@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.model;
 
-import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -24,7 +24,7 @@ public class Shuffling extends VersionedDerivedEntity {
     private short blocksRemaining;
     private byte registrantCount;
 
-    private ShufflingService.Stage stage;
+    private Stage stage;
     private long assigneeAccountId;
     private byte[][] recipientPublicKeys;
 
@@ -37,13 +37,13 @@ public class Shuffling extends VersionedDerivedEntity {
         this.amount = attachment.getAmount();
         this.participantCount = attachment.getParticipantCount();
         this.blocksRemaining = attachment.getRegistrationPeriod();
-        this.stage = ShufflingService.Stage.REGISTRATION;
+        this.stage = Stage.REGISTRATION;
         this.assigneeAccountId = issuerId;
         this.recipientPublicKeys = Convert.EMPTY_BYTES;
         this.registrantCount = 1;
     }
 
-    public Shuffling(Long dbId, long id, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount, short blocksRemaining, byte registrantCount, ShufflingService.Stage stage, long assigneeAccountId, byte[][] recipientPublicKeys, Integer height) {
+    public Shuffling(Long dbId, long id, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount, short blocksRemaining, byte registrantCount, Stage stage, long assigneeAccountId, byte[][] recipientPublicKeys, Integer height) {
         super(dbId, height);
         this.id = id;
         this.holdingId = holdingId;
@@ -120,11 +120,11 @@ public class Shuffling extends VersionedDerivedEntity {
         this.registrantCount = registrantCount;
     }
 
-    public ShufflingService.Stage getStage() {
+    public Stage getStage() {
         return stage;
     }
 
-    public void setStage(ShufflingService.Stage stage) {
+    public void setStage(Stage stage) {
         this.stage = stage;
     }
 

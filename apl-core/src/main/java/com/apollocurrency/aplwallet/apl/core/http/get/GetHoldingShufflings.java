@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -30,11 +29,13 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
@@ -62,10 +63,10 @@ public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
             }
         }
         String stageValue = Convert.emptyToNull(req.getParameter("stage"));
-        ShufflingService.Stage stage = null;
+        Stage stage = null;
         if (stageValue != null) {
             try {
-                stage = ShufflingService.Stage.get(Byte.parseByte(stageValue));
+                stage = Stage.get(Byte.parseByte(stageValue));
             } catch (RuntimeException e) {
                 return incorrect("stage");
             }
@@ -77,10 +78,9 @@ public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = shufflingService.getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shufflingService, shuffling, false));
-            }
+        List<Shuffling> shufflings = shufflingService.getHoldingShufflings(holdingId, stage, includeFinished, firstIndex, lastIndex);
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shufflingService, shuffling, false));
         }
         return response;
     }

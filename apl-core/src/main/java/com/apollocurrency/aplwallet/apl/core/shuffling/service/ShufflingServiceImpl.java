@@ -10,20 +10,18 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.shuffling.dao.InMemoryShufflingRepository;
 import com.apollocurrency.aplwallet.apl.core.shuffling.ShufflingEvent;
 import com.apollocurrency.aplwallet.apl.core.shuffling.ShufflingEventBinding;
 import com.apollocurrency.aplwallet.apl.core.shuffling.ShufflingEventType;
+import com.apollocurrency.aplwallet.apl.core.shuffling.dao.InMemoryShufflingRepository;
 import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
@@ -97,12 +95,12 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
 
-    String last3Stacktrace() {
+    private String last3Stacktrace() {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
     }
 
-    String getStacktraceSpec(StackTraceElement element) {
+    private String getStacktraceSpec(StackTraceElement element) {
         String className = element.getClassName();
         return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
@@ -110,27 +108,37 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public int getCount() {
-        return shufflingTable.getCount();
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getCount()
+                :shufflingTable.getCount();
     }
 
     @Override
     public int getActiveCount() {
-        return shufflingTable.getCount(new DbClause.NotNullClause("blocks_remaining"));
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getActiveCount()
+                : shufflingTable.getActiveCount();
     }
 
     @Override
     public List<Shuffling> getAll(int from, int to) {
-        return CollectionUtil.toList(shufflingTable.getAll(from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC "));
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.extractAll(from, to)
+                : shufflingTable.extractAll(from, to);
     }
 
     @Override
     public List<Shuffling> getActiveShufflings(int from, int to) {
-        return CollectionUtil.toList(shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC "));
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getActiveShufflings(from, to)
+                : shufflingTable.getActiveShufflings(from, to);
     }
 
     @Override
     public List<Shuffling> getFinishedShufflings(int from, int to) {
-        return CollectionUtil.toList(shufflingTable.getManyBy(new DbClause.NullClause("blocks_remaining"), from, to, " ORDER BY height DESC "));
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getFinishedShufflings(from, to)
+                : shufflingTable.getFinishedShufflings(from, to);
     }
 
     @Override
@@ -152,31 +160,24 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
-        DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
-        if (!includeFinished) {
-            clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
-        }
-        return shufflingTable.getCount(clause);
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getHoldingShufflingCount(holdingId, includeFinished)
+                : shufflingTable.getHoldingShufflingCount(holdingId, includeFinished);
     }
 
     @Override
-    public DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
-        DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
-        if (!includeFinished) {
-            clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
-        }
-        if (stage != null) {
-            clause = clause.and(new DbClause.ByteClause("stage", stage.getCode()));
-        }
-        return shufflingTable.getManyBy(clause, from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
+    public List<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getHoldingShufflings(holdingId, stage, includeFinished, from, to)
+                : shufflingTable.getHoldingShufflings(holdingId, stage, includeFinished, from, to);
     }
 
 
     @Override
-    public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
-        return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
-                        .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
-                " ORDER BY blocks_remaining NULLS LAST, height DESC ");
+    public List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
+        return useInMemoryShufflingRepository ?
+                inMemoryShufflingRepository.getAssignedShufflings(assigneeAccountId, from, to)
+                : shufflingTable.getAssignedShufflings(assigneeAccountId, from, to);
     }
 
     @Override
@@ -223,7 +224,7 @@ public class ShufflingServiceImpl implements ShufflingService {
             return;
         }
         List<Shuffling> shufflings = new ArrayList<>();
-        List<Shuffling> activeShufflings = useInMemoryShufflingRepository ? inMemoryShufflingRepository.getActiveShufflings() : getActiveShufflings(0, -1);
+        List<Shuffling> activeShufflings = useInMemoryShufflingRepository ? inMemoryShufflingRepository.getActiveShufflings(0, Integer.MAX_VALUE) : getActiveShufflings(0, -1);
         for (Shuffling shuffling : activeShufflings) {
             if (!isFull(shuffling, block)) {
                 shufflings.add(shuffling);

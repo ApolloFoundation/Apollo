@@ -25,8 +25,9 @@ class InMemoryShufflingRepositoryTest {
 
     @Test
     void testGetAllActiveShufflings() {
-        List<Shuffling> activeShufflings = shufflingRepository.getActiveShufflings();
+        List<Shuffling> activeShufflings = shufflingRepository.getActiveShufflings(0, Integer.MAX_VALUE);
         List<Shuffling> expected = List.of(std.APL_SHUFFLING1_3,std.ASSET_SHUFFLING2_2, std.CURRENCY_SHUFFLING3_1);
+
         assertEquals(expected, activeShufflings);
     }
 

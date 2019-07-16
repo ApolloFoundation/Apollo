@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -32,6 +31,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
@@ -54,10 +54,9 @@ public final class GetAssignedShufflings extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("shufflings", jsonArray);
-        try (DbIterator<Shuffling> shufflings = shufflingService.getAssignedShufflings(accountId, firstIndex, lastIndex)) {
-            for (Shuffling shuffling : shufflings) {
-                jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
-            }
+        List<Shuffling> shufflings = shufflingService.getAssignedShufflings(accountId, firstIndex, lastIndex);
+        for (Shuffling shuffling : shufflings) {
+            jsonArray.add(JSONData.shuffling(shufflingService, shuffling, includeHoldingInfo));
         }
         return response;
     }

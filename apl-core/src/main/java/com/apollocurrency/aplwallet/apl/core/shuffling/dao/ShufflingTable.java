@@ -5,15 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.mapper.ShufflingMapper;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -26,7 +24,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
-public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
+public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> implements ShufflingRepository{
     private static final String TABLE_NAME = "shuffling";
     private ShufflingMapper mapper;
     private ShufflingKeyFactory keyFactory;
@@ -66,6 +64,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             pstmt.executeUpdate();
         }
     }
+
     public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
         Connection con = null;
         try {
@@ -85,7 +84,56 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
         }
     }
 
+    @Override
     public Shuffling get(long id) {
         return get(keyFactory.newKey(id));
+    }
+
+    @Override
+    public int getActiveCount() {
+        return getCount(new DbClause.NotNullClause("blocks_remaining"));
+    }
+
+    @Override
+    public List<Shuffling> extractAll(int from, int to) {
+        return CollectionUtil.toList(getAll(from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC "));
+    }
+
+    @Override
+    public List<Shuffling> getActiveShufflings(int from, int to) {
+        return CollectionUtil.toList(getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC "));
+    }
+
+    @Override
+    public List<Shuffling> getFinishedShufflings(int from, int to) {
+        return CollectionUtil.toList(getManyBy(new DbClause.NullClause("blocks_remaining"), from, to, " ORDER BY height DESC "));
+    }
+
+    @Override
+    public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
+        DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
+        if (!includeFinished) {
+            clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
+        }
+        return getCount(clause);
+    }
+
+    @Override
+    public List<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
+        DbClause clause = holdingId != 0 ? new DbClause.LongClause("holding_id", holdingId) : new DbClause.NullClause("holding_id");
+        if (!includeFinished) {
+            clause = clause.and(new DbClause.NotNullClause("blocks_remaining"));
+        }
+        if (stage != null) {
+            clause = clause.and(new DbClause.ByteClause("stage", stage.getCode()));
+        }
+        return CollectionUtil.toList(getManyBy(clause, from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC "));
+    }
+
+    @Override
+    public List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
+        return CollectionUtil.toList(getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
+                        .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
+                " ORDER BY blocks_remaining NULLS LAST, height DESC "));
     }
 }

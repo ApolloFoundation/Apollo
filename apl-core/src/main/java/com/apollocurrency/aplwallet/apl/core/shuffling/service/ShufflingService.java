@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.shuffling.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -14,48 +13,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreat
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 
-import java.util.Arrays;
 import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
 public interface ShufflingService {
 
-
-    enum Stage {
-        REGISTRATION((byte)0, new byte[]{1,4}),
-        PROCESSING((byte)1, new byte[]{2,3,4}),
-        VERIFICATION((byte)2, new byte[]{3,4,5}),
-        BLAME((byte)3, new byte[]{4}),
-        CANCELLED((byte)4, new byte[]{}),
-        DONE((byte) 5, new byte[] {});
-
-        private final byte code;
-        private final byte[] allowedNext;
-
-        Stage(byte code, byte[] allowedNext) {
-            this.code = code;
-            this.allowedNext = allowedNext;
-        }
-
-        public static Stage get(byte code) {
-            for (Stage stage : Stage.values()) {
-                if (stage.code == code) {
-                    return stage;
-                }
-            }
-            throw new IllegalArgumentException("No matching stage for " + code);
-        }
-
-        public byte getCode() {
-            return code;
-        }
-
-        public boolean canBecome(Stage nextStage) {
-            return Arrays.binarySearch(allowedNext, nextStage.code) >= 0;
-        }
-
-    }
 
     int getCount();
 
@@ -73,10 +36,10 @@ public interface ShufflingService {
 
     int getHoldingShufflingCount(long holdingId, boolean includeFinished);
 
-    DbIterator<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to);
+    List<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to);
 
 
-    DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to);
+    List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to);
 
     void addShuffling(Transaction transaction, ShufflingCreation attachment);
 

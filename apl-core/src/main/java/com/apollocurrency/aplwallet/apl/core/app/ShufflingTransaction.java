@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -263,7 +264,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            if (shuffling.getStage() != ShufflingService.Stage.REGISTRATION) {
+            if (shuffling.getStage() != Stage.REGISTRATION) {
                 throw new AplException.NotCurrentlyValidException("Shuffling registration has ended for " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             if (shufflingParticipantService.getParticipant(shuffling.getId(), transaction.getSenderId()) != null) {
@@ -367,7 +368,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingService.Stage.PROCESSING) {
+            if (shuffling.getStage() != Stage.PROCESSING) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                         Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -490,7 +491,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingService.Stage.PROCESSING) {
+            if (shuffling.getStage() != Stage.PROCESSING) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling %s is not in processing stage",
                         Long.toUnsignedString(attachment.getShufflingId())));
             }
@@ -593,7 +594,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shuffling == null) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
-            if (shuffling.getStage() != ShufflingService.Stage.VERIFICATION) {
+            if (shuffling.getStage() != Stage.VERIFICATION) {
                 throw new AplException.NotCurrentlyValidException("Shuffling not in verification stage: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             ShufflingParticipant participant = shufflingParticipantService.getParticipant(shuffling.getId(), transaction.getSenderId());
@@ -685,7 +686,7 @@ public abstract class ShufflingTransaction extends TransactionType {
                 throw new AplException.NotCurrentlyValidException("Shuffling not found: " + Long.toUnsignedString(attachment.getShufflingId()));
             }
             long cancellingAccountId = attachment.getCancellingAccountId();
-            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(ShufflingService.Stage.BLAME)) {
+            if (cancellingAccountId == 0 && !shuffling.getStage().canBecome(Stage.BLAME)) {
                 throw new AplException.NotCurrentlyValidException(String.format("Shuffling in state %s cannot be cancelled", shuffling.getStage()));
             }
             if (cancellingAccountId != 0 && cancellingAccountId != shuffling.getAssigneeAccountId()) {

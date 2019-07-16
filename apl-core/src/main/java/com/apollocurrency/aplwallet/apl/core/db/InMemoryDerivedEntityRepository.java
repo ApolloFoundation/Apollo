@@ -4,25 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static java.util.stream.Collectors.groupingBy;
-
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.util.LockUtils;
+import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * In memory repository for blockchain entities,
- * Main purpose: to store derived entities and maintain data consistency according to blockchain events
- * Supports rollback, trim, insert operations
+ * In memory repository for blockchain immutable entities,
+ * Main purpose: to store final derived entities and maintain data consistency according to blockchain events
+ * Supports get, rollback, insert operations
+ *
  * @param <T> derived entity to store
  */
 public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
-    private Map<DbKey, List<T>> allEntities = new ConcurrentHashMap<>();
+    private Map<DbKey, T> allEntities = new HashMap<>();
+    private long counter = 0;
+    private ReadWriteLock lock = new ReentrantReadWriteUpdateLock();
+
     private KeyFactory<T> keyFactory;
 
     protected KeyFactory<T> getKeyFactory() {
@@ -33,77 +40,79 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
         this.keyFactory = keyFactory;
     }
 
-    protected Map<DbKey, List<T>> getAllEntities() {
+    protected Map<DbKey, T> getAllEntities() { // should never used directly by client code
         return allEntities;
     }
 
+    private void inWriteLock(Runnable action) {
+        LockUtils.doInLock(lock.writeLock(), action);
+    }
+
+    private <V> V inReadLock(Supplier<V> action) {
+        return LockUtils.getInLock(lock.readLock(), action);
+    }
+
     public void putAll(List<T> objects) {
-        allEntities.putAll(objects.stream()
-                .collect(groupingBy(keyFactory::newKey,
-                        Collectors.collectingAndThen(Collectors.toList(), l -> l.stream()
-                                .sorted(Comparator.comparing(DerivedEntity::getHeight))
-                                .collect(Collectors.toList())))));
+        inWriteLock(() -> {
+            allEntities.putAll(objects.stream()
+                    .collect(Collectors.toMap(keyFactory::newKey, Function.identity())));
+            Optional<Long> maxId = objects.stream().map(DerivedEntity::getDbId).max(Comparator.naturalOrder());
+            counter = maxId.orElse(0L);
+        });
     }
 
     public void clear() {
-        allEntities.clear();
+        inWriteLock(() -> allEntities.clear());
     }
 
     public void rollback(int height) {
-        allEntities.values().forEach(l-> l.removeIf(s->s.getHeight() > height));
-        List<DbKey> dbKeysToDelete = allEntities.entrySet().stream().filter(e -> e.getValue().size() == 0).map(Map.Entry::getKey).collect(Collectors.toList());
-        dbKeysToDelete.forEach(dbKey -> allEntities.remove(dbKey));
+        inWriteLock(() -> {
+            List<DbKey> toRollBack = allEntities.entrySet().stream().filter(v -> v.getValue().getHeight() > height).map(Map.Entry::getKey).collect(Collectors.toList());
+            toRollBack.forEach(allEntities::remove);
+        });
     }
 
     public T get(DbKey dbKey) {
-        List<T> entities = allEntities.get(dbKey);
-
-        return entities == null ? null : entities.get(entities.size() - 1);
+        return inReadLock(() -> allEntities.get(dbKey));
     }
 
     public T getCopy(DbKey dbKey) {
-        List<T> existingEntities = allEntities.get(dbKey);
-        if (existingEntities != null) {
-            T lastObject = existingEntities.get(existingEntities.size() - 1);
-            try {
-                return (T) lastObject.clone();
+        return inReadLock(() -> {
+
+            T existingEntity = allEntities.get(dbKey);
+            if (existingEntity != null) {
+                try {
+                    return (T) existingEntity.clone();
+                }
+                catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            } else {
+                return null;
             }
-            catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
-        } else {
-            return null;
-        }
+        });
     }
 
     public void insert(T entity) {
-        DbKey dbKey = keyFactory.newKey(entity);
-        List<T> existingEntities = allEntities.get(dbKey);
-        if (existingEntities == null) {
-            List<T> entities = new ArrayList<>();
-            entities.add(entity);
-            allEntities.put(dbKey, entities);
-        } else {
-            int lastPosition = existingEntities.size() - 1; // assume that existing list of entities has min size 1
-            T lastEntity = existingEntities.get(lastPosition);
-            if (lastEntity.getHeight() == entity.getHeight()) {
-                existingEntities.set(lastPosition, entity); // do merge
-            } else {
-                doInsert(existingEntities, entity, lastEntity); // do insert new value
+        inWriteLock(() -> {
+            DbKey dbKey = keyFactory.newKey(entity);
+            T existingEntity = allEntities.get(dbKey);
+            if (existingEntity != null && existingEntity.getHeight() != entity.getHeight()) {
+                throw new IllegalArgumentException("Unable to save already existing value");
             }
-        }
+            allEntities.put(dbKey, entity);
+            entity.setDbId(++counter);
+        });
     }
 
-    protected void doInsert(List<T> allEntities, T newEntity, T prevEntity) {
-        allEntities.add(newEntity);
-    }
 
-    public void delete(T entity) {
-
-    }
-
-    public void trim(int height) {
-
+    public List<T> getAll(int from, int to) {
+        return inReadLock(()-> allEntities.values()
+                .stream()
+                .sorted(Comparator.comparing(DerivedEntity::getHeight).reversed().thenComparing(Comparator.comparing(DerivedEntity::getDbId).reversed()))
+                .skip(from)
+                .limit(to - from)
+                .collect(Collectors.toList()));
     }
 
 }
