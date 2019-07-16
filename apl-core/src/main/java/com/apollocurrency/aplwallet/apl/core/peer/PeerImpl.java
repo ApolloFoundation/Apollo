@@ -303,13 +303,9 @@ public final class PeerImpl implements Peer {
         return pi.getApiPort();
     }
 
-    public void setApiPort(Object apiPortValue) {
+    public void setApiPort(Integer apiPortValue) {
         if (apiPortValue != null) {
-            try {
-                pi.setApiPort((Integer)apiPortValue);
-            } catch (RuntimeException e) {
-                throw new IllegalArgumentException("Invalid peer apiPort " + apiPortValue);
-            }
+            pi.setApiPort(apiPortValue);
         }
     }
 
@@ -318,13 +314,9 @@ public final class PeerImpl implements Peer {
         return pi.getApiSSLPort();
     }
 
-    public void setApiSSLPort(Object apiSSLPortValue) {
+    public void setApiSSLPort(Integer apiSSLPortValue) {
         if (apiSSLPortValue != null) {
-            try {
-                pi.setApiSSLPort((Integer)apiSSLPortValue);
-            } catch (RuntimeException e) {
-                throw new IllegalArgumentException("Invalid peer apiSSLPort " + apiSSLPortValue);
-            }
+                pi.setApiSSLPort(apiSSLPortValue);
         }
     }
 
@@ -333,10 +325,8 @@ public final class PeerImpl implements Peer {
         return Collections.unmodifiableSet(disabledAPIs);
     }
 
-    public void setDisabledAPIs(Object apiSetBase64) {
-        if (apiSetBase64 instanceof String) {
-            disabledAPIs = APIEnum.base64StringToEnumSet((String) apiSetBase64);
-        }
+    public void setDisabledAPIs(String apiSetBase64) {
+        disabledAPIs = APIEnum.base64StringToEnumSet(apiSetBase64);
     }
 
     @Override
@@ -581,14 +571,14 @@ public final class PeerImpl implements Peer {
         JSONObject response = null;
         try {
             if(ws==null){
-                LOG.trace("null websocket");
+                LOG.debug("null websocket");
                 return response;
             }
             StringWriter wsWriter = new StringWriter(Peers.MAX_REQUEST_SIZE);
             try {
                 request.writeJSONString(wsWriter);
             } catch (IOException ex) {
-                LOG.trace("Can not deserialize request");
+                LOG.debug("Can not deserialize request");
                 return response;
             }
             String wsRequest = wsWriter.toString();
@@ -597,15 +587,9 @@ public final class PeerImpl implements Peer {
             LOG.trace("WS Response = '{}'", (wsResponse != null && wsResponse.length() > 350 ? wsResponse.length() : wsResponse));
             if (wsResponse != null) {
                 updateUploadedVolume(wsRequest.length());
-                if (wsResponse.length() > Peers.MAX_MESSAGE_SIZE) {
-                    throw new AplException.AplIOException("Maximum size exceeded: " + wsResponse.length());
-                }
                 response = (JSONObject) JSONValue.parseWithException(wsResponse);
                 updateDownloadedVolume(wsResponse.length());
             }
-        } catch (IOException ex) {
-            LOG.trace("Exception sending to {} using websocket. Closing. Exception: {}",getHostWithPort(), ex);
-            deactivate("Exception sending to websocket");
         } catch (ParseException ex) {
             LOG.debug("Can not parse response from {}. Exception: {}",getHostWithPort(),ex);
         }
@@ -616,14 +600,21 @@ public final class PeerImpl implements Peer {
 
         JSONObject response = null;
         try {
-            boolean webSocketOK = false;
+            boolean inoundWebSocketOK = false;
+            boolean clientWebSocketOK = false;
             if(useWebSocket){
                 if(isInboundWebSocket()){
                     response = sendToWebSocket(request, inboundSocket);
-                    webSocketOK = response !=null;
-                    LOG.trace("Peer: {} Using inbound web socket. Success: {}",getHostWithPort(),webSocketOK);
+                    inoundWebSocketOK = response !=null;
+                    if(!inoundWebSocketOK){
+                       LOG.trace("Peer: {} Using inbound web socket. failed. Closing",getHostWithPort()); 
+                       inboundSocket.close();
+                       inboundSocket=null;
+                    }else{
+                       LOG.trace("Peer: {} Using inbound web socket. Success",getHostWithPort());                     
+                    }
                 }
-                if (!webSocketOK){ //no inbound connection or send failed
+                if (!inoundWebSocketOK){ //no inbound connection or send failed
                     if(clientWebSocket==null){
                         clientWebSocket=new PeerWebSocketClient(this,peerServlet);
                     }
@@ -637,25 +628,21 @@ public final class PeerImpl implements Peer {
                         String wsConnectString = "ws://" + addrWithPort + "/apl";
                         URI wsUri = URI.create(wsConnectString);
                         LOG.trace("Connecting to websocket'{}'...", wsConnectString);
-                        webSocketOK = clientWebSocket.startClient(wsUri);
-                        if (webSocketOK) {
+                        clientWebSocketOK = clientWebSocket.startClient(wsUri);
+                        if (clientWebSocketOK) {
                             LOG.trace("Connected as client to websocket {}", wsConnectString);
                         }
                     } else { //client socket is already open
-                        webSocketOK = true;
+                        clientWebSocketOK = true;
                     }
-                    if (webSocketOK) { //send using client socket
+                    if (clientWebSocketOK) { //send using client socket
                         response = sendToWebSocket(request, clientWebSocket);
-                        webSocketOK = response != null;
-                        LOG.trace("Peer: {} Using outbound web socket. Success: {}", getHostWithPort(), webSocketOK);
+                        clientWebSocketOK = response != null;
+                        LOG.trace("Peer: {} Using outbound web socket. Success: {}", getHostWithPort(), clientWebSocketOK);
                     }
                 }
             }
-            //
-            // Send the request and process the response
-            //
-            if (!webSocketOK) {
-                // Send the request using HTTP as fallback
+            if (!(clientWebSocketOK|inoundWebSocketOK)) { // Send the request using HTTP as fallback
                 response = sendHttp(request);
                 LOG.trace("Peer: {} Using HTTP. Success: {}",getHostWithPort(),response!=null);
             }
@@ -670,11 +657,6 @@ public final class PeerImpl implements Peer {
                 } else {
                     LOG.debug("Peer " + host + " version " + version + " returned error: " +
                             response.toJSONString() + ", request was: " + JSON.toString(request));
-// Just log at the moment, we have to segregate errors                    
-//                            ", disconnecting");
-//                    if (connection != null) {
-//                        connection.disconnect();
-//                    }
                 }
             }
         } catch (AplException.AplIOException e) {

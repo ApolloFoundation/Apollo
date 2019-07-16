@@ -263,7 +263,7 @@ public final class PeerServlet extends WebSocketServlet {
                 LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
                 processException(peer, e);
             } catch (IOException e) {
-                LOG.debug("Exception while responing to {}", peer.getHostWithPort(), e);
+                LOG.debug("Exception while responding to {}", peer.getHostWithPort(), e);
                 peer.deactivate("IO exception sending response to: "+webSocket.which());
             }
             if(jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL){
