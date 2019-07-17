@@ -187,19 +187,14 @@ public final class PeerServlet extends WebSocketServlet {
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
         PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
-        
-        if (peer == null) {
-            jsonResponse = PeerResponses.UNKNOWN_PEER;
-        } else {
-            jsonResponse = process(peer, req.getReader());
-        }
+
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
-                jsonResponse = process(peer, req.getReader());
+               jsonResponse = process(peer, req.getReader());
             }
         }        
         //
