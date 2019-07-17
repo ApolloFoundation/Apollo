@@ -504,8 +504,7 @@ public final class PeerImpl implements Peer {
                     LOG.debug("Sequence error received, reconnecting to " + host);
                     deactivate("Sequence error, need to handshake");
                 } else {
-                    LOG.debug("Peer " + host + " version " + version + " returned error: " +
-                            response.toJSONString() + ", request was: " + JSON.toString(request));
+                    processError(response);
                 }
             }
         } catch (RuntimeException|ParseException e) {
@@ -890,16 +889,23 @@ public final class PeerImpl implements Peer {
     }
     
     /** process error from transport level */
-    void processError(String message) {
+    boolean processError(String message) {
+        boolean res = false;
         LOG.debug("Error from transport level of {}:\n{}\n",getHostWithPort(), message);
         try {
             BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
             if(!StringUtils.isBlank(resp.error)){
                 LOG.debug("Parsed error: {}",resp.error);
+                res=true;
             }
         } catch (IOException ex) {
            LOG.debug("This is not P2P response",ex);
         }
+        return res;
+    }
+//TODO: replace this with something better
+    boolean processError(JSONObject request) {
+       return processError(request.toJSONString());
     }
     
 }

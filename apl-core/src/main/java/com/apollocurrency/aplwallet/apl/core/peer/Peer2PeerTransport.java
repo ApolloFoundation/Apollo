@@ -107,19 +107,14 @@ public class Peer2PeerTransport {
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            if (rqId == 0) { //error messages most likely
-                log.debug("Got message from {} with 0 requestId: {}", which(), message);
-                processError(message);
+            ResonseWaiter wsrw = requestMap.get(rqId);
+            if (wsrw != null) { //this is response we are waiting for
+                wsrw.setResponse(message);
             } else {
-                ResonseWaiter wsrw = requestMap.get(rqId);
-                if (wsrw != null) { //this is response we are waiting for
-                    wsrw.setResponse(message);
-                }else{
-                  //most likely ge've got request from remote and should process it
-                  peerServlet.doPost(this, rqId, message);
-                }
+                //most likely ge've got request from remote and should process it
+                //but it also can be error response without requestId
+                peerServlet.doPost(this, rqId, message);
             }
-
         }
     }
 

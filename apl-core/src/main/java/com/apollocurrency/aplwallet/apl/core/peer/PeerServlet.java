@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.ExecutorService;
@@ -195,7 +196,9 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Return the response
         //
-
+        if(jsonResponse==null){ //this is because we got just error message from peer
+            return;
+        }
         resp.setContentType("text/plain; charset=UTF-8");
         try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
             JSON.writeJSONString(jsonResponse, writer);
@@ -248,8 +251,12 @@ public final class PeerServlet extends WebSocketServlet {
         } else {
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
-            }else{          
-                 jsonResponse = process(peer, new StringReader(request));
+            }else{
+                 if(!peer.processError(request)){
+                   jsonResponse = process(peer, new StringReader(request));
+                 }else{
+                   return; //we don't respond on error messages  
+                 }
             }
         }
 
@@ -296,6 +303,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
+
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
                 LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
