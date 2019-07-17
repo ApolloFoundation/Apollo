@@ -329,11 +329,5 @@ public class Peer2PeerTransport {
         boolean res = outboundWebSocket != null && outboundWebSocket.isConnected();
         return res;
     }
-    
-    private void processError(String message){
-        PeerImpl p = (PeerImpl)peerReference.get();
-        if(p!=null){
-            p.processError(message);
-        }
-    }
+
 }
