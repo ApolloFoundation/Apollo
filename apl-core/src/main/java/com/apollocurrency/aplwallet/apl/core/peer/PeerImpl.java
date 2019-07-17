@@ -85,7 +85,6 @@ public final class PeerImpl implements Peer {
 
     private volatile int lastUpdated;
     private volatile int lastConnectAttempt;
-    private volatile int lastInboundRequest;
     private volatile long hallmarkBalance = -1;
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
@@ -205,7 +204,6 @@ public final class PeerImpl implements Peer {
                     LOG.debug(String.format("Blacklisting %s version %s", host, version));
                 }
                 blacklistingCause = "Old version: " + version;
-                lastInboundRequest = 0;
                 setState(PeerState.NON_CONNECTED);
                 Peers.notifyListeners(this, Peers.Event.BLACKLIST);
             }
@@ -389,8 +387,7 @@ public final class PeerImpl implements Peer {
     public void blacklist(String cause) {
         blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
-        deactivate(cause);
-        lastInboundRequest = 0;
+        deactivate("Blacklisting because of: "+cause);
         Peers.notifyListeners(this, Peers.Event.BLACKLIST);
     }
 
