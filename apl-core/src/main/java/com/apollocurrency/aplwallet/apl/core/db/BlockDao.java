@@ -56,6 +56,8 @@ public interface BlockDao {
 
     List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
 
+    List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, Connection connection, int index);
+
     Block findBlockWithVersion(int skipCount, int version);
 
 

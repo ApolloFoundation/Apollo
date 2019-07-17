@@ -356,8 +356,17 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, TransactionalDataSource dataSource, int index) {
         // Search the database
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+        try (Connection con = dataSource.getConnection()) {
+            return getBlocksAfter(height, blockIdList, result, con, index);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
+        // Search the database
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE height > ? "
                      + "ORDER BY height ASC LIMIT ?")) {
             pstmt.setLong(1, height);
