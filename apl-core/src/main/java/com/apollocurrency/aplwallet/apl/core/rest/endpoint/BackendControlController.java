@@ -23,6 +23,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,14 +35,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author alukin@gmail.com
  */
+@NoArgsConstructor
 @Singleton
 @Path("/control")
 public class BackendControlController {
     private static final Logger log = LoggerFactory.getLogger(BackendControlController.class);
 
+    @Inject @Setter
     private BackendControlService bcService;
 
-    @Inject
     public BackendControlController(BackendControlService bcService) {
         this.bcService = bcService;
     }

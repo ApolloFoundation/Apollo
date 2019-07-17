@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -48,46 +51,54 @@ import java.util.stream.Collectors;
 /**
  * Apollo accounts endpoint
  */
+@NoArgsConstructor
 @Slf4j
 @Path("/accounts")
 public class AccountController {
 
     private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
                                                                              RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-
+    @Inject @Setter
     private Blockchain blockchain;
-
+    @Inject @Setter
     private Account2FAHelper account2FAHelper;
-
+    @Inject @Setter
     private AccountService accountService;
-
+    @Inject @Setter
     private AccountAssetService accountAssetService;
-
+    @Inject @Setter
     private AccountCurrencyService accountCurrencyService;
-
-    @Setter
+    @Inject @Setter
     private AccountAssetConverter accountAssetConverter;
-
-    @Setter
+    @Inject @Setter
     private AccountCurrencyConverter accountCurrencyConverter;
-
-    @Setter
+    @Inject @Setter
     private AccountConverter converter;
-
-    @Setter
+    @Inject @Setter
     private AccountBlockConverter accountBlockConverter;
-
-    @Setter
+    @Inject @Setter
     private WalletKeysConverter walletKeysConverter;
-
-    @Setter
+    @Inject @Setter
     private Account2FADetailsConverter faDetailsConverter;
-
-    @Setter
+    @Inject @Setter
     private Account2FAConverter faConverter;
+    @Inject @Setter
+    private AccountBalanceService accountBalanceService;
 
-    @Inject
-    public AccountController(Blockchain blockchain, Account2FAHelper account2FAHelper, AccountService accountService, AccountAssetService accountAssetService, AccountCurrencyService accountCurrencyService, AccountAssetConverter accountAssetConverter, AccountCurrencyConverter accountCurrencyConverter, AccountConverter converter, AccountBlockConverter accountBlockConverter, WalletKeysConverter walletKeysConverter, Account2FADetailsConverter faDetailsConverter, Account2FAConverter faConverter) {
+    public AccountController(Blockchain blockchain,
+                             Account2FAHelper account2FAHelper,
+                             AccountService accountService,
+                             AccountAssetService accountAssetService,
+                             AccountCurrencyService accountCurrencyService,
+                             AccountAssetConverter accountAssetConverter,
+                             AccountCurrencyConverter accountCurrencyConverter,
+                             AccountConverter converter,
+                             AccountBlockConverter accountBlockConverter,
+                             WalletKeysConverter walletKeysConverter,
+                             Account2FADetailsConverter faDetailsConverter,
+                             Account2FAConverter faConverter,
+                             AccountBalanceService accountBalanceService) {
+
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
         this.accountService = accountService;
@@ -100,6 +111,7 @@ public class AccountController {
         this.walletKeysConverter = walletKeysConverter;
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
+        this.accountBalanceService = accountBalanceService;
     }
 
     @Path("/account")

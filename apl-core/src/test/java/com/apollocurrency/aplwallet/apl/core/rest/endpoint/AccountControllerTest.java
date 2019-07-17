@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
+import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,6 +64,7 @@ class AccountControllerTest extends AbstractEndpointTest{
     private AccountAssetConverter accountAssetConverter = mock(AccountAssetConverter.class);
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
     private AccountBlockConverter accountBlockConverter = new AccountBlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
+    private AccountBalanceService accountBalanceService = mock(AccountBalanceService.class);
 
     private Account2FAHelper account2FAHelper = mock(Account2FAHelper.class);
 
@@ -86,7 +88,8 @@ class AccountControllerTest extends AbstractEndpointTest{
                 accountBlockConverter,
                 new WalletKeysConverter(),
                 new Account2FADetailsConverter(),
-                new Account2FAConverter()
+                new Account2FAConverter(),
+                accountBalanceService
                 );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
