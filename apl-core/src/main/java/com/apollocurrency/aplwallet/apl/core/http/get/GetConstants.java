@@ -38,7 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ParticipantState;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -192,7 +192,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("shufflingStages", shufflingStages);
 
                 JSONObject shufflingParticipantStates = new JSONObject();
-                for (ShufflingParticipantService.State state : ShufflingParticipantService.State.values()) {
+                for (ParticipantState state : ParticipantState.values()) {
                     shufflingParticipantStates.put(state.toString(), state.getCode());
                 }
                 response.put("shufflingParticipantStates", shufflingParticipantStates);

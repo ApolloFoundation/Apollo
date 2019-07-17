@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.Assertions;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,8 +77,10 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
     public void testInsertNewEntityWithFakeDbKey() {
         List<T> allLatest = getAllLatest();
         T t = valueToInsert();
-        t.setHeight(allLatest.get(0).getHeight() + 1);
-        t.setDbKey(allLatest.get(0).getDbKey());
+        T lastValue = allLatest.get(0);
+        t.setHeight(lastValue.getHeight() + 1);
+        t.setDbKey(table.getDbKeyFactory().newKey(lastValue));
+        t.setDbId(getAll().stream().map(DerivedEntity::getDbId).max(Comparator.naturalOrder()).get() + 1);
         DbUtils.inTransaction(extension, (con)-> {
             table.insert(t);
             assertInCache(t);

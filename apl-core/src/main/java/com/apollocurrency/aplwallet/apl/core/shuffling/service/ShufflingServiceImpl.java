@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.shuffling.ShufflingEvent;
@@ -42,8 +41,8 @@ import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -198,8 +197,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     @PostConstruct
-    void init() {
-
+    public void init() {
         if (useInMemoryShufflingRepository) {
             if (shufflingRepositoryBean.isResolvable()) {
                 try {
@@ -210,7 +208,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                     throw new RuntimeException("Unable to init shuffling cache ", e);
                 }
             } else {
-                throw new RuntimeException("Shuffling inmemory repository is not resolvable");
+                throw new RuntimeException("Shuffling inmemory repository was not resolved by CDI");
             }
         }
     }
@@ -309,9 +307,8 @@ public class ShufflingServiceImpl implements ShufflingService {
                 return getFullHash(shuffling);
             case PROCESSING:
                 if (shuffling.getAssigneeAccountId() == shuffling.getIssuerId()) {
-                    try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
-                        return getParticipantsHash(participants);
-                    }
+                    List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
+                    return getParticipantsHash(participants);
                 } else {
                     ShufflingParticipant participant = getParticipant(shuffling.getId(), shuffling.getAssigneeAccountId());
                     return shufflingParticipantService.getPreviousParticipant(participant).getDataTransactionFullHash();
@@ -326,9 +323,8 @@ public class ShufflingServiceImpl implements ShufflingService {
                 if (hash != null && hash.length > 0) {
                     return hash;
                 }
-                try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
-                    return getParticipantsHash(participants);
-                }
+                List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
+                return getParticipantsHash(participants);
             case DONE:
                 return getLastParticipant(shuffling).getDataTransactionFullHash();
             default:
@@ -347,16 +343,17 @@ public class ShufflingServiceImpl implements ShufflingService {
         byte[][] data = Convert.EMPTY_BYTES;
         byte[] shufflingStateHash = null;
         int participantIndex = 0;
-        List<ShufflingParticipant> shufflingParticipants = new ArrayList<>();
         globalSync.readLock();
         // Read the participant list for the shuffling
-        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
-            for (ShufflingParticipant participant : participants) {
-                shufflingParticipants.add(participant);
+        List<ShufflingParticipant> shufflingParticipants = shufflingParticipantService.getParticipants(shuffling.getId());
+        try {
+            int index = 0;
+            for (ShufflingParticipant participant : shufflingParticipants) {
+                index++;
                 if (participant.getNextAccountId() == accountId) {
                     data = shufflingParticipantService.getData(participant);
                     shufflingStateHash = participant.getDataTransactionFullHash();
-                    participantIndex = shufflingParticipants.size();
+                    participantIndex = index;
                 }
             }
             if (shufflingStateHash == null) {
@@ -393,7 +390,7 @@ public class ShufflingServiceImpl implements ShufflingService {
         }
         outputDataList.add(bytesToEncrypt);
         // Shuffle the tokens and save the shuffled tokens as the participant data
-        Collections.sort(outputDataList, Convert.byteArrayComparator);
+        outputDataList.sort(Convert.byteArrayComparator);
         if (isLast) {
             Set<Long> recipientAccounts = new HashSet<>(shuffling.getParticipantCount());
             for (byte[] publicKey : outputDataList) {
@@ -427,7 +424,8 @@ public class ShufflingServiceImpl implements ShufflingService {
     @Override
     public ShufflingCancellationAttachment revealKeySeeds(Shuffling shuffling, final byte[] secretBytes, long cancellingAccountId, byte[] shufflingStateHash) {
         globalSync.readLock();
-        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
+        try {
+        Iterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId()).iterator();
             if (cancellingAccountId != shuffling.getAssigneeAccountId()) {
                 throw new RuntimeException(String.format("Current shuffling cancellingAccountId %s does not match %s",
                         Long.toUnsignedString(shuffling.getAssigneeAccountId()), Long.toUnsignedString(cancellingAccountId)));
@@ -597,13 +595,12 @@ public class ShufflingServiceImpl implements ShufflingService {
         }
         LedgerEvent event = LedgerEvent.SHUFFLING_DISTRIBUTION;
         HoldingType holdingType = shuffling.getHoldingType();
-        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
-            for (ShufflingParticipant participant : participants) {
-                Account participantAccount = Account.getAccount(participant.getAccountId());
-                holdingType.addToBalance(participantAccount, event, shuffling.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
-                if (holdingType != HoldingType.APL) {
-                    participantAccount.addToBalanceATM(event, shuffling.getId(), -blockchainConfig.getShufflingDepositAtm());
-                }
+        List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
+        for (ShufflingParticipant participant : participants) {
+            Account participantAccount = Account.getAccount(participant.getAccountId());
+            holdingType.addToBalance(participantAccount, event, shuffling.getId(), shuffling.getHoldingId(), -shuffling.getAmount());
+            if (holdingType != HoldingType.APL) {
+                participantAccount.addToBalanceATM(event, shuffling.getId(), -blockchainConfig.getShufflingDepositAtm());
             }
         }
         for (byte[] recipientPublicKey : recipientPublicKeys) {
@@ -627,7 +624,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     private void cancel(Shuffling shuffling, Block block) {
         LedgerEvent event = LedgerEvent.SHUFFLING_CANCELLATION;
         long blamedAccountId = blame(shuffling);
-        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
+        List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
             for (ShufflingParticipant participant : participants) {
                 Account participantAccount = Account.getAccount(participant.getAccountId());
                 HoldingType holdingType = shuffling.getHoldingType();
@@ -643,7 +640,6 @@ public class ShufflingServiceImpl implements ShufflingService {
                     participantAccount.addToBalanceATM(event, shuffling.getId(), -blockchainConfig.getShufflingDepositAtm());
                 }
             }
-        }
         if (blamedAccountId != 0) {
             // as a penalty the deposit goes to the generators of the finish block and previous 3 blocks
             long fee = blockchainConfig.getShufflingDepositAtm() / 4;
@@ -696,16 +692,11 @@ public class ShufflingServiceImpl implements ShufflingService {
             LOG.debug("Participant {} did not submit processing", Long.toUnsignedString(assigneeAccountId));
             return assigneeAccountId;
         }
-        List<ShufflingParticipant> participants = new ArrayList<>();
-        try (DbIterator<ShufflingParticipant> iterator = shufflingParticipantService.getParticipants(shuffling.getId())) {
-            while (iterator.hasNext()) {
-                participants.add(iterator.next());
-            }
-        }
+        List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
         if (currentStage == Stage.VERIFICATION) {
             // if verification started, blame the first one who did not submit verification
             for (ShufflingParticipant participant : participants) {
-                if (participant.getState() != ShufflingParticipantService.State.VERIFIED) {
+                if (participant.getState() != ParticipantState.VERIFIED) {
                     LOG.debug("Participant {} did not submit verification", Long.toUnsignedString(participant.getAccountId()));
                     return participant.getAccountId();
                 }
@@ -769,7 +760,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                         return participant.getAccountId();
                     }
                 }
-                if (nextParticipant.getState() == ShufflingParticipantService.State.CANCELLED && nextParticipant.getBlameData().length == 0) {
+                if (nextParticipant.getState() == ParticipantState.CANCELLED && nextParticipant.getBlameData().length == 0) {
                     break;
                 }
                 boolean found = false;
@@ -793,10 +784,9 @@ public class ShufflingServiceImpl implements ShufflingService {
     }
 
     private void delete(Shuffling shuffling) {
-        try (DbIterator<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId())) {
-            for (ShufflingParticipant participant : participants) {
-                shufflingParticipantService.delete(participant);
-            }
+        List<ShufflingParticipant> participants = shufflingParticipantService.getParticipants(shuffling.getId());
+        for (ShufflingParticipant participant : participants) {
+            shufflingParticipantService.delete(participant);
         }
         shuffling.setHeight(blockchain.getHeight());
         if (useInMemoryShufflingRepository) {

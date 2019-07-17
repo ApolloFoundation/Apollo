@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -24,8 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.shuffling.mapper.ShufflingMapper;
-import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.data.ShufflingTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -35,21 +36,19 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import javax.inject.Inject;
-
 @EnableWeld
-public class ShufflingDerivedTableTest extends VersionedEntityDbTableTest<Shuffling> {
+public class ShufflingParticipantTableTest extends VersionedEntityDbTableTest<ShufflingParticipant> {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
             JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
-            ShufflingTable.class,
-            ShufflingKeyFactory.class,
-            ShufflingMapper.class,
+            ShufflingParticipantTable.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
@@ -62,8 +61,12 @@ public class ShufflingDerivedTableTest extends VersionedEntityDbTableTest<Shuffl
     @Inject
     Blockchain blockchain;
     @Inject
-    ShufflingTable shufflingTable;
+    ShufflingParticipantTable table;
     ShufflingTestData std;
+
+    public ShufflingParticipantTableTest() {
+        super(ShufflingParticipant.class);
+    }
 
     @Override
     @BeforeEach
@@ -72,8 +75,14 @@ public class ShufflingDerivedTableTest extends VersionedEntityDbTableTest<Shuffl
         super.setUp();
     }
 
-    public ShufflingDerivedTableTest() {
-        super(Shuffling.class);
+    @Override
+    public DerivedDbTable<ShufflingParticipant> getDerivedDbTable() {
+        return table;
+    }
+
+    @Override
+    protected List<ShufflingParticipant> getAll() {
+        return std.ALL_PARTICIPANTS;
     }
 
     @Override
@@ -82,22 +91,74 @@ public class ShufflingDerivedTableTest extends VersionedEntityDbTableTest<Shuffl
     }
 
     @Override
-    public Shuffling valueToInsert() {
-        return std.NEW_SHUFFLING;
+    public ShufflingParticipant valueToInsert() {
+        return std.NEW_PARTICIPANT;
     }
-
-    @Override
-    public DerivedDbTable getDerivedDbTable() {
-        return shufflingTable;
-    }
-
-    @Override
-    protected List getAll() {
-        return std.ALL_SHUFFLINGS;
-    }
-
     @Override
     protected String dataScriptPath() {
         return "db/shuffling.sql";
     }
+
+    @Test
+    void testGetParticipants() {
+        List<ShufflingParticipant> participants = table.getParticipants(std.SHUFFLING_1_1_APL_VERIF_DELETED.getId());
+
+        assertEquals(List.of(std.PARTICIPANT_1_1_C_3_VERIFIC, std.PARTICIPANT_1_1_B_3_VERIFIC, std.PARTICIPANT_1_0_A_2_PROCESS), participants);
+    }
+
+    @Test
+    void testGetParticipantsForNonExistentShuffling() {
+        List<ShufflingParticipant> shufflings = table.getParticipants(Long.MAX_VALUE);
+        assertEquals(0, shufflings.size());
+    }
+
+    @Test
+    void testGetByIndex() {
+        ShufflingParticipant participant = table.getByIndex(std.SHUFFLING_1_1_APL_VERIF_DELETED.getId(), 2);
+
+        assertEquals(std.PARTICIPANT_1_0_A_2_PROCESS, participant);
+    }
+
+    @Test
+    void testGetByIndexWhichNotExist() {
+        ShufflingParticipant participant = table.getByIndex(std.SHUFFLING_1_1_APL_VERIF_DELETED.getId(), 3);
+
+        assertNull(participant);
+    }
+
+    @Test
+    void testGetLastParticipant() {
+        ShufflingParticipant last = table.getLast(std.SHUFFLING_2_2_ASSET_REGISTRATION.getId());
+
+        assertEquals(std.PARTICIPANT_2_1_C_1_REGISTR, last);
+    }
+
+    @Test
+    void testGetLastParticipantWhichNotExists() {
+        ShufflingParticipant last = table.getLast(Long.MAX_VALUE);
+
+        assertNull(last);
+    }
+
+    @Test
+    void testGetVerifiedCount() {
+        int verifiedCount = table.getVerifiedCount(std.SHUFFLING_1_2_APL_DONE_DELETED.getId());
+
+        assertEquals(2, verifiedCount);
+    }
+
+    @Test
+    void testGetVerifiedCountForShufflingDuringRegistration() {
+        int verifiedCount = table.getVerifiedCount(std.SHUFFLING_2_2_ASSET_REGISTRATION.getId());
+
+        assertEquals(0, verifiedCount);
+    }
+
+    @Test
+    void testGetByShufflingIdAndAccountId() {
+        ShufflingParticipant participant = table.get(std.PARTICIPANT_2_1_B_1_REGISTR.getShufflingId(), std.PARTICIPANT_2_1_B_1_REGISTR.getAccountId());
+
+        assertEquals(std.PARTICIPANT_2_1_B_2_REGISTR, participant);
+    }
+
 }

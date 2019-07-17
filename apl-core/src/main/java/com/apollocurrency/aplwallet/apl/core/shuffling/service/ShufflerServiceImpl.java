@@ -389,7 +389,7 @@ public class ShufflerServiceImpl implements ShufflerService {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() == ShufflingParticipantService.State.PROCESSED) {
+                if (shufflingParticipant.getState() == ParticipantState.PROCESSED) {
                     verify(shuffler, shuffling);
                 }
                 break;
@@ -397,7 +397,7 @@ public class ShufflerServiceImpl implements ShufflerService {
                 if (shufflingParticipant == null) {
                     throw new InvalidStageException("Account has not registered for this shuffling");
                 }
-                if (shufflingParticipant.getState() != ShufflingParticipantService.State.CANCELLED) {
+                if (shufflingParticipant.getState() != ParticipantState.CANCELLED) {
                     cancel(shuffler, shuffling);
                 }
                 break;

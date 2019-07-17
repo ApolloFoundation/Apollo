@@ -9,14 +9,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingDataTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
 import org.slf4j.Logger;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -41,8 +40,8 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
 
 
     @Override
-    public DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
-        return shufflingParticipantTable.getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
+    public List<ShufflingParticipant> getParticipants(long shufflingId) {
+        return shufflingParticipantTable.getParticipants(shufflingId);
     }
 
     @Override
@@ -52,7 +51,7 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
 
     @Override
     public ShufflingParticipant getLastParticipant(long shufflingId) {
-        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
+        return shufflingParticipantTable.getLast(shufflingId);
     }
 
     @Override
@@ -63,8 +62,7 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
 
     @Override
     public int getVerifiedCount(long shufflingId) {
-        return shufflingParticipantTable.getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
-                new DbClause.ByteClause("state", State.VERIFIED.getCode())));
+        return shufflingParticipantTable.getVerifiedCount(shufflingId);
     }
 
     @Override
@@ -78,7 +76,7 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
     }
 
     // caller must update database
-    private void setState(ShufflingParticipant participant, State state) {
+    private void setState(ShufflingParticipant participant, ParticipantState state) {
         if (!participant.getState().canBecome(state)) {
             throw new IllegalStateException(String.format("Shuffling participant in state %s cannot go to state %s", participant.getState(), state));
         }
@@ -118,7 +116,7 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
         }
         participant.setBlameData(blameData);
         participant.setKeySeeds(keySeeds);
-        setState(participant, State.CANCELLED);
+        setState(participant, ParticipantState.CANCELLED);
         participant.setHeight(blockchain.getHeight());
         shufflingParticipantTable.insert(participant);
     }
@@ -128,7 +126,7 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
         if (participant.getDataTransactionFullHash() != null) {
             throw new IllegalStateException("dataTransactionFullHash already set");
         }
-        setState(participant, State.PROCESSED);
+        setState(participant, ParticipantState.PROCESSED);
         participant.setDataTransactionFullHash(dataTransactionFullHash);
         if (dataHash != null) {
             setDataHash(participant, dataHash);
@@ -149,12 +147,12 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
         if (participant.getIndex() == 0) {
             return null;
         }
-        return shufflingParticipantTable.getBy(new DbClause.LongClause("shuffling_id", participant.getShufflingId()).and(new DbClause.IntClause("participant_index", participant.getIndex() - 1)));
+        return shufflingParticipantTable.getByIndex(participant.getShufflingId(), participant.getIndex() - 1);
     }
 
     @Override
     public void verify(ShufflingParticipant participant) {
-        setState(participant, State.VERIFIED);
+        setState(participant, ParticipantState.VERIFIED);
         participant.setHeight(blockchain.getHeight());
         shufflingParticipantTable.insert(participant);
     }

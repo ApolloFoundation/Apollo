@@ -42,7 +42,7 @@ public abstract class ShufflingRepositoryTest {
     @Test
     void testExtractAll() {
         List<Shuffling> shufflings = shufflingRepository.extractAll(0, Integer.MAX_VALUE);
-        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION, std.SHUFFLING_1_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED, std.SHUFFLING_4_2_APL_FINISHED);
+        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION, std.SHUFFLING_2_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED, std.SHUFFLING_4_2_APL_FINISHED);
         assertEquals(expected, shufflings);
         assertEquals(expected, shufflingRepository.extractAll(0, -1));
     }
@@ -50,7 +50,7 @@ public abstract class ShufflingRepositoryTest {
     @Test
     void testExtractAllWithPagination() {
         List<Shuffling> shufflings = shufflingRepository.extractAll(2, 5);
-        List<Shuffling> expected = List.of(std.SHUFFLING_1_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED);
+        List<Shuffling> expected = List.of(std.SHUFFLING_2_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED);
         assertEquals(expected, shufflings);
     }
 
@@ -58,7 +58,7 @@ public abstract class ShufflingRepositoryTest {
     @Test
     void testGetActiveShufflings() {
         List<Shuffling> activeShufflings = shufflingRepository.getActiveShufflings(0, Integer.MAX_VALUE);
-        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION,std.SHUFFLING_1_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION);
+        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION,std.SHUFFLING_2_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION);
 
         assertEquals(expected, activeShufflings);
     }
@@ -66,7 +66,7 @@ public abstract class ShufflingRepositoryTest {
     @Test
     void testGetActiveShufflingWithPagination() {
         List<Shuffling> activeShufflings = shufflingRepository.getActiveShufflings(1, 3);
-        List<Shuffling> expected = List.of( std.SHUFFLING_3_3_APL_REGISTRATION, std.SHUFFLING_1_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING);
+        List<Shuffling> expected = List.of( std.SHUFFLING_3_3_APL_REGISTRATION, std.SHUFFLING_2_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING);
 
         assertEquals(expected, activeShufflings);
     }
@@ -74,7 +74,7 @@ public abstract class ShufflingRepositoryTest {
     @Test
     void testGetActiveShufflingsWithNegativePagination() {
         List<Shuffling> activeShufflings = shufflingRepository.getActiveShufflings(0, -1);
-        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION,std.SHUFFLING_1_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION);
+        List<Shuffling> expected = List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION,std.SHUFFLING_2_2_ASSET_REGISTRATION, std.SHUFFLING_5_1_APL_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION);
 
         assertEquals(expected, activeShufflings);
     }

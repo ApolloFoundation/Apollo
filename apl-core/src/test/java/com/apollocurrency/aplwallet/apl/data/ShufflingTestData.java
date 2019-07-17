@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ParticipantState;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -13,28 +15,78 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShufflingTestData {
-    public final byte[][] RECIPIENT_PUBLIC_KEYS = {Convert.parseHexString("51546eb53e8439f156acd2a7b7301cadec13d0ff85f46ff0cc97005ae16776b7"), Convert.parseHexString("4d04aabfa6588d866f8eaa3ebc30ae5012b49cd1bd7667c716068f16a79303ec"), Convert.parseHexString("977f3b11ad0373a63688dd416f991d2447bddaf3660403077282bb8bad9c01ab")};
-    public final Shuffling SHUFFLING_1_1_ASSET_REGISTRATION    = new Shuffling(100L, 10_000L, 500   , HoldingType.get((byte) 1), 2500 , 100_000 , (byte) 10, (short) 120 , (byte) 2, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 999 );
-    public final Shuffling SHUFFLING_2_1_APL_VERIF_DELETED     = new Shuffling(110L, 20_000L, 0     , HoldingType.get((byte) 0), 3500 , 2500    , (byte) 3 , (short) 1   , (byte) 3, Stage.VERIFICATION , 0   , RECIPIENT_PUBLIC_KEYS, 999 );
-    public final Shuffling SHUFFLING_3_1_APL_REGISTRATION      = new Shuffling(120L, 30_000L, 0     , HoldingType.get((byte) 0), 1500 , 2500    , (byte) 5 , (short) 120 , (byte) 2, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 1000);
-    public final Shuffling SHUFFLING_2_2_APL_DONE_DELETED      = new Shuffling(130L, 20_000L, 0     , HoldingType.get((byte) 0), 3500 , 2500    , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0   , RECIPIENT_PUBLIC_KEYS, 1000);
-    public final Shuffling SHUFFLING_4_1_APL_DONE              = new Shuffling(140L, 40_000L, 0L    , HoldingType.get((byte) 0), 2500L, 5000L   , (byte) 3 , (short) 118 , (byte) 3, Stage.VERIFICATION , 2500,  Convert.EMPTY_BYTES , 1000);
-    public final Shuffling SHUFFLING_5_1_APL_PROCESSING        = new Shuffling(150L, 50_000L, 0L    , HoldingType.get((byte) 0), 2500L, 1000L   , (byte) 3 , (short) 120 , (byte) 3, Stage.PROCESSING   , 1500,  Convert.EMPTY_BYTES , 1000);
-    public final Shuffling SHUFFLING_6_1_CURRENCY_REGISTRATION = new Shuffling(160L, 60_000L, 1000  , HoldingType.get((byte) 2), 3500 , 2000    , (byte) 3 , (short) 1440, (byte) 1, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 1001);
-    public final Shuffling SHUFFLING_7_1_CURRENCY_DONE         = new Shuffling(170L, 70_000L, 1000L , HoldingType.get((byte) 2), 1500L, 2000L   , (byte) 3 , (short) 1   , (byte) 3, Stage.VERIFICATION , 0   , RECIPIENT_PUBLIC_KEYS, 1001);
-    public final Shuffling SHUFFLING_8_1_CURRENCY_PROCESSING   = new Shuffling(180L, 80_000L, 1000L , HoldingType.get((byte) 2), 1500L, 3000L   , (byte) 4 , (short) 110 , (byte) 4, Stage.PROCESSING   , 2500, Convert.EMPTY_BYTES  , 1001);
-    public final Shuffling SHUFFLING_4_2_APL_FINISHED          = new Shuffling(190L, 40_000L, 0L    , HoldingType.get((byte) 0), 2500L, 5000L   , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0   , RECIPIENT_PUBLIC_KEYS, 1001);
-    public final Shuffling SHUFFLING_3_2_APL_REGISTRATION      = new Shuffling(200L, 30_000L, 0     , HoldingType.get((byte) 0), 1500 , 2500    , (byte) 5 , (short) 119 , (byte) 2, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 1002);
-    public final Shuffling SHUFFLING_7_2_CURRENCY_FINISHED     = new Shuffling(210L, 70_000L, 1000L , HoldingType.get((byte) 2), 1500L, 2000L   , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0   , RECIPIENT_PUBLIC_KEYS, 1002);
-    public final Shuffling SHUFFLING_1_2_ASSET_REGISTRATION    = new Shuffling(220L, 10_000L, 500   , HoldingType.get((byte) 1), 2500 , 100_000 , (byte) 10, (short) 118 , (byte) 5, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 1003);
-    public final Shuffling SHUFFLING_3_3_APL_REGISTRATION      = new Shuffling(230L, 30_000L, 0     , HoldingType.get((byte) 0), 1500 , 2500    , (byte) 5 , (short) 118 , (byte) 3, Stage.REGISTRATION , 0   , Convert.EMPTY_BYTES  , 1005);
+    public final long ALICE_ID = 1500;
+    public final long BOB_ID   = 2500;
+    public final long CHUCK_ID = 3500;
 
-    public final Shuffling NEW_SHUFFLING = new Shuffling(231L, 100L, 0L, HoldingType.APL, 1500L, 2000L, (byte) 3, (short) 1440, (byte) 1, Stage.REGISTRATION, 0, Convert.EMPTY_BYTES, 100_000);
-    public final List<Shuffling> all = new ArrayList<>(List.of(
-            SHUFFLING_1_1_ASSET_REGISTRATION,
-            SHUFFLING_2_1_APL_VERIF_DELETED,
+    public final byte[][] RECIPIENT_PUBLIC_KEYS = {Convert.parseHexString("51546eb53e8439f156acd2a7b7301cadec13d0ff85f46ff0cc97005ae16776b7"), Convert.parseHexString("4d04aabfa6588d866f8eaa3ebc30ae5012b49cd1bd7667c716068f16a79303ec"), Convert.parseHexString("977f3b11ad0373a63688dd416f991d2447bddaf3660403077282bb8bad9c01ab")};
+    public final Shuffling SHUFFLING_1_1_APL_VERIF_DELETED     = new Shuffling(100L, 20_000L, 0     , HoldingType.get((byte) 0), CHUCK_ID , 2500    , (byte) 3 , (short) 1   , (byte) 3, Stage.VERIFICATION , 0        , RECIPIENT_PUBLIC_KEYS, 996 );
+    public final Shuffling SHUFFLING_2_1_ASSET_REGISTRATION    = new Shuffling(110L, 10_000L, 500   , HoldingType.get((byte) 1), BOB_ID   , 100_000 , (byte) 10, (short) 120 , (byte) 2, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 999 );
+    public final Shuffling SHUFFLING_3_1_APL_REGISTRATION      = new Shuffling(120L, 30_000L, 0     , HoldingType.get((byte) 0), ALICE_ID , 2500    , (byte) 5 , (short) 120 , (byte) 2, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 1000);
+    public final Shuffling SHUFFLING_1_2_APL_DONE_DELETED      = new Shuffling(130L, 20_000L, 0     , HoldingType.get((byte) 0), CHUCK_ID , 2500    , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0        , RECIPIENT_PUBLIC_KEYS, 1000);
+    public final Shuffling SHUFFLING_4_1_APL_DONE              = new Shuffling(140L, 40_000L, 0L    , HoldingType.get((byte) 0), BOB_ID   , 5000L   , (byte) 3 , (short) 118 , (byte) 3, Stage.VERIFICATION , BOB_ID   ,  Convert.EMPTY_BYTES , 1000);
+    public final Shuffling SHUFFLING_5_1_APL_PROCESSING        = new Shuffling(150L, 50_000L, 0L    , HoldingType.get((byte) 0), BOB_ID   , 1000L   , (byte) 3 , (short) 120 , (byte) 3, Stage.PROCESSING   , ALICE_ID ,  Convert.EMPTY_BYTES , 1000);
+    public final Shuffling SHUFFLING_6_1_CURRENCY_REGISTRATION = new Shuffling(160L, 60_000L, 1000  , HoldingType.get((byte) 2), CHUCK_ID , 2000    , (byte) 3 , (short) 1440, (byte) 1, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 1001);
+    public final Shuffling SHUFFLING_7_1_CURRENCY_DONE         = new Shuffling(170L, 70_000L, 1000L , HoldingType.get((byte) 2), ALICE_ID , 2000L   , (byte) 3 , (short) 1   , (byte) 3, Stage.VERIFICATION , 0        , RECIPIENT_PUBLIC_KEYS, 1001);
+    public final Shuffling SHUFFLING_8_1_CURRENCY_PROCESSING   = new Shuffling(180L, 80_000L, 1000L , HoldingType.get((byte) 2), ALICE_ID , 3000L   , (byte) 4 , (short) 110 , (byte) 4, Stage.PROCESSING   , BOB_ID   , Convert.EMPTY_BYTES  , 1001);
+    public final Shuffling SHUFFLING_4_2_APL_FINISHED          = new Shuffling(190L, 40_000L, 0L    , HoldingType.get((byte) 0), BOB_ID   , 5000L   , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0        , RECIPIENT_PUBLIC_KEYS, 1001);
+    public final Shuffling SHUFFLING_3_2_APL_REGISTRATION      = new Shuffling(200L, 30_000L, 0     , HoldingType.get((byte) 0), ALICE_ID , 2500    , (byte) 5 , (short) 119 , (byte) 2, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 1002);
+    public final Shuffling SHUFFLING_7_2_CURRENCY_FINISHED     = new Shuffling(210L, 70_000L, 1000L , HoldingType.get((byte) 2), ALICE_ID , 2000L   , (byte) 3 , (short) 0   , (byte) 3, Stage.DONE         , 0        , RECIPIENT_PUBLIC_KEYS, 1002);
+    public final Shuffling SHUFFLING_2_2_ASSET_REGISTRATION    = new Shuffling(220L, 10_000L, 500   , HoldingType.get((byte) 1), BOB_ID   , 100_000 , (byte) 10, (short) 118 , (byte) 5, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 1003);
+    public final Shuffling SHUFFLING_3_3_APL_REGISTRATION      = new Shuffling(230L, 30_000L, 0     , HoldingType.get((byte) 0), ALICE_ID , 2500    , (byte) 5 , (short) 118 , (byte) 3, Stage.REGISTRATION , 0        , Convert.EMPTY_BYTES  , 1005);
+
+    public final Shuffling NEW_SHUFFLING = new Shuffling(231L, 100L, 0L, HoldingType.APL, ALICE_ID, 2000L, (byte) 3, (short) 1440, (byte) 1, Stage.REGISTRATION, 0, Convert.EMPTY_BYTES, 100_000);
+
+
+    public final ShufflingParticipant PARTICIPANT_0_1_C_1_DELETED  = new ShufflingParticipant(920L           ,850            ,12345                                               ,CHUCK_ID             ,0             ,ALICE_ID               ,ParticipantState.get((byte)2)              ,Convert.parseHexString("5443a31df402f76ef4ff80fe7cbda419737b4d8933958fd5ce2c7e19b7daa58b")  ,Convert.parseHexString("b08dcd79a56d5ae3c92b6b25e60237d45a9c5e699174da17abf8b39bb2737afd")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_0_2_C_1_DELETED  = new ShufflingParticipant(930L           ,900            ,12345                                               ,CHUCK_ID             ,0             ,ALICE_ID               ,ParticipantState.get((byte)2)              ,Convert.parseHexString("5443a31df402f76ef4ff80fe7cbda419737b4d8933958fd5ce2c7e19b7daa58b")  ,Convert.parseHexString("b08dcd79a56d5ae3c92b6b25e60237d45a9c5e699174da17abf8b39bb2737afd")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_C_1_REGISTR  = new ShufflingParticipant(940L           ,994            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,CHUCK_ID             ,0             ,BOB_ID                 ,ParticipantState.get((byte)0)              ,Convert.parseHexString("6226f1365b784db87fa749ca6f793ebb9d1d7bed51ffd050d2c8767b4c4f9ec6")  ,Convert.parseHexString("00a3021a6e02ffe456d930bc789640b7b12b833d1bb621c781112f6007070d15")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_B_1_REGISTR  = new ShufflingParticipant(950L           ,995            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,BOB_ID               ,1             ,ALICE_ID               ,ParticipantState.get((byte)0)              ,Convert.parseHexString("41a7ed1ba26217cf70059964c74665d0a9c364a4078f69a3ca6d1e2623b0679f")  ,Convert.parseHexString("3f048d92be9bf806374a1823d99cfdbe1c59fbcbdf1de40001f4e39df523a4e7")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_A_1_REGISTR  = new ShufflingParticipant(960L           ,996            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,ALICE_ID             ,2             ,0                      ,ParticipantState.get((byte)0)              ,Convert.parseHexString("ecf13d204f0d98964d34959f2e5565cf9a909a5d1592004054a470e12147b6ab")  ,Convert.parseHexString("9ad9df94c1225e30c0d7cddd79a676c6a42371c52780031610941783eac8b9d1")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_C_2_PROCESS  = new ShufflingParticipant(970L           ,997            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,CHUCK_ID             ,0             ,BOB_ID                 ,ParticipantState.get((byte)1)              ,Convert.parseHexString("6226f1365b784db87fa749ca6f793ebb9d1d7bed51ffd050d2c8767b4c4f9ec6")  ,Convert.parseHexString("00a3021a6e02ffe456d930bc789640b7b12b833d1bb621c781112f6007070d15")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_B_2_PROCESS  = new ShufflingParticipant(980L           ,998            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,BOB_ID               ,1             ,ALICE_ID               ,ParticipantState.get((byte)1)              ,Convert.parseHexString("41a7ed1ba26217cf70059964c74665d0a9c364a4078f69a3ca6d1e2623b0679f")  ,Convert.parseHexString("3f048d92be9bf806374a1823d99cfdbe1c59fbcbdf1de40001f4e39df523a4e7")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_0_A_2_PROCESS  = new ShufflingParticipant(990L           ,999            , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,ALICE_ID             ,2             ,0                      ,ParticipantState.get((byte)1)              ,Convert.parseHexString("ecf13d204f0d98964d34959f2e5565cf9a909a5d1592004054a470e12147b6ab")  ,Convert.parseHexString("9ad9df94c1225e30c0d7cddd79a676c6a42371c52780031610941783eac8b9d1")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_2_1_B_1_REGISTR  = new ShufflingParticipant(1000L          ,999            , SHUFFLING_2_1_ASSET_REGISTRATION.getId()            ,BOB_ID               ,0             ,0                      ,ParticipantState.get((byte)0)              ,null                                                                                        ,null                                                                                         ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_1_C_3_VERIFIC  = new ShufflingParticipant(1010L          ,1000           , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,CHUCK_ID             ,0             ,BOB_ID                 ,ParticipantState.get((byte)2)              ,Convert.parseHexString("6226f1365b784db87fa749ca6f793ebb9d1d7bed51ffd050d2c8767b4c4f9ec6")  ,Convert.parseHexString("00a3021a6e02ffe456d930bc789640b7b12b833d1bb621c781112f6007070d15")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_1_1_B_3_VERIFIC  = new ShufflingParticipant(1020L          ,1000           , SHUFFLING_1_2_APL_DONE_DELETED.getId()              ,BOB_ID               ,1             ,ALICE_ID               ,ParticipantState.get((byte)2)              ,Convert.parseHexString("41a7ed1ba26217cf70059964c74665d0a9c364a4078f69a3ca6d1e2623b0679f")  ,Convert.parseHexString("3f048d92be9bf806374a1823d99cfdbe1c59fbcbdf1de40001f4e39df523a4e7")   ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_2_1_B_2_REGISTR  = new ShufflingParticipant(1030L          ,1001           , SHUFFLING_2_1_ASSET_REGISTRATION.getId()            ,BOB_ID               ,0             ,CHUCK_ID               ,ParticipantState.get((byte)0)              ,null                                                                                        ,null                                                                                         ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+    public final ShufflingParticipant PARTICIPANT_2_1_C_1_REGISTR  = new ShufflingParticipant(1040L          ,1001           , SHUFFLING_2_1_ASSET_REGISTRATION.getId()            ,CHUCK_ID             ,1             ,0                      ,ParticipantState.get((byte)0)              ,null                                                                                        ,null                                                                                         ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+
+    public final ShufflingParticipant NEW_PARTICIPANT              = new ShufflingParticipant(100_000L       ,1000           ,SHUFFLING_3_3_APL_REGISTRATION.getId()              ,BOB_ID               ,1             ,ALICE_ID               ,ParticipantState.get((byte)0)              ,null                                                                                        ,null                                                                                         ,Convert.EMPTY_BYTES                                   ,Convert.EMPTY_BYTES);
+
+
+    public final List<ShufflingParticipant> ALL_PARTICIPANTS = new ArrayList<>(List.of(
+            PARTICIPANT_0_1_C_1_DELETED,
+            PARTICIPANT_0_2_C_1_DELETED,
+            PARTICIPANT_1_0_C_1_REGISTR,
+            PARTICIPANT_1_0_B_1_REGISTR,
+            PARTICIPANT_1_0_A_1_REGISTR,
+            PARTICIPANT_1_0_C_2_PROCESS,
+            PARTICIPANT_1_0_B_2_PROCESS,
+            PARTICIPANT_1_0_A_2_PROCESS,
+            PARTICIPANT_2_1_B_1_REGISTR,
+            PARTICIPANT_2_1_B_2_REGISTR,
+            PARTICIPANT_2_1_C_1_REGISTR,
+            PARTICIPANT_1_1_C_3_VERIFIC,
+            PARTICIPANT_1_1_B_3_VERIFIC
+    ));
+
+    {
+        PARTICIPANT_0_1_C_1_DELETED.setLatest(false);
+        PARTICIPANT_0_2_C_1_DELETED.setLatest(false);
+        PARTICIPANT_1_0_C_1_REGISTR.setLatest(false);
+        PARTICIPANT_1_0_B_1_REGISTR.setLatest(false);
+        PARTICIPANT_1_0_A_1_REGISTR.setLatest(false);
+        PARTICIPANT_1_0_C_2_PROCESS.setLatest(false);
+        PARTICIPANT_1_0_B_2_PROCESS.setLatest(false);
+        PARTICIPANT_2_1_B_1_REGISTR.setLatest(false);
+    }
+
+    public final List<Shuffling> ALL_SHUFFLINGS = new ArrayList<>(List.of(
+            SHUFFLING_2_1_ASSET_REGISTRATION,
+            SHUFFLING_1_1_APL_VERIF_DELETED,
             SHUFFLING_3_1_APL_REGISTRATION,
-            SHUFFLING_2_2_APL_DONE_DELETED,
+            SHUFFLING_1_2_APL_DONE_DELETED,
             SHUFFLING_4_1_APL_DONE,
             SHUFFLING_5_1_APL_PROCESSING,
             SHUFFLING_6_1_CURRENCY_REGISTRATION,
@@ -43,15 +95,15 @@ public class ShufflingTestData {
             SHUFFLING_4_2_APL_FINISHED,
             SHUFFLING_3_2_APL_REGISTRATION,
             SHUFFLING_7_2_CURRENCY_FINISHED,
-            SHUFFLING_1_2_ASSET_REGISTRATION,
+            SHUFFLING_2_2_ASSET_REGISTRATION,
             SHUFFLING_3_3_APL_REGISTRATION     ));
     {
         SHUFFLING_7_1_CURRENCY_DONE.setLatest(false);
         SHUFFLING_4_1_APL_DONE.setLatest(false);
         SHUFFLING_3_1_APL_REGISTRATION.setLatest(false);
         SHUFFLING_3_2_APL_REGISTRATION.setLatest(false);
-        SHUFFLING_1_1_ASSET_REGISTRATION.setLatest(false);
-        SHUFFLING_2_1_APL_VERIF_DELETED.setLatest(false);
-        SHUFFLING_2_2_APL_DONE_DELETED.setLatest(false);
+        SHUFFLING_2_1_ASSET_REGISTRATION.setLatest(false);
+        SHUFFLING_1_1_APL_VERIF_DELETED.setLatest(false);
+        SHUFFLING_1_2_APL_DONE_DELETED.setLatest(false);
     }
 }

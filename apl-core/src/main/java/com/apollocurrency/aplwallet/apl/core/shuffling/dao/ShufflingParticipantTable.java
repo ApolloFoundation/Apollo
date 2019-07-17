@@ -4,20 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.shuffling.mapper.ShufflingMapper;
 import com.apollocurrency.aplwallet.apl.core.shuffling.mapper.ShufflingParticipantMapper;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ParticipantState;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
@@ -60,6 +62,23 @@ public class ShufflingParticipantTable extends VersionedDeletableEntityDbTable<S
             pstmt.setInt(++i, entity.getHeight());
             pstmt.executeUpdate();
         }
+    }
+
+    public List<ShufflingParticipant> getParticipants(long shufflingId) {
+        return CollectionUtil.toList(getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index "));
+    }
+
+    public ShufflingParticipant getByIndex(long shufflingId, int index) {
+        return getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.IntClause("participant_index", index)));
+    }
+
+    public ShufflingParticipant getLast(long shufflingId) {
+        return getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
+    }
+
+    public int getVerifiedCount(long shufflingId) {
+        return getCount(new DbClause.LongClause("shuffling_id", shufflingId).and(
+                new DbClause.ByteClause("state", ParticipantState.VERIFIED.getCode())));
     }
 
     public ShufflingParticipant get(long shufflingId, long accountId) {

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shuffling.model;
 
-import com.apollocurrency.aplwallet.apl.core.shuffling.service.ShufflingParticipantService;
+import com.apollocurrency.aplwallet.apl.core.shuffling.service.ParticipantState;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -17,7 +17,7 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
     private final int index;
 
     private long nextAccountId; // pointer to the next shuffling participant updated during registration
-    private ShufflingParticipantService.State state; // tracks the state of the participant in the process
+    private ParticipantState state; // tracks the state of the participant in the process
     private byte[][] blameData; // encrypted data saved as intermediate result in the shuffling process
     private byte[][] keySeeds; // to be revealed only if shuffle is being cancelled
     private byte[] dataTransactionFullHash;
@@ -28,12 +28,12 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
         this.shufflingId = shufflingId;
         this.accountId = accountId;
         this.index = index;
-        this.state = ShufflingParticipantService.State.REGISTERED;
+        this.state = ParticipantState.REGISTERED;
         this.blameData = Convert.EMPTY_BYTES;
         this.keySeeds = Convert.EMPTY_BYTES;
     }
 
-    public ShufflingParticipant(Long dbId, Integer height, long shufflingId, long accountId, int index, long nextAccountId, ShufflingParticipantService.State state, byte[][] blameData, byte[][] keySeeds, byte[] dataTransactionFullHash, byte[] dataHash) {
+    public ShufflingParticipant(Long dbId, Integer height, long shufflingId, long accountId, int index, long nextAccountId, ParticipantState state, byte[] dataTransactionFullHash, byte[] dataHash, byte[][] blameData, byte[][] keySeeds) {
         super(dbId, height);
         this.shufflingId = shufflingId;
         this.accountId = accountId;
@@ -66,11 +66,11 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
         this.nextAccountId = nextAccountId;
     }
 
-    public ShufflingParticipantService.State getState() {
+    public ParticipantState getState() {
         return state;
     }
 
-    public void setState(ShufflingParticipantService.State state) {
+    public void setState(ParticipantState state) {
         this.state = state;
     }
 
@@ -120,8 +120,8 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
                 index == that.index &&
                 nextAccountId == that.nextAccountId &&
                 state == that.state &&
-                Arrays.equals(blameData, that.blameData) &&
-                Arrays.equals(keySeeds, that.keySeeds) &&
+                Arrays.deepEquals(blameData, that.blameData) &&
+                Arrays.deepEquals(keySeeds, that.keySeeds) &&
                 Arrays.equals(dataTransactionFullHash, that.dataTransactionFullHash) &&
                 Arrays.equals(dataHash, that.dataHash);
     }
@@ -134,5 +134,23 @@ public class ShufflingParticipant extends VersionedDerivedEntity {
         result = 31 * result + Arrays.hashCode(dataTransactionFullHash);
         result = 31 * result + Arrays.hashCode(dataHash);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ShufflingParticipant{" +
+                "dbid=" + getDbId() +
+                ",height=" + getHeight() +
+                ",latest=" + isLatest() +
+                ",shufflingId=" + shufflingId +
+                ", accountId=" + accountId +
+                ", index=" + index +
+                ", nextAccountId=" + nextAccountId +
+                ", state=" + state +
+                ", blameData=" + Arrays.toString(blameData) +
+                ", keySeeds=" + Arrays.toString(keySeeds) +
+                ", dataTransactionFullHash=" + Arrays.toString(dataTransactionFullHash) +
+                ", dataHash=" + Arrays.toString(dataHash) +
+                '}';
     }
 }

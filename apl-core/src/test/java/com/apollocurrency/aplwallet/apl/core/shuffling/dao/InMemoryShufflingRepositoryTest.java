@@ -9,7 +9,7 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     @Override
     public ShufflingRepository repository() {
         InMemoryShufflingRepository inMemoryShufflingRepository = new InMemoryShufflingRepository(new ShufflingKeyFactory());
-        inMemoryShufflingRepository.putAll(std.all);
+        inMemoryShufflingRepository.putAll(std.ALL_SHUFFLINGS);
         return inMemoryShufflingRepository;
     }
 }
