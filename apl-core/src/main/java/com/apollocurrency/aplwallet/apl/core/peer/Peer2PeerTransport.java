@@ -297,7 +297,7 @@ public class Peer2PeerTransport {
             }
             if(!sendOK){
                 String msg ="Error on sending request";
-                getPeer().blacklist(msg);
+                getPeer().deactivate(msg);
             }
         return sendOK;
     }
