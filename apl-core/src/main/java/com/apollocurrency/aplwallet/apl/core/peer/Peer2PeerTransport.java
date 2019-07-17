@@ -50,11 +50,7 @@ public class Peer2PeerTransport {
 
     //we use random numbers to minimize possible request/response mismatches
     private Long nextRequestId() {
-        Long res = rnd.nextLong();
-        if (res == 0L) { // make sure we do not use 0 value
-            res++;
-        }
-        return res;
+        return rnd.nextLong();
     }
 
     public Peer getPeer() {
