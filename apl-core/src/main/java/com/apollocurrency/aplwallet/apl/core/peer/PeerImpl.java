@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -54,14 +52,12 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
-import java.util.logging.Level;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -523,17 +519,6 @@ public final class PeerImpl implements Peer {
         return getHost().compareTo(o.getHost());
     }
     
-    public URI getURI(boolean useTLS, String hostWithPort) throws URISyntaxException{
-        String prefix;
-        if(useTLS){
-           prefix="http://"; 
-        }else{
-           prefix="https://";             
-        }
-        PeerAddress pa = new PeerAddress(hostWithPort);
-        return new URI(prefix + pa.getAddrWithPort()+"/apl");
-    }
-    
     @Override   
     public synchronized void handshake(UUID targetChainId) {
         if(getState()==PeerState.CONNECTED){
@@ -649,18 +634,7 @@ public final class PeerImpl implements Peer {
                 unsetHallmark();
                 return false;
             }            
-//We have  to accept unresolveble by DNS  hosts because we have a lot of such hosts         
-//            InetAddress address = InetAddress.getByName(host);
-//            for (InetAddress inetAddress : InetAddress.getAllByName(pa.getHostName())) {
-//                if (inetAddress.equals(address)) {
-//                    return true;
-//                }
-//            }
-//            LOG.debug("Announced address " + newAnnouncedAddress + " does not match: " + host);
-//        } catch (RuntimeException|UnknownHostException e) {
-//            LOG.trace("Unresolved announced address: {}",newAnnouncedAddress);
-//            blacklist(e);
-//        }
+
         return true;
     }
 
