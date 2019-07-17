@@ -25,7 +25,7 @@ public class ShardTestData {
                     new int[]{45673250, 45673251});
     public static final Shard SHARD_2 =
             new Shard(3L, Convert.parseHexString("931a8011f4ba1cdc0bcae807032fe18b1e4f0b634f8da6016e421d06c7e13693"),
-                    ShardState.INIT, 31, null,
+                    ShardState.CREATED_BY_ARCHIVE, 31, null,
                     new long[]{57821792282L, 22116981092100L, 9211698109297098287L},
                     new int[]{1, 1},
                     new int[]{45673251, 45673252});
@@ -50,7 +50,7 @@ public class ShardTestData {
                     Arrays.toString(new int[]{0, 1}) , Arrays.toString(new int[]{45673250, 45673251}) );
     public static final ShardDTO SHARD_DTO_2 =
             new ShardDTO(3L, "931a8011f4ba1cdc0bcae807032fe18b1e4f0b634f8da6016e421d06c7e13693",
-                    0L, 31, null,
+                    50L, 31, null,
                     Arrays.toString(new long[]{57821792282L, 22116981092100L, 9211698109297098287L}),
                     Arrays.toString(new int[]{1, 1}) , Arrays.toString(new int[]{45673251, 45673252}) );
     public static final List<ShardDTO> SHARD_DTO_LIST = Arrays.asList(SHARD_DTO_0, SHARD_DTO_1, SHARD_DTO_2);

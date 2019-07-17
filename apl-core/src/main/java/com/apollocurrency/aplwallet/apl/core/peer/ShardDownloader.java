@@ -164,6 +164,7 @@ public class ShardDownloader {
 
     private void fireNoShardEvent() {
         ShardPresentData shardPresentData = new ShardPresentData();
+        log.debug("Firing 'NO_SHARD' event...");
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
@@ -171,7 +172,8 @@ public class ShardDownloader {
         ShardNameHelper snh = new ShardNameHelper();
         String fileId = snh.getFullShardId(shardId, myChainId);
         ShardPresentData shardPresentData = new ShardPresentData(fileId);
-        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is ignored
+        log.debug("Firing 'SHARD_PRESENT' event {}...", fileId);
+        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is used
     }
 
     private byte[] getHash(long shardId, String peerAddr) {
@@ -218,13 +220,15 @@ public class ShardDownloader {
             //check integrity
             FileInfo fi = downloadableFilesManager.getFileInfo(shardFileId);
             String fileHashActual = fi.hash;
-            String receivedHash=Convert.toHexString(hash);
+            String receivedHash = Convert.toHexString(hash);
             if (fileHashActual.equalsIgnoreCase(receivedHash)) {
                 res = true;
+                log.debug("Good zip hash was computed return '{}'...", res);
             } else {
-                log.debug("bad shard file: {}, received hash: {}. Calculated hash: {}. Deleting", zipInExportedFolder.getAbsolutePath(), receivedHash);
-                zipInExportedFolder.delete();
+                boolean deleteResult = zipInExportedFolder.delete();
                 res = false;
+                log.debug("bad shard file: '{}', received hash: '{}'. Calculated hash: '{}'. Zip is deleted = '{}'",
+                        zipInExportedFolder.getAbsolutePath(), receivedHash, fileHashActual, deleteResult);
             }
         }
         return res;
@@ -284,7 +288,7 @@ public class ShardDownloader {
         if(doNotShardImport){
             fireNoShardEvent();
             result=FileDownloadDecision.NoPeers;
-            log.warn("prepareAndStartDownload: skiping shard import due to config/command-line option");
+            log.warn("prepareAndStartDownload: skipping shard import due to config/command-line option");
             return result;        
         }
         if (sortedShards.isEmpty()) { //???
