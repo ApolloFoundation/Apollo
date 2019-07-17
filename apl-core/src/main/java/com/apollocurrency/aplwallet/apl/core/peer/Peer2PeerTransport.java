@@ -109,7 +109,7 @@ public class Peer2PeerTransport {
             } else {
                 //most likely ge've got request from remote and should process it
                 //but it also can be error response without requestId
-                peerServlet.doPost(this, rqId, message);
+                peerServlet.doPostWebSocket(this, rqId, message);
             }
         }
     }

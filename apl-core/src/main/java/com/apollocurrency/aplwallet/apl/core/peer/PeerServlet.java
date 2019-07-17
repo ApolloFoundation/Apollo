@@ -193,6 +193,15 @@ public final class PeerServlet extends WebSocketServlet {
         } else {
             jsonResponse = process(peer, req.getReader());
         }
+        if (peer == null) {
+            jsonResponse = PeerResponses.UNKNOWN_PEER;
+        } else {
+            if (peer.isBlacklisted()) { 
+               jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
+            }else{
+                jsonResponse = process(peer, req.getReader());
+            }
+        }        
         //
         // Return the response
         //
@@ -224,7 +233,7 @@ public final class PeerServlet extends WebSocketServlet {
         }
     }
 
-    void doPost(Peer2PeerTransport transport, Long requestId, String request) {
+    void doPostWebSocket(Peer2PeerTransport transport, Long requestId, String request) {
         threadPool.execute(() -> {
             doPostTask(transport, requestId, request);
         });
@@ -252,14 +261,12 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
-                 if(!peer.processError(request)){
-                   jsonResponse = process(peer, new StringReader(request));
-                 }else{
-                   return; //we don't respond on error messages  
-                 }
+               jsonResponse = process(peer, new StringReader(request));
             }
         }
-
+        if(jsonResponse==null){ //we've got error
+            return;
+        }
         // Return the response
         try {
             StringWriter writer = new StringWriter(1000);
@@ -292,18 +299,16 @@ public final class PeerServlet extends WebSocketServlet {
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
         lookupComponents();
-        //
-        // Check for blacklisted peer
-        //
-        if (peer.isBlacklisted()) {
-            return PeerResponses.getBlackisted(peer.getBlacklistingCause());
-        }
+
         //
         // Process the request
         //
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
-
+            //we have to process errors here because of http requests
+            if(peer.processError(request)){
+                return null;
+            }
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
                 LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
