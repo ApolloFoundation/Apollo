@@ -441,6 +441,42 @@ public class AccountController {
         }
     }
 
+    @Path("/account/currentAskOrderIds")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the current asked orders list.",
+            description = "Returns the list of current asked orders by account id and asset.",
+            tags = {"accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccountAssetDTO.class)))
+            })
+    @RolesAllowed("admin")
+    public Response getAccountCurrentAskOrderIds(
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
+            @Parameter(description = "The asset ID.") @QueryParam("asset") Long assetId,
+            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
+            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
+            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+            ) {
+
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
+        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
+        long accountId  = RestParameters.parseAccountId(accountStr);
+        List<Order.Ask> ordersByAccount;
+        if (assetId == null || assetId == 0) {
+            ordersByAccount = accountBalanceService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
+        }else{
+            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+        }
+        List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
+
+        return response.bind(new AccountCurrentAskOrderIdsResponse(ordersIdList)).build();
+    }
+
     @Path("/exportKey")
     @POST
     @Produces(MediaType.TEXT_HTML)

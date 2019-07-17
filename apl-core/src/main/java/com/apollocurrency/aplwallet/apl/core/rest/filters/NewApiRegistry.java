@@ -51,6 +51,8 @@ public class NewApiRegistry {
         apis.put("getAccountBlocks", "/rest/accounts/account/blocks"); //GET
         apis.put("getAccountCurrencyCount", "/rest/accounts/account/currencyCount"); //GET
         apis.put("getAccountCurrencies", "/rest/accounts/account/currencies"); //GET
+        apis.put("getAccountCurrentAskOrderIds", "/rest/accounts/account/currentAskOrderIds"); //GET
+
 
 
         //TODO: add new implemented endpoints

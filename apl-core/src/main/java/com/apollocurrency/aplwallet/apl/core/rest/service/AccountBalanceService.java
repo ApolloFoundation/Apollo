@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
@@ -69,6 +70,22 @@ public class AccountBalanceService {
         apolloWallet.addAplKey(aplAccount);
         apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
         return apolloWallet;
+    }
+
+    public List<Order.Ask> getAskOrdersByAccount(long accountId, int from, int to){
+        List<Order.Ask> orders = new ArrayList<>();
+        try(DbIterator<Order.Ask> askOrders = Order.Ask.getAskOrdersByAccount(accountId, from, to)){
+            askOrders.forEach(orders::add);
+        }
+        return orders;
+    }
+
+    public List<Order.Ask> getAskOrdersByAccountAsset(long accountId, long assetId, int from, int to){
+        List<Order.Ask> orders = new ArrayList<>();
+        try(DbIterator<Order.Ask> askOrders = Order.Ask.getAskOrdersByAccountAsset(accountId, assetId, from, to)){
+            askOrders.forEach(orders::add);
+        }
+        return orders;
     }
 
 }

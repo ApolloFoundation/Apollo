@@ -442,7 +442,7 @@ public enum APIEnum {
     GET_UNCONFIRMED_TRANSACTION_IDS("getUnconfirmedTransactionIds", new GetUnconfirmedTransactionIds()),
     GET_UNCONFIRMED_TRANSACTIONS("getUnconfirmedTransactions", new GetUnconfirmedTransactions()),
     GET_EXPECTED_TRANSACTIONS("getExpectedTransactions", new GetExpectedTransactions()),
-    GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
+    @Obsolete GET_ACCOUNT_CURRENT_ASK_ORDER_IDS("getAccountCurrentAskOrderIds", new GetAccountCurrentAskOrderIds()),
     GET_ACCOUNT_CURRENT_BID_ORDER_IDS("getAccountCurrentBidOrderIds", new GetAccountCurrentBidOrderIds()),
     GET_ACCOUNT_CURRENT_ASK_ORDERS("getAccountCurrentAskOrders", new GetAccountCurrentAskOrders()),
     GET_ACCOUNT_CURRENT_BID_ORDERS("getAccountCurrentBidOrders", new GetAccountCurrentBidOrders()),
