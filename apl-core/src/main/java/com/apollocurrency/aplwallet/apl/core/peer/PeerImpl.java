@@ -890,7 +890,7 @@ public final class PeerImpl implements Peer {
         try {
             BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
             if(!StringUtils.isBlank(resp.error)){
-                LOG.debug("Parsed error: {}",resp.error);
+                LOG.debug("Parsed error response from: {}. Error: {}",getHostWithPort(), resp.error);
                 if(Errors.BLACKLISTED.equalsIgnoreCase(resp.error)){
                     LOG.debug("Deactivating: We are blacklisted by {}, cause: {}",getHostWithPort(),resp.cause);
                     deactivate(message);
