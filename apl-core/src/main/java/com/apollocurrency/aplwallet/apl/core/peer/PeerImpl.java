@@ -428,7 +428,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void remove() {
-        setState(PeerState.NON_CONNECTED);
+        deactivate("Remove peer");
         Peers.removePeer(this);
         Peers.notifyListeners(this, Peers.Event.REMOVE);
     }
@@ -506,6 +506,8 @@ public final class PeerImpl implements Peer {
                 } else {
                     processError(response);
                 }
+            }else{
+               setLastUpdated(timeService.getEpochTime()); 
             }
         } catch (RuntimeException|ParseException e) {
             LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());

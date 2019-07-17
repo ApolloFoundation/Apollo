@@ -102,10 +102,6 @@ public final class GetInfo extends PeerRequestHandler {
                 }
             }
         }
-        if (pi.getApplication() == null) {
-            log.warn("Setting application = '?' instead of AppValue...");
-            pi.setApplication("?");
-        }
 
         if(!peerImpl.setApplication(pi.getApplication().trim())){
             log.trace("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
