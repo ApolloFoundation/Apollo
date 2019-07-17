@@ -38,7 +38,7 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private final ConcurrentHashMap<Long, ResonseWaiter> requestMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, ResponseWaiter> requestMap = new ConcurrentHashMap<>();
     private final Random rnd;
     private final PeerServlet peerServlet;
     private final boolean useWebSocket = Peers.useWebSockets && !Peers.useProxy;
@@ -106,7 +106,7 @@ public class Peer2PeerTransport {
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            ResonseWaiter wsrw = requestMap.get(rqId);
+            ResponseWaiter wsrw = requestMap.get(rqId);
             if (wsrw != null) { //this is response we are waiting for
                 wsrw.setResponse(message);
             } else {
@@ -119,7 +119,7 @@ public class Peer2PeerTransport {
 
     public Long sendRequest(String message){
         Long requestId = nextRequestId();
-        requestMap.put(requestId, new ResonseWaiter());
+        requestMap.put(requestId, new ResponseWaiter());
         boolean sendOK = send(message, requestId);
         if(sendOK) {
           return requestId;
@@ -145,7 +145,7 @@ public class Peer2PeerTransport {
 
     public String getResponse(Long rqId){
         String res = null;
-        ResonseWaiter wsrw = requestMap.get(rqId);
+        ResponseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) {
             try {
                 res = wsrw.get(Peers.readTimeout);

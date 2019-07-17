@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author al
  */
 @Slf4j
-public class ResonseWaiter {
+public class ResponseWaiter {
     /** time to live of entry. Entry should de deleted if it is older */
     public static long WSW_TTL_MS=60000; //1 minute
       /** Request latch */
