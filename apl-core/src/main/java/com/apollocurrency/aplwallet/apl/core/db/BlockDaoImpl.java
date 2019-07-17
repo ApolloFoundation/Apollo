@@ -647,23 +647,19 @@ public class BlockDaoImpl implements BlockDao {
             }
             return;
         }
-        LOG.info("Deleting blockchain...");
+        LOG.debug("Deleting blockchain...");
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-            }
-            catch (SQLException e) {
+                LOG.debug("DONE Deleting blockchain...");
+            } catch (SQLException e) {
                 dataSource.rollback(false);
                 throw e;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        finally {
-//            clearBlockCache();
         }
     }
 
