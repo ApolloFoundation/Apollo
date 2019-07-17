@@ -545,20 +545,16 @@ public final class PeerImpl implements Peer {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             JSONObject response = send(Peers.getMyPeerInfoRequest());
-            LOG.debug("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
+
             PeerInfo newPi;
             if (response != null) {
-                // parse in new_pi
-                newPi = mapper.convertValue(response, PeerInfo.class);
-                LOG.trace("handshake, Parsed response 'newPi' = {}", newPi);
-                if( ! StringUtils.isBlank(newPi.error) || (newPi.errorCode!=null && newPi.errorCode!=0)){
-                    LOG.debug("We've got error from peer: {}. Error: {}  cause: {} code: {} ", getHostWithPort(), newPi.error, newPi.getCause(), newPi.getErrorCode());
-                    if(Errors.BLACKLISTED.equalsIgnoreCase(newPi.error) || (newPi.getBlacklisted()!=null && newPi.getBlacklisted())){
-                       LOG.warn("We are blacklisted! Cause: {}", newPi.getBlacklistingCause());
-                    }
-                    setState(PeerState.NON_CONNECTED);
+                LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
+                if(processError(response)){
+                    LOG.debug("Error response on handshake from {}",getHostWithPort());
                     return;
                 }
+                // parse in new_pi
+                newPi = mapper.convertValue(response, PeerInfo.class);
 
                 if(!setApplication(newPi.getApplication())){
                     LOG.trace("Peer: {} has different Application value '{}', removing",
@@ -888,14 +884,17 @@ public final class PeerImpl implements Peer {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
     
-    /** process error from transport level */
+    /** process error from transport and application level */
     boolean processError(String message) {
         boolean res = false;
-        LOG.debug("Error from transport level of {}:\n{}\n",getHostWithPort(), message);
         try {
             BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
             if(!StringUtils.isBlank(resp.error)){
                 LOG.debug("Parsed error: {}",resp.error);
+                if(Errors.BLACKLISTED.equalsIgnoreCase(resp.error)){
+                    LOG.debug("Deactivating: We are blacklisted by {}, cause: {}",getHostWithPort(),resp.cause);
+                    deactivate(message);
+                }
                 res=true;
             }
         } catch (IOException ex) {
