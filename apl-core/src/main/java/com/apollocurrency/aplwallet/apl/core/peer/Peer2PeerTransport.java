@@ -100,6 +100,9 @@ public class Peer2PeerTransport {
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
+        if(ws==null){
+            log.debug("using HTTP on {}",which());
+        }
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
