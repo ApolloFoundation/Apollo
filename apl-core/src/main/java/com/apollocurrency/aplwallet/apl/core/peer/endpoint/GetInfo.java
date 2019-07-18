@@ -92,10 +92,6 @@ public final class GetInfo extends PeerRequestHandler {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
-                        if (peerImpl.getPort() != oldPort) {
-                            // force checking connectivity to new announced port
-                            peerImpl.deactivate("New announced address: "+announcedAddress);
-                        }
                     }
                 } else {
                     Peers.setAnnouncedAddress(peerImpl, null);

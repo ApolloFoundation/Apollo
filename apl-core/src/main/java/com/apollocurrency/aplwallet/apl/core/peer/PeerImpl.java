@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -101,6 +99,8 @@ public final class PeerImpl implements Peer {
     
     @Getter
     private final Peer2PeerTransport p2pTransport;
+    @Getter
+    private int failedConnectAttempts = 0;
     
     PeerImpl(String host, 
             String announcedAddress,
@@ -314,8 +314,12 @@ public final class PeerImpl implements Peer {
     public String getAnnouncedAddress() {
         return pi.getAnnouncedAddress();
     }
-
-    void setAnnouncedAddress(String announcedAddress) throws MalformedURLException, UnknownHostException {
+    /**
+     * Sets address of peer for outbound connections
+     * Shoul not be used directly but from Peers service only
+     * @param announcedAddress address with port  optionally
+     */
+    void setAnnouncedAddress(String announcedAddress) {
         if (announcedAddress != null && announcedAddress.length() > Peers.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
@@ -510,13 +514,29 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
+    //TODO: check this wander
     public int compareTo(Peer o) {
         if (getWeight() > o.getWeight()) {
             return -1;
         } else if (getWeight() < o.getWeight()) {
             return 1;
         }
-        return getHost().compareTo(o.getHost());
+        return getHostWithPort().compareTo(o.getHostWithPort());
+    }
+    
+    /**
+     * forget peers that are unconnectable
+     * @param failed true marks failed connect attempt, false for successful connection
+     */
+    private void processConnectAttempt(boolean failed){
+        if(!failed){
+          failedConnectAttempts++;
+          if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+              Peers.removePeer(this);
+          }
+        }else{
+            failedConnectAttempts=0;
+        }
     }
     
     @Override   
@@ -529,8 +549,6 @@ public final class PeerImpl implements Peer {
         lastConnectAttempt = timeService.getEpochTime();
         try {
             JSONObject response = send(Peers.getMyPeerInfoRequest());
-
-            PeerInfo newPi;
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if(processError(response)){
@@ -538,7 +556,7 @@ public final class PeerImpl implements Peer {
                     return;
                 }
                 // parse in new_pi
-                newPi = mapper.convertValue(response, PeerInfo.class);
+                PeerInfo newPi = mapper.convertValue(response, PeerInfo.class);
 
                 if(!setApplication(newPi.getApplication())){
                     LOG.trace("Peer: {} has different Application value '{}', removing",
@@ -563,7 +581,7 @@ public final class PeerImpl implements Peer {
                 if(!analyzeHallmark(newPi.getHallmark())){
                     LOG.debug("PEER-Connect host {}: version: {} hallmark failed, blacklisting",
                             host, peerVersion);
-                    blacklist("Old version: "+peerVersion.toString());
+                    blacklist("Bad hallmark");
                     return;
                 }
                 
@@ -583,27 +601,20 @@ public final class PeerImpl implements Peer {
                 setShareAddress(newPi.getShareAddress());
  
                 if (!Peers.ignorePeerAnnouncedAddress) {
-                    if (newPi.getAnnouncedAddress() != null) {
+                    if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
                             if (!verifyAnnouncedAddress(newPi.getAnnouncedAddress())) {
                                 LOG.debug("Connect: new announced address: {} for host: {}  not accepted", newPi.getAnnouncedAddress(), host);
-                                setState(PeerState.NON_CONNECTED);
+                                deactivate("Bad announced address");
                                 return;
                             }
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
                                 LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
-                                int oldPort = getPort();
                                 Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
-                                if (getPort() != oldPort) {
-                                    // force checking connectivity to new announced port
-                                    deactivate("Announced address chnage");
-                                    return;
-                                }
+                                // force checking connectivity to new announced port
+                                deactivate("Announced address chnage");
+                                return;
                             }
-                    } else {
-                        //we use here host only because port may be any for iblound peers
-                        //so in case we loose inbound connection we can try connect outbound
-                        Peers.setAnnouncedAddress(this, host);
                     }
                 }
                 setState(PeerState.CONNECTED);
@@ -611,12 +622,15 @@ public final class PeerImpl implements Peer {
                     Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                 }
                 LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
+                processConnectAttempt(false);
             } else {
-                LOG.debug("'NULL' json Response, Failed to connect to peer: {} ", getHostWithPort());
-               // deactivate();
+                LOG.debug("NULL json Response, Failed to connect to peer: {} ", getHostWithPort());
+                deactivate("NULL json Response on handshake");
+                processConnectAttempt(true);
             }
         } catch (RuntimeException e) {
             LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
+            processConnectAttempt(true);
             blacklist(e);
         }
     }
@@ -625,8 +639,6 @@ public final class PeerImpl implements Peer {
         if (newAnnouncedAddress == null || newAnnouncedAddress.isEmpty()) {
             return true;
         }
-//       try {
-
             PeerAddress pa = new PeerAddress(newAnnouncedAddress);
             int announcedPort = pa.getPort();
             if (hallmark != null && announcedPort != hallmark.getPort()) {
@@ -857,25 +869,33 @@ public final class PeerImpl implements Peer {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
     
-    /** process error from transport and application level */
+    /**
+     * process error from transport and application level
+     */
     boolean processError(String message) {
         boolean res = false;
-        try {
-            BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
-            if(!StringUtils.isBlank(resp.error)){
-                LOG.debug("Parsed error response from: {}. Error: {}",getHostWithPort(), resp.error);
-                if(Errors.BLACKLISTED.equalsIgnoreCase(resp.error)){
-                    LOG.debug("Deactivating: We are blacklisted by {}, cause: {}",getHostWithPort(),resp.cause);
-                    deactivate(message);
+        if (StringUtils.isBlank(message)) {
+            LOG.debug("Blank message from {}", getHostWithPort());
+            res = true;
+        } else {
+            try {
+                BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
+                if (!StringUtils.isBlank(resp.error)) {
+                    LOG.debug("Parsed error response from: {}. Error: {}", getHostWithPort(), resp.error);
+                    if (Errors.BLACKLISTED.equalsIgnoreCase(resp.error)) {
+                        String msg = String.format("We are blacklisted by %s, cause: %s", getHostWithPort(), resp.cause);
+                        LOG.debug("Deactivating: "+msg);
+                        deactivate(msg);
+                    }
+                    res = true;
                 }
-                res=true;
+            } catch (IOException ex) {
+                LOG.debug("This is not P2P response from {}", getHostWithPort(), ex);
             }
-        } catch (IOException ex) {
-           LOG.debug("This is not P2P response",ex);
         }
         return res;
     }
-//TODO: replace this with something better
+
     boolean processError(JSONObject request) {
        return processError(request.toJSONString());
     }

@@ -43,7 +43,7 @@ public class PeerHttpServer {
      public static final int MAX_PLATFORM_LENGTH = 30;
      public static final int DEFAULT_PEER_PORT=47874;
      public static final int DEFAULT_PEER_PORT_TLS=48743;
-     boolean shareMyAddress;
+     boolean shareMyAddress=false;
      private int myPeerServerPort;
      private final int myPeerServerPortTLS;
      private final boolean useTLS;
