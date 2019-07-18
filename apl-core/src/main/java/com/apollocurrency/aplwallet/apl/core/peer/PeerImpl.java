@@ -360,6 +360,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void blacklist(Exception cause) {
+        deactivate("Exception: "+cause.getMessage());
         if (cause instanceof AplException.NotCurrentlyValidException || cause instanceof BlockchainProcessor.BlockOutOfOrderException
                 || cause instanceof SQLException || cause.getCause() instanceof SQLException) {
             // don't blacklist peers just because a feature is not yet enabled, or because of database timeouts
