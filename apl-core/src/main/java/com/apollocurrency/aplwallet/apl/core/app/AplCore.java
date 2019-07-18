@@ -325,7 +325,7 @@ public final class AplCore {
         sb.append("Runtime free  memory, ,KB:" +(runtime.freeMemory()/ 1024));
         sb.append("Runtime max   memory, ,KB:" +(runtime.maxMemory()/ 1024));
         sb.append("Inound peers count: "+Peers.getInboundPeers().size());
-        sb.append("Active peers count: "+Peers.getActivePeers());
+        sb.append("Active peers count: "+Peers.getActivePeers().size());
         return sb.toString();
     }
     private void recoverSharding() {
