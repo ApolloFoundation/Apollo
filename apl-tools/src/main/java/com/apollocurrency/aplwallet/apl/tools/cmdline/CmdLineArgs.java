@@ -17,7 +17,7 @@ public class CmdLineArgs {
     @Parameter(description = "[command arguments]")    
     public String command;
     
-    @Parameter(names = {"--debug", "-d"}, description = "Debug levele [0-4]")
+    @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4]")
     public int debug = 2;
     @Parameter(names = {"--verbose", "-v"}, description = "Verbosity level 0-9")
     public Integer verbose = 1;

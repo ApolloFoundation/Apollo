@@ -53,7 +53,7 @@ public final class GetNextBlockIds extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }
