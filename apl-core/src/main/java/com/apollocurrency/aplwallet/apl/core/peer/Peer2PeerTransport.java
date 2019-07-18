@@ -274,6 +274,11 @@ public class Peer2PeerTransport {
                     if (!outboundWebSocket.isConnected()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
+                        Peer p = peerReference.get();
+                        if(p==null){
+                            log.error("Premature destruction of peer");
+                            return sendOK;
+                        }
                         String addrWithPort = peerReference.get().getAnnouncedAddress();
                         if (StringUtils.isBlank(addrWithPort)) { // try to use addres with port, should be OK for default peers
                             addrWithPort = getHostWithPort();
