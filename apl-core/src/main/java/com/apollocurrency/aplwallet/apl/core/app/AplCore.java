@@ -319,13 +319,13 @@ public final class AplCore {
     private String getNodeHealth(){
         StringBuilder sb = new StringBuilder("Node health info\n");
         int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
-        sb.append("Used DB connections: "+usedConnections+"\n");
+        sb.append("Used DB connections: " + usedConnections);
         Runtime runtime = Runtime.getRuntime();
-        sb.append("Runtime total memory, ,KB:" +(runtime.totalMemory() / 1024));
-        sb.append("Runtime free  memory, ,KB:" +(runtime.freeMemory()/ 1024));
-        sb.append("Runtime max   memory, ,KB:" +(runtime.maxMemory()/ 1024));
-        sb.append("Inound peers count: "+Peers.getInboundPeers().size());
-        sb.append("Active peers count: "+Peers.getActivePeers().size());
+        sb.append("\nRuntime total memory :" + String.format(" %,d KB", (runtime.totalMemory() / 1024)) );
+        sb.append("\nRuntime free  memory :" + String.format(" %,d KB", (runtime.freeMemory() / 1024)) );
+        sb.append("\nRuntime max   memory :" + String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
+        sb.append("\nInbound peers count: "+Peers.getInboundPeers().size());
+        sb.append(", Active peers count: "+Peers.getActivePeers().size());
         return sb.toString();
     }
     private void recoverSharding() {
