@@ -74,6 +74,9 @@ public final class PeerAddress implements Comparable{
     }
     
     public String getAddrWithPort(){
+        if(host==null || port ==null){
+            return "None";
+        }
         if (host instanceof Inet6Address){
           return "["+host.getHostAddress()+"]:"+port.toString();   
         } else{
