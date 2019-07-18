@@ -13,6 +13,19 @@ import lombok.Setter;
  * @author Serhiy Lymar
  */
 
-public class DexTradeEntryMin {
-    
+@Getter @Setter
+public class DexTradeEntryMin {    
+     private long hi;
+     private long low;
+     private long open;
+     private long close;
+
+public DexTradeInfoMinDto toDto(){       
+        DexTradeInfoMinDto dexTradeInfoMinDto = new DexTradeInfoMinDto();        
+        dexTradeInfoMinDto.hi = this.hi;
+        dexTradeInfoMinDto.low = this.low;
+        dexTradeInfoMinDto.open = this.open;
+        dexTradeInfoMinDto.close = this.close;        
+        return dexTradeInfoMinDto;
+    }
 }
