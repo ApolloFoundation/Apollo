@@ -134,7 +134,7 @@ public final class Constants {
 
     //Eth/Pax
     public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
-    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
+    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(250_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -143,6 +143,10 @@ public final class Constants {
 
     //24 h
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
+    //24 h TODO CHANGe time
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2 = 24 * 60 * 60;
+    //minutes
+    public static Integer DEX_OFFER_PROCESSOR_DELAY = 5;
 
     private Constants() {} // never
 

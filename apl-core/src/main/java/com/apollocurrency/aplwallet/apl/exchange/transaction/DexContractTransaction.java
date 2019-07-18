@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
@@ -44,8 +45,8 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexOffer offer = dexService.getOfferById(attachment.getOrderId());
-        DexOffer counterOffer = dexService.getOfferById(attachment.getCounterOrderId());
+        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
+        DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
         if(offer == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
@@ -54,15 +55,14 @@ public class DexContractTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getCounterOrderId());
         }
 
-        if(offer.getAccountId() != transaction.getSenderId()){
-            throw new AplException.NotValidException("Can create request contract only from your account.");
-        }
+        //TODO check it later if needs.
+//        if(offer.getAccountId() != transaction.getSenderId()){
+//            throw new AplException.NotValidException("Can create request contract only from your account.");
+//        }
 
-        if(attachment.getEncryptedSecret() ==null || attachment.getEncryptedSecret().length != 64){
+        if(attachment.getEncryptedSecret() != null && attachment.getEncryptedSecret().length != 64){
             throw new AplException.NotValidException("Encrypted secret is null or length is not right.");
         }
-
-
     }
 
     @Override
@@ -73,8 +73,14 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
+        DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
-        dexService.saveDexContract(new ExchangeContract(attachment));
+        if(attachment.getContractStatus().isStep2()) {
+            counterOffer.setStatus(OfferStatus.PENDING);
+            dexService.saveOffer(counterOffer);
+        }
+
+        dexService.saveDexContract(new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment));
     }
 
     @Override

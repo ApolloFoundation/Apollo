@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -29,11 +30,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -93,17 +96,20 @@ public class DexController {
     private EthereumWalletService ethereumWalletService;
     private DexMatcherServiceImpl dexMatcherService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
+    private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
+    DexOfferProcessor dexOfferProcessor;
 
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService) {
+                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, DexOfferProcessor dexOfferProcessor) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
+        this.dexOfferProcessor = dexOfferProcessor;
     }
 
     //For DI
@@ -195,7 +201,7 @@ public class DexController {
         }
 
         Integer currentTime = epochTime.getEpochTime();
-        JSONStreamAware response = null;
+        JSONStreamAware response = new JSONObject();
         try {
             Account account = ParameterParser.getSenderAccount(req);
             DexOffer offer = new DexOffer();
@@ -260,39 +266,45 @@ public class DexController {
             }
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
-            requestWrapper.addParameter("deadline", "1440");
-            DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
+            requestWrapper.addParameter("deadline", TX_DEADLINE);
             String freezeTx=null;
-
-            // Looks like this is the correct position for event handling
-            // for matcher.
 
             DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
 
             try {
                 //TODO move it in to service.
                 if (counterOffer != null) {
+                    // 1. Create offer.
+                    offer.setStatus(OfferStatus.PENDING);
+                    CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
+                            .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
+                    Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
+                    offer.setTransactionId(offerTx.getId());
+
                     byte[] secretX = new byte[32];
                     Crypto.getSecureRandom().nextBytes(secretX);
                     byte[] secretHash = Crypto.sha256().digest(secretX);
                     String passphrase = ParameterParser.getPassphrase(req, true);
                     byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
-                    long recipientId = Convert.parseAccountId(counterOffer.getToAddress());
-
+                    // 2. Send money to the counter offer.
                     CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
-                            .convert(req, account, recipientId, offer.getOfferAmount(), null);
-                    String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, secretHash);
+                            .convert(req, account, counterOffer.getAccountId(), offer.getOfferAmount(), null);
+                    String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
 
-                    DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
+                    // 3. Create contract.
+                    DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX, ExchangeContractStatus.STEP_1);
                     response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
                 } else {
+                    CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
+                            .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
+                    Transaction tx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
+
                     if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
+                        offer.setTransactionId(tx.getId());
                         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
                         freezeTx = service.freezeEthPax(passphrase, offer);
                     }
-
-                    response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
                     if (freezeTx != null) {
                         ((JSONObject) response).put("frozenTx", freezeTx);
                     }

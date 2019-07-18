@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -63,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -70,15 +72,19 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
+@Slf4j
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
@@ -103,7 +109,11 @@ public final class AplCore {
     private DirProvider dirProvider;
     @Inject @Setter
     private AplAppStatus aplAppStatus;
+    @Inject @Setter
+    private DexOfferProcessor dexOfferProcessor;
     private String initCoreTaskID;
+
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     
     public AplCore() {
         time = CDI.current().select(EpochTime.class).get();
@@ -283,6 +293,17 @@ public final class AplCore {
                         },
                    20,
                    TimeUnit.SECONDS);
+
+
+                Runnable task = () -> {
+                    log.info("DexOfferProcessor: start");
+                    dexOfferProcessor.processContracts();
+                    log.info("DexOfferProcessor: finish");
+                };
+
+                executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
+
+
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
                 ThreadPool.start();

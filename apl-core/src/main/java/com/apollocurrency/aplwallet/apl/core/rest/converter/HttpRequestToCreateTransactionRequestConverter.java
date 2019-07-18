@@ -27,6 +27,8 @@ public class HttpRequestToCreateTransactionRequestConverter {
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
                 .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null))
+                .secretPhrase(secretPhrase)
+                .passphrase(passphrase)
                 .deadlineValue(req.getParameter("deadline"))
                 .referencedTransactionFullHash(Convert.emptyToNull(req.getParameter("referencedTransactionFullHash")))
                 .publicKeyValue(Convert.emptyToNull(req.getParameter("publicKey")))

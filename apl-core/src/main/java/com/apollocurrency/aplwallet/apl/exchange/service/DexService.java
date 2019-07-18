@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
@@ -29,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -57,6 +59,7 @@ public class DexService {
     private DexOfferDao dexOfferDao;
     private DexOfferTable dexOfferTable;
     private DexContractTable dexContractTable;
+    private DexContractDao dexContractDao;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
@@ -66,7 +69,7 @@ public class DexService {
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable,
-                      DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime timeService) {
+                      DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime timeService, DexContractDao dexContractDao) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
@@ -76,6 +79,7 @@ public class DexService {
         this.dexContractTable = dexContractTable;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
         this.timeService = timeService;
+        this.dexContractDao = dexContractDao;
     }
 
 
@@ -92,12 +96,17 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
+    @Transactional
     public void saveOffer (DexOffer offer){
         dexOfferTable.insert(offer);
     }
 
     public void saveDexContract(ExchangeContract exchangeContract){
         dexContractTable.insert(exchangeContract);
+    }
+
+    public List<ExchangeContract> getDexContractsForAccount(Long userId){
+        return dexContractDao.getByRecipient(userId);
     }
 
     @Transactional
@@ -228,21 +237,21 @@ public class DexService {
     }
 
     /**
-     *
+     * Transfer money with approve for APL/ETH/PAX
      * @return Tx hash id/link
      */
-    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, byte [] secretHash) throws AplException.ExecutiveProcessException {
+    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, String toAddress, byte [] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
         String transactionStr = null;
 
-        if(offer.getPairCurrency().isApl()) {
+        if(offer.getType().isSell()) {
             createTransactionRequest.setDeadlineValue("1440");
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
             PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
-            PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1, phasingParams, null, secretHash, (byte) 2);
+            PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
 
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId() != null ? offer.getTransactionId() : 0, false));
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), false));
             try {
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
                 transactionStr = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
@@ -253,7 +262,7 @@ public class DexService {
                 LOG.error(e.getMessage(), e);
                 //TODO
             }
-        } else if(offer.getPairCurrency().isEthOrPax()){
+        } else if(offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()){
             BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
             String token = null;
 
@@ -261,11 +270,17 @@ public class DexService {
                 token = ethereumWalletService.PAX_CONTRACT_ADDRESS;
             }
 
-            transactionStr = dexSmartContractService.depositAndInitiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                    offer.getFromAddress(), offer.getTransactionId(),
-                    EthUtil.etherToWei(haveToPay),
-                    secretHash, offer.getToAddress(), Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1,
-                    null, token);
+            if(contractStatus.isStep1()) {
+                transactionStr = dexSmartContractService.depositAndInitiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
+                        offer.getFromAddress(), offer.getTransactionId(),
+                        EthUtil.etherToWei(haveToPay),
+                        secretHash, toAddress, contractStatus.timeOfWaiting(),
+                        null, token);
+            } else if (contractStatus.isStep2()){
+                transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
+                        offer.getFromAddress(), offer.getTransactionId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+            }
+
         }
 
 

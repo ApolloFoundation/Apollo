@@ -58,7 +58,7 @@ public class DexTransferMoneyTransaction extends DEX {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
 
-        DexOffer offer = dexService.getOfferById(attachment.getOrderId());
+        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
 
         //TODO change order status.
         if(attachment.isHasFrozenMoney() && DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {

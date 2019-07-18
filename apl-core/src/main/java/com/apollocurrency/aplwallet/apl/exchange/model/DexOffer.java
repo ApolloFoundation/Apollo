@@ -12,6 +12,10 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import java.math.BigDecimal;
 
 public class DexOffer{
+    /**
+     * Use transactionId.
+     */
+    @Deprecated
     private Long id;
     private Long transactionId;
     private Long accountId;

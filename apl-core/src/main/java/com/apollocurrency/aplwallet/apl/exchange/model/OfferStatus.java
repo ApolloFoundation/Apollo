@@ -13,4 +13,8 @@ public enum  OfferStatus {
         }
         return OfferStatus.values()[ordinal];
     }
+
+    public boolean isOpen(){
+        return this.equals(OfferStatus.OPEN);
+    }
 }
