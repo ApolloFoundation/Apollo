@@ -330,4 +330,8 @@ public class Peer2PeerTransport {
         return res;
     }
 
+    void setInboundSocket(PeerWebSocket pws) {
+        inboundWebSocket=pws;
+    }
+
 }

@@ -367,6 +367,7 @@ public final class PeerServlet extends WebSocketServlet {
                 PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
+                    peer.getP2pTransport().setInboundSocket(pws);
                     res = pws;
                 }
             }
