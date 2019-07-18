@@ -260,15 +260,16 @@ public final class PeerServlet extends WebSocketServlet {
                jsonResponse = process(peer, new StringReader(request));
             }
         }
-        if(jsonResponse==null){ //we've got error
-            return;
-        }
         // Return the response
         try {
             StringWriter writer = new StringWriter(1000);
             JSON.writeJSONString(jsonResponse, writer);
             String response = writer.toString();
             transport.send(response, requestId);
+            //check if we returned error and should close inbound socket
+            if(peer!=null){
+               peer.processError(response);
+            }
         } catch (RuntimeException e) {
             LOG.debug("Exception while responing to {}", transport.which(), e);
             processException(peer, e);
@@ -276,12 +277,6 @@ public final class PeerServlet extends WebSocketServlet {
             LOG.debug("Exception while responding to {}", transport.which(), e);
             if (peer != null) {
                 peer.deactivate("IO exception sending response to: " + transport.which());
-            }
-        }
-        if (jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL) {
-            if (peer != null) {
-                String msg = "Unsupported protocol";
-                peer.deactivate(msg);
             }
         }
     }

@@ -887,7 +887,14 @@ public final class PeerImpl implements Peer {
                         String msg = String.format("We are blacklisted by %s, cause: %s", getHostWithPort(), resp.cause);
                         LOG.debug("Deactivating: "+msg);
                         deactivate(msg);
+                    }else if (Errors.MAX_INBOUND_CONNECTIONS.equalsIgnoreCase(resp.error)) {                        
+                        deactivate(Errors.MAX_INBOUND_CONNECTIONS);
+                    }else if (Errors.INVALID_ANNOUNCED_ADDRESS.equalsIgnoreCase(resp.error)) {                        
+                        deactivate(Errors.INVALID_ANNOUNCED_ADDRESS);
+                    }else if (Errors.UNSUPPORTED_PROTOCOL.equalsIgnoreCase(resp.error)) {                        
+                        deactivate(Errors.UNSUPPORTED_PROTOCOL);
                     }
+                    //check any other error to deactivate?
                     res = true;
                 }
             } catch (IOException ex) {
