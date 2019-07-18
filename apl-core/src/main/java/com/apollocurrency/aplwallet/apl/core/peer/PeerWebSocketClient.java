@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -61,6 +63,16 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
 
         return websocketOK;
+    }
+
+    @Override
+    public void close() {
+        super.close(); //To change body of generated methods, choose Tools | Templates.
+        try {
+            client.stop();
+        } catch (Exception ex) {
+            log.trace("Exception on websocket client stop");
+        }
     }
 
 }

@@ -253,6 +253,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
+            Thread.currentThread().setName("doPostTask-"+peer.getHostWithPort());
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
