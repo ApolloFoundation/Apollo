@@ -267,14 +267,8 @@ public final class AplCore {
 
                 ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
                         () -> {
-                            Runtime runtime = Runtime.getRuntime();
-                            LOG.debug("Used connections - '{}', Memory Info. Total: {} Kb, Free: {} Kb, Max: {} Kb",
-                                  databaseManager.getDataSource().getJmxBean().getActiveConnections(),
-                                  runtime.totalMemory() / 1024,
-                                  runtime.freeMemory() / 1024,
-                                  runtime.maxMemory() / 1024
-                          );
-                          aplAppStatus.clearFinished(1*60L); //10 min
+                            LOG.debug(getNodeHealth());
+                            aplAppStatus.clearFinished(1*60L); //10 min
                         },
                    20,
                    TimeUnit.SECONDS);
@@ -322,7 +316,18 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-
+    private String getNodeHealth(){
+        StringBuilder sb = new StringBuilder("Node health info\n");
+        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        sb.append("Used DB connections: "+usedConnections+"\n");
+        Runtime runtime = Runtime.getRuntime();
+        sb.append("Runtime total memory, ,KB:" +(runtime.totalMemory() / 1024));
+        sb.append("Runtime free  memory, ,KB:" +(runtime.freeMemory()/ 1024));
+        sb.append("Runtime max   memory, ,KB:" +(runtime.maxMemory()/ 1024));
+        sb.append("Inound peers count: "+Peers.getInboundPeers().size());
+        sb.append("Active peers count: "+Peers.getActivePeers());
+        return sb.toString();
+    }
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
