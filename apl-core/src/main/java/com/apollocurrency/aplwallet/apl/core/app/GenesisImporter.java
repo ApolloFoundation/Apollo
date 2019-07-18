@@ -20,7 +20,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -35,44 +49,45 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.enterprise.inject.spi.CDI;
+@Slf4j
+@Singleton
+public final class GenesisImporter {
 
-@Deprecated
-public final class Genesis {
-    private static final Logger LOG = getLogger(Genesis.class);
-
-    private static final byte[] CREATOR_PUBLIC_KEY;
-    public static final long CREATOR_ID;
-    public static final long EPOCH_BEGINNING;
+    private static byte[] CREATOR_PUBLIC_KEY;
+    public static long CREATOR_ID;
+    public static long EPOCH_BEGINNING;
     public static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static  ConfigDirProvider configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
-//    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
-    private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
+    private BlockchainConfig blockchainConfig;
+    private ConfigDirProvider configDirProvider;
+    private AplAppStatus aplAppStatus;
 
-    private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
-    private static DatabaseManager databaseManager; // lazy init
-    private static String genesisTaskId;
-    static {
+    private BlockchainConfigUpdater blockchainConfigUpdater;
+    private DatabaseManager databaseManager; // lazy init
+    private String genesisTaskId;
+    private JSONObject genesisAccountsJSON = null;
+
+    @Inject
+    public GenesisImporter(BlockchainConfig blockchainConfig, ConfigDirProvider configDirProvider,
+                           BlockchainConfigUpdater blockchainConfigUpdater,
+                           DatabaseManager databaseManager,
+                           AplAppStatus aplAppStatus) {
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
+        this.configDirProvider = Objects.requireNonNull(configDirProvider, "configDirProvider is NULL");
+        this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
+        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        loadDataFromResources();
+    }
+
+    private void loadDataFromResources() {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
             CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
@@ -82,19 +97,20 @@ public final class Genesis {
         } catch (ParseException|IOException|java.text.ParseException e) {
             throw new RuntimeException("Failed to load genesis parameters", e);
         }
-        
+
     }
 
-    private static TransactionalDataSource lookupDataSource() {
+/*
+    private TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
     }
+*/
 
-    private static JSONObject genesisAccountsJSON = null;
 
-    private static byte[] loadGenesisAccountsJSON() {
+    private byte[] loadGenesisAccountsJSON() {
         if (genesisTaskId == null) {
             Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
             if (task.isPresent()) {
@@ -106,7 +122,7 @@ public final class Genesis {
 
         MessageDigest digest = Crypto.sha256();
         String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
-        LOG.trace("path = {}", path);
+        log.trace("path = {}", path);
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
@@ -119,25 +135,25 @@ public final class Genesis {
         return digest.digest();
     }
 
-    public static Block newGenesisBlock() {
+    public Block newGenesisBlock() {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
     }
 
-    public static void apply(boolean loadOnlyPublicKeys) {
+    public void apply(boolean loadOnlyPublicKeys) {
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
         blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.reset();
-        TransactionalDataSource dataSource = lookupDataSource();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         // load 'public Keys' from JSON only
         if(!dataSource.isInTransaction()){
             dataSource.begin();
         }
         JSONArray publicKeys = loadPublicKeys(dataSource);
-        dataSource.commit(false); 
+        dataSource.commit(false);
         if (loadOnlyPublicKeys) {
-            LOG.debug("The rest of GENESIS is skipped, shard info will be loaded...");
+            log.debug("The rest of GENESIS is skipped, shard info will be loaded...");
             return;
         }
         // load 'balances' from JSON only
@@ -148,17 +164,17 @@ public final class Genesis {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = Account.addOrGetAccount(Genesis.CREATOR_ID, true);
-        creatorAccount.apply(Genesis.CREATOR_PUBLIC_KEY, true);
+        Account creatorAccount = Account.addOrGetAccount(GenesisImporter.CREATOR_ID, true);
+        creatorAccount.apply(GenesisImporter.CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
         genesisTaskId = null;
     }
 
-    private static long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
+    private long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
         int count;
-        LOG.debug("Loaded " + publicKeys.size() + " public keys");
+        log.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
         JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
@@ -172,18 +188,18 @@ public final class Genesis {
             }
             if (balances.size() > 10000 && count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balances.size());
-                LOG.debug(message);
+                log.debug(message);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/balances.size()*1.0)*50, message);
             }
         }
         return total;
     }
 
-    private static JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
+    private JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
 
-        LOG.debug("Loading public keys [{}]...", publicKeys.size());
+        log.debug("Loading public keys [{}]...", publicKeys.size());
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
         for (Object jsonPublicKey : publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
@@ -200,33 +216,31 @@ public final class Genesis {
         return publicKeys;
     }
 
-    public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
-            
-            // Original line below:
-             String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();
-            // Hotfixed because UNIX way working everywhere
-            // TODO: Fix that for crossplatform compatibility
+    public List<Map.Entry<String, Long>> loadGenesisAccounts() {
+
+        // Original line below:
+        String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();
+        // Hotfixed because UNIX way working everywhere
+        // TODO: Fix that for crossplatform compatibility
 
 //            String path = aplCoreRuntime.getConfDir()+"/"+blockchainConfig.getChain().getGenesisLocation();
 
-            LOG.debug("Genesis accounts path = " + path);
-            try (InputStreamReader is = new InputStreamReader(
-                    Genesis.class.getClassLoader().getResourceAsStream(path))) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode root = objectMapper.readTree(is);
-                JsonNode balancesArray = root.get("balances");
-                Map<String, Long> map = objectMapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
+        log.debug("Genesis accounts path = " + path);
+        try (InputStreamReader is = new InputStreamReader(
+                GenesisImporter.class.getClassLoader().getResourceAsStream(path))) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(is);
+            JsonNode balancesArray = root.get("balances");
+            Map<String, Long> map = objectMapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
 
-                return map.entrySet()
-                        .stream()
-                        .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
-                        .skip(1) //skip first account to collect only genesis accounts
-                        .collect(Collectors.toList());
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to load genesis accounts", e);
-            }
+            return map.entrySet()
+                    .stream()
+                    .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
+                    .skip(1) //skip first account to collect only genesis accounts
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load genesis accounts", e);
         }
-
-    private Genesis() {} // never
+    }
 
 }
