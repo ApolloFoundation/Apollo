@@ -362,9 +362,9 @@ public final class PeerServlet extends WebSocketServlet {
             Object res = null;
             if (Peers.useWebSockets) {
                 String host = req.getRemoteAddress();
-//                int port=req.getRemotePort();
-//we ignore remote port to be able to connect back in case of inbound socket close
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host);
+                int port=req.getRemotePort();
+//we use remote port to distinguish peers behind the NAT/UPnP
+                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host+":"+port);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);
