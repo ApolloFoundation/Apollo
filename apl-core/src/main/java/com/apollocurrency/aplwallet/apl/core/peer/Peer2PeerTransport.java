@@ -115,6 +115,7 @@ public class Peer2PeerTransport {
                 peerServlet.doPostWebSocket(this, rqId, message);
             }
         }
+        updateDownloadedVolume(message.length());
     }
 
     public Long sendRequest(String message){
@@ -304,6 +305,8 @@ public class Peer2PeerTransport {
                 if(p!=null){
                   p.deactivate(msg);
                 }
+            }else{
+                updateUploadedVolume(message.length());
             }
         return sendOK;
     }
