@@ -103,8 +103,8 @@ public class DexService {
     
     @Transactional
     public List<DexTradeEntry> getTradeInfoForPeriod( Integer start, Integer finish, 
-            Integer offset, Integer limit) {
-        return dexTradeDao.getDexEntriesForInterval(start, finish, offset, limit);        
+            Byte pairCurrency, Integer offset, Integer limit) {
+        return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);        
     }
     
     @Transactional

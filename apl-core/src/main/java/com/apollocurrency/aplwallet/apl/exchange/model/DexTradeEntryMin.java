@@ -15,10 +15,10 @@ import lombok.Setter;
 
 @Getter @Setter
 public class DexTradeEntryMin {    
-     private long hi;
-     private long low;
-     private long open;
-     private long close;
+     private BigDecimal hi;
+     private BigDecimal low;
+     private BigDecimal open;
+     private BigDecimal close;
 
 public DexTradeInfoMinDto toDto(){       
         DexTradeInfoMinDto dexTradeInfoMinDto = new DexTradeInfoMinDto();        

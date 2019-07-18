@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoMinDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -79,10 +80,12 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Random;
+import org.checkerframework.checker.units.qual.A;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -531,7 +534,7 @@ public class DexController {
     }
 
     @GET
-    @Path("/tradeinfo")
+    @Path("/tradeInfo")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get trade data", description = "obtaining trading information for the given period")
     @ApiResponses(value = {
@@ -540,6 +543,7 @@ public class DexController {
     public Response getTradeInfoForPeriod(  
                                 @Parameter(description = "period start time", required = true) @QueryParam("start") Integer start,
                                 @Parameter(description = "period finish time", required = true) @QueryParam("finish") Integer finish,
+                                @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("pairCurrency") Byte pairCurrency,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getTradeInfoForPeriod:  start: {}, finish: {} ", start, finish );
@@ -548,13 +552,57 @@ public class DexController {
         int offset = firstIndex > 0 ? firstIndex : 0;
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
         
-        List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, offset, limit);
+        List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, pairCurrency, offset, limit);
         
         return Response.ok(tradeEntries.stream()
             .map(o -> o.toDto())
             .collect(Collectors.toList())
         ).build();
     }
+
+    @GET
+    @Path("/tradeInfoMin")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get trade data", description = "obtaining trading information for the given period")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getTradeInfoForPeriodMin(  
+                                @Parameter(description = "period start time", required = true) @QueryParam("start") Integer start,
+                                @Parameter(description = "period finish time", required = true) @QueryParam("finish") Integer finish,
+                                @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("pairCurrency") Byte pairCurrency,
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getTradeInfoForPeriod:  start: {}, finish: {} ", start, finish );
+        int firstIndex = ParameterParser.getFirstIndex(req);
+        int lastIndex = ParameterParser.getLastIndex(req);
+        int offset = firstIndex > 0 ? firstIndex : 0;
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+        
+        List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, pairCurrency, offset, limit);
+                
+        DexTradeEntryMin dexTradeEntryMin = new DexTradeEntryMin(); // dexTradeInfoMinDto = new DexTradeInfoMinDto();
+        
+        BigDecimal hi=tradeEntries.get(0).toDto().pairRate;//,low=t,open,close; 
+        BigDecimal low=tradeEntries.get(0).toDto().pairRate;
+        BigDecimal open = tradeEntries.get(0).toDto().pairRate;
+        BigDecimal close = tradeEntries.get( tradeEntries.size()-1 ).toDto().pairRate;
+        
+        // iterate list to find the highest or the lowest values
+        for (DexTradeEntry currEl : tradeEntries) {            
+            if ( currEl.toDto().pairRate.compareTo( hi ) == 1 ) hi = currEl.toDto().pairRate;
+            if ( currEl.toDto().pairRate.compareTo( low ) == -1 ) low = currEl.toDto().pairRate;
+        }
+        
+        dexTradeEntryMin.setHi(hi);
+        dexTradeEntryMin.setLow(low);
+        dexTradeEntryMin.setOpen(open);
+        dexTradeEntryMin.setClose(close);
+        
+        return Response.ok( (dexTradeEntryMin.toDto())).build();
+                
+    }
+
     
     @GET
     @Path("/ethInfo")
