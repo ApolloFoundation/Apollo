@@ -637,9 +637,13 @@ public enum APIEnum {
     }
 
     public static EnumSet<APIEnum> base64StringToEnumSet(String apiSetBase64) {
+        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
+        if(apiSetBase64==null){
+            return result;
+        }
         byte[] decoded = Base64.getDecoder().decode(apiSetBase64);
         BitSet bs = BitSet.valueOf(decoded);
-        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
+        
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
             result.add(APIEnum.values()[i]);
             if (i == Integer.MAX_VALUE) {

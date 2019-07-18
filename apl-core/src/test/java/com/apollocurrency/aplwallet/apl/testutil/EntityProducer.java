@@ -142,7 +142,7 @@ public class EntityProducer {
             }
 
             @Override
-            public void deactivate() {
+            public void deactivate(String reason) {
 
             }
 
@@ -173,16 +173,6 @@ public class EntityProducer {
 
             @Override
             public boolean isInbound() {
-                return false;
-            }
-
-            @Override
-            public boolean isInboundWebSocket() {
-                return false;
-            }
-
-            @Override
-            public boolean isOutboundWebSocket() {
                 return false;
             }
 
@@ -234,6 +224,11 @@ public class EntityProducer {
             @Override
             public PeerTrustLevel getTrustLevel() {
                 return PeerTrustLevel.NOT_TRUSTED;
+            }
+
+            @Override
+            public boolean isOutbound() {
+                return false;
             }
 
         };

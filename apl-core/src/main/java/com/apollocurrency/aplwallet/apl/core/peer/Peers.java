@@ -296,7 +296,7 @@ public final class Peers {
         pi.setVersion(Constants.VERSION.toString());
         pi.setPlatform(peerHttpServer.getMyPlatform());
         pi.setChainId(blockchainConfig.getChain().getChainId().toString());
-        pi.setShareAddress(peerHttpServer.shareMyAddress);
+        pi.setShareAddress(peerHttpServer.isShareMyAddress());
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
@@ -518,7 +518,7 @@ public final class Peers {
         if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
             return null;
         }
-        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder);
+        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder, peerHttpServer.getPeerServlet());
         return peer;
     }
 
@@ -536,14 +536,11 @@ public final class Peers {
             PeerAddress oldPa = new PeerAddress(oldPeer.getAnnouncedAddress());
             if (newPa.compareTo(oldPa) != 0) {
                 LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost() + ":" + oldPeer.getPort());
-                try {
-                    peer.setAnnouncedAddress(newAnnouncedAddress);
-                    oldPeer = removePeer(oldPeer);
-                    if (oldPeer != null) {
-                       notifyListeners(oldPeer, Event.REMOVE);
-                    }
-                } catch (MalformedURLException | UnknownHostException ex) {
-                    LOG.warn("Wrong announces address: " + newAnnouncedAddress, ex);
+
+                peer.setAnnouncedAddress(newAnnouncedAddress);
+                oldPeer = removePeer(oldPeer);
+                if (oldPeer != null) {
+                    notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }

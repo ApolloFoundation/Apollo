@@ -96,7 +96,7 @@ public interface Peer extends Comparable<Peer> {
 
     void unBlacklist();
 
-    void deactivate();
+    void deactivate(String reason);
 
     void remove();
 
@@ -110,9 +110,7 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isInbound();
 
-    boolean isInboundWebSocket();
-
-    boolean isOutboundWebSocket();
+    boolean isOutbound();
 
     boolean isOpenAPI();
 

@@ -15,7 +15,9 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
     private static final int startNumber = 5;
 
     protected int update(int nextUpdate) {
-        nextUpdate = super.update(nextUpdate);
+        if (nextUpdate < startNumber) {
+            nextUpdate = super.update(nextUpdate);
+        }
         switch (nextUpdate) {
 /*  ---------------------- BLOCK -------------------    */
             case startNumber:
