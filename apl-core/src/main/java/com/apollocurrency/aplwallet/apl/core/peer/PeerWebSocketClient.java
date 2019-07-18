@@ -9,8 +9,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -24,19 +22,13 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 public class PeerWebSocketClient extends PeerWebSocket{
 
     private final WebSocketClient client;
-    private boolean connected = false;
-    
+
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer); 
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
     }
-
-
-//    public PeerWebSocketClient(PeerImpl peer) {
-
-//    }
 
     public boolean startClient(URI uri) {
         if (uri == null) {
@@ -49,7 +41,6 @@ public class PeerWebSocketClient extends PeerWebSocket{
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
-            connected = websocketOK;
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
@@ -69,7 +60,9 @@ public class PeerWebSocketClient extends PeerWebSocket{
     public void close() {
         super.close(); //To change body of generated methods, choose Tools | Templates.
         try {
-            client.stop();
+           if(client!=null){ 
+              client.stop();
+           }
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop");
         }
