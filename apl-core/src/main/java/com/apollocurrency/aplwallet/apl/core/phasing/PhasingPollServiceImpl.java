@@ -96,9 +96,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
+    public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
-            return voterTable.getVoterPhasedTransactions(voterId, from, to);
+            return voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight());
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -106,8 +106,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                long accountId, boolean withoutWhitelist, int from, int to) {
+    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+                                                          long accountId, boolean withoutWhitelist, int from, int to) {
         try {
             return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
         }
@@ -117,7 +117,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
+    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
             return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
         }

@@ -4,200 +4,109 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.db.table.DerivedDbTableImpl;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.SQLException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-public abstract class DerivedDbTableTest<T extends DerivedEntity> {
+@EnableWeld
+public class DerivedDbTableTest {
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), dataScriptPath(), null);
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/derived-data.sql", null);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+            FullTextConfigImpl.class,
+            DerivedDbTablesRegistryImpl.class)
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .build();
 
-    DerivedDbTable<T> derivedDbTable;
-    Class<T> clazz;
-
-    public DerivedDbTableTest(Class<T> clazz) {
-        this.clazz = clazz;
-
-    }
+    private DerivedDbTable<DerivedIdEntity> derivedDbTable;
+    private DerivedTestData data = new DerivedTestData();
 
     @BeforeEach
-    public void setUp() {
-        derivedDbTable = getDerivedDbTable();
-        assertTrue(getHeights().size() >= 3, "Expected >= 3 data entries with different heights");
+    void setUp() {
+        derivedDbTable = new DerivedDbTableImpl();
     }
 
-    public abstract DerivedDbTable<T> getDerivedDbTable();
 
-    public DatabaseManager getDatabaseManager() {
-        return extension.getDatabaseManager();
+    @Test
+    void testGetAll() throws SQLException {
+        List<DerivedIdEntity> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+
+        assertEquals(data.ALL, all);
     }
 
     @Test
-    public void testGetAll() throws SQLException {
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-
-        List<T> expected = sortByHeightAsc(getAll());
-        assertEquals(expected, all);
+    void testTrimForZeroHeight() throws SQLException {
+        testTrim(0);
     }
 
     @Test
-    public void testTrimForZeroHeight() throws SQLException {
-        testTrim(0, Integer.MAX_VALUE);
+    void testTrimForMaxEntityHeight() throws SQLException {
+        testTrim(data.ENTITY_6.getHeight());
     }
 
-    @Test
-    public void testTrimForMaxHeight() throws SQLException {
-        testTrim(sortByHeightDesc(getAll()).get(0).getHeight(), Integer.MAX_VALUE);
-    }
-
-    public void testTrim(int height, int blockchainHeight) throws SQLException {
+    void testTrim(int height) throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
 
-        List<T> expected = getAll();
-        List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, all);
+        List<DerivedIdEntity> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(data.ALL, all);
     }
 
     @Test
-    public void testDelete() throws SQLException {
-        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(mock(clazz)));
+    void testDelete() {
+        assertThrows(UnsupportedOperationException.class, () -> derivedDbTable.delete(data.ENTITY_1));
     }
 
     @Test
-    public void testTruncate() throws SQLException {
+    void testTruncate() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.truncate());
 
-        List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<DerivedIdEntity> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
         assertTrue(all.isEmpty(), "Table should not contain any records after 'truncate' operation");
     }
 
     @Test
-    public void testInsert() {
-        assertThrows(UnsupportedOperationException.class, ()-> DbUtils.inTransaction(extension, (con) -> derivedDbTable.insert(mock(clazz))));
+    void testInsert() {
+        assertThrows(UnsupportedOperationException.class, () -> DbUtils.inTransaction(extension, (con) -> derivedDbTable.insert(data.NEW_ENTITY)));
     }
 
     @Test
-    public void testRollbackToNegativeHeight() throws SQLException {
-        testRollback(0);
+    void testRollbackToZero() throws SQLException {
+        testRollback(List.of(), 0);
     }
 
     @Test
-    public void testRollbackToLastEntry() throws SQLException {
-        List<Integer> heights = getHeights();
-        testRollback(heights.get(0));
+    void testRollbackToLastEntry() throws SQLException {
+        testRollback(data.ALL, data.ENTITY_6.getHeight());
     }
 
     @Test
-    public void testRollbackToFirstEntry() throws SQLException {
-        List<Integer> heights = getHeights();
-        Integer rollbackHeight = heights.get(heights.size() - 1);
-        testRollback(rollbackHeight);
+    void testRollbackToFirstEntry() throws SQLException {
+        testRollback(List.of(data.ENTITY_1, data.ENTITY_2), data.ENTITY_1.getHeight());
     }
 
-    public void testRollback(int height) throws SQLException {
-        List<T> expected = sublistByHeight(getAll(), height);
+    private void testRollback(List<DerivedIdEntity> expected, int height) throws SQLException {
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
-        List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<DerivedIdEntity> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, actual);
     }
-
-
-
-    public List<T> sublistByHeightDesc(List<T> list, int maxHeight) {
-        return list
-                .stream()
-                .filter(d-> d.getHeight() <= maxHeight)
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId).reversed())
-                .collect(toList());
-    }
-
-
-    public List<T> sublistByHeight(List<T> list, int maxHeight) {
-        return list
-                .stream()
-                .filter(d-> d.getHeight() <= maxHeight)
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
-                .collect(toList());
-    }
-
-    public List<T> sortByHeightDesc(List<T> list) {
-        return sublistByHeightDesc(list, Integer.MAX_VALUE);
-    }
-
-    public List<T> sortByHeightAsc(List<T> list) {
-        return list
-                .stream()
-                .sorted(Comparator.comparing(DerivedEntity::getHeight).thenComparing(DerivedEntity::getDbId))
-                .collect(toList());
-    }
-
-    public List<Integer> getHeights() {
-        return getHeights(getAll());
-    }
-    public List<Integer> getHeights(List<T> l) {
-        return l
-                .stream()
-                .map(DerivedEntity::getHeight)
-                .sorted(Comparator.reverseOrder())
-                .distinct()
-                .collect(toList());
-    }
-
-    public Map<DbKey, List<T>> groupByDbKey(List<T> data, KeyFactory<T> keyFactory) {
-        return data
-                .stream()
-                .collect(Collectors.groupingBy(keyFactory::newKey,
-                        Collectors.collectingAndThen(toList(),
-                                l-> l.stream().sorted(
-                                        Comparator.comparing(DerivedEntity::getHeight)
-                                                .thenComparing(DerivedEntity::getDbId)
-                                                .reversed()).collect(toList()))));
-    }
-
-    public Map<DbKey, List<T>> groupByDbKey(KeyFactory<T> keyFactory) {
-        return groupByDbKey(getAll(), keyFactory);
-    }
-
-    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size) {
-        return groupByDbKey(data, keyFactory)
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().size() == size)
-                .findFirst()
-                .get();
-    }
-
-    protected Map.Entry<DbKey, List<T>> getEntryWithListOfSize(List<T> data, KeyFactory<T> keyFactory, int size, boolean skipDeleted) {
-        return groupByDbKey(data, keyFactory)
-                .entrySet()
-                .stream()
-                .filter(entry-> !skipDeleted || entry.getValue().stream().anyMatch(e -> ((VersionedDerivedEntity) e).isLatest()))
-                .filter(entry -> getHeights(entry.getValue()).size() == size)
-                .findFirst()
-                .get();
-    }
-
-    protected String dataScriptPath() {
-        return "db/data.sql";
-    }
-    protected abstract List<T> getAll();
 }

@@ -6,241 +6,193 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.BasicDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.db.table.DerivedDbTableImpl;
+import com.apollocurrency.aplwallet.apl.core.db.table.VersionedBasicDbTableImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+@EnableWeld
+public class BasicDbTableTest {
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/derived-data.sql", null);
+    private VersionedBasicDbTableImpl versionedTable;
+    private DerivedDbTableImpl table;
+    private DerivedTestData data;
 
-public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedDbTableTest<T> {
-    BasicDbTable<T> table;
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+            FullTextConfigImpl.class,
+            DerivedDbTablesRegistryImpl.class)
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .build();
 
     @BeforeEach
-    @Override
     public void setUp() {
-        super.setUp();
-        table = (BasicDbTable<T>) getDerivedDbTable();
-    }
-
-    public BasicDbTableTest(Class<T> clazz) {
-        super(clazz);
-    }
-
-    public List<T> getDeletedMultiversionRecord() {
-        throw new UnsupportedOperationException("deleted multiversion record is not provided");
+        data = new DerivedTestData();
+        versionedTable = new VersionedBasicDbTableImpl();
+        table = new DerivedDbTableImpl();
     }
 
     @Test
-    public void testTrimForMaxHeight() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight();
-        testOrdinaryOrMultiversionTrim(maxHeight);
-    }
-
-    @Override
-    @Test
-    public void testTrimForZeroHeight() throws SQLException {
-        testOrdinaryOrMultiversionTrim(0);
+    void testMultiversionTrimForMaxHeight() throws SQLException {
+        testMultiversionTrim(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_3_2), data.VERSIONED_ENTITY_3_2.getHeight());
     }
 
     @Test
-    public void testTrimForMaxHeightInclusive() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() + 1;
-        testOrdinaryOrMultiversionTrim(maxHeight);
-    }
-
-    public void testOrdinaryOrMultiversionTrim(int height) throws SQLException {
-        if (table.isMultiversion()) {
-            testMultiversionTrim(height);
-        } else {
-            testTrim(height, Integer.MAX_VALUE);
-        }
-    }
-
-    public void testOrdinaryOrMultiversionRollback(int height) throws SQLException {
-        if (table.isMultiversion()) {
-            testMultiversionRollback(height);
-        } else {
-            testRollback(height);
-        }
+    void testMultiversionTrimForZeroHeight() throws SQLException {
+        testMultiversionTrim(data.ALL_VERSIONED, 0);
     }
 
     @Test
-    public void testTrimForMaxHeightExclusive() throws SQLException {
-        int maxHeight = sortByHeightDesc(getAll()).get(0).getHeight() - 1;
-        testOrdinaryOrMultiversionTrim(maxHeight);
+    void testMultiversionTrimForMaxHeightInclusive() throws SQLException {
+        int maxHeight = data.VERSIONED_ENTITY_3_2.getHeight() + 1;
+        testMultiversionTrim(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_3_2), maxHeight);
     }
 
     @Test
-    public void testTrimAllDeleted() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> deleted = getDeletedMultiversionRecord();
-            int height = deleted.get(deleted.size() - 1).getHeight() + 1;
-            testMultiversionTrim(height);
-        }
+    void testTrimForMaxHeightExclusive() throws SQLException {
+        int maxHeight = data.VERSIONED_ENTITY_3_2.getHeight() - 1;
+        testMultiversionTrim(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_3_2), maxHeight);
     }
 
     @Test
-    public void testTrimDeletedEqualAtLastDeletedHeight() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> deleted = getDeletedMultiversionRecord();
-            int height = deleted.get(deleted.size() - 1).getHeight();
-            testMultiversionTrim(height);
-        }
-    }
-    @Test
-    public void testTrimDeletedAtHeightLessThanLastDeletedRecord() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> deleted = getDeletedMultiversionRecord();
-            int height = deleted.get(deleted.size() - 1).getHeight() - 1;
-            testMultiversionTrim(height);
-        }
+    void testTrimAllDeleted() throws SQLException {
+        int height = data.VERSIONED_ENTITY_4_2.getHeight() + 1;
+        testMultiversionTrim(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_3_2), height);
     }
 
     @Test
-    public void testTrimMiddleHeight() throws SQLException {
-        List<Integer> heights = getHeights();
-        int middleHeight = (heights.get(0) + heights.get(heights.size() - 1)) / 2;
-        testOrdinaryOrMultiversionTrim(middleHeight);
-
+    void testTrimDeletedEqualAtLastDeletedHeight() throws SQLException {
+        int height = data.VERSIONED_ENTITY_4_2.getHeight();
+        testMultiversionTrim(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_2_2, data.VERSIONED_ENTITY_4_1,  data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_4_2, data.VERSIONED_ENTITY_3_2), height);
+    }
+    @Test
+    void testTrimDeletedAtHeightLessThanLastDeletedRecord() throws SQLException {
+        int height = data.VERSIONED_ENTITY_4_2.getHeight() - 1;
+        testMultiversionTrim(data.ALL_VERSIONED, height);
     }
 
     @Test
-    public void testTrimForMiddleRecord() throws SQLException {
-        List<T> all = getAll();
+    void testTrimForThreeUpdatedRecords() throws SQLException {
+        int height = data.VERSIONED_ENTITY_2_3.getHeight() + 1;
 
-        int middleHeight = all.get(all.size() / 2).getHeight();
-        testOrdinaryOrMultiversionTrim(middleHeight);
+        testMultiversionTrim(List.of(
+                data.VERSIONED_ENTITY_1_1,
+                data.VERSIONED_ENTITY_3_1,
+                data.VERSIONED_ENTITY_2_3,
+                data.VERSIONED_ENTITY_3_2), height);
     }
 
     @Test
-    public void testTrimForThreeUpdatedRecords() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue());
-            testOrdinaryOrMultiversionTrim(list.get(0).getHeight());
+    void testTrimNothingForThreeUpdatedRecords() throws SQLException {
+        int height = data.VERSIONED_ENTITY_2_2.getHeight();
+
+        testMultiversionTrim(List.of(
+                data.VERSIONED_ENTITY_1_1,
+                data.VERSIONED_ENTITY_2_1,
+                data.VERSIONED_ENTITY_3_1,
+                data.VERSIONED_ENTITY_2_2,
+                data.VERSIONED_ENTITY_4_1,
+                data.VERSIONED_ENTITY_2_3,
+                data.VERSIONED_ENTITY_4_2,
+                data.VERSIONED_ENTITY_3_2), height);
+    }
+
+    @Test
+    void testTrimOutsideTransaction() {
+        if (versionedTable.isMultiversion()) {
+            Assertions.assertThrows(IllegalStateException.class, () -> versionedTable.trim(0));
         }
     }
 
     @Test
-    public void testTrimNothingForThreeUpdatedRecords() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> list = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue());
-            testOrdinaryOrMultiversionTrim(list.get(1).getHeight());
-        }
+    void testRollbackOutsideTransaction() {
+        Assertions.assertThrows(IllegalStateException.class, () -> versionedTable.rollback(0));
     }
 
     @Test
-    public void testTrimOutsideTransaction() {
-        if (table.isMultiversion()) {
-            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
-        }
+    void testRollbackDeletedEntries() throws SQLException {
+        int height = data.VERSIONED_ENTITY_4_1.getHeight() - 1;
+        data.VERSIONED_ENTITY_2_1.setLatest(true);
+        data.VERSIONED_ENTITY_3_1.setLatest(true);
+
+        testMultiversionRollback(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_2_1, data.VERSIONED_ENTITY_3_1), height);
     }
 
     @Test
-    public void testRollbackOutsideTransaction() {
-        Assertions.assertThrows(IllegalStateException.class, () -> table.rollback(0));
+    void testRollbackForThreeUpdatedRecords() throws SQLException {
+        int height = data.VERSIONED_ENTITY_2_3.getHeight() - 1;
+        data.VERSIONED_ENTITY_3_1.setLatest(true);
+        data.VERSIONED_ENTITY_2_2.setLatest(true);
+        data.VERSIONED_ENTITY_4_1.setLatest(true);
+        testMultiversionRollback(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_2_1, data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_2_2, data.VERSIONED_ENTITY_4_1), height);
     }
 
     @Test
-    public void testRollbackDeletedEntries() throws SQLException {
-        if (table.isMultiversion()) {
-            List<T> deleted = getDeletedMultiversionRecord();
-            int height = deleted.get(deleted.size() - 1).getHeight() - 1;
-            testOrdinaryOrMultiversionRollback(height);
-        }
+    void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
+        int height = data.VERSIONED_ENTITY_2_3.getHeight();
+        data.VERSIONED_ENTITY_3_1.setLatest(true);
+        testMultiversionRollback(List.of(
+                data.VERSIONED_ENTITY_1_1,
+                data.VERSIONED_ENTITY_2_1,
+                data.VERSIONED_ENTITY_3_1,
+                data.VERSIONED_ENTITY_2_2,
+                data.VERSIONED_ENTITY_4_1,
+                data.VERSIONED_ENTITY_2_3,
+                data.VERSIONED_ENTITY_4_2), height);
     }
 
     @Test
-    public void testRollbackForThreeUpdatedRecords() throws SQLException {
-        if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue()).get(0).getHeight() - 1;
-            testOrdinaryOrMultiversionRollback(height);
-        }
+    void testRollbackEntirelyForTwoRecords() throws SQLException {
+        int height = data.VERSIONED_ENTITY_3_1.getHeight() - 1;
+        testMultiversionRollback(List.of(data.VERSIONED_ENTITY_1_1), height);
     }
 
     @Test
-    public void testRollbackNothingForThreeUpdatedRecords() throws SQLException {
-        if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 3, true).getValue()).get(0).getHeight();
-            testOrdinaryOrMultiversionRollback(height);
-        }
+    void testRollbackNothing() throws SQLException {
+        testMultiversionRollback(data.ALL_VERSIONED, data.VERSIONED_ENTITY_3_2.getHeight());
     }
 
     @Test
-    public void testRollbackEntirelyForTwoRecords() throws SQLException {
-        if (table.isMultiversion()) {
-            int height = sortByHeightDesc(getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 2, true).getValue()).get(1).getHeight() - 1;
-            testOrdinaryOrMultiversionRollback(height);
-        }
+    void testRollbackForNotMultiversionTable() throws SQLException {
+        DbUtils.inTransaction(extension, (con) -> table.rollback(data.ENTITY_3.getHeight()));
+
+        List<DerivedIdEntity> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(List.of(data.ENTITY_1, data.ENTITY_2, data.ENTITY_3), values);
     }
 
-    @Override
     @Test
-    public void testRollbackToFirstEntry() throws SQLException {
-        List<T> all = getAll();
-        T first = all.get(all.size() - 1);
-        testOrdinaryOrMultiversionRollback(first.getHeight());
+    void testTrimForNotMultiversionTable() throws SQLException {
+        DbUtils.inTransaction(extension, (con)-> table.trim(Integer.MAX_VALUE)); //should trim all records but trim nothing due to parent implementation, which do nothing
+
+        List<DerivedIdEntity> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        assertEquals(data.ALL, values);
     }
 
-    public void testMultiversionRollback(int height) throws SQLException {
-        List<T> all = getAll();
-        List<T> rollbacked = all.stream().filter(t -> t.getHeight() > height).collect(Collectors.toList());
-        Map<DbKey, List<T>> dbKeyListMapRollbacked = groupByDbKey(rollbacked, table.getDbKeyFactory());
-
-        List<T> expected = all.stream().filter(t -> t.getHeight() <= height).collect(Collectors.toList());
-        Map<DbKey, List<T>> expectedDbKeyListMap = groupByDbKey(expected, table.getDbKeyFactory());
-        dbKeyListMapRollbacked.entrySet()
-                .stream()
-                .filter(e-> expectedDbKeyListMap.containsKey(e.getKey()) && expectedDbKeyListMap.get(e.getKey()).size() != 0)
-                .map(Map.Entry::getKey)
-                .map(expectedDbKeyListMap::get)
-                .forEach((e) -> {
-                    int maxHeight = e.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get();
-                    e.stream().filter(el->el.getHeight() == maxHeight).forEach(el-> ((VersionedDerivedEntity) el).setLatest(true));
-                });
-        expected = sortByHeightAsc(expected);
-
-        DbUtils.inTransaction(extension, (con)-> table.rollback(height));
-        List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+    private void testMultiversionRollback(List<VersionedDerivedIdEntity> expected, int height) throws SQLException {
+        DbUtils.inTransaction(extension, (con)-> versionedTable.rollback(height));
+        List<VersionedDerivedIdEntity> values = versionedTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }
 
-    public void testMultiversionTrim(int height) throws SQLException {
-        List<T> all = getAll();
-        Map<DbKey, List<T>> dbKeyListMap = groupByDbKey();
-        List<T> trimmed = new ArrayList<>();
-        dbKeyListMap.forEach(((key, value) -> {
-            List<T> list = value.stream().filter(t -> t.getHeight() < height).collect(Collectors.toList());
-            if (list.size() != 0) {
-                if (list.stream().noneMatch(e-> ((VersionedDerivedEntity) e).isLatest()) && value.size() == list.size()) { //delete deleted
-                    trimmed.addAll(list);
-                } else {
-                    Integer maxHeight = list.stream().map(DerivedEntity::getHeight).max(Comparator.naturalOrder()).get(); //delete all not latest duplicates
-                    List<T> toTrim = list.stream().filter(el -> el.getHeight() < maxHeight).collect(Collectors.toList());
-                    trimmed.addAll(toTrim);
-                }
-            }
-        }));
-        List<T> expected = new ArrayList<>(all);
-        for (T t : trimmed) {
-            expected.remove(t);
-        }
-        expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con)-> table.trim(height));
-        List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+    private void testMultiversionTrim(List<VersionedDerivedIdEntity> expected, int height) throws SQLException {
+        DbUtils.inTransaction(extension, (con)-> versionedTable.trim(height));
+        List<VersionedDerivedIdEntity> values = versionedTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }
-
-    Map<DbKey, List<T>> groupByDbKey() {
-        return groupByDbKey(table.getDbKeyFactory());
-    }
-
 }

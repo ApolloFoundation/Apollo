@@ -501,7 +501,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
 
     private boolean doesNotExceed(int height) {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         return blockchain.getHeight() <= height;
     }
 

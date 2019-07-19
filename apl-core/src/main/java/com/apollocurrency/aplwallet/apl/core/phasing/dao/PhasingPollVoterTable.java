@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
@@ -14,13 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollVoterMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
+import com.apollocurrency.aplwallet.apl.core.utils.BlockchainUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -37,13 +35,11 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
         }
     };
     private static final PhasingPollVoterMapper MAPPER = new PhasingPollVoterMapper(KEY_FACTORY);
-    private final Blockchain blockchain;
 
 
     @Inject
-    public PhasingPollVoterTable(Blockchain blockchain) {
+    public PhasingPollVoterTable() {
         super(TABLE_NAME, false, KEY_FACTORY, false);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
     public List<PhasingPollVoter> get(long pollId) {
@@ -67,7 +63,7 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
         }
     }
 
-    public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) throws SQLException {
+    public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to, int height) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();
@@ -82,11 +78,11 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
                     + "ORDER BY transaction.height DESC, transaction.transaction_index DESC "
                     + DbUtils.limitsClause(from, to));
             int i = 0;
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, height);
             pstmt.setLong(++i, voterId);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return blockchain.getTransactions(con, pstmt);
+            return BlockchainUtil.loadTransactions(pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw e;

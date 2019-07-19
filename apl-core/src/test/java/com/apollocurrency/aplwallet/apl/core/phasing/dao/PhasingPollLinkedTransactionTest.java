@@ -8,11 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
@@ -25,14 +20,13 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -42,12 +36,20 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingPollLinkedTransaction> {
+public class PhasingPollLinkedTransactionTest {
+    @RegisterExtension
+    DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -57,8 +59,8 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
@@ -68,24 +70,12 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
     PhasingTestData ptd;
     TransactionTestData ttd;
 
-    public PhasingPollLinkedTransactionTest() {
-        super(PhasingPollLinkedTransaction.class);
-    }
-
 
 
     @BeforeEach
-    @Override
     public void setUp() {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
-        super.setUp();
-    }
-
-
-    @Override
-    public DerivedDbTable<PhasingPollLinkedTransaction> getDerivedDbTable() {
-        return table;
     }
 
     @Test
@@ -128,19 +118,6 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
         List<Transaction> transactions = table.getLinkedPhasedTransactions(ttd.TRANSACTION_12.getFullHash());
 
         assertTrue(transactions.isEmpty(), "Linked transactions should not exist for transaction #12");
-    }
-
-
-
-    @Override
-    protected List<PhasingPollLinkedTransaction> getAll() {
-        return List.of(ptd.LINKED_TRANSACTION_0, ptd.LINKED_TRANSACTION_1, ptd.LINKED_TRANSACTION_2, ptd.FAKE_LINKED_TRANSACTION_0, ptd.FAKE_LINKED_TRANSACTION_1, ptd.FAKE_LINKED_TRANSACTION_2);
-    }
-
-
-    @Override
-    protected List<PhasingPollLinkedTransaction> dataToInsert() {
-        return List.of(ptd.NEW_LINKED_TRANSACTION_1, ptd.NEW_LINKED_TRANSACTION_2);
     }
 
 }

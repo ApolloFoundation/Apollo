@@ -8,34 +8,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTableTest;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -43,12 +34,13 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.Mockito;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -56,34 +48,26 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
+public class PhasingPollTableTest  {
+    @RegisterExtension
+    DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
-            GlobalSyncImpl.class,
-            PhasingPollResultTable.class,
-            PhasingPollTable.class,
-            PhasingPollVoterTable.class,
-            PhasingPollLinkedTransactionTable.class,
-            PhasingVoteTable.class,
             FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
-            .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
-            .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
-            .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+            PhasingPollTable.class,
+            BlockchainConfig.class,
+            PropertiesHolder.class,
+            NtpTime.class,
+            EpochTime.class,
+            DerivedDbTablesRegistryImpl.class)
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class, PhasingPollServiceImpl.class))
             .build();
-    @Inject
-    Blockchain blockchain;
     @Inject
     PhasingPollTable table;
 
@@ -92,50 +76,19 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     private BlockTestData btd;
 
-    public PhasingPollTableTest() {
-        super(PhasingPoll.class);
-    }
 
     @BeforeEach
-    @Override
     public void setUp() {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
-        super.setUp();
-    }
-
-    @Override
-    public DerivedDbTable<PhasingPoll> getDerivedDbTable() {
-        return table;
-    }
-
-    @Override
-    protected List<PhasingPoll> getAll() {
-        return List.of(ptd.POLL_0, ptd.POLL_1, ptd.POLL_2, ptd.POLL_3, ptd.POLL_4, ptd.POLL_5);
-    }
-
-
-    @Override
-    public Blockchain getBlockchain() {
-        return blockchain;
-    }
-
-    @Override
-    public PhasingPoll valueToInsert() {
-        return ptd.NEW_POLL;
     }
 
     @Test
-    @Override
-    public void testTrimForZeroHeight() {
-        testTrim(ptd.POLL_1.getFinishHeight() + 1, Integer.MAX_VALUE);
-    }
-
-    @Override
-    public void testTrim(int height, int blockchainHeight) {
+    void testTrim() {
+        int height = ptd.POLL_1.getFinishHeight() + 1;
         table.trim(height);
         List<PhasingPoll> actual = CollectionUtil.toList(table.getAll(Integer.MIN_VALUE, Integer.MAX_VALUE));
-        List<PhasingPoll> expected = sortByHeightDesc(getAll().stream().filter(p -> p.getFinishHeight() >= height).collect(Collectors.toList()));
+        List<PhasingPoll> expected = List.of(ptd.POLL_5, ptd.POLL_4, ptd.POLL_3);
         Assertions.assertEquals(expected, actual);
         String condition = "transaction_id IN " + String.format("(%d,%d,%d)", ptd.POLL_0.getId(), ptd.POLL_1.getId(), ptd.POLL_2.getId());
         assertNotExistEntriesInTableForCondition("phasing_poll_voter", condition);
@@ -143,8 +96,9 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         assertNotExistEntriesInTableForCondition("phasing_poll_linked_transaction", condition);
     }
 
+
     private void assertNotExistEntriesInTableForCondition(String tableName, String condition) {
-        DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        DbUtils.inTransaction(extension.getDatabaseManager(), (con) -> {
             try (Statement stmt = con.createStatement()) {
                 try (ResultSet rs = stmt.executeQuery("SELECT 1 FROM " + tableName + " where  " + condition)) {
                     Assertions.assertFalse(rs.next());
@@ -160,7 +114,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     void testGetFinishingTransactions() {
         List<Transaction> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
-        assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
+        assertEquals(List.of(ttd.TRANSACTION_7), finishingTransactions);
     }
 
 
@@ -223,13 +177,13 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetByHoldingId() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight()));
+        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight()));
+        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight());
         assertTrue(transactions.isEmpty());
     }
 
@@ -256,19 +210,20 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtLastBlockHeight() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1);
         assertTrue(transactions.isEmpty());
     }
 
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
+
         assertEquals(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
     }
 
     @Test
     void testGetAllAccountPhasedTransactionsWithPagination() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
         assertEquals(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
     }
 
@@ -303,11 +258,10 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         assertNull(phasingPoll);
     }
 
-    @Override
     @Test
     public void testInsertAlreadyExist() {
         PhasingPoll value = ptd.POLL_1;
-        Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
+        Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension.getDatabaseManager(), (con) -> {
             table.insert(value);
         }));
     }

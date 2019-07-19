@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -51,11 +50,8 @@ public class GetVoterPhasedTransactions extends AbstractAPIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<Transaction> iterator = phasingPollService.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
-            }
+        for (Transaction transaction : phasingPollService.getVoterPhasedTransactions(accountId, firstIndex, lastIndex)) {
+            transactions.add(JSONData.transaction(false, transaction));
         }
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

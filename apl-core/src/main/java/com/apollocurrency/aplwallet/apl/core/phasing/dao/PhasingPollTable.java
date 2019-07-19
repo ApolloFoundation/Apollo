@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -17,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.utils.BlockchainUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -45,12 +44,10 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     };
     private static final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
     private static final String TABLE_NAME = "phasing_poll";
-    private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollTable(Blockchain blockchain) {
+    public PhasingPollTable() {
         super(TABLE_NAME, KEY_FACTORY, false);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
 
@@ -90,16 +87,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     public List<Transaction> getFinishingTransactions(int height) {
         Connection con = null;
-        List<Transaction> transactions = new ArrayList<>();
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, height);
-            blockchain.getTransactions(con, pstmt).forEach(transactions::add);
-
-            return transactions;
+            return BlockchainUtil.loadTransactions(pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             LOG.error(e.getMessage(), e);
@@ -109,16 +103,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     public List<Transaction> getFinishingTransactionsByTime(int time) {
         Connection con = null;
-        List<Transaction> transactions = new ArrayList<>();
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                     "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time <= ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
             pstmt.setInt(1, time);
-            blockchain.getTransactions(con, pstmt).forEach(transactions::add);
-
-            return transactions;
+            return BlockchainUtil.loadTransactions(pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             LOG.error(e.getMessage(), e);
@@ -146,7 +137,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to, int height) throws SQLException {
 
         Connection con = null;
@@ -171,13 +162,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             }
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return blockchain.getTransactions(con, pstmt);
+            return BlockchainUtil.loadTransactions(pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw e;
         }
     }
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
+    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
         Connection con = null;
         try {
             con = getDatabaseManager().getDataSource().getConnection();
@@ -193,7 +184,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
             pstmt.setInt(++i, height);
             DbUtils.setLimits(++i, pstmt, from, to);
 
-            return blockchain.getTransactions(con, pstmt);
+            return BlockchainUtil.loadTransactions(pstmt);
         } catch (SQLException e) {
             DbUtils.close(con);
             throw e;

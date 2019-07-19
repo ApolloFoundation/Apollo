@@ -2,9 +2,7 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
-
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+package com.apollocurrency.aplwallet.apl.core.db.model;
 
 import java.util.Objects;
 
@@ -36,5 +34,12 @@ public class VersionedDerivedIdEntity extends VersionedDerivedEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "VersionedDerivedIdEntity{" +
+                "id=" + id +
+                '}';
     }
 }

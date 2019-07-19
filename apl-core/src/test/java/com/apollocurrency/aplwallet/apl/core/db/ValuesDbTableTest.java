@@ -5,24 +5,31 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChildDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.table.VersionedValuesDbTableImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDbTableTest<T> {
+@EnableWeld
+public class ValuesDbTableTest {
     private DbKey INCORRECT_DB_KEY = new DbKey() {
         @Override
         public int compareTo(Object o) {
@@ -41,133 +48,91 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         }
     };
 
-    public ValuesDbTableTest(Class<T> clazz) {
-        super(clazz);
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/derived-data.sql", null);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+            FullTextConfigImpl.class,
+            DerivedDbTablesRegistryImpl.class)
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .build();
 
-    }
-
-    public ValuesDbTable<T> getTable() {
-        return (ValuesDbTable<T>) getDerivedDbTable();
-    }
+    private CacheUtils<VersionedChildDerivedEntity> cacheUtils;
+    private DerivedTestData data;
 
     @BeforeEach
-    @Override
-    public void setUp() {
-        super.setUp();
-        table = getTable();
-        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),2));
-        assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(),3));
+    void setUp() {
+        data = new DerivedTestData();
+        versionedTable = new VersionedValuesDbTableImpl();
+        cacheUtils = new CacheUtils<>(versionedTable, extension);
     }
 
-    ValuesDbTable<T> table ;
+    ValuesDbTable<VersionedChildDerivedEntity> versionedTable;
 
     @Test
-    public void testGetByDbKey() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3);
-        List<T> values = sortByHeightAsc(entry.getValue());
-        DbKey dbKey = entry.getKey();
-        List<T> result = table.get(dbKey);
-        assertEquals(values, result);
+    void testGetByDbKey() {
+        List<VersionedChildDerivedEntity> result = versionedTable.get(versionedTable.getDbKeyFactory().newKey(data.VCE_2_1_3));
+        assertEquals(List.of(data.VCE_2_1_3, data.VCE_2_2_3, data.VCE_2_3_3), result);
     }
 
     @Test
-    public void testGetByUnknownDbKey() {
-        List<T> actual = table.get(INCORRECT_DB_KEY);
+    void testGetByUnknownDbKey() {
+        List<VersionedChildDerivedEntity> actual = versionedTable.get(INCORRECT_DB_KEY);
         assertTrue(actual.isEmpty(), "No records should be found at dbkey -1");
 
     }
 
-    @Override
     @Test
-    public void testInsert() {
-        List<T> toInsert = dataToInsert();
+    void testInsert() {
+        List<VersionedChildDerivedEntity> toInsert = List.of(data.NEW_VCE_1, data.NEW_VCE_2);
         DbUtils.inTransaction(extension, (con) -> {
-            table.insert(toInsert);
+            versionedTable.insert(toInsert);
             //check cache in transaction
-            assertInCache(toInsert);
+            cacheUtils.assertInCache(toInsert);
         });
         //check db
-        assertNotInCache(toInsert);
-        List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
+        cacheUtils.assertNotInCache(toInsert);
+        List<VersionedChildDerivedEntity> retrievedData = versionedTable.get(versionedTable.getDbKeyFactory().newKey(toInsert.get(0)));
         assertEquals(toInsert, retrievedData);
     }
 
     @Test
-    public void testGetInCached() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
-        List<T> values = sortByHeightAsc(entry.getValue());
-        DbKey dbKey = entry.getKey();
+    void testGetInCached() {
+        List<VersionedChildDerivedEntity> values = List.of(data.VCE_1_1_2, data.VCE_1_2_2);
+        DbKey dbKey = versionedTable.getDbKeyFactory().newKey(data.VCE_1_2_2);
         DbUtils.inTransaction(extension, con -> {
-            List<T> actual = table.get(dbKey);
-            assertInCache(values);
+            List<VersionedChildDerivedEntity> actual = versionedTable.get(dbKey);
+            cacheUtils.assertInCache(values);
             assertEquals(values, actual);
         });
-        assertNotInCache(values);
+        cacheUtils.assertNotInCache(values);
     }
 
     @Test
-    public void testGetFromDeletedCache() {
-        Map.Entry<DbKey, List<T>> entry = getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2);
-        List<T> values = sortByHeightAsc(entry.getValue());
-        DbKey dbKey = entry.getKey();
+    void testGetFromDeletedCache() {
+        List<VersionedChildDerivedEntity> values = List.of(data.VCE_1_1_2, data.VCE_1_2_2);
+        DbKey dbKey = versionedTable.getDbKeyFactory().newKey(data.VCE_1_2_2);
         DbUtils.inTransaction(extension, con -> {
-            List<T> actual = table.get(dbKey);
-            assertInCache(values);
+            List<VersionedChildDerivedEntity> actual = versionedTable.get(dbKey);
+            cacheUtils.assertInCache(values);
             assertEquals(values, actual);
-            removeFromCache(values);
-            assertNotInCache(values);
+            cacheUtils.removeFromCache(values);
+            cacheUtils.assertNotInCache(values);
         });
-        assertNotInCache(values);
+        cacheUtils.assertNotInCache(values);
     }
 
 
     @Test
-    public void testInsertNotInTransaction() {
-        assertThrows(IllegalStateException.class, () -> table.insert(Collections.emptyList()));
+    void testInsertNotInTransaction() {
+        assertThrows(IllegalStateException.class, () -> versionedTable.insert(Collections.emptyList()));
     }
 
     @Test
-    public void testInsertWithDifferentDbKeys() {
-        List<T> dataToInsert = dataToInsert();
-        T t = dataToInsert.get(0);
-        t.setDbKey(INCORRECT_DB_KEY);
-        assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
+    void testInsertWithDifferentDbKeys() {
+        List<VersionedChildDerivedEntity> dataToInsert = List.of(data.NEW_VCE_1, data.NEW_VCE_2);
+        data.NEW_VCE_1.setDbKey(INCORRECT_DB_KEY);
+        assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> versionedTable.insert(dataToInsert)));
     }
 
-
-    public void assertInCache(List<T> values) {
-        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
-        assertEquals(values, cachedValues);
-    }
-
-    public void assertNotInCache(List<T> values) {
-        List<T> cachedValues = getCache(table.getDbKeyFactory().newKey(values.get(0)));
-        assertNotEquals(values, cachedValues);
-    }
-
-    public  List<T> getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
-            return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
-        } else {
-            return getCacheInTransaction(dbKey);
-        }
-    }
-
-    public List<T> getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        return (List<T>) cache.get(dbKey);
-    }
-
-
-    public void removeFromCache(List<T> values) {
-        DbKey dbKey = table.getDbKeyFactory().newKey(values.get(0));
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        cache.remove(dbKey);
-    }
-
-    protected abstract List<T> dataToInsert();
-
-    protected List<T> getAllLatest() {
-        return getAll();
-    }
 }

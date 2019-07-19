@@ -44,12 +44,12 @@ public interface PhasingPollService {
 
     List<Transaction> getFinishingTransactionsByTime(int time);
 
-    DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
+    List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 
-    DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                       long accountId, boolean withoutWhitelist, int from, int to);
+    List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+                                                   long accountId, boolean withoutWhitelist, int from, int to);
 
-    DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
+    List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
 
     int getAccountPhasedTransactionCount(long accountId);
 

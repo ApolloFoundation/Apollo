@@ -12,179 +12,176 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChildDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.table.VersionedValuesDbTableImpl;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+@EnableWeld
+class VersionedValuesDbTableTest {
+    @RegisterExtension
+    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/derived-data.sql", null);
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+            FullTextConfigImpl.class,
+            DerivedDbTablesRegistryImpl.class)
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .build();
 
-public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntity> extends ValuesDbTableTest<T> {
+    VersionedDeletableValuesDbTable<VersionedChildDerivedEntity> table;
+    DerivedTestData data;
+    CacheUtils<VersionedChildDerivedEntity> cacheUtils;
 
-    public VersionedValuesDbTableTest(Class<T> clazz) {
-        super(clazz);
-    }
-
-    VersionedDeletableValuesDbTable<T> table;
 
     @BeforeEach
-    public void setUp() {
-        super.setUp();
-        table = (VersionedDeletableValuesDbTable<T>) getTable();
+    void setUp() {
+        data = new DerivedTestData();
+        table = new VersionedValuesDbTableImpl();
+        cacheUtils = new CacheUtils<>(table, extension);
     }
 
-    @Override
-    protected List<T> getAllLatest() {
-        return sortByHeightDesc(getAll().stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList()));
-    }
-
-    @Override
     @Test
-    public void testDelete() {
+    void testDelete() {
         DbUtils.inTransaction(extension, (con) -> {
 
-            List<T> allLatest = getAllLatest();
-            Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(allLatest, table.getDbKeyFactory(), 3);
-            int deleteHeight = sortByHeightDesc(valuesToDelete.getValue()).get(0).getHeight() + 1;
-            boolean deleted = table.delete(valuesToDelete.getValue().get(0), deleteHeight);
+            List<VersionedChildDerivedEntity> valuesToDelete = List.of(data.VCE_2_1_3, data.VCE_2_2_3, data.VCE_2_3_3);
+            DbKey dbKey = table.getDbKeyFactory().newKey(valuesToDelete.get(0));
+            int deleteHeight = data.VCE_2_3_3.getHeight() + 1;
+            boolean deleted = table.delete(valuesToDelete.get(0), deleteHeight); // should delete all values linked to same dbKey
             assertTrue(deleted);
-            List<T> values = table.get(valuesToDelete.getKey());
+            List<VersionedChildDerivedEntity>  values = table.get(dbKey);
             assertTrue(values.isEmpty());
-            List<T> all;
+            List<VersionedChildDerivedEntity>  all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
             }
             catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
-            assertFalse(all.containsAll(valuesToDelete.getValue()));
-            List<T> expectedDeleted = valuesToDelete.getValue().stream().peek(v -> v.setLatest(false)).collect(Collectors.toList());
-            assertTrue(all.containsAll(expectedDeleted));
-            long lastDbId = sortByHeightDesc(getAll()).get(0).getDbId();
-            expectedDeleted = sortByHeightAsc(valuesToDelete.getValue());
-            for (T t : expectedDeleted) {
+            assertFalse(all.containsAll(valuesToDelete));
+            valuesToDelete.forEach(e-> e.setLatest(false));
+            assertTrue(all.containsAll(valuesToDelete));
+            long lastDbId = data.VCE_4_1_1.getDbId();
+            for (VersionedChildDerivedEntity  t : values) {
                 t.setHeight(deleteHeight);
                 t.setDbId(++lastDbId);
             }
-            assertTrue(all.containsAll(expectedDeleted));
+            assertTrue(all.containsAll(valuesToDelete));
         });
     }
 
     @Test
-    public void testDeleteOutsideTransaction() {
-        assertThrows(IllegalStateException.class, () -> table.delete(mock(clazz), 0));
+    void testDeleteOutsideTransaction() {
+        assertThrows(IllegalStateException.class, () -> table.delete(data.VCE_4_1_1, 0));
     }
 
     @Test
-    public void testDeleteForNull() {
+    void testDeleteForNull() {
         assertFalse(table.delete(null, 0));
     }
 
     @Test
-    public void testDeleteForSameHeight() {
+    void testDeleteForSameHeight() {
         DbUtils.inTransaction(extension, (con) -> {
 
-            List<T> allLatest = getAllLatest();
-            Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(allLatest, table.getDbKeyFactory(), 2);
-            int deleteHeight = sortByHeightDesc(valuesToDelete.getValue()).get(0).getHeight();
-            boolean deleted = table.delete(valuesToDelete.getValue().get(0), deleteHeight);
+            List<VersionedChildDerivedEntity> valuesToDelete = List.of(data.VCE_1_1_2, data.VCE_1_2_2);
+            DbKey dbKey = table.getDbKeyFactory().newKey(valuesToDelete.get(0));
+            int deleteHeight = data.VCE_1_1_2.getHeight();
+            boolean deleted = table.delete(valuesToDelete.get(0), deleteHeight);
             assertTrue(deleted);
-            List<T> values = table.get(valuesToDelete.getKey());
+            List<VersionedChildDerivedEntity>  values = table.get(dbKey);
             assertTrue(values.isEmpty());
-            List<T> all;
+            List<VersionedChildDerivedEntity>  all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
             }
             catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
-            assertEquals(getAll().size(), all.size());
-            assertFalse(all.containsAll(valuesToDelete.getValue()));
-            List<T> expectedDeleted = valuesToDelete.getValue().stream().peek(v -> v.setLatest(false)).collect(Collectors.toList());
-            assertTrue(all.containsAll(expectedDeleted));
-            assertEquals(all.size(), getAll().size());
+            assertEquals(12, all.size());
+            assertFalse(all.containsAll(valuesToDelete));
+            valuesToDelete.forEach(v -> v.setLatest(false));
+            assertTrue(all.containsAll(valuesToDelete));
         });
     }
 
     @Test
-    public void testDeleteValuesAtHeightBelowLastValueToDelete() {
+    void testDeleteValuesAtHeightBelowLastValueToDelete() {
         DbUtils.inTransaction(extension, (con) -> {
-            Map.Entry<DbKey, List<T>> valuesToDelete = getEntryWithListOfSize(getAll(), table.getDbKeyFactory(), 6);
-            int deleteHeight = sortByHeightAsc(valuesToDelete.getValue()).get(0).getHeight();
-            boolean deleted = table.delete(valuesToDelete.getValue().get(0), deleteHeight);
+            List<VersionedChildDerivedEntity> valuesToDelete = List.of(data.VCE_2_1_1, data.VCE_2_1_2, data.VCE_2_1_2, data.VCE_2_1_3, data.VCE_2_2_3, data.VCE_2_3_3);
+            DbKey dbKey = table.getDbKeyFactory().newKey(valuesToDelete.get(0));
+            int deleteHeight = data.VCE_2_1_1.getHeight();
+            boolean deleted = table.delete(valuesToDelete.get(0), deleteHeight);
             assertTrue(deleted);
-            List<T> values = table.get(valuesToDelete.getKey());
+            List<VersionedChildDerivedEntity>  values = table.get(dbKey);
             assertTrue(values.isEmpty());
-            List<T> all;
+            List<VersionedChildDerivedEntity>  all;
             try {
                 all = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
             }
             catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
-            assertEquals(getAll().size() - 6, all.size());
-            assertFalse(all.containsAll(valuesToDelete.getValue()));
-            List<T> expectedDeleted = valuesToDelete.getValue().stream().peek(v -> v.setLatest(false)).collect(Collectors.toList());
-            assertFalse(all.containsAll(expectedDeleted));
+            assertEquals(6, all.size());
+            assertFalse(all.containsAll(valuesToDelete));
+            valuesToDelete.forEach(v -> v.setLatest(false)); // no effect, all values were deleted
+            assertFalse(all.containsAll(valuesToDelete));
         });
     }
 
     @Test
-    public void testDeleteForIncorrectDbKey() {
+    void testDeleteForIncorrectDbKey() {
         DbUtils.inTransaction(extension, (con) -> {
-            T valueToDelete = getAllLatest().get(0);
+            VersionedChildDerivedEntity valueToDelete = data.VCE_3_1_1;
             valueToDelete.setDbKey(mock(DbKey.class));
             assertThrows(RuntimeException.class, () -> table.delete(valueToDelete, valueToDelete.getHeight() + 1));
         });
     }
 
-    @Override
-    public List<T> getDeletedMultiversionRecord() {
-        return sortByHeightAsc(groupByDbKey()
-                .entrySet()
-                .stream()
-                .filter(e -> e.getValue().size() >= 2
-                        && !e.getValue()
-                        .stream()
-                        .allMatch(VersionedDerivedEntity::isLatest))
-                .map(e -> e.getValue().get(0))
-                .collect(Collectors.toList()));
-    }
-
     @Test
-    public void testInsertWithSameKey() throws SQLException {
-        List<T> toInsert = sortByHeightAsc(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3).getValue());
-        List<Long> dbIds = toInsert.stream().map(T::getDbId).collect(Collectors.toList());
+    void testInsertWithSameKey() throws SQLException {
+        List<VersionedChildDerivedEntity> toInsert = List.of(data.VCE_2_1_3, data.VCE_2_2_3, data.VCE_2_3_3);
+        List<Long> dbIds = toInsert.stream().map(VersionedChildDerivedEntity::getDbId).collect(Collectors.toList());
 
         DbUtils.inTransaction(extension, (con) -> {
-            List<T> values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
+            List<VersionedChildDerivedEntity>  values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
 
             assertEquals(toInsert, values);
-            assertInCache(toInsert);
+            cacheUtils.assertInCache(toInsert);
             toInsert.forEach(t-> t.setHeight(t.getHeight() + 1));
             table.insert(toInsert);
             //check cache in transaction
-            assertInCache(toInsert);
+            cacheUtils.assertInCache(toInsert);
 
         });
         toInsert.forEach(t -> t.setHeight(t.getHeight() - 1));
         //check db
-        assertNotInCache(toInsert);
-        List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
-        long lastDbId = sortByHeightDesc(getAll()).get(0).getDbId();
-        for (T t : toInsert) {
+        cacheUtils.assertNotInCache(toInsert);
+        List<VersionedChildDerivedEntity>  retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
+        long lastDbId = data.VCE_4_1_1.getDbId();
+        for (VersionedChildDerivedEntity  t : toInsert) {
             t.setHeight(t.getHeight() + 1);
             t.setDbId(++lastDbId);
         }
         assertEquals(toInsert, retrievedData);
-        List<T> allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        List<VersionedChildDerivedEntity>  allValues = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
         assertTrue(allValues.containsAll(toInsert));
         for (int i = 0; i < toInsert.size(); i++) {
-            T t = toInsert.get(i);
+            VersionedChildDerivedEntity  t = toInsert.get(i);
             t.setHeight(t.getHeight() - 1);
             t.setLatest(false);
             t.setDbId(dbIds.get(i));
