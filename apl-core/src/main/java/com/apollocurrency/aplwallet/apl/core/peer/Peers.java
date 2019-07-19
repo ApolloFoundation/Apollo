@@ -584,9 +584,9 @@ public final class Peers {
             if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }
-        }else{
-            p = inboundPeers.remove(peer.getHostWithPort());
         }
+        inboundPeers.remove(peer.getHostWithPort());
+        
         return p;
     }
 

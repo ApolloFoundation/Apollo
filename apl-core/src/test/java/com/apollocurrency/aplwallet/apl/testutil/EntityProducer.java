@@ -236,6 +236,16 @@ public class EntityProducer {
                 return 0L;
             }
 
+            @Override
+            public boolean isInboundSocket() {
+                return false;
+            }
+
+            @Override
+            public boolean isOutboundSocket() {
+                return false;
+            }
+
         };
         return peer;
     }

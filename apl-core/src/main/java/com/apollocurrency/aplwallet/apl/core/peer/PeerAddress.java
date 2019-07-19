@@ -20,7 +20,7 @@ public final class PeerAddress implements Comparable{
     private InetAddress ipAddress;
     private String hostName;    
     private Integer port;
-    @Getter
+
     private boolean valid=true;
     
     public PeerAddress(int port, String host){
@@ -122,8 +122,13 @@ public final class PeerAddress implements Comparable{
        return res;
     }
     
+    public boolean isValid(){
+        return valid;
+    }
+    
     @Override
     public String toString(){
         return "host:"+ipAddress+" name:"+hostName+" port: "+port;
     }
+    
 }

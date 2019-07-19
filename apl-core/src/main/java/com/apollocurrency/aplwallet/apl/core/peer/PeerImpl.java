@@ -115,11 +115,11 @@ public final class PeerImpl implements Peer {
         this.port = addrByFact.getPort();
         
         this.propertiesHolder=propertiesHolder;
-        pi.setShareAddress(true);
         if(announcedAddress==null){
             LOG.trace("got empty announcedAddress from host {}",getHostWithPort());
             pi.setShareAddress(false);
         }else{
+            pi.setShareAddress(true);
             pi.setAnnouncedAddress(announcedAddress.getAddrWithPort());
         }
         this.state = PeerState.NON_CONNECTED;
@@ -436,14 +436,22 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return p2pTransport.isInbound();
+        return pi.getAnnouncedAddress()==null;
     }
 
     @Override
     public boolean isOutbound() {
-        return p2pTransport.isOutbound();
+        return pi.getAnnouncedAddress()!=null;
+    }
+    @Override
+    public boolean isInboundSocket() {
+        return p2pTransport.isInbound();
     }
 
+    @Override
+    public boolean isOutboundSocket() {
+        return p2pTransport.isOutbound();
+    }
     @Override
     public String getBlacklistingCause() {
         return blacklistingCause == null ? "unknown" : blacklistingCause;
