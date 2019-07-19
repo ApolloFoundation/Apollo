@@ -33,10 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.math.BigInteger;
 import javax.enterprise.inject.Instance;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.Arrays;
 
 /**
  *
@@ -140,7 +138,7 @@ public class ShardDownloader {
             //avoid modification while iterating
             for (String pa : additionalPeersCopy) {
 
-                Peer p = Peers.findOrCreatePeer(pa, true);
+                Peer p = Peers.findOrCreatePeer(null, pa, true);
                 if(p!=null) {
                     if (processPeerShardInfo(p)) {
                         counterWinShardInfo++;

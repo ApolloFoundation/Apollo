@@ -51,11 +51,11 @@ public class BlacklistPeer extends AbstractAPIRequestHandler {
         if (peerAddress == null) {
             return MISSING_PEER;
         }
-        Peer peer = Peers.findOrCreatePeer(peerAddress, true);
+        Peer peer = Peers.findOrCreatePeer(null,peerAddress, true);
         if (peer == null) {
             return UNKNOWN_PEER;
         } else {
-            Peers.addPeer(peer);
+           // Peers.addPeer(peer);
             peer.blacklist("Manual blacklist");
             response.put("done", true);
         }

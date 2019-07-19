@@ -78,7 +78,7 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
-public final class AplCore {
+    public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
@@ -324,8 +324,11 @@ public final class AplCore {
         sb.append("\nRuntime total memory :" + String.format(" %,d KB", (runtime.totalMemory() / 1024)) );
         sb.append("\nRuntime free  memory :" + String.format(" %,d KB", (runtime.freeMemory() / 1024)) );
         sb.append("\nRuntime max   memory :" + String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
+        sb.append("\nActive threads count :" + Thread.activeCount() );
         sb.append("\nInbound peers count: "+Peers.getInboundPeers().size());
         sb.append(", Active peers count: "+Peers.getActivePeers().size());
+        sb.append(", Known peers count: "+Peers.getAllPeers().size());
+        sb.append(", Connectable peers count: "+Peers.getAllConnectablePeers().size());
         return sb.toString();
     }
     private void recoverSharding() {

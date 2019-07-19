@@ -50,7 +50,7 @@ public class BlacklistAPIProxyPeer extends AbstractAPIRequestHandler {
         if (peerAddress == null) {
             return MISSING_PEER;
         }
-        Peer peer = Peers.findOrCreatePeer(peerAddress, true);
+        Peer peer = Peers.findOrCreatePeer(null,peerAddress, true);
         JSONObject response = new JSONObject();
         if (peer == null) {
             return UNKNOWN_PEER;

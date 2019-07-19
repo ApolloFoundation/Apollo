@@ -186,7 +186,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+        PeerImpl peer = Peers.findOrCreatePeer(pa,null,true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -253,14 +253,12 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
+            Thread.currentThread().setName("doPostTask-"+peer.getHostWithPort());
             if (peer.isBlacklisted()) { 
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
                jsonResponse = process(peer, new StringReader(request));
             }
-        }
-        if(jsonResponse==null){ //we've got error
-            return;
         }
         // Return the response
         try {
@@ -268,6 +266,10 @@ public final class PeerServlet extends WebSocketServlet {
             JSON.writeJSONString(jsonResponse, writer);
             String response = writer.toString();
             transport.send(response, requestId);
+            //check if we returned error and should close inbound socket
+            if(peer!=null){
+               peer.processError(response);
+            }
         } catch (RuntimeException e) {
             LOG.debug("Exception while responing to {}", transport.which(), e);
             processException(peer, e);
@@ -275,12 +277,6 @@ public final class PeerServlet extends WebSocketServlet {
             LOG.debug("Exception while responding to {}", transport.which(), e);
             if (peer != null) {
                 peer.deactivate("IO exception sending response to: " + transport.which());
-            }
-        }
-        if (jsonResponse == PeerResponses.UNSUPPORTED_PROTOCOL) {
-            if (peer != null) {
-                String msg = "Unsupported protocol";
-                peer.deactivate(msg);
             }
         }
     }
@@ -362,9 +358,11 @@ public final class PeerServlet extends WebSocketServlet {
             Object res = null;
             if (Peers.useWebSockets) {
                 String host = req.getRemoteAddress();
-                int port=req.getRemotePort();
+                int port = req.getRemotePort();
+                PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host+":"+port);
+//TODO: it is bad and we have to use reliable node ID to distinguish peers
+                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);

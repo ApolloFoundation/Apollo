@@ -22,19 +22,13 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 public class PeerWebSocketClient extends PeerWebSocket{
 
     private final WebSocketClient client;
-    private boolean connected = false;
-    
+
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer); 
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
     }
-
-
-//    public PeerWebSocketClient(PeerImpl peer) {
-
-//    }
 
     public boolean startClient(URI uri) {
         if (uri == null) {
@@ -43,11 +37,11 @@ public class PeerWebSocketClient extends PeerWebSocket{
         boolean websocketOK = false;
         try {
             client.start();
+            client.setStopAtShutdown(true);
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
-            connected = websocketOK;
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
@@ -61,6 +55,22 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
 
         return websocketOK;
+    }
+
+    @Override
+    public void close() {
+        super.close(); 
+        stop();
+    }
+
+    private void stop() {
+        try {
+           if(client!=null){ 
+              client.stop();
+           }
+        } catch (Exception ex) {
+            log.trace("Exception on websocket client stop");
+        }      
     }
 
 }

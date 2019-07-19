@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PEER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PEER;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
@@ -49,7 +50,7 @@ public final class GetPeer extends AbstractAPIRequestHandler {
             return MISSING_PEER;
         }
 
-        Peer peer = Peers.findOrCreatePeer(peerAddress, false);
+        Peer peer = Peers.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
         if (peer == null) {
             return UNKNOWN_PEER;
         }

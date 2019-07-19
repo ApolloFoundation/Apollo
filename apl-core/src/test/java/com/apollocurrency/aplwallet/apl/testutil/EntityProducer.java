@@ -231,6 +231,21 @@ public class EntityProducer {
                 return false;
             }
 
+            @Override
+            public long getServices() {
+                return 0L;
+            }
+
+            @Override
+            public boolean isInboundSocket() {
+                return false;
+            }
+
+            @Override
+            public boolean isOutboundSocket() {
+                return false;
+            }
+
         };
         return peer;
     }

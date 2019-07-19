@@ -170,7 +170,7 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        if(ws==inboundWebSocket){
+        if(ws==inboundWebSocket){            
             inboundWebSocket = null;
         }else if(ws==outboundWebSocket){
             outboundWebSocket=null;
@@ -255,6 +255,10 @@ public class Peer2PeerTransport {
     public boolean send(String message, Long requestId) {
         cleanUp();
             boolean sendOK = false;
+            if(message==null||message.isEmpty()){
+                //we have nothing to send
+                return sendOK;
+            }
             if (useWebSocket) {
                 if (isInbound()) {
                     sendOK  = sendToWebSocket(message, inboundWebSocket, requestId);

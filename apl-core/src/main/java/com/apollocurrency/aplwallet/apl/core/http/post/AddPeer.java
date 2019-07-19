@@ -52,7 +52,7 @@ public class AddPeer extends AbstractAPIRequestHandler {
             return MISSING_PEER;
         }
         JSONObject response = new JSONObject();
-        Peer peer = Peers.findOrCreatePeer(peerAddress, true);
+        Peer peer = Peers.findOrCreatePeer(null,peerAddress, true);
         if (peer != null) {
             boolean isNewlyAdded = Peers.addPeer(peer, peerAddress);
             Peers.connectPeer(peer);
