@@ -577,14 +577,17 @@ public final class Peers {
     }
 
     public static PeerImpl removePeer(Peer peer) {
-        PeerDb.Entry entry = new PeerDb.Entry(peer.getHostWithPort(), 0, 0);
-        PeerDb.deletePeer(entry);
         PeerImpl p;
-        if(connectablePeers.containsKey(peer.getAnnouncedAddress())){
-            p = connectablePeers.remove(peer.getAnnouncedAddress());
+        if (peer.getAnnouncedAddress() != null) {
+            PeerDb.Entry entry = new PeerDb.Entry(peer.getAnnouncedAddress(), 0, 0);
+            PeerDb.deletePeer(entry);
+            if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
+                p = connectablePeers.remove(peer.getAnnouncedAddress());
+            }
         }else{
             p = inboundPeers.remove(peer.getHostWithPort());
         }
+        
         
         return p;
     }
