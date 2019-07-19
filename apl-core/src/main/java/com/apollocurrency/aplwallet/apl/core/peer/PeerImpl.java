@@ -878,7 +878,7 @@ public final class PeerImpl implements Peer {
         } else {
             try {
                 BaseP2PResponse resp = mapper.readValue(message, BaseP2PResponse.class);
-                if (!StringUtils.isBlank(resp.error)) {
+                if (resp !=null && !StringUtils.isBlank(resp.error)) {
                     LOG.debug("Parsed error response from: {}. Error: {}", getHostWithPort(), resp.error);
                     if (Errors.BLACKLISTED.equalsIgnoreCase(resp.error)) {
                         String msg = String.format("We are blacklisted by %s, cause: %s", getHostWithPort(), resp.cause);
