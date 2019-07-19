@@ -60,13 +60,14 @@ public class PeerWebSocketClient extends PeerWebSocket{
     @Override
     public void close() {
         super.close(); 
-        stop();
+        destroy();
     }
 
-    private void stop() {
+    private void destroy() {
         try {
            if(client!=null){ 
               client.stop();
+              client.destroy();
            }
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop");

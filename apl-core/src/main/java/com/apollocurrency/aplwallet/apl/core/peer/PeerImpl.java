@@ -468,7 +468,7 @@ public final class PeerImpl implements Peer {
             handshake(chainId);
         }
         if(state!=PeerState.CONNECTED){
-            LOG.error("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
+            LOG.trace("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
             return null;
         }else{        
             return send(request);
