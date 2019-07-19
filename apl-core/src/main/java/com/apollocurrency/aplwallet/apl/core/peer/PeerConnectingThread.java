@@ -67,7 +67,7 @@ class PeerConnectingThread implements Runnable {
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
                         connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
-                            PeerAddress pa = new PeerAddress(peer.getPort(),peer.getHost());
+                            PeerAddress pa = new PeerAddress(peer.getAnnouncedAddress());
                             if(Peers.isMyAddress(pa)){
                                 return null;
                             }

@@ -26,7 +26,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -154,15 +153,13 @@ public final class PeerImpl implements Peer {
     }
 
     private void setState(PeerState newState) {
-        //do nothing if there's no state change
-        if (this.state == newState) {
-            return;
-        }        
-        //well, if we are connected and some routine say to disconnect
-        //we should close all
-        if (newState == PeerState.DISCONNECTED && state == PeerState.CONNECTED) {
+        // if we are even not connected and some routine say to disconnect
+        // we should close all because possily we alread tried to connect and have
+        // client thread running
+        if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
-        }
+        }        
+       
         if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED || newState==PeerState.DISCONNECTED) {
@@ -546,7 +543,7 @@ public final class PeerImpl implements Peer {
             LOG.trace("Peers {} is already connected.",getHostWithPort());
             return;
         }
-        LOG.trace("Start handshake Thread to chainId = {}...", targetChainId);
+        LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
             JSONObject response = send(Peers.getMyPeerInfoRequest());
