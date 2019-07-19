@@ -131,6 +131,7 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
+        setLastUpdated(timeService.getEpochTime());
     }
     
     @Override
