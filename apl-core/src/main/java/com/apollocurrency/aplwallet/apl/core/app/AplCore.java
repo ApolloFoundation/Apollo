@@ -324,6 +324,7 @@ public final class AplCore {
         sb.append("\nRuntime total memory :" + String.format(" %,d KB", (runtime.totalMemory() / 1024)) );
         sb.append("\nRuntime free  memory :" + String.format(" %,d KB", (runtime.freeMemory() / 1024)) );
         sb.append("\nRuntime max   memory :" + String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
+        sb.append("\nActive threads count :" + Thread.activeCount() );
         sb.append("\nInbound peers count: "+Peers.getInboundPeers().size());
         sb.append(", Active peers count: "+Peers.getActivePeers().size());
         return sb.toString();
