@@ -646,7 +646,7 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            Set<Peer> peers = Set.copyOf(getPeers(PeerState.CONNECTED));
+            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
             peers.addAll(connectablePeers.values());
             for (final Peer peer : peers) {
 
