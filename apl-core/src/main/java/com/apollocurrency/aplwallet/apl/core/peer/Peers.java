@@ -579,11 +579,11 @@ public final class Peers {
     //connected, but we should be carefull because peer could be connecting
     //right now
     private static void cleanupInboundPeers(Peer peer){
-        inboundPeers.remove(peer.getHostWithPort());
         int now = timeService.getEpochTime();
         Set<Peer> toDelete=new HashSet<>();
+        toDelete.add(peer);
         inboundPeers.values().stream()
-                .filter((p) -> (p.getState()!=PeerState.CONNECTED && now - p.getLastUpdated()>connectTimeout*2 ))
+                .filter((p) -> (p.getState()!=PeerState.CONNECTED && now - p.getLastUpdated()>(connectTimeout/1000+1)*2 ))
                 .forEachOrdered((p) -> toDelete.add(p));
         
         toDelete.forEach((p) -> {
@@ -646,7 +646,7 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            Set<Peer> peers = Set.copyOf(getPeers(PeerState.CONNECTED));
+            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
             peers.addAll(connectablePeers.values());
             for (final Peer peer : peers) {
 
