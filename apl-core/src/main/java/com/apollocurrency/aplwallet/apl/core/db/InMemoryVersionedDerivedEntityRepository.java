@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -31,22 +33,24 @@ import java.util.stream.Collectors;
  *
  * @param <T> versioned derived entity to store
  */
-public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerivedEntity> {
+public abstract class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerivedEntity> {
 
-    private Map<DbKey, List<T>> allEntities = new HashMap<>();
+    private Map<DbKey, EntityWithChanges<T>> allEntities = new HashMap<>();
     private long counter = 0;
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private KeyFactory<T> keyFactory;
+    private List<String> chageableColumns;
 
-    public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory) {
+    public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory, List<String> changeableColumns) {
         this.keyFactory = keyFactory;
+        this.chageableColumns = changeableColumns;
     }
 
     protected KeyFactory<T> getKeyFactory() {
         return keyFactory;
     }
 
-    protected Map<DbKey, List<T>> getAllEntities() {
+    protected Map<DbKey, EntityWithChanges<T>> getAllEntities() {
         return allEntities;
     }
 
@@ -66,15 +70,39 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
     public void putAll(List<T> objects) {
         inWriteLock(() ->
         {
-            allEntities.putAll(objects.stream()
+            Map<DbKey, List<T>> groupedObjects = objects.stream()
                     .collect(groupingBy(keyFactory::newKey,
                             Collectors.collectingAndThen(Collectors.toList(), l -> l.stream()
                                     .sorted(Comparator.comparing(DerivedEntity::getHeight))
-                                    .collect(Collectors.toList())))));
+                                    .collect(Collectors.toList()))));
+            for (Map.Entry<DbKey, List<T>> entry : groupedObjects.entrySet()) {
+                DbKey dbKey = entry.getKey();
+                List<T> historicalEntities = entry.getValue();
+                T lastValue = historicalEntities.get(historicalEntities.size() - 1);
+                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), s-> new ArrayList<>()));
+                for (T historicalEntity : historicalEntities) {
+                    chageableColumns.forEach(name-> {
+                        List<Change> columnChanges = changes.get(name);
+                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : columnChanges.get(columnChanges.size() - 1), historicalEntity);
+                        if (columnChange != null) {
+                            columnChanges.add(new Change(historicalEntity.getHeight(), columnChange));
+                        }
+                    });
+                }
+                EntityWithChanges<T> entityWithChanges = new EntityWithChanges<>(lastValue, changes);
+                allEntities.put(dbKey, entityWithChanges);
+            }
+
             Optional<Long> maxId = objects.stream().map(DerivedEntity::getDbId).max(Comparator.naturalOrder());
             counter = maxId.orElse(0L);
         });
     }
+
+    // alternatively, we could use reflection, but it will be slower significantly
+    public abstract Object analyzeChanges(String columnName, Object prevValue, T entity);
+
+    // set value for column with such name for entity
+    public abstract void setColumn(String columnName, Object value, T entity);
 
     public void clear() {
         inWriteLock(() -> allEntities.clear());
@@ -105,9 +133,9 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
 
     public T get(DbKey dbKey) {
         return inReadLock(() -> {
-            List<T> entities = allEntities.get(dbKey);
-            if (entities != null) {
-                T t = entities.get(entities.size() - 1);
+            EntityWithChanges<T> entity = allEntities.get(dbKey);
+            if (entity != null) {
+                T t = entity.getEntity();
                 if (t.isLatest()) {
                     return t;
                 }
@@ -118,9 +146,9 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
 
     public T getCopy(DbKey dbKey) {
         return inReadLock(() -> {
-            List<T> existingEntities = allEntities.get(dbKey);
-            if (existingEntities != null) {
-                T lastObject = existingEntities.get(existingEntities.size() - 1);
+            EntityWithChanges<T> entity = allEntities.get(dbKey);
+            if (entity != null) {
+                T lastObject = entity.getEntity();
                 try {
                     T clone = (T) lastObject.clone();
                     if (clone.isLatest()) {
@@ -138,13 +166,13 @@ public class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerived
     public boolean delete(T entity) {
         return getInWriteLock(() -> {
             DbKey dbKey = getKeyFactory().newKey(entity);
-            List<T> existingEntities = allEntities.get(dbKey);
+            EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
             entity.setLatest(false);
-            if (existingEntities != null) {
-                int lastPosition = existingEntities.size() - 1; // assume that existing list of entities has min size 1
-                T existingEntity = existingEntities.get(lastPosition);
-                existingEntity.setLatest(false);
-                existingEntities.add(entity);
+            if (existingEntity != null) {
+                T ourEntity = existingEntity.getEntity();
+                ourEntity.setLatest(false);
+                List<Change> latestChanges = existingEntity.getChanges().get("latest");
+                latestChanges.add(new Change(entity.getHeight(), false));
                 return true;
             } else {
                 return false;

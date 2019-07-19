@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -126,6 +127,34 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         assertTrue(data.VERSIONED_ENTITY_4_1.isLatest());
         assertTrue(data.VERSIONED_ENTITY_3_1.isLatest());
         assertTrue(data.VERSIONED_ENTITY_2_2.isLatest());
+    }
+
+    @Test
+    void testClear() {
+        repository.clear();
+
+        assertEquals(0, repository.getAllEntities().size());
+    }
+
+    @Test
+    void testGetAll() {
+        List<VersionedDerivedIdEntity> all = repository.getAll(Comparator.comparing(VersionedDerivedIdEntity::getId), 0, Integer.MAX_VALUE);
+
+        assertEquals(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_2_3, data.VERSIONED_ENTITY_3_2), all);
+    }
+
+    @Test
+    void testGetAllWithPagination() {
+        List<VersionedDerivedIdEntity> all = repository.getAll(Comparator.comparing(VersionedDerivedIdEntity::getId), 0, 1);
+
+        assertEquals(List.of(data.VERSIONED_ENTITY_1_1, data.VERSIONED_ENTITY_2_3), all);
+    }
+
+    @Test
+    void testGetCopyWhichNotExists() {
+        VersionedDerivedIdEntity nonexistentEntity = repository.getCopy(new LongKey(Long.MAX_VALUE));
+        
+        assertNull(nonexistentEntity);
     }
 
 }

@@ -123,6 +123,17 @@ class InMemoryDerivedEntityRepositoryTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    void testGetAll() {
+        List<DerivedIdEntity> all = repository.getAll(0, Integer.MAX_VALUE);
+        assertEquals(List.of(die2, die1, die3), all);
+    }
+    @Test
+    void testGetAllWithPagination() {
+        List<DerivedIdEntity> all = repository.getAll(1, 2);
+        assertEquals(List.of(die1, die3), all);
+    }
+
 
     private void assertNothingChanged() {
         Map<DbKey, DerivedIdEntity> allEntities = repository.getAllEntities();

@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -71,14 +70,12 @@ public class PhasingPollTableTest  {
     @Inject
     PhasingPollTable table;
 
-    PhasingTestData ptd;
-    TransactionTestData ttd;
-
-    private BlockTestData btd;
+    private PhasingTestData ptd;
+    private TransactionTestData ttd;
 
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
     }
@@ -259,7 +256,7 @@ public class PhasingPollTableTest  {
     }
 
     @Test
-    public void testInsertAlreadyExist() {
+    void testInsertAlreadyExist() {
         PhasingPoll value = ptd.POLL_1;
         Assertions.assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension.getDatabaseManager(), (con) -> {
             table.insert(value);
