@@ -563,13 +563,10 @@ public final class Peers {
     }
 
     public static boolean addPeer(Peer peer) {
-        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()) {
+        
+        if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            if (!connectablePeers.containsKey(peer.getHostWithPort())) {
-                connectablePeers.put(peer.getHostWithPort(), (PeerImpl) peer);
-            } else {
-                connectablePeers.replace(peer.getHostWithPort(), (PeerImpl) peer);
-            }
+            connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
@@ -654,10 +651,14 @@ public final class Peers {
                     continue;
                 }
 
-                if (!peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
-                        && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT) {
-                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> peer.send(jsonRequest,
-                            blockchainConfig.getChain().getChainId()));
+                if ( !peer.isBlacklisted() 
+//                     && peer.getState() == PeerState.CONNECTED 
+                     && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
+                   ) 
+                {
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
+                        peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
+                    );
                     expectedResponses.add(futureResponse);
                 }
                 if (expectedResponses.size() >= sendToPeersLimit - successful) {
