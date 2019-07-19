@@ -168,15 +168,9 @@ public class Peer2PeerTransport {
         }
         return res;
     }
-
+//just log here, do nothing more
     public void onWebSocketClose(PeerWebSocket ws) {
-        if(ws==inboundWebSocket){            
-            inboundWebSocket = null;
-        }else if(ws==outboundWebSocket){
-            outboundWebSocket=null;
-        }else{
-            log.warn("Unknown websocket closed");
-        }
+        log.debug(which()+" websocket close");
     }
 
     private synchronized void cleanUp() {
