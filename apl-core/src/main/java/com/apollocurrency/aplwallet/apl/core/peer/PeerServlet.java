@@ -186,7 +186,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = Peers.findOrCreatePeer(pa.getAddrWithPort());
+        PeerImpl peer = Peers.findOrCreatePeer(pa,null,true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -358,9 +358,11 @@ public final class PeerServlet extends WebSocketServlet {
             Object res = null;
             if (Peers.useWebSockets) {
                 String host = req.getRemoteAddress();
-                int port=req.getRemotePort();
+                int port = req.getRemotePort();
+                PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(host+":"+port);
+//TODO: it is bad and we have to use reliable node ID to distinguish peers
+                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);

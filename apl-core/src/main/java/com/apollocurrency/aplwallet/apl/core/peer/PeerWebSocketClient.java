@@ -37,6 +37,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         boolean websocketOK = false;
         try {
             client.start();
+            client.setStopAtShutdown(true);
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
@@ -59,13 +60,17 @@ public class PeerWebSocketClient extends PeerWebSocket{
     @Override
     public void close() {
         super.close(); 
+        stop();
+    }
+
+    private void stop() {
         try {
            if(client!=null){ 
               client.stop();
            }
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop");
-        }
+        }      
     }
 
 }

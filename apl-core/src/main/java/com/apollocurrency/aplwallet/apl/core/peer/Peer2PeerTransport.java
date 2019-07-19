@@ -170,7 +170,7 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        if(ws==inboundWebSocket){
+        if(ws==inboundWebSocket){            
             inboundWebSocket = null;
         }else if(ws==outboundWebSocket){
             outboundWebSocket=null;

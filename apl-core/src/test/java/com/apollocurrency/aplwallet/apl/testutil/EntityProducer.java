@@ -231,6 +231,11 @@ public class EntityProducer {
                 return false;
             }
 
+            @Override
+            public long getServices() {
+                return 0L;
+            }
+
         };
         return peer;
     }

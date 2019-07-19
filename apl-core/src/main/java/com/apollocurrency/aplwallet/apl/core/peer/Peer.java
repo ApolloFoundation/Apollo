@@ -129,4 +129,6 @@ public interface Peer extends Comparable<Peer> {
     public boolean isTrusted();
     
     public PeerTrustLevel getTrustLevel();
+    
+    public long getServices();
 }

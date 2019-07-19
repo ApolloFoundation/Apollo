@@ -62,7 +62,7 @@ class GetMorePeersThread implements Runnable {
                     int now = timeService.getEpochTime();
                     for (int i = 0; i < peers.size(); i++) {
                         String announcedAddress = (String) peers.get(i);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);
+                        PeerImpl newPeer = Peers.findOrCreatePeer(null,announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);
@@ -84,7 +84,7 @@ class GetMorePeersThread implements Runnable {
                 }
                 JSONArray myPeers = new JSONArray();
                 JSONArray myServices = new JSONArray();
-                Peers.getAllPeers().forEach((myPeer) -> {
+                Peers.getAllConnectablePeers().forEach((myPeer) -> {
                     if (!myPeer.isBlacklisted() && myPeer.getAnnouncedAddress() != null && myPeer.getState() == PeerState.CONNECTED && myPeer.shareAddress() && !addedAddresses.contains(myPeer.getAnnouncedAddress()) && !myPeer.getAnnouncedAddress().equals(peer.getAnnouncedAddress())) {
                         myPeers.add(myPeer.getAnnouncedAddress());
                         myServices.add(Long.toUnsignedString(((PeerImpl) myPeer).getServices()));
@@ -122,10 +122,13 @@ class GetMorePeersThread implements Runnable {
         //
         Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
         UUID chainId = Peers.blockchainConfig.getChain().getChainId();
-        Peers.peers.values().forEach((peer) -> {
-            if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted() && chainId.equals(peer.getChainId()) && now - peer.getLastUpdated() < 7 * 24 * 3600) {
-                currentPeers.put(peer.getAnnouncedAddress(), new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
-            }
+        Peers.getPeers(
+                peer->peer.getAnnouncedAddress()!= null
+             && !peer.isBlacklisted() 
+             && chainId.equals(peer.getChainId()) 
+             && now - peer.getLastUpdated() < 7 * 24 * 3600 
+        ).forEach((peer) -> {
+            currentPeers.put(peer.getAnnouncedAddress(), new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
         });
         //
         // Build toDelete and toUpdate lists

@@ -101,8 +101,8 @@ public final class PeerImpl implements Peer {
     @Getter
     private int failedConnectAttempts = 0;
     
-    PeerImpl(String host, 
-            String announcedAddress,
+    PeerImpl(PeerAddress addrByFact, 
+            PeerAddress announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
             EpochTime timeService,
@@ -111,20 +111,17 @@ public final class PeerImpl implements Peer {
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
+        this.host = addrByFact.getHost();
+        this.port = addrByFact.getPort();
         
-        this.host = host;
         this.propertiesHolder=propertiesHolder;
         pi.setShareAddress(true);
-        PeerAddress pa;
-        if(announcedAddress==null || announcedAddress.isEmpty()){
-            LOG.trace("got empty announcedAddress from host {}",host);
-            pa= new PeerAddress(host);
+        if(announcedAddress==null){
+            LOG.trace("got empty announcedAddress from host {}",getHostWithPort());
             pi.setShareAddress(false);
         }else{
-            pa = new PeerAddress(announcedAddress);
+            pi.setAnnouncedAddress(announcedAddress.getAddrWithPort());
         }
-        pi.setAnnouncedAddress(pa.getAddrWithPort());
-        this.port = pa.getPort();
         this.state = PeerState.NON_CONNECTED;
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
@@ -694,7 +691,7 @@ public final class PeerImpl implements Peer {
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;
-            for (Peer p : Peers.getAllPeers()) {
+            for (Peer p : Peers.getAllConnectablePeers()) {
                 PeerImpl peer = (PeerImpl)p;
                 if (peer.hallmark == null) {
                     continue;

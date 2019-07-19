@@ -58,7 +58,7 @@ public class SetAPIProxyPeer extends AbstractAPIRequestHandler {
             }
             return JSONData.peer(peer);
         }
-        Peer peer = Peers.findOrCreatePeer(peerAddress,  false);
+        Peer peer = Peers.findOrCreatePeer(null,peerAddress,  false);
         if (peer == null) {
             return UNKNOWN_PEER;
         }

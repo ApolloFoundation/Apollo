@@ -327,6 +327,7 @@ public final class AplCore {
         sb.append("\nActive threads count :" + Thread.activeCount() );
         sb.append("\nInbound peers count: "+Peers.getInboundPeers().size());
         sb.append(", Active peers count: "+Peers.getActivePeers().size());
+        sb.append(", Known peers count: "+Peers.getAllPeers().size());
         return sb.toString();
     }
     private void recoverSharding() {
