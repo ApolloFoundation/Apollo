@@ -902,7 +902,12 @@ public final class PeerImpl implements Peer {
     }
 
     boolean processError(JSONObject request) {
-       return processError(request.toJSONString());
+       if(request!=null){ 
+          return processError(request.toJSONString());
+       }else{
+            LOG.debug("null message from {}", getHostWithPort());
+            return true;           
+       }
     }
     
 }
