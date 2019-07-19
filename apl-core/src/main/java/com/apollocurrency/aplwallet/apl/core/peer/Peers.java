@@ -511,7 +511,7 @@ public final class Peers {
             return peer;
         }
         if ((peer = connectablePeers.get(actualAddr.getAddrWithPort())) != null) {
-            LOG.trace("Returning existing peer from connactable map {}", peer);
+            LOG.trace("Returning existing peer from connectable map {}", peer);
             return peer;
         }
         

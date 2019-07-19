@@ -160,7 +160,7 @@ public final class PeerImpl implements Peer {
        
         if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
-        } else if (newState == PeerState.NON_CONNECTED || newState==PeerState.DISCONNECTED) {
+        } else if (newState == PeerState.NON_CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
         }
         //we have to change state anyway
@@ -411,8 +411,6 @@ public final class PeerImpl implements Peer {
     @Override
     public void deactivate(String reason) {
         if (state == PeerState.CONNECTED) {
-            setState(PeerState.DISCONNECTED);
-        } else {
             setState(PeerState.NON_CONNECTED);
         }
         LOG.debug("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
