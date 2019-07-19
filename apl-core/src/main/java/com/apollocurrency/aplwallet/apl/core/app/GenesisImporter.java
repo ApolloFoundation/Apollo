@@ -60,8 +60,8 @@ import org.json.simple.parser.ParseException;
 public final class GenesisImporter {
 
     private byte[] CREATOR_PUBLIC_KEY;
-    public long CREATOR_ID;
-    public long EPOCH_BEGINNING;
+    public static long CREATOR_ID;
+    public static long EPOCH_BEGINNING;
     public static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 

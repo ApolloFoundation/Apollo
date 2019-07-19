@@ -7,9 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -33,7 +32,7 @@ import javax.inject.Singleton;
 public class ShardImporter {
     private ShardDao shardDao;
 
-    private DatabaseManager databaseManager;
+    private GenesisImporter genesisImporter;
     private Blockchain blockchain;
     private DerivedTablesRegistry derivedTablesRegistry;
     private BlockchainConfig blockchainConfig;
@@ -43,9 +42,9 @@ public class ShardImporter {
     private AplAppStatus aplAppStatus;
 
     @Inject
-    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig, DatabaseManager databaseManager, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
+    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig, GenesisImporter genesisImporter, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
         this.shardDao = shardDao;
-        this.databaseManager = databaseManager;
+        this.genesisImporter = genesisImporter;
         this.blockchain = blockchain;
         this.derivedTablesRegistry = derivedTablesRegistry;
         this.csvImporter = csvImporter;
@@ -67,7 +66,7 @@ public class ShardImporter {
 
     public void importLastShard(int height) {
         if (height == 0) {
-            Genesis.apply(false);
+            genesisImporter.apply(false);
         } else {
             Shard completedShard = shardDao.getLastCompletedShard();
             Long shardId = completedShard.getShardId();
@@ -106,7 +105,7 @@ public class ShardImporter {
             throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
         }
 
-        Genesis.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
+        genesisImporter.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
         // import additional tables
         List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,

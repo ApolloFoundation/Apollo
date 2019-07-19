@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanc
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
@@ -467,7 +467,7 @@ public final class Account {
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
-        if (accountId == Genesis.CREATOR_ID) {
+        if (accountId == GenesisImporter.CREATOR_ID) {
             return;
         }
         if (confirmed < 0) {

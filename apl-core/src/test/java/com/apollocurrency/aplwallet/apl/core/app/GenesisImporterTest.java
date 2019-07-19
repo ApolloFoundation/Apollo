@@ -39,9 +39,7 @@ import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.DBIterator;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -50,11 +48,13 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 @Slf4j
 @EnableWeld
-//@Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
+@Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class GenesisImporterTest {
 
 //    private final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
@@ -137,7 +137,7 @@ class GenesisImporterTest {
         assertEquals(0, block.getHeight());
         assertEquals("1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b",
                 Convert.toHexString( genesisImporter.getCreatorPublicKey() ));
-        assertEquals("1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b",
+        assertEquals("9056ecb5bf764f7513195bc6655756b83e55dcb2c4c2fdb20d5e5aa5348617ed",
                 Convert.toHexString( genesisImporter.getComputedDigest() ));
         assertEquals(1739068987193023818L, genesisImporter.CREATOR_ID);
         assertEquals(1515931200000L, genesisImporter.EPOCH_BEGINNING);
