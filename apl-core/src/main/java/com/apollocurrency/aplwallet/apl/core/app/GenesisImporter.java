@@ -59,9 +59,9 @@ import org.json.simple.parser.ParseException;
 @Singleton
 public final class GenesisImporter {
 
-    private static byte[] CREATOR_PUBLIC_KEY;
-    public static long CREATOR_ID;
-    public static long EPOCH_BEGINNING;
+    private byte[] CREATOR_PUBLIC_KEY;
+    public long CREATOR_ID;
+    public long EPOCH_BEGINNING;
     public static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 
@@ -73,6 +73,9 @@ public final class GenesisImporter {
     private DatabaseManager databaseManager; // lazy init
     private String genesisTaskId;
     private JSONObject genesisAccountsJSON = null;
+    private JSONArray publicKeys;
+    private JSONObject balances;
+    private byte[] computedDigest;
 
     @Inject
     public GenesisImporter(BlockchainConfig blockchainConfig, ConfigDirProvider configDirProvider,
@@ -84,10 +87,10 @@ public final class GenesisImporter {
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        loadDataFromResources();
+        loadGenesisDataFromResources();
     }
 
-    private void loadDataFromResources() {
+    private void loadGenesisDataFromResources() {
         try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
             JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
             CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
@@ -100,17 +103,8 @@ public final class GenesisImporter {
 
     }
 
-/*
-    private TransactionalDataSource lookupDataSource() {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        return databaseManager.getDataSource();
-    }
-*/
-
-
-    private byte[] loadGenesisAccountsJSON() {
+    private byte[] loadBalancesAccountsComputeDigest() {
+        long start = System.currentTimeMillis();
         if (genesisTaskId == null) {
             Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
             if (task.isPresent()) {
@@ -126,22 +120,28 @@ public final class GenesisImporter {
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
+            this.balances = (JSONObject) genesisAccountsJSON.get("balances");
+            this.publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
         } catch (ParseException|IOException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
         // we should leave here '0' to create correct genesis block for already launched mainnet
         digest.update((byte)(0));
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
-        return digest.digest();
+        this.computedDigest = digest.digest();
+        genesisAccountsJSON = null;
+        log.debug("Digest is computed in {} ms", (System.currentTimeMillis() - start) / 1000 );
+        return this.computedDigest;
     }
 
     public Block newGenesisBlock() {
-        return new BlockImpl(CREATOR_PUBLIC_KEY, loadGenesisAccountsJSON());
+        return new BlockImpl(CREATOR_PUBLIC_KEY, loadBalancesAccountsComputeDigest());
     }
 
     public void apply(boolean loadOnlyPublicKeys) {
-        if (genesisAccountsJSON == null) {
-            loadGenesisAccountsJSON();
+        long start = System.currentTimeMillis();
+        if (this.balances == null || this.publicKeys == null) {
+            loadBalancesAccountsComputeDigest();
         }
         blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.reset();
@@ -150,70 +150,82 @@ public final class GenesisImporter {
         if(!dataSource.isInTransaction()){
             dataSource.begin();
         }
-        JSONArray publicKeys = loadPublicKeys(dataSource);
+        savePublicKeys(dataSource);
         dataSource.commit(false);
         if (loadOnlyPublicKeys) {
-            log.debug("The rest of GENESIS is skipped, shard info will be loaded...");
+            this.publicKeys = null;
+            this.balances = null;
+            log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
+                    (System.currentTimeMillis() - start) / 1000);
             return;
         }
         // load 'balances' from JSON only
-        long total = loadBalances(dataSource, publicKeys);
+        long total = saveBalances(dataSource);
 
         long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         String message = String.format("Total balance %f %s", (double)total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        Account creatorAccount = Account.addOrGetAccount(GenesisImporter.CREATOR_ID, true);
-        creatorAccount.apply(GenesisImporter.CREATOR_PUBLIC_KEY, true);
+        Account creatorAccount = Account.addOrGetAccount(CREATOR_ID, true);
+        creatorAccount.apply(CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         genesisAccountsJSON = null;
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
+        log.debug("Public Keys [{}] + Balances [{}] were saved in {} ms", this.publicKeys.size(), this.balances.size(),
+                (System.currentTimeMillis() - start) / 1000);
         genesisTaskId = null;
+        this.publicKeys = null;
+        this.balances = null;
     }
 
-    private long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
-        int count;
-        log.debug("Loaded " + publicKeys.size() + " public keys");
-        count = 0;
-        JSONObject balances = (JSONObject) genesisAccountsJSON.get("balances");
-        aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
-        long total = 0;
-        for (Map.Entry<String, Long> entry : ((Map<String, Long>)balances).entrySet()) {
-            Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
-            account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
-            total += entry.getValue();
-            if (count++ % 100 == 0) {
-                dataSource.commit(false);
-            }
-            if (balances.size() > 10000 && count % 10000 == 0) {
-                String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balances.size());
-                log.debug(message);
-                aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/balances.size()*1.0)*50, message);
-            }
-        }
-        return total;
-    }
-
-    private JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
+    private void savePublicKeys(TransactionalDataSource dataSource) {
+        long start = System.currentTimeMillis();
         int count = 0;
-        JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-
-        log.debug("Loading public keys [{}]...", publicKeys.size());
+        log.trace("Saving public keys [{}]...", this.publicKeys.size());
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
-        for (Object jsonPublicKey : publicKeys) {
+        for (Object jsonPublicKey : this.publicKeys) {
             byte[] publicKey = Convert.parseHexString((String)jsonPublicKey);
-            Account account = Account.addOrGetAccount(Account.getId(publicKey), true);
+            long id = Account.getId(publicKey);
+            log.trace("AccountId = '{}' by publicKey string = '{}'", id, jsonPublicKey);
+            Account account = Account.addOrGetAccount(id, true);
             account.apply(publicKey, true);
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }
-            if (publicKeys.size() > 20000 && count % 10000 == 0) {
-                String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeys.size());
-                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/publicKeys.size()*1.0)*50, message);
+            if (this.publicKeys.size() > 20000 && count % 10000 == 0) {
+                String message = String.format(LOADING_STRING_PUB_KEYS, count, this.publicKeys.size());
+                log.debug(message);
+                aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/this.publicKeys.size()*1.0)*50, message);
             }
         }
-        return publicKeys;
+        log.debug("Saved public keys = [{}] in {} ms", this.publicKeys.size(), (System.currentTimeMillis() - start) / 1000);
+    }
+
+    private long saveBalances(TransactionalDataSource dataSource) {
+        long start = System.currentTimeMillis();
+        int count;
+        log.trace("Saved [{}] public keys, start saving Balances...", this.publicKeys.size());
+        count = 0;
+        aplAppStatus.durableTaskUpdate(genesisTaskId, 50+0.1, "Loading genesis balance amounts");
+        long totalAmount = 0;
+        for (Map.Entry<String, Long> entry : ((Map<String, Long>)this.balances).entrySet()) {
+            log.trace("Parsed json balance entry: {} - {}", entry.getKey(), entry.getValue());
+            Account account = Account.addOrGetAccount(Long.parseUnsignedLong(entry.getKey()), true);
+            account.addToBalanceAndUnconfirmedBalanceATM(null, 0, entry.getValue());
+            totalAmount += entry.getValue();
+            if (count++ % 100 == 0) {
+                dataSource.commit(false);
+            }
+            if (this.balances.size() > 10000 && count % 10000 == 0) {
+                String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, this.balances.size());
+                log.debug(message);
+                aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/this.balances.size()*1.0)*50, message);
+            }
+        }
+        log.debug("Saved [{}] balances in {} ms, total balance amount = {}", this.balances.size(),
+                (System.currentTimeMillis() - start) / 1000, totalAmount);
+        return totalAmount;
     }
 
     public List<Map.Entry<String, Long>> loadGenesisAccounts() {
@@ -243,4 +255,11 @@ public final class GenesisImporter {
         }
     }
 
+    public byte[] getCreatorPublicKey() {
+        return CREATOR_PUBLIC_KEY;
+    }
+
+    public byte[] getComputedDigest() {
+        return computedDigest;
+    }
 }
