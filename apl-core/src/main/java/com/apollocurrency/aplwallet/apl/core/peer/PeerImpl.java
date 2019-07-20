@@ -410,9 +410,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void deactivate(String reason) {
-        if (state == PeerState.CONNECTED) {
-            setState(PeerState.NON_CONNECTED);
-        }
+        setState(PeerState.NON_CONNECTED);
         LOG.debug("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
         Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
@@ -468,7 +466,7 @@ public final class PeerImpl implements Peer {
             handshake(chainId);
         }
         if(state!=PeerState.CONNECTED){
-            LOG.error("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
+            LOG.trace("Peer: {}  handshake failed with state = {}.", getAnnouncedAddress(), state);
             return null;
         }else{        
             return send(request);

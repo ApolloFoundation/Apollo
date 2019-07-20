@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
 /**
  *
@@ -30,7 +31,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
     }
 
-    public boolean startClient(URI uri) {
+    public synchronized boolean startClient(URI uri) {
         if (uri == null) {
             return false;
         }
@@ -60,17 +61,23 @@ public class PeerWebSocketClient extends PeerWebSocket{
     @Override
     public void close() {
         super.close(); 
-        stop();
+        destroy();
     }
 
-    private void stop() {
+    private synchronized void destroy() {
         try {
-           if(client!=null){ 
-              client.stop();
-           }
+            client.stop();
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop");
-        }      
+        }
+        client.getOpenSessions().stream().map((wss) -> {
+            wss.close();
+            return wss;
+        }).forEach((wss) -> {
+            wss.destroy();
+        });
+        client.destroy();
+        log.debug("WebSocketClient: {} destroyed.",which());
     }
 
 }
