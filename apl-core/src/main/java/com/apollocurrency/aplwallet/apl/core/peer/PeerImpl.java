@@ -534,11 +534,11 @@ public final class PeerImpl implements Peer {
     private int processConnectAttempt(boolean failed){
         if(failed){
           failedConnectAttempts++;
-          if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX/10 && !isBlacklisted()){
+          if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX/10 && !isBlacklisted()){
               LOG.debug("Peer {} in noit connecatfble, blaclisting",getAnnouncedAddress());
               blacklist("Can not connect "+failedConnectAttempts+" times");
           }
-          if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+          if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
               LOG.debug("Peer {} in noit connecatfble, removing",getAnnouncedAddress());
               Peers.removePeer(this);
           }
