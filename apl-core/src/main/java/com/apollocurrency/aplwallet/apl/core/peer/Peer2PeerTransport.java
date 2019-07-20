@@ -59,10 +59,12 @@ public class Peer2PeerTransport {
 
     String which() {
         String which;
-        if (peerServlet != null) {
+        if (inboundWebSocket != null) {
             which = "Inbound";
-        } else {
+        } else if(outboundWebSocket!=null){
             which = "Outbound";
+        }else{
+            which="Not connected";
         }
         Peer p = peerReference.get();
         if (p != null) {
