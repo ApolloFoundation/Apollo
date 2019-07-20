@@ -37,7 +37,7 @@ public class PeerAddressTest {
         String hp=a.getAddrWithPort();
         assertEquals(hp, "192.168.0.1"+":"+Integer.toString(Constants.DEFAULT_PEER_PORT));
         assertEquals(port, Constants.DEFAULT_PEER_PORT);
-        a = new PeerAddress("fe80::d166:519e:5758:d24a");
+        a = new PeerAddress("[fe80::d166:519e:5758:d24a]");
         hp=a.getAddrWithPort();
         assertEquals(hp, "[fe80:0:0:0:d166:519e:5758:d24a]"+":"+Integer.toString(Constants.DEFAULT_PEER_PORT));
     }

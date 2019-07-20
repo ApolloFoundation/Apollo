@@ -35,7 +35,14 @@ public final class PeerAddress implements Comparable{
     public PeerAddress(String hostWithPort){
         fromString(hostWithPort);
     }
-    
+    public String formatIP6Address(String addr) throws UnknownHostException{
+        String res = addr;
+        InetAddress a = InetAddress.getByName(addr);
+        if(a instanceof Inet6Address){
+            res = "["+a.getHostAddress()+"]";
+        }
+        return res;
+    }
     
     private void fromString(String addr){
         if(addr==null || addr.isEmpty()){
