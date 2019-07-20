@@ -100,9 +100,6 @@ public class Peer2PeerTransport {
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
-        if(ws==null){
-            log.debug("using HTTP on {}",which());
-        }
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
@@ -224,7 +221,7 @@ public class Peer2PeerTransport {
                 log.debug("Peer " + getHostWithPort() + " responded with HTTP " + connection.getResponseCode());
             }
         } catch (IOException ex) {
-            log.warn("Error getting HTTP response from {}", getHostWithPort(), ex); 
+            log.trace("Error getting HTTP response from {}", getHostWithPort(), ex); 
         }finally{
             connection.disconnect(); 
         }
@@ -246,7 +243,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    public boolean send(String message, Long requestId) {
+    public synchronized boolean send(String message, Long requestId) {
         cleanUp();
             boolean sendOK = false;
             if(message==null||message.isEmpty()){
@@ -298,6 +295,7 @@ public class Peer2PeerTransport {
             }
             if (!sendOK) { // Send the request using HTTP as fallback
                 sendOK = sendHttp(message,requestId);
+                log.debug("Trying ot use HTTP requests to {} because websockets failed",getHostWithPort());
                 if(!sendOK){
                     log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
                 }
@@ -314,7 +312,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    void disconnect() {
+    synchronized void disconnect() {
         if (inboundWebSocket != null) {
             inboundWebSocket.close();
             inboundWebSocket = null;

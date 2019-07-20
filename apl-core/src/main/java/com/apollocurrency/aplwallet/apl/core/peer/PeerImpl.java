@@ -99,7 +99,7 @@ public final class PeerImpl implements Peer {
     @Getter
     private final Peer2PeerTransport p2pTransport;
     @Getter
-    private int failedConnectAttempts = 0;
+    private volatile int failedConnectAttempts = 0;
     
     PeerImpl(PeerAddress addrByFact, 
             PeerAddress announcedAddress,
@@ -393,7 +393,6 @@ public final class PeerImpl implements Peer {
             return;
         }
         LOG.debug("Unblacklisting " + host);
-        setState(PeerState.NON_CONNECTED);
         blacklistingTime = 0;
         blacklistingCause = null;
         Peers.notifyListeners(this, Peers.Event.UNBLACKLIST);
@@ -460,7 +459,7 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public JSONObject send(final JSONStreamAware request, UUID chainId) {
+    public synchronized JSONObject send(final JSONStreamAware request, UUID chainId) {
         if(state!=PeerState.CONNECTED){
             LOG.trace("send() called before handshake(). Handshacking");
             handshake(chainId);
@@ -525,17 +524,24 @@ public final class PeerImpl implements Peer {
     }
     
     /**
-     * forget peers that are unconnectable
+     * first blacklist and then forget peers that are not connectable
+     * or reset counter on success
      * @param failed true marks failed connect attempt, false for successful connection
      */
     private void processConnectAttempt(boolean failed){
         if(!failed){
           failedConnectAttempts++;
+          if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX/10){
+              LOG.debug("Peer {} in noit connecatfble, blaclisting",getAnnouncedAddress());
+              blacklist("Can not connect "+failedConnectAttempts+" times");
+          }
           if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+              LOG.debug("Peer {} in noit connecatfble, removing",getAnnouncedAddress());
               Peers.removePeer(this);
           }
         }else{
             failedConnectAttempts=0;
+            unBlacklist();
         }
     }
     
@@ -625,8 +631,8 @@ public final class PeerImpl implements Peer {
                 processConnectAttempt(false);
             } else {
                 LOG.debug("NULL json Response, Failed to connect to peer: {} ", getHostWithPort());
-                deactivate("NULL json Response on handshake");
                 processConnectAttempt(true);
+                deactivate("NULL json Response on handshake");
             }
         } catch (RuntimeException e) {
             LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
