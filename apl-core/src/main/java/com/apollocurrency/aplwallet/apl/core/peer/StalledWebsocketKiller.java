@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.websocket.api.Session;
 
 
 /**
@@ -20,12 +21,53 @@ public class StalledWebsocketKiller {
     void register(PeerWebSocketClient wsc){
         clientWebsockets.add(wsc);
     }
+    boolean isBad(PeerWebSocketClient wsc){
+          String reason="";
+          Peer2PeerTransport tr = wsc.getTransport();
+          Peer p;
+          boolean noTransport=true;
+          boolean noPeeer=true;
+          boolean notConnectedState = true;
+          if(tr!=null){
+              p=tr.getPeer();
+              noTransport=false;
+          }else{
+              reason+="Lost transport";
+              p=null;
+          }
+          if(p==null){
+              reason+=" Lost peer";
+          }else{
+            noPeeer=false;
+            notConnectedState = p.getState()!=PeerState.CONNECTED;
+            if(notConnectedState){
+                reason+="Not connectd peer";
+            }
+          }
+          long now = System.currentTimeMillis();
+          boolean idleLongTime = now -  wsc.getLastActivityTime() >= Peers.webSocketIdleTimeout;
+          if(idleLongTime){
+              reason+="Idle timeout";
+          }
+          boolean bad =  noPeeer || noTransport || idleLongTime||notConnectedState;
+          
+          if(bad){
+              String addr="Unknown";
+              Session s = wsc.getSession();
+              if(s!=null){
+                  addr = s.getRemoteAddress().getHostName()+":"+s.getRemoteAddress().getPort();
+              }
+            log.debug("Bad websocet client found. Addr: {} Reason:{}",addr,reason);
+          }
+          return bad;
+    }
     
     void killStalled(){
-        long now = System.currentTimeMillis();
+ 
         int counter=0;
         for(PeerWebSocketClient wsc :clientWebsockets){
-          if( now -  wsc.getLastActivityTime() >= Peers.webSocketIdleTimeout){
+
+          if( isBad(wsc) ){
               Peer2PeerTransport transport = wsc.getTransport();
               if(transport!=null){
                   transport.onWebSocketClose(wsc);
@@ -35,6 +77,6 @@ public class StalledWebsocketKiller {
               counter++;
           }
         }
-      log.debug("WebSocketClients toatl: {}, Stalled webSocket clients killed: {}",clientWebsockets.size(),counter);
+      log.debug("WebSocketClients total: {}, Stalled webSocket clients killed: {}",clientWebsockets.size(),counter);
     }
 }

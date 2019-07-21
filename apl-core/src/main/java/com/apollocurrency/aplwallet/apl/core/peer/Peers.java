@@ -589,7 +589,10 @@ public final class Peers {
         Set<Peer> toDelete=new HashSet<>();
         toDelete.add(peer);
         inboundPeers.values().stream()
-                .filter((p) -> (p.getState()!=PeerState.CONNECTED && now - p.getLastActivityTime() > webSocketIdleTimeout))
+                .filter((p) -> (
+                        p.getState()!=PeerState.CONNECTED 
+                     && now - p.getLastActivityTime() > webSocketIdleTimeout)
+                )
                 .forEachOrdered((p) -> toDelete.add(p));
         
         toDelete.forEach((p) -> {

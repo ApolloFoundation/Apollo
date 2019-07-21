@@ -462,7 +462,7 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public synchronized JSONObject send(final JSONStreamAware request, UUID chainId) {
+    public JSONObject send(final JSONStreamAware request, UUID chainId) {
         if(isBlacklisted()){
             return null;
         }
