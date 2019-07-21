@@ -886,6 +886,7 @@ public final class PeerImpl implements Peer {
         boolean res = false;
         if (StringUtils.isBlank(message)) {
             LOG.debug("Blank message from {}", getHostWithPort());
+            deactivate("Null message");
             res = true;
         } else {
             try {
@@ -913,11 +914,12 @@ public final class PeerImpl implements Peer {
         return res;
     }
 
-    boolean processError(JSONObject request) {
-       if(request!=null){ 
-          return processError(request.toJSONString());
+    boolean processError(JSONObject message) {
+       if(message!=null){ 
+          return processError(message.toJSONString());
        }else{
-            LOG.debug("null message from {}", getHostWithPort());
+            LOG.debug("null message from {}, deactivating", getHostWithPort());
+            deactivate(host);
             return true;           
        }
     }
