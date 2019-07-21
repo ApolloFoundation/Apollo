@@ -161,6 +161,8 @@ public final class Peers {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
+    private static StalledWebsocketKiller clientKiller = new StalledWebsocketKiller();
+    
     public static int myPort;
 
     private Peers() {
@@ -401,7 +403,14 @@ public final class Peers {
         }
         return pa;
     }
-            
+    public static  void registerWebSocketClient(PeerWebSocketClient wsc){
+        clientKiller.register(wsc);
+    }        
+    
+    public static void killStalled(){
+        clientKiller.killStalled();
+    }
+    
     public static Collection<Peer> getAllConnectablePeers() {
         Collection<Peer> res =  Collections.unmodifiableCollection(connectablePeers.values());
         return res;
@@ -575,7 +584,7 @@ public final class Peers {
     //we do not need inboulnd peers that is not
     //connected, but we should be carefull because peer could be connecting
     //right now
-    private static void cleanupInboundPeers(Peer peer){
+    private static void cleanupPeers(Peer peer){
         int now = timeService.getEpochTime();
         Set<Peer> toDelete=new HashSet<>();
         toDelete.add(peer);
@@ -598,7 +607,7 @@ public final class Peers {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }
         }
-        cleanupInboundPeers(peer);
+        cleanupPeers(peer);
         return p;
     }
 

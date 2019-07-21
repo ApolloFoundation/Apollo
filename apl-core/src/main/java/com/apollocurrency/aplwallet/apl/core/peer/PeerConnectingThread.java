@@ -30,6 +30,7 @@ class PeerConnectingThread implements Runnable {
 
     @Override
     public void run() {
+        Peers.killStalled();
         if (Peers.shutdown || Peers.suspend) {
             return;
         }

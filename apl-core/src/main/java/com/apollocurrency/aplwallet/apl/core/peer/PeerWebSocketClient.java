@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
 /**
  *
@@ -32,6 +31,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     }
 
     public synchronized boolean startClient(URI uri) {
+        Peers.registerWebSocketClient(this);
         if (uri == null) {
             return false;
         }
