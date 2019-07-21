@@ -22,30 +22,33 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 @Slf4j
 public class PeerWebSocketClient extends PeerWebSocket{
 
-    private final WebSocketClient client;
-    private AtomicBoolean started = new AtomicBoolean(false);
+    private WebSocketClient client;
+    private boolean connected = false;
     
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer); 
+    }
+    
+    private void newClient() throws Exception{
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
+        client.setStopAtShutdown(true);
+        client.start();
     }
-
+    
     public synchronized boolean startClient(URI uri) {
-        Peers.registerWebSocketClient(this);
         if (uri == null) {
             return false;
         }
-        boolean websocketOK = false;
         try {
-            client.start();
-            started.set(true);
-            client.setStopAtShutdown(true);
+            if(client==null){
+               newClient();
+            }
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
-            websocketOK = session.isOpen();
+            connected = session.isOpen();
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
@@ -58,34 +61,37 @@ public class PeerWebSocketClient extends PeerWebSocket{
             log.trace("Generic error while connecting as client to: {} \n Exception: {}",which());
         }
 
-        return websocketOK;
+        return connected;
     }
 
     @Override
     public void close() {
         super.close(); 
-        destroy();
-    }
-
-    synchronized void destroy() {
-        Peers.unregisterWebSocketClient(this);
-        try {
-            client.stop();
-        } catch (Exception ex) {
-            log.trace("Exception on websocket client stop");
-        }
         client.getOpenSessions().stream().map((wss) -> {
             wss.close();
             return wss;
         }).forEach((wss) -> {
             wss.destroy();
         });
-        client.destroy();
-        log.debug("WebSocketClient: {} destroyed.",which());
+        connected=false;        
     }
 
-    AtomicBoolean isStarted() {
-        return started;
+    synchronized void destroy() {
+        if(client==null){
+            return;
+        }
+        try {
+            client.stop();
+        } catch (Exception ex) {
+            log.trace("Exception on websocket client stop");
+        }
+        client.destroy();
+
+        log.debug("WebSocketClient: {} destroyed.",which());        
+    }
+
+    boolean isClientConnected() {
+        return connected;
     }
 
 }

@@ -47,7 +47,8 @@ public class Peer2PeerTransport {
     private volatile long uploadedVolume;
     private final Object volumeMonitor = new Object();
     private PeerWebSocket inboundWebSocket;
-    private PeerWebSocketClient outboundWebSocket;
+    //this should be final because it is problematic to stop websocket client properly
+    private final PeerWebSocketClient outboundWebSocket;
     @Getter
     private long lastActivity;
 
@@ -64,7 +65,7 @@ public class Peer2PeerTransport {
         String which;
         if (inboundWebSocket != null) {
             which = "Inbound";
-        } else if(outboundWebSocket!=null){
+        } else if(outboundWebSocket.isClientConnected()){
             which = "Outbound";
         }else{
             which="Not connected";
@@ -80,6 +81,7 @@ public class Peer2PeerTransport {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
         rnd = new Random(System.currentTimeMillis());
+        outboundWebSocket=new PeerWebSocketClient(this);
     }
 
     public long getDownloadedVolume() {
@@ -277,10 +279,7 @@ public class Peer2PeerTransport {
                     }
                 }
                 if (!sendOK) { //no inbound connection or send failed
-                    if (outboundWebSocket == null) {
-                        outboundWebSocket = new PeerWebSocketClient(this);
-                    }
-                    if (!outboundWebSocket.isStarted().get()) {
+                    if (!outboundWebSocket.isClientConnected()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         Peer p = peerReference.get();
@@ -332,7 +331,6 @@ public class Peer2PeerTransport {
         }
         if (outboundWebSocket != null) {
             outboundWebSocket.close();
-            outboundWebSocket = null;
         }
 
     }
@@ -350,5 +348,5 @@ public class Peer2PeerTransport {
     void setInboundSocket(PeerWebSocket pws) {
         inboundWebSocket=pws;
     }
-
+    
 }

@@ -329,7 +329,6 @@ import javax.inject.Inject;
         sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
         sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
         sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
-        sb.append("\nClientWebSockets: ").append(Peers.clientWebCoscketsCount());
         return sb.toString();
     }
     private void recoverSharding() {

@@ -161,7 +161,6 @@ public final class Peers {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
-    private static StalledWebsocketKiller clientKiller = new StalledWebsocketKiller();
     
     public static int myPort;
 
@@ -403,18 +402,7 @@ public final class Peers {
         }
         return pa;
     }
-    public static  void registerWebSocketClient(PeerWebSocketClient wsc){
-        clientKiller.register(wsc);
-    }        
-    public static  void unregisterWebSocketClient(PeerWebSocketClient wsc){
-        clientKiller.unregister(wsc);
-    }    
-    public static void killStalled(){
-        clientKiller.killStalled();
-    }
-    public static int clientWebCoscketsCount(){
-        return clientKiller.count();
-    }
+
     public static Collection<Peer> getAllConnectablePeers() {
         Collection<Peer> res =  Collections.unmodifiableCollection(connectablePeers.values());
         return res;
