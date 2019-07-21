@@ -67,6 +67,9 @@ public class PeerWebSocketClient extends PeerWebSocket{
     @Override
     public void close() {
         super.close(); 
+         if(client==null){
+            return;
+        }       
         client.getOpenSessions().stream().map((wss) -> {
             wss.close();
             return wss;
