@@ -66,17 +66,16 @@ public class PeerWebSocketClient extends PeerWebSocket{
 
     @Override
     public void close() {
-        super.close(); 
-         if(client==null){
-            return;
-        }       
-        client.getOpenSessions().stream().map((wss) -> {
-            wss.close();
-            return wss;
-        }).forEach((wss) -> {
-            wss.destroy();
-        });
-        connected=false;        
+        super.close();
+        connected = false;
+        if (client != null) {
+            client.getOpenSessions().stream().map((wss) -> {
+                wss.close();
+                return wss;
+            }).forEach((wss) -> {
+                wss.destroy();
+            });
+        }
     }
 
     synchronized void destroy() {
