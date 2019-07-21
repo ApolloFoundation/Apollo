@@ -412,7 +412,9 @@ public final class Peers {
     public static void killStalled(){
         clientKiller.killStalled();
     }
-    
+    public static int clientWebCoscketsCount(){
+        return clientKiller.count();
+    }
     public static Collection<Peer> getAllConnectablePeers() {
         Collection<Peer> res =  Collections.unmodifiableCollection(connectablePeers.values());
         return res;
