@@ -280,7 +280,7 @@ public class Peer2PeerTransport {
                     if (outboundWebSocket == null) {
                         outboundWebSocket = new PeerWebSocketClient(this);
                     }
-                    if (!outboundWebSocket.isConnected()) {
+                    if (!outboundWebSocket.isStarted().get()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         Peer p = peerReference.get();
@@ -289,15 +289,14 @@ public class Peer2PeerTransport {
                             return sendOK;
                         }
                         String addrWithPort = peerReference.get().getAnnouncedAddress();
-                        if (StringUtils.isBlank(addrWithPort)) { // try to use addres with port, should be OK for default peers
-                            addrWithPort = getHostWithPort();
-                        }
-                        String wsConnectString = "ws://" + addrWithPort + "/apl";
-                        URI wsUri = URI.create(wsConnectString);
-                        log.trace("Connecting to websocket'{}'...", wsConnectString);
-                        sendOK  = outboundWebSocket.startClient(wsUri);
-                        if (sendOK ) {
-                            log.trace("Connected as client to websocket {}", wsConnectString);
+                        if (!StringUtils.isBlank(addrWithPort)) { // we cannot use peers that do not have external address
+                            String wsConnectString = "ws://" + addrWithPort + "/apl";
+                            URI wsUri = URI.create(wsConnectString);
+                            log.trace("Connecting to websocket'{}'...", wsConnectString);
+                            sendOK = outboundWebSocket.startClient(wsUri);
+                            if (sendOK) {
+                                log.trace("Connected as client to websocket {}", wsConnectString);
+                            }
                         }
                     } else { //client socket is already open
                        sendOK = true;

@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -22,7 +23,8 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 public class PeerWebSocketClient extends PeerWebSocket{
 
     private final WebSocketClient client;
-
+    private AtomicBoolean started = new AtomicBoolean(false);
+    
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer); 
         client = new WebSocketClient();
@@ -43,6 +45,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
+            started.set(true);
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
@@ -78,6 +81,10 @@ public class PeerWebSocketClient extends PeerWebSocket{
         });
         client.destroy();
         log.debug("WebSocketClient: {} destroyed.",which());
+    }
+
+    AtomicBoolean isStarted() {
+        return started;
     }
 
 }

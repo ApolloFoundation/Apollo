@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,15 @@ public class StalledWebsocketKiller {
     }
     boolean isBad(PeerWebSocketClient wsc){
           String reason="";
+          long now = System.currentTimeMillis();
+
           Peer2PeerTransport tr = wsc.getTransport();
           Peer p;
+          
           boolean noTransport=true;
           boolean noPeeer=true;
           boolean notConnectedState = true;
+          
           if(tr!=null){
               p=tr.getPeer();
               noTransport=false;
@@ -39,12 +44,14 @@ public class StalledWebsocketKiller {
               reason+=" Lost peer";
           }else{
             noPeeer=false;
-            notConnectedState = p.getState()!=PeerState.CONNECTED;
+            //we could be just in connecting process so...
+            notConnectedState = p.getState()!=PeerState.CONNECTED 
+                     && now - tr.getLastActivity() >Constants.PEER_UPDATE_INTERVAL*1000/2;
             if(notConnectedState){
-                reason+="Not connectd peer";
+                reason+=" Not connectd peer";
             }
           }
-          long now = System.currentTimeMillis();
+
           boolean idleLongTime = now -  wsc.getLastActivityTime() >= Peers.webSocketIdleTimeout;
           if(idleLongTime){
               reason+="Idle timeout";
@@ -77,6 +84,9 @@ public class StalledWebsocketKiller {
               counter++;
           }
         }
-      log.debug("WebSocketClients total: {}, Stalled webSocket clients killed: {}",clientWebsockets.size(),counter);
+      log.debug("Peers: {}, WebSocketClients total: {}, Stalled webSocket clients killed: {}",
+              Peers.getAllConnectablePeers().size(),
+              clientWebsockets.size(),
+              counter);
     }
 }
