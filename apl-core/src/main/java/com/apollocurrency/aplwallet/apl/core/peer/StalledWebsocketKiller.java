@@ -34,7 +34,7 @@ public class StalledWebsocketKiller {
               }
               counter++;
           }
-          log.debug("{} Stalled webSocket clients killed");
         }
+      log.debug("{} Stalled webSocket clients killed",counter);
     }
 }
