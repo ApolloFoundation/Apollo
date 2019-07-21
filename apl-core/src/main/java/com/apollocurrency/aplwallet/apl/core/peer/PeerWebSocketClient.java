@@ -64,7 +64,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         destroy();
     }
 
-    private synchronized void destroy() {
+    synchronized void destroy() {
         try {
             client.stop();
         } catch (Exception ex) {
