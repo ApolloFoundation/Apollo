@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -47,6 +48,8 @@ public class Peer2PeerTransport {
     private final Object volumeMonitor = new Object();
     private PeerWebSocket inboundWebSocket;
     private PeerWebSocketClient outboundWebSocket;
+    @Getter
+    private long lastActivity;
 
     //we use random numbers to minimize possible request/response mismatches
     private Long nextRequestId() {
@@ -114,6 +117,7 @@ public class Peer2PeerTransport {
                 peerServlet.doPostWebSocket(this, rqId, message);
             }
         }
+        lastActivity=System.currentTimeMillis();
         updateDownloadedVolume(message.length());
     }
 

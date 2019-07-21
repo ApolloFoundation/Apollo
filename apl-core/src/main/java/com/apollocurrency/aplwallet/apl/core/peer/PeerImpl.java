@@ -131,7 +131,6 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
-        setLastUpdated(timeService.getEpochTime());
     }
     
     @Override
@@ -457,6 +456,10 @@ public final class PeerImpl implements Peer {
     public int getLastConnectAttempt() {
         return lastConnectAttempt;
     }
+    
+    public long getLastActivityTime(){
+        return p2pTransport.getLastActivity();
+    }
 
     @Override
     public synchronized JSONObject send(final JSONStreamAware request, UUID chainId) {
@@ -505,8 +508,6 @@ public final class PeerImpl implements Peer {
                 } else {
                     processError(response);
                 }
-            }else{
-               setLastUpdated(timeService.getEpochTime()); 
             }
         } catch (RuntimeException|ParseException e) {
             LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
