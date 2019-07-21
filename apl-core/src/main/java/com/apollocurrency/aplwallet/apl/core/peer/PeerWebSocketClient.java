@@ -40,12 +40,12 @@ public class PeerWebSocketClient extends PeerWebSocket{
         boolean websocketOK = false;
         try {
             client.start();
+            started.set(true);
             client.setStopAtShutdown(true);
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             websocketOK = session.isOpen();
-            started.set(true);
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
         } catch (ExecutionException ex) {
@@ -68,6 +68,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     }
 
     synchronized void destroy() {
+        Peers.unregisterWebSocketClient(this);
         try {
             client.stop();
         } catch (Exception ex) {

@@ -332,7 +332,6 @@ public class Peer2PeerTransport {
         }
         if (outboundWebSocket != null) {
             outboundWebSocket.close();
-            outboundWebSocket.destroy();
             outboundWebSocket = null;
         }
 

@@ -406,7 +406,9 @@ public final class Peers {
     public static  void registerWebSocketClient(PeerWebSocketClient wsc){
         clientKiller.register(wsc);
     }        
-    
+    public static  void unregisterWebSocketClient(PeerWebSocketClient wsc){
+        clientKiller.unregister(wsc);
+    }    
     public static void killStalled(){
         clientKiller.killStalled();
     }

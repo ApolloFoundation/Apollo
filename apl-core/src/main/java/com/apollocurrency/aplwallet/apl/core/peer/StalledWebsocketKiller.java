@@ -89,4 +89,8 @@ public class StalledWebsocketKiller {
               clientWebsockets.size(),
               counter);
     }
+
+    void unregister(PeerWebSocketClient wsc) {
+        clientWebsockets.remove(wsc);
+    }
 }

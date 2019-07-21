@@ -463,9 +463,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) {
-        if(isBlacklisted()){
-            return null;
-        }
+        
         if(state!=PeerState.CONNECTED){
             LOG.trace("send() called before handshake(). Handshacking");
             handshake(chainId);
