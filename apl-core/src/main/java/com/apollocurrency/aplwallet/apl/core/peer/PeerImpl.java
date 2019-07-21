@@ -534,7 +534,7 @@ public final class PeerImpl implements Peer {
         if(failed){
           failedConnectAttempts++;
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX/10 && !isBlacklisted()){
-              LOG.debug("Peer {} in noit connecatfble, blaclisting",getAnnouncedAddress());
+              LOG.debug("Peer {} in not connecatable, blacklisting",getAnnouncedAddress());
               blacklist("Can not connect "+failedConnectAttempts+" times");
           }
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
