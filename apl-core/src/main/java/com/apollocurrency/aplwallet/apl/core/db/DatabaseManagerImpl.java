@@ -187,7 +187,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     @Override
     public synchronized List<TransactionalDataSource> getFullDatasources() {
         Set<Long> allFullShards = findAllFullShards();
-        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::getOrCreateShardDataSourceById).collect(Collectors.toList());
+        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(id-> getOrCreateShardDataSourceById(id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
         return dataSources;
     }
 
@@ -268,7 +268,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     public synchronized TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
         Set<Long> fullShards = findAllFullShards();
         if (fullShards.contains(shardId)) {
-            return getOrCreateShardDataSourceById(shardId);
+            return getOrCreateShardDataSourceById(shardId, new ShardAddConstraintsSchemaVersion());
         } else {
             return null;
         }

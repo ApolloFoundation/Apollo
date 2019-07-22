@@ -38,7 +38,6 @@ class UnresolvedPeersAnalyzer implements Runnable {
             } catch (TimeoutException ignore) {
             }
         }
-        LOG.debug("Known peers: " + Peers.peers.size());
     }
     
 }
