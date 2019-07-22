@@ -533,17 +533,12 @@ public final class PeerImpl implements Peer {
     private int processConnectAttempt(boolean failed){
         if(failed){
           failedConnectAttempts++;
-          if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX/5 && !isBlacklisted()){
-              LOG.debug("Peer {} in not connecatable, blacklisting",getAnnouncedAddress());
-              blacklist("Can not connect "+failedConnectAttempts+" times");
-          }
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
               LOG.debug("Peer {} in noit connecatfble, removing",getAnnouncedAddress());
               Peers.removePeer(this);
           }
         }else{  //reset on success
             failedConnectAttempts = 0;
-            unBlacklist();
         }
         return failedConnectAttempts;
     }

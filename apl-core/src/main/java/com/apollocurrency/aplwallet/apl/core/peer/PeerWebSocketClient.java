@@ -84,7 +84,9 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
         try {
             client.stop();
-            if(client!=null) client.destroy();
+            if(client!=null){
+                client.destroy();
+            }
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop",ex);
         }
