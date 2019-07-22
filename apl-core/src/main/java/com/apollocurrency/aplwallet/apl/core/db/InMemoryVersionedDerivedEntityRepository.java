@@ -93,7 +93,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
                     chageableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
-                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : last(columnChanges), historicalEntity);
+                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : last(columnChanges).getValue(), historicalEntity);
                         if (columnChange != null) {
                             columnChanges.add(new Change(historicalEntity.getHeight(), columnChange));
                         }
@@ -123,7 +123,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             entity.setLatest(true);
             DbKey dbKey = keyFactory.newKey(entity);
             EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
-            if (existingEntity == null) {
+            if (existingEntity == null) { // save new
                 entity.setDbId(++counter);
                 Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
                 chageableColumns.forEach(c -> {
@@ -150,6 +150,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     });
                     existingEntity.setEntity(entity);
                 } else { // do insert new value
+                    entity.setDbId(++counter);
                     Map<String, List<Change>> changes = existingEntity.getChanges();
                     chageableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
@@ -209,6 +210,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             DbKey dbKey = getKeyFactory().newKey(entity);
             EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
             if (existingEntity != null) {
+                entity.setLatest(false);
                 T ourEntity = existingEntity.getEntity();
                 ourEntity.setLatest(false);
                 ourEntity.setHeight(entity.getHeight());
@@ -256,7 +258,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             for (Map.Entry<DbKey, EntityWithChanges<T>> entry : allEntities.entrySet()) {
                 EntityWithChanges<T> entity = entry.getValue();
                 DbKey key = entry.getKey();
-                if (entity.getEntity().getHeight() < height) {
+                if (entity.getEntity().getHeight() > height) {
                     if (entity.getMinHeight() > height) {
                         keysToDelete.add(key);
                     } else {
@@ -265,7 +267,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                             List<Change> changes = columnWithChanges.getValue();
                             boolean removed = changes.removeIf(c -> c.getHeight() > height);
                             if (removed) {
-                                setColumn(columnWithChanges.getKey(), changes.get(changes.size() - 1).getValue(), entity.getEntity());
+                                setColumn(columnWithChanges.getKey(), last(changes).getValue(), entity.getEntity());
                                 keysToUpdate.add(key);
                             }
                         }
@@ -280,11 +282,12 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             keysToUpdate.stream()
                     .map(allEntities::get)
                     .forEach(e -> {
-                        e.getEntity().setLatest(true);
+                        T entity = e.getEntity();
+                        entity.setLatest(true);
                         List<DbIdLatestValue> dbIdLatestValues = e.getDbIdLatestValues();
-                        DbIdLatestValue lastDbIdLatestValue = dbIdLatestValues.get(dbIdLatestValues.size() - 1);
-                        e.getEntity().setDbId(lastDbIdLatestValue.getDbId());
-                        e.getEntity().setHeight(lastDbIdLatestValue.getHeight());
+                        DbIdLatestValue lastDbIdLatestValue = last(dbIdLatestValues);
+                        entity.setDbId(lastDbIdLatestValue.getDbId());
+                        entity.setHeight(lastDbIdLatestValue.getHeight());
                         lastDbIdLatestValue.setLatest(true);
                     });
         });

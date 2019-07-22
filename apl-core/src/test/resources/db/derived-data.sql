@@ -41,3 +41,21 @@ insert into versioned_child_derived_entity
 (1100     , 3                 , 1   , 130     , false),
 (1110     , 4                 , 1   , 130     , true ),
 ;
+create table if not exists versioned_changeable_derived_entity(db_id IDENTITY, remaining BIGINT NOT NULL, id BIGINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL);
+delete from versioned_changeable_derived_entity;
+insert into versioned_changeable_derived_entity
+(db_id    ,id          ,remaining   ,height  , latest) VALUES
+(1000     , 1          , 100        , 225    , false),
+(1010     , 1          , 99         , 226    , false),
+(1020     , 2          , 99         , 226    , false),
+(1030     , 3          , 0          , 227    , true ),
+(1040     , 4          , 0          , 227    , false),
+(1050     , 2          , 10         , 228    , true ),
+(1060     , 1          , 97         , 228    , true ),
+(1070     , 4          , 0          , 228    , false),
+;
+
+
+
+
+

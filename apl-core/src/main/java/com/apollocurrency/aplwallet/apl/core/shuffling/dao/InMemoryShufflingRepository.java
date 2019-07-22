@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.InMemoryVersionedDerivedEntityRepository;
+import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 
@@ -43,7 +45,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Inject
     public InMemoryShufflingRepository(ShufflingKeyFactory keyFactory) {
-        super(keyFactory);
+        super(keyFactory, List.of("recipient_public_keys", "blocks_remaining", "assignee_account_id", "registrant_count", "stage"));
         this.shufflingKeyFactory = keyFactory;
     }
 
@@ -145,7 +147,17 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     private Stream<Shuffling> latestStream() {
         return getAllEntities().values()
                 .stream()
-                .filter(l -> l.get(l.size() - 1).isLatest()) // skip deleted
-                .map(l -> l.get(l.size() - 1)); // get latest
+                .map(EntityWithChanges::getEntity)
+                .filter(VersionedDerivedEntity::isLatest); // skip deleted
+    }
+
+    @Override
+    public Object analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
+        return null;
+    }
+
+    @Override
+    public void setColumn(String columnName, Object value, Shuffling entity) {
+
     }
 }
