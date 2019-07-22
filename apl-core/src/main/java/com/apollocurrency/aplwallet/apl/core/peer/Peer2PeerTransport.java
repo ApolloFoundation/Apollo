@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -46,7 +47,10 @@ public class Peer2PeerTransport {
     private volatile long uploadedVolume;
     private final Object volumeMonitor = new Object();
     private PeerWebSocket inboundWebSocket;
+    //this should be final because it is problematic to stop websocket client properly
     private PeerWebSocketClient outboundWebSocket;
+    @Getter
+    private long lastActivity;
 
     //we use random numbers to minimize possible request/response mismatches
     private Long nextRequestId() {
@@ -59,10 +63,12 @@ public class Peer2PeerTransport {
 
     String which() {
         String which;
-        if (peerServlet != null) {
+        if (inboundWebSocket != null) {
             which = "Inbound";
-        } else {
-            which = "Outbound";
+        } else if(outboundWebSocket!=null && outboundWebSocket.isClientConnected()){
+            which = "Outbound, connected";
+        }else{
+            which="Outbound, not connected";
         }
         Peer p = peerReference.get();
         if (p != null) {
@@ -74,7 +80,7 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());
+        rnd = new Random(System.currentTimeMillis());        
     }
 
     public long getDownloadedVolume() {
@@ -100,9 +106,6 @@ public class Peer2PeerTransport {
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
-        if(ws==null){
-            log.debug("using HTTP on {}",which());
-        }
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
@@ -115,6 +118,7 @@ public class Peer2PeerTransport {
                 peerServlet.doPostWebSocket(this, rqId, message);
             }
         }
+        lastActivity=System.currentTimeMillis();
         updateDownloadedVolume(message.length());
     }
 
@@ -168,9 +172,15 @@ public class Peer2PeerTransport {
         }
         return res;
     }
-//just log here, do nothing more
+
     public void onWebSocketClose(PeerWebSocket ws) {
-        log.debug(which()+" websocket close");
+        log.debug("Peer: {} websocket close",which());
+        Peer p = peerReference.get();
+        if(p!=null){
+            p.deactivate("Websocket close event");
+        }else{
+             ws.close();   
+        }
     }
 
     private synchronized void cleanUp() {
@@ -224,7 +234,7 @@ public class Peer2PeerTransport {
                 log.debug("Peer " + getHostWithPort() + " responded with HTTP " + connection.getResponseCode());
             }
         } catch (IOException ex) {
-            log.warn("Error getting HTTP response from {}", getHostWithPort(), ex); 
+            log.trace("Error getting HTTP response from {}", getHostWithPort(), ex); 
         }finally{
             connection.disconnect(); 
         }
@@ -246,7 +256,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    public boolean send(String message, Long requestId) {
+    public synchronized boolean send(String message, Long requestId) {
         cleanUp();
             boolean sendOK = false;
             if(message==null||message.isEmpty()){
@@ -266,10 +276,10 @@ public class Peer2PeerTransport {
                     }
                 }
                 if (!sendOK) { //no inbound connection or send failed
-                    if (outboundWebSocket == null) {
-                        outboundWebSocket = new PeerWebSocketClient(this);
+                    if(outboundWebSocket==null){
+                       outboundWebSocket=new PeerWebSocketClient(this);
                     }
-                    if (!outboundWebSocket.isConnected()) {
+                    if (!outboundWebSocket.isClientConnected()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         Peer p = peerReference.get();
@@ -278,15 +288,14 @@ public class Peer2PeerTransport {
                             return sendOK;
                         }
                         String addrWithPort = peerReference.get().getAnnouncedAddress();
-                        if (StringUtils.isBlank(addrWithPort)) { // try to use addres with port, should be OK for default peers
-                            addrWithPort = getHostWithPort();
-                        }
-                        String wsConnectString = "ws://" + addrWithPort + "/apl";
-                        URI wsUri = URI.create(wsConnectString);
-                        log.trace("Connecting to websocket'{}'...", wsConnectString);
-                        sendOK  = outboundWebSocket.startClient(wsUri);
-                        if (sendOK ) {
-                            log.trace("Connected as client to websocket {}", wsConnectString);
+                        if (!StringUtils.isBlank(addrWithPort)) { // we cannot use peers that do not have external address
+                            String wsConnectString = "ws://" + addrWithPort + "/apl";
+                            URI wsUri = URI.create(wsConnectString);
+                            log.trace("Connecting to websocket'{}'...", wsConnectString);
+                            sendOK = outboundWebSocket.startClient(wsUri);
+                            if (sendOK) {
+                                log.trace("Connected as client to websocket {}", wsConnectString);
+                            }
                         }
                     } else { //client socket is already open
                        sendOK = true;
@@ -298,6 +307,7 @@ public class Peer2PeerTransport {
             }
             if (!sendOK) { // Send the request using HTTP as fallback
                 sendOK = sendHttp(message,requestId);
+                log.debug("Trying ot use HTTP requests to {} because websockets failed",getHostWithPort());
                 if(!sendOK){
                     log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
                 }
@@ -314,7 +324,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    void disconnect() {
+    synchronized void disconnect() {
         if (inboundWebSocket != null) {
             inboundWebSocket.close();
             inboundWebSocket = null;
@@ -339,5 +349,5 @@ public class Peer2PeerTransport {
     void setInboundSocket(PeerWebSocket pws) {
         inboundWebSocket=pws;
     }
-
+    
 }

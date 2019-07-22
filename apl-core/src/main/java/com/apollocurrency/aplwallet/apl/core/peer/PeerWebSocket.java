@@ -39,9 +39,11 @@ public class PeerWebSocket extends WebSocketAdapter {
      * Compressed message flag
      */
     private static final int FLAG_COMPRESSED = 1;
+    private long lastActivityTime;
 
     public PeerWebSocket(Peer2PeerTransport peer) {
         peerReference = new SoftReference<>(peer);
+        lastActivityTime=System.currentTimeMillis();
     }
     
     String which(){
@@ -56,6 +58,7 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
+        lastActivityTime=System.currentTimeMillis();
         log.debug("Peer: {} String received: \n{}",which(),message);
     }
 
@@ -84,6 +87,7 @@ public class PeerWebSocket extends WebSocketAdapter {
     @Override
     public void onWebSocketBinary(byte[] payload, int offset, int len) {
         super.onWebSocketBinary(payload, offset, len);
+        lastActivityTime=System.currentTimeMillis();
         try {
             ByteBuffer buf = ByteBuffer.wrap(payload, offset, len);
             version = Math.min(buf.getInt(), WS_VERSION);
@@ -110,6 +114,8 @@ public class PeerWebSocket extends WebSocketAdapter {
             Peer2PeerTransport p = peerReference.get();
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
+            }else{
+                log.debug("Peer reference is null on websocket incoming message:\n {}",message);
             }    
 
         } catch (IOException ex) {
@@ -164,8 +170,18 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void close(){
         Session s = getSession();
         if(s!=null){
+            try {
+                s.disconnect();
+            } catch (IOException ex) {
+                log.debug("Excetion on session disconnect to {}",which(),ex);
+            }
             s.close();
         }
     }
-
+    long getLastActivityTime() {
+        return lastActivityTime;
+    }
+    public Peer2PeerTransport getTransport(){
+        return peerReference.get();
+    }
 }

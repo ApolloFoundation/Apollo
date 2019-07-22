@@ -99,7 +99,7 @@ public final class PeerImpl implements Peer {
     @Getter
     private final Peer2PeerTransport p2pTransport;
     @Getter
-    private int failedConnectAttempts = 0;
+    private volatile int  failedConnectAttempts = 0;
     
     PeerImpl(PeerAddress addrByFact, 
             PeerAddress announcedAddress,
@@ -131,7 +131,6 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
-        setLastUpdated(timeService.getEpochTime());
     }
     
     @Override
@@ -150,7 +149,7 @@ public final class PeerImpl implements Peer {
         return state;
     }
 
-    private void setState(PeerState newState) {
+    private synchronized void setState(PeerState newState) {
         // if we are even not connected and some routine say to disconnect
         // we should close all because possily we alread tried to connect and have
         // client thread running
@@ -393,7 +392,6 @@ public final class PeerImpl implements Peer {
             return;
         }
         LOG.debug("Unblacklisting " + host);
-        setState(PeerState.NON_CONNECTED);
         blacklistingTime = 0;
         blacklistingCause = null;
         Peers.notifyListeners(this, Peers.Event.UNBLACKLIST);
@@ -458,9 +456,14 @@ public final class PeerImpl implements Peer {
     public int getLastConnectAttempt() {
         return lastConnectAttempt;
     }
+    
+    public long getLastActivityTime(){
+        return p2pTransport.getLastActivity();
+    }
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) {
+        
         if(state!=PeerState.CONNECTED){
             LOG.trace("send() called before handshake(). Handshacking");
             handshake(chainId);
@@ -503,11 +506,9 @@ public final class PeerImpl implements Peer {
                 } else {
                     processError(response);
                 }
-            }else{
-               setLastUpdated(timeService.getEpochTime()); 
             }
         } catch (RuntimeException|ParseException e) {
-            LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
+            LOG.debug("Exception while sending request to '{}'",getHostWithPort(),e);
             deactivate("Exception while sending request: "+e.getMessage());
         }
         return response;
@@ -525,18 +526,21 @@ public final class PeerImpl implements Peer {
     }
     
     /**
-     * forget peers that are unconnectable
+     * first blacklist and then forget peers that are not connectable
+     * or reset counter on success
      * @param failed true marks failed connect attempt, false for successful connection
      */
-    private void processConnectAttempt(boolean failed){
-        if(!failed){
+    private int processConnectAttempt(boolean failed){
+        if(failed){
           failedConnectAttempts++;
-          if(failedConnectAttempts>Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+          if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+              LOG.debug("Peer {} in noit connecatable, removing",getAnnouncedAddress());
               Peers.removePeer(this);
           }
-        }else{
-            failedConnectAttempts=0;
+        }else{  //reset on success
+            failedConnectAttempts = 0;
         }
+        return failedConnectAttempts;
     }
     
     @Override   
@@ -624,9 +628,9 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
                 processConnectAttempt(false);
             } else {
-                LOG.debug("NULL json Response, Failed to connect to peer: {} ", getHostWithPort());
+                int t = processConnectAttempt(true);
+                LOG.debug("Failed to connect to peer: {} ({}) this:{}", getHostWithPort(),t, System.identityHashCode(this));
                 deactivate("NULL json Response on handshake");
-                processConnectAttempt(true);
             }
         } catch (RuntimeException e) {
             LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
@@ -876,6 +880,7 @@ public final class PeerImpl implements Peer {
         boolean res = false;
         if (StringUtils.isBlank(message)) {
             LOG.debug("Blank message from {}", getHostWithPort());
+            deactivate("Null message");
             res = true;
         } else {
             try {
@@ -903,11 +908,12 @@ public final class PeerImpl implements Peer {
         return res;
     }
 
-    boolean processError(JSONObject request) {
-       if(request!=null){ 
-          return processError(request.toJSONString());
+    boolean processError(JSONObject message) {
+       if(message!=null){ 
+          return processError(message.toJSONString());
        }else{
-            LOG.debug("null message from {}", getHostWithPort());
+            LOG.debug("null message from {}, deactivating", getHostWithPort());
+            deactivate(host);
             return true;           
        }
     }
