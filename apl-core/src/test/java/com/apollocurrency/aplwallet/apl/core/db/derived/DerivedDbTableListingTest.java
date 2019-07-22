@@ -136,7 +136,6 @@ class DerivedDbTableListingTest {
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .build();
 
     @Inject
@@ -174,7 +173,7 @@ class DerivedDbTableListingTest {
         AccountInfoTable.getInstance().init();
         Alias.init();
         AccountAssetTable.getInstance().init();
-        GenesisPublicKeyTable.getInstance().init();
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         AccountLedgerTable accountLedgerTable = new AccountLedgerTable();

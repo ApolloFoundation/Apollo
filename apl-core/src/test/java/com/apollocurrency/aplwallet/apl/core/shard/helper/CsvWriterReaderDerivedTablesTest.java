@@ -185,7 +185,7 @@ class CsvWriterReaderDerivedTablesTest {
         AccountCurrencyTable.getInstance().init();
         PhasingOnly.get(Long.parseLong("-8446384352342482748"));
         AccountAssetTable.getInstance().init();
-        GenesisPublicKeyTable.getInstance().init();
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();

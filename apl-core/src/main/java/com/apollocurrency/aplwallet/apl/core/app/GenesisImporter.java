@@ -58,7 +58,7 @@ import org.json.simple.parser.ParseException;
 
 @Slf4j
 @Singleton
-public final class GenesisImporter {
+public class GenesisImporter {
 
     private byte[] CREATOR_PUBLIC_KEY;
     public static long CREATOR_ID;
@@ -140,7 +140,7 @@ public final class GenesisImporter {
     }
 
     @Transactional
-    public void apply(boolean loadOnlyPublicKeys) {
+    public void importGenesisJson(boolean loadOnlyPublicKeys) {
         long start = System.currentTimeMillis();
         if (this.balances == null || this.publicKeys == null) {
             loadBalancesAccountsComputeDigest();

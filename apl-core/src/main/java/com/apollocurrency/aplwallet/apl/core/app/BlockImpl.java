@@ -47,7 +47,7 @@ public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     private static ShardDao shardDao;
 
@@ -94,19 +94,19 @@ public final class BlockImpl implements Block {
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength, byte[] payloadHash,
               byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature, byte[] previousBlockHash, int timeout,
               List<Transaction> transactions) {
-        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, blockchainConfig.getCurrentConfig().getInitialBaseTarget(), 0L, -1, 0, timeout, transactions);
+        this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorPublicKey, generationSignature, blockSignature, previousBlockHash, BigInteger.ZERO, null, 0L, -1, 0, timeout, transactions);
     }
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
                      byte[] payloadHash, long generatorId, byte[] generationSignature, byte[] blockSignature,
-                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, Long baseTarget, long nextBlockId, int height, long id, int timeout,
                      List<Transaction> blockTransactions) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, generatorId, null, generationSignature, blockSignature, previousBlockHash,
                 cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, blockTransactions);
     }
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
                      byte[] payloadHash, byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature,
-                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+                     byte[] previousBlockHash, BigInteger cumulativeDifficulty, Long baseTarget, long nextBlockId, int height, long id, int timeout,
                      List<Transaction> blockTransactions) {
         this(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash, 0, generatorPublicKey, generationSignature, blockSignature, previousBlockHash,
                 cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout, blockTransactions);
@@ -114,7 +114,7 @@ public final class BlockImpl implements Block {
 
     public BlockImpl(int version, int timestamp, long previousBlockId, long totalAmountATM, long totalFeeATM, int payloadLength,
               byte[] payloadHash, long generatorId, byte[] generatorPublicKey, byte[] generationSignature, byte[] blockSignature,
-              byte[] previousBlockHash, BigInteger cumulativeDifficulty, long baseTarget, long nextBlockId, int height, long id, int timeout,
+              byte[] previousBlockHash, BigInteger cumulativeDifficulty, Long baseTarget, long nextBlockId, int height, long id, int timeout,
               List<Transaction> blockTransactions) {
         this.version = version;
         this.timestamp = timestamp;
@@ -128,7 +128,12 @@ public final class BlockImpl implements Block {
         this.previousBlockHash = previousBlockHash;
         this.timeout = timeout;
         this.cumulativeDifficulty = cumulativeDifficulty;
-        this.baseTarget = baseTarget;
+        if (baseTarget != null) {
+            this.baseTarget = baseTarget;
+        } else {
+            lookupBlockchainConfig();
+            this.baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
+        }
         this.nextBlockId = nextBlockId;
         this.height = height;
         this.id = id;
@@ -141,6 +146,13 @@ public final class BlockImpl implements Block {
         if (blockTransactions != null) {
             this.blockTransactions = Collections.unmodifiableList(blockTransactions);
         }
+    }
+
+    private BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return  blockchainConfig;
     }
 
     @Override

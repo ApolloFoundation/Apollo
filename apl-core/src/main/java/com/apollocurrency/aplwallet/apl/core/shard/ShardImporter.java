@@ -66,7 +66,7 @@ public class ShardImporter {
 
     public void importLastShard(int height) {
         if (height == 0) {
-            genesisImporter.apply(false);
+            genesisImporter.importGenesisJson(false);
         } else {
             Shard completedShard = shardDao.getLastCompletedShard();
             Long shardId = completedShard.getShardId();
@@ -105,7 +105,7 @@ public class ShardImporter {
             throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
         }
 
-        genesisImporter.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
+        genesisImporter.importGenesisJson(true); // import genesis public Keys ONLY (NO balances) - 049,842%
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
         // import additional tables
         List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,

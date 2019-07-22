@@ -145,7 +145,7 @@ public final class Account {
         accountCurrencyTable = AccountCurrencyTable.getInstance();
         accountLeaseTable = AccountLeaseTable.getInstance();
         accountPropertyTable = AccountPropertyTable.getInstance();
-        genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
+        genesisPublicKeyTable = new GenesisPublicKeyTable(blockchainParam);
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
@@ -824,7 +824,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                publicKeyTable.insert(publicKey);
             }
