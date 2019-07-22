@@ -79,7 +79,7 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
-public final class AplCore {
+    public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
@@ -278,14 +278,8 @@ public final class AplCore {
 
                 ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
                         () -> {
-                            Runtime runtime = Runtime.getRuntime();
-                            LOG.debug("Used connections - '{}', Memory Info. Total: {} Kb, Free: {} Kb, Max: {} Kb",
-                                  databaseManager.getDataSource().getJmxBean().getActiveConnections(),
-                                  runtime.totalMemory() / 1024,
-                                  runtime.freeMemory() / 1024,
-                                  runtime.maxMemory() / 1024
-                          );
-                          aplAppStatus.clearFinished(1*60L); //10 min
+                            LOG.debug(getNodeHealth());
+                            aplAppStatus.clearFinished(1*60L); //10 min
                         },
                    20,
                    TimeUnit.SECONDS);
@@ -333,7 +327,21 @@ public final class AplCore {
                 System.exit(1);
             }
         }
-
+    private String getNodeHealth(){
+        StringBuilder sb = new StringBuilder("Node health info\n");
+        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        sb.append("Used DB connections: ").append(usedConnections);
+        Runtime runtime = Runtime.getRuntime();
+        sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
+        sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
+        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
+        sb.append("\nActive threads count :").append(Thread.activeCount());
+        sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
+        sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
+        sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
+        sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
+        return sb.toString();
+    }
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();

@@ -49,7 +49,7 @@ public class PeerClient {
     public boolean checkConnection(){
         boolean res = false;
         String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = Peers.findOrCreatePeer(announcedAddress, true);
+        Peer p = Peers.findOrCreatePeer(null,announcedAddress, true);
         if(p!=null){
             peer=p;
             res=true;
