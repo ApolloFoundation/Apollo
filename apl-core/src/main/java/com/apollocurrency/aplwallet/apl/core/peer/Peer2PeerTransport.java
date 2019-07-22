@@ -65,8 +65,8 @@ public class Peer2PeerTransport {
         String which;
         if (inboundWebSocket != null) {
             which = "Inbound";
-        } else if(outboundWebSocket.isClientConnected()){
-            which = "Outbound";
+        } else if(outboundWebSocket!=null && outboundWebSocket.isClientConnected()){
+            which = "Outbound, connected";
         }else{
             which="Outbound, not connected";
         }

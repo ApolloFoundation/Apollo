@@ -508,7 +508,7 @@ public final class PeerImpl implements Peer {
                 }
             }
         } catch (RuntimeException|ParseException e) {
-            LOG.trace("Exception while sending request: {} to '{}'", e, getHostWithPort());
+            LOG.debug("Exception while sending request to '{}'",getHostWithPort(),e);
             deactivate("Exception while sending request: "+e.getMessage());
         }
         return response;
