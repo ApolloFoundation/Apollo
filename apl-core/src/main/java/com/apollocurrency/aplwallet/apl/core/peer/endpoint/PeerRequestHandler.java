@@ -29,10 +29,11 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
 /**
  *
@@ -44,9 +45,6 @@ public abstract class PeerRequestHandler {
 
     public abstract boolean rejectWhileDownloading();
 
-    protected boolean isChainIdProtected() {
-        return true;
-    }
     @Inject
     private Blockchain blockchain;
     @Inject

@@ -42,7 +42,7 @@ public class ChunkedFileOps {
     }
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     
-    public synchronized int writeChunk(Long offset, byte[] data, long crc) throws IOException{
+    public synchronized void writeChunk(Long offset, byte[] data, long crc) throws IOException{
         int res=0;
         CheckSum cs = new CheckSum();
         cs.update(data);
@@ -60,12 +60,12 @@ public class ChunkedFileOps {
             rf.write(data);
         }catch( IOException e){
            log.error("Can not write file: {}",absPath.toAbsolutePath().toString());
+           throw e;
         }finally{
             if(rf!=null){
               rf.close();
             }
         }
-        return res;
     }
     
     public int readChunk(Long offset, Long size, byte[] dataBuf) throws IOException{

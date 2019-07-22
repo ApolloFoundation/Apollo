@@ -6,13 +6,17 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import org.slf4j.Logger;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -31,11 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import org.slf4j.Logger;
 
 /**
  * {@inheritDoc}
@@ -227,7 +226,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
                                     } else if (o1 instanceof String){
                                         objectValue = "\'" + o1.toString() + "\'";
-                                    } else if (o1 instanceof Long) {
+                                    } else if (o1 instanceof Long || o1 instanceof Integer) {
                                         objectValue = o1.toString();
                                     } else {
                                         throw new RuntimeException("Unsupported array type: " + o1.getClass());

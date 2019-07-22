@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -47,6 +49,8 @@ public final class BlockImpl implements Block {
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static ShardDao shardDao;
+
 
     private final int version;
     private final int timestamp;
@@ -464,8 +468,7 @@ public final class BlockImpl implements Block {
             transaction.getAppendages();
         }
     }
-
-
+    
     private void calculateBaseTarget(Block previousBlock) {
         long prevBaseTarget = previousBlock.getBaseTarget();
         int blockchainHeight = previousBlock.getHeight();
@@ -497,18 +500,54 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        Block lastBlockForTimeAverage = blockchain.getBlockAtHeight(blockchainHeight - 2);
+        Block shardInitialBlock = blockchain.getShardInitialBlock();
+        int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
-            Block intermediateBlockForTimeAverage = blockchain.getBlockAtHeight(blockchainHeight - 1);
+            int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1);
+            int intermediateTimeout = getPrevTimeout(shardInitialBlock.getHeight(), blockchainHeight - 1);
             int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
-            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateBlockForTimeAverage.getTimestamp();
-            int secondAvgBlockTime = intermediateBlockForTimeAverage.getTimestamp()
-                    - intermediateBlockForTimeAverage.getTimeout() - lastBlockForTimeAverage.getTimestamp();
+            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateTimestamp;
+            int secondAvgBlockTime = intermediateTimestamp
+                    - intermediateTimeout - lastBlockTimestamp;
             return  (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
         } else {
-            return (this.timestamp - lastBlockForTimeAverage.getTimestamp()) / 3;
+            return (this.timestamp - lastBlockTimestamp) / 3;
         }
     }
+
+    private ShardDao lookupShardDao() {
+        if (shardDao == null) {
+            shardDao = CDI.current().select(ShardDao.class).get();
+        }
+        return shardDao;
+    }
+
+    private int getPrevTimestamp(int shardInitialHeight, int blockHeight) {
+        int diff = shardInitialHeight - blockHeight;
+        if (diff > 2) {
+            throw new IllegalArgumentException("Unable to retrieve block timestamp for height " + blockHeight + " current shard height " + shardInitialHeight);
+        }
+        if (diff > 0) {
+            Shard lastShard = lookupShardDao().getLastShard();
+            int[] blockTimestamps = lastShard.getBlockTimestamps();
+            return blockTimestamps[diff - 1];
+        }
+        return blockchain.getBlockAtHeight(blockHeight).getTimestamp();
+    }
+
+    private int getPrevTimeout(int shardInitialHeight, int blockHeight) {
+        int diff = shardInitialHeight - blockHeight;
+        if (diff > 2) {
+            throw new IllegalArgumentException("Unable to retrieve block timeout for height " + blockHeight + " current shard height " + shardInitialHeight);
+        }
+        if (diff > 0) {
+            Shard lastShard = lookupShardDao().getLastShard();
+            int[] blockTimeouts = lastShard.getBlockTimeouts();
+            return blockTimeouts[diff - 1];
+        }
+        return blockchain.getBlockAtHeight(blockHeight).getTimeout();
+    }
+
 
     @Override
     public String toString() {

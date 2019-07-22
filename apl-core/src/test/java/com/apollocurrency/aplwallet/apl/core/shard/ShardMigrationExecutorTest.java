@@ -59,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -137,7 +138,7 @@ class ShardMigrationExecutorTest {
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             DGSGoodsTable.class,
-            GeneratorIdsExtractor.class,
+            PrevBlockInfoExtractor.class,
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
@@ -266,15 +267,16 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-                    new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{1L, 2L});
+                    new ShardAddConstraintsSchemaVersion(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[] {3, 4}).prevBlockTimestamps(new Integer[] {5, 6}).build());
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
-
 
             Shard shard = shardDao.getShardById(shardId);
             assertNotNull(shard);
             assertArrayEquals(shardHash, shard.getShardHash());
             assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+            assertArrayEquals(new int[] {3, 4}, shard.getBlockTimeouts());
+            assertArrayEquals(new int[] {5, 6}, shard.getBlockTimestamps());
 
 
 //6-7.      // update secondary block + transaction indexes
@@ -335,7 +337,7 @@ class ShardMigrationExecutorTest {
         executeFrom(8000, 4L, DATA_REMOVED_FROM_MAIN);
         Shard lastShard = shardDao.getLastShard();
         assertNotNull(lastShard);
-        assertEquals(ShardConstants.SHARD_PERCENTAGE_FULL, lastShard.getShardState());
+        assertEquals(ShardState.FULL, lastShard.getShardState());
     }
 
     private void executeFrom(int height, long shardId, MigrateState state) {

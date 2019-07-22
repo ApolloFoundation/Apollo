@@ -527,16 +527,18 @@ public final class Peers {
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
         }
         PeerAddress newPa = new PeerAddress(newAnnouncedAddress);
-        Peer oldPeer = peers.get(peer.getHostWithPort());
+        String oldAnnouncedAddr = peer.getAnnouncedAddress();
+        Peer oldPeer = null;
+        if(oldAnnouncedAddr!=null){
+            oldPeer = peers.get(peer.getAnnouncedAddress());
+        }
         if (oldPeer != null) {
             PeerAddress oldPa = new PeerAddress(oldPeer.getAnnouncedAddress());
             if (newPa.compareTo(oldPa) != 0) {
                 LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost() + ":" + oldPeer.getPort());
-//                selfAnnouncedAddresses.remove(newPa.getAddrWithPort());
                 try {
                     peer.setAnnouncedAddress(newAnnouncedAddress);
-                    removePeer(oldPeer);
-                    oldPeer = peers.remove(oldPeer.getHostWithPort());
+                    oldPeer = removePeer(oldPeer);
                     if (oldPeer != null) {
                        notifyListeners(oldPeer, Event.REMOVE);
                     }
@@ -561,7 +563,6 @@ public final class Peers {
                 peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
             }
             listeners.notify(peer, Event.NEW_PEER);
-            connectPeer(peer);
             return true;
         }
         return false;

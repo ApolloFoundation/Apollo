@@ -11,10 +11,12 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 public class Shard {
     private Long shardId;
     private byte[] shardHash;
-    private Long shardState;
+    private ShardState shardState;
     private Integer shardHeight;
     private byte[] zipHashCrc;
-    private long[] generatorIds;
+    private long[] generatorIds; // tree latest generator Ids
+    private int[] blockTimeouts;  // two previous block timeout values
+    private int[] blockTimestamps; // two previous block timestamp values
 
     public Shard() {
     }
@@ -25,7 +27,12 @@ public class Shard {
                 Arrays.copyOf(zipHashCrc, zipHashCrc.length) : null;
         long[] generatorIds = this.generatorIds != null && this.generatorIds.length > 0 ?
                 Arrays.copyOf(this.generatorIds, this.generatorIds.length) : Convert.EMPTY_LONG;
-        return new Shard(shardId, shardHashCopy, shardState, shardHeight, shardZipHashCrcCopy, generatorIds);
+        int[] blockTimeouts = this.blockTimeouts != null && this.blockTimeouts.length > 0 ?
+                Arrays.copyOf(this.blockTimeouts, this.blockTimeouts.length) : Convert.EMPTY_INT;
+        int[] blockTimestamps = this.blockTimestamps != null && this.blockTimestamps.length > 0 ?
+                Arrays.copyOf(this.blockTimestamps, this.blockTimestamps.length) : Convert.EMPTY_INT;
+        return new Shard(shardId, shardHashCopy, shardState, shardHeight,
+                shardZipHashCrcCopy, generatorIds, blockTimeouts, blockTimestamps);
     }
 
     public Shard(long id, Integer shardHeight) {
@@ -51,14 +58,16 @@ public class Shard {
         this.shardHeight = shardHeight;
     }
 
-    public Shard(Long shardId, byte[] shardHash, Long shardState, Integer shardHeight,
-                 byte[] zipHashCrc, long[] generatorIds) {
+    public Shard(Long shardId, byte[] shardHash, ShardState shardState, Integer shardHeight,
+                 byte[] zipHashCrc, long[] generatorIds, int[] blockTimeouts, int[] blockTimestamps) {
         this.shardId = shardId;
         this.shardHash = shardHash;
         this.shardState = shardState;
         this.shardHeight = shardHeight;
         this.zipHashCrc = zipHashCrc;
         this.generatorIds = generatorIds;
+        this.blockTimeouts = blockTimeouts;
+        this.blockTimestamps = blockTimestamps;
     }
 
     @Override
@@ -71,7 +80,9 @@ public class Shard {
                 Objects.equals(shardState, shard.shardState) &&
                 Objects.equals(shardHeight, shard.shardHeight) &&
                 Arrays.equals(zipHashCrc, shard.zipHashCrc) &&
-                Arrays.equals(generatorIds, shard.generatorIds);
+                Arrays.equals(generatorIds, shard.generatorIds) &&
+                Arrays.equals(blockTimeouts, shard.blockTimeouts) &&
+                Arrays.equals(blockTimestamps, shard.blockTimestamps);
     }
 
     @Override
@@ -80,6 +91,8 @@ public class Shard {
         result = 31 * result + Arrays.hashCode(shardHash);
         result = 31 * result + Arrays.hashCode(zipHashCrc);
         result = 31 * result + Arrays.hashCode(generatorIds);
+        result = 31 * result + Arrays.hashCode(blockTimeouts);
+        result = 31 * result + Arrays.hashCode(blockTimestamps);
         return result;
     }
 
@@ -99,11 +112,11 @@ public class Shard {
         this.shardHash = shardHash;
     }
 
-    public Long getShardState() {
+    public ShardState getShardState() {
         return shardState;
     }
 
-    public void setShardState(Long shardState) {
+    public void setShardState(ShardState shardState) {
         this.shardState = shardState;
     }
 
@@ -131,6 +144,22 @@ public class Shard {
         this.generatorIds = generatorIds;
     }
 
+    public int[] getBlockTimeouts() {
+        return blockTimeouts;
+    }
+
+    public void setBlockTimeouts(int[] blockTimeouts) {
+        this.blockTimeouts = blockTimeouts;
+    }
+
+    public int[] getBlockTimestamps() {
+        return blockTimestamps;
+    }
+
+    public void setBlockTimestamps(int[] blockTimestamps) {
+        this.blockTimestamps = blockTimestamps;
+    }
+
     public static ShardBuilder builder() {
         return new ShardBuilder();
     }
@@ -138,10 +167,12 @@ public class Shard {
     public static final class ShardBuilder {
         private Long shardId;
         private byte[] shardHash;
-        private Long shardState;
+        private ShardState shardState;
         private Integer shardHeight;
         private byte[] zipHashCrc;
         private long[] generatorIds;
+        private int[] blockTimeouts;  // two previous block timeout values
+        private int[] blockTimestamps; // two previous block timestamp values
 
         private ShardBuilder() {
         }
@@ -156,7 +187,7 @@ public class Shard {
             return this;
         }
 
-        public ShardBuilder shardState(Long shardState) {
+        public ShardBuilder shardState(ShardState shardState) {
             this.shardState = shardState;
             return this;
         }
@@ -167,17 +198,28 @@ public class Shard {
         }
 
         public ShardBuilder zipHashCrc(byte[] zipHashCrc) {
-            this.zipHashCrc= zipHashCrc;
+            this.zipHashCrc = zipHashCrc;
             return this;
         }
 
         public ShardBuilder generatorIds(long[] generatorIds) {
-            this.generatorIds= generatorIds;
+            this.generatorIds = generatorIds;
+            return this;
+        }
+
+        public ShardBuilder blockTimeouts(int[] blockTimeouts) {
+            this.blockTimeouts = blockTimeouts;
+            return this;
+        }
+
+        public ShardBuilder blockTimestamps(int[] blockTimestamps) {
+            this.blockTimestamps = blockTimestamps;
             return this;
         }
 
         public Shard build() {
-            return new Shard(shardId, shardHash, shardState, shardHeight, zipHashCrc, generatorIds);
+            return new Shard(shardId, shardHash, shardState, shardHeight,
+                    zipHashCrc, generatorIds, blockTimeouts, blockTimestamps);
         }
     }
 
@@ -193,14 +235,28 @@ public class Shard {
         sb.append(", shardState=").append(shardState);
         sb.append(", shardHeight=").append(shardHeight);
         sb.append(", zipHashCrc=");
-        if (zipHashCrc == null) sb.append("null");
-        else {
+        if (zipHashCrc == null) {
+            sb.append("null");
+        } else {
             sb.append('[').append(Convert.toHexString(zipHashCrc)).append(']');
         }
         sb.append(", generatorIds=");
-        if (generatorIds == null) sb.append("null");
-        else {
+        if (generatorIds == null) {
+            sb.append("null");
+        } else {
             sb.append('[').append(generatorIds).append(']');
+        }
+        sb.append(", blockTimeouts=");
+        if (blockTimeouts == null) {
+            sb.append("null");
+        } else {
+            sb.append('[').append(blockTimeouts).append(']');
+        }
+        sb.append(", blockTimestamps=");
+        if (blockTimestamps == null) {
+            sb.append("null");
+        } else {
+            sb.append('[').append(blockTimestamps).append(']');
         }
         sb.append('}');
         return sb.toString();
