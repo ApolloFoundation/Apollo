@@ -5,8 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -74,7 +88,7 @@ public class ShardServiceTest {
 
         assertEquals(MigrateState.FAILED, c.get());
         verify(shardMigrationExecutor).executeAllOperations();
-        verify(trimEvent, times(2)).fire(anyBoolean());
+        verify(trimEvent, after(250).times(2)).fire(anyBoolean()); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
     }
 
     @Test
@@ -128,7 +142,7 @@ public class ShardServiceTest {
         assertEquals(MigrateState.FAILED, c.get());
 
         verifyZeroInteractions(shardMigrationExecutor);
-        verify(trimEvent, times(2)).fire(anyBoolean());
+        verify(trimEvent, after(250).times(2)).fire(anyBoolean()); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
     }
 
     @Test
