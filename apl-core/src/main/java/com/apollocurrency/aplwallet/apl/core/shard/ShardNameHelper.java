@@ -7,10 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.slf4j.Logger;
+
 import java.util.Objects;
 import java.util.UUID;
-
-import org.slf4j.Logger;
 
 /**
  * Class for mapping shard_id into shard file name as String.
@@ -40,6 +40,7 @@ public class ShardNameHelper {
        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
        return result;
     }
+
     public String getShardArchiveNameByShardId(Long shardId, UUID chainId) {
         if (shardId == null || shardId < 0) {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");

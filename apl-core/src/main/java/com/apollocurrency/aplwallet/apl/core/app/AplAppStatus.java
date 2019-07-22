@@ -249,13 +249,11 @@ public class AplAppStatus {
         List<String> ids = new ArrayList<>();
         long now = System.currentTimeMillis();
         for (DurableTaskInfo ti : tasks.values()) {
-            if (ti.getFinished().getTime() + secondsAgo * 1000 <= now) {
+            if (ti.getFinished() != null && ti.getFinished().getTime() + secondsAgo * 1000 <= now) {
                 ids.add(ti.getId());
             }
         }
-        ids.forEach((id) -> {
-            tasks.remove(id);
-        });
+        ids.forEach(tasks::remove);
     }
 
     /**

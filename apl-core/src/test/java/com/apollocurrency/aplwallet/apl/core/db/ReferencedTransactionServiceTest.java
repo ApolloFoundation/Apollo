@@ -56,14 +56,14 @@ public class ReferencedTransactionServiceTest {
     HeightConfig config = Mockito.mock(HeightConfig.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, BlockIndexDao.class, ReferencedTransactionDaoImpl.class,
+            PropertiesHolder.class, TransactionImpl.class, BlockchainImpl.class, DaoConfig.class, BlockIndexDao.class, ReferencedTransactionDaoImpl.class,
             GlobalSync.class,
             FullTextConfigImpl.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
             EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))

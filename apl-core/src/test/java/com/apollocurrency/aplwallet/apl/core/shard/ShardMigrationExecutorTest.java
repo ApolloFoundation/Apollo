@@ -129,8 +129,7 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-            BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
             PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
@@ -147,6 +146,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
