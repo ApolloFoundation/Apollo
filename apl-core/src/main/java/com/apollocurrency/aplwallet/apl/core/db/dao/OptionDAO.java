@@ -1,8 +1,8 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db.model;
+package com.apollocurrency.aplwallet.apl.core.db.dao;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

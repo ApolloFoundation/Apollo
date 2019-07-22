@@ -1,15 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.app.service;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.db.dao.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.model.SecureStorage;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,8 +17,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 @Singleton
 public class SecureStorageServiceImpl implements SecureStorageService {

@@ -9,6 +9,8 @@ import static java.util.stream.Collectors.toMap;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
+import com.apollocurrency.aplwallet.apl.core.db.model.DbIdLatestValue;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
 
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -25,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * In memory repository for blockchain changeable entities,
@@ -42,8 +46,8 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     private List<String> chageableColumns;
 
     public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory, List<String> changeableColumns) {
-        this.keyFactory = keyFactory;
-        this.chageableColumns = changeableColumns;
+        this.keyFactory = Objects.requireNonNull(keyFactory);
+        this.chageableColumns = Objects.requireNonNull(changeableColumns);
     }
 
     protected KeyFactory<T> getKeyFactory() {
@@ -58,12 +62,16 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
         LockUtils.doInLock(lock.writeLock(), action);
     }
 
-    protected  <V> V getInWriteLock(Supplier<V> action) {
+    protected <V> V getInWriteLock(Supplier<V> action) {
         return LockUtils.getInLock(lock.writeLock(), action);
     }
 
-    protected  <V> V inReadLock(Supplier<V> action) {
+    protected <V> V getInReadLock(Supplier<V> action) {
         return LockUtils.getInLock(lock.readLock(), action);
+    }
+
+    protected void inReadLock(Runnable action) {
+        LockUtils.doInLock(lock.readLock(), action);
     }
 
 
@@ -78,18 +86,20 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             for (Map.Entry<DbKey, List<T>> entry : groupedObjects.entrySet()) {
                 DbKey dbKey = entry.getKey();
                 List<T> historicalEntities = entry.getValue();
-                T lastValue = historicalEntities.get(historicalEntities.size() - 1);
-                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), s-> new ArrayList<>()));
+                T lastValue = last(historicalEntities);
+                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), s -> new ArrayList<>()));
+                List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
                 for (T historicalEntity : historicalEntities) {
-                    chageableColumns.forEach(name-> {
+                    dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
+                    chageableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
-                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : columnChanges.get(columnChanges.size() - 1), historicalEntity);
+                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : last(columnChanges), historicalEntity);
                         if (columnChange != null) {
                             columnChanges.add(new Change(historicalEntity.getHeight(), columnChange));
                         }
                     });
                 }
-                EntityWithChanges<T> entityWithChanges = new EntityWithChanges<>(lastValue, changes);
+                EntityWithChanges<T> entityWithChanges = new EntityWithChanges<>(lastValue, changes, dbIdLatestValues, historicalEntities.get(0).getHeight());
                 allEntities.put(dbKey, entityWithChanges);
             }
 
@@ -111,28 +121,59 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     public void insert(T entity) {
         inWriteLock(() -> {
             entity.setLatest(true);
-            entity.setDbId(++counter);
             DbKey dbKey = keyFactory.newKey(entity);
-            List<T> existingEntities = allEntities.get(dbKey);
-            if (existingEntities == null) {
-                List<T> entities = new ArrayList<>();
-                entities.add(entity);
-                allEntities.put(dbKey, entities);
+            EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
+            if (existingEntity == null) {
+                entity.setDbId(++counter);
+                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
+                chageableColumns.forEach(c -> {
+                    Object change = analyzeChanges(c, null, entity);
+                    changes.get(c).add(new Change(entity.getHeight(), change));
+                });
+                List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
+                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, entity.getDbId()));
+                allEntities.put(dbKey, new EntityWithChanges<>(entity, changes, dbIdLatestValues, entity.getHeight()));
             } else {
-                int lastPosition = existingEntities.size() - 1; // assume that existing list of entities has min size 1
-                T lastEntity = existingEntities.get(lastPosition);
-                if (lastEntity.getHeight() == entity.getHeight()) {
-                    existingEntities.set(lastPosition, entity); // do merge
+                if (existingEntity.getEntity().getHeight() == entity.getHeight()) { // do merge
+                    Map<String, List<Change>> changes = existingEntity.getChanges();
+                    chageableColumns.forEach(c -> {
+                        List<Change> columnChanges = changes.get(c);
+                        Change lastChange = last(columnChanges);
+                        Object change = analyzeChanges(c, lastChange.getValue(), entity);
+                        if (change != null && lastChange.getValue() != null) { // change was performed
+                            if (lastChange.getHeight() == entity.getHeight()) {
+                                lastChange.setValue(change);
+                            } else {
+                                columnChanges.add(new Change(entity.getHeight(), change));
+                            }
+                        }
+                    });
+                    existingEntity.setEntity(entity);
                 } else { // do insert new value
-                    lastEntity.setLatest(false);
-                    existingEntities.add(entity);
+                    Map<String, List<Change>> changes = existingEntity.getChanges();
+                    chageableColumns.forEach(c -> {
+                        List<Change> columnChanges = changes.get(c);
+                        Change lastChange = last(columnChanges);
+                        Object change = analyzeChanges(c, lastChange.getValue(), entity);
+                        if (change != null && lastChange.getValue() != null) { // change was performed
+                            columnChanges.add(new Change(entity.getHeight(), change));
+                        }
+                    });
+                    List<DbIdLatestValue> dbIdLatestValues = existingEntity.getDbIdLatestValues();
+                    last(dbIdLatestValues).setLatest(false);
+                    dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, entity.getDbId()));
+                    existingEntity.setEntity(entity);
                 }
             }
         });
     }
 
+    private <V> V last(List<V> l) {
+        return l.get(l.size() - 1);
+    }
+
     public T get(DbKey dbKey) {
-        return inReadLock(() -> {
+        return getInReadLock(() -> {
             EntityWithChanges<T> entity = allEntities.get(dbKey);
             if (entity != null) {
                 T t = entity.getEntity();
@@ -145,7 +186,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     }
 
     public T getCopy(DbKey dbKey) {
-        return inReadLock(() -> {
+        return getInReadLock(() -> {
             EntityWithChanges<T> entity = allEntities.get(dbKey);
             if (entity != null) {
                 T lastObject = entity.getEntity();
@@ -167,12 +208,14 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
         return getInWriteLock(() -> {
             DbKey dbKey = getKeyFactory().newKey(entity);
             EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
-            entity.setLatest(false);
             if (existingEntity != null) {
                 T ourEntity = existingEntity.getEntity();
                 ourEntity.setLatest(false);
-                List<Change> latestChanges = existingEntity.getChanges().get("latest");
-                latestChanges.add(new Change(entity.getHeight(), false));
+                ourEntity.setHeight(entity.getHeight());
+                ourEntity.setDbId(++counter);
+                List<DbIdLatestValue> dbIdLatestValues = existingEntity.getDbIdLatestValues();
+                last(dbIdLatestValues).setLatest(false);
+                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), false, counter));
                 return true;
             } else {
                 return false;
@@ -180,58 +223,83 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
         });
     }
 
-    public void trim(int height) { // no lock because we delete old data, which cannot be retrieved before or after trim
-        Set<DbKey> deleteEntirely = new HashSet<>();
-        allEntities.forEach((key, l) -> {
-            List<T> trimCandidates = l.stream().filter(s -> s.getHeight() < height).sorted(Comparator.comparing(VersionedDerivedEntity::getHeight)).collect(Collectors.toList());
-            if (trimCandidates.size() > 1) {
-                for (int i = 0; i < trimCandidates.size() - 1; i++) {
-                    l.remove(trimCandidates.get(i));
+    public void trim(int height) {
+        inReadLock(() -> {
+            Set<DbKey> deleteEntirely = new HashSet<>();
+            allEntities.forEach((key, l) -> {
+                if (l.getMinHeight() < height) {
+                    Stream<DbIdLatestValue> sortedLatestStream = l.getDbIdLatestValues().stream().filter(s -> s.getHeight() < height).sorted(Comparator.comparing(DbIdLatestValue::getHeight).reversed());
+                    long trimCandidates = sortedLatestStream.count();
+                    int maxHeight = sortedLatestStream.map(DbIdLatestValue::getHeight).findFirst().orElse(0);
+                    if (trimCandidates > 1) {
+                        Map<String, List<Change>> allChanges = l.getChanges();
+                        for (Map.Entry<String, List<Change>> columnWithChanges : allChanges.entrySet()) {
+                            List<Change> changes = columnWithChanges.getValue();
+                            changes.removeIf(c -> c.getHeight() < maxHeight);
+                        }
+                    }
+                    boolean delete = l.getDbIdLatestValues().stream().noneMatch(s -> s.getHeight() >= height) && !l.getEntity().isLatest();
+
+                    if (delete) {
+                        deleteEntirely.add(key);
+                    }
                 }
-            }
-            boolean delete = l.stream().noneMatch(s -> s.getHeight() >= height);
-            if (delete) {
-                List<T> deleteCandidates = l.stream().filter(entity -> entity.getHeight() < height && !entity.isLatest()).sorted(Comparator.comparing(VersionedDerivedEntity::getHeight)).collect(Collectors.toList());
-                for (T deleteCandidate : deleteCandidates) {
-                    l.remove(deleteCandidate);
-                }
-            }
-            if (l.size() == 0) {
-                deleteEntirely.add(key);
-            }
+            });
+            deleteEntirely.forEach(key -> allEntities.remove(key));
         });
-        deleteEntirely.forEach(key -> allEntities.remove(key));
     }
 
     public void rollback(int height) {
         inWriteLock(() -> {
-            Set<DbKey> keysToUpdate = allEntities.entrySet()
-                    .stream()
-                    .filter((e) -> e.getValue()
-                            .stream()
-                            .anyMatch(v -> v.getHeight() > height))
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toSet());
-
-            allEntities.values().forEach(l -> l.removeIf(s -> s.getHeight() > height));
-            List<DbKey> dbKeysToDelete = allEntities.entrySet().stream().filter(e -> e.getValue().size() == 0).map(Map.Entry::getKey).collect(Collectors.toList());
-            dbKeysToDelete.forEach(allEntities::remove);
+            Set<DbKey> keysToUpdate = new HashSet<>();
+            Set<DbKey> keysToDelete = new HashSet<>();
+            for (Map.Entry<DbKey, EntityWithChanges<T>> entry : allEntities.entrySet()) {
+                EntityWithChanges<T> entity = entry.getValue();
+                DbKey key = entry.getKey();
+                if (entity.getEntity().getHeight() < height) {
+                    if (entity.getMinHeight() > height) {
+                        keysToDelete.add(key);
+                    } else {
+                        Map<String, List<Change>> allChanges = entity.getChanges();
+                        for (Map.Entry<String, List<Change>> columnWithChanges : allChanges.entrySet()) {
+                            List<Change> changes = columnWithChanges.getValue();
+                            boolean removed = changes.removeIf(c -> c.getHeight() > height);
+                            if (removed) {
+                                setColumn(columnWithChanges.getKey(), changes.get(changes.size() - 1).getValue(), entity.getEntity());
+                                keysToUpdate.add(key);
+                            }
+                        }
+                        boolean entityChanged = entity.getDbIdLatestValues().removeIf(l -> l.getHeight() > height);
+                        if (entityChanged) {
+                            keysToUpdate.add(key);
+                        }
+                    }
+                }
+            }
+            keysToDelete.forEach(allEntities::remove);
             keysToUpdate.stream()
                     .map(allEntities::get)
-                    .forEach(l -> l.get(l.size() - 1).setLatest(true));
+                    .forEach(e -> {
+                        e.getEntity().setLatest(true);
+                        List<DbIdLatestValue> dbIdLatestValues = e.getDbIdLatestValues();
+                        DbIdLatestValue lastDbIdLatestValue = dbIdLatestValues.get(dbIdLatestValues.size() - 1);
+                        e.getEntity().setDbId(lastDbIdLatestValue.getDbId());
+                        e.getEntity().setHeight(lastDbIdLatestValue.getHeight());
+                        lastDbIdLatestValue.setLatest(true);
+                    });
         });
     }
 
     public List<T> getAll(Comparator<T> comparator, int from, int to) {
-        return inReadLock(() ->
+        return getInReadLock(() ->
                 CollectionUtil.limitStream(
                         allEntities.values()
                                 .stream()
-                                .filter(l -> l.get(l.size() - 1).isLatest())
-                                .map(l -> l.get(l.size() - 1))
+                                .map(EntityWithChanges::getEntity)
+                                .filter(T::isLatest)
                                 .sorted(comparator)
                         , from, to)
-                .collect(Collectors.toList()));
+                        .collect(Collectors.toList()));
     }
 }
 

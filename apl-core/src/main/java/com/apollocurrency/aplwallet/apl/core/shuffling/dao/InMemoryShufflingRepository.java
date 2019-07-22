@@ -53,12 +53,12 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public int getCount() {
-        return inReadLock(() -> (int) latestStream().count());
+        return getInReadLock(() -> (int) latestStream().count());
     }
 
     @Override
     public int getActiveCount() {
-        return inReadLock(()-> (int)
+        return getInReadLock(()-> (int)
                 latestStream()
                 .filter(s -> s.getBlocksRemaining() > 0)
                 .count());
@@ -71,7 +71,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public List<Shuffling> getActiveShufflings(int from, int to) {
-        return inReadLock(() ->
+        return getInReadLock(() ->
                 CollectionUtil.limitStream(
                         latestStream()
                                 .filter(s -> s.getBlocksRemaining() > 0) // skip finished
@@ -85,7 +85,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public List<Shuffling> getFinishedShufflings(int from, int to) {
-        return inReadLock(()->
+        return getInReadLock(()->
                 CollectionUtil.limitStream(
                         latestStream()
                                 .filter(s -> s.getBlocksRemaining() <= 0) // include only finished
@@ -101,7 +101,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
-        return inReadLock(()-> {
+        return getInReadLock(()-> {
             Stream<Shuffling> shufflingStream = latestStream()
                     .filter(s -> s.getHoldingId() == holdingId);
             if (!includeFinished) {
@@ -113,7 +113,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public List<Shuffling> getHoldingShufflings(long holdingId, Stage stage, boolean includeFinished, int from, int to) {
-        return inReadLock(()-> {
+        return getInReadLock(()-> {
             Stream<Shuffling> shufflingStream = latestStream()
                     .filter(s -> s.getHoldingId() == holdingId);
             if (!includeFinished) {
@@ -132,7 +132,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
-        return inReadLock(()->
+        return getInReadLock(()->
             CollectionUtil.limitStream(
                     latestStream()
                             .filter(s -> s.getAssigneeAccountId() == assigneeAccountId && s.getStage() == Stage.PROCESSING)

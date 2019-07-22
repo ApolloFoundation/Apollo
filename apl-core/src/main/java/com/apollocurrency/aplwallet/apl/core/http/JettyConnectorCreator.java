@@ -5,9 +5,6 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import javax.inject.Inject;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -17,6 +14,9 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import javax.inject.Inject;
 
 /**
  * Utility class to prepare HTTP or HTTPS connectors for Jetty server
@@ -33,8 +33,9 @@ public class JettyConnectorCreator {
     
     @Inject
     public JettyConnectorCreator(PropertiesHolder propertiesHolder, DirProvider dirProvider) {
-        keyStorePath = Paths.get(dirProvider.getAppBaseDir().toString())
-                            .resolve(Paths.get(propertiesHolder.getStringProperty("apl.keyStorePath")))
+        keyStorePath = dirProvider.getAppBaseDir()
+                            .resolve(propertiesHolder.getStringProperty("apl.keyStorePath"))
+                            .toAbsolutePath()
                             .toString();
         keyStorePassword=propertiesHolder.getStringProperty("apl.keyStorePassword", null, true);
         keyStoreAlias=propertiesHolder.getStringProperty("apl.keyStoreAlias", "jetty", true);
