@@ -170,6 +170,11 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void close(){
         Session s = getSession();
         if(s!=null){
+            try {
+                s.disconnect();
+            } catch (IOException ex) {
+                log.debug("Excetion on session disconnect to {}",which(),ex);
+            }
             s.close();
         }
     }
