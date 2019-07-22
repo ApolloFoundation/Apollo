@@ -48,7 +48,7 @@ public class Peer2PeerTransport {
     private final Object volumeMonitor = new Object();
     private PeerWebSocket inboundWebSocket;
     //this should be final because it is problematic to stop websocket client properly
-    private final PeerWebSocketClient outboundWebSocket;
+    private PeerWebSocketClient outboundWebSocket;
     @Getter
     private long lastActivity;
 
@@ -68,7 +68,7 @@ public class Peer2PeerTransport {
         } else if(outboundWebSocket.isClientConnected()){
             which = "Outbound";
         }else{
-            which="Not connected";
+            which="Outbound, not connected";
         }
         Peer p = peerReference.get();
         if (p != null) {
@@ -80,8 +80,7 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());
-        outboundWebSocket=new PeerWebSocketClient(this);
+        rnd = new Random(System.currentTimeMillis());        
     }
 
     public long getDownloadedVolume() {
@@ -277,6 +276,9 @@ public class Peer2PeerTransport {
                     }
                 }
                 if (!sendOK) { //no inbound connection or send failed
+                    if(outboundWebSocket==null){
+                       outboundWebSocket=new PeerWebSocketClient(this);
+                    }
                     if (!outboundWebSocket.isClientConnected()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
@@ -329,6 +331,7 @@ public class Peer2PeerTransport {
         }
         if (outboundWebSocket != null) {
             outboundWebSocket.close();
+            outboundWebSocket = null;
         }
 
     }

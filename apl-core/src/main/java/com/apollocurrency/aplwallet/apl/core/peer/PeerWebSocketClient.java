@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -77,6 +78,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
                 wss.destroy();
             });
         }
+        destroyClient();
     }
     
 @PreDestroy
@@ -91,7 +93,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
         client.destroy();
         client=null;
-        log.debug("WebSocketClient: {} destroyed.",which());        
+        log.debug("WebSocketClient: {} destroyed.",which());  
     }
 
     boolean isClientConnected() {
