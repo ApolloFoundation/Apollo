@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -138,6 +139,7 @@ public final class GenesisImporter {
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadBalancesAccountsComputeDigest());
     }
 
+    @Transactional
     public void apply(boolean loadOnlyPublicKeys) {
         long start = System.currentTimeMillis();
         if (this.balances == null || this.publicKeys == null) {

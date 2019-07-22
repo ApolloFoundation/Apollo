@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
@@ -36,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.data.BalancesPublicKeysTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -54,14 +56,12 @@ import org.mockito.Mockito;
 
 @Slf4j
 @EnableWeld
-@Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
+//@Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class GenesisImporterTest {
 
-//    private final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
 //    DbExtension extension = new DbExtension(createPath("genesisImport").toAbsolutePath());
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("genesisImport").toAbsolutePath().toString()));
-//    DbExtension extension = new DbExtension(Map.of("currency", List.of("code","name", "description"), "tagged_data", List.of("name","description","tags")));
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
@@ -95,7 +95,7 @@ class GenesisImporterTest {
     PropertiesHolder propertiesHolder;
     @Inject
     Blockchain blockchain;
-    @Inject
+//    @Inject
     AccountTable accountTable;
     PublicKeyTable publicKeyTable;
     BalancesPublicKeysTestData testData;
@@ -117,10 +117,10 @@ class GenesisImporterTest {
         doReturn("data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         doReturn("conf").when(configDirProvider).getConfigDirectoryName();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
-//        blockchainConfig.getCurrentConfig().getMaxBalanceATM(); // 3000000000000000000
         genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider,
                 blockchainConfigUpdater, extension.getDatabaseManager(), aplAppStatus);
         GenesisPublicKeyTable.getInstance().init();
+        accountTable = new AccountTable();
         publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         Account.init(extension.getDatabaseManager(), propertiesHolder, null,
@@ -144,26 +144,32 @@ class GenesisImporterTest {
     }
 
     @Test
-    void applyTrue() {
-        genesisImporter.apply(true);
-        int count = publicKeyTable.getCount();
-        assertEquals(10, count);
-        count = GenesisPublicKeyTable.getInstance().getCount();
-        assertEquals(10, count);
-        checkImportedPublicKeys(10);
+    void applyFalse() {
+        DatabaseManager databaseManager = extension.getDatabaseManager();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        DbUtils.inTransaction(dataSource, (con)-> {
+            genesisImporter.apply(false);
+            int count = publicKeyTable.getCount();
+            assertEquals(10, count);
+            count = GenesisPublicKeyTable.getInstance().getCount();
+            assertEquals(19, count);
+            Account genesisAccount = Account.getAccount(genesisImporter.CREATOR_ID);
+            assertEquals(-43678392484062L , genesisAccount.getBalanceATM());
+//        checkImportedPublicKeys(10);
+        });
     }
 
     @Test
-    void applyFalse() {
-        genesisImporter.apply(false);
-        int count = publicKeyTable.getCount();
-        assertEquals(10, count);
-        count = GenesisPublicKeyTable.getInstance().getCount();
-        assertEquals(19, count);
-        Account genesisAccount = Account.getAccount(genesisImporter.CREATOR_ID);
-        assertEquals(-43678392484062L , genesisAccount.getBalanceATM());
-//        checkImportedPublicKeys(10);
-
+    void applyTrue() {
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
+        DbUtils.inTransaction(dataSource, (con)-> {
+            genesisImporter.apply(true);
+            int count = publicKeyTable.getCount();
+            assertEquals(10, count);
+            count = GenesisPublicKeyTable.getInstance().getCount();
+            assertEquals(10, count);
+            checkImportedPublicKeys(10);
+        });
     }
 
     private void checkImportedPublicKeys(int countExpected) {
@@ -180,7 +186,6 @@ class GenesisImporterTest {
         }
         assertEquals(countExpected, countActual);
     }
-
 
     @Test
     void loadGenesisAccounts() {
