@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -77,7 +78,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
             });
         }
     }
-
+    
+@PreDestroy
     synchronized void destroyClient() {
         if(client==null){
             return;
