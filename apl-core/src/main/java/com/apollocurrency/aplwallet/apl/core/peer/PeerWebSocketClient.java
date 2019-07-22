@@ -79,19 +79,22 @@ public class PeerWebSocketClient extends PeerWebSocket{
     }
     
     private synchronized void destroyClient() {
-        if(client==null){
+        if (client == null) {
             return;
         }
         try {
-            client.stop();
-            if(client!=null){
-                client.destroy();
+            if (client.isRunning()) {
+                client.stop();
             }
+
         } catch (Exception ex) {
-            log.trace("Exception on websocket client stop",ex);
+            log.trace("Exception on websocket client stop", ex);
         }
-        client=null;
-        log.debug("WebSocketClient: {} destroyed.",which());  
+        if (client != null) {
+            client.destroy();
+        }
+        client = null;
+        log.debug("WebSocketClient: {} destroyed.", which());
     }
 
     boolean isClientConnected() {
