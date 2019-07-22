@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.math.BigDecimal;
 
 /**
  *
@@ -13,12 +14,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name="DexTradeInfoMinDto", description="Minimal DEX trading information")
 public class DexTradeInfoMinDto {
     @Schema(name="hi", description="the highest price for period")
-    public long hi;
+    public BigDecimal hi;
     @Schema(name="low", description="the lowest price for period")
-    public long low;
+    public BigDecimal low;
     @Schema(name="open", description="the rate at the moment of opening")
-    public long open;
+    public BigDecimal open;
     @Schema(name="close", description="the rate at the moment of closing")
-    public long close;    
+    public BigDecimal close;    
 }
 
