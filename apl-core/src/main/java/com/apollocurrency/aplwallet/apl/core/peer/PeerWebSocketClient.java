@@ -78,7 +78,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
     }
 
-    synchronized void destroy() {
+    synchronized void destroyClient() {
         if(client==null){
             return;
         }
@@ -88,7 +88,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             log.trace("Exception on websocket client stop");
         }
         client.destroy();
-
+        client=null;
         log.debug("WebSocketClient: {} destroyed.",which());        
     }
 
