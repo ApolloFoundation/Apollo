@@ -534,7 +534,7 @@ public final class PeerImpl implements Peer {
         if(failed){
           failedConnectAttempts++;
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
-              LOG.debug("Peer {} in noit connecatfble, removing",getAnnouncedAddress());
+              LOG.debug("Peer {} in noit connecatable, removing",getAnnouncedAddress());
               Peers.removePeer(this);
           }
         }else{  //reset on success
