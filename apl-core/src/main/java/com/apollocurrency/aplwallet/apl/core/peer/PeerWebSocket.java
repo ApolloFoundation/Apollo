@@ -114,6 +114,8 @@ public class PeerWebSocket extends WebSocketAdapter {
             Peer2PeerTransport p = peerReference.get();
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
+            }else{
+                log.debug("Peer reference is null on websocket incoming message:\n {}",message);
             }    
 
         } catch (IOException ex) {

@@ -28,25 +28,22 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private boolean connected = false;
     
     public PeerWebSocketClient(Peer2PeerTransport peer) {
-        super(peer); 
-    }
-    
-    private void newClient() throws Exception{
+        super(peer);
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
-        client.setStopAtShutdown(true);
-        client.start();
+        client.setStopAtShutdown(true);        
     }
     
     public synchronized boolean startClient(URI uri) {
         if (uri == null) {
             return false;
         }
+        if(connected){ //we want just one session, not more
+            return true;
+        }
         try {
-            if(client==null){
-               newClient();
-            }
+            client.start();
             ClientUpgradeRequest req = new ClientUpgradeRequest();
             Future<Session> conn = client.connect(this, uri, req);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
@@ -81,17 +78,16 @@ public class PeerWebSocketClient extends PeerWebSocket{
         destroyClient();
     }
     
-@PreDestroy
-    synchronized void destroyClient() {
+    private synchronized void destroyClient() {
         if(client==null){
             return;
         }
         try {
             client.stop();
+            if(client!=null) client.destroy();
         } catch (Exception ex) {
-            log.trace("Exception on websocket client stop");
+            log.trace("Exception on websocket client stop",ex);
         }
-        client.destroy();
         client=null;
         log.debug("WebSocketClient: {} destroyed.",which());  
     }
