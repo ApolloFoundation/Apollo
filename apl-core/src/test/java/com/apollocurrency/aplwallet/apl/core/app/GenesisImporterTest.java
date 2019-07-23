@@ -145,6 +145,17 @@ class GenesisImporterTest {
     }
 
     @Test
+    void newGenesisBlockLongJson() {
+        doReturn("data/genesisAccounts-HUGE.json").when(chain).getGenesisLocation();
+        Block block = genesisImporter.newGenesisBlock();
+        assertNotNull(block);
+        assertEquals(230730, genesisImporter.getPublicKeys().size()); // pub keys read from json
+        assertEquals(84832, genesisImporter.getBalances().size()); // balances read from json
+        assertEquals(1739068987193023818L, genesisImporter.CREATOR_ID);
+        assertEquals(1515931200000L, genesisImporter.EPOCH_BEGINNING);
+    }
+
+    @Test
     void applyFalse() throws Exception {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();

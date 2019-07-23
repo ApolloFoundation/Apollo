@@ -131,7 +131,9 @@ public class GenesisImporter {
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         this.computedDigest = digest.digest();
         genesisAccountsJSON = null;
-        log.debug("Digest is computed in {} ms", (System.currentTimeMillis() - start) / 1000 );
+        Long usedBytes = null;// = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
+        log.debug("Digest is computed in {} ms, used {} Kb", (System.currentTimeMillis() - start) / 1000,
+                usedBytes != null ? usedBytes / 1024 : "not calculated");
         return this.computedDigest;
     }
 
@@ -263,5 +265,13 @@ public class GenesisImporter {
 
     public byte[] getComputedDigest() {
         return computedDigest;
+    }
+
+    public JSONArray getPublicKeys() {
+        return publicKeys;
+    }
+
+    public JSONObject getBalances() {
+        return balances;
     }
 }
