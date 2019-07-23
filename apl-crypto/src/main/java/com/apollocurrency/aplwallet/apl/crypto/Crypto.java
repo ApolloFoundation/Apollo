@@ -60,6 +60,23 @@ public final class Crypto {
             throw new RuntimeException(e.getMessage(), e);
         }
     });
+    
+    
+    private static String normalizeByLen( String in, int length)
+    {
+        String rx = "";
+        int xlen = in.length();
+        if (length == xlen) return in;
+        if ( length > xlen ) {
+            for (int i = 0; i < length - xlen; i++) {
+                rx += "0";
+            }
+            rx += in;
+            return rx;
+        } else { // length < xlen // cut the vector            
+            return in.substring( xlen-length, length+1 );
+        }
+    }
 
     private Crypto() {} //never
 
@@ -380,7 +397,7 @@ public final class Crypto {
             BigInteger restored = BigInteger.ZERO;
                
             restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
-            String keyStr = restored.toString(16);
+            String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
             
             byte[] IVC = null;
             byte[] key = null;
@@ -406,3 +423,4 @@ public final class Crypto {
     }
 
 }
+
