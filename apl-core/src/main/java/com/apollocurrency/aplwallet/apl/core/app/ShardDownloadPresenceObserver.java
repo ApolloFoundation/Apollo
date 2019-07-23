@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -38,17 +39,17 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardDownloadPresenceObserver {
 
-    private DatabaseManager databaseManager;
-    private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
-    private DerivedTablesRegistry derivedTablesRegistry;
-    private CsvImporter csvImporter;
-    private Zip zipComponent;
-    private DownloadableFilesManager downloadableFilesManager;
-    private AplAppStatus aplAppStatus;
-    private GlobalSync globalSync;
-    private ShardImporter shardImporter;
-    private BlockchainConfigUpdater blockchainConfigUpdater;
+    private final DatabaseManager databaseManager;
+    private final Blockchain blockchain;
+    private final BlockchainProcessor blockchainProcessor;
+    private final DerivedTablesRegistry derivedTablesRegistry;
+    private final CsvImporter csvImporter;
+    private final Zip zipComponent;
+    private final DownloadableFilesManager downloadableFilesManager;
+    private final AplAppStatus aplAppStatus;
+    private final GlobalSync globalSync;
+    private final ShardImporter shardImporter;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
@@ -76,7 +77,19 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+        String fileId = shardPresentData.getFileIdValue();
+        try {
+            shardImporter.importShard(fileId, List.of());
+        } catch (Exception e) {
+            log.error("Error on Shard # {}. Zip/CSV importing...", fileId);
+            log.error("Node has encountered serious error and import CSV shard data. " +
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
+            // truncate all partial data potentially imported into database
+            cleanUpPreviouslyImportedData();
+            // fall back to importing Genesis and starting from beginning
+            onNoShardPresent(shardPresentData);
+            return;
+        }
         log.info("SNAPSHOT block should be READY in database...");
         blockchainProcessor.updateInitialSnapshotBlock();
         Block lastBlock = blockchain.findLastBlock();
@@ -84,6 +97,24 @@ public class ShardDownloadPresenceObserver {
         blockchainConfigUpdater.updateToLatestConfig();
         blockchainProcessor.setGetMoreBlocks(true); // turn ON blockchain downloading
         log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+    }
+
+    /**
+     * Remove all previously imported data from db
+     */
+    private void cleanUpPreviouslyImportedData() {
+        log.debug("start CleanUp after UNSUCCESSFUL zip import...");
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            blockchain.deleteAll();
+            derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
+            dataSource.commit();
+            log.debug("Finished CleanUp after UNSUCCESSFUL zip import");
+        } catch (Exception e) {
+            log.error("Error cleanUp after UNSUCCESSFUL zip import", e);
+            dataSource.rollback();
+            log.error("Please delete database files and try to run with command line option : --no-shards-import true");
+        }
     }
 
     /**
@@ -96,7 +127,6 @@ public class ShardDownloadPresenceObserver {
             try {
                 log.info("Genesis block not in database, starting from scratch");
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
-//        Connection con = dataSource.begin();
                 try (Connection con = dataSource.begin()) {
                     Block genesisBlock = Genesis.newGenesisBlock();
                     addBlock(dataSource, genesisBlock);

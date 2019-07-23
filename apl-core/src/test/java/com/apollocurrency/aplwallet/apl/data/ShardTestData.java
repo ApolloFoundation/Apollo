@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.data;
 
 import java.util.Arrays;
@@ -5,28 +9,29 @@ import java.util.List;
 
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public class ShardTestData {
     public static final Shard SHARD_0 =
             new Shard(1L, Convert.parseHexString("8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176"),
-                    0L,2, null,
+                    ShardState.INIT,2, null,
                     Convert.EMPTY_LONG, Convert.EMPTY_INT, Convert.EMPTY_INT);
     public static final Shard SHARD_1 =
             new Shard(2L, Convert.parseHexString("a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d"),
-                    100L, 3, Convert.parseHexString("a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d"),
+                    ShardState.FULL, 3, Convert.parseHexString("a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d"),
                     new long[]{782179228250L, 4821792282200L, 7821792282123976600L},
                     new int[]{0, 1},
                     new int[]{45673250, 45673251});
     public static final Shard SHARD_2 =
             new Shard(3L, Convert.parseHexString("931a8011f4ba1cdc0bcae807032fe18b1e4f0b634f8da6016e421d06c7e13693"),
-                    0L, 31, null,
+                    ShardState.CREATED_BY_ARCHIVE, 31, null,
                     new long[]{57821792282L, 22116981092100L, 9211698109297098287L},
                     new int[]{1, 1},
                     new int[]{45673251, 45673252});
     public static final Shard NOT_SAVED_SHARD =
             new Shard(5L, Convert.parseHexString("7a496e38973387732394ff257e73cd3e57165ed2f0ab1855d497ff6b14fd0678"),
-                    100L, 4, Convert.parseHexString("7a496e38973387732394ff257e73cd3e57165ed2f0ab1855d497ff6b14fd0678"),
+                    ShardState.FULL, 4, Convert.parseHexString("7a496e38973387732394ff257e73cd3e57165ed2f0ab1855d497ff6b14fd0678"),
                     new long[]{22116981092100L, 7821792282123976600L, 9211698109297098287L},
                     new int[]{1, 2},
                     new int[]{45673251, 45673252});
@@ -45,7 +50,7 @@ public class ShardTestData {
                     Arrays.toString(new int[]{0, 1}) , Arrays.toString(new int[]{45673250, 45673251}) );
     public static final ShardDTO SHARD_DTO_2 =
             new ShardDTO(3L, "931a8011f4ba1cdc0bcae807032fe18b1e4f0b634f8da6016e421d06c7e13693",
-                    0L, 31, null,
+                    50L, 31, null,
                     Arrays.toString(new long[]{57821792282L, 22116981092100L, 9211698109297098287L}),
                     Arrays.toString(new int[]{1, 1}) , Arrays.toString(new int[]{45673251, 45673252}) );
     public static final List<ShardDTO> SHARD_DTO_LIST = Arrays.asList(SHARD_DTO_0, SHARD_DTO_1, SHARD_DTO_2);

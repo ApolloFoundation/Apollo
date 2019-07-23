@@ -47,8 +47,11 @@ public class ShardRecovery {
     /**
      * Height of the blockchain at the beginning of sharding
      */
-    @Getter
     private int height;
+
+    public int getHeight() {
+        return height;
+    }
 
 
     public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {

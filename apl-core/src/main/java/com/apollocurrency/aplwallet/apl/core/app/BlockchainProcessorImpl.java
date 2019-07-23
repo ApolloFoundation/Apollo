@@ -1064,9 +1064,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         catch (RuntimeException e) {
             log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
             dataSource.rollback(false);
-            Block lastBlock = blockchain.findLastBlock();
-            lookupBlockhain().setLastBlock(lastBlock);
-            popOffToInTransaction(lastBlock,dataSource);
+            if (blockchain != null) { //prevent NPE on shutdown
+                Block lastBlock = blockchain.findLastBlock();
+                blockchain.setLastBlock(lastBlock);
+                popOffToInTransaction(lastBlock, dataSource);
+            }
             throw e;
         }
         return poppedOffBlocks;
@@ -1899,7 +1901,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
-                slowestPeer.deactivate();
+                slowestPeer.deactivate("This peer is slowest");
             }
             //
             // Add the new blocks to the blockchain.  We will stop if we encounter

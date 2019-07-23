@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -68,7 +69,7 @@ public class ShardImporter {
         if (height == 0) {
             Genesis.apply(false);
         } else {
-            Shard completedShard = shardDao.getLastCompletedShard();
+            Shard completedShard = shardDao.getLastCompletedOrArchivedShard();
             Long shardId = completedShard.getShardId();
             ShardNameHelper nameHelper = new ShardNameHelper();
             String fileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());
@@ -82,7 +83,7 @@ public class ShardImporter {
         } else if (blockchainConfig.getCurrentConfig().isShardingEnabled()) {
             Shard shard = shardDao.getLastShard();
             if (shard != null) {
-                return shard.getShardState() == 100;
+                return shard.getShardState() == ShardState.FULL;
             } else {
                 return true;
             }
@@ -99,6 +100,12 @@ public class ShardImporter {
         log.debug("Try unpack file name '{}'", zipInFolder);
         boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
         log.debug("Zip is unpacked = {}", unpackResult);
+        if (!unpackResult) {
+            log.error("Node has encountered serious error and can't import ZIP with shard data. " +
+                    "Somethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
+            aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
+            throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
+        }
 
         Genesis.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
@@ -119,9 +126,27 @@ public class ShardImporter {
                 log.debug("Imported '{}' rows = {}", table, rowsImported);
             } catch (Exception e) {
                 log.error("CSV import error for '{}', RETURN.......", table, e);
-                return;
+                aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
+                throw new RuntimeException(e);
             }
         }
+        Shard lastShard = shardDao.getLastShard();
+        if (lastShard == null) {
+            if (!excludedTables.contains(ShardConstants.SHARD_TABLE_NAME)) {
+                aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
+                throw new IllegalStateException("Unable to import shard without records in shard table");
+            }
+        } else {
+            lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
+            lastShard.setZipHashCrc(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
+            if(shardDao.getShardById(lastShard.getShardId()) != null){
+                log.debug("Somehow shard already exists in DB, shardID is {}",lastShard.getShardId());
+                shardDao.updateShard(lastShard);                
+            }else{
+                shardDao.saveShard(lastShard);
+            }
+        }
+
 
         // import derived tables
         Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());
@@ -132,13 +157,16 @@ public class ShardImporter {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
                 if (table.equalsIgnoreCase(ShardConstants.ACCOUNT_TABLE_NAME)) {
-                    rowsImported = csvImporter.importCsv(table, 100, true, null, Map.of("height", blockchain.findFirstBlock().getHeight()));
+                    rowsImported = csvImporter.importCsv(table, 100, true, null,
+                            Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else {
                     rowsImported = csvImporter.importCsv(table, 100, true);
                 }
                 log.debug("Imported '{}' rows = {}", table, rowsImported);
             } catch (Exception e) {
                 log.error("CSV import error for '{}', RETURN.......", table, e);
+                aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
+                throw new RuntimeException(e);
             }
         }
         aplAppStatus.durableTaskFinished(genesisTaskId, false, "Shard data import");

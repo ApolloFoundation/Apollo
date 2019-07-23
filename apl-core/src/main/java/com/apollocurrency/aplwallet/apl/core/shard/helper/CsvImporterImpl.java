@@ -178,12 +178,17 @@ public class CsvImporterImpl implements CsvImporter {
                                     actualArray[j] = actualValue;
                                 } else if (value.startsWith("\'") && value.endsWith("\'")) { //find string
                                     actualArray[j] = split[j].substring(1, split[j].length() - 1);
-                                } else { // try to process long value
+                                } else { // try to process number
                                     try {
-                                        actualArray[j] = Long.parseLong(split[j]);
+                                        actualArray[j] = Integer.parseInt(split[j]);
                                     }
-                                    catch (NumberFormatException e) { //throw exception, when specified value is not string, long or byte array
-                                        throw new RuntimeException("Value " + split[j] + " of unsupported type");
+                                    catch (NumberFormatException ignored) { // value can be of long type
+                                        try {
+                                            actualArray[j] = Long.parseLong(split[j]); // try to parse long
+                                        }
+                                        catch (NumberFormatException e) { // throw exception, when specified value is not a string, long, int or byte array
+                                            throw new RuntimeException("Value " + split[j] + " of unsupported type");
+                                        }
                                     }
                                 }
                             }

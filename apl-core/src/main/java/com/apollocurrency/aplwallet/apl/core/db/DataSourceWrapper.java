@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -156,7 +157,19 @@ public class DataSourceWrapper implements DataSource {
      * Constructor creates internal DataSource.
      * @param dbVersion database version related information
      */
-    public Jdbi init(DbVersion dbVersion) {
+    public Jdbi initWithJdbi(DbVersion dbVersion) {
+        initDatasource(dbVersion);
+        Jdbi jdbi = initJdbi();
+        setInitialzed();
+        return jdbi;
+    }
+
+    private void setInitialzed() {
+        initialized = true;
+        shutdown = false;
+    }
+
+    private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -185,7 +198,9 @@ public class DataSourceWrapper implements DataSource {
         }
         log.debug("Before starting Db schema init {}...", dbVersion);
         dbVersion.init(this);
+    }
 
+    private Jdbi initJdbi() {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
@@ -196,6 +211,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OfferStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
+        jdbi.registerArgument(new ShardStateFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
@@ -206,9 +222,12 @@ public class DataSourceWrapper implements DataSource {
             log.error("Error on opening database connection", e);
             throw e;
         }
-        initialized = true;
-        shutdown = false;
         return jdbi;
+    }
+
+    public void init(DbVersion dbVersion) {
+        initDatasource(dbVersion);
+        setInitialzed();
     }
 
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {

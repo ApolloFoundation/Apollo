@@ -30,7 +30,6 @@ import org.json.simple.JSONStreamAware;
 
 public interface Peer extends Comparable<Peer> {
 
-
     enum Service {
         HALLMARK(1),                    // Hallmarked node
         PRUNABLE(2),                    // Stores expired prunable messages
@@ -96,7 +95,7 @@ public interface Peer extends Comparable<Peer> {
 
     void unBlacklist();
 
-    void deactivate();
+    void deactivate(String reason);
 
     void remove();
 
@@ -110,10 +109,12 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isInbound();
 
-    boolean isInboundWebSocket();
+    boolean isOutbound();
 
-    boolean isOutboundWebSocket();
+    boolean isInboundSocket();
 
+    boolean isOutboundSocket();
+    
     boolean isOpenAPI();
 
     boolean isApiConnectable();
@@ -131,4 +132,6 @@ public interface Peer extends Comparable<Peer> {
     public boolean isTrusted();
     
     public PeerTrustLevel getTrustLevel();
+    
+    public long getServices();
 }

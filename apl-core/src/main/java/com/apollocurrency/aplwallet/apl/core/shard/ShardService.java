@@ -77,6 +77,10 @@ public class ShardService {
         return shardDao.getAllCompletedShards();
     }
 
+    public List<Shard> getAllCompletedOrArchivedShards() {
+        return shardDao.getAllCompletedOrArchivedShards();
+    }
+
     public List<Shard> getAllShards() {
         return shardDao.getAllShard();
     }

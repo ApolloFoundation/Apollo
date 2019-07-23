@@ -64,11 +64,6 @@ public final class GetInfo extends PeerRequestHandler {
     }
 
     @Override
-    protected boolean isChainIdProtected() {
-        return false;
-    }
-
-    @Override
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl)peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
@@ -90,26 +85,18 @@ public final class GetInfo extends PeerRequestHandler {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
                             Peers.setAnnouncedAddress(peerImpl, null);
                         }
-                        peer.deactivate();
+                        peer.deactivate("Invalid announced address: "+announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
                         Peers.setAnnouncedAddress(peerImpl, announcedAddress);
-                        if (peerImpl.getPort() != oldPort) {
-                            // force checking connectivity to new announced port
-                            peerImpl.deactivate();
-                        }
                     }
                 } else {
                     Peers.setAnnouncedAddress(peerImpl, null);
                 }
             }
-        }
-        if (pi.getApplication() == null) {
-            log.warn("Setting application = '?' instead of AppValue...");
-            pi.setApplication("?");
         }
 
         if(!peerImpl.setApplication(pi.getApplication().trim())){

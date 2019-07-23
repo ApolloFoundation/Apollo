@@ -167,8 +167,13 @@ public class AplAppStatus {
     }
 
     public synchronized double durableTaskUpdate(String taskId, String message, double addPercents) {
+        double res=0.0;
         durableTaskUpdate(taskId, null, message, -1, addPercents);
-        return tasks.get(taskId).getPercentComplete();
+        DurableTaskInfo ti = tasks.get(taskId);
+        if(ti!=null){
+            res=ti.getPercentComplete();
+        }
+        return res;
     }
 
     /**

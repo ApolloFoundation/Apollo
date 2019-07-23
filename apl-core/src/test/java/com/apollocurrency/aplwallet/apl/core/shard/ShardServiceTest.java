@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,6 +48,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -268,15 +271,16 @@ public class ShardServiceTest {
         verify(shardMigrationExecutor).executeAllOperations();
     }
 
-    @Test
-    void testAllShards() {
-        doReturn(List.of()).when(shardDao).getAllShard();
 
+    @Test
+    void testGetAllShards() {
+        doReturn(List.of()).when(shardDao).getAllShard();
         List<Shard> allShards = shardService.getAllShards();
 
         assertEquals(List.of(), allShards);
         verify(shardDao).getAllShard();
     }
+
 
     @Test
     void testAllCompletedShards() {

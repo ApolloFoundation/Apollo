@@ -9,15 +9,19 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import lombok.Getter;
 
 /**
  *
  * @author alukin@gmail.com
  */
+
 public final class PeerAddress implements Comparable{
-    private InetAddress host;
+    private InetAddress ipAddress;
     private String hostName;    
     private Integer port;
+
+    private boolean valid=true;
     
     public PeerAddress(int port, String host){
         setHost(host);
@@ -31,9 +35,16 @@ public final class PeerAddress implements Comparable{
     public PeerAddress(String hostWithPort){
         fromString(hostWithPort);
     }
+    public String formatIP6Address(String addr) throws UnknownHostException{
+        String res = addr;
+        InetAddress a = InetAddress.getByName(addr);
+        if(a instanceof Inet6Address){
+            res = "["+a.getHostAddress()+"]";
+        }
+        return res;
+    }
     
-    
-    public final void fromString(String addr){
+    private void fromString(String addr){
         if(addr==null || addr.isEmpty()){
             addr="localhost";
         }
@@ -44,24 +55,30 @@ public final class PeerAddress implements Comparable{
             }
             URL u = new URL(a);
             hostName=u.getHost();
-            host=InetAddress.getByName(hostName);
+            setHost(hostName);
             port=u.getPort();
             if(port==-1){
                 port=Constants.DEFAULT_PEER_PORT;
             }
-        } catch (MalformedURLException | UnknownHostException ex) {           
+        } catch (MalformedURLException ex) {
+            valid=false;
         }
     }
 
     public String getHost() {
-        return host.getHostAddress();
+        if(ipAddress instanceof Inet6Address){
+           return "["+ipAddress.getHostAddress()+"]";
+        }else{
+           return ipAddress.getHostAddress();
+        }  
     }
 
-    public final void setHost(String host){
+    private void setHost(String host){
         hostName=host;
         try {
-            this.host = InetAddress.getByName(host);
+            this.ipAddress = InetAddress.getByName(host);
         } catch (UnknownHostException ex) {
+            valid=false;
         }
     }
 
@@ -74,23 +91,26 @@ public final class PeerAddress implements Comparable{
     }
     
     public String getAddrWithPort(){
-        if (host instanceof Inet6Address){
-          return "["+host.getHostAddress()+"]:"+port.toString();   
+        if(ipAddress==null || port ==null){
+            return "None";
+        }
+        if (ipAddress instanceof Inet6Address){
+          return "["+ipAddress.getHostAddress()+"]:"+port.toString();   
         } else{
-          return host.getHostAddress()+":"+port.toString();
+          return ipAddress.getHostAddress()+":"+port.toString();
         }
     }
     public InetAddress getInetAddress(){
-        return host;
+        return ipAddress;
     }
     public String getHostName(){
         return hostName;
     }
     
     public boolean isLocal(){
-       boolean res = ( host.isAnyLocalAddress() 
-                     || host.isLoopbackAddress() 
-                     || host.isLinkLocalAddress() );
+       boolean res = ( ipAddress.isAnyLocalAddress() 
+                     || ipAddress.isLoopbackAddress() 
+                     || ipAddress.isLinkLocalAddress() );
       return res;
     }
     
@@ -99,7 +119,7 @@ public final class PeerAddress implements Comparable{
        int res = -1; 
        if(t!=null && t instanceof PeerAddress){
          PeerAddress pa = (PeerAddress)t;
-         if( pa.host.getHostAddress().equalsIgnoreCase(host.getHostAddress()) 
+         if( pa.ipAddress.getHostAddress().equalsIgnoreCase(ipAddress.getHostAddress()) 
              && this.port.intValue() == pa.port.intValue()
          ){
              res=0;
@@ -109,8 +129,13 @@ public final class PeerAddress implements Comparable{
        return res;
     }
     
+    public boolean isValid(){
+        return valid;
+    }
+    
     @Override
     public String toString(){
-        return "host:"+host+" name:"+hostName+" port: "+port;
+        return "host:"+ipAddress+" name:"+hostName+" port: "+port;
     }
+    
 }

@@ -108,7 +108,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -120,10 +120,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement)databaseManager).createAndAddShard(null, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
