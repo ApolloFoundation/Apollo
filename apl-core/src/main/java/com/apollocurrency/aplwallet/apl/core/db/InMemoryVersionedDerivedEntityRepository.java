@@ -8,9 +8,9 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.model.DbIdLatestValue;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
-import com.apollocurrency.aplwallet.apl.core.db.model.DbIdLatestValue;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
 
@@ -28,7 +28,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * In memory repository for blockchain changeable entities,
@@ -230,15 +229,15 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             Set<DbKey> deleteEntirely = new HashSet<>();
             allEntities.forEach((key, l) -> {
                 if (l.getMinHeight() < height) {
-                    Stream<DbIdLatestValue> sortedLatestStream = l.getDbIdLatestValues().stream().filter(s -> s.getHeight() < height).sorted(Comparator.comparing(DbIdLatestValue::getHeight).reversed());
-                    long trimCandidates = sortedLatestStream.count();
-                    int maxHeight = sortedLatestStream.map(DbIdLatestValue::getHeight).findFirst().orElse(0);
+                    long trimCandidates = l.getDbIdLatestValues().stream().filter(s -> s.getHeight() < height).count();
+                    int maxHeight = l.getDbIdLatestValues().stream().filter(s -> s.getHeight() < height).sorted(Comparator.comparing(DbIdLatestValue::getHeight).reversed()).map(DbIdLatestValue::getHeight).findFirst().orElse(0);
                     if (trimCandidates > 1) {
                         Map<String, List<Change>> allChanges = l.getChanges();
                         for (Map.Entry<String, List<Change>> columnWithChanges : allChanges.entrySet()) {
                             List<Change> changes = columnWithChanges.getValue();
                             changes.removeIf(c -> c.getHeight() < maxHeight);
                         }
+                        l.getDbIdLatestValues().removeIf(s -> s.getHeight() < maxHeight);
                     }
                     boolean delete = l.getDbIdLatestValues().stream().noneMatch(s -> s.getHeight() >= height) && !l.getEntity().isLatest();
 
@@ -262,19 +261,16 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     if (entity.getMinHeight() > height) {
                         keysToDelete.add(key);
                     } else {
+                        keysToUpdate.add(key);
                         Map<String, List<Change>> allChanges = entity.getChanges();
                         for (Map.Entry<String, List<Change>> columnWithChanges : allChanges.entrySet()) {
                             List<Change> changes = columnWithChanges.getValue();
                             boolean removed = changes.removeIf(c -> c.getHeight() > height);
                             if (removed) {
                                 setColumn(columnWithChanges.getKey(), last(changes).getValue(), entity.getEntity());
-                                keysToUpdate.add(key);
                             }
                         }
-                        boolean entityChanged = entity.getDbIdLatestValues().removeIf(l -> l.getHeight() > height);
-                        if (entityChanged) {
-                            keysToUpdate.add(key);
-                        }
+                        entity.getDbIdLatestValues().removeIf(l -> l.getHeight() > height);
                     }
                 }
             }

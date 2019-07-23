@@ -163,10 +163,38 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
     @Test
     void testTrimAll() {
-        repository.trim(104);
-        Map<DbKey, List<VersionedDerivedIdEntity>> expected = Map.of(new LongKey(1L), List.of(data.VERSIONED_ENTITY_1_1), new LongKey(2L), List.of(data.VERSIONED_ENTITY_2_3), new LongKey(3L), List.of(data.VERSIONED_ENTITY_3_1, data.VERSIONED_ENTITY_3_2));
+        repository.trim(data.VCDE_4_2.getHeight() + 1);
+        EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
+                data.VCDE_1_3, Map.of("remaining",
+                List.of(new Change(data.VCDE_1_3.getHeight(), data.VCDE_1_3.getRemaining()))),
+                List.of(new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, data.VCDE_1_3.getDbId())), data.VCDE_1_1.getHeight());
+        EntityWithChanges<VersionedChangeableDerivedEntity> second = new EntityWithChanges<>(
+                data.VCDE_2_2, Map.of("remaining",
+                List.of(new Change(data.VCDE_2_2.getHeight(), data.VCDE_2_2.getRemaining()))),
+                List.of(new DbIdLatestValue(data.VCDE_2_2.getHeight(), true, data.VCDE_2_2.getDbId())), data.VCDE_2_1.getHeight());
+
+        EntityWithChanges<VersionedChangeableDerivedEntity> third = new EntityWithChanges<>(
+                data.VCDE_3_1, Map.of("remaining",
+                List.of(new Change(data.VCDE_3_1.getHeight(), data.VCDE_3_1.getRemaining()))),
+                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
+
+
+        Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = Map.of(
+                new LongKey(1L), first,
+                new LongKey(2L), second,
+                new LongKey(3L), third
+        );
         assertEquals(expected, repository.getAllEntities());
     }
+
+    @Test
+    void testTrimNothing() {
+        repository.trim(data.VCDE_1_1.getHeight());
+
+        Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = allExpected();
+        assertEquals(expected, repository.getAllEntities());
+    }
+
 
     @Test
     void testRollbackAll() {
@@ -190,6 +218,12 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
     @Test
     void testRollbackNothing() {
         repository.rollback(data.VCDE_4_2.getHeight());
+
+        Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = allExpected();
+        assertEquals(expected, repository.getAllEntities());
+    }
+
+    private Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> allExpected() {
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_3, Map.of("remaining",
                 List.of(new Change(data.VCDE_1_1.getHeight(), data.VCDE_1_1.getRemaining()), new Change(data.VCDE_1_2.getHeight(), data.VCDE_1_2.getRemaining()), new Change(data.VCDE_1_3.getHeight(), data.VCDE_1_3.getRemaining()))),
@@ -216,7 +250,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
                 new LongKey(3L), third,
                 new LongKey(4L), fourth
         );
-        assertEquals(expected, repository.getAllEntities());
+        return expected;
     }
 
     @Test
