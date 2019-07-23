@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -66,13 +67,13 @@ public class BlockchainConfigTest {
 
     @Test
     void testUpdateBlockchainConfig() {
-        blockchainConfigUpdater.updateChain(chain);
+        blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testUpdateToHeight() {
-        blockchainConfigUpdater.updateChain(chain);
+        blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         blockchainConfigUpdater.updateToHeight(99);
         assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(100);
@@ -89,7 +90,7 @@ public class BlockchainConfigTest {
 
     @Test
     void testRollback() {
-        blockchainConfigUpdater.updateChain(chain);
+        blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         blockchainConfigUpdater.updateToHeight(102);
         assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(100);
@@ -100,7 +101,7 @@ public class BlockchainConfigTest {
 
     @Test
     public void testChangeListenerOnBlockAccepted() {
-        blockchainConfigUpdater.updateChain(chain);
+        blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         Block block = Mockito.mock(Block.class);
         Mockito.doReturn(100).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
@@ -109,7 +110,7 @@ public class BlockchainConfigTest {
     }
     @Test
     public void testChangeListenerOnPopped() {
-        blockchainConfigUpdater.updateChain(chain);
+        blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         Block block = Mockito.mock(Block.class);
         Mockito.doReturn(201).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);

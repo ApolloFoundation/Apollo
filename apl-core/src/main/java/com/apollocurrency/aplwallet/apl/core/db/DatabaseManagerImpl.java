@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -73,6 +73,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         initDatasource();
     }
     public void initDatasource() {
+        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
         jdbiHandleFactory.setJdbi(jdbi);
     }

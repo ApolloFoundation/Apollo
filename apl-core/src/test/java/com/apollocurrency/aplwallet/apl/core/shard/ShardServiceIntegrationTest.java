@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactiona
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.ShardTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -99,6 +100,15 @@ public class ShardServiceIntegrationTest {
     }
 
     @Test
+    void testGetAllCompletedOrArchivedShards() {
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+
+        List<Shard> shards = shardService.getAllCompletedOrArchivedShards();
+
+        assertEquals(List.of(ShardTestData.SHARD_2, ShardTestData.SHARD_1), shards);
+    }
+
+    @Test
     void testReset() throws IOException, SQLException {
         Path dbDir = folder.newFolder().toPath();
         DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFileProperties(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
@@ -109,6 +119,7 @@ public class ShardServiceIntegrationTest {
         shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db"));
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db"));
         Path backupDir = dbDir.resolve("backup");
         Files.createDirectory(backupDir);
         Path dbPath = backupDir.resolve(Constants.APPLICATION_DIR_NAME);
@@ -130,7 +141,7 @@ public class ShardServiceIntegrationTest {
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(RuntimeException.class, () -> shardDatasource.commit()); //shard datasource was closed
         long files = Files.list(dbDir).count();
-        assertEquals(5, files);
+        assertEquals(6, files);
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + ".h2.db"));
@@ -138,7 +149,7 @@ public class ShardServiceIntegrationTest {
         assertEquals(1, allShards.size());
         Shard shard = allShards.get(0);
         assertEquals(1000, shard.getShardHeight());
-        assertEquals(100, shard.getShardState());
+        assertEquals(ShardState.FULL, shard.getShardState());
     }
 
     private ShardDao createShardDao(JdbiHandleFactory jdbiHandleFactory) {
