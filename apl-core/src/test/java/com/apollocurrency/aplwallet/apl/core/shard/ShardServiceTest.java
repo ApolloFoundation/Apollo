@@ -162,11 +162,13 @@ public class ShardServiceTest {
     }
 
     @Test
-    void testCreateShardAsync() throws ExecutionException, InterruptedException {
+    void testCreateShardWhenLastShardHeightLessThanCurrentHeight() throws ExecutionException, InterruptedException {
         doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-        CompletableFuture<MigrateState> shardFuture1 = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
+        doReturn(new Shard(100, DEFAULT_TRIM_HEIGHT)).when(shardDao).getLastShard();
+        CompletableFuture<MigrateState> shardFuture1 = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT + 1, Integer.MAX_VALUE);
         assertNotNull(shardFuture1);
         assertNull(shardFuture1.get());
+        verify(shardMigrationExecutor).executeAllOperations();
     }
 
     private void mockBackupExists() throws IOException {
