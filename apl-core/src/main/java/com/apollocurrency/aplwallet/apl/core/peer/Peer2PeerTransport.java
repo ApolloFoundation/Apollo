@@ -286,7 +286,8 @@ public class Peer2PeerTransport {
                         // and do not have inbound
                         Peer p = peerReference.get();
                         if (p == null) {
-                            log.error("Premature destruction of peer");
+                            log.debug("Premature destruction of peer");
+                            disconnect();
                             return sendOK;
                         }
                         String addrWithPort = p.getAnnouncedAddress();
