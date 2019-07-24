@@ -409,7 +409,7 @@ public final class PeerImpl implements Peer {
     @Override
     public void deactivate(String reason) {
         setState(PeerState.NON_CONNECTED);
-        LOG.debug("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
+        LOG.trace("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
         Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
 
