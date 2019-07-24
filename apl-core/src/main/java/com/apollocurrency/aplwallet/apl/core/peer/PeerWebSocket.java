@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.websocket.api.CloseStatus;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
@@ -183,12 +184,12 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void close(){
         Session s = getSession();
         if(s!=null){
+            s.close(1001,"Disconnect"); //RFC 6455, Section 7.4.1
             try {
-                s.disconnect();
+                s.disconnect();                
             } catch (IOException ex) {
                 log.debug("Excetion on session disconnect to {}",which(),ex);
             }
-            s.close();
         }
     }
     long getLastActivityTime() {
