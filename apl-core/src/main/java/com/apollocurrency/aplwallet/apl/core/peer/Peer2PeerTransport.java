@@ -259,8 +259,8 @@ public class Peer2PeerTransport {
 
     public boolean send(String message, Long requestId) {
         boolean sendOK = false;
+        cleanUp();
         synchronized (this) {
-            cleanUp();
             if (message == null || message.isEmpty()) {
                 //we have nothing to send
                 return sendOK;
