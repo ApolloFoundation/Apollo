@@ -260,7 +260,7 @@ public class Peer2PeerTransport {
     public boolean send(String message, Long requestId) {
         boolean sendOK = false;
         cleanUp();
-        synchronized (this) {
+     //   synchronized (this) {
             if (message == null || message.isEmpty()) {
                 //we have nothing to send
                 return sendOK;
@@ -315,7 +315,7 @@ public class Peer2PeerTransport {
                     log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
                 }
             }
-        }
+       // }
         if (!sendOK) {
             String msg = "Error on sending request";
             Peer p = getPeer();
