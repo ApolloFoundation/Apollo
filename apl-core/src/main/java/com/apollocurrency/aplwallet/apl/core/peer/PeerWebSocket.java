@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
@@ -51,6 +52,15 @@ public class PeerWebSocket extends WebSocketAdapter {
         Peer2PeerTransport p = peerReference.get();
         if(p!=null){
             which+=" at "+p.getHostWithPort();
+        }else{
+            Session s = getSession();
+            if (s!=null){
+                RemoteEndpoint r = s.getRemote();
+                if(r!=null){
+                    String addr = r.getInetSocketAddress().getAddress().getHostAddress();
+                    which=addr+":"+r.getInetSocketAddress().getPort();
+                }
+            }
         }
         return which;
     }
@@ -81,6 +91,8 @@ public class PeerWebSocket extends WebSocketAdapter {
         Peer2PeerTransport p = peerReference.get();
         if(p!=null){
             p.onWebSocketClose(this);
+        }else{
+            log.debug("Closing orphaned websocket: {}",which());
         }
     }
 
@@ -115,7 +127,8 @@ public class PeerWebSocket extends WebSocketAdapter {
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
             }else{
-                log.debug("Peer reference is null on websocket incoming message:\n {}",message);
+                log.warn("Peer reference is null on websocket incoming message, closing websocket:\n {}",message);
+                close();
             }    
 
         } catch (IOException ex) {
