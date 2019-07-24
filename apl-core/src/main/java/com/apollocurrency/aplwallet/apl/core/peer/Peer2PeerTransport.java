@@ -80,7 +80,8 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());        
+        rnd = new Random(System.currentTimeMillis());  
+        lastActivity=System.currentTimeMillis();
     }
 
     public long getDownloadedVolume() {
@@ -285,7 +286,8 @@ public class Peer2PeerTransport {
                         // and do not have inbound
                         Peer p = peerReference.get();
                         if (p == null) {
-                            log.error("Premature destruction of peer");
+                            log.debug("Premature destruction of peer");
+                            disconnect();
                             return sendOK;
                         }
                         String addrWithPort = p.getAnnouncedAddress();
