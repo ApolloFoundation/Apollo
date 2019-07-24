@@ -328,7 +328,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    synchronized void disconnect() {
+    void disconnect() {
         if (inboundWebSocket != null) {
             inboundWebSocket.close();
             inboundWebSocket = null;
