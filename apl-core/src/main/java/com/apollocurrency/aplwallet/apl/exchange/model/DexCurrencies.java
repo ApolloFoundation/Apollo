@@ -18,6 +18,15 @@ public enum  DexCurrencies {
     public String getCurrencyCode() {
         return currencyCode;
     }
+    
+    public static Integer getValue( DexCurrencies i ) {
+        switch (i) {
+            case APL : return 0;
+            case ETH : return 1;
+            case PAX : return 2; 
+        }
+        return -1;
+    }
 
     public static DexCurrencies getType(int ordinal){
         if(ordinal < 0 || ordinal > DexCurrencies.values().length){
