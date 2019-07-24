@@ -80,7 +80,8 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());        
+        rnd = new Random(System.currentTimeMillis());  
+        lastActivity=System.currentTimeMillis();
     }
 
     public long getDownloadedVolume() {

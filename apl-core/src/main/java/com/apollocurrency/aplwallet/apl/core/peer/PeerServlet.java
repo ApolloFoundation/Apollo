@@ -316,11 +316,12 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 return PeerResponses.SEQUENCE_ERROR;
             }
-            if (!peer.isInbound()) {
+            if (peer.isInbound()) {
                 if (Peers.hasTooManyInboundPeers()) {
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
+                Peers.removePeer(peer);
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
@@ -360,6 +361,7 @@ public final class PeerServlet extends WebSocketServlet {
                 PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
+                Peers.cleanupPeers(null);
                 PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
