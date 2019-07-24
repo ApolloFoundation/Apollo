@@ -77,6 +77,9 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
         log.trace("Peer: {} WebSocket error: {}",which(),cause);
+        if(peerReference.get()==null){
+            close();
+        }
     }
 
     @Override
