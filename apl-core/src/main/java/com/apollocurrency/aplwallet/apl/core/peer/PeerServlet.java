@@ -299,7 +299,18 @@ public final class PeerServlet extends WebSocketServlet {
                 return null;
             }
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
+                if (LOG.isDebugEnabled()) {
+                    String toJSONString = request.toJSONString();
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"),
+                                peer.getHostWithPort(), toJSONString);
+                    } else {
+                        // cut off response string in log
+                        LOG.debug("Unsupported protocol {} from {}\nRequest: {}", request.get("protocol"), peer.getHostWithPort(),
+                                toJSONString != null && toJSONString.length() > 200
+                                        ? toJSONString.substring(0, 200) : toJSONString);
+                    }
+                }
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));
