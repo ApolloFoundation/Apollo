@@ -63,8 +63,6 @@ public final class Poll extends AbstractPoll {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private static final boolean isPollsProcessing = propertiesLoader.getBooleanProperty("apl.processPolls");
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static DatabaseManager databaseManager;
@@ -228,10 +226,8 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            if (Poll.isPollsProcessing) {
                 int height = block.getHeight();
                 Poll.checkPolls(height);
-            }
         }
     }
 
@@ -319,7 +315,7 @@ public final class Poll extends AbstractPoll {
     }
 
     public List<PollOptionResult> getResults() {
-        if (Poll.isPollsProcessing && isFinished()) {
+        if (isFinished()) {
             return pollResultsTable.get(pollDbKeyFactory.newKey(this)).stream().filter(r-> !r.isUndefined()).collect(Collectors.toList());
         } else {
             return countResults(voteWeighting);

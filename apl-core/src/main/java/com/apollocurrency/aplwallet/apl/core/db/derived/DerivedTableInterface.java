@@ -67,4 +67,8 @@ public interface DerivedTableInterface<T> {
      */
     MinMaxDbId getMinMaxDbId(int height) throws SQLException;
 
+    /**
+     * @return table db name
+     */
+    String getName();
 }

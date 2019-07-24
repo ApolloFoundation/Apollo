@@ -100,7 +100,7 @@ class ShardDaoTest {
         assertEquals(NOT_SAVED_SHARD.getShardState(), found.getShardState());
         assertArrayEquals(NOT_SAVED_SHARD.getShardHash(), found.getShardHash());
         assertEquals(NOT_SAVED_SHARD.getShardHeight(), found.getShardHeight());
-        assertArrayEquals(NOT_SAVED_SHARD.getZipHashCrc(), found.getZipHashCrc());
+        assertArrayEquals(NOT_SAVED_SHARD.getCoreZipHash(), found.getCoreZipHash());
 
         List<Shard> actual = dao.getAllShard();
         List<Shard> expected = new ArrayList<>(SHARDS);
@@ -126,7 +126,7 @@ class ShardDaoTest {
         assertEquals(copy.getShardState(), found.getShardState());
         assertArrayEquals(copy.getShardHash(), found.getShardHash());
         assertEquals(copy.getShardHeight(), found.getShardHeight());
-        assertArrayEquals(copy.getZipHashCrc(), found.getZipHashCrc());
+        assertArrayEquals(copy.getCoreZipHash(), found.getCoreZipHash());
 
         List<Shard> allShards = dao.getAllShard();
 
@@ -171,7 +171,7 @@ class ShardDaoTest {
     @Test
     void testGetShardAtHeight() {
         Shard shardAtHeight = dao.getShardAtHeight(SHARD_1.getShardHeight());
-        assertEquals(shardAtHeight, SHARD_1);
+        assertEquals(SHARD_1, shardAtHeight);
     }
 
     @Test

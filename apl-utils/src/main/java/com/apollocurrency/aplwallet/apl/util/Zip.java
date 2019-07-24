@@ -19,9 +19,8 @@ public interface Zip {
      * @param inputFolder folder to zip
      * @param filesTimeFromEpoch NULL (default will be assigned) or time in ms from Epoch for all file times
      * @param filenameFilter NULL (CSV will be by default) or file filter instance
-     * @param recursive with subfirs
-     * @return byte array filled by CRC/hash if success, ZERO length array if something went wrong
-     * @throws RuntimeException if there are no CSV file inside specified folder
+     * @param recursive with subdirs
+     * @return byte array filled by CRC/hash if success or null, when exception occurred or files for compress were not found
      */
     byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 
@@ -41,7 +40,7 @@ public interface Zip {
      * @param filesTimeFromEpoch NULL (default will be assigned) or time in ms from Epoch for all file times
      * @param filenameFilter NULL (CSV will be by default) or file filter instance
      * @param recursive with subfirs
-     * @throws RuntimeException if there are no CSV file inside specified folder
+     * @return true, when archive was successfully created and false if there are no CSV file inside specified folder or exception occurred during compression
      */
-     void compress(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);    
+     boolean compress(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 }

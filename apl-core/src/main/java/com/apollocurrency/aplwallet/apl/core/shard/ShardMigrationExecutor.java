@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
@@ -23,14 +24,17 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.FinishShardingComman
 import com.apollocurrency.aplwallet.apl.core.shard.commands.UpdateSecondaryIndexCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculator;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -92,6 +96,8 @@ public class ShardMigrationExecutor {
     public void createAllCommands(int height, long shardId, MigrateState state) {
         int shardStartHeight = getShardStartHeight();
         log.info("Create commands for shard between heights[{},{}]", shardStartHeight, height);
+        List<TableInfo> tableInfoList = null;
+        ExcludeInfo excludeInfo = null;
         switch (state) {
             case INIT:
                 if (backupDb) {
@@ -105,7 +111,7 @@ public class ShardMigrationExecutor {
                 addCreateSchemaCommand(shardId); //should happen only when enabled backup
             case SHARD_SCHEMA_CREATED:
             case DATA_COPY_TO_SHARD_STARTED:
-                ExcludeInfo excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
+                excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 CopyDataCommand copyDataCommand = new CopyDataCommand(shardId, shardEngine, height, excludeInfo);
                 this.addOperation(copyDataCommand);
             case DATA_COPY_TO_SHARD_FINISHED:
@@ -120,26 +126,25 @@ public class ShardMigrationExecutor {
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
+                excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 UpdateSecondaryIndexCommand updateSecondaryIndexCommand = new UpdateSecondaryIndexCommand
                         (shardEngine, height, excludeInfo);
                 this.addOperation(updateSecondaryIndexCommand);
             case SECONDARY_INDEX_FINISHED:
             case CSV_EXPORT_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
-                List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
-                tablesToExport.remove(ACCOUNT_LEDGER);
-                tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
-                CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
+                excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
+                tableInfoList = getOrInitTableList(tableInfoList);
+                CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tableInfoList, excludeInfo);
 
                 this.addOperation(csvExportCommand);
             case CSV_EXPORT_FINISHED:
             case ZIP_ARCHIVE_STARTED:
-                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId, shardEngine);
+                tableInfoList = getOrInitTableList(tableInfoList);
+                ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(shardId,tableInfoList, shardEngine);
                 this.addOperation(zipArchiveCommand);
             case ZIP_ARCHIVE_FINISHED:
             case DATA_REMOVE_STARTED:
-                excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
+                excludeInfo = getOrInitExcludeInfo(excludeInfo, shardStartHeight, height);
                 DeleteCopiedDataCommand deleteCopiedDataCommand =
                         new DeleteCopiedDataCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, excludeInfo);
                 this.addOperation(deleteCopiedDataCommand);
@@ -150,9 +155,20 @@ public class ShardMigrationExecutor {
             default:
                 throw new IllegalArgumentException("Unable to create commands for state " + state);
         }
+    }
 
-//        ReLinkDataCommand reLinkDataCommand = new ReLinkDataCommand(managementReceiver,height, dbIds);
-//        this.addOperation(reLinkDataCommand);
+    private List<TableInfo> getOrInitTableList(List<TableInfo> existingList) {
+        if (existingList != null) {
+            return existingList;
+        }
+        List<TableInfo> tableInfoList = derivedTablesRegistry.getDerivedTables()
+                .stream()
+                .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
+                .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
+                .collect(Collectors.toList());
+        List<TableInfo> coreTableInfoList = List.of(new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME), new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME), new TableInfo(ShardConstants.SHARD_TABLE_NAME));
+        tableInfoList.addAll(coreTableInfoList);
+        return tableInfoList;
     }
 
     private byte[] calculateHash(int height) {
@@ -208,5 +224,11 @@ public class ShardMigrationExecutor {
         };
     }
 
+    private ExcludeInfo getOrInitExcludeInfo(ExcludeInfo existing, int startHeight, int finishHeight) {
+        if (existing != null) {
+            return existing;
+        }
+        return excludedTransactionDbIdExtractor.getExcludeInfo(startHeight, finishHeight);
+    }
 
 }

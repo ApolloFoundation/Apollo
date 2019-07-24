@@ -76,6 +76,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -103,6 +106,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 
@@ -295,14 +299,14 @@ class ShardMigrationExecutorTest {
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-        List<String> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME);
+        List<TableInfo> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
 
         CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
             assertEquals(CSV_EXPORT_FINISHED, state);
 
 //10-11.    // archive CSV into zip
-            ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(4L, shardEngine);
+            ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(4L, tables, shardEngine);
             state = shardMigrationExecutor.executeOperation(zipArchiveCommand);
             assertEquals(ZIP_ARCHIVE_FINISHED, state);
 

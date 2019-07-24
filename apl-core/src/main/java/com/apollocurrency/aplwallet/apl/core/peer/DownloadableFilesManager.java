@@ -188,7 +188,7 @@ public class DownloadableFilesManager {
                        chainId=UUID.fromString(chainIdStr);
                     }
                     
-                    String fileName = shardNameHelper.getShardArchiveNameByShardId(shardId,chainId);
+                    String fileName = shardNameHelper.getCoreShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
                 } catch (NumberFormatException e) {

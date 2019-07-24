@@ -213,7 +213,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
     @Override
     public final String toString() {
-        return table;
+        return getName();
     }
 
+    @Override
+    public String getName() {
+        return table;
+    }
 }
