@@ -585,7 +585,7 @@ public final class Peers {
         inboundPeers.values().stream()
                 .filter((p) -> (
                         p.getState()!=PeerState.CONNECTED 
-                     && now - p.getLastActivityTime() > connectTimeout*4 )
+                     && now - p.getLastActivityTime() > webSocketIdleTimeout)
                 )
                 .forEachOrdered((p) -> toDelete.add(p));
         
