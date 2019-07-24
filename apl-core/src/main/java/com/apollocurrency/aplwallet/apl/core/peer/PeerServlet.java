@@ -239,7 +239,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param requestId Request identifier
      * @param request Request message
      */
-    private synchronized void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
+    private void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
 
         lookupComponents();
         JSONStreamAware jsonResponse;
@@ -261,7 +261,11 @@ public final class PeerServlet extends WebSocketServlet {
         // Return the response
         try {
             StringWriter writer = new StringWriter(1000);
-            JSON.writeJSONString(jsonResponse, writer);
+            try {
+                JSON.writeJSONString(jsonResponse, writer);
+            } catch (IOException ex) {
+                LOG.debug("Allmost impossible error: Can not wite to StringWtiter",ex);
+            }
             String response = writer.toString();
             transport.send(response, requestId);
             //check if we returned error and should close inbound socket
@@ -271,11 +275,6 @@ public final class PeerServlet extends WebSocketServlet {
         } catch (RuntimeException e) {
             LOG.debug("Exception while responing to {}", transport.which(), e);
             processException(peer, e);
-        } catch (IOException e) {
-            LOG.debug("Exception while responding to {}", transport.which(), e);
-            if (peer != null) {
-                peer.deactivate("IO exception sending response to: " + transport.which());
-            }
         }
     }
 
