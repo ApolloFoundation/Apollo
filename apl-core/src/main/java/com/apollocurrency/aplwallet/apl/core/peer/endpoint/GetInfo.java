@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import javax.inject.Inject;
 import org.json.simple.JSONObject;
@@ -48,19 +47,24 @@ public final class GetInfo extends PeerRequestHandler {
     
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
+    private static final JSONStreamAware INVALID_CHAINID;
     static {
         JSONObject response = new JSONObject();
         response.put("error", Errors.INVALID_ANNOUNCED_ADDRESS);
         INVALID_ANNOUNCED_ADDRESS = JSON.prepare(response);
+    
         response = new JSONObject();
-        response.put("error", Errors.UNSUPPORTED_PROTOCOL);
-        INVALID_APPLICATION = JSON.prepare(response);        
+        response.put("error", Errors.INVALID_CHAINID);
+        INVALID_CHAINID = JSON.prepare(response);
+        
+        response = new JSONObject();
+        response.put("error", Errors.INVALID_APPLICATION);
+        INVALID_APPLICATION = JSON.prepare(response);
     }
     
     @Inject
     public GetInfo(PropertiesHolder propertiesHolder) {
        this.propertiesHolder=propertiesHolder;
-       mapper.registerModule(new JsonOrgModule()); 
     }
 
     @Override
@@ -105,7 +109,12 @@ public final class GetInfo extends PeerRequestHandler {
             peerImpl.remove();
             return INVALID_APPLICATION;
         }
-
+        
+        if(Peers.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
+            peerImpl.remove();
+            return INVALID_CHAINID;
+        }
+        
         Version version = null;
         try {
             version = new Version(pi.getVersion());
@@ -121,6 +130,7 @@ public final class GetInfo extends PeerRequestHandler {
             log.warn("Setting Platform = '?' instead of Platform Value...");
             pi.setPlatform("?");
         }
+        
         peerImpl.setPlatform(pi.getPlatform().trim());
 
         peerImpl.setShareAddress(pi.getShareAddress());

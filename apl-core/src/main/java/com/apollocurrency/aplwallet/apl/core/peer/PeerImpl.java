@@ -82,6 +82,7 @@ public final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private final Object servicesMonitor = new Object();
+    private final Object stateMonitor = new Object();
 
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
@@ -153,10 +154,11 @@ public final class PeerImpl implements Peer {
         // if we are even not connected and some routine say to disconnect
         // we should close all because possily we alread tried to connect and have
         // client thread running
-        if (newState != PeerState.CONNECTED) {
+        synchronized (stateMonitor){
+          if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
-        }        
-       
+          }        
+        }
         if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED) {
@@ -409,7 +411,7 @@ public final class PeerImpl implements Peer {
     @Override
     public void deactivate(String reason) {
         setState(PeerState.NON_CONNECTED);
-        LOG.debug("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
+        LOG.trace("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
         Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
 

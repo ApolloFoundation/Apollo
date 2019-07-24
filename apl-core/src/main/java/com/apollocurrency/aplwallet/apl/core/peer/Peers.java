@@ -576,10 +576,12 @@ public final class Peers {
     //we do not need inboulnd peers that is not
     //connected, but we should be carefull because peer could be connecting
     //right now
-    private static void cleanupPeers(Peer peer){
-        int now = timeService.getEpochTime();
+   static void cleanupPeers(Peer peer){
+        long now = System.currentTimeMillis();
         Set<Peer> toDelete=new HashSet<>();
-        toDelete.add(peer);
+        if(peer!=null){
+           toDelete.add(peer);
+        }
         inboundPeers.values().stream()
                 .filter((p) -> (
                         p.getState()!=PeerState.CONNECTED 
@@ -588,7 +590,7 @@ public final class Peers {
                 .forEachOrdered((p) -> toDelete.add(p));
         
         toDelete.forEach((p) -> {
-            p.deactivate("Cleanup of incoming");
+            p.deactivate("Cleanup of inbounds");
             inboundPeers.remove(p.getHostWithPort());
         });
     }
