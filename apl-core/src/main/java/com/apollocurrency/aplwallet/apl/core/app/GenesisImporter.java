@@ -1,21 +1,5 @@
 /*
- * Copyright © 2013-2016 The Nxt Core Developers.
- * Copyright © 2016-2017 Jelurida IP B.V.
- *
- * See the LICENSE.txt file at the top-level directory of this distribution
- * for licensing information.
- *
- * Unless otherwise agreed in a custom licensing agreement with Jelurida B.V.,
- * no part of the Nxt software, including this file, may be copied, modified,
- * propagated, or distributed except according to the terms contained in the
- * LICENSE.txt file.
- *
- * Removal or modification of this copyright notice is prohibited.
- *
- */
-
-/*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -50,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -73,10 +58,14 @@ public class GenesisImporter {
     private BlockchainConfigUpdater blockchainConfigUpdater;
     private DatabaseManager databaseManager; // lazy init
     private String genesisTaskId;
+//    private JsonNode genesisAccountsJSON = null;
+//    private ArrayNode publicKeys;
+//    private ArrayNode balances;
     private JSONObject genesisAccountsJSON = null;
     private JSONArray publicKeys;
     private JSONObject balances;
     private byte[] computedDigest;
+    private ObjectMapper mapper;
 
     @Inject
     public GenesisImporter(BlockchainConfig blockchainConfig, ConfigDirProvider configDirProvider,
@@ -120,6 +109,11 @@ public class GenesisImporter {
         log.trace("path = {}", path);
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
+/*
+            genesisAccountsJSON = mapper.readTree(is);
+            this.balances = genesisAccountsJSON.get("balances");
+            this.publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
+*/
             genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
             this.balances = (JSONObject) genesisAccountsJSON.get("balances");
             this.publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
