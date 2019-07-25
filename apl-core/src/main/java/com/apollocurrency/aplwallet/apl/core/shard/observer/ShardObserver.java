@@ -161,7 +161,14 @@ public class ShardObserver {
         }
         return res;
     }
-    
+    private void stopNetOperations(){
+        Peers.suspend();
+        blockchainProcessor.setGetMoreBlocks(false);
+    }
+    private void resumeNetOperations(){
+        Peers.resume();
+        blockchainProcessor.setGetMoreBlocks(true);        
+    }
     public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
@@ -172,7 +179,7 @@ public class ShardObserver {
             return false;            
         }
         boolean result = false;
-        Peers.suspend();
+        stopNetOperations();
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();
         log.info("Start sharding....");
@@ -190,7 +197,7 @@ public class ShardObserver {
             log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
         } finally {
             isSharding = false;
-            Peers.resume();
+            resumeNetOperations();
         }
         if (state != MigrateState.FAILED && state != MigrateState.INIT) {
             log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);

@@ -41,7 +41,7 @@ public class NtpTime {
             String delay = (delayValue == null) ? "N/A" : delayValue.toString();
             String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
 
-            LOG.info(" Roundtrip delay(ms)=" + delay
+            LOG.trace(" Roundtrip delay(ms)=" + delay
                     + ", clock offset(ms)=" + offset); // offset in ms
 
             timeOffset = offsetValue;
