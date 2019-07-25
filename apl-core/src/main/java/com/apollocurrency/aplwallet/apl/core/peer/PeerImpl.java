@@ -135,7 +135,7 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
-        setState(PeerState.NON_CONNECTED);
+        state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
     
     @Override
