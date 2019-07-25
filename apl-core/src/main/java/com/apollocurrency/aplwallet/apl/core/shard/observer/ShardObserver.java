@@ -73,8 +73,11 @@ public class ShardObserver {
                 future.get();
             }
         }
-        catch (InterruptedException | ExecutionException e) {
-            log.error(e.toString(), e);
+        catch (InterruptedException ex){
+            log.debug("Interrupted");
+            Thread.currentThread().interrupt();
+        }catch(ExecutionException e){
+            log.error("Execution failed", e);
         }
     }
 
