@@ -149,7 +149,7 @@ public class DexOfferProcessor {
                         .build());
 
                 //TODO move to validation
-                if(dexService.isTxNotApproved(exchangeContract.getSecretHash(), offer.getType(), offer.getOfferCurrency(), exchangeContract.getTransferTxId())){
+                if(dexService.isTxApproved(exchangeContract.getSecretHash(), offer.getType(), offer.getPairCurrency(), exchangeContract.getTransferTxId())){
                     continue;
                 }
 
@@ -186,12 +186,12 @@ public class DexOfferProcessor {
                         .status(STEP_1.ordinal())
                         .build());
 
-                //TODO move to validation
-                if(!dexService.isTxNotApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getOfferCurrency(), initialContract.getTransferTxId())){
+                //TODO Fix it. Process two cases.
+                if(!dexService.isTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), initialContract.getTransferTxId())){
                     continue;
                 }
 
-                byte[] secret = dexService.getSecretIfTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getOfferCurrency(), initialContract.getTransferTxId());
+                byte[] secret = dexService.getSecretIfTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), initialContract.getTransferTxId());
                 dexService.approveMoneyTransfer(passphrase, accountId, outcomeOffer.getTransactionId(), initialContract.getTransferTxId(), secret);
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.getMessage(), e);

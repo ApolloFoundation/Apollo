@@ -41,6 +41,8 @@ public class DexSmartContractService {
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
 
+    private static final String ACCOUNT_TO_READ_DATA = "1234";
+
     @Inject
     public DexSmartContractService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService) {
@@ -127,7 +129,7 @@ public class DexSmartContractService {
     }
 
     public SwapDataInfo getSwapData(byte[] secretKey) throws AplException.ExecutiveProcessException {
-        return getSwapData(Credentials.create("test account"), secretKey);
+        return getSwapData(Credentials.create(ACCOUNT_TO_READ_DATA), secretKey);
     }
 
     public SwapDataInfo getSwapData(Credentials credentials, byte[] secretKey) throws AplException.ExecutiveProcessException {

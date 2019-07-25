@@ -351,8 +351,8 @@ public class DexService {
         return true;
     }
 
-    public boolean isTxNotApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
-        return getSecretIfTxApproved(secretHash, offerType, dexCurrencies, transferTxId) == null;
+    public boolean isTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
+        return getSecretIfTxApproved(secretHash, offerType, dexCurrencies, transferTxId) != null;
     }
 
     public byte[] getSecretIfTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
@@ -369,5 +369,6 @@ public class DexService {
 
         return null;
     }
+
 
 }
