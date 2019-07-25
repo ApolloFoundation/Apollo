@@ -10,6 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class PrunableMessage extends DerivedEntity {
     private final long id;
     private final long senderId;
@@ -70,7 +73,7 @@ public class PrunableMessage extends DerivedEntity {
         this.transactionTimestamp = transaction.getTimestamp();
     }
 
-    public PrunableMessage(Long dbId, Integer height, long id, long senderId, long recipientId, byte[] message, EncryptedData encryptedData, boolean messageIsText, boolean encryptedMessageIsText, boolean isCompressed, int transactionTimestamp, int blockTimestamp) {
+    public PrunableMessage(Long dbId, long id, long senderId, long recipientId, byte[] message, EncryptedData encryptedData, boolean messageIsText, boolean encryptedMessageIsText, boolean isCompressed, int blockTimestamp, int transactionTimestamp, Integer height) {
         super(dbId, height);
         this.id = id;
         this.senderId = senderId;
@@ -93,5 +96,74 @@ public class PrunableMessage extends DerivedEntity {
         this.encryptedData = appendix.getEncryptedData();
         this.encryptedMessageIsText = appendix.isText();
         this.isCompressed = appendix.isCompressed();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PrunableMessage)) return false;
+        if (!super.equals(o)) return false;
+        PrunableMessage that = (PrunableMessage) o;
+        return id == that.id &&
+                senderId == that.senderId &&
+                recipientId == that.recipientId &&
+                messageIsText == that.messageIsText &&
+                encryptedMessageIsText == that.encryptedMessageIsText &&
+                isCompressed == that.isCompressed &&
+                transactionTimestamp == that.transactionTimestamp &&
+                blockTimestamp == that.blockTimestamp &&
+                Arrays.equals(message, that.message) &&
+                Objects.equals(encryptedData, that.encryptedData);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), id, senderId, recipientId, encryptedData, messageIsText, encryptedMessageIsText, isCompressed, transactionTimestamp, blockTimestamp);
+        result = 31 * result + Arrays.hashCode(message);
+        return result;
+    }
+
+    public void setMessage(byte[] message) {
+        this.message = message;
+    }
+
+    public void setEncryptedData(EncryptedData encryptedData) {
+        this.encryptedData = encryptedData;
+    }
+
+    public boolean isMessageIsText() {
+        return messageIsText;
+    }
+
+    public void setMessageIsText(boolean messageIsText) {
+        this.messageIsText = messageIsText;
+    }
+
+    public boolean isEncryptedMessageIsText() {
+        return encryptedMessageIsText;
+    }
+
+    public void setEncryptedMessageIsText(boolean encryptedMessageIsText) {
+        this.encryptedMessageIsText = encryptedMessageIsText;
+    }
+
+    public void setCompressed(boolean compressed) {
+        isCompressed = compressed;
+    }
+
+    @Override
+    public String toString() {
+        return "PrunableMessage{" +
+                "id=" + id +
+                ", senderId=" + senderId +
+                ", recipientId=" + recipientId +
+                ", message=" + Arrays.toString(message) +
+                ", encryptedData=" + encryptedData +
+                ", messageIsText=" + messageIsText +
+                ", encryptedMessageIsText=" + encryptedMessageIsText +
+                ", isCompressed=" + isCompressed +
+                ", transactionTimestamp=" + transactionTimestamp +
+                ", blockTimestamp=" + blockTimestamp +
+                '}';
     }
 }

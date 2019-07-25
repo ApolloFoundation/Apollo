@@ -23,13 +23,22 @@ public class PrunableMessageMapper extends DerivedEntityMapper<PrunableMessage> 
         long senderId = rs.getLong("sender_id");
         long recipientId = rs.getLong("recipient_id");
         byte[] message = rs.getBytes("message");
-        boolean messageIsText = rs.getBoolean("message_is_text");
+        boolean messageIsText = false;
+        if (message != null) {
+            messageIsText = rs.getBoolean("message_is_text");
+        }
+
         byte[] encryptedMessage = rs.getBytes("encrypted_message");
-        EncryptedData encryptedData = EncryptedData.readEncryptedData(encryptedMessage);
-        boolean encryptedMessageIsText = rs.getBoolean("encrypted_is_text");
-        boolean isCompressed = rs.getBoolean("is_compressed");
+        boolean encryptedMessageIsText = false;
+        boolean isCompressed = false;
+        EncryptedData encryptedData = null;
+        if (encryptedMessage != null) {
+            encryptedData = EncryptedData.readEncryptedData(encryptedMessage);
+            encryptedMessageIsText = rs.getBoolean("encrypted_is_text");
+            isCompressed = rs.getBoolean("is_compressed");
+        }
         int blockTimestamp = rs.getInt("block_timestamp");
         int transactionTimestamp = rs.getInt("transaction_timestamp");
-        return new PrunableMessage(null, null, id, senderId, recipientId, message, encryptedData, messageIsText, encryptedMessageIsText, isCompressed, transactionTimestamp, blockTimestamp);
+        return new PrunableMessage(null, id, senderId, recipientId, message, encryptedData, messageIsText, encryptedMessageIsText, isCompressed, blockTimestamp, transactionTimestamp, null);
     }
 }

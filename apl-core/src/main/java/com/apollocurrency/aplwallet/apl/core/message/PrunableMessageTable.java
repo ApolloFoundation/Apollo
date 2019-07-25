@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.message;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
@@ -115,7 +114,7 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
         }
     }
 
-    boolean isPruned(long transactionId, boolean hasPrunablePlainMessage, boolean hasPrunableEncryptedMessage) {
+    public boolean isPruned(long transactionId, boolean hasPrunablePlainMessage, boolean hasPrunableEncryptedMessage) {
         if (!hasPrunablePlainMessage && !hasPrunableEncryptedMessage) {
             return false;
         }
