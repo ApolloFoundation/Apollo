@@ -216,141 +216,154 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
 
     private Runnable createRemoveUnconfirmedTransactionsThread() {
-        return () -> {
+        return new Runnable() {
+            @Override
+            public void run() {
+                Thread me = Thread.currentThread();
+                me.setName(me.getName()+"-createRemoveUnconfirmedTransactionsThread");
+                try {
+                    try {
+                        if (lookupBlockchainProcessor().isDownloading()) {
+                            return;
+                        }
+                        List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
+                        try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
+                                new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
+                            while (iterator.hasNext()) {
+                                expiredTransactions.add(iterator.next());
+                            }
+                        }
+                        if (expiredTransactions.size() > 0) {
+                            globalSync.writeLock();
+                            try {
+                                TransactionalDataSource dataSource = lookupDataSource();
+                                try {
+                                    dataSource.begin();
+                                    for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
+                                        removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
+                                    }
+                                    dataSource.commit();
+                                } catch (Exception e) {
+                                    LOG.error(e.toString(), e);
+                                    dataSource.rollback();
+                                    throw e;
+                                }
+                            } finally {
+                                globalSync.writeUnlock();
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOG.info("Error removing unconfirmed transactions", e);
+                    }
+                } catch (Throwable t) {
+                    LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+                    t.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        };
+    }
+
+    private final Runnable rebroadcastTransactionsThread = new Runnable() {
+        @Override
+        public void run() {
+            Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-rebroadcastTransactionsThread");           
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
                         return;
                     }
-                    List<UnconfirmedTransaction> expiredTransactions = new ArrayList<>();
-                    try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                            new DbClause.IntClause("expiration", DbClause.Op.LT, timeService.getEpochTime()), 0, -1, "")) {
-                        while (iterator.hasNext()) {
-                            expiredTransactions.add(iterator.next());
+                    List<Transaction> transactionList = new ArrayList<>();
+                    int curTime = timeService.getEpochTime();
+                    for (TransactionImpl transaction : broadcastedTransactions) {
+                        if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
+                            broadcastedTransactions.remove(transaction);
+                        } else if (transaction.getTimestamp() < curTime - 30) {
+                            transactionList.add(transaction);
                         }
                     }
-                    if (expiredTransactions.size() > 0) {
-                        globalSync.writeLock();
-                        try {
-                            TransactionalDataSource dataSource = lookupDataSource();
-                            try {
-                                dataSource.begin();
-                                for (UnconfirmedTransaction unconfirmedTransaction : expiredTransactions) {
-                                    removeUnconfirmedTransaction(unconfirmedTransaction.getTransaction());
-                                }
-                                dataSource.commit();
-                            } catch (Exception e) {
-                                LOG.error(e.toString(), e);
-                                dataSource.rollback();
-                                throw e;
-                            }
-                        } finally {
-                            globalSync.writeUnlock();
-                        }
+                    
+                    if (transactionList.size() > 0) {
+                        Peers.sendToSomePeers(transactionList);
                     }
+                    
                 } catch (Exception e) {
-                    LOG.info("Error removing unconfirmed transactions", e);
+                    LOG.info("Error in transaction re-broadcasting thread", e);
                 }
             } catch (Throwable t) {
                 LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
                 t.printStackTrace();
                 System.exit(1);
             }
-
-        };
-    }
-
-    private final Runnable rebroadcastTransactionsThread = () -> {
-
-        try {
-            try {
-                if (lookupBlockchainProcessor().isDownloading()) {
-                    return;
-                }
-                List<Transaction> transactionList = new ArrayList<>();
-                int curTime = timeService.getEpochTime();
-                for (TransactionImpl transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                        broadcastedTransactions.remove(transaction);
-                    } else if (transaction.getTimestamp() < curTime - 30) {
-                        transactionList.add(transaction);
-                    }
-                }
-
-                if (transactionList.size() > 0) {
-                    Peers.sendToSomePeers(transactionList);
-                }
-
-            } catch (Exception e) {
-                LOG.info("Error in transaction re-broadcasting thread", e);
-            }
-        } catch (Throwable t) {
-            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
         }
-
     };
 
-    private final Runnable processTransactionsThread = () -> {
-
-        try {
+    private final Runnable processTransactionsThread = new Runnable() {
+        @Override
+        public void run() {
+            Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-processTransactionsThread");          
             try {
-                if (lookupBlockchainProcessor().isDownloading()) {
-                    return;
-                }
-                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
-                if (peer == null) {
-                    return;
-                }
-                JSONObject request = new JSONObject();
-                request.put("requestType", "getUnconfirmedTransactions");
-                JSONArray exclude = new JSONArray();
-                getAllUnconfirmedTransactionIds().forEach(transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
-                Collections.sort(exclude);
-                request.put("exclude", exclude);
-                request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
-                if (response == null) {
-                    return;
-                }
-                JSONArray transactionsData = (JSONArray)response.get("unconfirmedTransactions");
-                if (transactionsData == null || transactionsData.size() == 0) {
-                    return;
-                }
                 try {
-                    processPeerTransactions(transactionsData);
-                } catch (AplException.NotValidException | RuntimeException e) {
-                    peer.blacklist(e);
+                    if (lookupBlockchainProcessor().isDownloading()) {
+                        return;
+                    }
+                    Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
+                    if (peer == null) {
+                        return;
+                    }
+                    JSONObject request = new JSONObject();
+                    request.put("requestType", "getUnconfirmedTransactions");
+                    JSONArray exclude = new JSONArray();
+                    getAllUnconfirmedTransactionIds().forEach(transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
+                    Collections.sort(exclude);
+                    request.put("exclude", exclude);
+                    request.put("chainId", blockchainConfig.getChain().getChainId());
+                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    if (response == null) {
+                        return;
+                    }
+                    JSONArray transactionsData = (JSONArray)response.get("unconfirmedTransactions");
+                    if (transactionsData == null || transactionsData.size() == 0) {
+                        return;
+                    }
+                    try {
+                        processPeerTransactions(transactionsData);
+                    } catch (AplException.NotValidException | RuntimeException e) {
+                        peer.blacklist(e);
+                    }
+                } catch (Exception e) {
+                    LOG.info("Error processing unconfirmed transactions", e);
                 }
-            } catch (Exception e) {
-                LOG.info("Error processing unconfirmed transactions", e);
+            } catch (Throwable t) {
+                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+                t.printStackTrace();
+                System.exit(1);
             }
-        } catch (Throwable t) {
-            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
         }
-
     };
 
-    private final Runnable processWaitingTransactionsThread = () -> {
-
-        try {
+    private final Runnable processWaitingTransactionsThread = new Runnable() {
+        @Override
+        public void run() {
+            Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-processWaitingTransactionsThread");             
             try {
-                if (lookupBlockchainProcessor().isDownloading()) {
-                    return;
+                try {
+                    if (lookupBlockchainProcessor().isDownloading()) {
+                        return;
+                    }
+                    processWaitingTransactions();
+                } catch (Exception e) {
+                    LOG.info("Error processing waiting transactions", e);
                 }
-                processWaitingTransactions();
-            } catch (Exception e) {
-                LOG.info("Error processing waiting transactions", e);
+            } catch (Throwable t) {
+                LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
+                t.printStackTrace();
+                System.exit(1);
             }
-        } catch (Throwable t) {
-            LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
-            t.printStackTrace();
-            System.exit(1);
         }
-
     };
 
 

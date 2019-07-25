@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Callable method to get the next block segment from the selected peer
  */
-public class GetNextBlocks implements Callable<List<BlockImpl>> {
-    private static final Logger log = LoggerFactory.getLogger(GetNextBlocks.class);
+public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
+    private static final Logger log = LoggerFactory.getLogger(GetNextBlocksTask.class);
     
     private BlockchainConfig blockchainConfig;   
     /** Callable future */
@@ -52,7 +52,7 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
      * @param   stop                Stop index within the list
      * @param   startHeight         Height of the block from which we will start to download blockchain
      */
-    public GetNextBlocks(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
         this.blockIds = blockIds;
         this.start = start;
@@ -68,6 +68,8 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
      */
     @Override
     public List<BlockImpl> call() {
+        Thread me = Thread.currentThread();
+        me.setName(me.getName()+"-GetNextBlocksTask");
         requestCount++;
         //
         // Build the block request list

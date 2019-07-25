@@ -1482,6 +1482,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         @Override
         public void run() {
+            Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-GetMoreBlocksThread");
             try {
                 //
                 // Download blocks until we are up-to-date
@@ -1800,11 +1802,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // Break the download into multiple segments.  The first block in each segment
             // is the common block for that segment.
             //
-            List<GetNextBlocks> getList = new ArrayList<>();
+            List<GetNextBlocksTask> getList = new ArrayList<>();
             int segSize = 36;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
-                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
+                getList.add(new GetNextBlocksTask(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
             }
             int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
             long maxResponseTime = 0;
@@ -1823,7 +1825,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // from another peer.  We will stop the download and process any pending
                 // blocks if we are unable to download a segment from the feeder peer.
                 //
-                for (GetNextBlocks nextBlocks : getList) {
+                for (GetNextBlocksTask nextBlocks : getList) {
                     Peer peer;
                     if (nextBlocks.getRequestCount() > 1) {
                         break download;
@@ -1847,9 +1849,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // Get the results.  A peer is on a different fork if a returned
                 // block is not in the block identifier list.
                 //
-                Iterator<GetNextBlocks> it = getList.iterator();
+                Iterator<GetNextBlocksTask> it = getList.iterator();
                 while (it.hasNext()) {
-                    GetNextBlocks nextBlocks = it.next();
+                    GetNextBlocksTask nextBlocks = it.next();
                     List<BlockImpl> blockList;
                     try {
                         blockList = nextBlocks.getFuture().get();

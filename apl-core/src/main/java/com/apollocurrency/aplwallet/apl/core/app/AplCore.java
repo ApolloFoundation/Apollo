@@ -68,6 +68,9 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import lombok.Setter;
 import org.slf4j.Logger;
 
@@ -316,8 +319,23 @@ import javax.inject.Inject;
                 System.exit(1);
             }
         }
+    private void findDeadLocks(StringBuilder sb)
+    {
+        ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
+        long[] ids = tmx.findDeadlockedThreads();
+        if (ids != null )
+        {
+            sb.append("DeadLocked threads found:\n");
+            ThreadInfo[] infos = tmx.getThreadInfo(ids,true,true);
+            System.out.println("Following Threads are deadlocked");
+            for (ThreadInfo info : infos)
+            {
+                sb.append(info.toString()).append("\n");
+            }
+        }
+    }    
     private String getNodeHealth(){
-        StringBuilder sb = new StringBuilder("Node health info\n");
+        StringBuilder sb = new StringBuilder("=== Node health info ====\n");
         int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
         sb.append("Used DB connections: ").append(usedConnections);
         Runtime runtime = Runtime.getRuntime();
@@ -329,6 +347,7 @@ import javax.inject.Inject;
         sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
         sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
         sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
+        findDeadLocks(sb);
         return sb.toString();
     }
     private void recoverSharding() {
