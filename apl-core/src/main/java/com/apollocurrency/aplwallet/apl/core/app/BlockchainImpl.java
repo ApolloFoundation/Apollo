@@ -106,12 +106,14 @@ public class BlockchainImpl implements Blockchain {
         return last == null ? 0 : last.getHeight();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public int getLastBlockTimestamp() {
         Block last = lastBlock.get();
         return last == null ? 0 : last.getTimestamp();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block getLastBlock(int timestamp) {
         Block block = lastBlock.get();
@@ -133,6 +135,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.findBlock(blockId, dataSource);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId) {
         return hasBlock(blockId, Integer.MAX_VALUE);
@@ -145,6 +148,7 @@ public class BlockchainImpl implements Blockchain {
     }
 */
 
+    @Transactional(readOnly = true)
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
         int blockchainHeight = getHeight();
@@ -153,6 +157,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.getBlocks(calculatedFrom, calculatedTo);
     }
 
+    @Transactional
     @Override
     public Block findFirstBlock() {
         return blockDao.findFirstBlock();
@@ -165,11 +170,13 @@ public class BlockchainImpl implements Blockchain {
     }
 */
 
+    @Transactional(readOnly = true)
     @Override
     public DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to) {
         return blockDao.getBlocks(accountId, timestamp, from, to);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block findLastBlock() {
         return blockDao.findLastBlock();
@@ -186,12 +193,14 @@ public class BlockchainImpl implements Blockchain {
         return block;
     }
 
+    @Transactional
     @Override
     public void saveBlock(Connection con, Block block) {
         blockDao.saveBlock(con, block);
         transactionDao.saveTransactions(con, block.getTransactions());
     }
 
+    @Transactional
     @Override
     public void commit(Block block) {
         blockDao.commit(block);
@@ -202,6 +211,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.getBlockCount(dataSource, from, to);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public int getBlockCount(long accountId) {
         return blockDao.getBlockCount(accountId);
@@ -310,6 +320,7 @@ public class BlockchainImpl implements Blockchain {
         return result;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public long getBlockIdAtHeight(int height) {
         Block block = lastBlock.get();
@@ -327,6 +338,7 @@ public class BlockchainImpl implements Blockchain {
         return blockDao.findBlockIdAtHeight(height, dataSource);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Block getBlockAtHeight(int height) {
         Block block = lastBlock.get();
@@ -353,6 +365,7 @@ public class BlockchainImpl implements Blockchain {
         return lastShardHeight != null ? lastShardHeight + 1 : 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public EcBlockData getECBlock(int timestamp) {
         Block block = getLastBlock(timestamp);
@@ -365,11 +378,13 @@ public class BlockchainImpl implements Blockchain {
         return new EcBlockData(ecBlock.getId(), ecBlock.getHeight());
     }
 
+    @Transactional
     @Override
     public void deleteBlocksFromHeight(int height) {
         blockDao.deleteBlocksFromHeight(height);
     }
 
+    @Transactional
     @Override
     public Block deleteBlocksFrom(long blockId) {
         return blockDao.deleteBlocksFrom(blockId);
@@ -387,6 +402,7 @@ public class BlockchainImpl implements Blockchain {
         log.debug("finished deleteAll()");
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction getTransaction(long transactionId) {
         return findTransaction(transactionId, Integer.MAX_VALUE);
@@ -398,11 +414,13 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.findTransaction(transactionId, height, datasource);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction getTransactionByFullHash(String fullHash) {
         return findTransactionByFullHash(Convert.parseHexString(fullHash));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash) {
         return findTransactionByFullHash(fullHash, Integer.MAX_VALUE);
@@ -491,11 +509,13 @@ public class BlockchainImpl implements Blockchain {
         return fullHash;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
         return transactionDao.loadTransaction(con, rs);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public int getTransactionCount() {
         return transactionDao.getTransactionCount();
@@ -523,6 +543,7 @@ public class BlockchainImpl implements Blockchain {
     }
 */
 
+    @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
@@ -568,49 +589,57 @@ public class BlockchainImpl implements Blockchain {
         return transactions;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Transaction> getBlockTransactions(long blockId) {
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         return transactionDao.findBlockTransactions(blockId, dataSource);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId, int height) {
         return lastBlock.get().getId() == blockId || blockDao.hasBlock(blockId, height, databaseManager.getDataSource());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean hasBlockInShards(long blockId) {
         return hasBlock(blockId) || blockIndexDao.getByBlockId(blockId) != null;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         return transactionDao.getTransactions(type, subtype, from, to);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public int getTransactionCount(long accountId, byte type, byte subtype) {
         return transactionDao.getTransactionCount(accountId, type, subtype);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
         return transactionDao.getTransactions(con, pstmt);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
     }
 
-
+    @Transactional(readOnly = true)
     @Override
     public Set<Long> getBlockGenerators(int limit) {
         int startHeight = getHeight() - MAX_BLOCK_GENERATOR_OFFSET;
         return blockDao.getBlockGenerators(startHeight, limit);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
         return transactionDao.getTransactionsBeforeHeight(height);
