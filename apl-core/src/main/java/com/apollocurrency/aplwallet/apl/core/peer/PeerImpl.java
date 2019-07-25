@@ -127,7 +127,7 @@ public final class PeerImpl implements Peer {
             pi.setShareAddress(true);
             pi.setAnnouncedAddress(announcedAddress.getAddrWithPort());
         }
-        this.state = PeerState.NON_CONNECTED;
+        setState(PeerState.NON_CONNECTED);
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
         this.blockchainState = BlockchainState.UP_TO_DATE;
@@ -165,21 +165,22 @@ public final class PeerImpl implements Peer {
         // if we are even not connected and some routine say to disconnect
         // we should close all because possily we alread tried to connect and have
         // client thread running
+        PeerState oldState=getState();
         Lock lock = stateLock.writeLock();
         try{
           if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
-          }        
+          }
+          this.state = newState;
         }finally{
             lock.unlock();
         }
-        if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
+        if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
         }
         //we have to change state anyway
-        this.state = newState;
     }
 
     @Override
@@ -823,7 +824,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isApiConnectable() {
-        return isOpenAPI() && state == PeerState.CONNECTED
+        return isOpenAPI() && getState() == PeerState.CONNECTED
                 && !Version.isOldVersion(version, Constants.MIN_PROXY_VERSION)
                 && !Version.isNewVersion(version)
                 && blockchainState == BlockchainState.UP_TO_DATE;
@@ -864,7 +865,7 @@ public final class PeerImpl implements Peer {
     @Override
     public String toString() {
         return "Peer{" +
-                "state=" + state +
+                "state=" + getState() +
                 ", announcedAddress='" + pi.getAnnouncedAddress() + '\'' +
                 ", services=" + services +
                 ", host='" + host + '\'' +
