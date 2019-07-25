@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -60,6 +61,9 @@ public class ShardObserverTest {
     ShardDao shardDao;
     @Mock
     ShardRecoveryDao recoveryDao;
+    @Mock
+    PeerHttpServer peerHttpServer;
+    
     PropertiesHolder propertiesHolder = new PropertiesHolder();
     {
         Properties properties = new Properties();
@@ -73,6 +77,7 @@ public class ShardObserverTest {
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        
 //        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
     }
 
@@ -81,7 +86,7 @@ public class ShardObserverTest {
 
         shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao, propertiesHolder, firedEvent);
+                shardDao, recoveryDao, propertiesHolder, peerHttpServer, firedEvent);
     }
 
     @Test

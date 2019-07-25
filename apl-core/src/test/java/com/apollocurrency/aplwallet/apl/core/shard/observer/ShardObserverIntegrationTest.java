@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -39,6 +40,7 @@ public class ShardObserverIntegrationTest {
     HeightConfig heightConfig = mock(HeightConfig.class);
     ShardDao shardDao = mock(ShardDao.class);
     PropertiesHolder holder = new PropertiesHolder();
+    PeerHttpServer peerHttpServer  = mock(PeerHttpServer.class);
     {
         Properties properties = new Properties();
         properties.put("apl.trimDerivedTables", "true");
@@ -54,6 +56,7 @@ public class ShardObserverIntegrationTest {
             .addBeans(MockBean.of(recoveryDao, ShardRecoveryDao.class))
             .addBeans(MockBean.of(shardDao, ShardDao.class))
             .addBeans(MockBean.of(holder, PropertiesHolder.class))
+            .addBeans(MockBean.of(peerHttpServer,PeerHttpServer.class))
             .build();
     @Inject
     Event<TrimData> trimEvent;

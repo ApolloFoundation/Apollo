@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
@@ -44,6 +45,7 @@ public class ShardObserver {
     private final ShardDao shardDao;
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
+    private PeerHttpServer peerHttpServer;
     private final PropertiesHolder propertiesHolder;
     public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
@@ -52,6 +54,7 @@ public class ShardObserver {
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
                          PropertiesHolder propertiesHolder,
+                         PeerHttpServer peerHttpServer,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -60,6 +63,7 @@ public class ShardObserver {
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
+        this.peerHttpServer=peerHttpServer;
     }
 
 
@@ -162,11 +166,11 @@ public class ShardObserver {
         return res;
     }
     private void stopNetOperations(){
-        Peers.suspend();
+        peerHttpServer.suspend();
         blockchainProcessor.setGetMoreBlocks(false);
     }
     private void resumeNetOperations(){
-        Peers.resume();
+        peerHttpServer.resume();
         blockchainProcessor.setGetMoreBlocks(true);        
     }
     public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
