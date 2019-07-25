@@ -175,7 +175,7 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        log.debug("Peer: {} websocket close",which());
+        log.trace("Peer: {} websocket close",which());
         Peer p = peerReference.get();
         if(p!=null){
             p.deactivate("Websocket close event");

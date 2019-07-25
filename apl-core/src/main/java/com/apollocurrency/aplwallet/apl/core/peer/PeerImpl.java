@@ -506,7 +506,7 @@ public final class PeerImpl implements Peer {
             String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
             if(resp==null){
-                LOG.debug("Null response from: ",getHostWithPort());
+                LOG.trace("Null response from: ",getHostWithPort());
                 return response;
             }
             response = (JSONObject) JSONValue.parseWithException(resp);
