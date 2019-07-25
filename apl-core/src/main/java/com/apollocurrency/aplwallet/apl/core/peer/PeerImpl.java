@@ -153,6 +153,7 @@ public final class PeerImpl implements Peer {
     public PeerState getState() {
         PeerState res;
         Lock lock = stateLock.readLock();
+        lock.lock();
         try{
             res=state;
         }finally{
@@ -167,7 +168,8 @@ public final class PeerImpl implements Peer {
         // client thread running
         PeerState oldState=getState();
         Lock lock = stateLock.writeLock();
-        try{
+        lock.lock();
+        try{            
           if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
           }
