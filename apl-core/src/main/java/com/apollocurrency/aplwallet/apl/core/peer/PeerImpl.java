@@ -481,7 +481,7 @@ public final class PeerImpl implements Peer {
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException{
         
-        if(state!=PeerState.CONNECTED){
+        if(getState()!=PeerState.CONNECTED){
             LOG.debug("send() called before handshake(). Handshacking to: {}",getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
         }else{
