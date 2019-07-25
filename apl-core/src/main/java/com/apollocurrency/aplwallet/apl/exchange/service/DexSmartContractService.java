@@ -6,10 +6,13 @@ import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +29,7 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @Singleton
 public class DexSmartContractService {
     private static final Logger LOG = LoggerFactory.getLogger(DexSmartContractService.class);
@@ -42,8 +46,8 @@ public class DexSmartContractService {
                                    EthereumWalletService ethereumWalletService) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
-        smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
-        paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+        this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
+        this.paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
         this.ethereumWalletService = ethereumWalletService;
     }
@@ -112,6 +116,43 @@ public class DexSmartContractService {
         }
 
         return depositAndInitiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), weiValue, secretHash, recipient, refundTimestamp,gasPrice, token);
+    }
+
+    public boolean approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+
+        boolean isApproved = approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
+
+        return isApproved;
+    }
+
+    public SwapDataInfo getSwapData(byte[] secretKey) throws AplException.ExecutiveProcessException {
+        return getSwapData(Credentials.create("test account"), secretKey);
+    }
+
+    public SwapDataInfo getSwapData(Credentials credentials, byte[] secretKey) throws AplException.ExecutiveProcessException {
+        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, null);
+        try {
+            SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretKey).sendAsync().get());
+            return swapDataInfo;
+        } catch (Exception e){
+            log.error(e.getMessage(), e);
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+    private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
+
+        try {
+            dexContract.redeem(secret).sendAsync().get();
+        } catch (Exception e){
+            log.error(e.getMessage(), e);
+            return false;
+        }
+
+        return true;
     }
 
     /**

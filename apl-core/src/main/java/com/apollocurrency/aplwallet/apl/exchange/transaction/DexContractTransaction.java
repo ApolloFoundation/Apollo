@@ -48,9 +48,10 @@ public class DexContractTransaction extends DEX {
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
-        if(offer == null) {
-            throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
-        }
+
+//        if(offer == null) {
+//            throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
+//        }
         if(counterOffer == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getCounterOrderId());
         }
@@ -73,11 +74,12 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
+        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
         if(attachment.getContractStatus().isStep2()) {
-            counterOffer.setStatus(OfferStatus.PENDING);
-            dexService.saveOffer(counterOffer);
+            offer.setStatus(OfferStatus.WAITING_APPROVAL);
+            dexService.saveOffer(offer);
         }
 
         dexService.saveDexContract(new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment));

@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -99,10 +100,11 @@ public class DexController {
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     DexOfferProcessor dexOfferProcessor;
+    DexSmartContractService dexSmartContractService;
 
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, DexOfferProcessor dexOfferProcessor) {
+                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, DexOfferProcessor dexOfferProcessor, DexSmartContractService dexSmartContractService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
@@ -110,6 +112,7 @@ public class DexController {
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
         this.dexOfferProcessor = dexOfferProcessor;
+        this.dexSmartContractService = dexSmartContractService;
     }
 
     //For DI
@@ -275,7 +278,7 @@ public class DexController {
                 //TODO move it in to service.
                 if (counterOffer != null) {
                     // 1. Create offer.
-                    offer.setStatus(OfferStatus.PENDING);
+                    offer.setStatus(OfferStatus.WAITING_APPROVAL);
                     CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                             .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
                     Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
@@ -536,7 +539,10 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
-    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, AplException.ExecutiveProcessException {
+
+
+        dexSmartContractService.getSwapData( Convert.parseHexString("c9d59e3398876fb4e63b9a3c36a62a7f561d562ec29615067f16ca34139b560a"));
 
         log.debug("dexEthInfo: ");
 
