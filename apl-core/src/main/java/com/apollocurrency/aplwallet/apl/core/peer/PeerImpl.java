@@ -127,7 +127,6 @@ public final class PeerImpl implements Peer {
             pi.setShareAddress(true);
             pi.setAnnouncedAddress(announcedAddress.getAddrWithPort());
         }
-        setState(PeerState.NON_CONNECTED);
         this.disabledAPIs = EnumSet.noneOf(APIEnum.class);
         pi.setApiServerIdleTimeout(API.apiServerIdleTimeout);
         this.blockchainState = BlockchainState.UP_TO_DATE;
@@ -136,6 +135,7 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         isLightClient=propertiesHolder.isLightClient();
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
+        setState(PeerState.NON_CONNECTED);
     }
     
     @Override
