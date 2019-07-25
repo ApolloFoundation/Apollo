@@ -55,6 +55,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -82,7 +86,7 @@ public final class PeerImpl implements Peer {
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
     private final Object servicesMonitor = new Object();
-    private final Object stateMonitor = new Object();
+    private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
 
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
@@ -147,17 +151,27 @@ public final class PeerImpl implements Peer {
     
     @Override
     public PeerState getState() {
-        return state;
+        PeerState res;
+        Lock lock = stateLock.readLock();
+        try{
+            res=state;
+        }finally{
+            lock.unlock();
+        }
+        return res;
     }
 
-    private synchronized void setState(PeerState newState) {
+    private void setState(PeerState newState) {
         // if we are even not connected and some routine say to disconnect
         // we should close all because possily we alread tried to connect and have
         // client thread running
-        synchronized (stateMonitor){
+        Lock lock = stateLock.writeLock();
+        try{
           if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
           }        
+        }finally{
+            lock.unlock();
         }
         if (newState == PeerState.CONNECTED && state!=PeerState.CONNECTED) {
             Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
