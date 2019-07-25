@@ -156,7 +156,7 @@ public class Peer2PeerTransport {
             try {
                 res = wsrw.get(Peers.readTimeout);
             } catch (SocketTimeoutException ex) {
-                log.warn("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
+                log.trace("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
             }
             requestMap.remove(rqId);
         }else{

@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -171,6 +172,7 @@ public class ShardObserver {
             return false;            
         }
         boolean result = false;
+        Peers.suspend();
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();
         log.info("Start sharding....");
@@ -188,6 +190,7 @@ public class ShardObserver {
             log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
         } finally {
             isSharding = false;
+            Peers.resume();
         }
         if (state != MigrateState.FAILED && state != MigrateState.INIT) {
             log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);

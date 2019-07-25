@@ -47,10 +47,10 @@ public class NtpTime {
             timeOffset = offsetValue;
         }
         catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.warn("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
+            LOG.trace("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
         }
         catch (IOException e) {
-            LOG.warn("NTP exception: {}",e.getMessage());
+            LOG.trace("NTP exception: {}",e.getMessage());
             timeOffset = 0;
         }
     }
