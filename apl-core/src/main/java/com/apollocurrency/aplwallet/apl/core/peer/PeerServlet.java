@@ -328,10 +328,10 @@ public final class PeerServlet extends WebSocketServlet {
             }
             if (peer.isInbound()) {
                 if (Peers.hasTooManyInboundPeers()) {
+                    Peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
-                Peers.removePeer(peer);
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
