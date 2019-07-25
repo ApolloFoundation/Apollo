@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
@@ -236,7 +237,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     request.put("requestType", "getTransactions");
                     request.put("transactionIds", requestList);
                     request.put("chainId", blockchainConfig.getChain().getChainId());
-                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    JSONObject response;
+                    try {
+                        response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    } catch (PeerNotConnectedException ex) {
+                        response = null;
+                    }
                     if (response == null) {
                         return;
                     }
@@ -564,7 +570,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 continue;
             }
             log.debug("Connected to archive peer " + peer.getHost());
-            JSONObject response = peer.send(request, blockchainConfig.getChain().getChainId());
+            JSONObject response;
+            try {
+                response = peer.send(request, blockchainConfig.getChain().getChainId());
+            } catch (PeerNotConnectedException ex) {
+                response = null;
+            }
             if (response == null) {
                 continue;
             }
@@ -1673,7 +1684,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
                 }
                 
-                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
+                JSONObject response;
+                try {
+                    response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
+                } catch (PeerNotConnectedException ex) {
+                    response=null;
+                }
                 if (response == null) {
                     return 0;
                 }
@@ -1718,7 +1734,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("blockId", Long.toUnsignedString(matchId));
                 request.put("limit", limit);
                 request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                JSONObject response;
+                try {
+                    response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                } catch (PeerNotConnectedException ex) {
+                   response=null;
+                }
                 if (response == null) {
                     log.debug("null reaponse from peer {} while getNeBlockIdst",peer.getHostWithPort());
                     return Collections.emptyList();
