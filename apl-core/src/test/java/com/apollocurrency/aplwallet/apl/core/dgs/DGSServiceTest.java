@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
@@ -106,6 +107,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
             .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();
     @Inject

@@ -36,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -144,6 +146,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardDownloader shardDownloader;
+    private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -277,7 +280,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
-                                   ShardImporter importer) {
+                                   ShardImporter importer, PrunableMessageService prunableMessageService) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -293,6 +296,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
         this.shardImporter = importer;
+        this.prunableMessageService = prunableMessageService;
 
         ThreadPool.runBeforeStart("BlockchainInit", () -> {
 
@@ -507,7 +511,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                        PrunableMessage.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
+                        prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(id);
                     }

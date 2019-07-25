@@ -20,22 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.List;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
 @Vetoed
 public final class GetPrunableMessages extends AbstractAPIRequestHandler {
+    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetPrunableMessages() {
         super(new APITag[] {APITag.MESSAGES}, "account", "otherAccount", "secretPhrase", "firstIndex", "lastIndex", "timestamp", "passphrase");
@@ -54,15 +57,13 @@ public final class GetPrunableMessages extends AbstractAPIRequestHandler {
         JSONArray jsonArray = new JSONArray();
         response.put("prunableMessages", jsonArray);
 
-        try (DbIterator<PrunableMessage> messages = otherAccountId == 0 ? PrunableMessage.getPrunableMessages(accountId, firstIndex, lastIndex)
-                : PrunableMessage.getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex)) {
-            while (messages.hasNext()) {
-                PrunableMessage prunableMessage = messages.next();
-                if (prunableMessage.getBlockTimestamp() < timestamp) {
-                    break;
-                }
-                jsonArray.add(JSONData.prunableMessage(prunableMessage, keySeed, null));
+        List<PrunableMessage> messages = otherAccountId == 0 ? prunableMessageService.getPrunableMessages(accountId, firstIndex, lastIndex)
+                : prunableMessageService.getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex);
+        for (PrunableMessage message : messages) {
+            if (message.getBlockTimestamp() < timestamp) {
+                break;
             }
+            jsonArray.add(JSONData.prunableMessage(prunableMessageService, message, keySeed, null));
         }
         return response;
     }

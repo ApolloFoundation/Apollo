@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
@@ -98,6 +99,7 @@ public class PhasingPollServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
     @Inject

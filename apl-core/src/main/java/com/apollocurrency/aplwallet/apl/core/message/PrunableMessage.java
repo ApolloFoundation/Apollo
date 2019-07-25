@@ -84,12 +84,12 @@ public class PrunableMessage extends DerivedEntity {
         this.blockTimestamp = blockTimestamp;
     }
 
-    private void setPlain(PrunablePlainMessageAppendix appendix) {
+    public void setPlain(PrunablePlainMessageAppendix appendix) {
         this.message = appendix.getMessage();
         this.messageIsText = appendix.isText();
     }
 
-    private void setEncrypted(PrunableEncryptedMessageAppendix appendix) {
+    public void setEncrypted(PrunableEncryptedMessageAppendix appendix) {
         this.encryptedData = appendix.getEncryptedData();
         this.encryptedMessageIsText = appendix.isText();
         this.isCompressed = appendix.isCompressed();

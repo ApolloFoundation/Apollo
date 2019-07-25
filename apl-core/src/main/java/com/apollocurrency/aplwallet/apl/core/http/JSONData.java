@@ -20,16 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
@@ -50,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
@@ -70,6 +59,8 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
@@ -110,6 +101,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 
 @Vetoed
 public final class JSONData {
@@ -1193,7 +1194,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject prunableMessage(PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
+    public static JSONObject prunableMessage(PrunableMessageService prunableMessageService, PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1212,9 +1213,9 @@ public final class JSONData {
             byte[] decrypted = null;
             try {
                 if (keySeed != null) {
-                    decrypted = prunableMessage.decryptUsingKeySeed(keySeed);
+                    decrypted = prunableMessageService.decryptUsingKeySeed(prunableMessage, keySeed);
                 } else if (sharedKey != null && sharedKey.length > 0) {
-                    decrypted = prunableMessage.decryptUsingSharedKey(sharedKey);
+                    decrypted = prunableMessageService.decryptUsingSharedKey(prunableMessage, sharedKey);
                 }
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));

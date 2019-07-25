@@ -6,10 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
 import static org.mockito.Mockito.mock;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -27,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.db.EntityDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -45,6 +42,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult> {
@@ -60,6 +61,7 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))

@@ -27,18 +27,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
@@ -48,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -75,6 +64,18 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
@@ -96,6 +97,7 @@ class BlockchainTest {
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
