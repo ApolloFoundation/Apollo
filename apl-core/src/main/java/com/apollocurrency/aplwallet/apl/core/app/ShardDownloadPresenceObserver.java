@@ -136,6 +136,7 @@ public class ShardDownloadPresenceObserver {
                     blockchain.commit(genesisBlock);
                     dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);
+                    blockchain.update();
                 } catch (SQLException e) {
                     dataSource.rollback();
                     log.info(e.getMessage());
@@ -153,7 +154,6 @@ public class ShardDownloadPresenceObserver {
     private void addBlock(TransactionalDataSource dataSource, Block block) {
         try (Connection con = dataSource.getConnection()) {
             blockchain.saveBlock(con, block);
-            blockchain.setLastBlock(block);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
