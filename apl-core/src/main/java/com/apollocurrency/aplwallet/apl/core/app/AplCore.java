@@ -268,13 +268,6 @@ import javax.inject.Inject;
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
-                        () -> {
-                            LOG.debug(getNodeHealth());
-                            aplAppStatus.clearFinished(1*60L); //10 min
-                        },
-                   20,
-                   TimeUnit.SECONDS);
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
                 ThreadPool.start();
@@ -319,37 +312,7 @@ import javax.inject.Inject;
                 System.exit(1);
             }
         }
-    private void findDeadLocks(StringBuilder sb)
-    {
-        ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
-        long[] ids = tmx.findDeadlockedThreads();
-        if (ids != null )
-        {
-            sb.append("DeadLocked threads found:\n");
-            ThreadInfo[] infos = tmx.getThreadInfo(ids,true,true);
-            System.out.println("Following Threads are deadlocked");
-            for (ThreadInfo info : infos)
-            {
-                sb.append(info.toString()).append("\n");
-            }
-        }
-    }    
-    private String getNodeHealth(){
-        StringBuilder sb = new StringBuilder("=== Node health info ====\n");
-        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
-        sb.append("Used DB connections: ").append(usedConnections);
-        Runtime runtime = Runtime.getRuntime();
-        sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
-        sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
-        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
-        sb.append("\nActive threads count :").append(Thread.activeCount());
-        sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
-        sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
-        sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
-        sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
-        findDeadLocks(sb);
-        return sb.toString();
-    }
+
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
