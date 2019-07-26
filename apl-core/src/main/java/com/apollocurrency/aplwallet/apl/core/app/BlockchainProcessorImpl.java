@@ -182,6 +182,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         @Override
         public void run() {
+            Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-RestorePrunableDataTask");
             Peer peer = null;
             try {
                 //
