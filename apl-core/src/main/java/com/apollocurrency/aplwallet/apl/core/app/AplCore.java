@@ -338,7 +338,6 @@ import javax.inject.Inject;
             aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
             ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
-            blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
             Shard lastShard = shardDao.getLastShard();
             executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();

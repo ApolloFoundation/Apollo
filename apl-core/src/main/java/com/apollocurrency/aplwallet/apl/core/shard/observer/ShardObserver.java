@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -46,6 +46,7 @@ public class ShardObserver {
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
     private PeerHttpServer peerHttpServer;
+    private Blockchain blockchain;
     private final PropertiesHolder propertiesHolder;
     public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
@@ -55,6 +56,7 @@ public class ShardObserver {
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
                          PropertiesHolder propertiesHolder,
                          PeerHttpServer peerHttpServer,
+                         Blockchain blockchain,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -64,6 +66,7 @@ public class ShardObserver {
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
         this.peerHttpServer=peerHttpServer;
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
 
@@ -117,7 +120,7 @@ public class ShardObserver {
 
                             completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, blockchainHeight))
                                     .thenApply((result) -> {
-                                        blockchainProcessor.updateInitialBlockId();
+                                        blockchain.setShardInitialBlock(blockchain.findFirstBlock());
                                         return result;
                                     })
                                     .handle((result, ex) -> {

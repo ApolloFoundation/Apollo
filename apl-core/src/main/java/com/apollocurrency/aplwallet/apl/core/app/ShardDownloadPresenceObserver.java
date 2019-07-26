@@ -20,10 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
-import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -79,7 +77,7 @@ public class ShardDownloadPresenceObserver {
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         String fileId = shardPresentData.getFileIdValue();
         try {
-            shardImporter.importShard(fileId, List.of());
+            shardImporter.importShardByFileId(fileId);
         } catch (Exception e) {
             log.error("Error on Shard # {}. Zip/CSV importing...", fileId);
             log.error("Node has encountered serious error and import CSV shard data. " +
@@ -91,11 +89,10 @@ public class ShardDownloadPresenceObserver {
             return;
         }
         log.info("SNAPSHOT block should be READY in database...");
-        blockchainProcessor.updateInitialSnapshotBlock();
         Block lastBlock = blockchain.findLastBlock();
         log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
         blockchainConfigUpdater.updateToLatestConfig();
-        blockchainProcessor.setGetMoreBlocks(true); // turn ON blockchain downloading
+        blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
         log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
     }
 
@@ -146,7 +143,6 @@ public class ShardDownloadPresenceObserver {
                 }
                 // set to start work block download thread (starting from Genesis block here)
                 log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
-                blockchainProcessor.updateInitialBlockId();
                 blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
 
             } catch (Exception e) {

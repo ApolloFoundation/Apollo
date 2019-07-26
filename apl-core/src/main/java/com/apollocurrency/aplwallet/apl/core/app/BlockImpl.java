@@ -22,14 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -42,6 +34,16 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
@@ -207,7 +209,7 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public List<Transaction> getTransactions() {
+    public List<Transaction> getOrLoadTransactions() {
         if (this.blockTransactions == null) {
             List<Transaction> transactions = Collections.unmodifiableList(blockchain.getBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
@@ -215,6 +217,11 @@ public final class BlockImpl implements Block {
             }
             this.blockTransactions = transactions;
         }
+        return this.blockTransactions;
+    }
+
+    @Override
+    public List<Transaction> getTransactions() {
         return this.blockTransactions;
     }
 
@@ -311,7 +318,7 @@ public final class BlockImpl implements Block {
         json.put("timeout", timeout);
 
         JSONArray transactionsData = new JSONArray();
-        getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
         return json;
     }
@@ -366,7 +373,7 @@ public final class BlockImpl implements Block {
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(getTransactions().size());
+            buffer.putInt(getOrLoadTransactions().size());
             buffer.putLong(totalAmountATM);
             buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
@@ -456,14 +463,14 @@ public final class BlockImpl implements Block {
             this.height = 0;
         }
         short index = 0;
-        for (Transaction transaction : getTransactions()) {
+        for (Transaction transaction : getOrLoadTransactions()) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
         }
     }
 
     void loadTransactions() {
-        for (Transaction transaction : getTransactions()) {
+        for (Transaction transaction : getOrLoadTransactions()) {
             ((TransactionImpl)transaction).bytes();
             transaction.getAppendages();
         }
