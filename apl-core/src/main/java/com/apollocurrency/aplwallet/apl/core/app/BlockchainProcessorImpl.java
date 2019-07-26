@@ -112,7 +112,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private DexService dexService;
+    private final DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
     private FullTextSearchService fullTextSearchProvider;
@@ -120,7 +120,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
 
@@ -1455,10 +1455,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
 
+    @Override
     public void suspendBlockchainDownloading() {
         getMoreBlocks = false;
     }
 
+    @Override
     public void resumeBlockchainDownloading() {
         getMoreBlocks = true;
     }

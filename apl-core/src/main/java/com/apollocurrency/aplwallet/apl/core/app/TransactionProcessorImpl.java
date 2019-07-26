@@ -179,22 +179,25 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
 
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<UnconfirmedTransaction>(
-            (UnconfirmedTransaction o1, UnconfirmedTransaction o2) -> {
-                int result;
-                if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
-                    return result;
-                }
-                if ((result = Boolean.compare(o2.getTransaction().referencedTransactionFullHash() != null,
-                        o1.getTransaction().referencedTransactionFullHash() != null)) != 0) {
-                    return result;
-                }
-                if ((result = Long.compare(o1.getFeePerByte(), o2.getFeePerByte())) != 0) {
-                    return result;
-                }
-                if ((result = Long.compare(o2.getArrivalTimestamp(), o1.getArrivalTimestamp())) != 0) {
-                    return result;
-                }
-                return Long.compare(o2.getId(), o1.getId());
+            new Comparator<UnconfirmedTransaction>() {
+                   @Override
+                    public int compare(UnconfirmedTransaction o1, UnconfirmedTransaction o2) {
+                        int result;
+                        if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
+                            return result;
+                        }
+                        if ((result = Boolean.compare(o2.getTransaction().referencedTransactionFullHash() != null,
+                            o1.getTransaction().referencedTransactionFullHash() != null)) != 0) {
+                            return result;
+                        }
+                        if ((result = Long.compare(o1.getFeePerByte(), o2.getFeePerByte())) != 0) {
+                            return result;
+                        }
+                        if ((result = Long.compare(o2.getArrivalTimestamp(), o1.getArrivalTimestamp())) != 0) {
+                            return result;
+                        }
+                        return Long.compare(o2.getId(), o1.getId());
+                    }
             })
     {
 
@@ -220,7 +223,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             @Override
             public void run() {
                 Thread me = Thread.currentThread();
-                me.setName(me.getName()+"-createRemoveUnconfirmedTransactionsThread");
+                me.setName(me.getName()+"-createRemoveUnconfirmedTransactions");
                 try {
                     try {
                         if (lookupBlockchainProcessor().isDownloading()) {
@@ -268,7 +271,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         @Override
         public void run() {
             Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-rebroadcastTransactionsThread");           
+            me.setName(me.getName()+"-rebroadcastTransactions");           
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
@@ -303,7 +306,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         @Override
         public void run() {
             Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-processTransactionsThread");          
+            me.setName(me.getName()+"-processTransactions");          
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
@@ -348,7 +351,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         @Override
         public void run() {
             Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-processWaitingTransactionsThread");             
+            me.setName(me.getName()+"-processWaitingTransactions");             
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
