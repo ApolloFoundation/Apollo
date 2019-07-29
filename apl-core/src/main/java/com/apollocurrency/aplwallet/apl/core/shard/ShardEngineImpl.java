@@ -538,7 +538,6 @@ public class ShardEngineImpl implements ShardEngine {
         Objects.requireNonNull(paramInfo);
         long startAllTables = System.currentTimeMillis();
 
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         ShardRecovery recovery = getOrCreateRecovery(ZIP_ARCHIVE_STARTED);
         if (recovery.getState().getValue() >= ZIP_ARCHIVE_FINISHED.getValue()) {
             // skip to next step

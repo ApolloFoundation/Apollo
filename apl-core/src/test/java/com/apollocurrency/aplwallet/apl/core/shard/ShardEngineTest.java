@@ -70,6 +70,8 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
@@ -152,7 +154,7 @@ class ShardEngineTest {
             DerivedDbTablesRegistryImpl.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
-            DGSGoodsTable.class,
+            DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
             PhasingPollTable.class,
             DerivedTablesRegistry.class,
             ShardEngineImpl.class,  ZipImpl.class, AplAppStatus.class,
@@ -195,6 +197,8 @@ class ShardEngineTest {
     TransactionDao transactionDao;
     @Inject
     PhasingPollTable phasingPollTable;
+    @Inject
+    PrunableMessageTable messageTable;
 
 
     public ShardEngineTest() throws Exception {}
@@ -443,6 +447,7 @@ class ShardEngineTest {
         tableNameList.add(new TableInfo(BLOCK_TABLE_NAME));
         tableNameList.add(new TableInfo("goods"));
         tableNameList.add(new TableInfo("phasing_poll"));
+        tableNameList.add(new TableInfo("prunable_message", true));
         paramInfo = CommandParamInfo.builder().commitBatchSize(2).snapshotBlockHeight(553326).excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
         state = shardEngine.exportCsv(paramInfo);
@@ -457,11 +462,12 @@ class ShardEngineTest {
         assertEquals(2, Files.readAllLines(dataExportDirPath.resolve("block.csv"))            .size());
 
 
-        tableNameList.clear();
         paramInfo = CommandParamInfo.builder().snapshotBlockHeight(snapshotBlockHeight).excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();
 //10-11.    // archive CSV into zip
         state = shardEngine.archiveCsv(paramInfo);
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
+        assertTrue(Files.exists(dirProvider.getDataExportDir().resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        assertTrue(Files.exists(dirProvider.getDataExportDir().resolve("apl-blockchain-shard-4-prunable-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
 
         tableNameList.clear();
         tableNameList.add(new TableInfo(BLOCK_TABLE_NAME));
@@ -491,7 +497,9 @@ class ShardEngineTest {
         paramInfo = CommandParamInfo.builder().shardId(4L).build();
         state = shardEngine.finishShardProcess(paramInfo);
         assertEquals(MigrateState.COMPLETED, state);
-
+        Shard lastShard = shardDao.getLastShard();
+        assertNotNull(lastShard.getPrunableZipHash());
+        assertNotNull(lastShard.getCoreZipHash());
         // compare full hashes
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
@@ -651,5 +659,24 @@ class ShardEngineTest {
         assertFalse(Files.exists(csvFile));
         assertTrue(Files.exists(anotherCsvFile));
         assertTrue(Files.exists(directory));
+    }
+
+    @Test
+    void testArchiveCsv() throws IOException, SQLException {
+        Files.createFile(dataExportDirPath.resolve("goods.csv"));
+        Files.createFile(dataExportDirPath.resolve("prunable_message.csv"));
+        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(new TableInfo("prunable_message", true), new TableInfo("goods"))).build();
+
+        MigrateState state = shardEngine.archiveCsv(paramInfo);
+
+        assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
+        assertTrue(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        assertTrue(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-prunable-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        Shard lastShard = shardDao.getLastShard();
+        assertNotNull(lastShard.getCoreZipHash());
+        assertNotNull(lastShard.getPrunableZipHash());
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
+        assertEquals("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip,apl-blockchain-shard-4-prunable-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", recovery.getProcessedObject());
     }
 }

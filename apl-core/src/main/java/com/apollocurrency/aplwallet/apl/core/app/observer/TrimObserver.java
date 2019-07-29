@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,23 +30,18 @@ public class TrimObserver {
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
     private final Object lock = new Object();
-    private List<Integer> trimHeights = new ArrayList<>();
-
-    public void scheduleTrim(int height) {
-        synchronized (lock) {
-            trimHeights.add(height);
-            trimHeights = trimHeights.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-        }
-    }
+    private List<Integer> trimHeights = Collections.synchronizedList(new ArrayList<>());
 
     private boolean processTrimEvent() {
         if (trimDerivedTables) {
             synchronized (lock) {
                 if (trimDerivedTables) {
                     if (!trimHeights.isEmpty()) {
-                        Integer height = trimHeights.remove(0);
-                        log.debug("Perform trim on height " + height);
-                        trimService.trimDerivedTables(height, true);
+                        List<Integer> targetHeights = trimHeights.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList()); // start from minimal height
+                        targetHeights.forEach(h-> {
+                            log.debug("Perform trim on height " + h);
+                            trimService.trimDerivedTables(h, true);
+                        });
                         return true;
                     }
                 }
@@ -82,8 +78,7 @@ public class TrimObserver {
     // async
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (block.getHeight() % trimFrequency == 0) {
-
-            scheduleTrim(block.getHeight());
+            trimHeights.add(block.getHeight());
         }
         processTrimEvent();
     }

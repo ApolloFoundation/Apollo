@@ -18,9 +18,6 @@ public interface Prunable {
     default boolean shouldLoadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         EpochTime timeService = CDI.current().select(EpochTime.class).get();
-        if (blockchainConfig.getCurrentConfig().isShardingEnabled()) {
-            return true;
-        }
         return timeService.getEpochTime() - transaction.getTimestamp() <
                 (includeExpiredPrunable && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() ?
                         blockchainConfig.getMaxPrunableLifetime() :
