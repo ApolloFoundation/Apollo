@@ -110,7 +110,8 @@ public class ShardObserver {
                             isSharding = true;
                             updateTrimConfig(false);
                             // quick create records for new Shard and Recovery process for later use
-                            shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
+                            shardRecoveryDao.saveShardRecovery(
+                                    ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
                             long nextShardId = shardDao.getNextShardId();
                             Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
                             shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
