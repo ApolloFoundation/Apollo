@@ -74,6 +74,9 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.BackgroundTaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -381,6 +384,20 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             ThreadPool.scheduleThread("RemoveUnconfirmedTransactions", createRemoveUnconfirmedTransactionsThread(), 20);
             ThreadPool.scheduleThread("ProcessWaitingTransactions", processWaitingTransactionsThread, 1);
         }
+
+        Task task = Task.builder()
+                .task(processTransactionsThread)
+                .name("ProcessTransactions")
+                .group("transaction")
+                .daemon(true)
+                .build();
+
+        BackgroundTaskDispatcher dispatcher = new BackgroundTaskDispatcher();
+
+        dispatcher.schedule(task, TaskOrder.TASK);
+
+
+
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         blockchain = CDI.current().select(Blockchain.class).get();
