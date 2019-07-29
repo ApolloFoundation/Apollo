@@ -50,7 +50,7 @@ public final class BlockImpl implements Block {
 
 
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static Blockchain blockchain;
     private static ShardDao shardDao;
 
 
@@ -211,7 +211,7 @@ public final class BlockImpl implements Block {
     @Override
     public List<Transaction> getOrLoadTransactions() {
         if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(blockchain.getBlockTransactions(getId()));
+            List<Transaction> transactions = Collections.unmodifiableList(lookupBlockchain().getBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
                 transaction.setBlock(this);
             }
@@ -413,7 +413,7 @@ public final class BlockImpl implements Block {
 
         try {
 
-            Block previousBlock = blockchain.getBlock(getPreviousBlockId());
+            Block previousBlock = lookupBlockchain().getBlock(getPreviousBlockId());
             if (previousBlock == null) {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
@@ -507,7 +507,7 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        Block shardInitialBlock = blockchain.getShardInitialBlock();
+        Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
         int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
             int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1);
@@ -539,7 +539,7 @@ public final class BlockImpl implements Block {
             int[] blockTimestamps = lastShard.getBlockTimestamps();
             return blockTimestamps[diff - 1];
         }
-        return blockchain.getBlockAtHeight(blockHeight).getTimestamp();
+        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimestamp();
     }
 
     private int getPrevTimeout(int shardInitialHeight, int blockHeight) {
@@ -552,7 +552,14 @@ public final class BlockImpl implements Block {
             int[] blockTimeouts = lastShard.getBlockTimeouts();
             return blockTimeouts[diff - 1];
         }
-        return blockchain.getBlockAtHeight(blockHeight).getTimeout();
+        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimeout();
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
     }
 
 
