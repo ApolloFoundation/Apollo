@@ -351,7 +351,6 @@ import javax.inject.Inject;
             // here we are able to recover from stored record
             aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
-            blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
             Shard lastShard = shardDao.getLastShard();
             executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();
