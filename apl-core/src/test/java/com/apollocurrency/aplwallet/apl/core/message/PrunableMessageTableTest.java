@@ -142,6 +142,8 @@ class PrunableMessageTableTest {
     void testIsPruned() {
         boolean pruned = table.isPruned(data.MESSAGE_7.getId(), false, true);
         assertFalse(pruned);
+        pruned = table.isPruned(data.MESSAGE_6.getId(), true, false);
+        assertFalse(pruned);
     }
 
     @Test
@@ -155,4 +157,17 @@ class PrunableMessageTableTest {
         boolean pruned = table.isPruned(data.MESSAGE_5.getId(), false, false);
         assertFalse(pruned);
     }
+    @Test
+    void testIsPrunedForMessageWithPrunableEncryptedDataAndWithoutPublicData() {
+        boolean pruned = table.isPruned(data.MESSAGE_11.getId(), false, true);
+        assertTrue(pruned);
+    }
+
+    @Test
+    void testIsPrunedForEncryptedMessageWithoutPublic() {
+        boolean pruned = table.isPruned(data.MESSAGE_8.getId(), true, false);
+        assertTrue(pruned);
+    }
+
+
 }
