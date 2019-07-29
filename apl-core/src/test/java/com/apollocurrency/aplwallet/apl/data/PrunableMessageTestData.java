@@ -18,11 +18,14 @@ public class PrunableMessageTestData {
     public String BOB_RS = "APL-CJHA-9RWR-MJ42-6DCJ9";
     public String CHUCK_RS = "APL-Y6S2-BU3L-SZXP-CV82X";
     public String ALICE_PUBLIC_KEY = "2e8b2883c27b391359d7d0c15d00815a6693290a38dd8eba341cc07ddaa8ed4d";
-    public String BOB_PUBLIC_KEY = "c0b126b5aa134b84e64625256b8de8973787612b1f3839d2c60526d2114e886d";
+    public String BOB_PUBLIC_KEY =   "c0b126b5aa134b84e64625256b8de8973787612b1f3839d2c60526d2114e886d";
     public String CHUCK_PUBLIC_KEY = "a574702cf92b7e0a7847f921ca8a23f538d62a582cc6a2f4861b160077c5f245";
     public long ALICE_ID = -6004096130734886685L;
     public long BOB_ID = 4882266200596627944L;
     public long CHUCK_ID = -5872452783836294400L;
+
+    public final byte[] MESSAGE_1_SHARED_KEY = Convert.parseHexString("668afea67b335ac07360ce6219dea989654d18ff595de7f769b76ce886d0b227");
+    public final byte[] MESSAGE_4_SHARED_KEY = Convert.parseHexString("4db705d998f8def1a4e507ea6ff5d6e59a2f4e47f3bd281e8d4ff54ed84b7d03");
 
     // DATA_1_ABTC
     //    DATA_1 - name of data
@@ -61,8 +64,8 @@ public class PrunableMessageTestData {
     public final String DECRYPTED_MESSAGE_5 = "alice_to_alice compressed encrypted text message";
     public final String DECRYPTED_MESSAGE_6 = "bob_to_bob compressed encrypted text message";
     public final String DECRYPTED_MESSAGE_7 = "chuck_to_alice encrypted text message";
-    public final String DECRYPTED_MESSAGE_8 = "chuck_to_bob encrypted binary message";
-    public final String DECRYPTED_MESSAGE_9 = "bob_to_chuck encrypted binary message";
+    public final String DECRYPTED_MESSAGE_9 = "chuck_to_bob encrypted binary message";
+    public final String DECRYPTED_MESSAGE_10 = "bob_to_chuck encrypted binary message";
 
 
     public final PrunableMessage MESSAGE_1  = new PrunableMessage(1000L   ,10       ,ALICE_ID   ,BOB_ID    ,null                                              ,DATA_1_ABTC    ,false   , true   , true     ,128   ,  120   , 10   );
@@ -80,7 +83,7 @@ public class PrunableMessageTestData {
     public final PrunableMessage NEW_MESSAGE = new PrunableMessage(1101L   ,120      ,CHUCK_ID   ,ALICE_ID  ,Convert.parseHexString("f348294357")             ,null           ,false    , false  , false    ,269   ,  258   , 31  );
 
 
-    List<PrunableMessage> ALL = List.of(
+    public final List<PrunableMessage> ALL = List.of(
             MESSAGE_1,
             MESSAGE_2,
             MESSAGE_3,

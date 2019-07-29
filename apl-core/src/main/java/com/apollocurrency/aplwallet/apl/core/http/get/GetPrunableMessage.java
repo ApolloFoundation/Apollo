@@ -55,12 +55,12 @@ public final class GetPrunableMessage extends AbstractAPIRequestHandler {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        PrunableMessage prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+        PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageService.get(transactionId);
         }
         if (prunableMessage != null) {
             return JSONData.prunableMessage(prunableMessageService, prunableMessage, keySeed, sharedKey);

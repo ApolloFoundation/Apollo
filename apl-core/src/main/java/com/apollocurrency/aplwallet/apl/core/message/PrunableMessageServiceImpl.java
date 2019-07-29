@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
 import java.util.List;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -21,31 +22,42 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
     private PrunableMessageTable table;
     private Blockchain blockchain;
 
-
+    @Inject
+    public PrunableMessageServiceImpl(PrunableMessageTable table, Blockchain blockchain) {
+        this.table = table;
+        this.blockchain = blockchain;
+    }
+    @Override
     public int getCount() {
         return table.getCount();
     }
 
+    @Override
     public List<PrunableMessage> getAll(int from, int to) {
         return CollectionUtil.toList(table.getAll(from, to));
     }
 
-    public PrunableMessage getPrunableMessage(long transactionId) {
+    @Override
+    public PrunableMessage get(long transactionId) {
         return table.get(transactionId);
     }
 
-    public List<PrunableMessage> getPrunableMessages(long accountId, int from, int to) {
+    @Override
+    public List<PrunableMessage> getAll(long accountId, int from, int to) {
         return table.getPrunableMessages(accountId, from, to);
     }
 
-    public List<PrunableMessage> getPrunableMessages(long accountId, long otherAccountId, int from, int to) {
+    @Override
+    public List<PrunableMessage> getAll(long accountId, long otherAccountId, int from, int to) {
         return table.getPrunableMessages(accountId, otherAccountId, from, to);
     }
 
+    @Override
     public byte[] decrypt(PrunableMessage message, String secretPhrase) {
         return decryptUsingKeySeed(message, Crypto.getKeySeed(secretPhrase));
     }
 
+    @Override
     public byte[] decryptUsingSharedKey(PrunableMessage message, byte[] sharedKey) {
         if (message.getEncryptedData() == null) {
             return null;
@@ -57,6 +69,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         return data;
     }
 
+    @Override
     public byte[] decryptUsingKeySeed(PrunableMessage message, byte[] keySeed) {
         if (message.getEncryptedData() == null) {
             return null;
@@ -67,10 +80,12 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
     }
 
 
+    @Override
     public void add(Transaction transaction, PrunablePlainMessageAppendix appendix) {
         add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
+    @Override
     public void add(Transaction transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getMessage() != null) {
             PrunableMessage prunableMessage = table.get(transaction.getId());
@@ -86,10 +101,12 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         }
     }
 
+    @Override
     public void add(Transaction transaction, PrunableEncryptedMessageAppendix appendix) {
         add(transaction, appendix, blockchain.getLastBlockTimestamp(), blockchain.getHeight());
     }
 
+    @Override
     public void add(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         if (appendix.getEncryptedData() != null) {
             PrunableMessage prunableMessage = table.get(transaction.getId());
@@ -105,6 +122,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
         }
     }
 
+    @Override
     public boolean isPruned(long transactionId, boolean hasPrunablePlainMessage, boolean hasPrunableEncryptedMessage) {
         return table.isPruned(transactionId, hasPrunablePlainMessage, hasPrunableEncryptedMessage);
     }

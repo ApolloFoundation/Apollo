@@ -175,7 +175,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = messageService.getPrunableMessage(transaction.getId());
+            PrunableMessage prunableMessage = messageService.get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 this.prunableMessage = prunableMessage;
             }

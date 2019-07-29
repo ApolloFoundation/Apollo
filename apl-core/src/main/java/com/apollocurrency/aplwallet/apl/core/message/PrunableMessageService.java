@@ -15,11 +15,11 @@ public interface PrunableMessageService {
 
     List<PrunableMessage> getAll(int from, int to);
 
-    PrunableMessage getPrunableMessage(long transactionId);
+    PrunableMessage get(long transactionId);
 
-    List<PrunableMessage> getPrunableMessages(long accountId, int from, int to);
+    List<PrunableMessage> getAll(long accountId, int from, int to);
 
-    List<PrunableMessage> getPrunableMessages(long accountId, long otherAccountId, int from, int to);
+    List<PrunableMessage> getAll(long accountId, long otherAccountId, int from, int to);
 
     byte[] decrypt(PrunableMessage message, String secretPhrase);
 

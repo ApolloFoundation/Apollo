@@ -54,12 +54,12 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
         long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
-        PrunableMessage prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+        PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageService.get(transactionId);
         }
         long accountId = ParameterParser.getAccountId(request, false);
         byte[] keySeed = ParameterParser.getKeySeed(request, accountId, false);

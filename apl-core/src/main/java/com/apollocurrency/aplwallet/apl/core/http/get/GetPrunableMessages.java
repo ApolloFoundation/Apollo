@@ -57,8 +57,8 @@ public final class GetPrunableMessages extends AbstractAPIRequestHandler {
         JSONArray jsonArray = new JSONArray();
         response.put("prunableMessages", jsonArray);
 
-        List<PrunableMessage> messages = otherAccountId == 0 ? prunableMessageService.getPrunableMessages(accountId, firstIndex, lastIndex)
-                : prunableMessageService.getPrunableMessages(accountId, otherAccountId, firstIndex, lastIndex);
+        List<PrunableMessage> messages = otherAccountId == 0 ? prunableMessageService.getAll(accountId, firstIndex, lastIndex)
+                : prunableMessageService.getAll(accountId, otherAccountId, firstIndex, lastIndex);
         for (PrunableMessage message : messages) {
             if (message.getBlockTimestamp() < timestamp) {
                 break;

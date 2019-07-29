@@ -68,12 +68,12 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
         if (transaction == null) {
             return UNKNOWN_TRANSACTION;
         }
-        PrunableMessage prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+        PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && (transaction.getPrunablePlainMessage() != null || transaction.getPrunableEncryptedMessage() != null) && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = prunableMessageService.getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageService.get(transactionId);
         }
 
         JSONObject response = new JSONObject();
