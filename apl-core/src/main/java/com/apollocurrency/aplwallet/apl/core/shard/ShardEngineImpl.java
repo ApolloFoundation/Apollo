@@ -587,10 +587,7 @@ public class ShardEngineImpl implements ShardEngine {
             Path zipPath = dirProvider.getDataExportDir().resolve(zipName);
             log.debug("Zip file name = '{}' will be searched/stored in '{}'", zipName, zipPath);
             // delete if something left in previous run
-            boolean isRemoved = FileUtils.deleteFileIfExistsAndHandleException(zipPath, (e) -> {
-                durableTaskUpdateByState(FAILED, null, null);
-                throw new RuntimeException("Unable to remove previous ZIP file: " + zipPath.toAbsolutePath().toString());
-            });
+            boolean isRemoved = FileUtils.deleteFileIfExists(zipPath);
             log.debug("Previous Zip in '{}' was '{}'", zipName, isRemoved ? "REMOVED" : "NOT FOUND");
             // compute ZIP crc hash
             byte[] zipCrcHash = zipComponent.compressAndHash(
