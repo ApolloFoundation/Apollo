@@ -597,6 +597,7 @@ public class ShardEngineImpl implements ShardEngine {
                     zipPath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
             postCompressTask.accept(requireLastNotFinishedShard(), zipCrcHash);
+            updateRecovery(recovery, zipName);
         }
     }
 

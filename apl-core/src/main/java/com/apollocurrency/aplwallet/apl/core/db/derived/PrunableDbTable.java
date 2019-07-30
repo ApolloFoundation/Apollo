@@ -38,8 +38,8 @@ import javax.enterprise.inject.spi.CDI;
 public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    public  PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
         super(table, dbKeyFactory);

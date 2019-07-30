@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -71,6 +72,7 @@ public class ShardHashCalculatorImplTest {
                     MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
                     MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
+                    MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
                     MockBean.of(mock(NtpTime.class), NtpTime.class)
             ).build();

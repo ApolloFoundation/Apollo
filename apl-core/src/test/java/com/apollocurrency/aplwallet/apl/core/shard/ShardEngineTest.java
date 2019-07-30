@@ -88,7 +88,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -139,6 +139,7 @@ class ShardEngineTest {
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
     private ShardDaoJdbc shardDaoJdbc = new ShardDaoJdbcImpl();
+    private Zip zip = spy(new ZipImpl());
 
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, shardDaoJdbc));
     {
@@ -157,8 +158,7 @@ class ShardEngineTest {
             DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
             PhasingPollTable.class,
             DerivedTablesRegistry.class,
-            ShardEngineImpl.class,  ZipImpl.class, AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class)
+            ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -167,8 +167,9 @@ class ShardEngineTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(shardDaoJdbc, ShardDaoJdbc.class, ShardDaoJdbcImpl.class))
             .addBeans(MockBean.of(csvExporter, CsvExporter.class))
+            .addBeans(MockBean.of(zip, Zip.class))
             .addBeans(dataExportDir)
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 
@@ -677,6 +678,29 @@ class ShardEngineTest {
         assertNotNull(lastShard.getCoreZipHash());
         assertNotNull(lastShard.getPrunableZipHash());
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
-        assertEquals("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip,apl-blockchain-shard-4-prunable-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", recovery.getProcessedObject());
+        assertNull(recovery.getProcessedObject());
+        assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, recovery.getState());
+    }
+
+    @Test
+    void testArchiveCsvWithException() throws IOException {
+        Files.createFile(dataExportDirPath.resolve("goods.csv"));
+        Files.createFile(dataExportDirPath.resolve("prunable_message.csv"));
+        DbUtils.inTransaction(extension, (con)-> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
+        TableInfo prunableTableInfo = spy(new TableInfo("prunable_message", true));
+        CommandParamInfo paramInfo = CommandParamInfo.builder().shardId(4L).tableInfoList(List.of(prunableTableInfo, new TableInfo("goods"))).build();
+        doThrow(new RuntimeException()).when(prunableTableInfo).getName();
+
+        MigrateState state = shardEngine.archiveCsv(paramInfo);
+
+        assertEquals(MigrateState.FAILED, state);
+        assertTrue(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        assertFalse(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-prunable-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        Shard lastShard = shardDao.getLastShard();
+        assertNotNull(lastShard.getCoreZipHash());
+        assertNull(lastShard.getPrunableZipHash());
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
+        assertEquals("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", recovery.getProcessedObject());
+        assertEquals(MigrateState.ZIP_ARCHIVE_STARTED, recovery.getState());
     }
 }
