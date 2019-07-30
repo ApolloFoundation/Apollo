@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public final class ThreadPool {
     private static final Logger LOG = getLogger(ThreadPool.class);
 
@@ -43,7 +45,7 @@ public final class ThreadPool {
     private static Map<Runnable, String> lastBeforeStartJobs = new LinkedHashMap<>();
     private static Map<Runnable, String> afterStartJobs = new LinkedHashMap<>();
 
-    public static synchronized void runBeforeStart(String name, Runnable runnable, boolean runLast) {
+    public static void runBeforeStart(String name, Runnable runnable, boolean runLast) {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started");
         }
@@ -54,15 +56,15 @@ public final class ThreadPool {
         }
     }
 
-    public static synchronized void runAfterStart(String name, Runnable runnable) {
+    public static void runAfterStart(String name, Runnable runnable) {
         afterStartJobs.put(runnable, name);
     }
 
-    public static synchronized void scheduleThread(String name, Runnable runnable, int delay) {
+    public static void scheduleThread(String name, Runnable runnable, int delay) {
         scheduleThread(name, runnable, delay, TimeUnit.SECONDS);
     }
 
-    public static synchronized void scheduleThread(String name, Runnable runnable, int delay, TimeUnit timeUnit) {
+    public static void scheduleThread(String name, Runnable runnable, int delay, TimeUnit timeUnit) {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started, no new jobs accepted");
         }
@@ -75,6 +77,7 @@ public final class ThreadPool {
         if (! aplGlobalObjects.getBooleanProperty("apl.disable" + name + "Thread")) {
         */
             backgroundJobs.put(runnable, timeUnit.toMillis(delay));
+            LOG.debug("Prepare Thread with name = '{}', prepared [{}] background jobs", name, backgroundJobs.size());
         /*
         } else {
             LOG.info("Will not run " + name + " thread");
@@ -82,22 +85,23 @@ public final class ThreadPool {
 */
     }
 
-    public static synchronized void start() {
+    public static void start() {
         if (scheduledThreadPool != null) {
             throw new IllegalStateException("Executor service already started");
         }
 
-        LOG.debug("Running " + beforeStartJobs.size() + " tasks...");
+        LOG.debug("Running [{}} tasks...", beforeStartJobs.size());
         runAll(beforeStartJobs);
         beforeStartJobs = null;
 
-        LOG.debug("Running " + lastBeforeStartJobs.size() + " final tasks...");
+        LOG.debug("Running [{}] final tasks...", lastBeforeStartJobs.size());
         runAll(lastBeforeStartJobs);
         lastBeforeStartJobs = null;
 
-        LOG.debug("Starting " + backgroundJobs.size() + " background jobs");
-        scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(), new ThreadFactoryImpl("scheduled background pool"));
-        for (Map.Entry<Runnable,Long> entry : backgroundJobs.entrySet()) {
+        LOG.debug("Starting [{}] background jobs", backgroundJobs.size());
+        scheduledThreadPool = Executors.newScheduledThreadPool(backgroundJobs.size(),
+                new ThreadFactoryImpl("scheduled background pool"));
+        for (Map.Entry<Runnable, Long> entry : backgroundJobs.entrySet()) {
             scheduledThreadPool.scheduleWithFixedDelay(entry.getKey(), 0, entry.getValue(), TimeUnit.MILLISECONDS);
         }
         backgroundJobs = null;
@@ -146,6 +150,7 @@ public final class ThreadPool {
         List<Thread> threads = new ArrayList<>();
         final StringBuffer errors = new StringBuffer();
         for (Map.Entry<Runnable, String> job: jobs.entrySet()) {
+            log.trace("ThreadPool creates thread: job name = '{}'", job.getValue());
             Thread thread = new Thread(() -> {
                 try {
                     job.getKey().run();
@@ -154,6 +159,7 @@ public final class ThreadPool {
                     throw t;
                 }
             }, job.getValue());
+            thread.setName(job.getValue());
             thread.setDaemon(true);
             thread.start();
             threads.add(thread);
