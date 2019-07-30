@@ -54,7 +54,6 @@ public class TrimObserver {
             synchronized (lock) {
                 if (trimDerivedTables) {
                     trimHeight = trimHeights.poll();
-                    log.debug("Scheduled trim heights: {}", trimHeights.size());
                 }
             }
             if (trimHeight != null) {
