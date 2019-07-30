@@ -144,7 +144,7 @@ public class DexSmartContractService {
     }
 
     private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
 
         try {
@@ -165,7 +165,7 @@ public class DexSmartContractService {
      */
     private String deposit(Credentials credentials, Long orderId, BigInteger weiValue, Long gasPrice, String token){
         BigInteger orderIdUnsign = new BigInteger(Long.toUnsignedString(orderId));
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
@@ -187,7 +187,7 @@ public class DexSmartContractService {
      * @return link on tx.
      */
     private String depositAndInitiate(Credentials credentials, BigInteger orderId, BigInteger weiValue, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice,  String token){
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
@@ -203,7 +203,7 @@ public class DexSmartContractService {
     }
 
     private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice, String token){
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
@@ -221,7 +221,7 @@ public class DexSmartContractService {
      * @return link on tx.
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice){
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ERC20);
+        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {

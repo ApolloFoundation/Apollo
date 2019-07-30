@@ -70,10 +70,18 @@ public class DexOfferProcessor {
                     continue;
                 }
 
+                String passphrase = secureStorageService.getUserPassPhrase(accountId);
                 CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
                         .builder()
-                        .passphrase(secureStorageService.getUserPassPhrase(accountId))
+                        .passphrase(passphrase)
+                        .deadlineValue("1440")
+                        .publicKey(Account.getPublicKey(accountId))
                         .senderAccount(Account.getAccount(accountId))
+                        .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase)))
+                        .broadcast(true)
+                        .recipientId(0L)
+                        .ecBlockHeight(0)
+                        .ecBlockId(0L)
                         .build();
 
                 String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOffer, offer.getToAddress(), incomeContract.getSecretHash(), STEP_2);
@@ -84,7 +92,6 @@ public class DexOfferProcessor {
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(counterOffer.getTransactionId(), offer.getTransactionId(), null, txId, null, STEP_2);
                 //TODO move it to some util
-                String passphrase = secureStorageService.getUserPassPhrase(accountId);
                 CreateTransactionRequest createTransactionRequest = CreateTransactionRequest
                         .builder()
                         .passphrase(passphrase)
@@ -149,14 +156,14 @@ public class DexOfferProcessor {
                         .build());
 
                 //TODO move to validation
-                if(dexService.isTxApproved(exchangeContract.getSecretHash(), offer.getType(), offer.getPairCurrency(), exchangeContract.getTransferTxId())){
+                if(dexService.isTxApproved(exchangeContract.getSecretHash(), offer.getType(), offer.getPairCurrency(), incomeContract.getTransferTxId())){
                     continue;
                 }
 
                 byte[] secret = Crypto.aesGCMDecrypt(exchangeContract.getEncryptedSecret(), Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
                 dexService.approveMoneyTransfer(passphrase, accountId, incomeContract.getCounterOrderId(), incomeContract.getTransferTxId(), secret);
-            }catch (AplException.ExecutiveProcessException ex){
+            }catch (Exception ex){
                 log.error(ex.getMessage(), ex);
                 continue;
             }
@@ -186,14 +193,20 @@ public class DexOfferProcessor {
                         .status(STEP_1.ordinal())
                         .build());
 
-                //TODO Fix it. Process two cases.
-                if(!dexService.isTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), initialContract.getTransferTxId())){
+                //TODO move it to validation function.
+                //Check on contract was not approved, and we can get money.
+                if(!dexService.isTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), outcomeContract.getTransferTxId())){
                     continue;
                 }
 
-                byte[] secret = dexService.getSecretIfTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), initialContract.getTransferTxId());
+                //Check if contract was approved, and we can get shared secret.
+                if(dexService.isTxApproved(initialContract.getSecretHash(), outcomeOffer.getType().reverse(), outcomeOffer.getPairCurrency(), initialContract.getTransferTxId())){
+                    continue;
+                }
+
+                byte[] secret = dexService.getSecretIfTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), outcomeContract.getTransferTxId());
                 dexService.approveMoneyTransfer(passphrase, accountId, outcomeOffer.getTransactionId(), initialContract.getTransferTxId(), secret);
-            } catch (AplException.ExecutiveProcessException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 continue;
             }

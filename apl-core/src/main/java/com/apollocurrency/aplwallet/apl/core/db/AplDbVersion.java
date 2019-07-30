@@ -787,7 +787,9 @@ public class AplDbVersion extends DbVersion {
                         " encrypted_secret BINARY(64), transfer_tx_id VARCHAR(120) NOT NULL, " +
                         " height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 298:
-                return 298;
+                apply("ALTER TABLE phasing_poll_result ADD COLUMN IF NOT EXISTS approved_tx BIGINT");
+            case 299:
+                return 299;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

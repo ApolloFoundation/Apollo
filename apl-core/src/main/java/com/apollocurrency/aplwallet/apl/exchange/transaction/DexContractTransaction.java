@@ -48,18 +48,19 @@ public class DexContractTransaction extends DEX {
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
+       if(attachment.getContractStatus().isStep2()){
+           if(offer == null) {
+                throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
+           }
 
-//        if(offer == null) {
-//            throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
-//        }
+           if(offer.getAccountId() != transaction.getSenderId()){
+               throw new AplException.NotValidException("Can create request contract only from your account.");
+           }
+       }
+
         if(counterOffer == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getCounterOrderId());
         }
-
-        //TODO check it later if needs.
-//        if(offer.getAccountId() != transaction.getSenderId()){
-//            throw new AplException.NotValidException("Can create request contract only from your account.");
-//        }
 
         if(attachment.getEncryptedSecret() != null && attachment.getEncryptedSecret().length != 64){
             throw new AplException.NotValidException("Encrypted secret is null or length is not right.");

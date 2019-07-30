@@ -229,8 +229,6 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
         } catch (AplException.InsufficientBalanceException e) {
             throw e;
-        } catch (AplException.ValidationException e) {
-            throw e;
         }
 
         return transaction;

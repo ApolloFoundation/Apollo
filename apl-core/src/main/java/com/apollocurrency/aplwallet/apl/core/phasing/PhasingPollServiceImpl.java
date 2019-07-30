@@ -181,9 +181,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
-//        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
+    public void finish(PhasingPoll phasingPoll, long result, long approvedTx) {
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum(), approvedTx);
         resultTable.insert(phasingPollResult);
     }
 

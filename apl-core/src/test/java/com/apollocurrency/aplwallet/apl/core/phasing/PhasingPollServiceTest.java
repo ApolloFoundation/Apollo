@@ -275,9 +275,9 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollNotApproved() throws SQLException {
         blockchain.setLastBlock(btd.BLOCK_9);
-        inTransaction(con -> service.finish(ptd.POLL_3, 1));
+        inTransaction(con -> service.finish(ptd.POLL_3, 1, 1));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
+        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false, null);
 
         assertEquals(expected, result);
     }
@@ -299,9 +299,9 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
+        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum(), 1));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
+        PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true, 0L);
 
         assertEquals(expected, result);
     }

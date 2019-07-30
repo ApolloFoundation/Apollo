@@ -17,13 +17,14 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -268,20 +269,22 @@ public class DexService {
         String transactionStr = null;
 
         if(offer.getType().isSell()) {
-            createTransactionRequest.setDeadlineValue("1440");
+            createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
+            createTransactionRequest.setAmountATM(offer.getOfferAmount());
+
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
             PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
-
             createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), false));
+
             try {
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
                 transactionStr = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
             } catch (AplException.ValidationException | ParameterException e) {
                 LOG.error(e.getMessage(), e);
-                //TODO
+                throw new AplException.ExecutiveProcessException(e.getMessage());
             }
         } else if(offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()){
             BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
@@ -352,7 +355,15 @@ public class DexService {
     }
 
     public boolean isTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
-        return getSecretIfTxApproved(secretHash, offerType, dexCurrencies, transferTxId) != null;
+        if(offerType.isBuy() && dexCurrencies.isEthOrPax()) {
+            SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
+            return swapDataInfo != null && swapDataInfo.getSecret() != null;
+        } else if(offerType.isSell()) {
+            PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
+            return phasingPoll != null && phasingPoll.getApprovedTx() != null;
+        }
+
+        throw new AplException.ExecutiveProcessException("Unknown offer pair.");
     }
 
     public byte[] getSecretIfTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
@@ -363,8 +374,15 @@ public class DexService {
                 return swapDataInfo.getSecret();
             }
         } else if(offerType.isSell()) {
-            PhasingPoll phasingPoll = phasingPollService.getPoll(Long.parseLong(transferTxId));
-            return phasingPoll.getHashedSecret();
+            PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
+            if(phasingPoll == null){
+                return null;
+            }
+
+            Long approvedTx = phasingPoll.getApprovedTx();
+            Transaction transaction = blockchain.getTransaction(approvedTx);
+            MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();
+            return  voteCasting.getRevealedSecret();
         }
 
         return null;

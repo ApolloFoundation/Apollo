@@ -35,7 +35,7 @@ public class CreateTransactionRequest {
     private PhasingAppendix phasing;
 
     private Account senderAccount;
-    private Long recipientId;
+    private long recipientId;
     private String recipientPublicKey;
 
     private long feeATM;

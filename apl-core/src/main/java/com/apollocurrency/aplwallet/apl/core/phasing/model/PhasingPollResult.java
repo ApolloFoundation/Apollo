@@ -5,14 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.model;
 
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.Objects;
-
+@Data
+@EqualsAndHashCode
 public class PhasingPollResult extends DerivedEntity {
 
     private final long id;
     private final long result;
     private final boolean approved;
+    private Long approvedTx;
 
     public PhasingPollResult(PhasingPoll poll, long result, int height) {
         super(poll.getDbId(), height);
@@ -21,39 +24,12 @@ public class PhasingPollResult extends DerivedEntity {
         this.approved = result >= poll.getQuorum();
     }
 
-    public PhasingPollResult(Long dbId, Integer height, long id, long result, boolean approved) {
+    public PhasingPollResult(Long dbId, Integer height, long id, long result, boolean approved, Long approvedTx) {
         super(dbId, height);
         this.id = id;
         this.result = result;
         this.approved = approved;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PhasingPollResult)) return false;
-        if (!super.equals(o)) return false;
-        PhasingPollResult that = (PhasingPollResult) o;
-        return id == that.id &&
-                result == that.result &&
-                approved == that.approved;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), id, result, approved);
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getResult() {
-        return result;
-    }
-
-    public boolean isApproved() {
-        return approved;
+        this.approvedTx = approvedTx;
     }
 
 }

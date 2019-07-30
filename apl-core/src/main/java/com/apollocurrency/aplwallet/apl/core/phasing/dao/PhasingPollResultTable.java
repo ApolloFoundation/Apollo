@@ -50,12 +50,13 @@ public class PhasingPollResultTable extends EntityDbTable<PhasingPollResult> {
     @Override
     public void save(Connection con, PhasingPollResult phasingPollResult) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_poll_result (id, "
-                + "result, approved, height) VALUES (?, ?, ?, ?)")) {
+                + "result, approved, height, approved_tx ) VALUES (?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, phasingPollResult.getId());
             pstmt.setLong(++i, phasingPollResult.getResult());
             pstmt.setBoolean(++i, phasingPollResult.isApproved());
             pstmt.setInt(++i, phasingPollResult.getHeight());
+            pstmt.setLong(++i, phasingPollResult.getApprovedTx());
             pstmt.executeUpdate();
         }
     }

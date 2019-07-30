@@ -294,7 +294,7 @@ public class DexController {
                     CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
                             .convert(req, account, counterOffer.getAccountId(), offer.getOfferAmount(), null);
                     String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
-
+// todo add if transactionId == null
                     // 3. Create contract.
                     DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX, ExchangeContractStatus.STEP_1);
                     response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);

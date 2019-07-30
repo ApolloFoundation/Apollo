@@ -24,4 +24,8 @@ public enum OfferType {
         return this.ordinal() == OfferType.SELL.ordinal();
     }
 
+    public OfferType reverse(){
+        return isBuy() ? OfferType.SELL : OfferType.BUY;
+    }
+
 }
