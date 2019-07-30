@@ -77,6 +77,10 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
 
     @Override
     public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+        return getMinMaxDbId(height, timeService.getEpochTime());
+    }
+
+    public MinMaxDbId getMinMaxDbId(int height, int currentTime) throws SQLException {
         // select MIN and MAX dbId values in one query
         String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
                 "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count from %s where HEIGHT <= ? and transaction_timestamp >= ?",  table);
@@ -86,7 +90,7 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
             pstmt.setInt(1, height);
-            pstmt.setInt(2, timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
+            pstmt.setInt(2, currentTime - blockchainConfig.getMinPrunableLifetime());
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     dbIdMin = rs.getLong("min_db_id");
