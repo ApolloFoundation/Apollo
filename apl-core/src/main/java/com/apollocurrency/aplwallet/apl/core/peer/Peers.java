@@ -371,11 +371,13 @@ public final class Peers {
     }
 
     public static void suspend() {
-        suspend = peerHttpServer.suspend();
+        if(peerHttpServer!=null){
+           suspend = peerHttpServer.suspend();
+        }
     }
 
     public static void resume() {
-        if (suspend) {
+        if (suspend && peerHttpServer!=null) {
             suspend = !peerHttpServer.resume();
         }
     }

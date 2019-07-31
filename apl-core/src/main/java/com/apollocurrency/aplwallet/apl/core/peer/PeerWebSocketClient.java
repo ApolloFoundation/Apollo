@@ -47,6 +47,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             connected = session.isOpen();
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
+            Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
             log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
         } catch (TimeoutException ex) {
@@ -92,7 +93,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             client.destroy();
         }
         client = null;
-        log.debug("WebSocketClient: {} destroyed.", which());
+        log.trace("WebSocketClient: {} destroyed.", which());
     }
 
     boolean isClientConnected() {

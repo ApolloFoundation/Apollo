@@ -61,7 +61,7 @@ public class ShardImporter {
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
-        blockchainProcessor.updateInitialSnapshotBlock();
+        blockchain.update();
         blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }
 

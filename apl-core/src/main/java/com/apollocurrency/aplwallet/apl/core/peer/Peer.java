@@ -125,9 +125,9 @@ public interface Peer extends Comparable<Peer> {
 
     String getBlacklistingCause();
 
-    JSONObject send(JSONStreamAware request, UUID chainId);
+    JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
    
-    public void handshake(UUID targetChainId);
+    public boolean handshake(UUID targetChainId);
     
     public boolean isTrusted();
     
