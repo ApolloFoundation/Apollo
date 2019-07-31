@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
@@ -40,7 +41,6 @@ import javax.inject.Singleton;
 public class CsvExporterImpl implements CsvExporter {
     private static final Logger log = getLogger(CsvExporterImpl.class);
     public static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
-    private static final String DEFAULT_SORT_COLUMN = "db_id";
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private ShardDaoJdbc shardDaoJdbc;
@@ -78,106 +78,34 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns) {
-        Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
-        // skip hard coded table
-        if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
-            // skip not needed table
-            log.debug("Skipped excluded Table = {}", derivedTableInterface.toString());
-            return -1;
-        }
+        return exportDerivedTableByDbIdPagination(derivedTableInterface.getName(), derivedTableInterface.getMinMaxDbId(targetHeight), batchLimit, excludedColumns);
+    }
 
-        long start = System.currentTimeMillis();
-        int processedCount;
-        int totalCount = 0;
-        // prepare connection + statement + writer
-        try (Connection con = this.databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + derivedTableInterface.toString() + " where db_id > ? and db_id < ? order by " + DEFAULT_SORT_COLUMN + " limit ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
-        ) {
-
-            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
-            MinMaxDbId minMaxDbId = derivedTableInterface.getMinMaxDbId(targetHeight);
-            log.debug("Table = {}, Min/Max = {} at height = {}", derivedTableInterface.toString(), minMaxDbId, targetHeight);
-
-            // process non empty tables only
-            if (minMaxDbId.getCount() > 0) {
-                do { // do exporting into csv with pagination
-                    CsvExportData csvExportData = csvWriter.append(derivedTableInterface.toString(),
-                            derivedTableInterface.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
-                    processedCount = csvExportData.getProcessCount();
-                    if (processedCount > 0) {
-                        minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
-                    }
-                    totalCount += processedCount;
-                } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {} in {} sec", derivedTableInterface.toString(), totalCount,
-                        (System.currentTimeMillis() - start) / 1000);
-            } else {
-                // skipped empty table
-                log.debug("Skipped exporting Table = {}", derivedTableInterface.toString());
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Exporting derived table exception " + derivedTableInterface.toString(), e);
-        }
-
-        return totalCount;
+    private long exportDerivedTableByDbIdPagination(String table, MinMaxDbId minMaxDbId, int batchLimit, Set<String> excludedColumns) {
+        return exportTable(table,"where db_id > ? and db_id < ? order by db_id limit ?", minMaxDbId, excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
+            pstmt.setLong(1,  minMaxId.getMinDbId());
+            pstmt.setLong(2,  minMaxId.getMaxDbId());
+            pstmt.setInt(3, batchLimit);
+        });
     }
 
     @Override
     public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
-        Objects.requireNonNull(derivedTableInterface, "derivedTableInterface is NULL");
-        // skip hard coded table
-        if (excludeTables.contains(derivedTableInterface.toString().toLowerCase())) {
-            // skip not needed table
-            log.debug("Skipped excluded Table = {}", derivedTableInterface.toString());
-            return -1;
-        }
-
-        long start = System.currentTimeMillis();
-        int processedCount;
-        int totalCount = 0;
-        // prepare connection + statement + writer
-        try (Connection con = this.databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + derivedTableInterface.toString() + " WHERE height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
-        ) {
-
-            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
-            MinMaxDbId minMaxDbId = derivedTableInterface.getMinMaxDbId(targetHeight);
-            log.debug("Table = {}, Min/Max = {} at height = {}", derivedTableInterface.toString(), minMaxDbId, targetHeight);
-
-            // process non empty tables only
-            if (minMaxDbId.getCount() > 0) {
-                do { // do exporting into csv with pagination
-                    pstmt.setInt(1, targetHeight);
-                    pstmt.setInt(2,  batchLimit);
-                    pstmt.setInt(3, totalCount);
-
-                    CsvExportData csvExportData = csvWriter.append(derivedTableInterface.toString(),
-                            pstmt.executeQuery());
-                    processedCount = csvExportData.getProcessCount();
-                    totalCount += processedCount;
-                } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {} in {} sec", derivedTableInterface.toString(), totalCount,
-                        (System.currentTimeMillis() - start) / 1000);
-            } else {
-                // skipped empty table
-                log.debug("Skipped exporting Table = {}", derivedTableInterface.toString());
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Exporting derived table exception " + derivedTableInterface.toString(), e);
-        }
-
-        return totalCount;
+        return exportTable(derivedTableInterface.getName(),"where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxDbId(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
+            pstmt.setInt(1,  targetHeight);
+            pstmt.setInt(2,  batchLimit);
+            pstmt.setInt(3, totalProcessed);
+        });
     }
 
     @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
         return exportDerivedTable(derivedTableInterface, targetHeight, batchLimit, DEFAULT_EXCLUDED_COLUMNS);
+    }
+
+    @Override
+    public long exportPrunableDerivedTable(PrunableDbTable table, int targetHeight, int currentTime, int batchLimit) {
+        return exportDerivedTableByDbIdPagination(table.getName(), table.getMinMaxDbId(targetHeight, currentTime), batchLimit, DEFAULT_EXCLUDED_COLUMNS);
     }
 
     /**
@@ -350,6 +278,7 @@ public class CsvExporterImpl implements CsvExporter {
         return totalCount;
     }
 
+    @Override
     public long exportBlock(int height) throws IllegalStateException {
         int processCount;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
@@ -376,5 +305,57 @@ public class CsvExporterImpl implements CsvExporter {
             throw new RuntimeException("Exporting table exception " + ShardConstants.BLOCK_TABLE_NAME, e);
         }
         return processCount;
+    }
+
+    private long exportTable(String table, String condition, MinMaxDbId minMaxDbId, Set<String> excludedColumns, StatementConfigurer statementConfigurer) {
+        Objects.requireNonNull(condition, "Condition sql should not be null");
+        Objects.requireNonNull(table, "Table should not be null");
+        Objects.requireNonNull(minMaxDbId, "MinMaxDbId should not be null");
+        // skip hard coded table
+        if (excludeTables.contains(table.toLowerCase())) {
+            // skip not needed table
+            log.debug("Skipped excluded Table = {}", table);
+            return -1;
+        }
+
+        long start = System.currentTimeMillis();
+        int processedCount;
+        int totalCount = 0;
+        // prepare connection + statement + writer
+        try (Connection con = this.databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+                     "select * from " + table + " " + condition);
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
+        ) {
+
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
+            log.debug("Table = {}, Min/Max = {}", table, minMaxDbId);
+
+            // process non empty tables only
+            if (minMaxDbId.getCount() > 0) {
+                do { // do exporting into csv with pagination
+                    statementConfigurer.configure(pstmt, minMaxDbId, totalCount);
+                    CsvExportData csvExportData = csvWriter.append(table, pstmt.executeQuery());
+                    processedCount = csvExportData.getProcessCount();
+                    if (processedCount > 0) {
+                        minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
+                    }
+                    totalCount += processedCount;
+                } while (processedCount > 0); //keep processing while not found more rows
+                log.trace("Table = {}, exported rows = {} in {} sec", table, totalCount,
+                        (System.currentTimeMillis() - start) / 1000);
+            } else {
+                // skipped empty table
+                log.debug("Skipped exporting Table = {}", table);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Exporting derived table exception " + table, e);
+        }
+
+        return totalCount;
+    }
+    private interface StatementConfigurer {
+        void configure(PreparedStatement pstmt, MinMaxDbId minMaxDbId, int totalProcessed) throws SQLException;
     }
 }

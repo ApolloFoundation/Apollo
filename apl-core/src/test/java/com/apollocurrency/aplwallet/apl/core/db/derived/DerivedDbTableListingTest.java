@@ -84,7 +84,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -195,13 +194,9 @@ class DerivedDbTableListingTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-            try {
                 MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
                 assertTrue(minMaxDbId.getMaxDbId() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxDbId.getMaxDbId());
                 log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
-            } catch (SQLException e) {
-                log.error("Exception", e);
-            }
         });
     }
 }

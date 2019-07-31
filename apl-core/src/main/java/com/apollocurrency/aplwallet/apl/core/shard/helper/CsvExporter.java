@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -35,6 +36,8 @@ public interface CsvExporter {
      * @return exported quantity
      */
     long exportDerivedTable(DerivedTableInterface tableInterface, int targetHeight, int batchLimit);
+
+    long exportPrunableDerivedTable(PrunableDbTable derivedTableInterface, int targetHeight, int currentTime, int batchLimit);
 
     /**
      * Exports one SHARD table and returns number of exported rows

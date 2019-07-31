@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.enterprise.inject.spi.CDI;
 
@@ -76,32 +75,23 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     }
 
     @Override
-    public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+    public MinMaxDbId getMinMaxDbId(int height) {
         return getMinMaxDbId(height, timeService.getEpochTime());
     }
 
-    public MinMaxDbId getMinMaxDbId(int height, int currentTime) throws SQLException {
+    public MinMaxDbId getMinMaxDbId(int height, int currentTime) {
         // select MIN and MAX dbId values in one query
         String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
-                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count from %s where HEIGHT <= ? and transaction_timestamp >= ?",  table);
-        long dbIdMin, dbIdMax;
-        MinMaxDbId minMaxDbId = new MinMaxDbId();
+                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?",  table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
             pstmt.setInt(1, height);
             pstmt.setInt(2, currentTime - blockchainConfig.getMinPrunableLifetime());
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    dbIdMin = rs.getLong("min_db_id");
-                    dbIdMax = rs.getLong("max_db_id");
-                    long rowCount = rs.getLong("count");
-                    // pagination is exclusive for upper + lower bounds
-                    minMaxDbId = new MinMaxDbId(dbIdMin - 1, dbIdMax + 1); // plus/minus one in Max/Min value
-                    minMaxDbId.setCount(rowCount);
-                }
-            }
+            return getMinMaxDbId(pstmt);
         }
-        return minMaxDbId;
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 }

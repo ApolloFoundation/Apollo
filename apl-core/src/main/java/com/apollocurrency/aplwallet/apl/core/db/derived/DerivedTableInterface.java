@@ -65,7 +65,7 @@ public interface DerivedTableInterface<T> {
      * @return object with internal values for min, max DB_ID and count of rows
      * @throws SQLException
      */
-    MinMaxDbId getMinMaxDbId(int height) throws SQLException;
+    MinMaxDbId getMinMaxDbId(int height);
 
     /**
      * @return table db name

@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -36,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
@@ -90,6 +92,7 @@ public class ShardEngineImpl implements ShardEngine {
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
     private String durableStatusTaskId;
+    private EpochTime epochTime;
 
 
     @Inject
@@ -99,6 +102,7 @@ public class ShardEngineImpl implements ShardEngine {
                            ShardRecoveryDaoJdbc shardRecoveryDao,
                            CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
+                           EpochTime epochTime,
                            ShardDao shardDao,
                            Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
@@ -110,6 +114,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
+        this.epochTime = Objects.requireNonNull(epochTime, "epochTime is NULL");
     }
 
     /**
@@ -443,9 +448,9 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo.getName(), paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
                         default:
-                            return exportDerivedTable(tableInfo.getName(), paramInfo);
+                            return exportDerivedTable(tableInfo, paramInfo);
                     }
                 });
                 incrementDurableTaskUpdateByPercent(0.7);
@@ -494,22 +499,27 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
-    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
-        DerivedTableInterface derivedTable = registry.getDerivedTable(tableName);
+    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
+        DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
         if (derivedTable != null) {
-            if (excludedColumns == null && sort == null) {
-                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            if (!info.isPrunable()) {
+                if (excludedColumns == null && sort == null) {
+                    return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+                } else {
+                    return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+                }
             } else {
-                return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+                int epochTime = this.epochTime.getEpochTime();
+                return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), epochTime - epochTime % 3600, paramInfo.getCommitBatchSize());
             }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
-            throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
+            throw new IllegalArgumentException("Unable to find derived table " + info.getName() + " in derived table registry");
         }
     }
 
-    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
-        return exportDerivedTable(tableName, paramInfo, null, null);
+    private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo) {
+        return exportDerivedTable(tableInfo, paramInfo, null, null);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {

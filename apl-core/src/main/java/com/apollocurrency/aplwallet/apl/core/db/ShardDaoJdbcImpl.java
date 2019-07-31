@@ -33,7 +33,7 @@ public class ShardDaoJdbcImpl implements ShardDaoJdbc {
         Objects.requireNonNull(sourceDataSource,"sourceDataSource is NULL");
         try ( Connection con = sourceDataSource.getConnection();
               PreparedStatement pstmt = con.prepareStatement(
-                      "SELECT IFNULL(min(SHARD_ID), 0) as MIN_ID, IFNULL(max(SHARD_ID), 0) as MAX_ID, IFNULL(count(*), 0) as COUNT" +
+                      "SELECT IFNULL(min(SHARD_ID), 0) as MIN_ID, IFNULL(max(SHARD_ID), 0) as MAX_ID, IFNULL(count(*), 0) as COUNT, max(shard_height) as max_height" +
                 " FROM shard WHERE shard_height <=?")) {
             pstmt.setLong(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {

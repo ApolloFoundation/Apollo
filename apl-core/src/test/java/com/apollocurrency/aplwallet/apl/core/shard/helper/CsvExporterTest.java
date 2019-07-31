@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -187,6 +188,7 @@ class CsvExporterTest {
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
