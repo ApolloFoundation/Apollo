@@ -93,20 +93,19 @@ public class AplCoreRuntime {
         }
     }
 
-    private String getNodeHealth() {
-        StringBuilder sb = new StringBuilder("\n=== Node health info ====\n");
+    private String getNodeHealth(){
+        StringBuilder sb = new StringBuilder("Node health info\n");
         int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
         sb.append("Used DB connections: ").append(usedConnections);
         Runtime runtime = Runtime.getRuntime();
         sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
         sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
-        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)));
+        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
         sb.append("\nActive threads count :").append(Thread.currentThread().getThreadGroup().getParent().activeCount());
         sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
         sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
         sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
         sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
-        findDeadLocks(sb);
         return sb.toString();
     }
 

@@ -24,9 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -73,7 +71,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         //response.put("blocks", blocksJSON);
         if (keepTransactions) {
-            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getOrLoadTransactions()));
         }
         return response;
     }

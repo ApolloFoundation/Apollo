@@ -158,7 +158,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
-    private volatile long initialBlock;
 
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
@@ -400,29 +399,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public long getInitialBlock() {
-        return initialBlock;
-    }
-
-    @Override
-    public void updateInitialSnapshotBlock() {
-        globalSync.updateLock();
-        try {
-            Block snapshotBlock = blockchain.findLastBlock(); // that block will be latest and first/single ONLY in db
-            log.debug("snapshotBlock imported = {}", snapshotBlock);
-            blockchain.setLastBlock(snapshotBlock);
-            initialBlock = snapshotBlock.getId();
-        } finally {
-            globalSync.updateUnlock();
-        }
-    }
-
-    @Override
-    public void updateInitialBlockId() {
-        initialBlock = blockchain.getShardInitialBlock().getId();
-    }
-
-    @Override
     public void processPeerBlock(JSONObject request) throws AplException {
         globalSync.updateLock();
         try {
@@ -458,13 +434,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 block.getId(),
                                 block.getHeight(),
                                 Convert2.rsAccount(block.getGeneratorId()));
-                        lookupTransactionProcessor().processLater(lastBlock.getTransactions());
+                        lookupTransactionProcessor().processLater(lastBlock.getOrLoadTransactions());
                         log.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
                     }
                     catch (BlockNotAcceptedException e) {
                         log.debug("Replacement block failed to be accepted, pushing back our last block");
                         pushBlock(lastBlock);
-                        lookupTransactionProcessor().processLater(block.getTransactions());
+                        lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                     }
                 }
             }// else ignore the block
@@ -676,14 +652,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void continuedDownloadOrTryImportGenesisShard() {
-        Block lastBlock = lookupBlockhain().findLastBlock();
+        Block lastBlock = lookupBlockhain().getLastBlock(); // blockchain should be initialized independently
         if (lastBlock != null) {
             // continue blockchain automatically
             log.info("Genesis block already in database");
-            lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            initialBlock = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             setGetMoreBlocks(true); // turn ON blockchain downloading
             scheduleOneScan();
@@ -852,7 +826,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
-        for (Transaction transaction : block.getTransactions()) {
+        for (Transaction transaction : block.getOrLoadTransactions()) {
             if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
                         + ", current time is " + curTime, block);
@@ -920,7 +894,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
             isProcessingBlock = true;
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
@@ -931,7 +905,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getOrLoadTransactions()) {
                 try {
                     transactionApplier.apply(transaction);
                     if (transaction.getTimestamp() > fromTimestamp) {
@@ -952,7 +926,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
-            block.getTransactions().forEach(transaction -> {
+            block.getOrLoadTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                         possiblyApprovedTransactions.add(phasedTransaction);
@@ -998,8 +972,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
-            if (block.getTransactions().size() > 0) {
-                lookupTransactionProcessor().notifyListeners(block.getTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+            if (block.getOrLoadTransactions().size() > 0) {
+                lookupTransactionProcessor().notifyListeners(block.getOrLoadTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             AccountLedger.commitEntries();
         } finally {
@@ -1401,7 +1375,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
-                                        for (Transaction transaction : currentBlock.getTransactions()) {
+                                        for (Transaction transaction : currentBlock.getOrLoadTransactions()) {
                                             byte[] transactionBytes = ((TransactionImpl)transaction).bytes();
                                             if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
@@ -1592,7 +1566,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 
-                long commonMilestoneBlockId = initialBlock;
+                long commonMilestoneBlockId = blockchain.getShardInitialBlock().getId();
                 
                 if (lookupBlockhain().getHeight() > 0) {
                     commonMilestoneBlockId = getCommonMilestoneBlockId(peer);
@@ -1603,7 +1577,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
-                    if (commonMilestoneBlockId == initialBlock) {
+                    if (commonMilestoneBlockId == blockchain.getShardInitialBlock().getId()) {
                         log.info("Cannot load blocks after genesis block {} from peer {}, perhaps using different Genesis block",
                                 commonMilestoneBlockId, peer.getAnnouncedAddress());
                     }
@@ -1726,7 +1700,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return 0;
                 }
                 if (milestoneBlockIds.isEmpty()) {
-                    return initialBlock;
+                    return blockchain.getShardInitialBlock().getId();
                 }
                 // prevent overloading with blockIds
                 if (milestoneBlockIds.size() > 20) {
@@ -1979,7 +1953,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
                 for (Block block : peerPoppedOffBlocks) {
-                    lookupTransactionProcessor().processLater(block.getTransactions());
+                    lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
             
@@ -1997,7 +1971,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } else {
                 log.debug("Switched to peer's fork, peer addr: {}",peer.getHost());
                 for (Block block : myPoppedOffBlocks) {
-                    lookupTransactionProcessor().processLater(block.getTransactions());
+                    lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
             

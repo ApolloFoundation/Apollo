@@ -16,6 +16,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -56,6 +57,8 @@ public class ShardObserverTest {
     @Mock
     BlockchainProcessor blockchainProcessor;
     @Mock
+    Blockchain blockchain;
+    @Mock
     HeightConfig heightConfig;
     @Mock
     ShardDao shardDao;
@@ -86,7 +89,7 @@ public class ShardObserverTest {
 
         shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao, propertiesHolder, peerHttpServer, firedEvent);
+                shardDao, recoveryDao, propertiesHolder, peerHttpServer, blockchain, firedEvent);
     }
 
     @Test

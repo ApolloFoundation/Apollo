@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -88,7 +89,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private final AtomicReference<Block> lastBlock = new AtomicReference<>();
-
+    private final AtomicReference<Block> shardInitialBlock = new AtomicReference<>();
 
 
     @Override
@@ -96,6 +97,14 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get();
     }
 
+    @PostConstruct
+    @Override
+    public void update() {
+        this.lastBlock.set(findLastBlock());
+        this.shardInitialBlock.set(findFirstBlock());
+    }
+
+    @Override
     public void setLastBlock(Block block) {
         lastBlock.set(block);
     }
@@ -197,7 +206,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void saveBlock(Connection con, Block block) {
         blockDao.saveBlock(con, block);
-        transactionDao.saveTransactions(con, block.getTransactions());
+        transactionDao.saveTransactions(con, block.getOrLoadTransactions());
     }
 
     @Transactional
@@ -354,15 +363,13 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
-    @Transactional(readOnly = true)
     public Block getShardInitialBlock() {
-        return getBlockAtHeight(getGenesisHeight());
+        return shardInitialBlock.get();
     }
 
-    private int getGenesisHeight() {
-        Integer lastShardHeight = blockIndexDao.getLastHeight();
-        log.trace("lastShardHeight = {}", lastShardHeight);
-        return lastShardHeight != null ? lastShardHeight + 1 : 0;
+    @Override
+    public void setShardInitialBlock(Block block) {
+        shardInitialBlock.set(block);
     }
 
     @Transactional(readOnly = true)
@@ -435,7 +442,8 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) || transactionIndexDao.getByTransactionId(transactionId) != null;
+        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) ||
+                transactionIndexDao.countByTransactionId(transactionId) == 1;
     }
 
     @Override

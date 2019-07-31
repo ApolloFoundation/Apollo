@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
@@ -36,6 +37,7 @@ public class ShardObserverIntegrationTest {
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     ShardMigrationExecutor shardMigrationExecutor = mock(ShardMigrationExecutor.class);
     BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+    Blockchain blockchain = mock(Blockchain.class);
     ShardRecoveryDao recoveryDao = mock(ShardRecoveryDao.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     ShardDao shardDao = mock(ShardDao.class);
@@ -53,6 +55,7 @@ public class ShardObserverIntegrationTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(shardMigrationExecutor, ShardMigrationExecutor.class))
             .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class))
+            .addBeans(MockBean.of(blockchain, Blockchain.class))
             .addBeans(MockBean.of(recoveryDao, ShardRecoveryDao.class))
             .addBeans(MockBean.of(shardDao, ShardDao.class))
             .addBeans(MockBean.of(holder, PropertiesHolder.class))
