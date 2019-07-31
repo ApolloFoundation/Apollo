@@ -1,9 +1,13 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.util.task;
+package com.apollocurrency.aplwallet.apl.core.task;
 
 public interface TaskDispatcher {
+
+    void dispatch();
+
+    boolean validate(Task task);
 
     default boolean schedule(Task task){
         return schedule(task, TaskOrder.TASK);
@@ -11,10 +15,8 @@ public interface TaskDispatcher {
 
     boolean schedule(Task task, TaskOrder order);
 
-    boolean cancel(String name);
-
-    boolean cancelAll();
-
     void shutdown();
+
+    String info();
 
 }

@@ -46,6 +46,10 @@ import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.core.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
@@ -100,7 +104,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
@@ -110,6 +113,8 @@ import javax.inject.Singleton;
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
 
+    private static final String BACKGROUND_SERVICE_NAME = "BlockchainService";
+
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private final DexService dexService;
@@ -117,6 +122,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private FullTextSearchService fullTextSearchProvider;
 
+    private TaskDispatchManager taskDispatchManager;
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
@@ -172,7 +178,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return databaseManager.getDataSource();
     }
 
-    private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
+    //private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
 
 
     /**
@@ -285,7 +291,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
-                                   ShardImporter importer) {
+                                   ShardImporter importer,
+                                   TaskDispatchManager taskDispatchManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -301,37 +308,56 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
         this.shardImporter = importer;
+        this.taskDispatchManager = taskDispatchManager;
 
-        ThreadPool.runBeforeStart("BlockchainInit", () -> {
+        configureBackgroundTasks();
 
-            continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
-            trimService.init(blockchain.getHeight()); // try to perform all not performed trims
-            if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
-                scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
-            } else {
-                boolean rescan;
-                boolean validate;
-                int height;
-                try (Connection con = lookupDataSource().getConnection();
-                     Statement stmt = con.createStatement();
-                     ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
-                    rs.next();
-                    rescan = rs.getBoolean("rescan");
-                    validate = rs.getBoolean("validate");
-                    height = rs.getInt("height");
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-                if (rescan) {
-                    scan(height, validate);
-                }
-            }
-        }, false);
+    }
+
+    private void configureBackgroundTasks() {
+
+        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+
+        Task blockChainInitTask = Task.builder()
+                .name("BlockchainInit")
+                .task(() -> {
+                    continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
+                    trimService.init(blockchain.getHeight()); // try to perform all not performed trims
+                    if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
+                        scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
+                    } else {
+                        boolean rescan;
+                        boolean validate;
+                        int height;
+                        try (Connection con = lookupDataSource().getConnection();
+                             Statement stmt = con.createStatement();
+                             ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
+                            rs.next();
+                            rescan = rs.getBoolean("rescan");
+                            validate = rs.getBoolean("validate");
+                            height = rs.getInt("height");
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e.toString(), e);
+                        }
+                        if (rescan) {
+                            scan(height, validate);
+                        }
+                    }
+                }).build();
+
+        dispatcher.schedule(blockChainInitTask, TaskOrder.INIT);
+
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 250, TimeUnit.MILLISECONDS);
-        }
+            Task moreBlocksTask = Task.builder()
+                    .name("GetMoreBlocks")
+                    .delay(250)
+                    .initialDelay(250)
+                    .task(new GetMoreBlocksThread())
+                    .build();
 
+            dispatcher.schedule(moreBlocksTask, TaskOrder.TASK);
+        }
     }
 
     private FullTextSearchService lookupFullTextSearchProvider() {
@@ -1486,8 +1512,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         @Override
         public void run() {
-            Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-GetMoreBlocksThread");
+            /*Thread me = Thread.currentThread();
+            me.setName(me.getName()+"-GetMoreBlocksThread");*/
             try {
                 //
                 // Download blocks until we are up-to-date

@@ -24,6 +24,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -46,6 +49,7 @@ import javax.enterprise.inject.spi.CDI;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
+    private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
 
 
     public enum Event {
@@ -61,6 +65,7 @@ public final class Generator implements Comparable<Generator> {
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
     private static final byte[] fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
@@ -154,7 +159,12 @@ public final class Generator implements Comparable<Generator> {
 
     static void init() {
         if (!propertiesHolder.isLightClient()) {
-            ThreadPool.scheduleThread("GenerateBlocks", generateBlocksThread, 500, TimeUnit.MILLISECONDS);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("GenerateBlocks")
+                            .delay(500)
+                            .task(generateBlocksThread)
+                            .build(), TaskOrder.TASK);
         }        
     }
 

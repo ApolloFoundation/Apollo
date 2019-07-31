@@ -6,6 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.core.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -56,6 +60,8 @@ public class PeerHttpServer {
      private final String host;
      private final int idleTimeout;
      private static List<Integer> externalPorts=new ArrayList<>();
+
+     private TaskDispatchManager taskDispatchManager;
      
     public boolean isShareMyAddress() {
         return shareMyAddress;
@@ -81,8 +87,9 @@ public class PeerHttpServer {
     }
     
     @Inject
-    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
+    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
         this.upnp = upnp;
+        this.taskDispatchManager = taskDispatchManager;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort",DEFAULT_PEER_PORT);
         myPeerServerPortTLS = propertiesHolder.getIntProperty("apl.myPeerServerPortTLS", DEFAULT_PEER_PORT_TLS);
@@ -169,16 +176,22 @@ public class PeerHttpServer {
         }
     }
 
-    public void start(){
-               ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
-                try {
-                    peerServer.start();
-                    LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
-                } catch (Exception e) {
-                    LOG.error("Failed to start peer networking server", e);
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }, true);
+    public void start() {
+        Task peerUPnPInitTask = Task.builder()
+                .name("PeerUPnPInit")
+                .task(() -> {
+                    try {
+                        peerServer.start();
+                        LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                    } catch (Exception e) {
+                        LOG.error("Failed to start peer networking server", e);
+                        throw new RuntimeException(e.toString(), e);
+                    }
+                })
+                .build();
+
+        taskDispatchManager.newBackgroundDispatcher("PeerUPnPService")
+                .schedule(peerUPnPInitTask, TaskOrder.BEFORE);
     }
     
     public void shutdown(){

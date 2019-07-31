@@ -48,6 +48,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.core.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -138,6 +142,7 @@ public final class Peers {
 
     private static final Listeners<Peer, Event> listeners = new Listeners<>();
 
+    private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     /**
      * Map of ANNOUNCED address with port to peer. Contains only peers that are connectable
      * (has announced public address) 
@@ -149,7 +154,7 @@ public final class Peers {
      * be added to connectablePeers
      */     
     private static final ConcurrentMap<String, PeerImpl> inboundPeers = new ConcurrentHashMap<>();
-    public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
+    public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
 
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
 
@@ -161,6 +166,7 @@ public final class Peers {
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     
     public static int myPort;
 
@@ -202,7 +208,7 @@ public final class Peers {
             }
         }
 
-        final List<String> defaultPeers = blockchainConfig.getChain().getDefaultPeers();
+
         wellKnownPeers = blockchainConfig.getChain().getWellKnownPeers();
 
         List<String> knownBlacklistedPeersList = blockchainConfig.getChain().getBlacklistedPeers();
@@ -240,14 +246,6 @@ public final class Peers {
 
         fillMyPeerInfo();
 
-        final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
-
-        if (!propertiesHolder.isOffline()) {
-            ThreadPool.runBeforeStart("PeerLoader", new PeerLoaderThread(defaultPeers, unresolvedPeers, timeService), false);
-        }
-
-        ThreadPool.runAfterStart("UnresolvedPeersAnalyzer", new UnresolvedPeersAnalyzer(unresolvedPeers));
-
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
@@ -264,14 +262,49 @@ public final class Peers {
             }
         }), Account.Event.BALANCE);
 
+        configureBackgroundTasks();
+
+        peerHttpServer.start();
+    }
+
+    private static void configureBackgroundTasks() {
+        final List<String> defaultPeers = blockchainConfig.getChain().getDefaultPeers();
+        final List<Future<String>> unresolvedPeers = Collections.synchronizedList(new ArrayList<>());
+        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+
         if (!propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("PeerConnecting", new PeerConnectingThread(timeService), 20);
-            ThreadPool.scheduleThread("PeerUnBlacklisting", new PeerUnBlacklistingThread(timeService), 60);
+            Task peerLoaderTask = Task.builder()
+                    .name("PeerLoader")
+                    .task(new PeerLoaderThread(defaultPeers, unresolvedPeers, timeService))
+                    .build();
+
+            dispatcher.schedule(peerLoaderTask, TaskOrder.INIT);
+        }
+        dispatcher.schedule(Task.builder()
+                .name("UnresolvedPeersAnalyzer")
+                .task(new UnresolvedPeersAnalyzer(unresolvedPeers))
+                .build(), TaskOrder.AFTER);
+        if (!propertiesHolder.isOffline()) {
+            dispatcher.schedule(Task.builder()
+                    .name("PeerConnecting")
+                    .delay(20000)
+                    .task(new PeerConnectingThread(timeService))
+                    .build(),TaskOrder.TASK);
+
+            dispatcher.schedule(Task.builder()
+                    .name("PeerUnBlacklisting")
+                    .delay(60000)
+                    .task(new PeerUnBlacklistingThread(timeService))
+                    .build(), TaskOrder.TASK);
+
             if (getMorePeers) {
-                ThreadPool.scheduleThread("GetMorePeers", new GetMorePeersThread(timeService), 20);
+                dispatcher.schedule(Task.builder()
+                        .name("GetMorePeers")
+                        .delay(20000)
+                        .task(new GetMorePeersThread(timeService))
+                        .build(), TaskOrder.TASK);
             }
         }
-        peerHttpServer.start();
     }
 
     private static void fillMyPeerInfo() {

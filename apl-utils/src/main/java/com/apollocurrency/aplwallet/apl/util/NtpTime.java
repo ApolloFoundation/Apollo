@@ -15,6 +15,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -68,7 +70,8 @@ public class NtpTime {
     public void start() {
         setUpClient();
         Runnable timeUpdate = this::setTimeDrift;
-        ThreadPool.scheduleThread("NTP Update", timeUpdate, REFRESH_FREQUENCY, TimeUnit.SECONDS);
+        ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1, new ThreadFactoryImpl("NTP-Update"));
+        scheduledThreadPool.scheduleWithFixedDelay(timeUpdate, 0, REFRESH_FREQUENCY, TimeUnit.SECONDS);
     }
 
     private void setUpClient() {

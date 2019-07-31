@@ -20,9 +20,10 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class AplCoreRuntime {
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
     private RuntimeMode runtimeMode;
-    private final ScheduledExecutorService schedulerOfPeridics;
+    //private final ScheduledExecutorService schedulerOfPeridics;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
@@ -51,32 +52,32 @@ public class AplCoreRuntime {
     //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
-    public static final int HEALTH_CHECK_INTERVAL = 30; //seconds
+    public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
+
+
+    private TaskDispatchManager taskManager;
 
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
     public AplCoreRuntime() {
-        this.schedulerOfPeridics = Executors.newScheduledThreadPool(1);
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
     }
 
-    public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder) {
+    public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
         this.runtimeMode = runtimeMode;
-        schedulerOfPeridics.scheduleAtFixedRate(
-            new Runnable() {
-                @Override
-                public void run() {
-                    Thread.currentThread().setName("AplCoreRuntime-periodics");
-                    LOG.info(getNodeHealth());
+        this.taskManager = taskManager;
+        TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
+        taskDispatcher.schedule( Task.builder()
+                .name("Core-health")
+                .initialDelay(HEALTH_CHECK_INTERVAL * 2)
+                .delay(HEALTH_CHECK_INTERVAL)
+                .task(()-> { LOG.info(getNodeHealth());
                     aplAppStatus.clearFinished(1 * 60L); //10 min
-                }
-            },
-            HEALTH_CHECK_INTERVAL * 2,
-            HEALTH_CHECK_INTERVAL,
-            TimeUnit.SECONDS
-        );
+                })
+                .build());
+        taskDispatcher.dispatch();
     }
 
     private void findDeadLocks(StringBuilder sb) {

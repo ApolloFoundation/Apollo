@@ -38,6 +38,9 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
@@ -46,6 +49,7 @@ import org.slf4j.Logger;
 @Vetoed
 public class APIProxy {
     private static final Logger LOG = getLogger(APIProxy.class);
+    private static final String BACKGROUND_SERVICE_NAME = "APIProxyService";
 
     public static final Set<String> NOT_FORWARDED_REQUESTS;
     
@@ -58,6 +62,7 @@ public class APIProxy {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -113,7 +118,12 @@ public class APIProxy {
 
     static {
         if (!propertiesHolder.isOffline() && enableAPIProxy) {
-            ThreadPool.scheduleThread("APIProxyPeersUpdate", peersUpdateThread, 60);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("APIProxyPeersUpdate")
+                            .delay(60000)
+                            .task(peersUpdateThread)
+                            .build(), TaskOrder.TASK);
         }
     }
 

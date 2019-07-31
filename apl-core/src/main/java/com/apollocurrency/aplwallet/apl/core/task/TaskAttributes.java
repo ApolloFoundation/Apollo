@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.util.task;
+package com.apollocurrency.aplwallet.apl.core.task;
 
 /**
  * The attributes for background tasks
@@ -26,18 +26,26 @@ public interface TaskAttributes {
      */
     boolean isRecurring();
 
-
     /**
      *
-     * @return the thread name
+     * @return the task name
      */
     String getName();
 
     /**
      *
-     * @return the threads group name
+     * @return the initial delay in milliseconds
      */
-    String getGroup();
+    default int getInitialDelay(){
+        return 0;
+    }
 
+    /**
+     *
+     * @return the delay between starts in milliseconds
+     */
+    default int getDelay(){
+        return 0;
+    }
 
 }

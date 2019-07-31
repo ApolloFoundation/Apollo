@@ -60,28 +60,24 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import lombok.Setter;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
-    public final class AplCore {
+public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
@@ -104,6 +100,9 @@ import javax.inject.Inject;
     private DirProvider dirProvider;
     @Inject  @Setter
     private AplAppStatus aplAppStatus;
+    @Inject @Setter
+    private TaskDispatchManager taskDispatchManager;
+
     private String initCoreTaskID;
     
     public AplCore() {
@@ -132,7 +131,8 @@ import javax.inject.Inject;
         AddOns.shutdown();
         apiServer.shutdown();
         FundingMonitor.shutdown();
-        ThreadPool.shutdown();
+        LOG.info("Background tasks shutdown...");
+        taskDispatchManager.shutdown();
 
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
@@ -153,7 +153,6 @@ import javax.inject.Inject;
         }
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
-
 
         AplCore.shutdown = true;
     }
@@ -270,7 +269,9 @@ import javax.inject.Inject;
 
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
-                ThreadPool.start();
+
+                //start all background tasks
+                taskDispatchManager.dispatch();
 
                 try {
                     secureRandomInitThread.join(10000);
