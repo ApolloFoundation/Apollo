@@ -44,12 +44,13 @@ class TrimServiceTest {
     Event event = mock(Event.class);
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     DerivedTableInterface derivedTable = mock(DerivedTableInterface.class);
+    TimeService timeService = mock(TimeService.class);
     GlobalSync globalSync = spy(new GlobalSyncImpl());
 
 
     @BeforeEach
     void setUp() {
-        trimService = new TrimService(databaseManager, registry, globalSync, event, trimDao, 1000);
+        trimService = new TrimService(databaseManager, registry, globalSync, timeService, event, trimDao, 1000);
     }
 
     @Test
@@ -80,6 +81,7 @@ class TrimServiceTest {
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
         doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
+        doReturn(7300).when(timeService).getEpochTime();
 
         trimService.init(5999);
 
@@ -90,7 +92,8 @@ class TrimServiceTest {
         verify(trimDao).save(new TrimEntry(1L, 5000, true));
         verify(dataSource).begin();
         verify(dataSource).commit(true);
-        verify(firedEvent).fire(new TrimData(4000, 5000));
+        verify(firedEvent).fire(new TrimData(4000, 5000, 7200));
+        verify(timeService).getEpochTime();
         verify(derivedTable).trim(4000);
     }
 
@@ -103,6 +106,8 @@ class TrimServiceTest {
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
         mockTrimEntries(8000, 10000, 1000);
+        doReturn(8000).when(timeService).getEpochTime();
+
         trimService.init(10500);
 
         verify(globalSync, times(6)).readLock();
@@ -110,9 +115,10 @@ class TrimServiceTest {
         verify(trimDao, times(3)).clear();
         verify(dataSource, times(3)).begin();
         verify(dataSource, times(3)).commit(true);
-        verify(firedEvent).fire(new TrimData(7000, 8000));
-        verify(firedEvent).fire(new TrimData(8000, 9000));
-        verify(firedEvent).fire(new TrimData(9000, 10000));
+        verify(firedEvent).fire(new TrimData(7000, 8000, 7200));
+        verify(firedEvent).fire(new TrimData(8000, 9000, 7200));
+        verify(firedEvent).fire(new TrimData(9000, 10000, 7200));
+        verify(timeService, times(3)).getEpochTime();
         verify(derivedTable, times(6)).trim(anyInt());
     }
 
@@ -124,6 +130,7 @@ class TrimServiceTest {
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(7199).when(timeService).getEpochTime();
         mockTrimEntries(10000, 11000, 1000);
 
         trimService.init(11999);
@@ -133,27 +140,30 @@ class TrimServiceTest {
         verify(trimDao, times(2)).clear();
         verify(dataSource, times(2)).begin();
         verify(dataSource, times(2)).commit(true);
-        verify(firedEvent).fire(new TrimData(9000, 10000));
-        verify(firedEvent).fire(new TrimData(10000, 11000));
+        verify(firedEvent).fire(new TrimData(9000, 10000, 3600));
+        verify(firedEvent).fire(new TrimData(10000, 11000, 3600));
         verify(derivedTable, times(2)).trim(anyInt());
+        verify(derivedTable, times(2)).prune(3600);
     }
 
     private void mockTrimEntries(int initialHeight, int finishHeight, int step) {
-        for (int i = initialHeight; i <= finishHeight; i+= step) {
+        for (int i = initialHeight; i <= finishHeight; i += step) {
             doReturn(new TrimEntry(1L, i, false)).when(trimDao).save(new TrimEntry(null, i, false));
         }
     }
-        @Test
+
+    @Test
     void testDoTrimDerivedTablesAndTriggerAsyncEvent() {
         Event firedEvent = mock(Event.class);
-            doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
+        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Async>() {});
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
+        doReturn(8100).when(timeService).getEpochTime();
 
-            DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000, true));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000, true));
 
         verify(derivedTable).trim(4000);
-        verify(firedEvent).fire(new TrimData(4000, 5000));
+        verify(firedEvent).fire(new TrimData(4000, 5000, 7200));
     }
 
     @Test
@@ -171,12 +181,13 @@ class TrimServiceTest {
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Async>() {});
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
+        doReturn(3500).when(timeService).getEpochTime();
 
         trimService.trimDerivedTables(5000, true);
 
         assertTrue(databaseManager.getDataSource().isInTransaction());
         verify(derivedTable).trim(4000);
-        verify(firedEvent).fire(new TrimData(4000, 5000));
+        verify(firedEvent).fire(new TrimData(4000, 5000, 0));
     }
 
 

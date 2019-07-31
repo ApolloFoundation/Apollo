@@ -132,7 +132,8 @@ public class TrimService {
     public int doTrimDerivedTablesOnHeight(int height) {
         TransactionalDataSource dataSource = dbManager.getDataSource();
         long onlyTrimTime = 0;
-        int pruningTime = timeService.getEpochTime() - timeService.getEpochTime() % DEFAULT_PRUNABLE_UPDATE_PERIOD;
+        int epochTime = timeService.getEpochTime();
+        int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
             globalSync.readLock();
             try {

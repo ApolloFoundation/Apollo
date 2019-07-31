@@ -25,7 +25,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 @Slf4j
+@Singleton
 public class ShardPrunableZipHashCalculator {
     private DerivedTablesRegistry registry;
     private Zip zip;
@@ -34,6 +38,16 @@ public class ShardPrunableZipHashCalculator {
     private BlockchainConfig blockchainConfig;
     private DirProvider dirProvider;
     private int lastPruningTime = 0;
+
+    @Inject
+    public ShardPrunableZipHashCalculator(DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider) {
+        this.registry = registry;
+        this.zip = zip;
+        this.databaseManager = databaseManager;
+        this.shardDao = shardDao;
+        this.blockchainConfig = blockchainConfig;
+        this.dirProvider = dirProvider;
+    }
 
     public void onTrimDone(@Observes @Async TrimData trimData) {
         tryRecalculatePrunableArchiveHashes(trimData.getPruningTime());

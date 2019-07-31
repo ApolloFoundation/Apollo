@@ -13,10 +13,14 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class PrunableArchiveMigrator {
     private static final String MIGRATE_OPTION = "prunable-shard-migration-finished";
     private static final String CURRENT_SHARD_OPTION = "current-shard-for-migration";
@@ -26,6 +30,16 @@ public class PrunableArchiveMigrator {
     private BlockchainConfig blockchainConfig;
     private Zip zip;
     private DerivedTablesRegistry registry;
+
+    @Inject
+    public PrunableArchiveMigrator(ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry) {
+        this.shardDao = shardDao;
+        this.optionDAO = optionDAO;
+        this.dirProvider = dirProvider;
+        this.blockchainConfig = blockchainConfig;
+        this.zip = zip;
+        this.registry = registry;
+    }
 
     public void migrate() {
         String migrateOption = optionDAO.get(MIGRATE_OPTION);
@@ -46,7 +60,10 @@ public class PrunableArchiveMigrator {
                     Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), blockchainConfig.getChain().getChainId()));
                     String tempDirectoryString = tempDirectory.toAbsolutePath().toString();
                     zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
-                    byte[] hash = zip.compressAndHash("shard-" + shard.getShardId() + ".zip", tempDirectoryString, 0L, (dir, name) -> prunableTables.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    String zipName = "shard-" + shard.getShardId() + ".zip";
+                    Path newArchive = tempDirectory.resolve(zipName);
+                    byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !prunableTables.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
                     shardDao.updateShard(shard);
 

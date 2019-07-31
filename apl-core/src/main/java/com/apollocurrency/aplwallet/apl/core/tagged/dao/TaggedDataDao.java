@@ -73,7 +73,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     }
 
     @Override
-    protected void prune() {
+    public void prune(int time) {
         if (blockchainConfig.isEnablePruning()) {
             try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
@@ -95,7 +95,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
                 throw new RuntimeException(e.toString(), e);
             }
         }
-        super.prune();
+        super.prune(time);
     }
 
     @Override
