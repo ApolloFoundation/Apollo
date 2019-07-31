@@ -22,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -80,6 +80,7 @@ import javax.inject.Singleton;
 public class ShardEngineImpl implements ShardEngine {
     private static final Logger log = getLogger(ShardEngineImpl.class);
 
+    private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600; // one hour
     private MigrateState state = MigrateState.INIT;
     private DatabaseManager databaseManager;
     private TrimService trimService;
@@ -92,7 +93,7 @@ public class ShardEngineImpl implements ShardEngine {
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
     private String durableStatusTaskId;
-    private EpochTime epochTime;
+    private TimeServiceImpl timeService;
 
 
     @Inject
@@ -102,7 +103,7 @@ public class ShardEngineImpl implements ShardEngine {
                            ShardRecoveryDaoJdbc shardRecoveryDao,
                            CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           EpochTime epochTime,
+                           TimeServiceImpl timeService,
                            ShardDao shardDao,
                            Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
@@ -114,7 +115,7 @@ public class ShardEngineImpl implements ShardEngine {
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
-        this.epochTime = Objects.requireNonNull(epochTime, "epochTime is NULL");
+        this.timeService = Objects.requireNonNull(timeService, "epochTime is NULL");
     }
 
     /**
@@ -428,7 +429,7 @@ public class ShardEngineImpl implements ShardEngine {
         state = CSV_EXPORT_STARTED;
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
-            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
+            int pruningTime = trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 Files.list(csvExporter.getDataExportPath())
                         .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
@@ -448,9 +449,9 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id", pruningTime);
                         default:
-                            return exportDerivedTable(tableInfo, paramInfo);
+                            return exportDerivedTable(tableInfo, paramInfo, pruningTime);
                     }
                 });
                 incrementDurableTaskUpdateByPercent(0.7);
@@ -467,12 +468,13 @@ public class ShardEngineImpl implements ShardEngine {
         return state;
     }
 
-    private void trimDerivedTables(int height) {
+    private int trimDerivedTables(int height) {
         databaseManager.getDataSource().begin();
         try {
-            trimService.doTrimDerivedTablesOnHeight(height);
+            return trimService.doTrimDerivedTablesOnHeight(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
+            throw new RuntimeException(e);
         } finally {
             databaseManager.getDataSource().commit();
         }
@@ -499,7 +501,7 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
-    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
+    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort, int pruningTime) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
         if (derivedTable != null) {
             if (!info.isPrunable()) {
@@ -509,8 +511,7 @@ public class ShardEngineImpl implements ShardEngine {
                     return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
                 }
             } else {
-                int epochTime = this.epochTime.getEpochTime();
-                return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), epochTime - epochTime % 3600, paramInfo.getCommitBatchSize());
+                return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
             }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
@@ -518,8 +519,8 @@ public class ShardEngineImpl implements ShardEngine {
         }
     }
 
-    private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo) {
-        return exportDerivedTable(tableInfo, paramInfo, null, null);
+    private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo, int pruningTime) {
+        return exportDerivedTable(tableInfo, paramInfo, null, null, pruningTime);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
@@ -686,78 +687,6 @@ public class ShardEngineImpl implements ShardEngine {
         durableTaskUpdateByState(state, null, null);
         return state;
     }
-//
-//    private void savePrevBlockData(PrevBlockData prevBlockData, long shardId) {
-//        try(Connection con = databaseManager.getDataSource().getConnection();
-//        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ?, block_timestamps = ?, block_timeouts = ? WHERE shard_id = ?")) {
-//            DbUtils.setArray(pstmt, 1, prevBlockData.getGeneratorIds());
-//            DbUtils.setArray(pstmt, 2, prevBlockData.getPrevBlockTimestamps());
-//            DbUtils.setArray(pstmt, 3, prevBlockData.getPrevBlockTimeouts());
-//            pstmt.setLong(4, shardId);
-//            pstmt.executeUpdate();
-//        }
-//        catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    private boolean updateShardRecord(CommandParamInfo paramInfo,
-//                                      TransactionalDataSource sourceDataSource,
-//                                      MigrateState recoveryStateUpdateInto,
-//                                      ShardState shardState) {
-//        ShardRecovery recovery;
-//        String sqlUpdate = null;
-//        // we want update SHARD either 'merkle tree hash' or 'zip CRC'
-//        if (paramInfo.getShardHash() != null) {
-//            if (!paramInfo.isZipCrcStored()) {
-//                // merkle tree hash
-//                sqlUpdate = "UPDATE SHARD SET SHARD_HASH = ?, SHARD_STATE = ? WHERE SHARD_ID = ?";
-//            } else {
-//                // zip crc hash
-//                sqlUpdate = "UPDATE SHARD SET ZIP_HASH_CRC = ?, SHARD_STATE = ? WHERE SHARD_ID = ?";
-//            }
-//        }
-//        if (sqlUpdate == null) {
-//            // update only state
-//            sqlUpdate = "UPDATE SHARD SET SHARD_STATE = ? WHERE SHARD_ID = ?";
-//        }
-////        try (Connection sourceConnect = sourceDataSource.begin();
-//        try (Connection sourceConnect = sourceDataSource.getConnection();
-//             PreparedStatement preparedInsertStatement = sourceConnect.prepareStatement(sqlUpdate)) {
-//            int result = 0;
-//            // skip updating SHARD record on latest step
-//            // assign either 'merkle tree hash' OR 'zip CRC'
-//            int i = 1;
-//            if (paramInfo.getShardHash() != null) {
-//                preparedInsertStatement.setBytes(i++, paramInfo.getShardHash()); // merkle or zip crc}
-//            }
-//            preparedInsertStatement.setLong(i++, shardState.getValue()); // 100% full shard is present on current node
-//            preparedInsertStatement.setLong(i, paramInfo.getShardId());
-//            result = preparedInsertStatement.executeUpdate();
-//            log.debug("Shard record is updated result = '{}'", result);
-//            if (recoveryStateUpdateInto == COMPLETED) {
-//                // remove recovery data when process is completed
-//                recovery = shardRecoveryDao.getLatestShardRecovery(sourceConnect);
-//                result = shardRecoveryDao.hardDeleteShardRecovery(sourceConnect, recovery.getShardRecoveryId());
-//                log.debug("Shard Recovery is deleted = '{}'", result);
-//            }
-//            sourceConnect.commit();
-//        }
-//        catch (Exception e) {
-//            log.error("Error creating Shard record in main db", e);
-//            sourceDataSource.rollback(false);
-//            state = MigrateState.FAILED;
-//            return true;
-//        }
-//        finally {
-///*
-//            if (sourceDataSource != null) {
-//                sourceDataSource.commit();
-//            }
-//*/
-//        }
-//        return false;
-//    }
 
     /**
      * Update previous info with table name just processed in loop

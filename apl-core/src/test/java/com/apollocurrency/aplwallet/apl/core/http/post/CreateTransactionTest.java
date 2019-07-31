@@ -4,9 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -31,16 +35,13 @@ import org.mockito.Mockito;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @EnableWeld
 //TODO fix this tasks.
 @Disabled
 class CreateTransactionTest {
 
     private BlockchainImpl blockchain = Mockito.mock(BlockchainImpl.class);
-    private EpochTime timeService = Mockito.mock(EpochTime.class);
+    private TimeServiceImpl timeService = Mockito.mock(TimeServiceImpl.class);
     private Block block = Mockito.mock(Block.class);
 
     private int lastBlockHeight = 1000;
@@ -53,7 +54,7 @@ class CreateTransactionTest {
             TransactionDaoImpl.class, TransactionProcessor.class,
             TransactionalDataSource.class)
             .addBeans(MockBean.of(blockchain, BlockchainImpl.class))
-            .addBeans(MockBean.of(timeService, EpochTime.class))
+            .addBeans(MockBean.of(timeService, TimeServiceImpl.class))
             .build();
 
     @BeforeEach

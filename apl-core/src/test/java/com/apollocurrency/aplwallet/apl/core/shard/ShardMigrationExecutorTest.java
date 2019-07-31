@@ -31,8 +31,8 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -46,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
@@ -146,8 +145,8 @@ class ShardMigrationExecutorTest {
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
-            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class, AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
+            ShardEngineImpl.class, CsvExporterImpl.class, ZipImpl.class, AplAppStatus.class,
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))

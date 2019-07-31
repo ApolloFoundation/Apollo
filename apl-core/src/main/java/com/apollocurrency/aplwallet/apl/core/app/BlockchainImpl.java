@@ -62,7 +62,7 @@ public class BlockchainImpl implements Blockchain {
     private BlockDao blockDao;
     private TransactionDao transactionDao;
     private BlockchainConfig blockchainConfig;
-    private EpochTime timeService;
+    private TimeServiceImpl timeService;
     private PropertiesHolder propertiesHolder;
     private TransactionIndexDao transactionIndexDao;
     private BlockIndexDao blockIndexDao;
@@ -71,7 +71,7 @@ public class BlockchainImpl implements Blockchain {
     private ShardRecoveryDao shardRecoveryDao;
 
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeServiceImpl timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao,
                           DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
         this.blockDao = blockDao;

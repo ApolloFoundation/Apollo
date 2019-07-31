@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
@@ -42,7 +42,7 @@ class PrunableMessageTableTest {
             PrunableMessageTable.class,
             DerivedDbTablesRegistryImpl.class,
             FullTextConfigImpl.class,
-            EpochTime.class,
+            TimeServiceImpl.class,
             NtpTime.class,
             BlockchainConfig.class,
             PropertiesHolder.class

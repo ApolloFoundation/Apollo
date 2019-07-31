@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
@@ -32,13 +32,13 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    private EpochTime epochTime;
+    private TimeServiceImpl timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService, EpochTime epochTime ) {
+    DexMatcherServiceImpl( DexService dexService, TimeServiceImpl timeService) {
         this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
-        this.epochTime =  Objects.requireNonNull( epochTime,"epochTime is null");        
+        this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }
     
     /**
@@ -137,7 +137,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
         OfferType counterOfferType = createdOffer.getType().isSell() ? OfferType.BUY : OfferType.SELL;
 
-        Integer currentTime = epochTime.getEpochTime();        
+        Integer currentTime = timeService.getEpochTime();
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
         

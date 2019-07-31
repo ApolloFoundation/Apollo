@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -37,7 +36,6 @@ import javax.enterprise.inject.spi.CDI;
 public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     private static final Logger LOG = getLogger(PrunableDbTable.class);
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
     public  PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
 
     protected PrunableDbTable(String table, KeyFactory<T> dbKeyFactory) {
@@ -49,17 +47,12 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     }
 
     @Override
-    public final void trim(int height) {
-        prune();
-        super.trim(height);
-    }
-
-    protected void prune() {
+    public void prune(int time) {
         if (blockchainConfig.isEnablePruning()) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-                pstmt.setInt(1, timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime());
+                pstmt.setInt(1, time - blockchainConfig.getMaxPrunableLifetime());
                 int deleted;
                 do {
                     deleted = pstmt.executeUpdate();
@@ -72,11 +65,6 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
                 throw new RuntimeException(e.toString(), e);
             }
         }
-    }
-
-    @Override
-    public MinMaxDbId getMinMaxDbId(int height) {
-        return getMinMaxDbId(height, timeService.getEpochTime());
     }
 
     public MinMaxDbId getMinMaxDbId(int height, int currentTime) {

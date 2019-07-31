@@ -36,7 +36,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -120,7 +119,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
     private DatabaseManager databaseManager;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));

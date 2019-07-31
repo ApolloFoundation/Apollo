@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -58,7 +58,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUG
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    protected EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    protected TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
     private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",

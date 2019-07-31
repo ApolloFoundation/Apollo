@@ -85,7 +85,7 @@ class BlockchainTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(blockchainTestDbPath,"mainDb", "db/shard-main-data.sql");
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    EpochTime epochTime = mock(EpochTime.class);
+    TimeServiceImpl timeService = mock(TimeServiceImpl.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @WeldSetup
@@ -93,7 +93,7 @@ class BlockchainTest {
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(epochTime, EpochTime.class))
+            .addBeans(MockBean.of(timeService, TimeServiceImpl.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -853,7 +853,7 @@ class BlockchainTest {
     void testGetTransactionsExcludingExpiredPrunable() {
         blockchain.setLastBlock(btd.BLOCK_13);
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset + 1).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);
@@ -866,7 +866,7 @@ class BlockchainTest {
         blockchain.setLastBlock(btd.BLOCK_13);
         doReturn(true).when(propertiesHolder).INCLUDE_EXPIRED_PRUNABLE();
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset + 1).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);
@@ -879,7 +879,7 @@ class BlockchainTest {
         blockchain.setLastBlock(btd.BLOCK_13);
         doReturn(true).when(propertiesHolder).INCLUDE_EXPIRED_PRUNABLE();
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);

@@ -55,7 +55,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -113,7 +113,7 @@ public final class PeerImpl implements Peer {
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
-    private volatile EpochTime timeService;
+    private volatile TimeServiceImpl timeService;
     private final PropertiesHolder propertiesHolder;
     
     private PeerInfo pi = new PeerInfo();
@@ -124,7 +124,7 @@ public final class PeerImpl implements Peer {
             String announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
-            EpochTime timeService,
+            TimeServiceImpl timeService,
             PropertiesHolder propertiesHolder
     ) {
         //TODO: remove Json.org entirely from P2P

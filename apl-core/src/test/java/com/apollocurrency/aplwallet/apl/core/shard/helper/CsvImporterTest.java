@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -43,8 +43,6 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -104,7 +102,7 @@ class CsvImporterTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            JdbiHandleFactory.class, ShardDaoJdbcImpl.class,
+            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
@@ -117,7 +115,7 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
@@ -128,8 +126,6 @@ class CsvImporterTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
 
-    @Inject
-    private ShardDaoJdbc daoJdbc;
     @Inject
     private AplAppStatus aplAppStatus;
     CsvImporter csvImporter;

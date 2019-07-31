@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
-    private EpochTime timeService;
+    private TimeServiceImpl timeService;
     private final List<Future<String>> unresolvedPeers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, EpochTime timeService) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeServiceImpl timeService) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;

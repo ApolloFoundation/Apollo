@@ -35,7 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
@@ -57,7 +57,7 @@ public class APIProxy {
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;

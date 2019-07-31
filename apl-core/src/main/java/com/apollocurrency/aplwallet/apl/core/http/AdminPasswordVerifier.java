@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
@@ -33,11 +33,11 @@ public class AdminPasswordVerifier {
     public static String adminPassword="";
     public final boolean disableAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
-    private final  EpochTime timeService;
+    private final TimeServiceImpl timeService;
     private final String forwardedForHeader;
     
     @Inject
-    public AdminPasswordVerifier(PropertiesHolder propertiesHolder, EpochTime timeService) {
+    public AdminPasswordVerifier(PropertiesHolder propertiesHolder, TimeServiceImpl timeService) {
         this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
         

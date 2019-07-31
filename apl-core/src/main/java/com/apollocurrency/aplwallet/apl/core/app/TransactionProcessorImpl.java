@@ -87,7 +87,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
 

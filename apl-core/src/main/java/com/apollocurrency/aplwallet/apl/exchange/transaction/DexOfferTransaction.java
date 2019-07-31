@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOfferAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -35,7 +35,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION
 public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
-    private EpochTime epochTime = CDI.current().select(EpochTime.class).get();
+    private TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     @Override
     public byte getSubtype() {
@@ -97,7 +97,7 @@ public class DexOfferTransaction extends DEX {
         }
 
 
-        Integer currentTime = epochTime.getEpochTime();
+        Integer currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
             throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }

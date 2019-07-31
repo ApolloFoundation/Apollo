@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -64,7 +64,7 @@ public class ShardHashCalculatorImplTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class,
+    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class,
             JdbiHandleFactory.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),

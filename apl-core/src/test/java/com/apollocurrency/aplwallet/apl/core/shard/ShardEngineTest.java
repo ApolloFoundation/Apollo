@@ -35,8 +35,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -52,8 +52,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
@@ -138,10 +136,9 @@ class ShardEngineTest {
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     private DirProvider dirProvider = mock(DirProvider.class);
-    private ShardDaoJdbc shardDaoJdbc = new ShardDaoJdbcImpl();
     private Zip zip = spy(new ZipImpl());
 
-    private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, shardDaoJdbc));
+    private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath));
     {
         // return the same dir for both CDI components
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
@@ -165,11 +162,10 @@ class ShardEngineTest {
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
-            .addBeans(MockBean.of(shardDaoJdbc, ShardDaoJdbc.class, ShardDaoJdbcImpl.class))
             .addBeans(MockBean.of(csvExporter, CsvExporter.class))
             .addBeans(MockBean.of(zip, Zip.class))
             .addBeans(dataExportDir)
-            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 

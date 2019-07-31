@@ -198,6 +198,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         }
     }
 
+    @Override
+    public void prune(int time) {}
+
     protected MinMaxDbId getMinMaxDbId(PreparedStatement pstmt) throws SQLException {
         MinMaxDbId result = null;
         try (ResultSet rs = pstmt.executeQuery()) {

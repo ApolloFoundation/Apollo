@@ -24,7 +24,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WHITELIST;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -122,7 +122,7 @@ public final class ParameterParser {
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    protected static TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     private static final int DEFAULT_LAST_INDEX = 250;
 

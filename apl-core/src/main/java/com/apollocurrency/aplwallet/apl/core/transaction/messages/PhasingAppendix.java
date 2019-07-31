@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -244,7 +244,7 @@ public class PhasingAppendix extends AbstractAppendix {
         }
 
         lookupBlockchain();
-        EpochTime timeService = CDI.current().select(EpochTime.class).get();
+        TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
         Block lastBlock = blockchain.getLastBlock();
         int lastBlockHeight = lastBlock.getHeight();
         int currentTime = timeService.getEpochTime();

@@ -27,11 +27,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.InetSocketAddress;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
@@ -54,10 +53,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.channels.ClosedChannelException;
-import java.util.UUID;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -79,7 +76,7 @@ public final class PeerServlet extends WebSocketServlet {
     @Inject
     private BlockchainProcessor blockchainProcessor;
     @Inject
-    private volatile EpochTime timeService;   
+    private volatile TimeServiceImpl timeService;
     @Inject
     private ShardDao shardDao;
     @Inject
@@ -98,7 +95,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (timeService ==null) timeService = CDI.current().select(TimeServiceImpl.class).get();
         if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     

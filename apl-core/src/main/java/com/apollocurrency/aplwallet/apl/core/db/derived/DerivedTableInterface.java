@@ -31,6 +31,8 @@ public interface DerivedTableInterface<T> {
 
     void createSearchIndex(Connection con) throws SQLException;
 
+    void prune(int time);
+
     void insert(T t);
 
     /**

@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
-    private EpochTime timeService;
+    private TimeServiceImpl timeService;
      
-    public PeerConnectingThread(EpochTime timeService) {
+    public PeerConnectingThread(TimeServiceImpl timeService) {
         this.timeService=timeService;
     }
 

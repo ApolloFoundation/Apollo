@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
@@ -43,12 +42,10 @@ public class CsvExporterImpl implements CsvExporter {
     public static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
-    private ShardDaoJdbc shardDaoJdbc;
-
     private Set<String> excludeTables; // skipped tables
 
     @Inject
-    public CsvExporterImpl(DatabaseManager databaseManager, @Named("dataExportDir") Path dataExportPath, ShardDaoJdbc shardDaoJdbc) {
+    public CsvExporterImpl(DatabaseManager databaseManager, @Named("dataExportDir") Path dataExportPath) {
         Objects.requireNonNull(dataExportPath, "exportDirProducer 'data Path' is NULL");
         this.dataExportPath = dataExportPath;
         try {
@@ -61,7 +58,6 @@ public class CsvExporterImpl implements CsvExporter {
         }
         //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.shardDaoJdbc = Objects.requireNonNull(shardDaoJdbc, "shardDaoJdbc is NULL");
         this.excludeTables = Set.of("genesis_public_key");
     }
 
@@ -119,21 +115,27 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM shard WHERE shard_id > ? AND shard_id < ? ORDER BY shard_id LIMIT ?");
+                     "SELECT * FROM shard WHERE shard_id > ? AND shard_height <= ? ORDER BY shard_id LIMIT ?");
+             PreparedStatement countPstmt = con.prepareStatement("SELECT count(*) FROM shard WHERE shard_height <= ?");
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("SHARD_STATE"))
         ) {
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count            // select Min, Max DbId + rows count
-            MinMaxDbId minMaxDbId = shardDaoJdbc.getMinMaxId(dataSource, targetHeight);
-            log.debug("Table = {}, Min/Max = {} at height = {}", ShardConstants.SHARD_TABLE_NAME, minMaxDbId, targetHeight);
+            ResultSet countRs = countPstmt.executeQuery();
+            countRs.next();
+            int count = countRs.getInt(1);
+            log.debug("Table = {},count - {} at height = {}", ShardConstants.SHARD_TABLE_NAME, count, targetHeight);
 
             // process non empty tables only
-            if (minMaxDbId.getCount() > 0) {
+            if (count > 0) {
+                long from = 0;
                 do { // do exporting into csv with pagination
-                    CsvExportData csvExportData = csvWriter.append(ShardConstants.SHARD_TABLE_NAME,
-                            shardDaoJdbc.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
+                    pstmt.setLong(1, from);
+                    pstmt.setInt(2, targetHeight);
+                    pstmt.setInt(3, batchLimit);
+                    CsvExportData csvExportData = csvWriter.append(ShardConstants.SHARD_TABLE_NAME, pstmt.executeQuery());
                     processedCount = csvExportData.getProcessCount();
                     if (processedCount > 0) {
-                        minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("SHARD_ID"));
+                        from = (Long) csvExportData.getLastRow().get("SHARD_ID");
                     }
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
@@ -307,7 +309,7 @@ public class CsvExporterImpl implements CsvExporter {
         return processCount;
     }
 
-    private long exportTable(String table, String condition, MinMaxDbId minMaxDbId, Set<String> excludedColumns, StatementConfigurer statementConfigurer) {
+    private long exportTable(String table, String condition, MinMaxDbId minMaxDbId, Set<String> excludedColumns, StatementConfigurator statementConfigurator) {
         Objects.requireNonNull(condition, "Condition sql should not be null");
         Objects.requireNonNull(table, "Table should not be null");
         Objects.requireNonNull(minMaxDbId, "MinMaxDbId should not be null");
@@ -334,7 +336,7 @@ public class CsvExporterImpl implements CsvExporter {
             // process non empty tables only
             if (minMaxDbId.getCount() > 0) {
                 do { // do exporting into csv with pagination
-                    statementConfigurer.configure(pstmt, minMaxDbId, totalCount);
+                    statementConfigurator.configure(pstmt, minMaxDbId, totalCount);
                     CsvExportData csvExportData = csvWriter.append(table, pstmt.executeQuery());
                     processedCount = csvExportData.getProcessCount();
                     if (processedCount > 0) {
@@ -355,7 +357,7 @@ public class CsvExporterImpl implements CsvExporter {
 
         return totalCount;
     }
-    private interface StatementConfigurer {
+    private interface StatementConfigurator {
         void configure(PreparedStatement pstmt, MinMaxDbId minMaxDbId, int totalProcessed) throws SQLException;
     }
 }

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import javax.inject.Inject;
 import org.json.simple.JSONObject;
@@ -43,7 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
     private final PropertiesHolder propertiesHolder;
     
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;

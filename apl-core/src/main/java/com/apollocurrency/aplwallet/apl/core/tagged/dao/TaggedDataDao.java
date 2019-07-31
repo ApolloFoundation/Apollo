@@ -4,15 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
@@ -36,7 +34,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
     private BlockchainConfig blockchainConfig;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     private static final String DB_TABLE = "tagged_data";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";

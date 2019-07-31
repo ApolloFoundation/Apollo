@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -51,7 +51,7 @@ class PrunableMessageServiceTest {
             DerivedDbTablesRegistryImpl.class,
             PrunableMessageServiceImpl.class,
             FullTextConfigImpl.class,
-            EpochTime.class,
+            TimeServiceImpl.class,
             NtpTime.class,
             BlockchainConfig.class,
             PublicKeyTable.class,

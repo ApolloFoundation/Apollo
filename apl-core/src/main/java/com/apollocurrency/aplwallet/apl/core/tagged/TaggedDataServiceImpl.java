@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -39,7 +39,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private DataTagDao dataTagDao;
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 

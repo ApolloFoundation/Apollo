@@ -87,7 +87,7 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private Time time;
+    private TimeService time;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -106,7 +106,7 @@ public final class AplCore {
     private String initCoreTaskID;
     
     public AplCore() {
-        time = CDI.current().select(EpochTime.class).get();
+        time = CDI.current().select(TimeServiceImpl.class).get();
     }
 
     public static boolean isShutdown() {

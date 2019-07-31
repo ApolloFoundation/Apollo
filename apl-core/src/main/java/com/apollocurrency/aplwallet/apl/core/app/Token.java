@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public final class Token {
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     public static String generateToken(byte[] keySeed, String messageString) {
         return generateToken(keySeed, Convert.toBytes(messageString));
