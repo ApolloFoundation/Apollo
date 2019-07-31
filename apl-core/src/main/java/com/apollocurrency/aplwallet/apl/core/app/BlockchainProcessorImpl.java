@@ -188,8 +188,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         @Override
         public void run() {
-            Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-RestorePrunableDataTask");
             Peer peer = null;
             try {
                 //
@@ -1512,8 +1510,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         @Override
         public void run() {
-            /*Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-GetMoreBlocksThread");*/
             try {
                 //
                 // Download blocks until we are up-to-date

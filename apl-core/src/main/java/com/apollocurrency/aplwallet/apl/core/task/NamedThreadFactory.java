@@ -47,9 +47,7 @@ public class NamedThreadFactory implements ThreadFactory {
             if (t.getPriority() != Thread.NORM_PRIORITY)
                 t.setPriority(Thread.NORM_PRIORITY);
 
-        } catch (Exception ignored) {
-            // Doesn't matter even if failed to set.
-        }
+        } catch (Exception ignored) { }
 
         return t;
     }

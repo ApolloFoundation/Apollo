@@ -68,8 +68,6 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      */
     @Override
     public List<BlockImpl> call() {
-        Thread me = Thread.currentThread();
-        me.setName(me.getName()+"-GetNextBlocksTask");
         requestCount++;
         //
         // Build the block request list

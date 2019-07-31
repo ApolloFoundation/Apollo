@@ -227,8 +227,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return new Runnable() {
             @Override
             public void run() {
-                Thread me = Thread.currentThread();
-                me.setName(me.getName()+"-createRemoveUnconfirmedTransactions");
                 try {
                     try {
                         if (lookupBlockchainProcessor().isDownloading()) {
@@ -275,8 +273,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Runnable rebroadcastTransactionsThread = new Runnable() {
         @Override
         public void run() {
-            Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-rebroadcastTransactions");           
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
@@ -310,8 +306,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Runnable processTransactionsThread = new Runnable() {
         @Override
         public void run() {
-            Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-processTransactions");          
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {
@@ -355,8 +349,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final Runnable processWaitingTransactionsThread = new Runnable() {
         @Override
         public void run() {
-            Thread me = Thread.currentThread();
-            me.setName(me.getName()+"-processWaitingTransactions");             
             try {
                 try {
                     if (lookupBlockchainProcessor().isDownloading()) {

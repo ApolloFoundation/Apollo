@@ -36,7 +36,7 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     public AbstractTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name, boolean disabled) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
-        this.serviceName = Objects.requireNonNull(name, "Service name is NULL");
+        this.serviceName = APL_BKG_WORKERS+"-"+Objects.requireNonNull(name, "Service name is NULL");
         this.disabled = disabled;
         if (disabled) {
             log.warn("Thread service {} is disabled in configuration.", serviceName);
