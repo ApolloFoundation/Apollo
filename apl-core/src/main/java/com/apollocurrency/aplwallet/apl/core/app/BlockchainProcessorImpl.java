@@ -66,6 +66,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.model.ApprovedAndConfirmationTx;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
@@ -898,11 +899,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new BlockchainProcessor.TransactionNotAcceptedException(e, transaction);
                 }
             }
-            SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            SortedSet<ApprovedAndConfirmationTx> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
-                        possiblyApprovedTransactions.add(phasedTransaction);
+                        possiblyApprovedTransactions.add(new ApprovedAndConfirmationTx(phasedTransaction, transaction));
                     }
                 });
                 if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
@@ -911,7 +912,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
                         if (phasingPoll.allowEarlyFinish() &&
                                 (phasingPoll.getFinishHeight() > block.getHeight() || phasingPoll.getFinishTime() > block.getTimestamp())) {
-                            possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
+                            Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
+                            possiblyApprovedTransactions.add(new ApprovedAndConfirmationTx(approvedTx, transaction));
                         }
                     });
                 }
@@ -924,19 +926,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
+                                Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
+                                possiblyApprovedTransactions.add(new ApprovedAndConfirmationTx(approvedTx, phasedTransaction));
                             }
                         });
                     }
                 }
             });
-            possiblyApprovedTransactions.forEach(transaction -> {
-                if (phasingPollService.getResult(transaction.getId()) == null) {
+            possiblyApprovedTransactions.forEach(approvedAndConfirmation -> {
+                Transaction approvedTx = approvedAndConfirmation.getApproved();
+                if (phasingPollService.getResult(approvedTx.getId()) == null) {
                     try {
-                        transactionValidator.validate(transaction);
-                        transaction.getPhasing().tryCountVotes(transaction, duplicates);
+                        transactionValidator.validate(approvedTx);
+                        approvedTx.getPhasing().tryCountVotes(approvedTx, duplicates, approvedAndConfirmation.getConfirmation());
                     } catch (AplException.ValidationException e) {
-                        log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
+                        log.debug("At height " + block.getHeight() + " phased transaction " + approvedTx.getStringId()
                                 + " no longer passes validation: " + e.getMessage() + ", cannot finish early");
                     }
                 }
@@ -957,10 +961,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private static final Comparator<Transaction> finishingTransactionsComparator = Comparator
-            .comparingInt(Transaction::getHeight)
-            .thenComparingInt(Transaction::getIndex)
-            .thenComparingLong(Transaction::getId);
+    private static final Comparator<ApprovedAndConfirmationTx> finishingTransactionsComparator = Comparator
+            .<ApprovedAndConfirmationTx>comparingInt(o -> o.getApproved().getHeight())
+            .thenComparingInt(o -> o.getApproved().getIndex())
+            .thenComparingLong(o -> o.getApproved().getId());
 
     public List<Block> popOffTo(Block commonBlock) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();

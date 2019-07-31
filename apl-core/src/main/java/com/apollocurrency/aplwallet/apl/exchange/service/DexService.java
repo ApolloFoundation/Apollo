@@ -271,13 +271,15 @@ public class DexService {
         if(offer.getType().isSell()) {
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
             createTransactionRequest.setAmountATM(offer.getOfferAmount());
+            createTransactionRequest.setDeadlineValue("1440");
 
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
             PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), false));
+            //contractStatus.isStep1 doesn't have frozen money.
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), contractStatus.isStep2()));
 
             try {
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
@@ -322,7 +324,7 @@ public class DexService {
             log.info("Transaction:" + txId +" was approved.");
         } else if(offer.getType().isBuy()){
             try {
-                Transaction transaction = blockchain.getTransaction(Long.parseLong(txId));
+                Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(txId));
                 List<byte[]> txHash = new ArrayList<>();
                 txHash.add(transaction.getFullHash());
 
