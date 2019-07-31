@@ -30,7 +30,7 @@ class BackgroundTaskDispatcherTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(10).when(propertiesHolder).getIntProperty(anyString(), anyInt());
+        //doReturn(10).when(propertiesHolder).getIntProperty(anyString(), anyInt());
         doReturn(false).when(propertiesHolder).getBooleanProperty(anyString(), anyBoolean());
 
         manager = new TaskDispatchManager(propertiesHolder);
