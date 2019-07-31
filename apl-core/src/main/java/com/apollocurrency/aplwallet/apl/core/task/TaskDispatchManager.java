@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.task;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcherFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -12,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.apollocurrency.aplwallet.apl.core.task.AbstractTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
+import static com.apollocurrency.aplwallet.apl.util.task.AbstractTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
 
 @Slf4j
 @Singleton
@@ -20,20 +22,18 @@ public class TaskDispatchManager {
 
     private PropertiesHolder propertiesHolder;
 
-    private TaskDispatcherFactory factory;
     private Map<String, TaskDispatcher> dispatchers;
     private final Object dispatchersMonitor = new Object();
 
     @Inject
     public TaskDispatchManager(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
-        this.factory = new TaskDispatcherFactory();
         dispatchers = new HashMap<>();
     }
 
     public TaskDispatcher newScheduledDispatcher(String serviceName){
         Objects.requireNonNull(serviceName, "serviceName is NULL");
-        TaskDispatcher dispatcher = factory.newScheduledDispatcher(serviceName);
+        TaskDispatcher dispatcher = TaskDispatcherFactory.newScheduledDispatcher(serviceName);
         registerDispatcher(dispatcher, serviceName);
 
         return dispatcher;
@@ -41,7 +41,7 @@ public class TaskDispatchManager {
 
     public TaskDispatcher newBackgroundDispatcher(String serviceName){
         Objects.requireNonNull(serviceName, "serviceName is NULL");
-        TaskDispatcher dispatcher = factory.newBackgroundDispatcher(serviceName);
+        TaskDispatcher dispatcher = TaskDispatcherFactory.newBackgroundDispatcher(serviceName);
         registerDispatcher(dispatcher, serviceName);
 
         return dispatcher;
@@ -92,25 +92,12 @@ public class TaskDispatchManager {
         }
     }
 
-    private class TaskDispatcherFactory {
+    private boolean retriveDisabledValue(String serviceName) {
+        return propertiesHolder.getBooleanProperty(String.format("apl.disable%sThread", serviceName), false);
+    }
 
-        public TaskDispatcher newBackgroundDispatcher(String serviceName){
-            boolean disabled = retriveDisabledValue(serviceName);
-            return new BackgroundTaskDispatcher(serviceName, disabled);
-        }
-
-        public TaskDispatcher newScheduledDispatcher(String serviceName){
-            boolean disabled = retriveDisabledValue(serviceName);
-            return new ScheduledTaskDispatcher(serviceName, disabled);
-        }
-
-        private boolean retriveDisabledValue(String serviceName) {
-            return propertiesHolder.getBooleanProperty(String.format("apl.disable%sThread", serviceName), false);
-        }
-
-        private int retrivePoolSize(String serviceName) {//TODO: this property need to be analyzed
-            return propertiesHolder.getIntProperty(String.format("apl.%sThreadPoolSizeMAX", serviceName), DEFAULT_THREAD_POOL_SIZE);
-        }
+    private int retrivePoolSize(String serviceName) {//TODO: this property need to be analyzed
+        return propertiesHolder.getIntProperty(String.format("apl.%sThreadPoolSizeMAX", serviceName), DEFAULT_THREAD_POOL_SIZE);
     }
 
 }

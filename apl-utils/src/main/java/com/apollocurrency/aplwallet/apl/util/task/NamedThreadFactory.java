@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.task;
+package com.apollocurrency.aplwallet.apl.util.task;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

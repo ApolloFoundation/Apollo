@@ -1,10 +1,11 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.task;
+package com.apollocurrency.aplwallet.apl.util.task;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -12,10 +13,9 @@ import lombok.ToString;
 @ToString
 public class Task implements TaskAttributes, Runnable{
 
+    @Setter
     private Runnable task;
     private String name;
-    private boolean daemon;
-    private boolean recurring;
     private int initialDelay;
     private int delay;
 

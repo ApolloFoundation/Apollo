@@ -21,9 +21,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 
-import com.apollocurrency.aplwallet.apl.core.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +101,7 @@ public class AplCoreRuntime {
         sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
         sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
         sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)));
-        sb.append("\nActive threads count :").append(Thread.activeCount());
+        sb.append("\nActive threads count :").append(Thread.currentThread().getThreadGroup().getParent().activeCount());
         sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
         sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
         sb.append(", Known peers count: ").append(Peers.getAllPeers().size());

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.task;
+package com.apollocurrency.aplwallet.apl.util.task;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BackgroundTaskDispatcher extends AbstractTaskDispatcher {
 
-    public BackgroundTaskDispatcher(String serviceName, boolean disabled) {
-        super(new ScheduledExecutorServiceFactory(), serviceName, disabled);
+    public BackgroundTaskDispatcher(String serviceName) {
+        super(new ScheduledExecutorServiceFactory(), serviceName);
     }
 
     @Override

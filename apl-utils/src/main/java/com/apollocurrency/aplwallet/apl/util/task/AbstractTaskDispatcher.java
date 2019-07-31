@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.task;
+package com.apollocurrency.aplwallet.apl.util.task;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +18,14 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     public static final String APL_BKG_WORKERS = "apl-bkg-workers";
     public static final String APL_POOL_NAME = "apl-dispatcher";
 
+    @Getter
+    protected final Map<String,String> initParameters;
+
     protected ExecutorServiceFactory executorServiceFactory;
     protected ExecutorService backgroundThread;
     @Getter
     protected String serviceName;
-    @Getter
-    protected boolean disabled;
+
     protected volatile boolean started = false;
 
     private ExecutorService onStartExecutor;
@@ -31,23 +33,24 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     private Object taskMonitor = new Object();
 
     public AbstractTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
-        this(executorServiceFactory, name, false);
-    }
-
-    public AbstractTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name, boolean disabled) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
         this.serviceName = APL_BKG_WORKERS+"-"+Objects.requireNonNull(name, "Service name is NULL");
-        this.disabled = disabled;
-        if (disabled) {
-            log.warn("Thread service {} is disabled in configuration.", serviceName);
-        } else {
-            this.onStartExecutor = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE,
+        this.initParameters = new HashMap<>(3);
+        this.onStartExecutor = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE,
                     new NamedThreadFactory(new ThreadGroup(APL_BKG_WORKERS), APL_POOL_NAME+"-workers", false));
-        }
+    }
+
+    @Override
+    public String getName()
+    {
+        return serviceName;
     }
 
     protected ExecutorService createMainExecutor(){
         if(backgroundThread == null) {
+            //TODO: adjust code using init parameters and min/max constraints
+            //String corePoolSize = getInitParameter(TaskInitParameters.APL_CORE_POOL_SIZE);
+            //String maxPoolSize = getInitParameter(TaskInitParameters.APL_MAX_POOL_SIZE);
             int poolSize = 1;
             if (tasks.get(TaskOrder.TASK) != null) {
                 poolSize = Math.max(1, tasks.get(TaskOrder.TASK).size());
@@ -61,11 +64,6 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     protected void invokeAll(Collection<? extends Task> tasks) throws RejectedExecutionException {
         tasks.forEach(this::invoke);
-    }
-
-    private boolean isEnabled() throws IllegalStateException {
-        //or throw Exception instead of return false
-        return !disabled;
     }
 
     private boolean setStarted(){
@@ -84,88 +82,98 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     @Override
     public boolean schedule(Task task, TaskOrder position) {
-        if (isEnabled()) {
-            Objects.requireNonNull(task, "Task is NULL.");
-            Objects.requireNonNull(position, "Task position is NULL.");
-            if (isStarted())
-                return false;
-            else if (validate(task)) {
+        Objects.requireNonNull(task, "Task is NULL.");
+        Objects.requireNonNull(position, "Task position is NULL.");
+        if (isStarted()) {
+            if (isShutdown()) {
+                throw new RejectedExecutionException("Dispatcher is shutdown.");
+            }
+            return false;
+        }else {
+            if (validate(task)){
                 return tasks.put(position, task);
-            }else {
+            } else {
                 throw new IllegalArgumentException(String.format("The task contains wrong field values, task=%s", task.toString()));
             }
-        } else {
-            return false;
         }
     }
 
     @Override
     public void dispatch() {
-        if (isEnabled()) {
-            synchronized (taskMonitor) {
-                if (!setStarted()) return;
-                log.debug("Prepare dispatcher {} to start . . .", this.serviceName);
+        synchronized (taskMonitor) {
+            if (!setStarted()) return;
+            log.debug("Prepare dispatcher {} to start . . .", this.serviceName);
 
-                createMainExecutor();
+            createMainExecutor();
 
-                Thread thread = new Thread(() -> {
-                    Collection<Task> jobs;
-                    if (log.isTraceEnabled()) {
-                        log.trace("ThreadGroup Name: {}", Thread.currentThread().getThreadGroup().getName());
-                        log.trace("Thread Name: {} this={}", Thread.currentThread().getName(), Thread.currentThread());
-                        log.trace("Parent Thread Name: {}", Thread.currentThread().getThreadGroup().getParent().getName());
-                    }
+            Thread thread = new Thread(() -> {
+                Collection<Task> jobs;
+                if (log.isTraceEnabled()) {
+                    log.trace("ThreadGroup Name: {}", Thread.currentThread().getThreadGroup().getName());
+                    log.trace("Thread Name: {} this={}", Thread.currentThread().getName(), Thread.currentThread());
+                    log.trace("Parent Thread Name: {}", Thread.currentThread().getThreadGroup().getParent().getName());
+                }
 
-                    /* Run INIT tasks */
-                    jobs = tasks.get(TaskOrder.INIT);
-                    log.debug("{}: run INIT tasks.", serviceName);
-                    runAllAndWait(jobs);
-                    tasks.replaceValues(TaskOrder.INIT, Collections.emptyList());
+                /* Run INIT tasks */
+                jobs = tasks.get(TaskOrder.INIT);
+                log.debug("{}: run INIT tasks.", serviceName);
+                runAllAndWait(jobs);
+                tasks.replaceValues(TaskOrder.INIT, Collections.emptyList());
 
-                    /* Run BEFORE tasks */
-                    jobs = tasks.get(TaskOrder.BEFORE);
-                    log.debug("{}: run BEFORE tasks.", serviceName);
-                    runAllAndWait(jobs);
-                    tasks.replaceValues(TaskOrder.BEFORE, Collections.emptyList());
+                /* Run BEFORE tasks */
+                jobs = tasks.get(TaskOrder.BEFORE);
+                log.debug("{}: run BEFORE tasks.", serviceName);
+                runAllAndWait(jobs);
+                tasks.replaceValues(TaskOrder.BEFORE, Collections.emptyList());
 
-                    /* Run background tasks in thread pool */
-                    jobs = tasks.get(TaskOrder.TASK);
-                    log.info("{}: run tasks.", serviceName);
-                    try {
-                        invokeAll(jobs);
-                    } catch (RejectedExecutionException e) {
-                        throw new IllegalStateException("The background tasks can't be initialized properly.", e);
-                    }
-                    tasks.replaceValues(TaskOrder.TASK, Collections.emptyList());
+                /* Run background tasks in thread pool */
+                jobs = tasks.get(TaskOrder.TASK);
+                log.info("{}: run tasks.", serviceName);
+                try {
+                    invokeAll(jobs);
+                } catch (RejectedExecutionException e) {
+                    throw new IllegalStateException("The background tasks can't be initialized properly.", e);
+                }
+                tasks.replaceValues(TaskOrder.TASK, Collections.emptyList());
 
-                    jobs = tasks.get(TaskOrder.AFTER);
-                    log.info("{}: run AFTER tasks.", serviceName);
-                    runAllAndWait(jobs);
-                    tasks.replaceValues(TaskOrder.AFTER, Collections.emptyList());
-                });
-                thread.setDaemon(false);
-                thread.setName(APL_POOL_NAME+"-"+getServiceName()+"-onStart");
-                thread.start();
-                log.debug("Dispatcher {} started, thread={}", this.serviceName, thread.toString());
+                jobs = tasks.get(TaskOrder.AFTER);
+                log.info("{}: run AFTER tasks.", serviceName);
+                runAllAndWait(jobs);
+                tasks.replaceValues(TaskOrder.AFTER, Collections.emptyList());
+
+                //Shutdown onStartExecutor to release resources
+                onStartExecutor.shutdown();
+
+            });
+            thread.setDaemon(false);
+            thread.setName(APL_POOL_NAME + "-" + getServiceName() + "-onStart");
+            thread.start();
+            log.debug("Dispatcher {} started, thread={}", this.serviceName, thread.toString());
+        }
+
+    }
+
+    @Override
+    public void shutdown() {
+        if (!started) {
+            log.warn("The {} dispatcher is not started.", serviceName);
+        } else {
+            if (backgroundThread != null) {
+                backgroundThread.shutdown();
+                try {
+                    backgroundThread.awaitTermination(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException ignored) {
+                }
             }
         }
     }
 
     @Override
-    public void shutdown() {
-        if (isEnabled()) {
-            if (!started) {
-                log.warn("The {} dispatcher is not started.", serviceName);
-            } else {
-                if (backgroundThread != null) {
-                    backgroundThread.shutdown();
-                    try {
-                        backgroundThread.awaitTermination(500, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }
+    public boolean isShutdown() {
+        if (backgroundThread != null) {
+            return backgroundThread.isShutdown();
         }
+        return false;
     }
 
     protected void runAllAndWait(final Collection<Task> tasks) {
@@ -219,6 +227,25 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     private int getTasksCount(TaskOrder order){
         return tasks.containsKey(order)?tasks.get(order).size():0;
+    }
+
+    public String getInitParameter(String param){
+        if (initParameters == null) return null;
+        return initParameters.get(param);
+    }
+
+    public Enumeration<String> getInitParameterNames(){
+        if (initParameters == null) return Collections.enumeration(Collections.EMPTY_LIST);
+        return Collections.enumeration(initParameters.keySet());
+    }
+
+    public void setInitParameter(String param, String value){
+        initParameters.put(param,value);
+    }
+
+    public void setInitParameters(Map<String,String> map){
+        initParameters.clear();
+        initParameters.putAll(map);
     }
 
     public static class ScheduledExecutorServiceFactory implements ExecutorServiceFactory {
