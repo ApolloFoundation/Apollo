@@ -37,6 +37,10 @@ public interface TransactionIndexDao {
     TransactionIndex getByTransactionId(@Bind("transactionId") long transactionId);
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT count(transaction_id) FROM transaction_shard_index where transaction_id =:transactionId")
+    long countByTransactionId(@Bind("transactionId") long transactionId);
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT shard_id FROM shard where shard_height > (select height from transaction_shard_index where transaction_id =:transactionId) ORDER BY shard_height LIMIT 1")
     Long getShardIdByTransactionId(@Bind("transactionId") long transactionId);
 
