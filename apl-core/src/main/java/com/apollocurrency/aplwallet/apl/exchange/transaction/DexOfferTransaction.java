@@ -3,9 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOfferAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -23,19 +26,16 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 @Singleton
 public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
-    private TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
+    private TimeService timeService = CDI.current().select(TimeService.class).get();
 
     @Override
     public byte getSubtype() {

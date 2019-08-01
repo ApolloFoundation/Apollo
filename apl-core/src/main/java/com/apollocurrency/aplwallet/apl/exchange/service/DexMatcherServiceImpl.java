@@ -5,19 +5,20 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -32,11 +33,11 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    private TimeServiceImpl timeService;
+    private TimeService timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService, TimeServiceImpl timeService) {
+    DexMatcherServiceImpl( DexService dexService, TimeService timeService) {
         this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }

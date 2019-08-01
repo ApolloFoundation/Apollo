@@ -107,7 +107,7 @@ public final class AplCore {
     private String initCoreTaskID;
     
     public AplCore() {
-        time = CDI.current().select(TimeServiceImpl.class).get();
+        time = CDI.current().select(TimeService.class).get();
     }
 
     public static boolean isShutdown() {

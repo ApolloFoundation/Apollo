@@ -85,7 +85,7 @@ class BlockchainTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(blockchainTestDbPath,"mainDb", "db/shard-main-data.sql");
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    TimeServiceImpl timeService = mock(TimeServiceImpl.class);
+    TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @WeldSetup
@@ -93,7 +93,7 @@ class BlockchainTest {
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(timeService, TimeServiceImpl.class))
+            .addBeans(MockBean.of(timeService, TimeService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

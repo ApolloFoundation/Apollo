@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
@@ -165,7 +165,7 @@ class ShardEngineTest {
             .addBeans(MockBean.of(csvExporter, CsvExporter.class))
             .addBeans(MockBean.of(zip, Zip.class))
             .addBeans(dataExportDir)
-            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
+            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 

@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
@@ -66,7 +67,7 @@ public class PrunableArchiveMigrator {
                     Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
                     shardDao.updateShard(shard);
-
+                    FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }
                 catch (IOException e) {
                     throw new RuntimeException(e);

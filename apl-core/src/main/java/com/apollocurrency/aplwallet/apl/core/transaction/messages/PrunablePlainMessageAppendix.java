@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix.hasAppendix;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
@@ -27,7 +27,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static PrunableMessageService messageService = CDI.current().select(PrunableMessageService.class).get();
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override

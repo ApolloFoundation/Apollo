@@ -61,12 +61,16 @@ public class ShardPrunableZipHashCalculator {
         }
     }
 
+    public int getLastPruningTime() {
+        return lastPruningTime;
+    }
+
     private void recalculatePrunableArchiveHashes() {
         List<Shard> allCompletedShards = shardDao.getAllCompletedShards().stream().filter(shard -> shard.getPrunableZipHash() != null).collect(Collectors.toList()); // TODO change to completed and imported
         allCompletedShards.forEach(shard -> {
             try {
                 Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
-                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory);
+                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory); // create new instance of CsvExporter for each directory
                 List<PrunableDbTable> prunableTables = registry.getDerivedTables().stream().filter(t -> t instanceof PrunableDbTable).map(t -> (PrunableDbTable) t).collect(Collectors.toList());
                 prunableTables.forEach(t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100));
                 long count = Files.list(tempDirectory).count();
@@ -79,12 +83,12 @@ public class ShardPrunableZipHashCalculator {
                     Files.deleteIfExists(prunableArchivePath);
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
-                    byte[] hash = zip.compressAndHash(zipName, tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    byte[] hash = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
                     Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
-                FileUtils.clearDirectorySilently(tempDirectory);
+                FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
             }
             catch (IOException e) {
                 throw new RuntimeException(e);

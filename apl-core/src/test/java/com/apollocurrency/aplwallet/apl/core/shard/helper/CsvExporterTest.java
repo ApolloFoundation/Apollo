@@ -50,10 +50,12 @@ import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -74,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
+import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -104,6 +107,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -170,7 +174,7 @@ class CsvExporterTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DirProvider.class,
-            AplAppStatus.class,
+            AplAppStatus.class, PrunableMessageTable.class,
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
@@ -195,6 +199,9 @@ class CsvExporterTest {
 
     @Inject
     AccountTable accountTable;
+    @Inject
+    PrunableMessageTable messageTable;
+
     @Inject
     PropertiesHolder propertiesHolder;
     @Inject
@@ -398,6 +405,29 @@ class CsvExporterTest {
         List<String> header = transactionExportContent.subList(0, 1);
         assertEquals(header, Files.readAllLines(dataExportPath.resolve("transaction.csv")));
 
+    }
+
+    @Test
+    void testExportPrunableMessageTable() throws URISyntaxException, IOException {
+        doReturn(100).when(blockchainConfig).getMinPrunableLifetime();
+        PrunableMessageTestData data = new PrunableMessageTestData();
+        long exported = csvExporter.exportPrunableDerivedTable(messageTable, data.MESSAGE_6.getHeight() + 1, data.MESSAGE_11.getTransactionTimestamp(), 2);
+        assertEquals(4, exported);
+        List<String> allPrunableMessageData = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("prunable_message.csv").toURI()));
+        List<String> expected = new ArrayList<>();
+        expected.add(allPrunableMessageData.get(0));
+        expected.addAll(allPrunableMessageData.subList(3, 7));
+        List<String> actual = Files.readAllLines(dataExportPath.resolve("prunable_message.csv"));
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void testExportIgnoredTable() {
+        DerivedTableInterface genesisTable = mock(DerivedTableInterface.class);
+        doReturn("genesis_public_KEY").when(genesisTable).getName();
+        doReturn(new MinMaxDbId(1, 2, 2, 2)).when(genesisTable).getMinMaxDbId(8000);
+        long exported = csvExporter.exportDerivedTable(genesisTable, 8000, 2);
+        assertEquals(-1, exported);
     }
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {

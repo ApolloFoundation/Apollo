@@ -22,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -93,7 +93,7 @@ public class ShardEngineImpl implements ShardEngine {
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
     private String durableStatusTaskId;
-    private TimeServiceImpl timeService;
+    private TimeService timeService;
 
 
     @Inject
@@ -103,7 +103,7 @@ public class ShardEngineImpl implements ShardEngine {
                            ShardRecoveryDaoJdbc shardRecoveryDao,
                            CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           TimeServiceImpl timeService,
+                           TimeService timeService,
                            ShardDao shardDao,
                            Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
