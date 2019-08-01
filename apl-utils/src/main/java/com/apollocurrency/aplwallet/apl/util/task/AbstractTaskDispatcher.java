@@ -69,6 +69,10 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
         tasks.forEach(this::invoke);
     }
 
+    /**
+     * Set dispatcher to the Started state
+     * @return false if dispatcher is already started otherwise return true
+     */
     private boolean setStarted(){
         if (started) {
             log.warn("The {} dispatcher already started.", serviceName);
