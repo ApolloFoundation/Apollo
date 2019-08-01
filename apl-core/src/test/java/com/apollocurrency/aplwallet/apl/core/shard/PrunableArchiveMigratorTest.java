@@ -58,8 +58,8 @@ class PrunableArchiveMigratorTest {
     WeldInitiator weld = WeldInitiator.from(PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
     PrunableArchiveMigrator migrator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
-    Shard shard1 = new Shard(1L, new byte[32], ShardState.FULL, 2000, new byte[32], new long[3], new int[3], new int[3], new byte[32]);
-    Shard shard2 = new Shard(2L, new byte[32], ShardState.FULL, 4000, new byte[32], new long[3], new int[3], new int[3], new byte[32]);
+    Shard shard1 = new Shard(1L, new byte[32], ShardState.FULL, 2000, null, new long[3], new int[3], new int[3], new byte[32]);
+    Shard shard2 = new Shard(2L, new byte[32], ShardState.FULL, 4000, null, new long[3], new int[3], new int[3], new byte[32]);
 
     @BeforeEach
     void setUp() {
@@ -100,6 +100,8 @@ class PrunableArchiveMigratorTest {
         assertFalse(Arrays.equals(newHash2, hash2));
         assertArrayEquals(newHash1, shard1.getCoreZipHash());
         assertArrayEquals(newHash2, shard2.getCoreZipHash());
+        assertArrayEquals(new byte[32], shard1.getPrunableZipHash());
+        assertArrayEquals(new byte[32], shard2.getPrunableZipHash());
         Path extractPath = extension.newFolder().toPath();
         zip.extract(firstZipPath.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString());
         assertEquals(1, Files.list(extractPath).count());
@@ -143,6 +145,7 @@ class PrunableArchiveMigratorTest {
         assertArrayEquals(newHash1, hash1);
         assertFalse(Arrays.equals(newHash2, hash2));
         assertArrayEquals(newHash2, shard2.getCoreZipHash());
+        assertArrayEquals(new byte[32], shard2.getPrunableZipHash());
         Path extractPath = extension.newFolder().toPath();
         zip.extract(secondZipPath.toAbsolutePath().toString(), extractPath.toAbsolutePath().toString());
         assertEquals(1, Files.list(extractPath).count());

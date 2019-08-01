@@ -66,6 +66,7 @@ public class PrunableArchiveMigrator {
                     byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !prunableTables.contains(name.substring(0, name.indexOf(".csv"))), false);
                     Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
+                    shard.setPrunableZipHash(new byte[32]); // not null to force archive recreation
                     shardDao.updateShard(shard);
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }
