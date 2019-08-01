@@ -10,13 +10,16 @@ import org.jboss.weld.util.collections.ListMultimap;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     public static final int DEFAULT_THREAD_POOL_SIZE = 10;
-    public static final String APL_BKG_WORKERS = "apl-bkg-workers";
+    public static final String APL_BG_WORKERS = "apl-bg-workers";
     public static final String APL_POOL_NAME = "apl-dispatcher";
+
+    private static final AtomicInteger groupNumber = new AtomicInteger(1);
 
     @Getter
     protected final Map<String,String> initParameters;
@@ -34,10 +37,10 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     public AbstractTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
-        this.serviceName = APL_BKG_WORKERS+"-"+Objects.requireNonNull(name, "Service name is NULL");
+        this.serviceName = APL_BG_WORKERS +"-"+Objects.requireNonNull(name, "Service name is NULL");
         this.initParameters = new HashMap<>(3);
         this.onStartExecutor = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE,
-                    new NamedThreadFactory(new ThreadGroup(APL_BKG_WORKERS), APL_POOL_NAME+"-workers", false));
+                    new NamedThreadFactory(new ThreadGroup(APL_BG_WORKERS), APL_POOL_NAME+"-workers", false));
     }
 
     @Override
@@ -214,14 +217,14 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     }
 
     public String info(){
-        StringBuilder info = new StringBuilder("Dispatcher=");
-        info.append("Name: ").append(serviceName);
-        info.append(",Tasks(");
-        info.append("INIT=").append(getTasksCount(TaskOrder.INIT));
-        info.append(", BEFORE=").append(getTasksCount(TaskOrder.BEFORE));
-        info.append(", TASK=").append(getTasksCount(TaskOrder.TASK));
-        info.append(", AFTER=").append(getTasksCount(TaskOrder.AFTER));
-        info.append(")");
+        StringBuilder info = new StringBuilder("Dispatcher={");
+        info.append("name:").append(serviceName);
+        info.append(",tasks:[");
+        info.append("INIT:").append(getTasksCount(TaskOrder.INIT));
+        info.append(", BEFORE:").append(getTasksCount(TaskOrder.BEFORE));
+        info.append(", TASK:").append(getTasksCount(TaskOrder.TASK));
+        info.append(", AFTER:").append(getTasksCount(TaskOrder.AFTER));
+        info.append("]}");
         return info.toString();
     }
 
@@ -248,10 +251,28 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
         initParameters.putAll(map);
     }
 
+    private static String nextGroupName(){
+        return APL_BG_WORKERS+"-"+groupNumber.getAndIncrement();
+    }
+
     public static class ScheduledExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
         public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return Executors.newScheduledThreadPool(poolSize, new NamedThreadFactory(new ThreadGroup(APL_BKG_WORKERS), poolName, daemon));
+            return Executors.newScheduledThreadPool(poolSize, new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
+        }
+    }
+
+    public static class CachedExecutorServiceFactory implements ExecutorServiceFactory {
+        @Override
+        public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
+            return Executors.newCachedThreadPool(new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
+        }
+    }
+
+    public static class FixedExecutorServiceFactory implements ExecutorServiceFactory {
+        @Override
+        public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
+            return Executors.newFixedThreadPool(poolSize, new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
         }
     }
 
