@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -91,14 +92,15 @@ public final class AplCore {
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
-    private API apiServer;
     private static TransportInteractionService transportInteractionService;
+    private API apiServer;
+    private DexMatcherServiceImpl tcs;
 
     @Inject @Setter
     private PropertiesHolder propertiesHolder;
     @Inject @Setter
     private DirProvider dirProvider;
-    @Inject  @Setter
+    @Inject @Setter
     private AplAppStatus aplAppStatus;
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
@@ -155,6 +157,8 @@ public final class AplCore {
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
         AplCore.shutdown = true;
+
+        tcs.deinitialize();
     }
 
     private static volatile boolean initialized = false;
@@ -218,6 +222,13 @@ public final class AplCore {
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.1, "Apollo core cleaases initialization");
+
+
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
+
+                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
+                tcs.initialize();
+
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
