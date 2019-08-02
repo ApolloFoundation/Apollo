@@ -5,11 +5,21 @@ package com.apollocurrency.aplwallet.apl.util.task;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.util.collections.ListMultimap;
-import org.jboss.weld.util.collections.Multimap;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -32,7 +42,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     protected volatile boolean started = false;
 
     private ExecutorService onStartExecutor;
-    private Multimap<TaskOrder, Task> tasks = new ListMultimap<>();
+    private HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
     private Object taskMonitor = new Object();
 
     public DefaultTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
@@ -93,11 +103,18 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             return false;
         }else {
             if (validate(task)){
-                return tasks.put(position, task);
+                return put(position, task);
             } else {
                 throw new IllegalArgumentException(String.format("The task contains the wrong field values, task=%s", task.toString()));
             }
         }
+    }
+
+    private boolean put(TaskOrder position, Task task){
+        List<Task> taskList = tasks.getOrDefault(position, new ArrayList<>());
+        taskList.add(task);
+        tasks.put(position, taskList);
+        return true;
     }
 
     @Override
@@ -120,13 +137,13 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 jobs = tasks.get(TaskOrder.INIT);
                 log.debug("{}: run INIT tasks.", serviceName);
                 runAllAndWait(jobs);
-                tasks.replaceValues(TaskOrder.INIT, Collections.emptyList());
+                tasks.remove(TaskOrder.INIT);
 
                 /* Run BEFORE tasks */
                 jobs = tasks.get(TaskOrder.BEFORE);
                 log.debug("{}: run BEFORE tasks.", serviceName);
                 runAllAndWait(jobs);
-                tasks.replaceValues(TaskOrder.BEFORE, Collections.emptyList());
+                tasks.remove(TaskOrder.BEFORE);
 
                 /* Run background tasks in thread pool */
                 jobs = tasks.get(TaskOrder.TASK);
@@ -136,12 +153,12 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 } catch (RejectedExecutionException e) {
                     throw new IllegalStateException("The background tasks can't be initialized properly.", e);
                 }
-                tasks.replaceValues(TaskOrder.TASK, Collections.emptyList());
+                tasks.remove(TaskOrder.TASK);
 
                 jobs = tasks.get(TaskOrder.AFTER);
                 log.info("{}: run AFTER tasks.", serviceName);
                 runAllAndWait(jobs);
-                tasks.replaceValues(TaskOrder.AFTER, Collections.emptyList());
+                tasks.remove(TaskOrder.AFTER);
 
                 //Shutdown onStartExecutor to release resources
                 onStartExecutor.shutdown();

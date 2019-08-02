@@ -13,7 +13,9 @@ import java.util.concurrent.RejectedExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -51,8 +53,9 @@ class BackgroundTaskDispatcherTest {
 
         try {
             Thread.sleep(100);
-        } catch (InterruptedException ignored) {}
-
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         //expected that thread executed at least 9 times
         verify(runnable, atLeast(9)).run();
