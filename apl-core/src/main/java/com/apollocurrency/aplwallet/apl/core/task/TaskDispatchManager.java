@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.apollocurrency.aplwallet.apl.util.task.AbstractTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
+import static com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
 
 @Slf4j
 @Singleton

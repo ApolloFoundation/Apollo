@@ -5,11 +5,9 @@ package com.apollocurrency.aplwallet.apl.util.task;
 
 import java.util.concurrent.RejectedExecutionException;
 
-public interface TaskDispatcher extends TaskDispatcherConfig{
+public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfig{
 
     void dispatch();
-
-    boolean validate(Task task);
 
     default boolean schedule(Task task) throws RejectedExecutionException {
         return schedule(task, TaskOrder.TASK);

@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util.task;
 
-import java.util.concurrent.ExecutorService;
 
 public interface ExecutorServiceFactory {
     /**
@@ -12,5 +11,5 @@ public interface ExecutorServiceFactory {
      *
      * @return constructed executor, or {@code null}
      */
-    ExecutorService newExecutor(String poolName, int poolSize, boolean daemon);
+    TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon);
 }

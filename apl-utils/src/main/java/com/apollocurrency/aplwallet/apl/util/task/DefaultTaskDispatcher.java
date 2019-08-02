@@ -5,15 +5,15 @@ package com.apollocurrency.aplwallet.apl.util.task;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.util.collections.Multimap;
 import org.jboss.weld.util.collections.ListMultimap;
+import org.jboss.weld.util.collections.Multimap;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public abstract class AbstractTaskDispatcher implements TaskDispatcher {
+public class DefaultTaskDispatcher implements TaskDispatcher {
 
     public static final int DEFAULT_THREAD_POOL_SIZE = 10;
     public static final String APL_BG_WORKERS = "apl-bg-workers";
@@ -25,7 +25,7 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     protected final Map<String,String> initParameters;
 
     protected ExecutorServiceFactory executorServiceFactory;
-    protected ExecutorService backgroundThread;
+    protected TaskExecutorService backgroundThread;
     @Getter
     protected String serviceName;
 
@@ -35,7 +35,7 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     private Multimap<TaskOrder, Task> tasks = new ListMultimap<>();
     private Object taskMonitor = new Object();
 
-    public AbstractTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
+    public DefaultTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
         this.serviceName = APL_BG_WORKERS +"-"+Objects.requireNonNull(name, "Service name is NULL");
         this.initParameters = new HashMap<>(3);
@@ -49,7 +49,7 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
         return serviceName;
     }
 
-    protected ExecutorService createMainExecutor(){
+    protected TaskExecutorService createMainExecutor(){
         if(backgroundThread == null) {
             //TODO: adjust code using init parameters and min/max constraints
             //String corePoolSize = getInitParameter(TaskInitParameters.APL_CORE_POOL_SIZE);
@@ -63,28 +63,23 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
         return backgroundThread;
     }
 
-    protected abstract void invoke(Task task) throws RejectedExecutionException;
+    @Override
+    public boolean validate(Task task) {
+        return createMainExecutor().validate(task);
+    }
+
+    @Override
+    public void invoke(Task task) throws RejectedExecutionException{
+        createMainExecutor().invoke(task);
+    }
 
     protected void invokeAll(Collection<? extends Task> tasks) throws RejectedExecutionException {
         tasks.forEach(this::invoke);
     }
 
-    /**
-     * Set dispatcher to the Started state
-     * @return false if dispatcher is already started otherwise return true
-     */
-    private boolean setStarted(){
-        if (started) {
-            log.warn("The {} dispatcher already started.", serviceName);
-            return false;
-        }
-        started=true;
-        return started;
-    }
-
-    private boolean isStarted() throws IllegalStateException {
-        //or throw Exception instead of return false
-        return started;
+    @Override
+    public ExecutorService executor() {
+        return createMainExecutor().executor();
     }
 
     @Override
@@ -100,7 +95,7 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
             if (validate(task)){
                 return tasks.put(position, task);
             } else {
-                throw new IllegalArgumentException(String.format("The task contains wrong field values, task=%s", task.toString()));
+                throw new IllegalArgumentException(String.format("The task contains the wrong field values, task=%s", task.toString()));
             }
         }
     }
@@ -166,11 +161,34 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
             log.warn("The {} dispatcher is not started.", serviceName);
         } else {
             if (backgroundThread != null) {
-                backgroundThread.shutdown();
+                shutdownExecutor(serviceName, backgroundThread.executor(), 2);
+            }
+        }
+    }
+
+    /**
+     * Initiates an orderly shutdown and blocks until all tasks have completed execution after a shutdown
+     * request, or the timeout occurs.
+     * @param name the executor name for logging
+     * @param executor executor
+     * @param timeout the maximum time to wait in SECONDS
+     */
+    public static void shutdownExecutor(String name, ExecutorService executor, int timeout) {
+        if (executor != null) {
+            try {
+                log.info("Shutting down {}", name);
+                executor.shutdown();
                 try {
-                    backgroundThread.awaitTermination(500, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException ignored) {
+                    executor.awaitTermination(timeout, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
+                if (!executor.isTerminated()) {
+                    log.info("Some threads in {} didn't terminate, forcing shutdown", name);
+                    executor.shutdownNow();
+                }
+            } catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
             }
         }
     }
@@ -178,12 +196,30 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
     @Override
     public boolean isShutdown() {
         if (backgroundThread != null) {
-            return backgroundThread.isShutdown();
+            return backgroundThread.executor().isShutdown();
         }
         return false;
     }
 
-    protected void runAllAndWait(final Collection<Task> tasks) {
+    /**
+     * Set dispatcher to the Started state
+     * @return false if dispatcher is already started otherwise return true
+     */
+    private boolean setStarted(){
+        if (started) {
+            log.warn("The {} dispatcher already started.", serviceName);
+            return false;
+        }
+        started=true;
+        return started;
+    }
+
+    private boolean isStarted() throws IllegalStateException {
+        //or throw Exception instead of return false
+        return started;
+    }
+
+    private void runAllAndWait(final Collection<Task> tasks) {
         if (tasks != null && tasks.size() > 0) {
             StringBuffer errors = new StringBuffer();
             log.debug("Init CountDownLatch({})", tasks.size());
@@ -261,23 +297,116 @@ public abstract class AbstractTaskDispatcher implements TaskDispatcher {
 
     public static class ScheduledExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
-        public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return Executors.newScheduledThreadPool(poolSize, new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
+        public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
+            return  new ScheduledTaskExecutorService(
+                    Executors.newScheduledThreadPool(
+                            poolSize,
+                            new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
-    public static class CachedExecutorServiceFactory implements ExecutorServiceFactory {
+    public static class BackgroundExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
-        public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return Executors.newCachedThreadPool(new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
+        public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
+            return  new BackgroundTaskExecutorService(
+                    Executors.newScheduledThreadPool(
+                            poolSize,
+                            new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
     public static class FixedExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
-        public ExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
-            return Executors.newFixedThreadPool(poolSize, new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon));
+        public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
+            return  new FixedSizeTaskExecutorService(
+                    Executors.newFixedThreadPool(
+                            poolSize,
+                            new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
+    private static abstract class AbstractTaskExecutorService implements TaskExecutorService{
+        protected ExecutorService service;
+
+        public AbstractTaskExecutorService(ExecutorService service) {
+            this.service = service;
+        }
+
+        @Override
+        public ExecutorService executor() {
+            return service;
+        }
+    }
+
+    private static class BackgroundTaskExecutorService extends AbstractTaskExecutorService {
+
+        public BackgroundTaskExecutorService(ExecutorService service) {
+            super(service);
+        }
+
+        @Override
+        public boolean validate(Task task) {
+            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >=0;
+        }
+
+        @Override
+        public void invoke(Task task) throws RejectedExecutionException {
+            try {
+                ((ScheduledExecutorService)service).scheduleWithFixedDelay(
+                        task,
+                        task.getInitialDelay(),
+                        task.getDelay(),
+                        TimeUnit.MILLISECONDS);
+            }catch (Exception e){
+                log.error("The task {} can't be scheduled, cause:{}", task.getName(), e.getMessage());
+                throw new RejectedExecutionException(e);
+            }
+        }
+    }
+
+    private static class ScheduledTaskExecutorService extends AbstractTaskExecutorService {
+
+        public ScheduledTaskExecutorService(ExecutorService service) {
+            super(service);
+        }
+
+        @Override
+        public boolean validate(Task task) {
+            return task.getTask() != null && task.getName() != null && task.getInitialDelay() >=0 && task.getDelay()>0 ;
+        }
+
+        @Override
+        public void invoke(Task task) throws RejectedExecutionException {
+            try {
+                ((ScheduledExecutorService)service).scheduleAtFixedRate(
+                        task,
+                        task.getInitialDelay(),
+                        task.getDelay(),
+                        TimeUnit.MILLISECONDS);
+            }catch (Exception e){
+                log.error("The task {} can't be scheduled, cause:{}", task.getName(), e.getMessage());
+                throw new RejectedExecutionException(e);
+            }
+        }
+    }
+    private static class FixedSizeTaskExecutorService extends AbstractTaskExecutorService {
+
+        public FixedSizeTaskExecutorService(ExecutorService service) {
+            super(service);
+        }
+        @Override
+        public boolean validate(Task task) {
+            return task.getTask() != null && task.getName() != null;
+        }
+
+        @Override
+        public void invoke(Task task) throws RejectedExecutionException {
+            try {
+                service.submit(task);
+            }catch (Exception e){
+                log.error("The task {} can't be submitted, cause:{}", task.getName(), e.getMessage());
+                throw new RejectedExecutionException(e);
+            }
+        }
+    }
 }
