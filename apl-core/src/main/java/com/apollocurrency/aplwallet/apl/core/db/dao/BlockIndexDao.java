@@ -50,7 +50,7 @@ public interface BlockIndexDao {
     BlockIndex getLast();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT block_height FROM block_index ORDER BY block_height desc LIMIT 1")
+    @SqlQuery("SELECT max(block_height) FROM block_index")
     Integer getLastHeight();
 
     @Transactional(readOnly = true)

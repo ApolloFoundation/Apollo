@@ -109,7 +109,7 @@ public class DataSourceWrapper implements DataSource {
         return this.dataSource.getParentLogger();
     }
 
-    private volatile HikariDataSource dataSource;
+    private HikariDataSource dataSource;
     private HikariPoolMXBean jmxBean;
 //    private JdbcConnectionPool dataSource;
     private volatile int maxActiveConnections;
@@ -215,8 +215,8 @@ public class DataSourceWrapper implements DataSource {
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
-            Integer result = handle.createQuery("select X from dual;")
-                    .mapTo(Integer.class).findOnly();
+            Optional<Integer> result = handle.createQuery("select X from dual;")
+                    .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {
             log.error("Error on opening database connection", e);
@@ -275,7 +275,9 @@ public class DataSourceWrapper implements DataSource {
     public void analyzeTables() {
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
+            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
             stmt.execute("ANALYZE");
+            log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

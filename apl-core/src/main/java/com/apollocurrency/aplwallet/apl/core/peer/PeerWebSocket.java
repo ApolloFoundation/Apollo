@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.websocket.api.CloseStatus;
+import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
@@ -51,6 +53,15 @@ public class PeerWebSocket extends WebSocketAdapter {
         Peer2PeerTransport p = peerReference.get();
         if(p!=null){
             which+=" at "+p.getHostWithPort();
+        }else{
+            Session s = getSession();
+            if (s!=null){
+                RemoteEndpoint r = s.getRemote();
+                if(r!=null){
+                    String addr = r.getInetSocketAddress().getAddress().getHostAddress();
+                    which=addr+":"+r.getInetSocketAddress().getPort();
+                }
+            }
         }
         return which;
     }
@@ -66,6 +77,9 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
         log.trace("Peer: {} WebSocket error: {}",which(),cause);
+        if(peerReference.get()==null){
+            close();
+        }
     }
 
     @Override
@@ -81,6 +95,8 @@ public class PeerWebSocket extends WebSocketAdapter {
         Peer2PeerTransport p = peerReference.get();
         if(p!=null){
             p.onWebSocketClose(this);
+        }else{
+            log.debug("Closing orphaned websocket: {}",which());
         }
     }
 
@@ -115,7 +131,8 @@ public class PeerWebSocket extends WebSocketAdapter {
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
             }else{
-                log.debug("Peer reference is null on websocket incoming message:\n {}",message);
+                log.warn("Peer reference is null on websocket incoming message, closing websocket:\n {}",message);
+                close();
             }    
 
         } catch (IOException ex) {
@@ -170,12 +187,12 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void close(){
         Session s = getSession();
         if(s!=null){
+            s.close(1001,"Disconnect"); //RFC 6455, Section 7.4.1
             try {
-                s.disconnect();
+                s.disconnect();                
             } catch (IOException ex) {
                 log.debug("Excetion on session disconnect to {}",which(),ex);
             }
-            s.close();
         }
     }
     long getLastActivityTime() {

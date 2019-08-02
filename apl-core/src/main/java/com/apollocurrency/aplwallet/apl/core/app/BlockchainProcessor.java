@@ -73,12 +73,6 @@ public interface BlockchainProcessor {
 
     Transaction restorePrunedTransaction(long transactionId);
 
-    long getInitialBlock();
-
-    void updateInitialBlock();
-
-    void updateInitialSnapshotBlock();
-
     class BlockNotAcceptedException extends AplException {
 
         private final Block block;

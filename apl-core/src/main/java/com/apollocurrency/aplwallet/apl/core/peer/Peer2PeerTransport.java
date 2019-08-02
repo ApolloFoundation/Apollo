@@ -80,7 +80,8 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());        
+        rnd = new Random(System.currentTimeMillis());  
+        lastActivity=System.currentTimeMillis();
     }
 
     public long getDownloadedVolume() {
@@ -155,7 +156,7 @@ public class Peer2PeerTransport {
             try {
                 res = wsrw.get(Peers.readTimeout);
             } catch (SocketTimeoutException ex) {
-                log.warn("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
+                log.trace("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
             }
             requestMap.remove(rqId);
         }else{
@@ -174,7 +175,7 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        log.debug("Peer: {} websocket close",which());
+        log.trace("Peer: {} websocket close",which());
         Peer p = peerReference.get();
         if(p!=null){
             p.deactivate("Websocket close event");
@@ -258,8 +259,8 @@ public class Peer2PeerTransport {
 
     public boolean send(String message, Long requestId) {
         boolean sendOK = false;
-        synchronized (this) {
-            cleanUp();
+        cleanUp();
+     //   synchronized (this) {
             if (message == null || message.isEmpty()) {
                 //we have nothing to send
                 return sendOK;
@@ -285,7 +286,8 @@ public class Peer2PeerTransport {
                         // and do not have inbound
                         Peer p = peerReference.get();
                         if (p == null) {
-                            log.error("Premature destruction of peer");
+                            log.debug("Premature destruction of peer");
+                            disconnect();
                             return sendOK;
                         }
                         String addrWithPort = p.getAnnouncedAddress();
@@ -313,7 +315,7 @@ public class Peer2PeerTransport {
                     log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
                 }
             }
-        }
+       // }
         if (!sendOK) {
             String msg = "Error on sending request";
             Peer p = getPeer();
@@ -326,7 +328,7 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    synchronized void disconnect() {
+    void disconnect() {
         if (inboundWebSocket != null) {
             inboundWebSocket.close();
             inboundWebSocket = null;

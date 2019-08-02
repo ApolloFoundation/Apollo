@@ -337,6 +337,7 @@ import javax.inject.Inject;
         sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
         return sb.toString();
     }
+
     private void recoverSharding() {
         CDI.current().select(ShardService.class).get().recoverSharding();
     }

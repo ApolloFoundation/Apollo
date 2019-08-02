@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -166,7 +165,7 @@ public final class Account {
         public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
             if (publicKeyCache != null) {
                 publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
-                block.getTransactions().forEach(transaction -> {
+                block.getOrLoadTransactions().forEach(transaction -> {
                     publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
                     if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
                         publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
