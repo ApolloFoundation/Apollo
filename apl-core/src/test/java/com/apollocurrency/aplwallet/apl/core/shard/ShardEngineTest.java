@@ -290,7 +290,7 @@ class ShardEngineTest {
                 .build();
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
-        checkDbVersion(21, 3);
+        checkDbVersion(24, 3);
         checkTableExist(new String[] {"block", "option", "transaction"}, 3);
         Shard lastShard = shardDao.getLastShard();
         assertArrayEquals(generators, Convert.toArray(lastShard.getGeneratorIds()));

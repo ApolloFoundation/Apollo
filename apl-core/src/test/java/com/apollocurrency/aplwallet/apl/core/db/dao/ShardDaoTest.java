@@ -179,4 +179,16 @@ class ShardDaoTest {
         Shard shard = dao.getLastCompletedShard();
         assertEquals(SHARD_1, shard);
     }
+
+    @Test
+    void testGetLastCompletedOrArchivedShard() {
+        Shard shard = dao.getLastCompletedOrArchivedShard();
+        assertEquals(SHARD_2, shard);
+    }
+
+    @Test
+    void testGetAllCompletedOrArchivedShards() {
+        List<Shard> result = dao.getAllCompletedOrArchivedShards();
+        assertEquals(Arrays.asList(SHARD_2, SHARD_1), result);
+    }
 }

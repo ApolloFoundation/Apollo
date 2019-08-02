@@ -20,10 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import org.json.simple.JSONObject;
+
 import java.math.BigInteger;
 import java.util.List;
-
-import org.json.simple.JSONObject;
 
 public interface Block {
     int LEGACY_BLOCK_VERSION   = 3;
@@ -60,6 +60,8 @@ public interface Block {
     int getPayloadLength();
 
     byte[] getPayloadHash();
+
+    List<Transaction> getOrLoadTransactions();
 
     List<Transaction> getTransactions();
 

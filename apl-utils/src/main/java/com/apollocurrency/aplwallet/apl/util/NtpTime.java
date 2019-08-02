@@ -41,16 +41,16 @@ public class NtpTime {
             String delay = (delayValue == null) ? "N/A" : delayValue.toString();
             String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
 
-            LOG.info(" Roundtrip delay(ms)=" + delay
+            LOG.trace(" Roundtrip delay(ms)=" + delay
                     + ", clock offset(ms)=" + offset); // offset in ms
 
             timeOffset = offsetValue;
         }
         catch (SocketTimeoutException | UnknownHostException e) {
-            LOG.warn("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
+            LOG.trace("Exception: "+e.getMessage() + ". Keep prev offset: " + timeOffset);
         }
         catch (IOException e) {
-            LOG.warn("NTP exception: {}",e.getMessage());
+            LOG.trace("NTP exception: {}",e.getMessage());
             timeOffset = 0;
         }
     }

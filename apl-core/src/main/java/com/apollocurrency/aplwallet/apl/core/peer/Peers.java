@@ -20,9 +20,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import javax.enterprise.inject.spi.CDI;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -141,9 +138,17 @@ public final class Peers {
 
     private static final Listeners<Peer, Event> listeners = new Listeners<>();
 
-    // used by threads so shoudl be ConcurrentMap
-    static final ConcurrentMap<String, PeerImpl> peers = new ConcurrentHashMap<>();
-
+    /**
+     * Map of ANNOUNCED address with port to peer. Contains only peers that are connectable
+     * (has announced public address) 
+     */
+    
+    private static final ConcurrentMap<String, PeerImpl> connectablePeers = new ConcurrentHashMap<>();
+    /**
+     * Map of incoming peers only. In incoming peer announces some public address, it will
+     * be added to connectablePeers
+     */     
+    private static final ConcurrentMap<String, PeerImpl> inboundPeers = new ConcurrentHashMap<>();
     public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersService");
 
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new ThreadFactoryImpl("PeersSendingService"));
@@ -156,10 +161,11 @@ public final class Peers {
     private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
 
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
+    
     public static int myPort;
 
     private Peers() {
-    } // never
+    } 
 
     public static void init() {
 
@@ -252,7 +258,7 @@ public final class Peers {
             }
         }), Peers.Event.CHANGED_SERVICES);
 
-        Account.addListener(account -> peers.values().forEach(peer -> {
+        Account.addListener(account -> connectablePeers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
@@ -296,7 +302,7 @@ public final class Peers {
         pi.setVersion(Constants.VERSION.toString());
         pi.setPlatform(peerHttpServer.getMyPlatform());
         pi.setChainId(blockchainConfig.getChain().getChainId().toString());
-        pi.setShareAddress(peerHttpServer.shareMyAddress);
+        pi.setShareAddress(peerHttpServer.isShareMyAddress());
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
@@ -365,11 +371,13 @@ public final class Peers {
     }
 
     public static void suspend() {
-        suspend = peerHttpServer.suspend();
+        if(peerHttpServer!=null){
+           suspend = peerHttpServer.suspend();
+        }
     }
 
     public static void resume() {
-        if (suspend) {
+        if (suspend && peerHttpServer!=null) {
             suspend = !peerHttpServer.resume();
         }
     }
@@ -385,12 +393,29 @@ public final class Peers {
     public static void notifyListeners(Peer peer, Event eventType) {
         listeners.notify(peer, eventType);
     }
-
-    public static Collection<Peer> getAllPeers() {
-        Collection<Peer> res =  Collections.unmodifiableCollection(peers.values());
-        return res;
+    
+    public static PeerAddress resolveAnnouncedAddress(String adrWithPort){        
+        PeerAddress pa = null;
+        if(adrWithPort!=null && adrWithPort.length()<=MAX_ANNOUNCED_ADDRESS_LENGTH){
+            pa = new PeerAddress(adrWithPort);
+            if(!pa.isValid()){
+                pa=null;
+            }
+        }
+        return pa;
     }
 
+    public static Collection<Peer> getAllConnectablePeers() {
+        Collection<Peer> res =  Collections.unmodifiableCollection(connectablePeers.values());
+        return res;
+    }
+    
+    public static Collection<Peer> getAllPeers() {
+        List<Peer> peers = new ArrayList(connectablePeers.values());
+        peers.addAll(inboundPeers.values());
+        Collection<Peer> res =  Collections.unmodifiableCollection(peers);
+        return res;
+    }
     public static List<Peer> getActivePeers() {
         return getPeers(peer -> peer.getState() != PeerState.NON_CONNECTED);
     }
@@ -405,7 +430,7 @@ public final class Peers {
 
     public static List<Peer> getPeers(Filter<Peer> filter, int limit) {
         List<Peer> result = new ArrayList<>();
-        for (Peer peer : peers.values()) {
+        for (Peer peer : connectablePeers.values()) {
             if (filter.test(peer)) {
                 result.add(peer);
                 if (result.size() >= limit) {
@@ -413,12 +438,20 @@ public final class Peers {
                 }
             }
         }
+        for(Peer peer:  inboundPeers.values()){
+            if (filter.test(peer)) {
+                result.add(peer);
+                if (result.size() >= limit) {
+                    break;
+                }
+            }            
+        }
         return result;
     }
 
-    public static Peer getPeer(String host) {
-        PeerAddress pa = new PeerAddress( host);
-        return peers.get(pa.getAddrWithPort());
+    public static Peer getPeer(String hostWithPort) {
+        PeerAddress pa = new PeerAddress( hostWithPort);
+        return connectablePeers.get(pa.getAddrWithPort());
     }
 
     public static List<Peer> getInboundPeers() {
@@ -434,39 +467,7 @@ public final class Peers {
                 maxNumberOfOutboundConnections).size() >= maxNumberOfOutboundConnections;
     }
 
-    public static PeerImpl findOrCreatePeer(String announcedAddress, boolean create) {
-        if (announcedAddress == null || announcedAddress.isEmpty()) {
-            return null;
-        }
-        announcedAddress = announcedAddress.trim().toLowerCase();
-        PeerAddress pAnnouncedAddress = new PeerAddress(announcedAddress);
-        PeerImpl peer;
-        if ((peer = peers.get(pAnnouncedAddress.getAddrWithPort())) != null) {
-            LOG.trace("Return peer from peers list = {}", peer);
-            return peer;
-        }
-        try {
 
-            String host = pAnnouncedAddress.getAddrWithPort();
-            if (host == null) {
-                return null;
-            }
-            if ((peer = peers.get(host)) != null) {
-                LOG.trace("Return 2 = {}", peer);
-                return peer;
-            }
-
-            InetAddress inetAddress = InetAddress.getByName(pAnnouncedAddress.getHost());
-            return findOrCreatePeer(inetAddress.getHostAddress(), announcedAddress, create);
-        } catch (UnknownHostException e) {
-            //LOG.debug("Invalid peer address: " + announcedAddress + ", " + e.toString());
-            return null;
-        }
-    }
-
-    public static PeerImpl findOrCreatePeer(String hostWithPort) {
-        return findOrCreatePeer(hostWithPort, null, true);
-    }
 
     public static boolean isMyAddress(PeerAddress pa) {
         if(pa==null){
@@ -490,35 +491,45 @@ public final class Peers {
         return false;
     }
 
-    public static PeerImpl findOrCreatePeer(String addressWithPort, final String announcedAddress, final boolean create) {
-        
-        PeerAddress pa = new PeerAddress(addressWithPort);
-        String host = pa.getHost();
-        if (cjdnsOnly && !host.substring(0, 2).equals("fc")) {
+    public static PeerImpl findOrCreatePeer(PeerAddress actualAddr, final String announcedAddress, final boolean create) {
+        if(actualAddr==null){
+            actualAddr=resolveAnnouncedAddress(announcedAddress);
+        }
+        if(actualAddr==null){
             return null;
         }
-        //re-add the [] to ipv6 addresses lost in getHostAddress() above
-        if (host.split(":").length > 2) {
-            host = "[" + host + "]";
+        String hostName = actualAddr.getHostName();
+        if(hostName!=null && cjdnsOnly && !hostName.startsWith("fc")){
+            return null;
         }
-
-        if (isMyAddress(pa)) {
+        //do not create peer for ourselves
+        if (isMyAddress(actualAddr)) {
             return null;
         }
 
         PeerImpl peer;
-        if ((peer = peers.get(pa.getAddrWithPort())) != null) {
-            LOG.trace("Returning existing peer from map {}", peer);
+        //search by connection addres first
+        if ((peer = inboundPeers.get(actualAddr.getAddrWithPort())) != null) {
+            LOG.trace("Returning existing peer from inbound map {}", peer);
             return peer;
         }
+        if ((peer = connectablePeers.get(actualAddr.getAddrWithPort())) != null) {
+            LOG.trace("Returning existing peer from connectable map {}", peer);
+            return peer;
+        }
+        
         if (!create) {
             return null;
         }
-
-        if (announcedAddress != null && announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
-            return null;
+        //check not-null announced address and do not create peer
+        //if it is not resolvable
+        PeerAddress apa = resolveAnnouncedAddress(announcedAddress);        
+        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, propertiesHolder, peerHttpServer.getPeerServlet());
+        if(apa!=null){
+            connectablePeers.put(apa.getAddrWithPort(),peer);
+        }else{
+            inboundPeers.put(actualAddr.getAddrWithPort(), peer);
         }
-        peer = new PeerImpl(host, announcedAddress, blockchainConfig, blockchain, timeService, propertiesHolder);
         return peer;
     }
 
@@ -526,24 +537,24 @@ public final class Peers {
         if (StringUtils.isBlank(newAnnouncedAddress)) {
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
         }
-        PeerAddress newPa = new PeerAddress(newAnnouncedAddress);
+        PeerAddress newPa = resolveAnnouncedAddress(newAnnouncedAddress);
+        if(newPa==null){
+            return;
+        }
         String oldAnnouncedAddr = peer.getAnnouncedAddress();
         Peer oldPeer = null;
         if(oldAnnouncedAddr!=null){
-            oldPeer = peers.get(peer.getAnnouncedAddress());
+            oldPeer = connectablePeers.get(peer.getAnnouncedAddress());
         }
         if (oldPeer != null) {
             PeerAddress oldPa = new PeerAddress(oldPeer.getAnnouncedAddress());
             if (newPa.compareTo(oldPa) != 0) {
                 LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost() + ":" + oldPeer.getPort());
-                try {
-                    peer.setAnnouncedAddress(newAnnouncedAddress);
-                    oldPeer = removePeer(oldPeer);
-                    if (oldPeer != null) {
-                       notifyListeners(oldPeer, Event.REMOVE);
-                    }
-                } catch (MalformedURLException | UnknownHostException ex) {
-                    LOG.warn("Wrong announces address: " + newAnnouncedAddress, ex);
+
+                peer.setAnnouncedAddress(newAnnouncedAddress);
+                oldPeer = removePeer(oldPeer);
+                if (oldPeer != null) {
+                    notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }
@@ -555,29 +566,54 @@ public final class Peers {
     }
 
     public static boolean addPeer(Peer peer) {
-        if (peer != null && peer.getHost() != null && !peer.getHost().isEmpty()) {
+        
+        if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            if (!peers.containsKey(peer.getHostWithPort())) {
-                peers.put(peer.getHostWithPort(), (PeerImpl) peer);
-            } else {
-                peers.replace(peer.getHostWithPort(), (PeerImpl) peer);
-            }
+            connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
         return false;
     }
-
+    //we do not need inboulnd peers that is not
+    //connected, but we should be carefull because peer could be connecting
+    //right now
+   static void cleanupPeers(Peer peer){
+        long now = System.currentTimeMillis();
+        Set<Peer> toDelete=new HashSet<>();
+        if(peer!=null){
+           toDelete.add(peer);
+        }
+        inboundPeers.values().stream()
+                .filter((p) -> (
+                        p.getState()!=PeerState.CONNECTED 
+                     && now - p.getLastActivityTime() > webSocketIdleTimeout)
+                )
+                .forEachOrdered((p) -> toDelete.add(p));
+        
+        toDelete.forEach((p) -> {
+            p.deactivate("Cleanup of inbounds");
+            inboundPeers.remove(p.getHostWithPort());
+        });
+    }
+    
     public static PeerImpl removePeer(Peer peer) {
-        PeerDb.Entry entry = new PeerDb.Entry(peer.getHostWithPort(), 0, 0);
-        PeerDb.deletePeer(entry);
-        return peers.remove(peer.getHostWithPort());
+        PeerImpl p=null;
+        if (peer.getAnnouncedAddress() != null) {
+            PeerDb.Entry entry = new PeerDb.Entry(peer.getAnnouncedAddress(), 0, 0);
+            PeerDb.deletePeer(entry);
+            if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
+                p = connectablePeers.remove(peer.getAnnouncedAddress());
+            }
+        }
+        cleanupPeers(peer);
+        return p;
     }
 
     public static void connectPeer(Peer peer) {
         peer.unBlacklist();
-        PeerAddress pa=new PeerAddress(peer.getPort(),peer.getHost());
-        if(!isMyAddress(pa)){
+        PeerAddress pa= resolveAnnouncedAddress(peer.getAnnouncedAddress());
+        if(pa!=null && !isMyAddress(pa)){
            peer.handshake(blockchainConfig.getChain().getChainId());
         }
     }
@@ -615,16 +651,22 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            for (final Peer peer : peers.values()) {
+            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
+            peers.addAll(connectablePeers.values());
+            for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
                     continue;
                 }
 
-                if (!peer.isBlacklisted() && peer.getState() == PeerState.CONNECTED && peer.getAnnouncedAddress() != null
-                        && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT) {
-                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> peer.send(jsonRequest,
-                            blockchainConfig.getChain().getChainId()));
+                if ( !peer.isBlacklisted() 
+//                     && peer.getState() == PeerState.CONNECTED 
+                     && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
+                   ) 
+                {
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
+                        peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
+                    );
                     expectedResponses.add(futureResponse);
                 }
                 if (expectedResponses.size() >= sendToPeersLimit - successful) {
@@ -689,11 +731,11 @@ public final class Peers {
     }
 
     public static boolean hasTooFewKnownPeers() {
-        return peers.size() < minNumberOfKnownPeers;
+        return connectablePeers.size() < minNumberOfKnownPeers;
     }
 
     public static boolean hasTooManyKnownPeers() {
-        return peers.size() > maxNumberOfKnownPeers;
+        return connectablePeers.size() > maxNumberOfKnownPeers;
     }
 
     static boolean hasEnoughConnectedPublicPeers(int limit) {

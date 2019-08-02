@@ -682,6 +682,8 @@ public class ShardEngineImpl implements ShardEngine {
         Shard shard = requireLastNotFinishedShard();
         shard.setShardState(ShardState.FULL);
         shardDao.updateShard(shard);
+        // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
+        sourceDataSource.analyzeTables();
         log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
                 System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);

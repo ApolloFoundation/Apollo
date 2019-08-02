@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -830,6 +831,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
      * @return                                      Processed transactions
      * @throws  AplException.NotValidException    Transaction is not valid
      */
+    @Transactional(readOnly = true)
     @Override
     public List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException {
         List<Transaction> processed = new ArrayList<>();

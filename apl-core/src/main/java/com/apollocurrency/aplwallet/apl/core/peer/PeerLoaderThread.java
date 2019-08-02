@@ -65,7 +65,7 @@ class PeerLoaderThread implements Runnable {
         }
         entries.forEach((entry) -> {
             Future<String> unresolvedAddress = Peers.peersExecutorService.submit(() -> {
-                PeerImpl peer = Peers.findOrCreatePeer(entry.getAddress(), true);
+                PeerImpl peer = Peers.findOrCreatePeer(null,entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());
                     peer.setServices(entry.getServices());

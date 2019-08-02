@@ -15,7 +15,9 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
     private static final int startNumber = 5;
 
     protected int update(int nextUpdate) {
-        nextUpdate = super.update(nextUpdate);
+        if (nextUpdate < startNumber) {
+            nextUpdate = super.update(nextUpdate);
+        }
         switch (nextUpdate) {
 /*  ---------------------- BLOCK -------------------    */
             case startNumber:
@@ -50,8 +52,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (timestamp DESC)");
 /*  ---------------------- TRANSACTION -------------------    */
             case startNumber + 10:
-                log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("alter table TRANSACTION add constraint IF NOT EXISTS TRANSACTION_ID_IDX unique (ID)");
+                apply(null); //left for compatibility with existing dbs
             case startNumber + 11:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("alter table TRANSACTION add constraint IF NOT EXISTS PRIMARY_KEY_TRANSACTION_DB_ID primary key (DB_ID)"); // PK + unique index
@@ -68,7 +69,13 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON transaction (block_timestamp DESC)");
             case startNumber + 16:
-                return startNumber + 16;
+                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS TRANSACTION_ID_IDX");
+            case startNumber + 17:
+                apply("CREATE UNIQUE INDEX transaction_block_id_transaction_index_idx ON transaction (block_id, transaction_index)");
+            case startNumber + 18:
+                apply("ANALYZE");
+            case startNumber + 19:
+                return startNumber + 19;
             default:
                 throw new RuntimeException("Shard ADD CONSTRAINTS/INDEXES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

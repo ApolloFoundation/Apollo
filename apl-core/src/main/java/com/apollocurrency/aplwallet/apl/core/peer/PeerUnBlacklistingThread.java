@@ -24,8 +24,8 @@ class PeerUnBlacklistingThread implements Runnable {
         try {
             try {
                 int curTime = timeService.getEpochTime();
-                for (PeerImpl peer : Peers.peers.values()) {
-                    peer.updateBlacklistedStatus(curTime);
+                for (Peer peer : Peers.getAllPeers()) {
+                    ((PeerImpl)peer).updateBlacklistedStatus(curTime);
                 }
             } catch (Exception e) {
                 LOG.debug("Error un-blacklisting peer", e);
