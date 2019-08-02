@@ -4,9 +4,55 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.crypto.KNV25;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
+import org.web3j.crypto.Hash;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,47 +76,9 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
-import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
-import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.jboss.resteasy.annotations.jaxrs.FormParam;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
@@ -78,24 +86,24 @@ import org.slf4j.Logger;
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
 
-    private static String ETH_GAS_INFO_KEY = "eth_gas_info";
-
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private EpochTime epochTime;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
+    private DexMatcherServiceImpl dexMatcherService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService) {
+                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
+        this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
     }
 
     //For DI
@@ -113,8 +121,12 @@ public class DexController {
     public Response getBalances(@Parameter(description = "Addresses to get balance", required = true) @QueryParam("eth") List<String> ethAddresses
         ) throws NotFoundException {
 
+        log.debug("getBalances: ");
+
         for (String ethAddress : ethAddresses) {
+            log.debug("address: {}",ethAddress);
             if(!EthUtil.isAddressValid(ethAddress)){
+                log.debug("Valid!");
                 return Response.status(Response.Status.OK).entity(incorrect("ethAddress", "Address length is not correct.")).build();
             }
         }
@@ -137,6 +149,9 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getHistory( @NotNull  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,@Context SecurityContext securityContext)
             throws NotFoundException {
+
+        log.debug("getHistory: account: {}, pair: {}, type: {}", account, pair, type );
+
         return Response.ok(service.getHistory(account,pair,type)).build();
     }
 
@@ -154,6 +169,12 @@ public class DexController {
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
+
+
+        log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
+
+
+
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
@@ -174,6 +195,7 @@ public class DexController {
         }
 
         Integer currentTime = epochTime.getEpochTime();
+        JSONStreamAware response = null;
         try {
             Account account = ParameterParser.getSenderAccount(req);
             DexOffer offer = new DexOffer();
@@ -242,15 +264,45 @@ public class DexController {
             DexOfferAttachmentV2 dexOfferAttachment = new DexOfferAttachmentV2(offer);
             String freezeTx=null;
 
-            try {
-                if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
-                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-                    freezeTx = service.freezeEthPax(passphrase, offer);
-                }
+            // Looks like this is the correct position for event handling
+            // for matcher.
 
-                JSONStreamAware response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
-                if(freezeTx != null){
-                    ((JSONObject)response).put("frozenTx", freezeTx);
+            DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
+
+            try {
+                //TODO move it in to service.
+                if (counterOffer != null) {
+                    byte[] secretX = new byte[32];
+                    Crypto.getSecureRandom().nextBytes(secretX);
+                    byte[] secretHash = Crypto.sha256().digest(secretX);
+                    String passphrase = ParameterParser.getPassphrase(req, true);
+
+                    byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
+
+                    //SELL APL
+                    if (offer.getType().isSell()) {
+                        long recipientId = Convert.parseAccountId(counterOffer.getToAddress());
+
+                        CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
+                                .convert(req, account, recipientId, offer.getOfferAmount(), null);
+                        String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, secretHash);
+
+                        DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX);
+                        response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
+                    } else if (offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()) {
+                        //TODO Implement it for ETH/PAX
+                    }
+
+                } else {
+                    if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
+                        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+                        freezeTx = service.freezeEthPax(passphrase, offer);
+                    }
+
+                    response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOfferAttachment);
+                    if (freezeTx != null) {
+                        ((JSONObject) response).put("frozenTx", freezeTx);
+                    }
                 }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
@@ -267,7 +319,7 @@ public class DexController {
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
 
-        return Response.ok().build();
+        return Response.ok(JSON.toString(response)).build();
     }
 
     @GET
@@ -285,6 +337,9 @@ public class DexController {
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getOffers:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}",orderType, pairCurrency,status, accountIdStr,isAvailableForNow, minAskPrice, maxBidPrice);
+
         OfferType type = null;
         OfferStatus offerStatus = null;
         DexCurrencies pairCur = null;
@@ -317,6 +372,8 @@ public class DexController {
         int offset = firstIndex > 0 ? firstIndex : 0;
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
 
+        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit );
+
         DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
@@ -335,6 +392,9 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
                                          @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("cancelOrderByOrderID: {}", transactionIdStr);
+
         try{
             Long transactionId;
             Account account = ParameterParser.getSenderAccount(req);
@@ -406,6 +466,9 @@ public class DexController {
                                     @NotNull @Parameter(description = "Transfer fee in GWei") @FormParam("transferFee") Long transferFee,
                                     @NotNull @Parameter(description = "crypto currency for withdraw:ETH=1/PAX=2") @FormParam("cryptocurrency") Byte cryptocurrency,
                                     @Context HttpServletRequest req) {
+
+        log.debug("dexWithdrawPost, amount: {}, fromAddress: {}, toAddr: {}, transferFee: {}, currency: ", amount, fromAddress, toAddress, transferFee, cryptocurrency);
+
         DexCurrencies currencies = null;
         String passphrase;
         Account sender;
@@ -469,6 +532,9 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, ExecutionException {
+
+        log.debug("dexEthInfo: ");
+
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();

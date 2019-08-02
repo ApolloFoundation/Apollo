@@ -76,12 +76,12 @@ public class PhasingTestData {
         td = new TransactionTestData();
         LINKED_TRANSACTION_1_HASH = td.TRANSACTION_11.getFullHash();
         LINKED_TRANSACTION_2_HASH = td.NOT_SAVED_TRANSACTION.getFullHash();
-        POLL_0 = PhasingCreator.createPoll(10, td.TRANSACTION_6.getId(), td.TRANSACTION_6.getSenderId(), null, td.TRANSACTION_6.getFullHash(), 4000, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414"), (byte) 2, null, td.TRANSACTION_6.getHeight());
-        POLL_1 = PhasingCreator.createPoll(20, td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0_ID, POLL_1_VOTER_1_ID}, td.TRANSACTION_8.getFullHash(), 10000, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_8.getHeight());
-        POLL_2 = PhasingCreator.createPoll(30, td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_7.getHeight());
-        POLL_3 = PhasingCreator.createPoll(40, td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{LINKED_TRANSACTION_0_HASH, LINKED_TRANSACTION_1_HASH, LINKED_TRANSACTION_2_HASH}, td.TRANSACTION_12.getHeight());
-        POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, (byte) 0, 3, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
-        POLL_5 = PhasingCreator.createPoll(60, td.TRANSACTION_13.getId(), td.TRANSACTION_13.getSenderId(), new long[]{POLL_5_VOTER_0_ID, POLL_5_VOTER_1_ID }, td.TRANSACTION_13.getFullHash(), 537000, (byte) 2, 50, 10, 4826028362757542803L, (byte) 2, null, (byte) 0, null, td.TRANSACTION_13.getHeight());
+        POLL_0 = PhasingCreator.createPoll(10, td.TRANSACTION_6.getId(), td.TRANSACTION_6.getSenderId(), null, td.TRANSACTION_6.getFullHash(), 4000, -1, (byte) 5, 1, 0, 0, (byte) 0, Convert.parseHexString("be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414"), (byte) 2, null, td.TRANSACTION_6.getHeight());
+        POLL_1 = PhasingCreator.createPoll(20, td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0_ID, POLL_1_VOTER_1_ID}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_8.getHeight());
+        POLL_2 = PhasingCreator.createPoll(30, td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500, -1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_7.getHeight());
+        POLL_3 = PhasingCreator.createPoll(40, td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000, -1, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{LINKED_TRANSACTION_0_HASH, LINKED_TRANSACTION_1_HASH, LINKED_TRANSACTION_2_HASH}, td.TRANSACTION_12.getHeight());
+        POLL_4 = PhasingCreator.createPoll(50, td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0_ID}, td.TRANSACTION_11.getFullHash(), 18000, -1, (byte) 0, 3, 0, 0, (byte) 0, null, (byte) 0, null, td.TRANSACTION_11.getHeight());
+        POLL_5 = PhasingCreator.createPoll(60, td.TRANSACTION_13.getId(), td.TRANSACTION_13.getSenderId(), new long[]{POLL_5_VOTER_0_ID, POLL_5_VOTER_1_ID }, td.TRANSACTION_13.getFullHash(), 537000, -1, (byte) 2, 50, 10, 4826028362757542803L, (byte) 2, null, (byte) 0, null, td.TRANSACTION_13.getHeight());
 
         POLL_1_VOTER_0 = new PhasingPollVoter(20L, POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_0_ID);
         POLL_1_VOTER_1 = new PhasingPollVoter(30L,POLL_1.getHeight(), POLL_1.getId(), POLL_1_VOTER_1_ID);
@@ -124,27 +124,6 @@ public class PhasingTestData {
         NEW_VOTER_1 = new PhasingPollVoter(POLL_5_VOTER_1.getDbId() + 2, POLL_4.getHeight() + 1, POLL_4.getId() + 1, 10000L);
         NEW_VOTER_2 = new PhasingPollVoter(POLL_5_VOTER_1.getDbId() + 3, POLL_2.getHeight() + 1, POLL_2.getId() + 1, 20000L);
         NEW_RESULT = new PhasingPollResult(RESULT_2.getDbId() + 1, POLL_4.getHeight() + 1, POLL_4.getId(), 0, true);
-/*
-        //TODO Add one POLL testdata with finishTime != -1
-        POLL_1 = new PhasingPoll(td.TRANSACTION_8.getId(), td.TRANSACTION_8.getSenderId(), new long[] {POLL_1_VOTER_0, POLL_1_VOTER_1}, td.TRANSACTION_8.getFullHash(), 10000, -1, (byte) 0, 1,  0, 0, (byte) 0, null, (byte) 0, null);
-        POLL_2 = new PhasingPoll(td.TRANSACTION_7.getId(), td.TRANSACTION_7.getSenderId(), null, td.TRANSACTION_7.getFullHash(), 9500,-1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
-        POLL_3 = new PhasingPoll(td.TRANSACTION_12.getId(), td.TRANSACTION_12.getSenderId(), null, td.TRANSACTION_12.getFullHash(), 17000,-1, (byte) 4, 3, 0, 0, (byte) 0, null, (byte) 0, new byte[][]{Convert.parseHexString("6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e"),td.TRANSACTION_11.getFullHash(), td.NOT_SAVED_TRANSACTION.getFullHash()});
-        POLL_4 = new PhasingPoll(td.TRANSACTION_11.getId(), td.TRANSACTION_11.getSenderId(), new long[]{POLL_4_VOTER_0}, td.TRANSACTION_11.getFullHash(), 18000,-1, (byte) 0, 1, 0, 0, (byte) 0, null, (byte) 0, null);
-
-        SHARD_RESULT_0 = new PhasingPollResult(100, 1, true, 300);
-        RESULT_0 = new PhasingPollResult(td.TRANSACTION_0.getId(), 1, true, 1500);
-        RESULT_1 = new PhasingPollResult(POLL_1.getId(), 0, true, 9000);
-        RESULT_2 = new PhasingPollResult(POLL_2.getId(), 0, false, 9500);
-        POLL_1_VOTE_0 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_0, td.TRANSACTION_9.getId());
-        POLL_1_VOTE_1 = new PhasingVote(POLL_1.getId(), POLL_1_VOTER_1, td.TRANSACTION_10.getId());
-        NEW_POLL_PARAMS = new PhasingParams((byte) 0, 0, 3, 0, (byte)0, new long[] {1, 2, 3});
-        NEW_POLL_APPENDIX = new PhasingAppendixV2(20000,-1, NEW_POLL_PARAMS, new byte[][] {td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);
-        NEW_POLL = new PhasingPoll(td.TRANSACTION_10, NEW_POLL_APPENDIX);
-        NEW_VOTE_TX = td.TRANSACTION_3;
-        NEW_VOTE = new PhasingVote(POLL_1.getId(), NEW_VOTE_TX.getSenderId(), NEW_VOTE_TX.getId());
-        NEW_LINKED_TX_VOTE = new PhasingVote(POLL_3.getId(), td.NOT_SAVED_TRANSACTION.getSenderId(), td.NOT_SAVED_TRANSACTION.getId());
-*/
-
     }
 }
 
