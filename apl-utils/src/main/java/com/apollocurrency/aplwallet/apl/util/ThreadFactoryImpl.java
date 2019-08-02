@@ -8,6 +8,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.enterprise.inject.Vetoed;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Vetoed
 public class ThreadFactoryImpl implements ThreadFactory {
     private final ThreadGroup group;
@@ -19,12 +22,17 @@ public class ThreadFactoryImpl implements ThreadFactory {
         group = (s != null) ? s.getThreadGroup() :
                 Thread.currentThread().getThreadGroup();
         namePrefix = threadPrefix +"-";
+        log.trace("create ThreadPool/Factory/Executor : Group = '{}', Prefix = '{}'", group, namePrefix);
     }
+
     @Override
     public Thread newThread(Runnable r) {
-        Thread t = new Thread(group, r,
-                namePrefix + threadNumber.getAndIncrement(),
+        Thread t = new Thread(group,
+                r,
+                (namePrefix != null ? namePrefix : Thread.currentThread().getName()) + threadNumber.getAndIncrement(),
                 0);
+        log.trace("ThreadFactory created thread: group = {}, name = {}", t.getThreadGroup().getName(),
+                t.getName());
         if (t.isDaemon())
             t.setDaemon(false);
         if (t.getPriority() != Thread.NORM_PRIORITY)
