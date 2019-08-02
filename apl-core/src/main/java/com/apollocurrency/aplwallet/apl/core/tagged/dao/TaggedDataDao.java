@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -35,7 +34,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     private DataTagDao dataTagDao;
     private BlockchainConfig blockchainConfig;
-    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private TimeService timeService;
 
     private static final String DB_TABLE = "tagged_data";
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
@@ -50,9 +49,10 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     @Inject
     public TaggedDataDao(DataTagDao dataTagDao,
-                         BlockchainConfig blockchainConfig) {
+                         BlockchainConfig blockchainConfig, TimeService timeService) {
         super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, false);
         this.dataTagDao = dataTagDao;
+        this.timeService = timeService;
         this.blockchainConfig = blockchainConfig;
     }
 

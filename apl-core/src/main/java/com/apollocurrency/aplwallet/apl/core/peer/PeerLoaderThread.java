@@ -3,15 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
-
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
-    private TimeServiceImpl timeService;
+    private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeServiceImpl timeService) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;

@@ -22,7 +22,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -32,7 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion
 import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
@@ -80,12 +81,12 @@ import javax.inject.Singleton;
 public class ShardEngineImpl implements ShardEngine {
     private static final Logger log = getLogger(ShardEngineImpl.class);
 
-    private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600; // one hour
     private MigrateState state = MigrateState.INIT;
     private DatabaseManager databaseManager;
     private TrimService trimService;
     private HelperFactory<BatchedPaginationOperation> helperFactory = new HelperFactoryImpl();
-    private ShardRecoveryDaoJdbc shardRecoveryDao;
+    private ShardRecoveryDaoJdbc shardRecoveryDaoJdbc;
+    private ShardRecoveryDao shardRecoveryDao;
     private CsvExporter csvExporter;
     private DerivedTablesRegistry registry;
     private DirProvider dirProvider;
@@ -93,29 +94,28 @@ public class ShardEngineImpl implements ShardEngine {
     private Zip zipComponent;
     private AplAppStatus aplAppStatus;
     private String durableStatusTaskId;
-    private TimeService timeService;
 
 
     @Inject
     public ShardEngineImpl(DirProvider dirProvider,
                            DatabaseManager databaseManager,
                            TrimService trimService,
-                           ShardRecoveryDaoJdbc shardRecoveryDao,
+                           ShardRecoveryDaoJdbc shardRecoveryDaoJdbc,
                            CsvExporter csvExporter,
                            DerivedTablesRegistry registry,
-                           TimeService timeService,
+                           ShardRecoveryDao shardRecoveryDao,
                            ShardDao shardDao,
                            Zip zipComponent, AplAppStatus aplAppStatus) {
         this.dirProvider = Objects.requireNonNull(dirProvider, "dirProvider is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
+        this.shardRecoveryDaoJdbc = Objects.requireNonNull(shardRecoveryDaoJdbc, "shardRecoveryDaoJdbc is NULL");
         this.shardRecoveryDao = Objects.requireNonNull(shardRecoveryDao, "shardRecoveryDao is NULL");
         this.csvExporter = Objects.requireNonNull(csvExporter, "csvExporter is NULL");
         this.registry = Objects.requireNonNull(registry, "registry is NULL");
         this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
-        this.timeService = Objects.requireNonNull(timeService, "epochTime is NULL");
     }
 
     /**
@@ -172,7 +172,7 @@ public class ShardEngineImpl implements ShardEngine {
         log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
         try {
             boolean isConstraintSchema = dbVersion instanceof ShardAddConstraintsSchemaVersion || dbVersion instanceof AplDbVersion;
-            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(databaseManager.getDataSource());
+            ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(databaseManager.getDataSource());
             if (recovery != null) {
                 if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {
                     // skip to next step
@@ -242,12 +242,12 @@ public class ShardEngineImpl implements ShardEngine {
      * @param sourceDataSource usually main db (but can be different)
      */
     private void loadAndRefreshRecovery(TransactionalDataSource sourceDataSource) {
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         log.trace("Latest = {}", recovery);
         if (recovery == null) {
             // store new value or continue to next step
             recovery = new ShardRecovery(state);
-            shardRecoveryDao.saveShardRecovery(sourceDataSource, recovery);
+            shardRecoveryDaoJdbc.saveShardRecovery(sourceDataSource, recovery);
         } else {
             if (recovery.getState().getValue() < state.getValue()) {
                 recovery.setState(state); // do not change previous state
@@ -255,7 +255,7 @@ public class ShardEngineImpl implements ShardEngine {
                 recovery.setColumnName(null);
                 recovery.setProcessedObject(null);
                 recovery.setLastColumnValue(null);
-                shardRecoveryDao.updateShardRecovery(sourceDataSource, recovery);
+                shardRecoveryDaoJdbc.updateShardRecovery(sourceDataSource, recovery);
             }
         }
     }
@@ -283,7 +283,7 @@ public class ShardEngineImpl implements ShardEngine {
         TransactionalDataSource targetDataSource = ((ShardManagement) databaseManager).getOrCreateShardDataSourceById(paramInfo.getShardId());
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         // check previous state
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > DATA_COPY_TO_SHARD_FINISHED.getValue()) {
             // skip to next step
@@ -310,7 +310,7 @@ public class ShardEngineImpl implements ShardEngine {
                             currentTable, paramInfo.getCommitBatchSize(), paramInfo.getSnapshotBlockHeight(),
                             paramInfo.getShardId(), excludeInfo);
 
-                paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao);// mandatory
+                paginationOperationHelper.setShardRecoveryDao(shardRecoveryDaoJdbc);// mandatory
 
                     long totalCount = paginationOperationHelper.processOperation(
                             sourceConnect, targetConnect, operationParams);
@@ -350,7 +350,7 @@ public class ShardEngineImpl implements ShardEngine {
             log.error(error);
             throw new IllegalStateException(error);
         }
-        paginationOperationHelper.setShardRecoveryDao(shardRecoveryDao); // mandatory assignment
+        paginationOperationHelper.setShardRecoveryDao(shardRecoveryDaoJdbc); // mandatory assignment
 
         long totalCount = paginationOperationHelper.processOperation(
                 sourceConnect, null, operationParams);
@@ -371,7 +371,7 @@ public class ShardEngineImpl implements ShardEngine {
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > SECONDARY_INDEX_FINISHED.getValue()) {
             // skip to next step
@@ -482,11 +482,11 @@ public class ShardEngineImpl implements ShardEngine {
 
     private ShardRecovery getOrCreateRecovery(MigrateState commandStartState) {
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery == null) {
             // init new recovery
             recovery = new ShardRecovery(commandStartState);
-            long generatedId = shardRecoveryDao.saveShardRecovery(databaseManager.getDataSource(), recovery);
+            long generatedId = shardRecoveryDaoJdbc.saveShardRecovery(sourceDataSource, recovery);
             recovery.setShardRecoveryId(generatedId);
         }
         return recovery;
@@ -498,7 +498,7 @@ public class ShardEngineImpl implements ShardEngine {
         } else {
             recovery.setProcessedObject(recovery.getProcessedObject() + "," + processedObject);
         }
-        shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery);
+        shardRecoveryDaoJdbc.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
     private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort, int pruningTime) {
@@ -621,7 +621,7 @@ public class ShardEngineImpl implements ShardEngine {
         String currentTable = null;
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(sourceDataSource);
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() > DATA_REMOVED_FROM_MAIN.getValue()) {
             // skip to next step
@@ -664,14 +664,15 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public MigrateState finishShardProcess(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
         long startAllTables = System.currentTimeMillis();
-        log.debug("Starting create SHARD record in main db...");
+        log.debug("Finish sharding...");
 
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
 
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(sourceDataSource);
+        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
         if (recovery != null && recovery.getState() != null
                 && recovery.getState().getValue() >= COMPLETED.getValue()) {
             // skip to next step
@@ -682,9 +683,10 @@ public class ShardEngineImpl implements ShardEngine {
         Shard shard = requireLastNotFinishedShard();
         shard.setShardState(ShardState.FULL);
         shardDao.updateShard(shard);
+        shardRecoveryDao.hardDeleteAllShardRecovery();
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
         sourceDataSource.analyzeTables();
-        log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
+        log.debug("Shard process finished successfully", paramInfo.getShardId(),
                 System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
@@ -698,7 +700,7 @@ public class ShardEngineImpl implements ShardEngine {
      */
     private ShardRecovery updateShardRecoveryProcessedTableList(
             Connection connection, String currentTable, MigrateState inProgressState) {
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery(connection);
+        ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(connection);
         // add processed table name into optional column for later use
         recovery.setState(inProgressState);
         // we want :
@@ -709,7 +711,7 @@ public class ShardEngineImpl implements ShardEngine {
                 (!AbstractHelper.isContain(recovery.getProcessedObject(), currentTable) ?
                         recovery.getProcessedObject() + " " + currentTable.toLowerCase() : recovery.getProcessedObject())
                 : currentTable.toLowerCase()); // add processed table name into list if NOT exists
-        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
+        shardRecoveryDaoJdbc.updateShardRecovery(connection, recovery); // update info for next step
         return recovery;
     }
 
@@ -720,12 +722,12 @@ public class ShardEngineImpl implements ShardEngine {
      */
     private void updateToFinalStepState(Connection connection, ShardRecovery recovery, MigrateState finalStepState) {
        resetShardRecovery(recovery, finalStepState);
-        shardRecoveryDao.updateShardRecovery(connection, recovery); // update info for next step
+       shardRecoveryDaoJdbc.updateShardRecovery(connection, recovery); // update info for next step
     }
 
     private void updateToFinalStepState(ShardRecovery recovery, MigrateState finalStepState) {
         resetShardRecovery(recovery, finalStepState);
-        shardRecoveryDao.updateShardRecovery(databaseManager.getDataSource(), recovery); // update info for next step
+        shardRecoveryDaoJdbc.updateShardRecovery(databaseManager.getDataSource(), recovery); // update info for next step
     }
 
     private void resetShardRecovery(ShardRecovery recovery, MigrateState migrateState) {

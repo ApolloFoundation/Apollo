@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
  */
 class PeerUnBlacklistingThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerUnBlacklistingThread.class);
-    private final TimeServiceImpl timeService;
+    private final TimeService timeService;
 
-    public PeerUnBlacklistingThread(TimeServiceImpl timeService) {
+    public PeerUnBlacklistingThread(TimeService timeService) {
         this.timeService = timeService;
     }
 

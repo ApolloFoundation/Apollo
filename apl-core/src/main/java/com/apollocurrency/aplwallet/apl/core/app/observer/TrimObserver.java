@@ -57,7 +57,7 @@ public class TrimObserver {
                 }
             }
             if (trimHeight != null) {
-                log.debug("Perform trim on height {}", trimHeight);
+                log.debug("Perform trim on blockchain height {}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
             }
         }

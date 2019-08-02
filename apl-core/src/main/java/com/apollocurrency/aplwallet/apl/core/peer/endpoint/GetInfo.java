@@ -20,31 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.IOException;
-import java.io.StringWriter;
-
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import javax.inject.Inject;
+
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
-    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
-    private final PropertiesHolder propertiesHolder;
-    
+    private final TimeService timeService;
+
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
     private static final JSONStreamAware INVALID_CHAINID;
@@ -63,8 +59,8 @@ public final class GetInfo extends PeerRequestHandler {
     }
     
     @Inject
-    public GetInfo(PropertiesHolder propertiesHolder) {
-       this.propertiesHolder=propertiesHolder;
+    public GetInfo(TimeService timeService) {
+       this.timeService = timeService;
     }
 
     @Override
@@ -75,7 +71,7 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = pi.getServices();
-        String announcedAddress = null;
+        String announcedAddress;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
         peerImpl.analyzeHallmark(pi.getHallmark());
         if (!Peers.ignorePeerAnnouncedAddress) {

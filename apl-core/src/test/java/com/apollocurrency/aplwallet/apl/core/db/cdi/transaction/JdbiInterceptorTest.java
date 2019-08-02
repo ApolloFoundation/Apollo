@@ -12,6 +12,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.jboss.weld.environment.se.Weld;
@@ -134,6 +136,10 @@ public class JdbiInterceptorTest {
 
     @Test
     void testThrowExceptionOnReadOnlyTransaction() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger("com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor");
+        logger.setLevel(Level.TRACE);;
         doThrow(new RuntimeException("Test exception")).when(factory).setReadOnly(true);
         assertThrows(RuntimeException.class, () -> testClass.requireReadOnlyTransaction());
         verify(factory).isInTransaction();

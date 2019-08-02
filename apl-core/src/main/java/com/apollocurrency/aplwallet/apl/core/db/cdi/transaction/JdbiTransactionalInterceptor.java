@@ -35,6 +35,7 @@ public class JdbiTransactionalInterceptor {
         boolean createHandle = !jdbiHandleFactory.currentHandleOpened();
         if (createHandle) {
              jdbiHandleFactory.open();
+             logIfTraceEnabled("Open handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
         }
         try {
             if (!readOnly) {
@@ -42,6 +43,7 @@ public class JdbiTransactionalInterceptor {
                     log.warn("Will start transaction on readOnly handle");
                 }
                 jdbiHandleFactory.begin();
+                logIfTraceEnabled("Begin transaction {}.{}", ctx.getTarget(), ctx.getMethod().getName());
             } else {
                 if (createHandle) {
                     jdbiHandleFactory.setReadOnly(true);
@@ -51,18 +53,27 @@ public class JdbiTransactionalInterceptor {
 
             if (!readOnly) {
                 jdbiHandleFactory.commit();
+                logIfTraceEnabled("Commit transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
 
             return result;
         } catch (Exception e) {
             if (!readOnly) {
                 jdbiHandleFactory.rollback();
+                logIfTraceEnabled("Rollback transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
             throw e;
         } finally {
             if (createHandle) {
                 jdbiHandleFactory.close();
+                logIfTraceEnabled("Close handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
+        }
+    }
+
+    private void logIfTraceEnabled(String pattern, Object... objects) {
+        if (log.isTraceEnabled()) {
+            log.trace(pattern,objects);
         }
     }
 }

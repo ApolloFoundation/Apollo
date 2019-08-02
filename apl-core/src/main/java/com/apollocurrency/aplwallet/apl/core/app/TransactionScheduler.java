@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.slf4j.Logger;
@@ -29,9 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.enterprise.inject.spi.CDI;
 
 public class TransactionScheduler {
@@ -39,7 +38,7 @@ public class TransactionScheduler {
 
     private static final Map<Transaction, TransactionScheduler> transactionSchedulers = new ConcurrentHashMap<>();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
 
     public static void schedule(Filter<Transaction> filter, Transaction transaction) {
         if (transactionSchedulers.size() >= 100) {

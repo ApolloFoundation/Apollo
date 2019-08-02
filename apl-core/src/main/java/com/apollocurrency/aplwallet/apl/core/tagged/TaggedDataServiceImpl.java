@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.tagged;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -39,15 +39,16 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private DataTagDao dataTagDao;
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
-    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
+    private TimeService timeService;
 
     private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
 
     @Inject
     public TaggedDataServiceImpl(TaggedDataDao taggedDataDao, DataTagDao dataTagDao,
                                  BlockchainConfig blockchainConfig, Blockchain blockchain,
-                                 TaggedDataTimestampDao taggedDataTimestampDao, TaggedDataExtendDao taggedDataExtendDao) {
+                                 TaggedDataTimestampDao taggedDataTimestampDao, TaggedDataExtendDao taggedDataExtendDao, TimeService timeService) {
         this.taggedDataDao = taggedDataDao;
+        this.timeService = timeService;
         this.dataTagDao = dataTagDao;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;

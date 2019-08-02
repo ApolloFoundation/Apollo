@@ -21,14 +21,14 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import javax.enterprise.inject.spi.CDI;
-import java.util.Arrays;
-
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+
+import java.util.Arrays;
+import javax.enterprise.inject.spi.CDI;
 
 public final class Token {
-    private static volatile TimeServiceImpl timeService = CDI.current().select(TimeServiceImpl.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
 
     public static String generateToken(byte[] keySeed, String messageString) {
         return generateToken(keySeed, Convert.toBytes(messageString));

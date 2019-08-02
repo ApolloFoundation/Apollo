@@ -57,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
@@ -91,6 +92,7 @@ import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -139,23 +141,26 @@ class ShardEngineTest {
     private Zip zip = spy(new ZipImpl());
 
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath));
+    Weld weld = WeldInitiator.createWeld();
     {
+        weld.addInterceptor(JdbiTransactionalInterceptor.class);
+        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+                JdbiHandleFactory.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+                DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
+                TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
+                GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
+                DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
+                PhasingPollTable.class,
+                DerivedTablesRegistry.class,
+                ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class);
+
         // return the same dir for both CDI components
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
-            DerivedDbTablesRegistryImpl.class,
-            TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
-            GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
-            DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
-            PhasingPollTable.class,
-            DerivedTablesRegistry.class,
-            ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class)
+    public WeldInitiator weldInitiator = WeldInitiator.from(weld)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -329,7 +334,7 @@ class ShardEngineTest {
 
 
     @Test
-    void createShardDbDoAllOperations() throws IOException {
+    void createShardDbDoAllOperations() throws IOException, SQLException {
         // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
 
@@ -497,6 +502,8 @@ class ShardEngineTest {
         Shard lastShard = shardDao.getLastShard();
         assertNotNull(lastShard.getPrunableZipHash());
         assertNotNull(lastShard.getCoreZipHash());
+        List<ShardRecovery> existingRecovery = shardRecoveryDaoJdbc.getAllShardRecovery(extension.getDatabaseManager().getDataSource().getConnection());
+        assertEquals(0, existingRecovery.size());
         // compare full hashes
         TransactionIndex index = transactionIndexDao.getByTransactionId(td.TRANSACTION_1.getId());
         assertNotNull(index);
