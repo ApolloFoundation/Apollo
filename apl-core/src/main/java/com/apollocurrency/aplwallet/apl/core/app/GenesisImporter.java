@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -56,7 +57,7 @@ public class GenesisImporter {
     private AplAppStatus aplAppStatus;
 
     private BlockchainConfigUpdater blockchainConfigUpdater;
-    private DatabaseManager databaseManager; // lazy init
+    private DatabaseManager databaseManager;
     private String genesisTaskId;
 //    private JsonNode genesisAccountsJSON = null;
 //    private ArrayNode publicKeys;
@@ -77,18 +78,21 @@ public class GenesisImporter {
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        loadGenesisDataFromResources();
+//        loadGenesisDataFromResources();
     }
 
-    private void loadGenesisDataFromResources() {
-        try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
-            JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
-            CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
-            CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-            EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-        } catch (ParseException|IOException|java.text.ParseException e) {
-            throw new RuntimeException("Failed to load genesis parameters", e);
+    @PostConstruct
+    public void loadGenesisDataFromResources() {
+        if (CREATOR_PUBLIC_KEY == null) {
+            try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
+                JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
+                CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
+                CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+                EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
+            } catch (ParseException|IOException|java.text.ParseException e) {
+                throw new RuntimeException("Failed to load genesis parameters", e);
+            }
         }
 
     }

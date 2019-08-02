@@ -72,7 +72,7 @@ class GenesisImporterTest {
     @WeldSetup
     public WeldInitiator weld  = WeldInitiator.from(
             AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-            ShardDaoJdbcImpl.class,
+            ShardDaoJdbcImpl.class, GenesisImporter.class,
             BlockIndexDao.class, TransactionDaoImpl.class, BlockchainImpl.class,
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
@@ -86,6 +86,7 @@ class GenesisImporterTest {
             .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
             .build();
 
+    @Inject
     private GenesisImporter genesisImporter;
     @Inject
     PropertiesHolder propertiesHolder;
@@ -115,9 +116,6 @@ class GenesisImporterTest {
         doReturn("conf").when(configDirProvider).getConfigDirectoryName();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
-
-        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider,
-                blockchainConfigUpdater, extension.getDatabaseManager(), aplAppStatus);
         genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         accountTable = new AccountTable();
         publicKeyTable = new PublicKeyTable(blockchain);

@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.collections4.map.HashedMap;
 
 public class BalancesPublicKeysTestData {
 
@@ -29,7 +28,7 @@ public class BalancesPublicKeysTestData {
                 "af787ee65f2ce7355d10b3d69390bb48bbd47b725f2eb0c786f9d9e623a1ac51");
 
         // that map corresponds 'balances' in /resources/conf/data/genesisAccounts-testnet.json
-        this.balances = new HashedMap<>(10);
+        this.balances = new HashMap<>(10);
         this.balances.put(1L, 15984639707L);
         this.balances.put(10L, 3303638046L);
         this.balances.put(10000L, 300338008L);
