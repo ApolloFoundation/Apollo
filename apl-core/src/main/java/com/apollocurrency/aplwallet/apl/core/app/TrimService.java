@@ -156,4 +156,9 @@ public class TrimService {
         }
         log.debug("Only trim time: " + onlyTrimTime);
     }
+
+
+    public boolean isTrimming() {
+        return true;
+    }
 }

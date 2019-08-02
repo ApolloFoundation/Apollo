@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
@@ -62,6 +63,8 @@ public class ShardServiceIntegrationTest {
     @Mock
     DirProvider dirProvider;
     @Mock
+    TrimService trimService;
+    @Mock
     Zip zip;
     @Mock
     BlockchainConfig blockchainConfig;
@@ -85,7 +88,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
         List<Shard> allShards = shardService.getAllShards();
 
         assertEquals(ShardTestData.SHARDS, allShards);
@@ -93,7 +96,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
         List<Shard> allShards = shardService.getAllCompletedShards();
 
         assertEquals(List.of(ShardTestData.SHARD_1), allShards);
@@ -101,7 +104,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedOrArchivedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
 
         List<Shard> shards = shardService.getAllCompletedOrArchivedShards();
 
@@ -116,7 +119,7 @@ public class ShardServiceIntegrationTest {
         doReturn(mockChain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(mockChain).getChainId();
         zip = new ZipImpl();
-        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db"));

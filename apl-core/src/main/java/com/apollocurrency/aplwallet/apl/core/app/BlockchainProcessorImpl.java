@@ -471,42 +471,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void clean() {
-        globalSync.writeLock();
-        try {
-            setGetMoreBlocks(false);
-            try {
-                TransactionalDataSource dataSource = databaseManager.getDataSource();
-                dataSource.begin();
-                try {
-                    blockchain.deleteAll();
-                    dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
-                    ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
-                    trimService.resetTrim();
-                    DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
-                    Path dataExportDir = dirProvider.getDataExportDir();
-                    FileUtils.clearDirectorySilently(dataExportDir);
-                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
-
-                    dataSource.commit(false);
-                    lookupBlockhainConfigUpdater().rollback(0);
-                }
-                catch (Exception e) {
-                    log.error(e.toString(), e);
-                    dataSource.rollback(false);
-                }
-                finally {
-                    dataSource.commit();
-                }
-                continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
-            } finally {
-                setGetMoreBlocks(true);
-            }
-        } finally {
-            globalSync.writeUnlock();
-        }
-    }
-
     @Override
     public void setGetMoreBlocks(boolean getMoreBlocks) {
         log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);

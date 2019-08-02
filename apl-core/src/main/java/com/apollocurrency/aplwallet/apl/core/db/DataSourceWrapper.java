@@ -46,6 +46,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 

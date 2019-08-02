@@ -6,7 +6,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.UUID;
-import javax.enterprise.inject.Produces;
 
 public interface DatabaseManager {
 
@@ -21,6 +20,8 @@ public interface DatabaseManager {
     PropertiesHolder getPropertiesHolder();
 
     void shutdown();
+
+    void setAvailable(boolean available);
 
     void shutdown(TransactionalDataSource dataSource);
 

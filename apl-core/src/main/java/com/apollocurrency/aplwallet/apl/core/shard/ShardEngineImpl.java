@@ -639,6 +639,7 @@ public class ShardEngineImpl implements ShardEngine {
             return state = COMPLETED;
         }
         state = COMPLETED;
+        ((ShardManagement) databaseManager).addFullShard(paramInfo.getShardId());
         // complete sharding
         updateShardRecord(paramInfo, sourceDataSource, state, ShardState.FULL);
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it

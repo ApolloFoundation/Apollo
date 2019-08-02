@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.enterprise.event.Event;
+import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,6 +50,7 @@ public class ShardService {
     private AplAppStatus aplAppStatus;
     private PropertiesHolder propertiesHolder;
     private Event<Boolean> trimEvent;
+    private TrimService trimService;
     private GlobalSync globalSync;
 
 
@@ -57,7 +60,7 @@ public class ShardService {
     public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
 
     @Inject
-    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain, DirProvider dirProvider, Zip zip, DatabaseManager databaseManager, BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao, ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus, PropertiesHolder propertiesHolder, Event<Boolean> trimEvent, GlobalSync globalSync) {
+    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain, DirProvider dirProvider, Zip zip, DatabaseManager databaseManager, BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao, ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus, PropertiesHolder propertiesHolder, Event<Boolean> trimEvent, GlobalSync globalSync, TrimService trimService) {
         this.shardDao = shardDao;
         this.blockchainProcessor = blockchainProcessor;
         this.blockchain = blockchain;
@@ -70,6 +73,7 @@ public class ShardService {
         this.aplAppStatus = aplAppStatus;
         this.propertiesHolder = propertiesHolder;
         this.trimEvent = trimEvent;
+        this.trimService = trimService;
         this.globalSync = globalSync;
     }
 
@@ -100,6 +104,16 @@ public class ShardService {
         Path backupZip = dbDir.resolve(String.format(ShardConstants.DB_BACKUP_FORMAT, new ShardNameHelper().getShardNameByShardId(shardId, blockchainConfig.getChain().getChainId())));
         boolean backupExists = Files.exists(backupZip);
         if (backupExists) {
+            updateTrimConfig(false);
+            while (trimService.isTrimming()) {
+                try {
+                    Thread.sleep(100);
+                }
+                catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            blockchainProcessor.suspendBlockchainDownloading();
             globalSync.writeLock();
             try {
                 if (isSharding) {
@@ -111,6 +125,7 @@ public class ShardService {
                         return false;
                     }
                 }
+                databaseManager.setAvailable(false);
                 databaseManager.shutdown();
                 FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                     Path fileName = p.getFileName();
@@ -125,8 +140,9 @@ public class ShardService {
                     }
                 });
                 zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString());
-                databaseManager.getDataSource();
-                blockchainProcessor.updateInitialSnapshotBlock();
+                databaseManager.setAvailable(true);
+                databaseManager.getDataSource(); // force init
+                blockchain.update();
                 recoverSharding();
                 return true;
             }
@@ -144,24 +160,48 @@ public class ShardService {
     }
 
     public void recoverSharding() {
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        if (blockchainConfig.getCurrentConfig().isShardingEnabled() && recovery != null && recovery.getState() != MigrateState.COMPLETED) {
-            isSharding = true;
-            try {
-                aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
-                blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
-                Shard lastShard = shardDao.getLastShard();
-                shardMigrationExecutor.cleanCommands();
-                shardMigrationExecutor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
-                shardMigrationExecutor.executeAllOperations();
-                aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
-            } finally {
-                isSharding = false;
+            ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
+            boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+            boolean shardingEnabled = blockchainConfig.getCurrentConfig().isShardingEnabled();
+            log.debug("Is Shard Recovery POSSIBLE ? RESULT = '{}' parts : ({} && {} && {} && {})",
+                    ( (!isShardingOff && shardingEnabled) && recovery != null && recovery.getState() != MigrateState.COMPLETED),
+                    !isShardingOff,
+                    shardingEnabled,
+                    recovery != null,
+                    recovery != null ? recovery.getState() != MigrateState.COMPLETED : "false"
+            );
+            if ( (!isShardingOff && shardingEnabled)
+                    && recovery != null
+                    && recovery.getState() != MigrateState.COMPLETED) {
+                isSharding = true;
+                try {
+                    // here we are able to recover from stored record
+                    aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
+                    ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
+                    Shard lastShard = shardDao.getLastShard();
+                    executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
+                    executor.executeAllOperations();
+                    aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
+                } finally {
+                    isSharding = false;
+                }
+            } else {
+                // when sharding was disabled but recovery records was stored before
+                // let's remove records for sharding recovery + shard
+                if ( (isShardingOff && !shardingEnabled) && recovery != null && recovery.getState() == MigrateState.INIT) {
+                    // remove previous recover record if it's in INIT state
+                    int shardRecoveryDeleted = shardRecoveryDao.hardDeleteShardRecovery(recovery.getShardRecoveryId());
+                    Shard shard = shardDao.getLastShard();
+                    int shardDeleted = 0;
+                    if (shard != null) {
+                        shardDeleted = shardDao.hardDeleteShard(shard.getShardId());
+                    }
+                    log.debug("Deleted records : shardRecoveryDeleted = {}, shardDeleted = {}",
+                            shardRecoveryDeleted, shardDeleted);
+                }
             }
-        } else {
-            log.info("Nothing to recover");
-        }
     }
+
     public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
         MigrateState resultState = MigrateState.FAILED;
         if (!shouldPerformSharding()) {
@@ -204,7 +244,7 @@ public class ShardService {
 
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
-                                blockchainProcessor.updateInitialBlock();
+                                blockchain.setShardInitialBlock(blockchain.findFirstBlock());
                                 updateTrimConfig(true);
                                 isSharding = false;
                                 return result;

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -75,10 +76,12 @@ public class ShardServiceTest {
     @Mock PropertiesHolder propertiesHolder;
     @Mock Event<Boolean> trimEvent;
     @Mock GlobalSync globalSync;
+    @Mock
+    TrimService trimService;
 
     @BeforeEach
     void setUp() {
-        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync);
+        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
     }
 
     @Test

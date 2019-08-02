@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -19,13 +20,9 @@ public interface ShardManagement {
     long TEMP_DB_IDENTITY = -1L;
 
 
-    /**
-     * Find and return all available shard Ids from main db 'SHARD' table
-     *
-     * @param transactionalDataSource main db data source to search for another shards in
-     * @return shard and file name
-     */
-    List<Long> findAllShards(TransactionalDataSource transactionalDataSource);
+    void initFullShards(Collection<Long> ids);
+
+    void addFullShard(Long shard);
 
     /**
      * That is preferred way to retrieve cached shard data source or create it fully initialized
