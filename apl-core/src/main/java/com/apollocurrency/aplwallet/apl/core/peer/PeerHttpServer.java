@@ -43,7 +43,7 @@ public class PeerHttpServer {
      public static final int MAX_PLATFORM_LENGTH = 30;
      public static final int DEFAULT_PEER_PORT=47874;
      public static final int DEFAULT_PEER_PORT_TLS=48743;
-     boolean shareMyAddress;
+     boolean shareMyAddress=false;
      private int myPeerServerPort;
      private final int myPeerServerPortTLS;
      private final boolean useTLS;
@@ -51,6 +51,7 @@ public class PeerHttpServer {
      private final String myPlatform;
      private PeerAddress myExtAddress;
      private final Server peerServer;
+     private PeerServlet peerServlet;
      private final UPnP upnp;
      private final String host;
      private final int idleTimeout;
@@ -75,7 +76,10 @@ public class PeerHttpServer {
     public PeerAddress getMyExtAddress(){
         return myExtAddress;
     }
-
+    public PeerServlet getPeerServlet(){
+        return peerServlet;
+    }
+    
     @Inject
     public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
         this.upnp = upnp;
@@ -111,7 +115,8 @@ public class PeerHttpServer {
             ctxHandler.setContextPath("/");
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
-            ServletHolder peerServletHolder = new ServletHolder(new PeerServlet());
+            peerServlet = new PeerServlet();
+            ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));

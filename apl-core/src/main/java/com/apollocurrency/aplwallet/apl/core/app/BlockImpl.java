@@ -22,14 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -43,12 +35,22 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.enterprise.inject.spi.CDI;
+
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
 
 
     private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static Blockchain blockchain;
     private static ShardDao shardDao;
 
 
@@ -219,14 +221,19 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public List<Transaction> getTransactions() {
+    public List<Transaction> getOrLoadTransactions() {
         if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(blockchain.getBlockTransactions(getId()));
+            List<Transaction> transactions = Collections.unmodifiableList(lookupBlockchain().getBlockTransactions(getId()));
             for (Transaction transaction : transactions) {
                 transaction.setBlock(this);
             }
             this.blockTransactions = transactions;
         }
+        return this.blockTransactions;
+    }
+
+    @Override
+    public List<Transaction> getTransactions() {
         return this.blockTransactions;
     }
 
@@ -323,7 +330,7 @@ public final class BlockImpl implements Block {
         json.put("timeout", timeout);
 
         JSONArray transactionsData = new JSONArray();
-        getTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
         json.put("transactions", transactionsData);
         return json;
     }
@@ -378,7 +385,7 @@ public final class BlockImpl implements Block {
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(getTransactions().size());
+            buffer.putInt(getOrLoadTransactions().size());
             buffer.putLong(totalAmountATM);
             buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
@@ -418,7 +425,7 @@ public final class BlockImpl implements Block {
 
         try {
 
-            Block previousBlock = blockchain.getBlock(getPreviousBlockId());
+            Block previousBlock = lookupBlockchain().getBlock(getPreviousBlockId());
             if (previousBlock == null) {
                 throw new BlockchainProcessor.BlockOutOfOrderException("Can't verify signature because previous block is missing", this);
             }
@@ -468,14 +475,14 @@ public final class BlockImpl implements Block {
             this.height = 0;
         }
         short index = 0;
-        for (Transaction transaction : getTransactions()) {
+        for (Transaction transaction : getOrLoadTransactions()) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
         }
     }
 
     void loadTransactions() {
-        for (Transaction transaction : getTransactions()) {
+        for (Transaction transaction : getOrLoadTransactions()) {
             ((TransactionImpl)transaction).bytes();
             transaction.getAppendages();
         }
@@ -512,7 +519,7 @@ public final class BlockImpl implements Block {
 
     private int getBlockTimeAverage(Block previousBlock) {
         int blockchainHeight = previousBlock.getHeight();
-        Block shardInitialBlock = blockchain.getShardInitialBlock();
+        Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
         int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2);
         if (version != Block.LEGACY_BLOCK_VERSION) {
             int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1);
@@ -544,7 +551,7 @@ public final class BlockImpl implements Block {
             int[] blockTimestamps = lastShard.getBlockTimestamps();
             return blockTimestamps[diff - 1];
         }
-        return blockchain.getBlockAtHeight(blockHeight).getTimestamp();
+        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimestamp();
     }
 
     private int getPrevTimeout(int shardInitialHeight, int blockHeight) {
@@ -557,7 +564,14 @@ public final class BlockImpl implements Block {
             int[] blockTimeouts = lastShard.getBlockTimeouts();
             return blockTimeouts[diff - 1];
         }
-        return blockchain.getBlockAtHeight(blockHeight).getTimeout();
+        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimeout();
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
     }
 
 

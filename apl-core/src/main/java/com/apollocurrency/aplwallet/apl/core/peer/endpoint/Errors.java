@@ -28,6 +28,8 @@ public final class Errors {
     public final static String UNSUPPORTED_REQUEST_TYPE = "Unsupported request type!";
     public final static String UNSUPPORTED_PROTOCOL = "Unsupported protocol!";
     public final static String INVALID_ANNOUNCED_ADDRESS = "Invalid announced address";
+    public final static String INVALID_CHAINID = "Invalid chain Id";
+    public final static String INVALID_APPLICATION = "Invalid Application, must be apl";
     public final static String SEQUENCE_ERROR = "Peer request received before 'getInfo' request";
     public final static String MAX_INBOUND_CONNECTIONS = "Maximum number of inbound connections exceeded";
     public final static String TOO_MANY_BLOCKS_REQUESTED = "Too many blocks requested";

@@ -22,14 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
@@ -56,6 +49,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import java.util.Collections;
+import java.util.Map;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
@@ -67,10 +66,10 @@ public final class GetConstants extends AbstractAPIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+                Blockchain blockchain = CDI.current().select(Blockchain.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
 
-                response.put("initialShardBlockId", Long.toUnsignedString(blockchainProcessor.getInitialBlock()));
+                response.put("initialShardBlockId", Long.toUnsignedString(blockchain.getShardInitialBlock().getId()));
                 response.put("genesisAccountId", Long.toUnsignedString(GenesisImporter.CREATOR_ID));
                 response.put("epochBeginning", GenesisImporter.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
