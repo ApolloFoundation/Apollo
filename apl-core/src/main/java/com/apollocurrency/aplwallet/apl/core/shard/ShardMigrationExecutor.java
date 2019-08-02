@@ -161,7 +161,7 @@ public class ShardMigrationExecutor {
     }
 
     private int getShardStartHeight() {
-        Shard lastCompletedShard = shardDao.getLastCompletedShard(); // last shard is missing on the first time
+        Shard lastCompletedShard = shardDao.getLastCompletedOrArchivedShard(); // last shard is missing on the first time
         return lastCompletedShard != null ? lastCompletedShard.getShardHeight() : 0;
     }
 

@@ -36,6 +36,12 @@ public interface Blockchain {
 
     Block getLastBlock();
 
+    /**
+     * Update internal state of blockchain
+     * Should be called, when database was created from scratch
+     */
+    void update();
+
     void setLastBlock(Block block);
 
     Block getLastBlock(int timestamp);
@@ -76,6 +82,8 @@ public interface Blockchain {
 
 
     Block getShardInitialBlock();
+
+    void setShardInitialBlock(Block block);
 
 //    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 

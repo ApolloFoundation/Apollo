@@ -356,8 +356,17 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, TransactionalDataSource dataSource, int index) {
         // Search the database
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+        try (Connection con = dataSource.getConnection()) {
+            return getBlocksAfter(height, blockIdList, result, con, index);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
+        // Search the database
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE height > ? "
                      + "ORDER BY height ASC LIMIT ?")) {
             pstmt.setLong(1, height);
@@ -638,23 +647,19 @@ public class BlockDaoImpl implements BlockDao {
             }
             return;
         }
-        LOG.info("Deleting blockchain...");
+        LOG.debug("Deleting blockchain...");
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-            }
-            catch (SQLException e) {
+                LOG.debug("DONE Deleting blockchain...");
+            } catch (SQLException e) {
                 dataSource.rollback(false);
                 throw e;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        finally {
-//            clearBlockCache();
         }
     }
 

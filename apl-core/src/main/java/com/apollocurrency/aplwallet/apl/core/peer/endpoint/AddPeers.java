@@ -41,7 +41,7 @@ public final class AddPeers extends PeerRequestHandler {
             Peers.peersExecutorService.submit(() -> {
                 for (int i=0; i<peers.size(); i++) {
                     String announcedAddress = (String)peers.get(i);
-                    PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);
+                    PeerImpl newPeer = Peers.findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
                         if (Peers.addPeer(newPeer) && setServices) {
                             newPeer.setServices(Long.parseUnsignedLong((String)services.get(i)));

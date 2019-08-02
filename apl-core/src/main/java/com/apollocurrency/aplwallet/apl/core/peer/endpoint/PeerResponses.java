@@ -81,5 +81,12 @@ public class PeerResponses {
         return response;
     }
 
+    public static JSONStreamAware getBlackisted(String blacklistingCause) {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.BLACKLISTED);
+        response.put("cause", blacklistingCause);
+        return JSON.prepare(response);
+    }
+
    
 }

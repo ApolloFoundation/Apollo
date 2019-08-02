@@ -49,7 +49,7 @@ public class PeerClient {
     public boolean checkConnection(){
         boolean res = false;
         String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = Peers.findOrCreatePeer(announcedAddress, true);
+        Peer p = Peers.findOrCreatePeer(null,announcedAddress, true);
         if(p!=null){
             peer=p;
             res=true;
@@ -67,7 +67,12 @@ public class PeerClient {
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
         }else{
@@ -98,7 +103,12 @@ public class PeerClient {
        rq.offset=fci.offset;
        rq.size=fci.size;
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+       JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         if(resp==null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
@@ -121,7 +131,12 @@ public class PeerClient {
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         log.trace("shardInfo respond = {}", resp);
         if(resp==null){
             log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());
