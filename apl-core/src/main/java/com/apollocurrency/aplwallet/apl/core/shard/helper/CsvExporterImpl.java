@@ -51,14 +51,14 @@ public class CsvExporterImpl implements CsvExporter {
         try {
             boolean folderExist = Files.exists(this.dataExportPath);
             if (!folderExist) { // check and create dataExport folder
-                Files.createDirectory(this.dataExportPath);
+                Files.createDirectories(this.dataExportPath);
             }
         } catch (IOException e) {
             throw new RuntimeException("Unable to create data export directory", e);
         }
         //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.excludeTables = Set.of("genesis_public_key");
+        this.excludeTables = Set.of("genesis_public_key", "data_tag");
     }
 
     /**

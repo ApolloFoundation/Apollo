@@ -210,12 +210,12 @@ INSERT into PUBLIC.DATA_TAG
 ;
 
 INSERT into PUBLIC.TAGGED_DATA
-(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
-(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
-(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
-(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
-(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
-(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
+(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,tags                          , parsed_tags                 ,data              ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
+(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,'tag1,tag2,tag3,tag2,sl'      ,('tag1', 'tag2', 'tag3')     ,X'c11dd7986e'     ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,'tag2,tag2,ss'                ,('tag2')                     ,X'c11d86986e'     ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,'tag3,tag4,tag3,newtag'       ,('tag3', 'tag4', 'newtag')   ,X'c11d8344588e'   ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,'tag3,tag3,tag3,tag2,tag2'    ,('tag3', 'tag2')             ,X'c11d1234589e'   ,   TRUE   ,          73600    ,      35078473        ,   3500),
+(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,'iambatman'                   ,('iambatman')                ,X'c11d1234586e'   ,   FALSE  ,          73600    ,      35078473        ,   8000),
 ;
 
 INSERT into PUBLIC.TAGGED_DATA_EXTEND

@@ -9,22 +9,21 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
+import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -32,25 +31,26 @@ import javax.inject.Singleton;
 @Slf4j
 public class ShardImporter {
     private ShardDao shardDao;
-
-    private DatabaseManager databaseManager;
     private Blockchain blockchain;
     private DerivedTablesRegistry derivedTablesRegistry;
     private BlockchainConfig blockchainConfig;
+    private DataTagDao dataTagDao;
+    private BlockchainProcessor blockchainProcessor;
     private CsvImporter csvImporter;
     private Zip zipComponent;
     private DownloadableFilesManager downloadableFilesManager;
     private AplAppStatus aplAppStatus;
 
     @Inject
-    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig, DatabaseManager databaseManager, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
+    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig,BlockchainProcessor blockchainProcessor, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DataTagDao dataTagDao, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
         this.shardDao = shardDao;
-        this.databaseManager = databaseManager;
         this.blockchain = blockchain;
         this.derivedTablesRegistry = derivedTablesRegistry;
         this.csvImporter = csvImporter;
         this.zipComponent = zipComponent;
+        this.blockchainProcessor = blockchainProcessor;
         this.downloadableFilesManager = downloadableFilesManager;
+        this.dataTagDao = dataTagDao;
         this.aplAppStatus = aplAppStatus;
         this.blockchainConfig = blockchainConfig;
 
@@ -60,14 +60,13 @@ public class ShardImporter {
         importShard(fileId, List.of());
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
-        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         blockchain.update();
         blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }
 
     public void importLastShard(int height) {
         if (height == 0) {
-            Genesis.apply(false);
+            importGenesis(false);
         } else {
             Shard completedShard = shardDao.getLastCompletedOrArchivedShard();
             Long shardId = completedShard.getShardId();
@@ -83,12 +82,16 @@ public class ShardImporter {
         } else if (blockchainConfig.getCurrentConfig().isShardingEnabled()) {
             Shard shard = shardDao.getLastShard();
             if (shard != null) {
-                return shard.getShardState() == ShardState.FULL;
+                return shard.getShardState() == ShardState.FULL || shard.getShardState() == ShardState.CREATED_BY_ARCHIVE;
             } else {
                 return true;
             }
         }
         return true;
+    }
+
+    protected void importGenesis(boolean onlyKeys) {
+        Genesis.apply(onlyKeys);
     }
 
     public void importShard(String fileId, List<String> excludedTables) {
@@ -107,7 +110,7 @@ public class ShardImporter {
             throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
         }
 
-        Genesis.apply(true); // import genesis public Keys ONLY (NO balances) - 049,842%
+        importGenesis(true); // import genesis public Keys ONLY (NO balances) - 049,842%
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50.0, "Public keys were imported");
         // import additional tables
         List<String> tables = List.of(ShardConstants.SHARD_TABLE_NAME,
@@ -139,17 +142,12 @@ public class ShardImporter {
         } else {
             lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
             lastShard.setCoreZipHash(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
-            if(shardDao.getShardById(lastShard.getShardId()) != null){
-                log.debug("Somehow shard already exists in DB, shardID is {}",lastShard.getShardId());
-                shardDao.updateShard(lastShard);                
-            }else{
-                shardDao.saveShard(lastShard);
-            }
+            shardDao.updateShard(lastShard);
         }
 
 
         // import derived tables
-        Collection<String> tableNames = derivedTablesRegistry.getDerivedTables().stream().map(Object::toString).collect(Collectors.toList());
+        Collection<String> tableNames = derivedTablesRegistry.getDerivedTableNames();
         log.debug("2. Will be imported [{}] tables...", tables.size());
         for (String table : tableNames) {
             try {
@@ -157,8 +155,17 @@ public class ShardImporter {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
                 if (table.equalsIgnoreCase(ShardConstants.ACCOUNT_TABLE_NAME)) {
-                    rowsImported = csvImporter.importCsv(table, 100, true, null,
+                    rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
                             Map.of("height", blockchain.findFirstBlock().getHeight()));
+                } else if (table.equalsIgnoreCase(ShardConstants.TAGGED_DATA_TABLE_NAME)) {
+                    rowsImported = csvImporter.importCsvWithRowHook(table, 100, true, (row)-> {
+                        Object parsedTags = row.get("parsed_tags");
+                        Object height = row.get("height");
+                        if (parsedTags != null) {
+                            Object[] tagArray = (Object[]) parsedTags;
+                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.valueOf((String) height));
+                        }
+                    });
                 } else {
                     rowsImported = csvImporter.importCsv(table, 100, true);
                 }

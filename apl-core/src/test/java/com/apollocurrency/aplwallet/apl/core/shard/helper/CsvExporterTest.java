@@ -201,6 +201,8 @@ class CsvExporterTest {
     AccountTable accountTable;
     @Inject
     PrunableMessageTable messageTable;
+    @Inject
+    TaggedDataDao taggedDataDao;
 
     @Inject
     PropertiesHolder propertiesHolder;
