@@ -301,7 +301,11 @@ class CsvExporterTest {
             int readCount = importCsvAndCheckContent(fileName, dataExportPath);
             assertTrue(readCount > 0);
         }
-
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(0).contains("BLOCK_TIMEOUTS"));
+        assertTrue(lines.get(0).contains("BLOCK_TIMESTAMPS"));
         log.debug("Processed Table = [{}]", filesInFolder.size());
     }
 

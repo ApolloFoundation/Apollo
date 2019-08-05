@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
@@ -90,22 +91,28 @@ public class Apollo {
     private static AplContainer container;
 
     private PropertiesHolder propertiesHolder;
+    private TaskDispatchManager taskDispatchManager;
     private static AplCoreRuntime aplCoreRuntime;
     
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
-        String packageName = "com.apollocurrency.aplwallet.apl";
-        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
-            logLevel = VALID_LOG_LEVELS.length - 1;
+        // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
+        String packageName = "com.apollocurrency.aplwallet";
+        if(logLevel<0){
+            return;
         }
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        if (logLevel >= VALID_LOG_LEVELS.length - 1) {
+            logLevel = VALID_LOG_LEVELS.length - 1;
+        }   
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
-        System.out.println(packageName + " current logger level: " + logger.getLevel()
-                + " New level: " + VALID_LOG_LEVELS[logLevel]);
+            ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+            System.out.println(packageName + " current logger level: " + logger.getLevel()
+                    + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
-        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+            logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));        
+        // otherwise we want to load usual logback.xml settings
     }
 
     public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
@@ -219,12 +226,14 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
-        if(args.noShardImport){
-            props.setProperty("apl.noshardimport", "true");
+//over-write config options from command line if set
+        if(args.noShardImport!=null){
+            props.setProperty("apl.noshardimport", ""+args.noShardImport);
         }
-        if(args.noShardCreate){
-            props.setProperty("apl.noshardcreate", "true");
-        }        
+        if(args.noShardCreate!=null){
+            props.setProperty("apl.noshardcreate", ""+args.noShardCreate);
+        }
+
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
@@ -232,7 +241,9 @@ public class Apollo {
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
-        setLogLevel(args.debug);
+        if(args.debug!=CmdLineArgs.DEFAULT_DEBUG_LEVEL){
+           setLogLevel(args.debug);
+        }
 
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
@@ -256,6 +267,7 @@ public class Apollo {
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
+                .recursiveScanPackages(TaskDispatchManager.class)
                 .recursiveScanPackages(Updater.class)
                 .recursiveScanPackages(ServerInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
@@ -279,6 +291,7 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
+        app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
@@ -287,7 +300,7 @@ public class Apollo {
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder, app.taskDispatchManager);
 
         try {
             // updated shutdown hook explicitly created with instances

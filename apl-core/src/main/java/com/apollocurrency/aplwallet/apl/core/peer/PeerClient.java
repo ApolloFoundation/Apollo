@@ -49,7 +49,7 @@ public class PeerClient {
     public boolean checkConnection(){
         boolean res = false;
         String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = Peers.findOrCreatePeer(announcedAddress, true);
+        Peer p = Peers.findOrCreatePeer(null,announcedAddress, true);
         if(p!=null){
             peer=p;
             res=true;
@@ -67,15 +67,18 @@ public class PeerClient {
         rq.fileId = entityId;
         rq.full = true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        log.trace("getFileInfo() resp = {}", req.toJSONString());
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         if(resp == null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
         }else{
             log.trace("getFileInfo() resp = {}", resp.toJSONString());
         }
         FileDownloadInfoResponse res = mapper.convertValue(resp, FileDownloadInfoResponse.class);
-        log.debug("getFileInfo() FInfoResp = {}", res);
         if(res==null){
             res=new FileDownloadInfoResponse();
             res.errorCode=-3;
@@ -84,12 +87,11 @@ public class PeerClient {
         if (res.errorCode != 0 || res.error!=null) {
             log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
         }
-        log.trace("getFileInfo() result = {}", res);
         return res.downloadInfo;
     }
 
     public FileChunk downloadChunk(FileChunkInfo fci) {
-        log.debug("downloadChunk() fci = {}", fci);
+        log.trace("downloadChunk() fci = {}", fci);
         if(!checkConnection()){
             log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;
@@ -101,7 +103,12 @@ public class PeerClient {
        rq.offset=fci.offset;
        rq.size=fci.size;
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
-       JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+       JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         if(resp==null){
             log.debug("NULL FileInfo response from peer: {}",peer.getAnnouncedAddress());
             return null;
@@ -124,7 +131,12 @@ public class PeerClient {
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
-        JSONObject resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        JSONObject resp;
+        try {
+            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+        } catch (PeerNotConnectedException ex) {
+            resp=null;
+        }
         log.trace("shardInfo respond = {}", resp);
         if(resp==null){
             log.debug("NULL ShardInfo response from peer: {}",peer.getAnnouncedAddress());

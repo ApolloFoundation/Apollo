@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -19,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -37,23 +37,25 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardDownloadPresenceObserver {
 
-    private DatabaseManager databaseManager;
-    private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
-    private DerivedTablesRegistry derivedTablesRegistry;
-    private CsvImporter csvImporter;
-    private Zip zipComponent;
-    private DownloadableFilesManager downloadableFilesManager;
-    private AplAppStatus aplAppStatus;
-    private GlobalSync globalSync;
-    private ShardImporter shardImporter;
+    private final DatabaseManager databaseManager;
+    private final Blockchain blockchain;
+    private final BlockchainProcessor blockchainProcessor;
+    private final DerivedTablesRegistry derivedTablesRegistry;
+    private final CsvImporter csvImporter;
+    private final Zip zipComponent;
+    private final DownloadableFilesManager downloadableFilesManager;
+    private final AplAppStatus aplAppStatus;
+    private final GlobalSync globalSync;
+    private final ShardImporter shardImporter;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          Zip zipComponent, CsvImporter csvImporter,
                                          DownloadableFilesManager downloadableFilesManager,
-                                         AplAppStatus aplAppStatus, GlobalSync globalSync, ShardImporter shardImporter) {
+                                         AplAppStatus aplAppStatus, GlobalSync globalSync,
+                                         ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -62,8 +64,9 @@ public class ShardDownloadPresenceObserver {
         this.csvImporter = Objects.requireNonNull(csvImporter, "csvImporter is NULL");
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.globalSync = globalSync;
-        this.shardImporter = shardImporter;
+        this.globalSync = Objects.requireNonNull(globalSync, "globalSync is NULL");
+        this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
+        this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
     }
 
     /**
@@ -72,7 +75,43 @@ public class ShardDownloadPresenceObserver {
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
     public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        shardImporter.importShard(shardPresentData.getFileIdValue(), List.of());
+        String fileId = shardPresentData.getFileIdValue();
+        try {
+            shardImporter.importShardByFileId(fileId);
+        } catch (Exception e) {
+            log.error("Error on Shard # {}. Zip/CSV importing...", fileId);
+            log.error("Node has encountered serious error and import CSV shard data. " +
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
+            // truncate all partial data potentially imported into database
+            cleanUpPreviouslyImportedData();
+            // fall back to importing Genesis and starting from beginning
+            onNoShardPresent(shardPresentData);
+            return;
+        }
+        log.info("SNAPSHOT block should be READY in database...");
+        Block lastBlock = blockchain.findLastBlock();
+        log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
+        blockchainConfigUpdater.updateToLatestConfig();
+        blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
+        log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+    }
+
+    /**
+     * Remove all previously imported data from db
+     */
+    private void cleanUpPreviouslyImportedData() {
+        log.debug("start CleanUp after UNSUCCESSFUL zip import...");
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            blockchain.deleteAll();
+            derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
+            dataSource.commit();
+            log.debug("Finished CleanUp after UNSUCCESSFUL zip import");
+        } catch (Exception e) {
+            log.error("Error cleanUp after UNSUCCESSFUL zip import", e);
+            dataSource.rollback();
+            log.error("Please delete database files and try to run with command line option : --no-shards-import true");
+        }
     }
 
     /**
@@ -86,7 +125,6 @@ public class ShardDownloadPresenceObserver {
         try {
                 log.info("Genesis block not in database, starting from scratch");
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
-//        Connection con = dataSource.begin();
                 try (Connection con = dataSource.begin()) {
                     Block genesisBlock = Genesis.newGenesisBlock();
                     addBlock(dataSource, genesisBlock);
@@ -99,6 +137,7 @@ public class ShardDownloadPresenceObserver {
                     blockchain.commit(genesisBlock);
                     dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);
+                    blockchain.update();
                 } catch (SQLException e) {
                     dataSource.rollback();
                     log.info(e.getMessage());
@@ -106,7 +145,6 @@ public class ShardDownloadPresenceObserver {
                 }
                 // set to start work block download thread (starting from Genesis block here)
                 log.debug("Before updating BlockchainProcessor from Genesis and RESUME block downloading...");
-                blockchainProcessor.updateInitialBlockId();
                 blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
 
             } catch (Exception e) {
@@ -117,7 +155,6 @@ public class ShardDownloadPresenceObserver {
     private void addBlock(TransactionalDataSource dataSource, Block block) {
         try (Connection con = dataSource.getConnection()) {
             blockchain.saveBlock(con, block);
-            blockchain.setLastBlock(block);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

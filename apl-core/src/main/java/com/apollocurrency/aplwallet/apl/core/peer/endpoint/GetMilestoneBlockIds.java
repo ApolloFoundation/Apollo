@@ -102,7 +102,7 @@ public final class GetMilestoneBlockIds extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

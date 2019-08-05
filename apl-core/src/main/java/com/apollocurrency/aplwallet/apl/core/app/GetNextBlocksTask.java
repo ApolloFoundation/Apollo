@@ -5,13 +5,14 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -20,8 +21,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Callable method to get the next block segment from the selected peer
  */
-public class GetNextBlocks implements Callable<List<BlockImpl>> {
-    private static final Logger log = LoggerFactory.getLogger(GetNextBlocks.class);
+public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
+    private static final Logger log = LoggerFactory.getLogger(GetNextBlocksTask.class);
     
     private BlockchainConfig blockchainConfig;   
     /** Callable future */
@@ -51,7 +52,7 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
      * @param   stop                Stop index within the list
      * @param   startHeight         Height of the block from which we will start to download blockchain
      */
-    public GetNextBlocks(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
         this.blockchainConfig = blockchainConfig;
         this.blockIds = blockIds;
         this.start = start;
@@ -81,7 +82,12 @@ public class GetNextBlocks implements Callable<List<BlockImpl>> {
         request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
         request.put("chainId", blockchainConfig.getChain().getChainId());
         long startTime = System.currentTimeMillis();
-        JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+        JSONObject response;
+        try {
+            response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+        } catch (PeerNotConnectedException ex) {
+            response=null;
+        }
         responseTime = System.currentTimeMillis() - startTime;
         if (response == null) {
             return null;
