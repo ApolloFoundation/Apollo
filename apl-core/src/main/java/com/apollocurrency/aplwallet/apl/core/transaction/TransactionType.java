@@ -108,6 +108,7 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_DEX_OFFER_CANCEL = 1;
     public static final byte SUBTYPE_DEX_CONTRACT = 2;
     public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
+    public static final byte SUBTYPE_DEX_CLOSE_OFFER = 4;
 
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -239,6 +240,10 @@ public abstract class TransactionType {
                         return DEX.DEX_CONTRACT_TRANSACTION;
                     case SUBTYPE_DEX_TRANSFER_MONEY :
                         return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
+                    case SUBTYPE_DEX_CLOSE_OFFER:
+                        return DEX.DEX_CLOSE_OFFER;
+                    default:
+                        return null;
                 }
 
             default:

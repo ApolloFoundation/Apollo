@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
@@ -150,8 +151,6 @@ public class DexService {
         for (String ethAddress : eth) {
             ethWalletsBalance.add(ethereumWalletService.balanceInfo(ethAddress));
         }
-
-        // New Crypto currencies.
 
         return new WalletsBalance(ethWalletsBalance);
     }
@@ -314,43 +313,57 @@ public class DexService {
 
     public boolean approveMoneyTransfer(String passphrase, Long accountId, Long orderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
 
-        DexOffer offer = getOfferByTransactionId(orderId);
+        try {
+            DexOffer offer = getOfferByTransactionId(orderId);
 
+            CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
+                    .builder()
+                    .passphrase(passphrase)
+                    .publicKey(Account.getPublicKey(accountId))
+                    .senderAccount(Account.getAccount(accountId))
+                    .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase)))
+                    .deadlineValue("1440")
+                    .feeATM(Constants.ONE_APL * 2)
+                    .broadcast(true)
+                    .recipientId(0L)
+                    .ecBlockHeight(0)
+                    .ecBlockId(0L)
+                    .build();
 
-        if(offer.getType().isSell()){
+            if(offer.getType().isSell()){
+                dexSmartContractService.approve(passphrase, secret, offer.getToAddress(), accountId);
+                log.info("Transaction:" + txId +" was approved.");
 
-            dexSmartContractService.approve(passphrase, secret, offer.getToAddress(), accountId);
+                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
+                templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-            log.info("Transaction:" + txId +" was approved.");
-        } else if(offer.getType().isBuy()){
-            try {
+                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+                log.info("Order:" + offer.getTransactionId() +" was closed. TxId:" + respCloseOffer.getId());
+
+                //TODO add for make graphics
+
+            } else if(offer.getType().isBuy()){
+
                 Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(txId));
                 List<byte[]> txHash = new ArrayList<>();
                 txHash.add(transaction.getFullHash());
 
                 Attachment attachment = new MessagingPhasingVoteCasting(txHash, secret);
+                templatTransactionRequest.setAttachment(attachment);
 
-                CreateTransactionRequest createTransactionRequest = CreateTransactionRequest
-                        .builder()
-                        .passphrase(passphrase)
-                        .publicKey(Account.getPublicKey(accountId))
-                        .senderAccount(Account.getAccount(accountId))
-                        .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase)))
-                        .deadlineValue("1440")
-                        .feeATM(Constants.ONE_APL * 2)
-                        .broadcast(true)
-                        .recipientId(0L)
-                        .ecBlockHeight(0)
-                        .ecBlockId(0L)
-                        .attachment(attachment)
-                        .build();
+                Transaction respApproveTx = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+                log.info("Transaction:" + txId +" was approved. TxId: " + respApproveTx.getId());
 
-                Transaction transactionResp = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
+                templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-                log.info("Transaction:" + txId +" was approved. TxId: " + transactionResp.getId());
-            } catch (Exception ex){
-                throw new AplException.ExecutiveProcessException(ex.getMessage());
+                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+                log.info("Order:" + offer.getTransactionId() +" was closed. TxId:" + respCloseOffer.getId());
+
+                //TODO add for make graphics
             }
+        } catch (Exception ex){
+            throw new AplException.ExecutiveProcessException(ex.getMessage());
         }
 
         return true;

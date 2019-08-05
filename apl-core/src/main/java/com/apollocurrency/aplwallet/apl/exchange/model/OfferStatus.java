@@ -6,7 +6,8 @@ public enum  OfferStatus {
     PENDING,
     EXPIRED,
     CANCEL,
-    WAITING_APPROVAL;
+    WAITING_APPROVAL,
+    CLOSED;
 
     public static OfferStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferStatus.values().length){
