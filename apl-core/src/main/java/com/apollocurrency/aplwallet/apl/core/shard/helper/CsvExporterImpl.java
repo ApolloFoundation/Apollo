@@ -58,7 +58,7 @@ public class CsvExporterImpl implements CsvExporter {
         }
         //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.excludeTables = Set.of("genesis_public_key", "data_tag");
+        this.excludeTables = Set.of("genesis_public_key", "data_tag", "unconfirmed_transaction");
     }
 
     /**

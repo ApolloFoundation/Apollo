@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -35,20 +36,18 @@ public class ShardImporter {
     private DerivedTablesRegistry derivedTablesRegistry;
     private BlockchainConfig blockchainConfig;
     private DataTagDao dataTagDao;
-    private BlockchainProcessor blockchainProcessor;
     private CsvImporter csvImporter;
     private Zip zipComponent;
     private DownloadableFilesManager downloadableFilesManager;
     private AplAppStatus aplAppStatus;
 
     @Inject
-    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig,BlockchainProcessor blockchainProcessor, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DataTagDao dataTagDao, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
+    public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DataTagDao dataTagDao, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
         this.shardDao = shardDao;
         this.blockchain = blockchain;
         this.derivedTablesRegistry = derivedTablesRegistry;
         this.csvImporter = csvImporter;
         this.zipComponent = zipComponent;
-        this.blockchainProcessor = blockchainProcessor;
         this.downloadableFilesManager = downloadableFilesManager;
         this.dataTagDao = dataTagDao;
         this.aplAppStatus = aplAppStatus;
@@ -60,6 +59,7 @@ public class ShardImporter {
         importShard(fileId, List.of());
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
+        BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get(); // prevent circular dependency, should be fixed later
         blockchain.update();
         blockchainProcessor.resumeBlockchainDownloading(); // IMPORTANT CALL !!!
     }

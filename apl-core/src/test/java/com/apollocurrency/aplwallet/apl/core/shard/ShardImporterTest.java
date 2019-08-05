@@ -69,8 +69,8 @@ class ShardImporterTest {
     DbExtension extension = new DbExtension();
     @RegisterExtension
     TemporaryFolderExtension folder = new TemporaryFolderExtension();
-    @Mock
-    BlockchainProcessor blockchainProcessor;
+
+    BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     @Mock
     private ShardDao shardDao;
     @Mock
@@ -86,8 +86,11 @@ class ShardImporterTest {
     private Zip zipComponent;
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class)
-            .addBeans(MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
+            .addBeans(
+                    MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
+                    MockBean.of(blockchainProcessor, BlockchainProcessor.class),
                     MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+
             .build();
 
     @Inject
@@ -108,7 +111,7 @@ class ShardImporterTest {
     @BeforeEach
     void setUp() {
         csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus);
-        shardImporter = spy(new ShardImporter(shardDao, blockchainConfig, blockchainProcessor, blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
+        shardImporter = spy(new ShardImporter(shardDao, blockchainConfig, blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
     }
 
     @Test
