@@ -35,9 +35,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -59,14 +57,11 @@ public class GenesisImporter {
     private BlockchainConfigUpdater blockchainConfigUpdater;
     private DatabaseManager databaseManager;
     private String genesisTaskId;
-//    private JsonNode genesisAccountsJSON = null;
-//    private ArrayNode publicKeys;
-//    private ArrayNode balances;
-    private JSONObject genesisAccountsJSON = null;
-    private JSONArray publicKeys;
-    private JSONObject balances;
+    private JsonNode genesisAccountsJSON = null;
+    private List<String> publicKeys;
+    private Map<String, Long> balances;
     private byte[] computedDigest;
-    private ObjectMapper mapper;
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public GenesisImporter(BlockchainConfig blockchainConfig, ConfigDirProvider configDirProvider,
@@ -78,7 +73,6 @@ public class GenesisImporter {
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-//        loadGenesisDataFromResources();
     }
 
     @PostConstruct
@@ -113,15 +107,23 @@ public class GenesisImporter {
         log.trace("path = {}", path);
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
-/*
             genesisAccountsJSON = mapper.readTree(is);
-            this.balances = genesisAccountsJSON.get("balances");
-            this.publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-*/
-            genesisAccountsJSON = (JSONObject) JSONValue.parseWithException(is);
-            this.balances = (JSONObject) genesisAccountsJSON.get("balances");
-            this.publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
-        } catch (ParseException|IOException e) {
+            if (log.isTraceEnabled()) {
+                log.trace("genesisAccountsJSON = {}", genesisAccountsJSON);
+            }
+            JsonNode balances = genesisAccountsJSON.get("balances");
+            this.balances = mapper.readValue(balances.toString(), new TypeReference<Map<String, Long>>(){});
+            log.debug("balances = [{}]", this.balances.size());
+            if (log.isTraceEnabled()) {
+                log.trace("balances = {}", this.balances);
+            }
+            JsonNode publicKeys = genesisAccountsJSON.get("publicKeys");
+            this.publicKeys = mapper.readValue(publicKeys.toString(), new TypeReference<List<String>>(){});
+            log.debug("publicKeys = [{}]", this.publicKeys.size());
+            if (log.isTraceEnabled()) {
+                log.trace("publicKeys = {}", this.publicKeys);
+            }
+        } catch (IOException e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
         // we should leave here '0' to create correct genesis block for already launched mainnet
@@ -129,8 +131,8 @@ public class GenesisImporter {
         digest.update(Convert.toBytes(EPOCH_BEGINNING));
         this.computedDigest = digest.digest();
         genesisAccountsJSON = null;
-        Long usedBytes = null;// = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
-        log.debug("Digest is computed in {} ms, used {} Kb", (System.currentTimeMillis() - start) / 1000,
+        Long usedBytes = null; // Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
+        log.debug("Digest is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
                 usedBytes != null ? usedBytes / 1024 : "not calculated");
         return this.computedDigest;
     }
@@ -242,10 +244,9 @@ public class GenesisImporter {
         log.debug("Genesis accounts path = " + path);
         try (InputStreamReader is = new InputStreamReader(
                 GenesisImporter.class.getClassLoader().getResourceAsStream(path))) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode root = objectMapper.readTree(is);
+            JsonNode root = mapper.readTree(is);
             JsonNode balancesArray = root.get("balances");
-            Map<String, Long> map = objectMapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
+            Map<String, Long> map = mapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
 
             return map.entrySet()
                     .stream()
@@ -265,11 +266,12 @@ public class GenesisImporter {
         return computedDigest;
     }
 
-    public JSONArray getPublicKeys() {
+    public List<String> getPublicKeys() {
         return publicKeys;
     }
 
-    public JSONObject getBalances() {
+    public Map<String, Long> getBalances() {
         return balances;
     }
+
 }
