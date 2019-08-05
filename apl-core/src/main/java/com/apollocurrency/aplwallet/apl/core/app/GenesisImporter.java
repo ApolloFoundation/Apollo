@@ -36,9 +36,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
 
 @Slf4j
 @Singleton
@@ -79,12 +76,12 @@ public class GenesisImporter {
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
             try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
-                JSONObject genesisParameters = (JSONObject)JSONValue.parseWithException(new InputStreamReader(is));
-                CREATOR_PUBLIC_KEY = Convert.parseHexString((String)genesisParameters.get("genesisPublicKey"));
+                JsonNode genesisParameters = mapper.readTree(is);
+                CREATOR_PUBLIC_KEY = Convert.parseHexString(genesisParameters.get("genesisPublicKey").asText());
                 CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
                 DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-                EPOCH_BEGINNING = dateFormat.parse((String) genesisParameters.get("epochBeginning")).getTime();
-            } catch (ParseException|IOException|java.text.ParseException e) {
+                EPOCH_BEGINNING = dateFormat.parse(genesisParameters.get("epochBeginning").asText()).getTime();
+             } catch (IOException | java.text.ParseException e) {
                 throw new RuntimeException("Failed to load genesis parameters", e);
             }
         }
