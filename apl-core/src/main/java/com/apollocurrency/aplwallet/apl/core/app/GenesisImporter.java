@@ -59,29 +59,34 @@ public class GenesisImporter {
     private Map<String, Long> balances;
     private byte[] computedDigest;
     private ObjectMapper mapper = new ObjectMapper();
+    private String genesisParametersLocation;
 
     @Inject
     public GenesisImporter(BlockchainConfig blockchainConfig, ConfigDirProvider configDirProvider,
                            BlockchainConfigUpdater blockchainConfigUpdater,
                            DatabaseManager databaseManager,
-                           AplAppStatus aplAppStatus) {
+                           AplAppStatus aplAppStatus,
+                           GenesisImporterProducer genesisImporterProducer) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.configDirProvider = Objects.requireNonNull(configDirProvider, "configDirProvider is NULL");
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        Objects.requireNonNull(genesisImporterProducer);
+        this.genesisParametersLocation = genesisImporterProducer.genesisParametersLocation();
     }
 
     @PostConstruct
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
-            try (InputStream is = ClassLoader.getSystemResourceAsStream("conf/data/genesisParameters.json")) {
+            try (InputStream is = ClassLoader.getSystemResourceAsStream(genesisParametersLocation)) {
                 JsonNode genesisParameters = mapper.readTree(is);
                 CREATOR_PUBLIC_KEY = Convert.parseHexString(genesisParameters.get("genesisPublicKey").asText());
                 CREATOR_ID = Account.getId(CREATOR_PUBLIC_KEY);
                 DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
                 EPOCH_BEGINNING = dateFormat.parse(genesisParameters.get("epochBeginning").asText()).getTime();
              } catch (IOException | java.text.ParseException e) {
+                log.error("genesis Parameters were not loaded = {}", e.getMessage());
                 throw new RuntimeException("Failed to load genesis parameters", e);
             }
         }
@@ -100,7 +105,7 @@ public class GenesisImporter {
         }
 
         MessageDigest digest = Crypto.sha256();
-        String path = "conf/"+blockchainConfig.getChain().getGenesisLocation();
+        String path = blockchainConfig.getChain().getGenesisLocation();
         log.trace("path = {}", path);
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
@@ -120,7 +125,7 @@ public class GenesisImporter {
             if (log.isTraceEnabled()) {
                 log.trace("publicKeys = {}", this.publicKeys);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
         // we should leave here '0' to create correct genesis block for already launched mainnet
@@ -200,7 +205,7 @@ public class GenesisImporter {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/this.publicKeys.size()*1.0)*50, message);
             }
         }
-        log.debug("Saved public keys = [{}] in {} ms", this.publicKeys.size(), (System.currentTimeMillis() - start) / 1000);
+        log.debug("Saved public keys = [{}] in {} sec", this.publicKeys.size(), (System.currentTimeMillis() - start) / 1000);
     }
 
     private long saveBalances(TransactionalDataSource dataSource) {
@@ -224,23 +229,16 @@ public class GenesisImporter {
                 aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/this.balances.size()*1.0)*50, message);
             }
         }
-        log.debug("Saved [{}] balances in {} ms, total balance amount = {}", this.balances.size(),
+        log.debug("Saved [{}] balances in {} sec, total balance amount = {}", this.balances.size(),
                 (System.currentTimeMillis() - start) / 1000, totalAmount);
         return totalAmount;
     }
 
     public List<Map.Entry<String, Long>> loadGenesisAccounts() {
-
-        // Original line below:
-        String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();
-        // Hotfixed because UNIX way working everywhere
-        // TODO: Fix that for crossplatform compatibility
-
-//            String path = aplCoreRuntime.getConfDir()+"/"+blockchainConfig.getChain().getGenesisLocation();
-
+        String path = blockchainConfig.getChain().getGenesisLocation();
         log.debug("Genesis accounts path = " + path);
         try (InputStreamReader is = new InputStreamReader(
-                GenesisImporter.class.getClassLoader().getResourceAsStream(path))) {
+                Objects.requireNonNull(GenesisImporter.class.getClassLoader().getResourceAsStream(path)))) {
             JsonNode root = mapper.readTree(is);
             JsonNode balancesArray = root.get("balances");
             Map<String, Long> map = mapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});
@@ -250,7 +248,7 @@ public class GenesisImporter {
                     .sorted((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()))
                     .skip(1) //skip first account to collect only genesis accounts
                     .collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to load genesis accounts", e);
         }
     }

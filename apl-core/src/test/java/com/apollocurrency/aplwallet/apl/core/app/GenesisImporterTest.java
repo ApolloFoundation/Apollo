@@ -7,9 +7,13 @@ import static org.mockito.Mockito.mock;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -68,6 +72,7 @@ class GenesisImporterTest {
     private Chain chain = Mockito.mock(Chain.class);
     private ConfigDirProvider configDirProvider = mock(ConfigDirProvider.class);
     private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
+    private GenesisImporterProducer genesisImporterProducer = mock(GenesisImporterProducer.class);
 
     @WeldSetup
     public WeldInitiator weld  = WeldInitiator.from(
@@ -84,9 +89,9 @@ class GenesisImporterTest {
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
+            .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
             .build();
 
-    @Inject
     private GenesisImporter genesisImporter;
     @Inject
     PropertiesHolder propertiesHolder;
@@ -111,9 +116,6 @@ class GenesisImporterTest {
     void setUp() {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
-//        doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
-        doReturn("data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
-        doReturn("conf").when(configDirProvider).getConfigDirectoryName();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
         genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
@@ -129,6 +131,12 @@ class GenesisImporterTest {
 
     @Test
     void newGenesisBlock() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+        genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
+
         Block block = genesisImporter.newGenesisBlock();
         assertNotNull(block);
         assertEquals(1739068987193023818L, block.getGeneratorId());
@@ -143,9 +151,36 @@ class GenesisImporterTest {
     }
 
     @Test
+    void incorrectGenesisParameter() {
+        doReturn("conf/data/genesisParameters-INCORRECT.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+        assertThrows(RuntimeException.class, ()-> {
+            genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
+        });
+    }
+
+    @Test
     void newGenesisBlockLongJson() {
-        doReturn("data/genesisAccounts-HUGE.json").when(chain).getGenesisLocation();
+        String key = UUID.randomUUID().toString();
+        DurableTaskInfo info = new DurableTaskInfo();
+        info.setId(key);
+        info.setName("Shard data import");
+        info.setPercentComplete(0.0);
+        info.setDecription("data import");
+        info.setStarted(new Date());
+        info.setStateOfTask(DurableTaskInfo.TASK_STATES[0]);
+        info.setIsCrititcal(true);
+        doReturn(Optional.of(info)).when(aplAppStatus).findTaskByName("Shard data import");
+        doReturn("conf/data/genesisAccounts-HUGE.json").when(chain).getGenesisLocation();
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+        genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
+
         Block block = genesisImporter.newGenesisBlock();
+//        genesisImporter.importGenesisJson(false); // COMMENTED OUT because it TAKES LONG TIME with HIGE json !!!!
         assertNotNull(block);
         assertEquals(230730, genesisImporter.getPublicKeys().size()); // pub keys read from json
         assertEquals(84832, genesisImporter.getBalances().size()); // balances read from json
@@ -154,9 +189,15 @@ class GenesisImporterTest {
     }
 
     @Test
-    void applyFalse() throws Exception {
+    void savePublicKeysOnly() throws Exception {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+        genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
+
         genesisImporter.importGenesisJson(false);
         int count = publicKeyTable.getCount();
         assertEquals(10, count);
@@ -178,14 +219,59 @@ class GenesisImporterTest {
     }
 
     @Test
-    void applyTrue() {
+    void genesisParamIncorrectPath() {
+        doReturn("conf/unknown_path/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+
+        assertThrows(RuntimeException.class, ()-> {
+            genesisImporter.newGenesisBlock();
+        });
+
+    }
+
+    @Test
+    void savePublicKeysAndBalances() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+        dataSource.begin();
+
         genesisImporter.importGenesisJson(true);
         int count = publicKeyTable.getCount();
         assertEquals(10, count);
         count = genesisPublicKeyTable.getCount();
         assertEquals(10, count);
         checkImportedPublicKeys(10);
+    }
+
+    @Test
+    void incorrectTotalBalanceValue() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+        doReturn(30000000L).when(config).getMaxBalanceATM(); // incorrect value here
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+
+        assertThrows(RuntimeException.class, ()-> {
+            genesisImporter.importGenesisJson(false);
+        });
+    }
+
+    @Test
+    void missingBalanceValues() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+
+        assertThrows(RuntimeException.class, ()-> {
+            genesisImporter.importGenesisJson(false);
+        });
     }
 
     private void checkImportedPublicKeys(int countExpected) {
@@ -205,8 +291,27 @@ class GenesisImporterTest {
 
     @Test
     void loadGenesisAccounts() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
         assertEquals(9, result.size()); // genesis is skipped
+    }
+
+    @Test
+    void loadGenesisAccountsIncorrectKey() {
+        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+        doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
+
+        genesisImporter = new GenesisImporter(blockchainConfig, configDirProvider, blockchainConfigUpdater,
+                extension.getDatabaseManager(), aplAppStatus, genesisImporterProducer);
+
+        assertThrows(RuntimeException.class, ()-> {
+            List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
+        });
     }
 }
