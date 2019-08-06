@@ -712,7 +712,7 @@ public final class Peers {
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
-                            LOG.debug("Error in sendToSomePeers", e);
+                            LOG.debug("Error in sendToSomePeers = {}", e.getMessage());
                         }
 
                     }

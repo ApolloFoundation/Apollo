@@ -37,6 +37,7 @@ public final class Errors {
     public final static String DOWNLOADING = "Blockchain download in progress";
     public final static String LIGHT_CLIENT = "Peer is in light mode";
     public final static String CONNECTION_TIMEOUT = "Connection timed out";
+    public final static String IO_ERROR = "Connection IO error";
     public final static String CHAIN_ID_ERROR = "Your peer connected to different chain!";
     public final static String UPDATING = "Peer is updating now.";
     public final static String NO_FILE ="File not found";

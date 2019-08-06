@@ -141,6 +141,9 @@ public class Peer2PeerTransport {
         rqId = sendRequest(request);
         if(rqId==null){
             log.debug("Exception while sending to websocket of {}", which());
+            if (isInbound()) {
+                inboundWebSocket.close();
+            }
             sendOK = false;
         }
         if (sendOK) {
@@ -156,11 +159,14 @@ public class Peer2PeerTransport {
             try {
                 res = wsrw.get(Peers.readTimeout);
             } catch (SocketTimeoutException ex) {
-                log.trace("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
+                log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
+                if (isInbound()) {
+                    inboundWebSocket.close();
+                }
             }
             requestMap.remove(rqId);
-        }else{
-            log.error("Waiting for non-exisatent request. Peer: {}, ID: {}",which(),rqId);
+        } else {
+            log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
         }
         return res;
     }
@@ -175,23 +181,22 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        log.trace("Peer: {} websocket close",which());
+        log.trace("Peer: {} websocket close", which());
         Peer p = peerReference.get();
-        if(p!=null){
+        if (p != null) {
             p.deactivate("Websocket close event");
-        }else{
-             ws.close();   
+        } else {
+            if (isInbound()) {
+                inboundWebSocket.close();
+            }
+            ws.close();
         }
     }
 
     private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
-        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
-            toDelete.add(wsw);
-        });
-        toDelete.forEach((key) -> {
-            requestMap.remove(key);
-        });
+        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered(toDelete::add);
+        toDelete.forEach(requestMap::remove);
     }
 
     private boolean sendHttp(final String request, Long requestId) {
@@ -213,7 +218,7 @@ public class Peer2PeerTransport {
                 updateUploadedVolume(cow.getCount());
             }
         } catch (IOException ex) {
-            log.trace("Error sending HTTP erequest to {}", getHostWithPort(), ex);
+            log.trace("Error sending HTTP request to {}", getHostWithPort(), ex);
             return sendOK;
         }
         try {
@@ -253,6 +258,7 @@ public class Peer2PeerTransport {
             sendOK = ws.send(wsRequest, requestId);
         } catch (IOException ex) {
             log.debug("Can not sent to {}. Exception: {}", getHostWithPort(), ex);
+            ws.close();
         }
         return sendOK;
     }
@@ -265,16 +271,17 @@ public class Peer2PeerTransport {
                 //we have nothing to send
                 return sendOK;
             }
-            if (useWebSocket) {
+        String hostWithPort = getHostWithPort();
+        if (useWebSocket) {
                 if (isInbound()) {
                     sendOK = sendToWebSocket(message, inboundWebSocket, requestId);
 
                     if (!sendOK) {
-                        log.trace("Peer: {} Using inbound web socket. failed. Closing", getHostWithPort());
+                        log.trace("Peer: {} Using inbound web socket. failed. Closing", hostWithPort);
                         inboundWebSocket.close();
                         inboundWebSocket = null;
                     } else {
-                        log.trace("Peer: {} Send using inbound web socket failed", getHostWithPort());
+                        log.trace("Peer: {} Send using inbound web socket failed", hostWithPort);
                     }
                 }
                 if (!sendOK) { //no inbound connection or send failed
@@ -297,7 +304,11 @@ public class Peer2PeerTransport {
                             log.trace("Connecting to websocket'{}'...", wsConnectString);
                             sendOK = outboundWebSocket.startClient(wsUri);
                             if (sendOK) {
-                                log.trace("Connected as client to websocket {}", wsConnectString);
+                                log.debug("Connected as client to websocket {}", wsConnectString);
+                            } else {
+                                log.debug("NOT Connected as client to websocket {}, CLOSE outbound...", wsConnectString);
+                                outboundWebSocket.close();
+                                outboundWebSocket = null;
                             }
                         }
                     } else { //client socket is already open
@@ -305,14 +316,18 @@ public class Peer2PeerTransport {
                     }
                     if (sendOK) { //send using client socket
                         sendOK = sendToWebSocket(message, outboundWebSocket, requestId);
+                        if (!sendOK && outboundWebSocket != null) {
+                            outboundWebSocket.close();
+                            outboundWebSocket = null;
+                        }
                     }
                 }
             }
             if (!sendOK) { // Send the request using HTTP as fallback
                 sendOK = sendHttp(message, requestId);
-                log.debug("Trying ot use HTTP requests to {} because websockets failed", getHostWithPort());
+                log.debug("Trying ot use HTTP requests to {} because websockets failed", hostWithPort);
                 if (!sendOK) {
-                    log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
+                    log.debug("Peer: {} Using HTTP. Failed.", hostWithPort);
                 }
             }
        // }

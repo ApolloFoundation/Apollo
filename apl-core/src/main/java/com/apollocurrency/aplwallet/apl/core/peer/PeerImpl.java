@@ -502,11 +502,13 @@ public final class PeerImpl implements Peer {
             return response;
         }
 
+        String hostWithPort = getHostWithPort();
         try {
             String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
-            if(resp==null){
-                LOG.trace("Null response from: ",getHostWithPort());
+            if(resp == null || resp.isEmpty()) {
+                LOG.trace("Null response from: {}", hostWithPort);
+                deactivate("Null response from: " + hostWithPort);
                 return response;
             }
             response = (JSONObject) JSONValue.parseWithException(resp);
@@ -514,7 +516,7 @@ public final class PeerImpl implements Peer {
             // Check for an error response
             //
             if (response != null && response.get("error") != null) {
-                LOG.debug("Peer: {} RESPONSE = {}", getHostWithPort(), response);
+                LOG.debug("Peer: {} RESPONSE = {}", hostWithPort, response);
                 if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){
                     LOG.debug("Sequence error received, reconnecting to " + host);
                     deactivate("Sequence error, need to handshake");
@@ -523,7 +525,7 @@ public final class PeerImpl implements Peer {
                 }
             }
         } catch (RuntimeException|ParseException e) {
-            LOG.debug("Exception while sending request to '{}'",getHostWithPort(),e);
+            LOG.debug("Exception while sending request to '{}'", hostWithPort,e);
             deactivate("Exception while sending request: "+e.getMessage());
         }
         return response;
@@ -548,8 +550,9 @@ public final class PeerImpl implements Peer {
     private int processConnectAttempt(boolean failed){
         if(failed){
           failedConnectAttempts++;
-          if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
-              LOG.debug("Peer {} in noit connecatable, removing",getAnnouncedAddress());
+          if(failedConnectAttempts >= Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+              LOG.debug("Peer {} is not connectable, removing", getAnnouncedAddress());
+              deactivate("Peer is not connectable, removing" + getAnnouncedAddress());
               Peers.removePeer(this);
           }
         }else{  //reset on success
@@ -645,7 +648,7 @@ public final class PeerImpl implements Peer {
             } else {
                 int t = processConnectAttempt(true);
                 LOG.debug("Failed to connect to peer: {} ({}) this:{}", getHostWithPort(),t, System.identityHashCode(this));
-                deactivate("NULL json Response on handshake");
+//                deactivate("NULL json Response on handshake");
                 return false;
             }
         } catch (RuntimeException e) {
@@ -921,6 +924,7 @@ public final class PeerImpl implements Peer {
                 }
             } catch (IOException ex) {
                 LOG.debug("This is not P2P response from {}", getHostWithPort(), ex);
+                deactivate(Errors.IO_ERROR);
             }
         }
         return res;
