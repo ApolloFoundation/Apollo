@@ -33,7 +33,9 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class DGSServiceImpl implements DGSService {
     private DGSPublicFeedbackTable publicFeedbackTable;
     private DGSPurchaseTable purchaseTable;

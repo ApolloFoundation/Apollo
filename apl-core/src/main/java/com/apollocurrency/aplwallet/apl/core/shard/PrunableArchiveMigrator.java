@@ -52,7 +52,8 @@ public class PrunableArchiveMigrator {
             }
             long finalShardIdForMigration = shardIdForMigration;
             List<Shard> shardsForMigration = shardDao.getAllCompletedShards().stream().filter(shard -> shard.getShardId() >= finalShardIdForMigration).sorted(Comparator.comparing(Shard::getShardId)).collect(Collectors.toList());
-            List<String> prunableTables = registry.getDerivedTables().stream().filter(t -> t instanceof PrunableDbTable).map(DerivedTableInterface::getName).collect(Collectors.toList());
+            List<String> tablesToExclude = registry.getDerivedTables().stream().filter(t -> t instanceof PrunableDbTable).map(DerivedTableInterface::getName).collect(Collectors.toList());
+            tablesToExclude.add(ShardConstants.DATA_TAG_TABLE_NAME);
             for (Shard shard : shardsForMigration) {
                 try {
                     optionDAO.set(CURRENT_SHARD_OPTION, String.valueOf(shard.getShardId()));
@@ -63,10 +64,10 @@ public class PrunableArchiveMigrator {
                     zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
-                    byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !prunableTables.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
                     Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
-                    shard.setPrunableZipHash(new byte[32]); // not null to force archive recreation
+                    shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation
                     shardDao.updateShard(shard);
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }

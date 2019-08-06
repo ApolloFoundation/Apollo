@@ -1135,6 +1135,33 @@ class BlockchainTest {
         assertEquals(List.of(), result);
     }
 
+    @Test
+    void testIsInitializedWhenLastBlockNotSet() {
+        blockchain.setLastBlock(null);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertFalse(initialized);
+    }
+    @Test
+    void testIsInitializedWhenShardInitialBlockNotSet() {
+        blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(null);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertFalse(initialized);
+    }
+    @Test
+    void testIsInitializedWhenShardInitialBlockAndLastBlockSet() {
+        blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(btd.BLOCK_10);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertTrue(initialized);
+    }
+
     private byte[] fullHashWithCollision(byte[] fullHash) {
         byte[] fullHashWithCollision = Arrays.copyOfRange(fullHash, 0, 32);
         fullHashWithCollision[31] = (byte) (fullHashWithCollision[31] + 1);

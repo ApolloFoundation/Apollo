@@ -39,7 +39,7 @@ import javax.inject.Singleton;
 @Singleton
 public class CsvExporterImpl implements CsvExporter {
     private static final Logger log = getLogger(CsvExporterImpl.class);
-    public static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
+    private static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private Set<String> excludeTables; // skipped tables
@@ -58,7 +58,7 @@ public class CsvExporterImpl implements CsvExporter {
         }
         //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.excludeTables = Set.of("genesis_public_key", "data_tag", "unconfirmed_transaction");
+        this.excludeTables = Set.of(ShardConstants.GENESIS_PK_TABLE_NAME, ShardConstants.DATA_TAG_TABLE_NAME, ShardConstants.UNCONFIRMED_TX_TABLE_NAME);
     }
 
     /**

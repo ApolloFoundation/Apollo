@@ -68,8 +68,9 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 JSONObject response = new JSONObject();
                 Blockchain blockchain = CDI.current().select(Blockchain.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-
-                response.put("initialShardBlockId", Long.toUnsignedString(blockchain.getShardInitialBlock().getId()));
+                if (blockchain.isInitialized()) {
+                    response.put("genesisBlockId", Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
+                }
                 response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
                 response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);

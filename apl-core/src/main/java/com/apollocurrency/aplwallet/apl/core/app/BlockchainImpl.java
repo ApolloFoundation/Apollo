@@ -603,6 +603,11 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.findBlockTransactions(blockId, dataSource);
     }
 
+    @Override
+    public boolean isInitialized() {
+        return getLastBlock() != null && getShardInitialBlock() != null;
+    }
+
     @Transactional(readOnly = true)
     @Override
     public boolean hasBlock(long blockId, int height) {

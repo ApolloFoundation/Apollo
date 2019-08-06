@@ -155,6 +155,8 @@ public interface Blockchain {
 
     List<Transaction> getBlockTransactions(long blockId);
 
+    boolean isInitialized();
+
     boolean hasBlock(long blockId, int height);
 
     int getTransactionCount(long accountId, byte type, byte subtype);

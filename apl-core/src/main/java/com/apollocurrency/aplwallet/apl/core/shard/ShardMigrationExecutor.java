@@ -192,7 +192,6 @@ public class ShardMigrationExecutor {
         dataMigrateOperations.add(shardOperation);
     }
 
-    @Transactional
     public MigrateState executeAllOperations() {
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
