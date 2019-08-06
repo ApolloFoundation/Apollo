@@ -52,7 +52,9 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -567,7 +569,7 @@ public final class Peers {
         //check not-null announced address and do not create peer
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
-        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, propertiesHolder, peerHttpServer.getPeerServlet());
+        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, propertiesHolder, peerHttpServer.getPeerServlet(), accountService);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{

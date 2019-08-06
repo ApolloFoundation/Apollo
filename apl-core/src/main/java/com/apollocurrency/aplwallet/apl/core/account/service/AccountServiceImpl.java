@@ -161,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
                 && account.getForgedBalanceATM() == 0
                 && account.getActiveLesseeId() == 0
                 && account.getControls().isEmpty()) {
-            accountTable.delete(account);
+            accountTable.delete(account, true, blockchain.getHeight());
         } else {
             accountTable.insert(account);
         }
@@ -169,9 +169,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
-        int shardHeight = blockchain.getShardInitialBlock().getHeight();
-        if (shardHeight <= height - EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            Account genesisAccount = getAccount(account.getId(), shardHeight);
+        if (height <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            Account genesisAccount = getAccount(account.getId(), 0);
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (account.getPublicKey() == null) {
@@ -342,9 +341,9 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0){
+        if (feeATM != 0 && log.isTraceEnabled()){
             log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height- {}",
-                    account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(),
+                    account.getId(), last3Stacktrace(),
                     amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
@@ -360,8 +359,20 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public  void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
+        if(log.isTraceEnabled()) {
+            log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), last3Stacktrace(), amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
+        }
         addToBalanceATM(account, event, eventId, amountATM, 0);
-        log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(), amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
+    }
+
+    private String last3Stacktrace() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+    }
+
+    private String getStacktraceSpec(StackTraceElement element) {
+        String className = element.getClassName();
+        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     @Override
@@ -369,9 +380,9 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM != 0){
+        if (feeATM != 0 && log.isTraceEnabled()){
             log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                    account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(),
+                    account.getId(), last3Stacktrace(),
                     amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
@@ -395,10 +406,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
+        if (log.isTraceEnabled()){
+            log.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}",
+                    account.getId(), last3Stacktrace(),
+                    amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+        }
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
-        log.trace("Add c and  u balance for {} from {} , amount - {}, total conf- {}, total unc {}, height {}",
-                account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(),
-                amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
     }
 
     private void addToGuaranteedBalanceATM(Account account, long amountATM) {
@@ -435,9 +448,9 @@ public class AccountServiceImpl implements AccountService {
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
-        if (feeATM!=0){
+        if (feeATM!=0 && log.isTraceEnabled()){
             log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                    account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(),
+                    account.getId(), last3Stacktrace(),
                     amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
@@ -456,10 +469,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
+        if (log.isTraceEnabled()){
+            log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
+                    account.getId(), last3Stacktrace(),
+                    amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
+        }
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
-        log.trace("Add u balance for {} from {} , amount - {}, total unc {}, height - {}",
-                account.getId(), Thread.currentThread().getStackTrace()[2].getMethodName(),
-                amountATM, amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
     }
 
     @Override

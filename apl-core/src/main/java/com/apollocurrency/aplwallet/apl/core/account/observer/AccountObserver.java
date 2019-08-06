@@ -66,7 +66,7 @@ public class AccountObserver {
         log.trace("Catch event (BLOCK_POPPED) {}", block);
         if (accountPublicKeyService.getPublicKeyCache() != null) {
             accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
-            block.getTransactions().forEach(transaction -> {
+            block.getOrLoadTransactions().forEach(transaction -> {
                 accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));
                 if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
                     accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getRecipientId()));

@@ -20,7 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -78,6 +79,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
