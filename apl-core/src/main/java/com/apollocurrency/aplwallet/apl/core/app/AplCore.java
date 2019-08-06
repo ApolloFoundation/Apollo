@@ -61,11 +61,11 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionSe
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -76,11 +76,10 @@ import org.slf4j.Logger;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
-    public final class AplCore {
+public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
 //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
@@ -104,6 +103,9 @@ import javax.inject.Inject;
     private DirProvider dirProvider;
     @Inject @Setter
     private AplAppStatus aplAppStatus;
+    @Inject @Setter
+    private TaskDispatchManager taskDispatchManager;
+
     private String initCoreTaskID;
     
     public AplCore() {
@@ -132,7 +134,8 @@ import javax.inject.Inject;
         AddOns.shutdown();
         apiServer.shutdown();
         FundingMonitor.shutdown();
-        ThreadPool.shutdown();
+        LOG.info("Background tasks shutdown...");
+        taskDispatchManager.shutdown();
 
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
@@ -153,7 +156,6 @@ import javax.inject.Inject;
         }
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
-
 
         AplCore.shutdown = true;
 
@@ -276,18 +278,13 @@ import javax.inject.Inject;
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
-                        () -> {
-                            LOG.debug(getNodeHealth());
-                            aplAppStatus.clearFinished(1*60L); //10 min
-                        },
-                   20,
-                   TimeUnit.SECONDS);
                 PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
                 migrator.migrate();
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
-                ThreadPool.start();
+
+                //start all background tasks
+                taskDispatchManager.dispatch();
 
                 try {
                     secureRandomInitThread.join(10000);
@@ -329,21 +326,6 @@ import javax.inject.Inject;
                 System.exit(1);
             }
         }
-    private String getNodeHealth(){
-        StringBuilder sb = new StringBuilder("Node health info\n");
-        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
-        sb.append("Used DB connections: ").append(usedConnections);
-        Runtime runtime = Runtime.getRuntime();
-        sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
-        sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
-        sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
-        sb.append("\nActive threads count :").append(Thread.activeCount());
-        sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
-        sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
-        sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
-        sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
-        return sb.toString();
-    }
 
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();

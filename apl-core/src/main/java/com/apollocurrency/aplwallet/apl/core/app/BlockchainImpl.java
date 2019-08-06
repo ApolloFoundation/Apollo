@@ -442,7 +442,8 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) || transactionIndexDao.getByTransactionId(transactionId) != null;
+        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) ||
+                transactionIndexDao.countByTransactionId(transactionId) == 1;
     }
 
     @Override

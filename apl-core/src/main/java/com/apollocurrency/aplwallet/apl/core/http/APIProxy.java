@@ -29,6 +29,9 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ import javax.enterprise.inject.spi.CDI;
 @Vetoed
 public class APIProxy {
     private static final Logger LOG = getLogger(APIProxy.class);
+    private static final String BACKGROUND_SERVICE_NAME = "APIProxyService";
 
     public static final Set<String> NOT_FORWARDED_REQUESTS;
     
@@ -57,7 +61,8 @@ public class APIProxy {
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private static TimeService timeService = CDI.current().select(TimeService.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -113,7 +118,12 @@ public class APIProxy {
 
     static {
         if (!propertiesHolder.isOffline() && enableAPIProxy) {
-            ThreadPool.scheduleThread("APIProxyPeersUpdate", peersUpdateThread, 60);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("APIProxyPeersUpdate")
+                            .delay(60000)
+                            .task(peersUpdateThread)
+                            .build(), TaskOrder.TASK);
         }
     }
 

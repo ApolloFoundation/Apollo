@@ -51,7 +51,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @return main data source
      */
     @Override
-    public synchronized TransactionalDataSource getDataSource() {
+    public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
             jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
@@ -103,7 +103,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     @Produces
-    public synchronized Jdbi getJdbi() {
+    public Jdbi getJdbi() {
         if (jdbi == null) {
             // should never happen, but happens sometimes in unit tests because of CDI
             jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
@@ -115,7 +115,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized List<Long> findAllShards(TransactionalDataSource transactionalDataSource) {
+    public List<Long> findAllShards(TransactionalDataSource transactionalDataSource) {
         Objects.requireNonNull(transactionalDataSource, "DataSource cannot be null");
         String shardSelect = "SELECT shard_id from shard";
         List<Long> result = new ArrayList<>();
@@ -132,7 +132,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return result;
     }
 
-    private synchronized Set<Long> findAllFullShards() {
+    private Set<Long> findAllFullShards() {
         Set<Long> result = new HashSet<>();
         try (Connection con = getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
@@ -152,7 +152,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized TransactionalDataSource createAndAddShard(Long shardId) {
+    public TransactionalDataSource createAndAddShard(Long shardId) {
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
                 new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
@@ -166,7 +166,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
+    public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
         if (connectedShardDataSourceMap.containsKey(shardId)) {
             TransactionalDataSource dataSource = connectedShardDataSourceMap.get(shardId);
@@ -207,7 +207,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
+    public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
         Objects.requireNonNull(temporaryDatabaseName, "temporary Database Name is NULL");
         log.debug("Create new SHARD '{}'", temporaryDatabaseName);
         if (temporaryDatabaseName.isEmpty() || temporaryDatabaseName.length() > 255) {
