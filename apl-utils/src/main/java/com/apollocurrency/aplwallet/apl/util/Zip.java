@@ -24,6 +24,15 @@ public interface Zip {
      * @throws RuntimeException if there are no CSV file inside specified folder
      */
     byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
+
+
+    /**
+     * Calculate zip hash crc for zip file specified by path
+     * @param zipFile absolute path to zip file
+     * @return byte array of size 32, which represent zip sha256 crc hash
+     */
+    byte[] calculateHash(String zipFile);
+
     /**
      * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.
      *

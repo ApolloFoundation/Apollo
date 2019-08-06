@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 
@@ -20,12 +21,12 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public Peer findPeerByAddress(String peerAddress){
-        return Peers.findOrCreatePeer(peerAddress, false);
+        return Peers.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
     }
 
     @Override
     public Peer findOrCreatePeerByAddress(String peerAddress){
-        return Peers.findOrCreatePeer(peerAddress, true);
+        return Peers.findOrCreatePeer(null,peerAddress, true);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public Peer putPeerInBlackList(String peerAddress) {
-        Peer peer = Peers.findOrCreatePeer(peerAddress, true);
+        Peer peer = Peers.findOrCreatePeer(null,peerAddress, true);
         if (peer != null) {
             Peers.addPeer(peer);
             peer.blacklist("Manual blacklist");

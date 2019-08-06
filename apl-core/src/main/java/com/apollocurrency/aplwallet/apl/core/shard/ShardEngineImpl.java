@@ -18,7 +18,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_PERCENTAGE_FULL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
@@ -34,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -59,6 +59,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -132,7 +133,7 @@ public class ShardEngineImpl implements ShardEngine {
                 state = FAILED;
                 durableTaskUpdateByState(state, null, null);
             }
-            log.debug("BACKUP by SQL={} was successful", sql);
+            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
             state = MigrateState.MAIN_DB_BACKUPED;
             durableTaskUpdateByState(state, 3.0, "Backed up");
             loadAndRefreshRecovery(sourceDataSource);
@@ -183,9 +184,10 @@ public class ShardEngineImpl implements ShardEngine {
                     // update shard record by merkle tree hash value
                     // save prev generator ids to shard
                     // TODO: find better place
-                    savePrevGeneratorIds(commandParamInfo.getGeneratorIds(), commandParamInfo.getShardId());
+                    savePrevBlockData(commandParamInfo.getPrevBlockData(), commandParamInfo.getShardId());
+
                     // main goal is store merkle tree hash
-                    updateShardRecord(commandParamInfo, databaseManager.getDataSource(), state, 1L);
+                    updateShardRecord(commandParamInfo, databaseManager.getDataSource(), state, ShardState.IN_PROGRESS);
                 }
                 durableTaskUpdateByState(state, 13.0, "Shard is completed");
             } else {
@@ -399,7 +401,7 @@ public class ShardEngineImpl implements ShardEngine {
         }
         durableTaskUpdateByState(state, 17.0, "CSV exporting...");
         try {
-            trimDerivedTables(paramInfo.getSnapshotBlockHeight());
+            trimDerivedTables(paramInfo.getSnapshotBlockHeight() + 1);
             if (StringUtils.isBlank(recovery.getProcessedObject())) {
                 Files.list(csvExporter.getDataExportPath())
                         .filter(p-> !Files.isDirectory(p) && p.toString().endsWith(CsvAbstractBase.CSV_FILE_EXTENSION))
@@ -418,6 +420,8 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.ACCOUNT_TABLE_NAME:
+                            return exportDerivedTable(tableName, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id");
                         default:
                             return exportDerivedTable(tableName, paramInfo);
                     }
@@ -459,14 +463,22 @@ public class ShardEngineImpl implements ShardEngine {
         return recovery;
     }
 
-    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(tableName);
         if (derivedTable != null) {
-            return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            if (excludedColumns == null && sort == null) {
+                return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
+            } else {
+                return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+            }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
             throw new IllegalArgumentException("Unable to find derived table " + tableName + " in derived table registry");
         }
+    }
+
+    private Long exportDerivedTable(String tableName, CommandParamInfo paramInfo) {
+        return exportDerivedTable(tableName, paramInfo, null, null);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
@@ -540,7 +552,7 @@ public class ShardEngineImpl implements ShardEngine {
                     .isZipCrcStored(true)
                     .shardId(paramInfo.getShardId())
                     .build();
-            updateShardRecord(paramInfo, sourceDataSource, state, 1L); //update shard record by ZIP crc value
+            updateShardRecord(paramInfo, sourceDataSource, state, ShardState.IN_PROGRESS); //update shard record by ZIP crc value
 
             // update recovery
             state = ZIP_ARCHIVE_FINISHED;
@@ -627,17 +639,22 @@ public class ShardEngineImpl implements ShardEngine {
         }
         state = COMPLETED;
         // complete sharding
-        updateShardRecord(paramInfo, sourceDataSource, state, SHARD_PERCENTAGE_FULL);
-        log.debug("Shard record is created with Hash in {} ms", System.currentTimeMillis() - startAllTables);
+        updateShardRecord(paramInfo, sourceDataSource, state, ShardState.FULL);
+        // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
+        sourceDataSource.analyzeTables();
+        log.debug("Shard record '{}' is created with Hash in {} ms", paramInfo.getShardId(),
+                System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
     }
 
-    private void savePrevGeneratorIds(Long[] ids, long shardId) {
+    private void savePrevBlockData(PrevBlockData prevBlockData, long shardId) {
         try(Connection con = databaseManager.getDataSource().getConnection();
-        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ? WHERE shard_id = ?")) {
-            DbUtils.setArray(pstmt, 1, ids);
-            pstmt.setLong(2, shardId);
+        PreparedStatement pstmt = con.prepareStatement("UPDATE shard SET generator_ids = ?, block_timestamps = ?, block_timeouts = ? WHERE shard_id = ?")) {
+            DbUtils.setArray(pstmt, 1, prevBlockData.getGeneratorIds());
+            DbUtils.setArray(pstmt, 2, prevBlockData.getPrevBlockTimestamps());
+            DbUtils.setArray(pstmt, 3, prevBlockData.getPrevBlockTimeouts());
+            pstmt.setLong(4, shardId);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -648,7 +665,7 @@ public class ShardEngineImpl implements ShardEngine {
     private boolean updateShardRecord(CommandParamInfo paramInfo,
                                       TransactionalDataSource sourceDataSource,
                                       MigrateState recoveryStateUpdateInto,
-                                      Long stateValue) {
+                                      ShardState shardState) {
         ShardRecovery recovery;
         String sqlUpdate = null;
         // we want update SHARD either 'merkle tree hash' or 'zip CRC'
@@ -675,7 +692,7 @@ public class ShardEngineImpl implements ShardEngine {
             if (paramInfo.getShardHash() != null) {
                 preparedInsertStatement.setBytes(i++, paramInfo.getShardHash()); // merkle or zip crc}
             }
-            preparedInsertStatement.setLong(i++, stateValue); // 100% full shard is present on current node
+            preparedInsertStatement.setLong(i++, shardState.getValue()); // 100% full shard is present on current node
             preparedInsertStatement.setLong(i, paramInfo.getShardId());
             result = preparedInsertStatement.executeUpdate();
             log.debug("Shard record is updated result = '{}'", result);

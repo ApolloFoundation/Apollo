@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.Vetoed;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -33,7 +32,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-@Vetoed
 public final class GetMilestoneBlockIds extends PeerRequestHandler {
     private static final Logger LOG = getLogger(GetMilestoneBlockIds.class);
 
@@ -104,7 +102,7 @@ public final class GetMilestoneBlockIds extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

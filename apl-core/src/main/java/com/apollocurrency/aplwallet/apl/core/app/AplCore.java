@@ -61,12 +61,12 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -110,11 +110,14 @@ public final class AplCore {
     @Inject @Setter
     private AplAppStatus aplAppStatus;
     @Inject @Setter
+    private TaskDispatchManager taskDispatchManager;
+    @Inject @Setter
     private DexOfferProcessor dexOfferProcessor;
+
     private String initCoreTaskID;
 
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    
+
     public AplCore() {
         time = CDI.current().select(EpochTime.class).get();
     }
@@ -141,7 +144,8 @@ public final class AplCore {
         AddOns.shutdown();
         apiServer.shutdown();
         FundingMonitor.shutdown();
-        ThreadPool.shutdown();
+        LOG.info("Background tasks shutdown...");
+        taskDispatchManager.shutdown();
 
         if (blockchainProcessor != null) {
             blockchainProcessor.shutdown();
@@ -162,7 +166,6 @@ public final class AplCore {
         }
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
-
 
         AplCore.shutdown = true;
 
@@ -286,27 +289,19 @@ public final class AplCore {
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
-                ThreadPool.scheduleThread("DB_con_log_AplAppStatus_clean",
-                        () -> {
-                          LOG.debug("Used connections - '{}'", databaseManager.getDataSource().getJmxBean().getActiveConnections());
-                          aplAppStatus.clearFinished(10*60L); //10 min
-                        },
-                   20,
-                   TimeUnit.SECONDS);
+                // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
+                recoverSharding();
 
+                //start all background tasks
+                taskDispatchManager.dispatch();
 
+                //TODO move to taskDispatchManager Andrii K
                 Runnable task = () -> {
                     log.info("DexOfferProcessor: start");
                     dexOfferProcessor.processContracts();
                     log.info("DexOfferProcessor: finish");
                 };
-
                 executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
-
-
-                // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
-                recoverSharding();
-                ThreadPool.start();
 
                 try {
                     secureRandomInitThread.join(10000);
@@ -351,16 +346,41 @@ public final class AplCore {
 
     private void recoverSharding() {
         ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
+        ShardDao shardDao = CDI.current().select(ShardDao.class).get();
         ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        if (blockchainConfig.getCurrentConfig().isShardingEnabled() && recovery != null && recovery.getState() != MigrateState.COMPLETED) {
+        boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+        boolean shardingEnabled = blockchainConfig.getCurrentConfig().isShardingEnabled();
+        LOG.debug("Is Shard Recovery POSSIBLE ? RESULT = '{}' parts : ({} && {} && {} && {})",
+                ( (!isShardingOff && shardingEnabled) && recovery != null && recovery.getState() != MigrateState.COMPLETED),
+                !isShardingOff,
+                shardingEnabled,
+                recovery != null,
+                recovery != null ? recovery.getState() != MigrateState.COMPLETED : "false"
+        );
+        if ( (!isShardingOff && shardingEnabled)
+                && recovery != null
+                && recovery.getState() != MigrateState.COMPLETED) {
+            // here we are able to recover from stored record
             aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
-            ShardDao shardDao = CDI.current().select(ShardDao.class).get();
             ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
-            blockchain.setLastBlock(blockchain.findLastBlock()); // assume that we have at least one block
             Shard lastShard = shardDao.getLastShard();
             executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
             executor.executeAllOperations();
             aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
+        } else {
+            // when sharding was disabled but recovery records was stored before
+            // let's remove records for sharding recovery + shard
+            if ( (isShardingOff && !shardingEnabled) && recovery != null && recovery.getState() == MigrateState.INIT) {
+                // remove previous recover record if it's in INIT state
+                int shardRecoveryDeleted = shardRecoveryDao.hardDeleteShardRecovery(recovery.getShardRecoveryId());
+                Shard shard = shardDao.getLastShard();
+                int shardDeleted = 0;
+                if (shard != null) {
+                    shardDeleted = shardDao.hardDeleteShard(shard.getShardId());
+                }
+                LOG.debug("Deleted records : shardRecoveryDeleted = {}, shardDeleted = {}",
+                        shardRecoveryDeleted, shardDeleted);
+            }
         }
     }
 

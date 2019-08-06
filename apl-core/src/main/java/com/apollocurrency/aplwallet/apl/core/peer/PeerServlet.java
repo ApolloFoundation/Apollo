@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.InetSocketAddress;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
@@ -35,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
@@ -54,7 +52,13 @@ import com.apollocurrency.aplwallet.apl.core.peer.endpoint.ProcessTransactions;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.ExecutorService;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -69,66 +73,86 @@ import org.slf4j.LoggerFactory;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    @Inject
+    private PropertiesHolder propertiesHolder;
+    @Inject
+    private BlockchainProcessor blockchainProcessor;
+    @Inject
+    private volatile EpochTime timeService;   
+    @Inject
     private ShardDao shardDao;
+    @Inject
     private BlockchainConfig blockchainConfig;
+    @Inject
     private DownloadableFilesManager downloadableFilesManager;
+    private ExecutorService threadPool;
+    
+    @Override
+    public void init() throws ServletException {
+        super.init(); 
+        lookupComponents();
+        threadPool = new QueuedThreadPool(
+                Runtime.getRuntime().availableProcessors(),
+                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");        
+    }
 
-    protected BlockchainProcessor lookupComponents() {
+    protected void lookupComponents() {
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        return blockchainProcessor;
+        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
+        if(rtype==null){
+            return null;
+        }
         lookupComponents();
         PeerRequestHandler res = null;
         switch (rtype) {
             case "addPeers":
-                res = new AddPeers();
+                res = CDI.current().select(AddPeers.class).get();
                 break;
             case "getCumulativeDifficulty":
-                res = new GetCumulativeDifficulty();
+                res = CDI.current().select(GetCumulativeDifficulty.class).get();
                 break;
             case "getInfo":
-                res = new GetInfo();
+                res = CDI.current().select(GetInfo.class).get();
                 break;
             case "getMilestoneBlockIds":
-                res = new GetMilestoneBlockIds();
+                res = CDI.current().select(GetMilestoneBlockIds.class).get();
                 break;
             case "getNextBlockIds":
-                res = new GetNextBlockIds();
+                res = CDI.current().select(GetNextBlockIds.class).get();
                 break;
             case "getNextBlocks":
-                res = new GetNextBlocks();
+                res = CDI.current().select(GetNextBlocks.class).get();
                 break;
             case "getPeers":
-                res = new GetPeers();
+                res = CDI.current().select(GetPeers.class).get();
                 break;
             case "getTransactions":
-                res = new GetTransactions();
+                res = CDI.current().select(GetTransactions.class).get();
                 break;
             case "getUnconfirmedTransactions":
-                res = new GetUnconfirmedTransactions();
+                res = CDI.current().select(GetUnconfirmedTransactions.class).get();
                 break;
             case "processBlock":
-                res = new ProcessBlock();
+                res = CDI.current().select(ProcessBlock.class).get();
                 break;
             case "processTransactions":
-                res = new ProcessTransactions();
+                res = CDI.current().select(ProcessTransactions.class).get();
                 break;
             case "getFileDownloadInfo":
-                res = new GetFileDownloadInfo(downloadableFilesManager);
+                res = CDI.current().select(GetFileDownloadInfo.class).get();
                 break;
             case "getFileChunk":
-                res = new GetFileChunk(downloadableFilesManager);
+                res = CDI.current().select(GetFileChunk.class).get();
                 break; 
             case "getShardingInfo":
-                res = new GetShardingInfo(shardDao, blockchainConfig);
+                res = CDI.current().select(GetShardingInfo.class).get();
                 break;                
         }
         return res;
@@ -155,89 +179,101 @@ public final class PeerServlet extends WebSocketServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONStreamAware jsonResponse;
+        lookupComponents();
         //
         // Process the peer request
         //
-        PeerImpl peer = Peers.findOrCreatePeer(req.getRemoteAddr());
+        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
+        PeerImpl peer = Peers.findOrCreatePeer(pa,null,true);
+
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            jsonResponse = process(peer, req.getReader());
-        }
+            if (peer.isBlacklisted()) { 
+               jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
+            }else{
+               jsonResponse = process(peer, req.getReader());
+            }
+        }        
         //
         // Return the response
         //
-
+        if(jsonResponse==null){ //this is because we got just error message from peer
+            return;
+        }
         resp.setContentType("text/plain; charset=UTF-8");
         try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
             JSON.writeJSONString(jsonResponse, writer);
-            if (peer != null) {
-                peer.updateUploadedVolume(writer.getCount());
-            }
-        } catch (RuntimeException | IOException e) {
+        } catch (RuntimeException e) {
             processException(peer, e);
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);            
             throw e;
+        }catch ( IOException e){
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e); 
         }
     }
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-            if ((Peers.communicationLoggingMask & Peers.LOGGING_MASK_EXCEPTIONS) != 0) {
-                if (e instanceof RuntimeException) {
-                    LOG.debug("Error sending response to peer " + peer.getHost(), e);
-                } else {
-                    LOG.debug(String.format("Error sending response to peer %s: %s",
-                        peer.getHost(), e.getMessage() != null ? e.getMessage() : e.toString()));
-                }
+
+//jetty misused this, ignore            
+            if (!(e instanceof ClosedChannelException)) {
+                LOG.debug("Error sending response to peer " + peer.getHost(), e);
+                peer.blacklist(e);
+            } else {
+                LOG.trace("Error sending response to peer " + peer.getHost(), e);
             }
-            peer.blacklist(e);
         }
     }
 
-
-    protected boolean chainIdProtected() {
-        return true;
+    void doPostWebSocket(Peer2PeerTransport transport, Long requestId, String request) {
+        threadPool.execute(() -> {
+            doPostTask(transport, requestId, request);
+        });
     }
+
     /**
      * Process WebSocket POST request
      *
-     * @param   webSocket           WebSocket for the connection
-     * @param   requestId           Request identifier
-     * @param   request             Request message
+     * @param transport WebSocket for the connection
+     * @param requestId Request identifier
+     * @param request Request message
      */
-    void doPost(PeerWebSocket webSocket, long requestId, String request) {
+    private void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
+
+        lookupComponents();
         JSONStreamAware jsonResponse;
         //
         // Process the peer request
         //
-        InetSocketAddress socketAddress = webSocket.getRemoteAddress();
-        if (socketAddress == null) {
-            return;
-        }
-        String remoteAddress = socketAddress.getHostString();
-        PeerImpl peer = Peers.findOrCreatePeer(remoteAddress);
+
+        PeerImpl peer = (PeerImpl) transport.getPeer();
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            peer.setInboundWebSocket(webSocket);
-            jsonResponse = process(peer, new StringReader(request));
-            if (chainIdProtected()) {
-
+            Thread.currentThread().setName("doPostTask-"+peer.getHostWithPort());
+            if (peer.isBlacklisted()) { 
+               jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
+            }else{
+               jsonResponse = process(peer, new StringReader(request));
             }
         }
-        //
         // Return the response
-        //
-
         try {
             StringWriter writer = new StringWriter(1000);
-            JSON.writeJSONString(jsonResponse, writer);
-            String response = writer.toString();
-            webSocket.sendResponse(requestId, response);
-            if (peer != null) {
-                peer.updateUploadedVolume(response.length());
+            try {
+                JSON.writeJSONString(jsonResponse, writer);
+            } catch (IOException ex) {
+                LOG.debug("Allmost impossible error: Can not wite to StringWtiter",ex);
             }
-        } catch (RuntimeException | IOException e) {
+            String response = writer.toString();
+            transport.send(response, requestId);
+            //check if we returned error and should close inbound socket
+            if(peer!=null){
+               peer.processError(response);
+            }
+        } catch (RuntimeException e) {
+            LOG.debug("Exception while responing to {}", transport.which(), e);
             processException(peer, e);
         }
     }
@@ -250,34 +286,38 @@ public final class PeerServlet extends WebSocketServlet {
      * @return                      JSON response
      */
     private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
-        //
-        // Check for blacklisted peer
-        //
-        if (peer.isBlacklisted()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("error", Errors.BLACKLISTED);
-            jsonObject.put("cause", peer.getBlacklistingCause());
-            return jsonObject;
-        }
-        Peers.addPeer(peer);
+        lookupComponents();
+
         //
         // Process the request
         //
         try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
-            peer.updateDownloadedVolume(cr.getCount());
+            //we have to process errors here because of http requests
+            if(peer.processError(request)){
+                return null;
+            }
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                LOG.debug("Unsupported protocol " + request.get("protocol"));
+                if (LOG.isDebugEnabled()) {
+                    String toJSONString = request.toJSONString();
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"),
+                                peer.getHostWithPort(), toJSONString);
+                    } else {
+                        // cut off response string in log
+                        LOG.debug("Unsupported protocol {} from {}\nRequest: {}", request.get("protocol"), peer.getHostWithPort(),
+                                toJSONString != null && toJSONString.length() > 200
+                                        ? toJSONString.substring(0, 200) : toJSONString);
+                    }
+                }
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));
             if (peerRequestHandler == null) {
+                LOG.debug("Unsupported request type " + request.get((String)request.get("requestType")));
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 
-//            if (peer.getState() == PeerState.DISCONNECTED) {
-//                peer.setState(PeerState.CONNECTED);
-//            }
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
@@ -286,15 +326,15 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 return PeerResponses.SEQUENCE_ERROR;
             }
-            if (!peer.isInbound()) {
+            if (peer.isInbound()) {
                 if (Peers.hasTooManyInboundPeers()) {
+                    Peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
-            peer.setLastInboundRequest(timeService.getEpochTime());
             if (peerRequestHandler.rejectWhileDownloading()) {
-                if (lookupComponents().isDownloading()) {
+                if (blockchainProcessor.isDownloading()) {
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
@@ -303,8 +343,10 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException| ParseException |IOException e) {
-            LOG.debug("Error processing POST request: " + e.toString());
-            peer.blacklist(e);
+            LOG.debug("Error processing POST request, host = '{}', error = {}", peer.getHostWithPort(), e.toString());
+            if(! (e instanceof  ClosedChannelException) ){
+              peer.blacklist(e);
+            }
             return PeerResponses.error(e);
         }
     }
@@ -322,7 +364,27 @@ public final class PeerServlet extends WebSocketServlet {
          */
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-            return Peers.useWebSockets ? new PeerWebSocket(PeerServlet.this) : null;
+            Object res = null;
+            if (Peers.useWebSockets) {
+                String host = req.getRemoteAddress();
+                int port = req.getRemotePort();
+                PeerAddress pa = new PeerAddress(port,host);
+//we use remote port to distinguish peers behind the NAT/UPnP
+//TODO: it is bad and we have to use reliable node ID to distinguish peers
+                Peers.cleanupPeers(null);
+                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
+                if (peer != null) {
+                    PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
+                    peer.getP2pTransport().setInboundSocket(pws);
+                    res = pws;
+                }
+            }
+            return res;
         }
+    }
+    
+    @PreDestroy
+    public void shutdown(){
+        threadPool.shutdown();
     }
 }

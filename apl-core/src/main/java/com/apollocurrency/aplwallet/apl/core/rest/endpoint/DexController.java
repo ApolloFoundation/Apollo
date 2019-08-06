@@ -443,6 +443,9 @@ public class DexController {
             if (cryptocurrency != null) {
                 currencies = DexCurrencies.getType(cryptocurrency);
             }
+        } catch (ParameterException ex){
+            log.error(ex.getMessage(), ex);
+            return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         } catch (Exception ex){
             log.error(ex.getMessage(), ex);
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();

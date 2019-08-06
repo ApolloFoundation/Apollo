@@ -31,9 +31,7 @@ import org.json.simple.JSONStreamAware;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
-@Vetoed
 public final class GetNextBlocks extends PeerRequestHandler {
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
@@ -78,7 +76,7 @@ public final class GetNextBlocks extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

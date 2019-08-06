@@ -43,6 +43,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ShardMigrationExecutor {
     private static final Logger log = getLogger(ShardMigrationExecutor.class);
+    public static final String ACCOUNT_LEDGER = "account_ledger";
     private final List<DataMigrateOperation> dataMigrateOperations = new ArrayList<>();
 
     private final javax.enterprise.event.Event<MigrateState> migrateStateEvent;
@@ -51,7 +52,7 @@ public class ShardMigrationExecutor {
     private ShardDao shardDao;
     private ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor;
     private DerivedTablesRegistry derivedTablesRegistry;
-    private GeneratorIdsExtractor generatorIdsExtractor;
+    private PrevBlockInfoExtractor prevBlockInfoExtractor;
     private volatile boolean backupDb;
 
     public boolean backupDb() {
@@ -68,7 +69,7 @@ public class ShardMigrationExecutor {
                                   ShardHashCalculator shardHashCalculator,
                                   ShardDao shardDao,
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
-                                  GeneratorIdsExtractor generatorIdsExtractor,
+                                  PrevBlockInfoExtractor prevBlockInfoExtractor,
                                   DerivedTablesRegistry registry,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
@@ -78,7 +79,7 @@ public class ShardMigrationExecutor {
         this.excludedTransactionDbIdExtractor = Objects.requireNonNull(excludedTransactionDbIdExtractor, "exluded transaction db_id extractor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
-        this.generatorIdsExtractor = Objects.requireNonNull(generatorIdsExtractor);
+        this.prevBlockInfoExtractor = Objects.requireNonNull(prevBlockInfoExtractor);
     }
 
     private void addCreateSchemaCommand(long shardId) {
@@ -113,9 +114,9 @@ public class ShardMigrationExecutor {
                     throw new IllegalStateException("Cannot calculate shard hash");
                 }
                 log.debug("SHARD HASH = {}", hash.length);
-                Long[] generatorIds = Convert.toObjectArray(generatorIdsExtractor.extractGeneratorIdsBefore(height, 3));
+                PrevBlockData prevBlockData = prevBlockInfoExtractor.extractPrevBlockData(height, 3);
                 CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, generatorIds);
+                        new ShardAddConstraintsSchemaVersion(), /*hash should be correct value*/ hash, prevBlockData);
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:
@@ -127,6 +128,7 @@ public class ShardMigrationExecutor {
             case CSV_EXPORT_STARTED:
                 excludeInfo = excludedTransactionDbIdExtractor.getExcludeInfo(shardStartHeight, height);
                 List<String> tablesToExport = new ArrayList<>(derivedTablesRegistry.getDerivedTableNames());
+                tablesToExport.remove(ACCOUNT_LEDGER);
                 tablesToExport.addAll(List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME));
                 CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, ShardConstants.DEFAULT_COMMIT_BATCH_SIZE, height, tablesToExport, excludeInfo);
 
@@ -159,7 +161,7 @@ public class ShardMigrationExecutor {
     }
 
     private int getShardStartHeight() {
-        Shard lastCompletedShard = shardDao.getLastCompletedShard(); // last shard is missing on the first time
+        Shard lastCompletedShard = shardDao.getLastCompletedOrArchivedShard(); // last shard is missing on the first time
         return lastCompletedShard != null ? lastCompletedShard.getShardHeight() : 0;
     }
 

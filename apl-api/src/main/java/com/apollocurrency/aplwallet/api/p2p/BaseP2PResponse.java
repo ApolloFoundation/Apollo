@@ -20,4 +20,5 @@ public class BaseP2PResponse {
     public Integer errorCode=0;
     public Integer protocol = 1;
     public String error=null;
+    public String cause=null;
 }

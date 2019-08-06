@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import org.slf4j.Logger;
@@ -60,8 +61,10 @@ public class BlockDeleteHelper extends AbstractHelper {
             log.error("Processing failed, Table " + currentTableName, e);
             throw e;
         } finally {
-            if (this.preparedInsertStatement != null && !this.preparedInsertStatement.isClosed()) {
-                this.preparedInsertStatement.close();
+            if (this.preparedInsertStatement != null /*&& !this.preparedInsertStatement.isClosed()*/) {
+                log.trace("preparedInsertStatement will be CLOSED!");
+                DbUtils.close(this.preparedInsertStatement);
+//                this.preparedInsertStatement.close();
             }
         }
         log.debug("Deleted '{}' = [{} / {}] within {} secs", operationParams.tableName, totalProcessedCount, totalSelectedRows, (System.currentTimeMillis() - startSelect) / 1000);

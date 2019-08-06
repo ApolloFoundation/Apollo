@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -54,7 +54,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     public TransactionalDataSource getDataSource() {
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+            jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
         }
         return currentTransactionalDataSource;
     }
@@ -70,7 +70,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         propertiesHolder = propertiesHolderParam;
         // init internal data source stuff only one time till next shutdown() will be called
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-        jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+        jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
 //        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
     }
 //not used yet
@@ -106,7 +106,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     public Jdbi getJdbi() {
         if (jdbi == null) {
             // should never happen, but happens sometimes in unit tests because of CDI
-            jdbi = currentTransactionalDataSource.init(new AplDbVersion());
+            jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
         }
         return jdbi;
     }
@@ -136,7 +136,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         Set<Long> result = new HashSet<>();
         try (Connection con = getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
-            pstmt.setLong(1, ShardConstants.SHARD_PERCENTAGE_FULL);
+            pstmt.setLong(1, ShardState.FULL.getValue());
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     result.add(rs.getLong("shard_id"));
@@ -168,30 +168,38 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     @Override
     public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-                new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
-        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-        shardId = shardDataSourceCreateHelper.getShardId();
         if (connectedShardDataSourceMap.containsKey(shardId)) {
             TransactionalDataSource dataSource = connectedShardDataSourceMap.get(shardId);
-            if (dataSource != null && !dataSource.isShutdown()) {
-                shutdown(dataSource);
-                shardDb.init(dbVersion);
-            }
-            connectedShardDataSourceMap.replace(shardId, shardDb);
+            dataSource.init(dbVersion);
+            log.debug("Init existing SHARD using db version'{}' ", dbVersion);
+            return dataSource;
         } else {
+            ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                    new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
+            TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
             shardDb.init(dbVersion);
             connectedShardDataSourceMap.put(shardId, shardDb);
+            log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
+            return shardDb;
         }
-        log.debug("new SHARD '{}' is CREATED", shardDataSourceCreateHelper.getShardName());
-        return shardDb;
     }
 
     @Override
-    public List<TransactionalDataSource> getFullDatasources() {
+    public synchronized List<TransactionalDataSource> getFullDatasources() {
         Set<Long> allFullShards = findAllFullShards();
-        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(this::getOrCreateShardDataSourceById).collect(Collectors.toList());
+        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(id-> getOrCreateShardDataSourceById(id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
         return dataSources;
+    }
+
+    @Override
+    public synchronized int closeAllShardDataSources() {
+        int closedDatasources = 0;
+        for (TransactionalDataSource dataSource : connectedShardDataSourceMap.values()) {
+            dataSource.shutdown();
+            closedDatasources++;
+        }
+        connectedShardDataSourceMap.clear();
+        return closedDatasources;
     }
 
 
@@ -224,7 +232,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     }
 
     @Override
-    public TransactionalDataSource getShardDataSourceById(long shardId) {
+    public synchronized TransactionalDataSource getShardDataSourceById(long shardId) {
         return connectedShardDataSourceMap.get(shardId);
     }
 
@@ -232,7 +240,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
+    public synchronized TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
         } else {
@@ -244,7 +252,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion) {
+    public synchronized TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
@@ -257,10 +265,10 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
+    public synchronized TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
         Set<Long> fullShards = findAllFullShards();
         if (fullShards.contains(shardId)) {
-            return getOrCreateShardDataSourceById(shardId);
+            return getOrCreateShardDataSourceById(shardId, new ShardAddConstraintsSchemaVersion());
         } else {
             return null;
         }
@@ -281,11 +289,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * After that the db can be reinitialized/opened again
      */
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
         try {
-            if (connectedShardDataSourceMap.size() > 0) {
-                connectedShardDataSourceMap.values().stream().forEach(DataSourceWrapper::shutdown);
-            }
+            closeAllShardDataSources();
             if (currentTransactionalDataSource != null) {
                 currentTransactionalDataSource.shutdown();
                 currentTransactionalDataSource = null;

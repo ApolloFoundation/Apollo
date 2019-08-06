@@ -13,11 +13,11 @@ public class ShardConstants {
     public static final String BLOCK_TABLE_NAME = "block";
     public static final String TRANSACTION_TABLE_NAME = "transaction";
     public static final String SHARD_TABLE_NAME = "shard";
+    public static final String ACCOUNT_TABLE_NAME = "account";
     public static final String BLOCK_INDEX_TABLE_NAME = "block_index";
     public static final String TRANSACTION_INDEX_TABLE_NAME = "transaction_shard_index";
     public static final String GOODS_TABLE_NAME = "goods";
     public static final String PHASING_POLL_TABLE_NAME = "phasing_poll";
-    public static final Long SHARD_PERCENTAGE_FULL = 100L;
 
     private ShardConstants() {}
 }

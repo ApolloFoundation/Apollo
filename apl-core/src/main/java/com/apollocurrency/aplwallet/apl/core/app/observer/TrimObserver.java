@@ -9,23 +9,18 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.event.ObservesAsync;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TrimObserver {
@@ -33,7 +28,6 @@ public class TrimObserver {
     private TrimService trimService;
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
-    private Event<Integer> trimEvent;
     private final Object lock = new Object();
     private List<Integer> trimHeights = new ArrayList<>();
 
@@ -51,8 +45,7 @@ public class TrimObserver {
                     if (!trimHeights.isEmpty()) {
                         Integer height = trimHeights.remove(0);
                         log.debug("Perform trim on height " + height);
-                        trimService.trimDerivedTables(height);
-                        trimEvent.fire(trimService.getLastTrimHeight());
+                        trimService.trimDerivedTables(height, true);
                         return true;
                     }
                 }
@@ -61,13 +54,15 @@ public class TrimObserver {
         return false;
     }
 
-    @Inject
     public TrimObserver(TrimService trimService,
-                        @Property("apl.trimFrequency") int trimFrequency,
-                        Event<Integer> trimEvent) {
+                         int trimFrequency) {
         this.trimService = trimService;
         this.trimFrequency = trimFrequency;
-        this.trimEvent = trimEvent;
+    }
+    @Inject
+    public TrimObserver(TrimService trimService) {
+        this.trimService = trimService;
+        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
     }
 
 
@@ -80,7 +75,7 @@ public class TrimObserver {
             log.info("processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
-            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight());
+            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
         }
     }
 

@@ -708,7 +708,7 @@ public class AplDbVersion extends DbVersion {
             case 261:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id BIGINT AUTO_INCREMENT NOT NULL, " +
                         "state VARCHAR NOT NULL, object_name VARCHAR NULL, column_name VARCHAR NULL, " +
-                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL)");
+                        "last_column_value BIGINT, processed_object VARCHAR, updated TIMESTAMP(9) NOT NULL, height INT NOT NULL)");
             case 262:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT IF NOT EXISTS pk_shard_recovery_state PRIMARY KEY(shard_recovery_id)");
             case 263:
@@ -782,14 +782,22 @@ public class AplDbVersion extends DbVersion {
             case 296:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS generator_ids ARRAY DEFAULT NULL");
             case 297:
+                apply("CREATE TABLE IF NOT EXISTS trim(db_id IDENTITY, height INT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE)");
+            case 298:
+                apply("ALTER TABLE IF EXISTS shard_recovery ADD COLUMN IF NOT EXISTS height INT NOT NULL");
+            case 299:
+                apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timeouts ARRAY DEFAULT NULL");
+            case 300:
+                apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
+            case 301:
                 apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
                         "counter_offer_id BIGINT NOT NULL, status TINYINT NOT NULL, sender BIGINT NOT NULL, recipient BIGINT NOT NULL, secret_hash BINARY(32)," +
                         " encrypted_secret BINARY(64), transfer_tx_id VARCHAR(120) NOT NULL, " +
                         " height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 298:
+            case 302:
                 apply("ALTER TABLE phasing_poll_result ADD COLUMN IF NOT EXISTS approved_tx BIGINT");
-            case 299:
-                return 299;
+            case 303:
+                return 303;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

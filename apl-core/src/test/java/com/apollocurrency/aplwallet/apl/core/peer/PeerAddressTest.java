@@ -32,13 +32,12 @@ public class PeerAddressTest {
 
     @Test
     public void testFromString() throws MalformedURLException, UnknownHostException{
-        PeerAddress a = new PeerAddress();
-        a.fromString("192.168.0.1");
+        PeerAddress a = new PeerAddress("192.168.0.1");
         int port = a.getPort();
         String hp=a.getAddrWithPort();
         assertEquals(hp, "192.168.0.1"+":"+Integer.toString(Constants.DEFAULT_PEER_PORT));
         assertEquals(port, Constants.DEFAULT_PEER_PORT);
-        a.setHost("fe80::d166:519e:5758:d24a");
+        a = new PeerAddress("[fe80::d166:519e:5758:d24a]");
         hp=a.getAddrWithPort();
         assertEquals(hp, "[fe80:0:0:0:d166:519e:5758:d24a]"+":"+Integer.toString(Constants.DEFAULT_PEER_PORT));
     }

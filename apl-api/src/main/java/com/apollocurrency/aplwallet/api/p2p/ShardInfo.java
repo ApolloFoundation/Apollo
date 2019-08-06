@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -32,6 +29,4 @@ public class ShardInfo {
     public String hash=null;
     public String zipCrcHash=null;
     public Long height;
-    @JsonIgnore
-    public String peerAddress; //needed for processing
 }

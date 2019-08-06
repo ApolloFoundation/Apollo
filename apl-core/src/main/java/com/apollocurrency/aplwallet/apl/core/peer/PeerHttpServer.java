@@ -6,8 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -43,7 +45,7 @@ public class PeerHttpServer {
      public static final int MAX_PLATFORM_LENGTH = 30;
      public static final int DEFAULT_PEER_PORT=47874;
      public static final int DEFAULT_PEER_PORT_TLS=48743;
-     boolean shareMyAddress;
+     boolean shareMyAddress=false;
      private int myPeerServerPort;
      private final int myPeerServerPortTLS;
      private final boolean useTLS;
@@ -51,10 +53,13 @@ public class PeerHttpServer {
      private final String myPlatform;
      private PeerAddress myExtAddress;
      private final Server peerServer;
+     private PeerServlet peerServlet;
      private final UPnP upnp;
      private final String host;
      private final int idleTimeout;
      private static List<Integer> externalPorts=new ArrayList<>();
+
+     private TaskDispatchManager taskDispatchManager;
      
     public boolean isShareMyAddress() {
         return shareMyAddress;
@@ -75,10 +80,14 @@ public class PeerHttpServer {
     public PeerAddress getMyExtAddress(){
         return myExtAddress;
     }
-
+    public PeerServlet getPeerServlet(){
+        return peerServlet;
+    }
+    
     @Inject
-    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator) {
+    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
         this.upnp = upnp;
+        this.taskDispatchManager = taskDispatchManager;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && ! propertiesHolder.isOffline();  
         myPeerServerPort = propertiesHolder.getIntProperty("apl.myPeerServerPort",DEFAULT_PEER_PORT);
         myPeerServerPortTLS = propertiesHolder.getIntProperty("apl.myPeerServerPortTLS", DEFAULT_PEER_PORT_TLS);
@@ -111,7 +120,8 @@ public class PeerHttpServer {
             ctxHandler.setContextPath("/");
             //add Weld listener
             ctxHandler.addEventListener(new Listener());
-            ServletHolder peerServletHolder = new ServletHolder(new PeerServlet());
+            peerServlet = new PeerServlet();
+            ServletHolder peerServletHolder = new ServletHolder(peerServlet);
             ctxHandler.addServlet(peerServletHolder, "/*");
             if (propertiesHolder.getBooleanProperty("apl.enablePeerServerDoSFilter")) {
                 FilterHolder dosFilterHolder = ctxHandler.addFilter(DoSFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
@@ -137,7 +147,7 @@ public class PeerHttpServer {
                     }
                 }
             //if address is set in config file, we ignore UPnP    
-            if (enablePeerUPnP && upnp.isAvailable() && myExtAddress!=null) {
+            if (enablePeerUPnP && upnp.isAvailable() && myExtAddress==null) {
                 for (Integer pn : internalPorts) {
                     int port = upnp.addPort(pn, "Peer2Peer");
                     if (port > 0) {
@@ -148,14 +158,15 @@ public class PeerHttpServer {
             }else{
                 externalPorts.addAll(internalPorts);
             }
-            // if we do not have addres set in config and do not have UPnP
+            // if we still do not have addres set in config and do not have UPnP
             //  myExtAddress is still null, do we have public IP?
-            String addr = getMyPublicIPAdresses();
-            if(addr!=null){
-                myExtAddress=new PeerAddress(externalPorts.get(0),addr);
+            if (myExtAddress == null) {
+                String addr = getMyPublicIPAdresses();
+                if (addr != null) {
+                    myExtAddress = new PeerAddress(externalPorts.get(0), addr);
+                }
+                peerServer.setStopAtShutdown(true);
             }
-            peerServer.setStopAtShutdown(true);
-
 
         } else {
             peerServer = null;
@@ -163,16 +174,22 @@ public class PeerHttpServer {
         }
     }
 
-    public void start(){
-               ThreadPool.runBeforeStart("PeerUPnPInit", () -> {
-                try {
-                    peerServer.start();
-                    LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
-                } catch (Exception e) {
-                    LOG.error("Failed to start peer networking server", e);
-                    throw new RuntimeException(e.toString(), e);
-                }
-            }, true);
+    public void start() {
+        Task peerUPnPInitTask = Task.builder()
+                .name("PeerUPnPInit")
+                .task(() -> {
+                    try {
+                        peerServer.start();
+                        LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
+                    } catch (Exception e) {
+                        LOG.error("Failed to start peer networking server", e);
+                        throw new RuntimeException(e.toString(), e);
+                    }
+                })
+                .build();
+
+        taskDispatchManager.newBackgroundDispatcher("PeerUPnPService")
+                .schedule(peerUPnPInitTask, TaskOrder.BEFORE);
     }
     
     public void shutdown(){

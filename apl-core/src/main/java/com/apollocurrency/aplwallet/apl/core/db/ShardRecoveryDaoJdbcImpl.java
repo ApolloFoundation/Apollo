@@ -41,6 +41,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
                     .lastColumnValue(rs.getLong("last_column_value"))
                     .processedObject(rs.getString("processed_object"))
                     .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
+                    .height(rs.getInt("height"))
                     .build();
             return recovery;
         }
@@ -142,8 +143,8 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         Objects.requireNonNull(recovery.getState(),"recovery State is NULL"); // NULL is not permitted !
         try (PreparedStatement pstmt = con.prepareStatement(
                 "INSERT INTO shard_recovery(" +
-                        "state, object_name, column_name, last_column_value, processed_object, updated) " +
-                        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP())"
+                        "state, object_name, column_name, last_column_value, processed_object, updated, height) " +
+                        "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(), ?)"
         )) {
             int i = 0;
             pstmt.setString(++i, recovery.getState().name()); // recovery.getState() SHOULD NEVER be NULL, field restriction
@@ -155,6 +156,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
                 pstmt.setNull(++i, Types.BIGINT);
             }
             pstmt.setString(++i, recovery.getProcessedObject());
+            pstmt.setInt(++i, recovery.getHeight());
             int inserted = pstmt.executeUpdate();
             log.trace("recovery inserted = {}", inserted);
             if(inserted > 0) {

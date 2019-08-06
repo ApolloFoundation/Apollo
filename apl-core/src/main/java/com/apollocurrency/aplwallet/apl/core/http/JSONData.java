@@ -531,7 +531,7 @@ public final class JSONData {
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());
-        json.put("numberOfTransactions", block.getTransactions().size());
+        json.put("numberOfTransactions", block.getOrLoadTransactions().size());
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
@@ -549,7 +549,7 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction : block.getTransactions()) {
+        for (Transaction transaction : block.getOrLoadTransactions()) {
             JSONObject transactionJson = transaction(true, transaction);
             Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
             totalAmountATM += amountATM;
@@ -669,8 +669,8 @@ public final class JSONData {
         json.put("lastUpdated", peer.getLastUpdated());
         json.put("lastConnectAttempt", peer.getLastConnectAttempt());
         json.put("inbound", peer.isInbound());
-        json.put("inboundWebSocket", peer.isInboundWebSocket());
-        json.put("outboundWebSocket", peer.isOutboundWebSocket());
+        json.put("inboundWebSocket", peer.isInboundSocket());
+        json.put("outboundWebSocket", peer.isOutboundSocket());
         if (peer.isBlacklisted()) {
             json.put("blacklistingCause", peer.getBlacklistingCause());
         }

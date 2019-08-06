@@ -136,8 +136,7 @@ public class SetLogging extends AbstractAPIRequestHandler {
         //
         if (response == null) {
             String[] events = req.getParameterValues("communicationEvent");
-            if (!Peers.setCommunicationLoggingMask(events))
-                response = INCORRECT_EVENT;
+            response = INCORRECT_EVENT;
         }
         //
         // Return the response

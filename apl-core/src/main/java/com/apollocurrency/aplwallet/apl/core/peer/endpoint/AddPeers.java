@@ -24,12 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-@Vetoed
 public final class AddPeers extends PeerRequestHandler {
 
     public AddPeers() {}
@@ -43,7 +41,7 @@ public final class AddPeers extends PeerRequestHandler {
             Peers.peersExecutorService.submit(() -> {
                 for (int i=0; i<peers.size(); i++) {
                     String announcedAddress = (String)peers.get(i);
-                    PeerImpl newPeer = Peers.findOrCreatePeer(announcedAddress, true);
+                    PeerImpl newPeer = Peers.findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
                         if (Peers.addPeer(newPeer) && setServices) {
                             newPeer.setServices(Long.parseUnsignedLong((String)services.get(i)));

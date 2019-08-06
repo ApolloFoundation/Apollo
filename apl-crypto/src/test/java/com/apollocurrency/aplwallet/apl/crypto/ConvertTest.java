@@ -124,7 +124,7 @@ public class ConvertTest {
 
     @Test
     void testListOfLongsToLongArray() {
-        Long[] longs = Convert.toObjectArray(List.of(1L, 2L));
+        Long[] longs = Convert.toObjectLongArray(List.of(1L, 2L));
 
         assertArrayEquals(new Long[] {1L, 2L}, longs);
     }

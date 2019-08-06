@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -105,6 +106,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 
@@ -150,7 +152,7 @@ class ShardEngineTest {
             PhasingPollTable.class,
             DerivedTablesRegistry.class,
             ShardEngineImpl.class,  ZipImpl.class, AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class)
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -229,7 +231,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().build());
+        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().shardId(3L).build());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         checkDbVersion(5, 3);
@@ -274,12 +276,21 @@ class ShardEngineTest {
 
         byte[] shardHash = new byte[32];
         Long[] generators = {1L, 2L, 3L};
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).generatorIds(generators).build());
+        Integer[] timestamps = {4, 5, 6};
+        Integer[] timeouts = {7, 8, 9};
+        PrevBlockData prevBlockData = PrevBlockData.builder()
+                .prevBlockTimestamps(timestamps)
+                .prevBlockTimeouts(timeouts)
+                .generatorIds(generators)
+                .build();
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
-        checkDbVersion(21, 3);
+        checkDbVersion(24, 3);
         checkTableExist(new String[] {"block", "option", "transaction"}, 3);
         Shard lastShard = shardDao.getLastShard();
         assertArrayEquals(generators, Convert.toArray(lastShard.getGeneratorIds()));
+        assertArrayEquals(timeouts, Convert.toArray(lastShard.getBlockTimeouts()));
+        assertArrayEquals(timestamps, Convert.toArray(lastShard.getBlockTimestamps()));
         assertArrayEquals(shardHash, lastShard.getShardHash());
     }
 
@@ -298,7 +309,7 @@ class ShardEngineTest {
         ShardRecovery recovery = new ShardRecovery(state);
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         shardRecoveryDaoJdbc.saveShardRecovery(dataSource, recovery);
-        MigrateState shardState = shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder().shardHash(new byte[32]).generatorIds(new Long[0]).build());
+        MigrateState shardState = shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder().shardHash(new byte[32]).build());
         assertEquals(shardState, state);
         ShardRecovery actualRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(dataSource);
         assertEquals(state, actualRecovery.getState());
@@ -307,7 +318,7 @@ class ShardEngineTest {
     @Test
     void createFullShardDbWhenNoRecoveryPresent() {
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
-        MigrateState shardState = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(new byte[32]).generatorIds(new Long[0]).build());
+        MigrateState shardState = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(new byte[32]).build());
         assertEquals(MigrateState.FAILED, shardState);
     }
 
@@ -389,13 +400,16 @@ class ShardEngineTest {
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
         //5.        // create shard db FULL schema + add shard hash info
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).generatorIds(new Long[] {2L, 3L, 4L}).build());
+        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData( PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[] {3, 4}).prevBlockTimestamps(new Integer[] {5, 6}).build()).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
         Shard shard = shardDao.getShardById(shardId);
         assertNotNull(shard);
         assertArrayEquals(shardHash, shard.getShardHash());
-        assertArrayEquals(new long[] {2,3,4}, shard.getGeneratorIds());
+        assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+        assertArrayEquals(new int[] {3, 4}, shard.getBlockTimeouts());
+        assertArrayEquals(new int[] {5, 6}, shard.getBlockTimestamps());
+
 
         tableNameList.clear();
         tableNameList.add(BLOCK_INDEX_TABLE_NAME);
@@ -594,6 +608,7 @@ class ShardEngineTest {
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("DB_ID", "LATEST"));
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(2, recovery.getShardRecoveryId());
@@ -620,6 +635,8 @@ class ShardEngineTest {
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("DB_ID", "LATEST"));
+
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(2, recovery.getShardRecoveryId());
