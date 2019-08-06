@@ -182,21 +182,17 @@ public class DexController {
 
         log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
 
-
-
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
         if (offerAmount <= 0 ) {
             return Response.ok(JSON.toString(incorrect("offerAmount", "Should be more than zero."))).build();
         }
-
         try {
             Math.multiplyExact(pairRate, offerAmount);
         } catch (ArithmeticException ex){
             return Response.ok(JSON.toString(incorrect("pairRate or offerAmount", "Are too big."))).build();
         }
-
         if (amountOfTime <= 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
             return Response.ok(
                     JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", amountOfTime, 0, MAX_ORDER_DURATION_SEC)))
@@ -204,25 +200,23 @@ public class DexController {
         }
 
         Integer currentTime = epochTime.getEpochTime();
-        JSONStreamAware response = new JSONObject();
         try {
             Account account = ParameterParser.getSenderAccount(req);
-            DexOffer offer = new DexOffer();
             OfferType type = OfferType.getType(offerType);
-
+            DexOffer offer;
             try {
-                offer.setAccountId(account.getId());
-                offer.setType(type);
-                //TODO refactoring it. Use Long (apollo unit of measurement)
-                offer.setOfferAmount(EthUtil.gweiToApl(offerAmount));
-                offer.setFromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress);
-                offer.setToAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()));
-                offer.setOfferCurrency(DexCurrencies.APL);
-                offer.setPairCurrency(DexCurrencies.getType(pairCurrency));
-                //TODO refactoring it. Use Long (apollo unit of measurement)
-                offer.setPairRate(EthUtil.gweiToEth(pairRate));
-                offer.setStatus(OfferStatus.OPEN);
-                offer.setFinishTime(currentTime + amountOfTime);
+                offer = DexOffer.builder()
+                        .accountId(account.getId())
+                        .type(type)
+                        .offerAmount(EthUtil.gweiToApl(offerAmount))
+                        .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
+                        .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
+                        .offerCurrency(DexCurrencies.APL)
+                        .pairCurrency(DexCurrencies.getType(pairCurrency))
+                        .pairRate(EthUtil.gweiToEth(pairRate))
+                        .status(OfferStatus.OPEN)
+                        .finishTime(currentTime + amountOfTime)
+                        .build();
             } catch (Exception ex) {
                 return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
             }
@@ -270,48 +264,10 @@ public class DexController {
 
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", TX_DEADLINE);
-            String freezeTx=null;
-
-            DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
 
             try {
-                //TODO move it in to service.
-                if (counterOffer != null) {
-                    // 1. Create offer.
-                    offer.setStatus(OfferStatus.WAITING_APPROVAL);
-                    CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                            .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
-                    Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
-                    offer.setTransactionId(offerTx.getId());
+                JSONStreamAware response = service.createOffer(requestWrapper, account, offer);
 
-                    byte[] secretX = new byte[32];
-                    Crypto.getSecureRandom().nextBytes(secretX);
-                    byte[] secretHash = Crypto.sha256().digest(secretX);
-                    String passphrase = ParameterParser.getPassphrase(req, true);
-                    byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
-
-                    // 2. Send money to the counter offer.
-                    CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
-                            .convert(req, account, counterOffer.getAccountId(), offer.getOfferAmount(), null);
-                    String transactionId = service.transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
-// todo add if transactionId == null
-                    // 3. Create contract.
-                    DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX, ExchangeContractStatus.STEP_1);
-                    response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
-                } else {
-                    CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                            .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
-                    Transaction tx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
-
-                    if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
-                        offer.setTransactionId(tx.getId());
-                        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-                        freezeTx = service.freezeEthPax(passphrase, offer);
-                    }
-                    if (freezeTx != null) {
-                        ((JSONObject) response).put("frozenTx", freezeTx);
-                    }
-                }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
@@ -327,7 +283,7 @@ public class DexController {
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
         }
 
-        return Response.ok(JSON.toString(response)).build();
+        return Response.ok().build();
     }
 
     @GET

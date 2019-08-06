@@ -11,7 +11,7 @@ public enum OfferType {
 
     public static OfferType getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferType.values().length){
-            return null;
+            throw new IllegalArgumentException("Offer type with order: " + ordinal + " doesn't exist.");
         }
         return OfferType.values()[ordinal];
     }

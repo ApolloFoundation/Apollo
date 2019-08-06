@@ -8,9 +8,14 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import lombok.Builder;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
+
+@Data
+@Builder
 public class DexOffer{
     /**
      * Use transactionId.
@@ -83,93 +88,5 @@ public class DexOffer{
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(Long transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public String getFromAddress() {
-        return fromAddress;
-    }
-
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
-    }
-
-    public OfferType getType() {
-        return type;
-    }
-
-    public void setType(OfferType type) {
-        this.type = type;
-    }
-
-    public DexCurrencies getOfferCurrency() {
-        return offerCurrency;
-    }
-
-    public void setOfferCurrency(DexCurrencies offerCurrency) {
-        this.offerCurrency = offerCurrency;
-    }
-
-    public Long getOfferAmount() {
-        return offerAmount;
-    }
-
-    public void setOfferAmount(Long offerAmount) {
-        this.offerAmount = offerAmount;
-    }
-
-    public DexCurrencies getPairCurrency() {
-        return pairCurrency;
-    }
-
-    public void setPairCurrency(DexCurrencies pairCurrency) {
-        this.pairCurrency = pairCurrency;
-    }
-
-    public BigDecimal getPairRate() {
-        return pairRate;
-    }
-
-    public void setPairRate(BigDecimal pairRate) {
-        this.pairRate = pairRate;
-    }
-
-    public Integer getFinishTime() {
-        return finishTime;
-    }
-
-    public void setFinishTime(Integer finishTime) {
-        this.finishTime = finishTime;
-    }
-
-    public OfferStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OfferStatus status) {
-        this.status = status;
-    }
-
-    public String getToAddress() {
-        return toAddress;
-    }
-
-    public void setToAddress(String toAddress) {
-        this.toAddress = toAddress;
     }
 }
