@@ -87,7 +87,7 @@ public class PrunableArchiveMigrator {
         }
     }
 
-    CsvExporter createExporter(Path dir) {
+    CsvExporter createExporter(Path dir) { // just to mock instance creation
         return new CsvExporterImpl(databaseManager, dir);
     }
 }
