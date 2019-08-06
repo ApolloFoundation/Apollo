@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,10 +50,7 @@ public class CsvExporterImpl implements CsvExporter {
         Objects.requireNonNull(dataExportPath, "exportDirProducer 'data Path' is NULL");
         this.dataExportPath = dataExportPath;
         try {
-            boolean folderExist = Files.exists(this.dataExportPath);
-            if (!folderExist) { // check and create dataExport folder
-                Files.createDirectories(this.dataExportPath);
-            }
+             Files.createDirectories(this.dataExportPath);
         } catch (IOException e) {
             throw new RuntimeException("Unable to create data export directory", e);
         }
@@ -144,6 +142,34 @@ public class CsvExporterImpl implements CsvExporter {
             } else {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", ShardConstants.SHARD_TABLE_NAME);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Exporting table exception " + ShardConstants.SHARD_TABLE_NAME, e);
+        }
+        return totalCount;
+    }
+
+    @Override
+    public long exportShardTableIgnoringLastZipHashes(int targetHeight, int batchLimit) {
+        int totalCount = 0;
+        TransactionalDataSource dataSource = this.databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard WHERE shard_height <= ? ORDER BY shard_id DESC LIMIT 1")) {
+            pstmt.setInt(1, targetHeight);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int height = rs.getInt("shard_height");
+                    totalCount += exportShardTable(height - 1, batchLimit);
+                    try (CsvWriter csvWriter = new CsvWriterImpl(dataExportPath, Set.of("SHARD_STATE"))) {
+                        csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+                        csvWriter.append(ShardConstants.SHARD_TABLE_NAME, pstmt.executeQuery(), Map.of("zip_hash_crc", "null", "prunable_zip_hash", "null"));
+                        totalCount += 1;
+                    }
+                } else {
+                    log.debug("Skipped exporting Table = {}", ShardConstants.SHARD_TABLE_NAME);
+                }
+                log.trace("Table = {}, exported rows = {}", ShardConstants.SHARD_TABLE_NAME, totalCount);
             }
         }
         catch (Exception e) {

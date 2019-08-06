@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -196,7 +198,8 @@ class CsvExporterTest {
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
-
+    @Inject
+    ShardDao shardDao;
     @Inject
     AccountTable accountTable;
     @Inject
@@ -290,7 +293,7 @@ class CsvExporterTest {
     }
 
     @Test
-    void exportShardTable() throws Exception {
+    void testExportShardTable() throws Exception {
         String tableName = "shard";
         int targetHeight = 3;
         int batchLimit = 1; // used for pagination and partial commit
@@ -431,6 +434,52 @@ class CsvExporterTest {
         long exported = csvExporter.exportDerivedTable(genesisTable, 8000, 2);
         assertEquals(-1, exported);
     }
+
+    @Test
+    void testExportShardTableIgnoringLastHashes() throws IOException, URISyntaxException {
+
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(4, 1);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        assertEquals(2, exportedRows);
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(1, exportedFiles);
+        assertTrue(Files.exists(shardExportedFile));
+
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(3, lines.size());
+        List<String> expectedRows = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("shard-last-hashes-null.csv").toURI()));
+        assertEquals(expectedRows, lines);
+    }
+
+    @Test
+    void testExportShardTableIgnoringLastHashesWhenNoShardsInDb() throws IOException {
+        shardDao.hardDeleteAllShards();
+
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(Integer.MAX_VALUE, 1);
+        assertEquals(0, exportedRows);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(0, exportedFiles);
+        assertFalse(Files.exists(shardExportedFile));
+    }
+    @Test
+    void testExportShardTableIgnoringLastHashesWhenOnlyOneShardExists() throws IOException, URISyntaxException {
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(2, 1);
+        assertEquals(1, exportedRows);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(1, exportedFiles);
+        assertTrue(Files.exists(shardExportedFile));
+
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(2, lines.size());
+        List<String> expectedRows = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("shard-last-hashes-null.csv").toURI())).subList(0, 2);
+        assertEquals(expectedRows, lines);
+    }
+
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
         int readRowsFromFile = 0;

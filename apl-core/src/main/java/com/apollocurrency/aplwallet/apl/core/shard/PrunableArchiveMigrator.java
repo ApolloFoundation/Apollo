@@ -1,12 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -26,6 +29,7 @@ public class PrunableArchiveMigrator {
     private static final String MIGRATE_OPTION = "prunable-shard-migration-finished";
     private static final String CURRENT_SHARD_OPTION = "current-shard-for-migration";
     private ShardDao shardDao;
+    private DatabaseManager databaseManager;
     private OptionDAO optionDAO;
     private DirProvider dirProvider;
     private BlockchainConfig blockchainConfig;
@@ -33,12 +37,13 @@ public class PrunableArchiveMigrator {
     private DerivedTablesRegistry registry;
 
     @Inject
-    public PrunableArchiveMigrator(ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry) {
+    public PrunableArchiveMigrator(ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
         this.shardDao = shardDao;
         this.optionDAO = optionDAO;
         this.dirProvider = dirProvider;
         this.blockchainConfig = blockchainConfig;
         this.zip = zip;
+        this.databaseManager = databaseManager;
         this.registry = registry;
     }
 
@@ -60,8 +65,11 @@ public class PrunableArchiveMigrator {
                     Path tempDirectory = Files.createTempDirectory("prunable-shard-migration-" + shard.getShardId());
                     ShardNameHelper shardNameHelper = new ShardNameHelper();
                     Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), blockchainConfig.getChain().getChainId()));
+
                     String tempDirectoryString = tempDirectory.toAbsolutePath().toString();
                     zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
+                    CsvExporter csvExporter = createExporter(tempDirectory);
+                    csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
                     byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
@@ -74,9 +82,12 @@ public class PrunableArchiveMigrator {
                 catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
             }
             optionDAO.set(MIGRATE_OPTION, "false");
         }
+    }
+
+    CsvExporter createExporter(Path dir) {
+        return new CsvExporterImpl(databaseManager, dir);
     }
 }

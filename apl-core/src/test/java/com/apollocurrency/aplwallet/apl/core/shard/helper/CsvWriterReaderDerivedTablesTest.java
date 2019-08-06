@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.CSV_FILE_EXTENSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -410,5 +411,28 @@ class CsvWriterReaderDerivedTablesTest {
 
         String tableName = "unknown_table_name";
         assertThrows(NullPointerException.class, () -> csvWriter.write(tableName + CSV_FILE_EXTENSION, null));
+    }
+
+    @Test
+    void testAppendWithDefaultParameters() throws SQLException {
+        DirProvider dirProvider = mock(DirProvider.class);
+        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Set.of("DB_ID"));
+        csvWriter.setOptions("fieldDelimiter=");
+
+        CsvExportData csvExportData = csvWriter.append("public_key", extension.getDatabaseManager().getDataSource().getConnection().createStatement().executeQuery("select * from public_key where height<= 8000"), Map.of("account_id", "batman", "public_key", "null"));
+
+        int processCount = csvExportData.getProcessCount();
+        assertEquals(8, processCount);
+        assertEquals(Map.of("PUBLIC_KEY", "null", "ACCOUNT_ID", "batman", "HEIGHT", 8000, "LATEST", Boolean.TRUE, "DB_ID", 8L), csvExportData.getLastRow());
+
+        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        ResultSet rs = csvReader.read("public_key", null, null);
+        while (rs.next()) {
+            Object publicKey = rs.getObject("public_key");
+            assertNull(publicKey);
+            Object accountId= rs.getObject("account_id");
+            assertEquals("batman", accountId);
+        }
     }
 }

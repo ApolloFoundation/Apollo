@@ -49,6 +49,17 @@ public interface CsvExporter {
      */
     long exportShardTable(int targetHeight, int batchLimit);
 
+    /**
+     * Perform 'shard' table export as {@link CsvExporter#exportShardTable(int, int)} but
+     * leave last shard entry without zip hashes as it performed during sharding process
+     * to meet shard archive requirements
+     *
+     * @param targetHeight target blockchain height
+     * @param batchLimit rows in batch to process
+     * @return exported quantity
+     */
+    long exportShardTableIgnoringLastZipHashes(int targetHeight, int batchLimit);
+
     long exportTransactionIndex(int targetHeight, int batchLimit);
 
     long exportBlockIndex(int targetHeight, int batchLimit);
