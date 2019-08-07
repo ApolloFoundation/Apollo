@@ -667,7 +667,6 @@ public class ShardEngineImpl implements ShardEngine {
     @Transactional
     public MigrateState finishShardProcess(CommandParamInfo paramInfo) {
         Objects.requireNonNull(paramInfo, "paramInfo is NULL");
-        long startAllTables = System.currentTimeMillis();
         log.debug("Finish sharding...");
 
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
@@ -686,8 +685,7 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDao.hardDeleteAllShardRecovery();
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
         sourceDataSource.analyzeTables();
-        log.debug("Shard process finished successfully, shard id - {}", paramInfo.getShardId(),
-                System.currentTimeMillis() - startAllTables);
+        log.debug("Shard process finished successfully, shard id - {}", paramInfo.getShardId());
         durableTaskUpdateByState(state, null, null);
         return state;
     }
