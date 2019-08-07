@@ -94,11 +94,11 @@ public class PhasingTestData {
         POLL_5_VOTER_0 = new PhasingPollVoter(80L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_0_ID);
         POLL_5_VOTER_1 = new PhasingPollVoter(90L, POLL_5.getHeight(), POLL_5.getId(), POLL_5_VOTER_1_ID);
 
-        SHARD_RESULT_0 = new PhasingPollResult(10L, 300, 100, 1, true, 0L);
+        SHARD_RESULT_0 = new PhasingPollResult(10L, 300, 100, 1, true, 1L);
         RESULT_0 = new PhasingPollResult(20L, 1500, td.TRANSACTION_0.getId(), 1, true, 0L);
         RESULT_1 = new PhasingPollResult(25L, POLL_0.getFinishHeight(), POLL_0.getId(), 1, true, 0L);
         RESULT_2 = new PhasingPollResult(30L, 9000, POLL_1.getId(), 0, true, 0L);
-        RESULT_3 = new PhasingPollResult(40L, 9500, POLL_2.getId(), 0, false , null);
+        RESULT_3 = new PhasingPollResult(40L, 9500, POLL_2.getId(), 0, false , null );
         POLL_1_VOTE_0 = new PhasingVote(30L, 8500, POLL_1.getId(), POLL_1_VOTER_0_ID, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(40L, 8999, POLL_1.getId(), POLL_1_VOTER_1_ID, td.TRANSACTION_10.getId());
         //real linked transactions

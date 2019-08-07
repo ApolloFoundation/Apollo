@@ -130,12 +130,12 @@ DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT
 (60	    ,4851834545659781120	,9211698109297098287	        ,2	        ,537000	            , 2	        ,50	        ,10	            ,4826028362757542803	,2		            ,null                                                                          ,0	            ,517468),
 ;
 INSERT INTO PUBLIC.PHASING_POLL_RESULT
-(DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
-(10	    ,100                	,1	    ,TRUE	    ,300     ),
-(20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
-(25	    ,5471926494854938613	,1	    ,TRUE	    ,4000   ),
-(30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
-(40	    ,2083198303623116770	,0	    ,FALSE	    ,9500   ),
+(DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT, APPROVED_TX ) VALUES
+(10	    ,100                	,1	    ,TRUE	    ,300    ,1),
+(20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ,0),
+(25	    ,5471926494854938613	,1	    ,TRUE	    ,4000   ,0),
+(30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ,0),
+(40	    ,2083198303623116770	,0	    ,FALSE	    ,9500 ,null  ),
 ;
 INSERT into PUBLIC.PHASING_POLL_VOTER
 (DB_ID  	,TRANSACTION_ID  	,VOTER_ID  	,HEIGHT) VALUES

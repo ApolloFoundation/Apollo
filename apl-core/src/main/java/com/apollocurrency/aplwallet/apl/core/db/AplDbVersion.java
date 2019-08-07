@@ -797,7 +797,9 @@ public class AplDbVersion extends DbVersion {
             case 302:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
             case 303:
-                return 303;
+                apply("ALTER TABLE phasing_poll_result ADD COLUMN IF NOT EXISTS approved_tx BIGINT");
+            case 304:
+                return 304;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -23,7 +23,7 @@ public class PhasingPollResultMapper extends DerivedEntityMapper<PhasingPollResu
         long id = rs.getLong("id");
         long result = rs.getLong("result");
         boolean approved = rs.getBoolean("approved");
-        Long approvedTx = rs.getLong("approved_tx");
+        Long approvedTx = rs.getString("approved_tx") == null ? null : rs.getLong("approved_tx");
         return new PhasingPollResult(null, null, id, result, approved, approvedTx);
     }
 }
