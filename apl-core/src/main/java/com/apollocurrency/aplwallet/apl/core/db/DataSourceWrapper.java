@@ -310,4 +310,12 @@ public class DataSourceWrapper implements DataSource {
         return dbUrl;
     }
 
+    @Override
+    public String toString() {
+        return "DataSourceWrapper{" +
+                "dbUrl='" + dbUrl + '\'' +
+                ", initialized=" + initialized +
+                ", shutdown=" + shutdown +
+                '}';
+    }
 }

@@ -208,10 +208,14 @@ public class ShardServiceTest {
     void testReset() throws IOException {
         mockBackupExists();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
+        Event firedEvent = mock(Event.class);
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         boolean reset = shardService.reset(1);
 
         assertTrue(reset);
         verify(databaseManager).getDataSource();
+        verify(firedEvent).fire(true);
+        verify(firedEvent).fire(false);
         verify(databaseManager).shutdown();
         verify(zip).extract(anyString(), anyString());
     }

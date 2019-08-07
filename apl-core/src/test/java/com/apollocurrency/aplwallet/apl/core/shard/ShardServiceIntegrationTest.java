@@ -9,12 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
@@ -49,6 +51,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceIntegrationTest {
     @RegisterExtension
@@ -64,8 +68,7 @@ public class ShardServiceIntegrationTest {
     DirProvider dirProvider;
     @Mock
     TrimService trimService;
-    @Mock
-    Zip zip;
+    Zip zip = new ZipImpl();
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
@@ -118,7 +121,8 @@ public class ShardServiceIntegrationTest {
         Chain mockChain = mock(Chain.class);
         doReturn(mockChain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(mockChain).getChainId();
-        zip = new ZipImpl();
+        Event firedEvent = mock(Event.class);
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db"));
@@ -135,11 +139,11 @@ public class ShardServiceIntegrationTest {
         TransactionalDataSource shardDatasource = databaseManager.getOrCreateShardDataSourceById(1L);
         shardDatasource.begin();
         databaseManager.getDataSource().begin();
-
         Path zipPath = dbDir.resolve("BACKUP-BEFORE-apl-blockchain-shard-1-chain-a2e9b946-290b-48b6-9985-dc2e5a5860a1.zip");
         zip.compress(zipPath.toAbsolutePath().toString(), dbPath.getParent().toAbsolutePath().toString(), 0L, null, false);
 
         boolean reset = shardService.reset(1);
+
         assertTrue(reset);
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(RuntimeException.class, () -> shardDatasource.commit()); //shard datasource was closed
@@ -153,6 +157,12 @@ public class ShardServiceIntegrationTest {
         Shard shard = allShards.get(0);
         assertEquals(1000, shard.getShardHeight());
         assertEquals(ShardState.FULL, shard.getShardState());
+        verify(globalSync).writeLock();
+        verify(globalSync).writeUnlock();
+        verify(firedEvent).fire(false);
+        verify(firedEvent).fire(true);
+        verify(blockchainProcessor).suspendBlockchainDownloading();
+        verify(blockchainProcessor).resumeBlockchainDownloading();
     }
 
     private ShardDao createShardDao(JdbiHandleFactory jdbiHandleFactory) {

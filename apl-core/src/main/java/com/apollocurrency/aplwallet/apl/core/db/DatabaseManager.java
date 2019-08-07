@@ -23,7 +23,5 @@ public interface DatabaseManager {
 
     void setAvailable(boolean available);
 
-    void shutdown(TransactionalDataSource dataSource);
-
     UUID getChainId();
 }
