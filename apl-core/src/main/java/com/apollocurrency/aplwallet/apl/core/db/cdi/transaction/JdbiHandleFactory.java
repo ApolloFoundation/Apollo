@@ -6,7 +6,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -18,7 +17,7 @@ public class JdbiHandleFactory {
 
     private final static ThreadLocal<Handle> currentHandleThreadLocal = new ThreadLocal<>();
 
-    private Jdbi jdbi;
+    private volatile Jdbi jdbi;
 
     public void setJdbi(Jdbi jdbi) {
         this.jdbi = jdbi;

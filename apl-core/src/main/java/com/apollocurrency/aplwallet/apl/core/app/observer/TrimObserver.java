@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -13,6 +14,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.Executors;
@@ -31,7 +34,7 @@ public class TrimObserver {
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
     private final Object lock = new Object();
-    private Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
+    private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     @PostConstruct
@@ -63,6 +66,12 @@ public class TrimObserver {
         }
     }
 
+    List<Integer> getTrimHeights() {
+        synchronized (lock) {
+            return new ArrayList<>(trimHeights);
+        }
+    }
+
     @Inject
     public TrimObserver(TrimService trimService) {
         this.trimService = trimService;
@@ -70,9 +79,14 @@ public class TrimObserver {
     }
 
 
-    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated Boolean trimDerivedTables) {
+    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
         log.info("Set trim to {} ", trimDerivedTables);
-        this.trimDerivedTables = trimDerivedTables;
+        this.trimDerivedTables = trimConfig.isEnableTrim();
+        if (trimConfig.isClearTrimQueue()) {
+            synchronized (lock) {
+                trimHeights.clear();
+            }
+        }
     }
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {

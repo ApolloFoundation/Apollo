@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -36,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
+import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -74,7 +76,7 @@ public class ShardServiceTest {
     @Mock ShardMigrationExecutor shardMigrationExecutor;
     @Mock AplAppStatus aplAppStatus;
     @Mock PropertiesHolder propertiesHolder;
-    @Mock Event<Boolean> trimEvent;
+    @Mock Event<TrimConfig> trimEvent;
     @Mock GlobalSync globalSync;
     @Mock
     TrimService trimService;
@@ -92,7 +94,7 @@ public class ShardServiceTest {
 
         assertEquals(MigrateState.FAILED, c.get());
         verify(shardMigrationExecutor).executeAllOperations();
-        verify(trimEvent, after(250).times(2)).fire(anyBoolean()); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
+        verify(trimEvent, after(250).times(2)).fire((any(TrimConfig.class))); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
     }
 
     @Test
@@ -105,8 +107,8 @@ public class ShardServiceTest {
         assertNull(c);
 
         verify(shardMigrationExecutor, never()).executeAllOperations();
-        verify(trimEvent, never()).fire(true);
-        verify(trimEvent, never()).fire(false);
+        verify(trimEvent, never()).fire(new TrimConfig(true, false));
+        verify(trimEvent, never()).fire(new TrimConfig(false, false));
     }
 
 
@@ -148,7 +150,7 @@ public class ShardServiceTest {
         assertEquals(MigrateState.FAILED, c.get());
 
         verifyZeroInteractions(shardMigrationExecutor);
-        verify(trimEvent, after(250).times(2)).fire(anyBoolean()); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
+        verify(trimEvent, after(250).times(2)).fire(any(TrimConfig.class)); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
     }
 
     @Test
@@ -187,7 +189,9 @@ public class ShardServiceTest {
     void testSkipResetToShardWhenShardingProcessWasStartedWithoutCompleteableFuture() throws IOException {
         mockBackupExists();
         shardService.setSharding(true);
+
         boolean reset = shardService.reset(1L);
+
         assertFalse(reset);
         verifyZeroInteractions(shardMigrationExecutor);
     }
@@ -198,6 +202,7 @@ public class ShardServiceTest {
         doReturn(UUID.randomUUID()).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(folder.newFolder().toPath()).when(dirProvider).getDbDir();
+
         boolean reset = shardService.reset(1);
 
         assertFalse(reset);
@@ -213,11 +218,7 @@ public class ShardServiceTest {
         boolean reset = shardService.reset(1);
 
         assertTrue(reset);
-        verify(databaseManager).getDataSource();
-        verify(firedEvent).fire(true);
-        verify(firedEvent).fire(false);
-        verify(databaseManager).shutdown();
-        verify(zip).extract(anyString(), anyString());
+        verifySuccessfulReset(firedEvent);
     }
 
     @Test
@@ -243,6 +244,37 @@ public class ShardServiceTest {
         assertTrue(shardProcess.isDone());
         assertFalse(shardService.isSharding());
 
+    }
+
+    @Test
+    void testResetWaitingTrim() throws IOException, ExecutionException, InterruptedException {
+        mockBackupExists();
+        doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
+        Event firedEvent = mock(Event.class);
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(true).when(trimService).isTrimming();
+        CompletableFuture<Void> trimFuture = CompletableFuture.supplyAsync(() -> {
+            ThreadUtils.sleep(250);
+            doReturn(false).when(trimService).isTrimming();
+            return null;
+        });
+        boolean reset = shardService.reset(1);
+        trimFuture.get();
+
+        assertTrue(reset);
+        verifySuccessfulReset(firedEvent);
+    }
+
+    private void verifySuccessfulReset(Event<TrimConfig> event) {
+        verify(databaseManager).getDataSource();
+        verify(globalSync).writeLock();
+        verify(globalSync).writeUnlock();
+        verify(event).fire(new TrimConfig(false, true));
+        verify(event).fire(new TrimConfig(true, false));
+        verify(blockchainProcessor).suspendBlockchainDownloading();
+        verify(blockchainProcessor).resumeBlockchainDownloading();
+        verify(databaseManager).shutdown();
+        verify(zip).extract(anyString(), anyString());
     }
 
     @Test
@@ -283,9 +315,28 @@ public class ShardServiceTest {
         doReturn(true).when(config).isShardingEnabled();
         doReturn(new ShardRecovery(MigrateState.MAIN_DB_BACKUPED)).when(shardRecoveryDao).getLatestShardRecovery();
         doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[32], new long[0], new int[0], new int[0], new byte[32])).when(shardDao).getLastShard();
+
         shardService.recoverSharding();
 
         verify(shardMigrationExecutor).executeAllOperations();
+    }
+
+    @Test
+    void testRecoverWhenDbWasRestoredFromBackupButShardingDisabledInCmd() {
+        HeightConfig config = mock(HeightConfig.class);
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(true).when(config).isShardingEnabled();
+        ShardRecovery recovery = new ShardRecovery(MigrateState.INIT);
+        recovery.setShardRecoveryId(2L);
+        doReturn(recovery).when(shardRecoveryDao).getLatestShardRecovery();
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
+        doReturn(new Shard(1L, 2000)).when(shardDao).getLastShard();
+
+        shardService.recoverSharding();
+
+        verify(shardDao).hardDeleteShard(1L);
+        verify(shardRecoveryDao).hardDeleteShardRecovery(2L);
+        verifyZeroInteractions(shardMigrationExecutor);
     }
 
 
@@ -307,5 +358,15 @@ public class ShardServiceTest {
 
         assertEquals(List.of(), allShards);
         verify(shardDao).getAllCompletedShards();
+    }
+    @Test
+    void testAllCompletedOrArchivedShards() {
+        List<Shard> expected = List.of(new Shard(1L, 20), new Shard(2L, 30));
+        doReturn(expected).when(shardDao).getAllCompletedOrArchivedShards();
+
+        List<Shard> allShards = shardService.getAllCompletedOrArchivedShards();
+
+        assertEquals(expected, allShards);
+        verify(shardDao).getAllCompletedOrArchivedShards();
     }
 }

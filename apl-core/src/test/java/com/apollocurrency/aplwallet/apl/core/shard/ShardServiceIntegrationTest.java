@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -79,7 +80,7 @@ public class ShardServiceIntegrationTest {
     @Mock
     PropertiesHolder propertiesHolder;
     @Mock
-    Event<Boolean> trimEvent;
+    Event<TrimConfig> trimEvent;
     @Mock
     GlobalSync globalSync;
 
@@ -159,8 +160,8 @@ public class ShardServiceIntegrationTest {
         assertEquals(ShardState.FULL, shard.getShardState());
         verify(globalSync).writeLock();
         verify(globalSync).writeUnlock();
-        verify(firedEvent).fire(false);
-        verify(firedEvent).fire(true);
+        verify(firedEvent).fire(new TrimConfig(false,true));
+        verify(firedEvent).fire(new TrimConfig(true,false));
         verify(blockchainProcessor).suspendBlockchainDownloading();
         verify(blockchainProcessor).resumeBlockchainDownloading();
     }
