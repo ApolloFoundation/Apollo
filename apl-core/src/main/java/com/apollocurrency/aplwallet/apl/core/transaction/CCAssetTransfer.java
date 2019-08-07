@@ -4,11 +4,10 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -64,7 +63,7 @@ class CCAssetTransfer extends ColoredCoins {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
         senderAccount.addToAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), -attachment.getQuantityATU());
-        if (recipientAccount.getId() == Genesis.CREATOR_ID) {
+        if (recipientAccount.getId() == GenesisImporter.CREATOR_ID) {
             Asset.deleteAsset(transaction, attachment.getAssetId(), attachment.getQuantityATU());
         } else {
             recipientAccount.addToAssetAndUnconfirmedAssetBalanceATU(getLedgerEvent(), transaction.getId(), attachment.getAssetId(), attachment.getQuantityATU());
@@ -84,7 +83,7 @@ class CCAssetTransfer extends ColoredCoins {
         if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
         }
-        if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+        if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Asset transfer to Genesis not allowed, " + "use asset delete attachment instead");
         }
         Asset asset = Asset.getAsset(attachment.getAssetId());

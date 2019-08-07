@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
@@ -55,7 +56,8 @@ class PrunableMessageServiceTest {
             NtpTime.class,
             BlockchainConfig.class,
             PublicKeyTable.class,
-            PropertiesHolder.class
+            PropertiesHolder.class,
+            GenesisPublicKeyTable.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
