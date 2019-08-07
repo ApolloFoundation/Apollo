@@ -331,7 +331,19 @@ public class DexController {
 
         log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit );
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest(type, currentTime, DexCurrencies.APL, pairCur, accountId, offerStatus, minAskPrice, maxBidPrice, offset, limit);
+        DexOfferDBRequest dexOfferDBRequest = DexOfferDBRequest.builder()
+                .type(type != null ? type.ordinal() : null)
+                .currentTime(currentTime)
+                .offerCur(DexCurrencies.APL.ordinal())
+                .pairCur(pairCur != null ? pairCur.ordinal() : null)
+                .accountId(accountId)
+                .status(offerStatus)
+                .minAskPrice(minAskPrice)
+                .maxBidPrice(maxBidPrice)
+                .offerCur(offset)
+                .limit(limit)
+                .build();
+        
         List<DexOffer> offers = service.getOffers(dexOfferDBRequest);
 
         return Response.ok(offers.stream()

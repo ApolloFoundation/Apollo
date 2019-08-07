@@ -192,7 +192,7 @@ public class DexService {
                 refundFrozenMoneyForOffer(offer);
             } catch (AplException.ExecutiveProcessException ex){
                 LOG.error(ex.getMessage(), ex);
-                //TODO take a look ones again do we need this throw exception there.
+                //TODO take a look ones again do we need throw exception here.
 //                throw new RuntimeException(ex);
             }
         }
