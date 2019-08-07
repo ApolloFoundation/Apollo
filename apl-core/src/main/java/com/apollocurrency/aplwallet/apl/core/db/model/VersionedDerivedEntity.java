@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.model;
 
+import lombok.ToString;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
+@ToString(callSuper = true)
 public abstract class VersionedDerivedEntity extends DerivedEntity {
     private boolean latest = true;
 
@@ -17,6 +20,7 @@ public abstract class VersionedDerivedEntity extends DerivedEntity {
 
     public VersionedDerivedEntity(ResultSet rs) throws SQLException {
         super(rs);
+        latest = rs.getBoolean("latest");
     }
 
     public boolean isLatest() {

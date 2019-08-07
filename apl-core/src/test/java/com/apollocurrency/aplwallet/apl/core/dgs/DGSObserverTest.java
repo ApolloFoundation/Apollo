@@ -8,9 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -71,7 +78,6 @@ public class DGSObserverTest {
             DGSFeedbackTable.class,
             DGSGoodsTable.class,
             DGSTagTable.class,
-            AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DGSObserver.class,
@@ -101,9 +107,7 @@ public class DGSObserverTest {
     @Inject
     Event<Block> event;
 
-
     DGSTestData dtd;
-
 
     @BeforeEach
     public void setUp() {
@@ -146,6 +150,7 @@ public class DGSObserverTest {
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
         assertEquals(dtd.PURCHASE_2, purchase);
     }
+
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
         return new BlockEventBinding() {
             @Override
@@ -154,6 +159,7 @@ public class DGSObserverTest {
             }
         };
     }
+
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
         Account account = accountService.getAccount(accountId);
         if (balance != null) {

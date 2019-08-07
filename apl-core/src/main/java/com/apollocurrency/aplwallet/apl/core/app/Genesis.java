@@ -66,11 +66,11 @@ public final class Genesis {
     public static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
     public static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static  ConfigDirProvider configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
+    private static BlockchainConfig blockchainConfig; // = CDI.current().select(BlockchainConfig.class).get();
+    private static  ConfigDirProvider configDirProvider; // = CDI.current().select(ConfigDirProvider.class).get();
 //    private static AplCoreRuntime aplCoreRuntime  = CDI.current().select(AplCoreRuntime.class).get();
-    private static AplAppStatus aplAppStatus = CDI.current().select(AplAppStatus.class).get();;
-    private static AccountService accountService = CDI.current().select(AccountServiceImpl .class).get();
+    private static AplAppStatus aplAppStatus; // = CDI.current().select(AplAppStatus.class).get();
+    private static AccountService accountService;// = CDI.current().select(AccountServiceImpl .class).get();
     private static AccountPublicKeyService accountPublicKeyService;// = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
     private static BlockchainConfigUpdater blockchainConfigUpdater;// = CDI.current().select(BlockchainConfigUpdater.class).get();
     private static DatabaseManager databaseManager; // lazy init
@@ -88,6 +88,34 @@ public final class Genesis {
         
     }
 
+    private static BlockchainConfig lookupBlockchainConfig() {
+        if (blockchainConfig == null) {
+            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+        }
+        return blockchainConfig;
+    }
+
+    private static ConfigDirProvider lookupConfigDirProvider() {
+        if (configDirProvider == null) {
+            configDirProvider = CDI.current().select(ConfigDirProvider.class).get();
+        }
+        return configDirProvider;
+    }
+
+    private static AplAppStatus lookupAplAppStatus() {
+        if (aplAppStatus == null) {
+            aplAppStatus = CDI.current().select(AplAppStatus.class).get();
+        }
+        return aplAppStatus;
+    }
+
+    private static AccountService lookupAccountService() {
+        if (accountService == null) {
+            accountService = CDI.current().select(AccountServiceImpl .class).get();
+        }
+        return accountService;
+    }
+
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
@@ -102,9 +130,19 @@ public final class Genesis {
         return accountPublicKeyService;
     }
 
+    private static void loadCDI(){
+        lookupBlockchainConfig();
+        lookupConfigDirProvider();
+        lookupAplAppStatus();
+        lookupAccountService();
+        lookupDataSource();
+        lookupAccountPublicKeyService();
+    }
+
     private static JSONObject genesisAccountsJSON = null;
 
     private static byte[] loadGenesisAccountsJSON() {
+        loadCDI();
         if (genesisTaskId == null) {
             Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
             if (task.isPresent()) {
@@ -133,6 +171,7 @@ public final class Genesis {
     }
 
     public static void apply(boolean loadOnlyPublicKeys) {
+        loadCDI();
         if (genesisAccountsJSON == null) {
             loadGenesisAccountsJSON();
         }
@@ -166,6 +205,7 @@ public final class Genesis {
     }
 
     private static long loadBalances(TransactionalDataSource dataSource, JSONArray publicKeys) {
+        loadCDI();
         int count;
         LOG.debug("Loaded " + publicKeys.size() + " public keys");
         count = 0;
@@ -189,6 +229,7 @@ public final class Genesis {
     }
 
     private static JSONArray loadPublicKeys(TransactionalDataSource dataSource) {
+        loadCDI();
         int count = 0;
         JSONArray publicKeys = (JSONArray) genesisAccountsJSON.get("publicKeys");
 
@@ -210,7 +251,7 @@ public final class Genesis {
     }
 
     public static List<Map.Entry<String, Long>> loadGenesisAccounts() {
-            
+            loadCDI();
             // Original line below:
              String path = configDirProvider.getConfigDirectoryName()+"/"+blockchainConfig.getChain().getGenesisLocation();
             // Hotfixed because UNIX way working everywhere

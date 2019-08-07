@@ -22,21 +22,55 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.*;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.FundingMonitor;
+import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
+import com.apollocurrency.aplwallet.apl.core.app.Token;
+import com.apollocurrency.aplwallet.apl.core.app.Trade;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Vote;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
-import com.apollocurrency.aplwallet.apl.core.dgs.model.*;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.*;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -46,7 +80,15 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderCancellationAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -59,16 +101,17 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 @Vetoed
 public final class JSONData {
     private static Logger LOG = LoggerFactory.getLogger(JSONData.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static AccountService accountService = CDI.current().select(AccountService.class).get();
     private static AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
@@ -368,40 +411,22 @@ public final class JSONData {
     }
 
     public static JSONObject getAccountsStatistic(int numberOfAccounts) {
-        //using one connection for 4 queries
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            long totalSupply = AccountTable.getTotalSupply(con);
-            long totalAccounts = AccountTable.getTotalNumberOfAccounts(con);
-            long totalAmountOnTopAccounts = AccountTable.getTotalAmountOnTopAccounts(con, numberOfAccounts);
-            try(DbIterator<Account> topHolders = accountService.getTopHolders(con, numberOfAccounts)) {
-                return accounts(topHolders, totalAmountOnTopAccounts, totalSupply, totalAccounts, numberOfAccounts);
-            }
-        }
-        catch (SQLException e) {
-            DbUtils.close(con);                        
-            throw new RuntimeException(e.toString(), e);
-        }finally{
-            DbUtils.close(con);            
-        }
-    }
+        long totalSupply = accountService.getTotalSupply();
+        long totalAccounts = accountService.getTotalNumberOfAccounts();
+        long totalAmountOnTopAccounts = accountService.getTotalAmountOnTopAccounts(numberOfAccounts);
+        List<Account> topAccounts = accountService.getTopHolders(numberOfAccounts);
 
-    private static JSONObject accounts(DbIterator<Account> topAccountsIterator, long totalAmountOnTopAccounts, long totalSupply, long totalAccounts,
-                                       int numberOfAccounts) {
         JSONObject result = new JSONObject();
         result.put("totalSupply", totalSupply);
         result.put("totalNumberOfAccounts", totalAccounts);
         result.put("numberOfTopAccounts", numberOfAccounts);
         result.put("totalAmountOnTopAccounts", totalAmountOnTopAccounts);
         JSONArray holders = new JSONArray();
-        while (topAccountsIterator.hasNext()) {
-            Account account = topAccountsIterator.next();
+        topAccounts.forEach(account -> {
             JSONObject accountJson = JSONData.accountBalance(account, false);
             JSONData.putAccount(accountJson, "account", account.getId());
             holders.add(accountJson);
-        }
+            });
         result.put("topHolders", holders);
         return result;
     }

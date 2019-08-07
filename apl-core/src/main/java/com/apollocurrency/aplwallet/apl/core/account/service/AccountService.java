@@ -88,7 +88,7 @@ public interface AccountService {
 
     long getTotalNumberOfAccounts();
 
-    DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts);
+    List<Account> getTopHolders(int numberOfTopAccounts);
 
     long getTotalSupply();
 

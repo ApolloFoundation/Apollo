@@ -40,7 +40,7 @@ import java.util.Set;
  */
 @Slf4j
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class Account extends VersionedDerivedEntity {
 
     private long id;

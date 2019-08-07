@@ -156,6 +156,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void save(Account account) {
+        account.setHeight(blockchain.getHeight());
         if (account.getBalanceATM() == 0
                 && account.getUnconfirmedBalanceATM() == 0
                 && account.getForgedBalanceATM() == 0
@@ -481,7 +482,7 @@ public class AccountServiceImpl implements AccountService {
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
-            return AccountTable.getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
+            return accountTable.getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -498,7 +499,7 @@ public class AccountServiceImpl implements AccountService {
     public long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
-            return AccountTable.getTotalNumberOfAccounts(con);
+            return accountTable.getTotalNumberOfAccounts(con);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -506,20 +507,23 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
-        try {
-            return accountTable.getTopHolders(con, numberOfTopAccounts);
-        }
-        catch (SQLException e) {
+    public List<Account> getTopHolders(int numberOfTopAccounts) {
+        List<Account> result = new ArrayList<>();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
+            DbIterator<Account> iterator = accountTable.getTopHolders(con, numberOfTopAccounts)){
+            iterator.forEachRemaining(result::add);
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        return result;
     }
 
     @Override
     public long getTotalSupply() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
-            return AccountTable.getTotalSupply(con);
+            return accountTable.getTotalSupply(con);
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
