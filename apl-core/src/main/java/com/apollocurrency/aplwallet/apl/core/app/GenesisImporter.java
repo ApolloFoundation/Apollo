@@ -199,7 +199,7 @@ public class GenesisImporter {
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }
-            if (/*this.publicKeys.size() > 20000 && */count % 10000 == 0) {
+            if (count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_PUB_KEYS, count, this.publicKeys.size());
                 log.debug(message);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/this.publicKeys.size()*1.0)*50, message);
@@ -223,7 +223,7 @@ public class GenesisImporter {
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }
-            if (/*this.balances.size() > 10000 && */count % 10000 == 0) {
+            if (count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, this.balances.size());
                 log.debug(message);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/this.balances.size()*1.0)*50, message);
