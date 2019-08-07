@@ -12,4 +12,5 @@ import lombok.Data;
 public class TrimData {
     private int trimHeight;
     private int blockchainHeight;
+    private int pruningTime;
 }

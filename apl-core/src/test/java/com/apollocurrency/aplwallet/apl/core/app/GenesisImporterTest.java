@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
@@ -77,10 +77,10 @@ class GenesisImporterTest {
     @WeldSetup
     public WeldInitiator weld  = WeldInitiator.from(
             AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-            ShardDaoJdbcImpl.class, GenesisImporter.class,
+            ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, GenesisPublicKeyTable.class,
             BlockIndexDao.class, TransactionDaoImpl.class, BlockchainImpl.class,
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
-            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
             .addBeans(MockBean.of(configDirProvider, ConfigDirProvider.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(blockchainConfigUpdater, BlockchainConfigUpdater.class))
@@ -180,7 +180,7 @@ class GenesisImporterTest {
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         Block block = genesisImporter.newGenesisBlock();
-//        genesisImporter.importGenesisJson(false); // COMMENTED OUT because it TAKES LONG TIME with HIGE json !!!!
+//        genesisImporter.importGenesisJson(false); // COMMENTED OUT because it TAKES LONG TIME with HUGE json !!!!
         assertNotNull(block);
         assertEquals(230730, genesisImporter.getPublicKeys().size()); // pub keys read from json
         assertEquals(84832, genesisImporter.getBalances().size()); // balances read from json

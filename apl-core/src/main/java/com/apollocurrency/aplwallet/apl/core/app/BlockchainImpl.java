@@ -64,7 +64,7 @@ public class BlockchainImpl implements Blockchain {
     private BlockDao blockDao;
     private TransactionDao transactionDao;
     private BlockchainConfig blockchainConfig;
-    private EpochTime timeService;
+    private TimeService timeService;
     private PropertiesHolder propertiesHolder;
     private TransactionIndexDao transactionIndexDao;
     private BlockIndexDao blockIndexDao;
@@ -73,7 +73,7 @@ public class BlockchainImpl implements Blockchain {
     private ShardRecoveryDao shardRecoveryDao;
 
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, EpochTime timeService,
+    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao,
                           DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
         this.blockDao = blockDao;
@@ -442,7 +442,8 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransaction(long transactionId) {
-        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) || transactionIndexDao.getByTransactionId(transactionId) != null;
+        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource()) ||
+                transactionIndexDao.countByTransactionId(transactionId) == 1;
     }
 
     @Override
@@ -601,6 +602,11 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> getBlockTransactions(long blockId) {
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
         return transactionDao.findBlockTransactions(blockId, dataSource);
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return getLastBlock() != null && getShardInitialBlock() != null;
     }
 
     @Transactional(readOnly = true)

@@ -110,21 +110,15 @@ public class GenesisImporter {
         try (InputStreamReader is = new InputStreamReader(new DigestInputStream(
                 ClassLoader.getSystemResourceAsStream(path), digest))) {
             genesisAccountsJSON = mapper.readTree(is);
-            if (log.isTraceEnabled()) {
-                log.trace("genesisAccountsJSON = {}", genesisAccountsJSON);
-            }
+            traceDumpData("genesisAccountsJSON = {}", genesisAccountsJSON);
             JsonNode balances = genesisAccountsJSON.get("balances");
             this.balances = mapper.readValue(balances.toString(), new TypeReference<Map<String, Long>>(){});
             log.debug("balances = [{}]", this.balances.size());
-            if (log.isTraceEnabled()) {
-                log.trace("balances = {}", this.balances);
-            }
+            traceDumpData("balances = {}", this.balances);
             JsonNode publicKeys = genesisAccountsJSON.get("publicKeys");
             this.publicKeys = mapper.readValue(publicKeys.toString(), new TypeReference<List<String>>(){});
             log.debug("publicKeys = [{}]", this.publicKeys.size());
-            if (log.isTraceEnabled()) {
-                log.trace("publicKeys = {}", this.publicKeys);
-            }
+            traceDumpData("publicKeys = {}", this.publicKeys);
         } catch (Exception e) {
             throw new RuntimeException("Failed to process genesis recipients accounts", e);
         }
@@ -137,6 +131,12 @@ public class GenesisImporter {
         log.debug("Digest is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
                 usedBytes != null ? usedBytes / 1024 : "not calculated");
         return this.computedDigest;
+    }
+
+    private void traceDumpData(String pattern, Object... data) {
+        if (log.isTraceEnabled()) {
+            log.trace(pattern, data);
+        }
     }
 
     public Block newGenesisBlock() {
@@ -199,7 +199,7 @@ public class GenesisImporter {
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }
-            if (this.publicKeys.size() > 20000 && count % 10000 == 0) {
+            if (/*this.publicKeys.size() > 20000 && */count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_PUB_KEYS, count, this.publicKeys.size());
                 log.debug(message);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, (count*1.0/this.publicKeys.size()*1.0)*50, message);
@@ -223,7 +223,7 @@ public class GenesisImporter {
             if (count++ % 100 == 0) {
                 dataSource.commit(false);
             }
-            if (this.balances.size() > 10000 && count % 10000 == 0) {
+            if (/*this.balances.size() > 10000 && */count % 10000 == 0) {
                 String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, this.balances.size());
                 log.debug(message);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, 50+(count*1.0/this.balances.size()*1.0)*50, message);

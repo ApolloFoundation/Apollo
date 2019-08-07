@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.jboss.weld.junit.MockBean;
@@ -54,6 +55,7 @@ public class DGSServiceSearchTest {
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .build();
     @Inject

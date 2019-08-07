@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
@@ -82,9 +82,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +121,8 @@ class DerivedDbTableListingTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -148,15 +146,6 @@ class DerivedDbTableListingTest {
     DerivedTablesRegistry registry;
 
     public DerivedDbTableListingTest() throws Exception {}
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 
     @AfterEach
     void cleanup() {
@@ -194,13 +183,9 @@ class DerivedDbTableListingTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-            try {
                 MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
                 assertTrue(minMaxDbId.getMaxDbId() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxDbId.getMaxDbId());
                 log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
-            } catch (SQLException e) {
-                log.error("Exception", e);
-            }
         });
     }
 }

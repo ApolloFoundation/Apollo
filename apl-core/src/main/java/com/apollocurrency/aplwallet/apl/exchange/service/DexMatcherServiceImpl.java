@@ -5,19 +5,20 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -32,13 +33,13 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     DexService dexService;
-    private EpochTime epochTime;
+    private TimeService timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService, EpochTime epochTime ) {
+    DexMatcherServiceImpl( DexService dexService, TimeService timeService) {
         this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
-        this.epochTime =  Objects.requireNonNull( epochTime,"epochTime is null");        
+        this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }
     
     /**
@@ -137,7 +138,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
         OfferType counterOfferType = createdOffer.getType().isSell() ? OfferType.BUY : OfferType.SELL;
 
-        Integer currentTime = epochTime.getEpochTime();        
+        Integer currentTime = timeService.getEpochTime();
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
         

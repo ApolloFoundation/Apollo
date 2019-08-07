@@ -51,7 +51,7 @@ public class GetShardingInfo extends PeerRequestHandler{
                     shard.getShardId(),
                     blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
-                    Convert.toHexString(shard.getZipHashCrc()),
+                    Convert.toHexString(shard.getCoreZipHash()),
                     shard.getShardHeight().longValue()
             );
             res.shardingInfo.shards.add(shardInfo);

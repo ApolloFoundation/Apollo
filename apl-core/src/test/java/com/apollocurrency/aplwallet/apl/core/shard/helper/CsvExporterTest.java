@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
@@ -28,10 +30,10 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
@@ -47,14 +49,16 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -75,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
+import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -105,6 +110,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -160,7 +166,6 @@ class CsvExporterTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            ShardDaoJdbcImpl.class,
             JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -172,13 +177,14 @@ class CsvExporterTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DirProvider.class,
-            AplAppStatus.class,
+            AplAppStatus.class, PrunableMessageTable.class,
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -187,15 +193,22 @@ class CsvExporterTest {
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .build();
-
+    @Inject
+    ShardDao shardDao;
     @Inject
     AccountTable accountTable;
+    @Inject
+    PrunableMessageTable messageTable;
+    @Inject
+    TaggedDataDao taggedDataDao;
+
     @Inject
     PropertiesHolder propertiesHolder;
     @Inject
@@ -204,8 +217,6 @@ class CsvExporterTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
-    @Inject
-    ShardDaoJdbc shardDaoJdbc;
 
     CsvExporter csvExporter;
 
@@ -244,7 +255,7 @@ class CsvExporterTest {
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         dataExportPath = createPath("csvExportDir");
-        csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath, shardDaoJdbc);
+        csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
     }
 
     @Test
@@ -284,7 +295,7 @@ class CsvExporterTest {
     }
 
     @Test
-    void exportShardTable() throws Exception {
+    void testExportShardTable() throws Exception {
         String tableName = "shard";
         int targetHeight = 3;
         int batchLimit = 1; // used for pagination and partial commit
@@ -402,6 +413,75 @@ class CsvExporterTest {
         assertEquals(header, Files.readAllLines(dataExportPath.resolve("transaction.csv")));
 
     }
+
+    @Test
+    void testExportPrunableMessageTable() throws URISyntaxException, IOException {
+        doReturn(100).when(blockchainConfig).getMinPrunableLifetime();
+        PrunableMessageTestData data = new PrunableMessageTestData();
+        long exported = csvExporter.exportPrunableDerivedTable(messageTable, data.MESSAGE_6.getHeight() + 1, data.MESSAGE_11.getTransactionTimestamp(), 2);
+        assertEquals(4, exported);
+        List<String> allPrunableMessageData = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("prunable_message.csv").toURI()));
+        List<String> expected = new ArrayList<>();
+        expected.add(allPrunableMessageData.get(0));
+        expected.addAll(allPrunableMessageData.subList(3, 7));
+        List<String> actual = Files.readAllLines(dataExportPath.resolve("prunable_message.csv"));
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void testExportIgnoredTable() {
+        DerivedTableInterface genesisTable = mock(DerivedTableInterface.class);
+        doReturn("genesis_public_KEY").when(genesisTable).getName();
+        doReturn(new MinMaxDbId(1, 2, 2, 2)).when(genesisTable).getMinMaxDbId(8000);
+        long exported = csvExporter.exportDerivedTable(genesisTable, 8000, 2);
+        assertEquals(-1, exported);
+    }
+
+    @Test
+    void testExportShardTableIgnoringLastHashes() throws IOException, URISyntaxException {
+
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(4, 1);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        assertEquals(2, exportedRows);
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(1, exportedFiles);
+        assertTrue(Files.exists(shardExportedFile));
+
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(3, lines.size());
+        List<String> expectedRows = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("shard-last-hashes-null.csv").toURI()));
+        assertEquals(expectedRows, lines);
+    }
+
+    @Test
+    void testExportShardTableIgnoringLastHashesWhenNoShardsInDb() throws IOException {
+        shardDao.hardDeleteAllShards();
+
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(Integer.MAX_VALUE, 1);
+        assertEquals(0, exportedRows);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(0, exportedFiles);
+        assertFalse(Files.exists(shardExportedFile));
+    }
+    @Test
+    void testExportShardTableIgnoringLastHashesWhenOnlyOneShardExists() throws IOException, URISyntaxException {
+        long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(2, 1);
+        assertEquals(1, exportedRows);
+
+        Path shardExportedFile = dataExportPath.resolve("shard.csv");
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(1, exportedFiles);
+        assertTrue(Files.exists(shardExportedFile));
+
+        List<String> lines = Files.readAllLines(shardExportedFile);
+        assertEquals(2, lines.size());
+        List<String> expectedRows = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("shard-last-hashes-null.csv").toURI())).subList(0, 2);
+        assertEquals(expectedRows, lines);
+    }
+
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
         int readRowsFromFile = 0;

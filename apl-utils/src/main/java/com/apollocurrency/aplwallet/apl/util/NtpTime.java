@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.slf4j.Logger;
@@ -15,6 +16,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -68,7 +71,8 @@ public class NtpTime {
     public void start() {
         setUpClient();
         Runnable timeUpdate = this::setTimeDrift;
-        ThreadPool.scheduleThread("NTP Update", timeUpdate, REFRESH_FREQUENCY, TimeUnit.SECONDS);
+        ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1, new NamedThreadFactory("NTP-Update"));
+        scheduledThreadPool.scheduleWithFixedDelay(timeUpdate, 0, REFRESH_FREQUENCY, TimeUnit.SECONDS);
     }
 
     private void setUpClient() {
