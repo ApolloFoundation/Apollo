@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -144,7 +145,7 @@ public final class Account {
         accountCurrencyTable = AccountCurrencyTable.getInstance();
         accountLeaseTable = AccountLeaseTable.getInstance();
         accountPropertyTable = AccountPropertyTable.getInstance();
-        genesisPublicKeyTable = new GenesisPublicKeyTable(blockchainParam);
+        genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
