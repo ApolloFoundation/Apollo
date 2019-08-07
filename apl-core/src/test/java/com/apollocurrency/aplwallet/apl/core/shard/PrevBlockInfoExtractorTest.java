@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import java.util.List;
-
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.BeforeEach;

@@ -42,6 +42,15 @@ public class FileUtils {
         return false;
     }
 
+    public static boolean deleteFileIfExists(Path file) {
+        try {
+            return Files.deleteIfExists(file);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     public static void clearDirectorySilently(Path directory) {
         if (!Files.isDirectory(directory) || !Files.exists(directory)) {
             return;

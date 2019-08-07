@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TrimService {
+    private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     private final int maxRollback;
     private final int trimFrequency;
@@ -31,6 +32,7 @@ public class TrimService {
     private final DerivedTablesRegistry dbTablesRegistry;
     private final TrimDao trimDao;
     private final GlobalSync globalSync;
+    private final TimeService timeService;
 
     private Event<TrimData> trimEvent;
 
@@ -40,6 +42,7 @@ public class TrimService {
     public TrimService(DatabaseManager databaseManager,
                        DerivedTablesRegistry derivedDbTablesRegistry,
                        GlobalSync globalSync,
+                       TimeService timeService,
                        Event<TrimData> trimEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
@@ -49,6 +52,7 @@ public class TrimService {
         this.dbManager = Objects.requireNonNull(databaseManager, "Database manager cannot be null");
         this.dbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "Db tables registry cannot be null");
         this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
+        this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
     }
@@ -109,12 +113,11 @@ public class TrimService {
             trimDao.clear();
             trimEntry = trimDao.save(trimEntry);
             dbManager.getDataSource().commit(false);
-
-            doTrimDerivedTablesOnHeight(trimHeight, false);
+            int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
             if (async) {
-                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight));
+                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
             } else {
-                trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight));
+                trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
             }
             trimEntry.setDone(true);
             trimDao.save(trimEntry);
@@ -125,12 +128,14 @@ public class TrimService {
         trimDao.clear();
     }
 
-    public void doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
+    public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
         TransactionalDataSource dataSource = dbManager.getDataSource();
         if (oneLock) {
             globalSync.readLock();
         }
         long onlyTrimTime = 0;
+        int epochTime = timeService.getEpochTime();
+        int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         try {
             for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
                 if (!oneLock) {
@@ -138,23 +143,23 @@ public class TrimService {
                 }
                 try {
                     long startTime = System.currentTimeMillis();
+                    table.prune(pruningTime);
                     table.trim(height);
                     dataSource.commit(false);
                     onlyTrimTime += (System.currentTimeMillis() - startTime);
-                }
-                finally {
+                } finally {
                     if (!oneLock) {
                         globalSync.readUnlock();
                     }
                 }
             }
-        }
-        finally {
+        } finally {
             if (oneLock) {
                 globalSync.readUnlock();
             }
         }
         log.debug("Only trim time: " + onlyTrimTime);
+        return pruningTime;
     }
 
 

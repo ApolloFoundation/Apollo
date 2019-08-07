@@ -9,7 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -36,7 +36,7 @@ import org.mockito.Mockito;
 class PhasingAppendixTest {
 
     private BlockchainImpl blockchain = Mockito.mock(BlockchainImpl.class);
-    private EpochTime timeService = Mockito.mock(EpochTime.class);
+    private TimeService timeService = Mockito.mock(TimeService.class);
     private Block block = Mockito.mock(Block.class);
 
     private int lastBlockHeight = 1000;
@@ -53,7 +53,7 @@ class PhasingAppendixTest {
             .addBeans(MockBean.of(blockchain, BlockchainImpl.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
-            .addBeans(MockBean.of(timeService, EpochTime.class))
+            .addBeans(MockBean.of(timeService, TimeService.class))
             .build();
 
     @BeforeEach

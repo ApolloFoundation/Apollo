@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.DataTagMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +31,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class DataTagDao extends EntityDbTable<DataTag> {
-    private static Logger logger = LoggerFactory.getLogger(DataTagDao.class);
 
     private static final String DB_TABLE = "data_tag";
 
@@ -53,15 +54,23 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void add(TaggedData taggedData) {
-        for (String tagValue : taggedData.getParsedTags()) {
+        add(taggedData.getParsedTags(), taggedData.getHeight());
+    }
+
+    public void add(String[] tags, int height) {
+        for (String tagValue : tags) {
             DataTag dataTag = get(tagDbKeyFactory.newKey(tagValue));
             if (dataTag == null) {
-                logger.debug("Add new tag value {}", tagValue);
+                if (log.isTraceEnabled()) {
+                    log.trace("Add new tag value {} at height {} - {}", tagValue, height, last3Stacktrace());
+                }
                 dataTag = new DataTag(tagValue);
             }
-            dataTag.setHeight(taggedData.getHeight());
+            dataTag.setHeight(height);
             dataTag.setCount(dataTag.getCount() + 1);
-            logger.debug("New quantity for tag value {} - {}", tagValue, dataTag.getCount());
+            if (log.isTraceEnabled()) {
+                log.trace("New quantity for tag value {} - {} at {} - ", tagValue, dataTag.getCount(), height, last3Stacktrace());
+            }
             insert(dataTag);
         }
     }
@@ -72,7 +81,9 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void add(TaggedData taggedData, int height) {
-        logger.trace("Restore tagged data {} - {}", Arrays.toString(taggedData.getParsedTags()), height);
+        if (log.isTraceEnabled()) {
+            log.trace("Restore tagged data at {} - tags - {}  : {}", height, Arrays.toString(taggedData.getParsedTags()), last3Stacktrace());
+        }
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count + 1 WHERE tag = ? AND height >= ?")) {
@@ -92,7 +103,6 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     }
 
     public void delete(Map<String, Integer> expiredTags) {
-        logger.debug("Delete expired tags {} ", expiredTags);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE data_tag SET tag_count = tag_count - ? WHERE tag = ?");
@@ -101,15 +111,26 @@ public class DataTagDao extends EntityDbTable<DataTag> {
                 pstmt.setInt(1, entry.getValue());
                 pstmt.setString(2, entry.getKey());
                 pstmt.executeUpdate();
-                logger.trace("Reduced mapTag count for " + entry.getKey() + " by " + entry.getValue());
+                if (log.isTraceEnabled()) {
+                    log.trace("Reduced mapTag count for {} by {} - ", entry.getKey(), entry.getValue(), last3Stacktrace());
+                }
             }
             int deleted = pstmtDelete.executeUpdate();
             if (deleted > 0) {
-                logger.debug("Deleted {} tags", deleted);
+                log.trace("Deleted {} tags", deleted);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+    }
+    private String last3Stacktrace() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+    }
+
+    private String getStacktraceSpec(StackTraceElement element) {
+        String className = element.getClassName();
+        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     public int getDataTagCount() {

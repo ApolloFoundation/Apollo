@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
@@ -63,7 +64,7 @@ public class ShardHashCalculatorImplTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, EpochTime.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
+    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
@@ -71,6 +72,7 @@ public class ShardHashCalculatorImplTest {
                     MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
                     MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
+                    MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
                     MockBean.of(mock(NtpTime.class), NtpTime.class)
             ).build();
