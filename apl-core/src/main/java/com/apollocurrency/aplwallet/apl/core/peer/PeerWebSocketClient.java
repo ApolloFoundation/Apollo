@@ -6,13 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -46,12 +42,12 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
         try {
             client.start();
-            ClientUpgradeRequest req = new ClientUpgradeRequest();
-            Future<Session> conn = client.connect(this, uri, req);
+            Future<Session> conn = client.connect(this, uri);
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
+            Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
             log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
         } catch (TimeoutException ex) {
@@ -97,7 +93,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             client.destroy();
         }
         client = null;
-        log.debug("WebSocketClient: {} destroyed.", which());
+        log.trace("WebSocketClient: {} destroyed.", which());
     }
 
     boolean isClientConnected() {

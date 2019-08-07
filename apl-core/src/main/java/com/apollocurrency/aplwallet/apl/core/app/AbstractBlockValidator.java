@@ -54,8 +54,8 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }
 
-        if (block.getTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
+        if (block.getOrLoadTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getOrLoadTransactions().size(), block);
         }
         if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);

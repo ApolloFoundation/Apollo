@@ -80,7 +80,8 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());        
+        rnd = new Random(System.currentTimeMillis());  
+        lastActivity=System.currentTimeMillis();
     }
 
     public long getDownloadedVolume() {
@@ -155,7 +156,7 @@ public class Peer2PeerTransport {
             try {
                 res = wsrw.get(Peers.readTimeout);
             } catch (SocketTimeoutException ex) {
-                log.warn("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
+                log.trace("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
             }
             requestMap.remove(rqId);
         }else{
@@ -174,7 +175,7 @@ public class Peer2PeerTransport {
     }
 
     public void onWebSocketClose(PeerWebSocket ws) {
-        log.debug("Peer: {} websocket close",which());
+        log.trace("Peer: {} websocket close",which());
         Peer p = peerReference.get();
         if(p!=null){
             p.deactivate("Websocket close event");
@@ -183,7 +184,7 @@ public class Peer2PeerTransport {
         }
     }
 
-    private synchronized void cleanUp() {
+    private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
         requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
             toDelete.add(wsw);
@@ -256,18 +257,19 @@ public class Peer2PeerTransport {
         return sendOK;
     }
 
-    public synchronized boolean send(String message, Long requestId) {
+    public boolean send(String message, Long requestId) {
+        boolean sendOK = false;
         cleanUp();
-            boolean sendOK = false;
-            if(message==null||message.isEmpty()){
+     //   synchronized (this) {
+            if (message == null || message.isEmpty()) {
                 //we have nothing to send
                 return sendOK;
             }
             if (useWebSocket) {
                 if (isInbound()) {
-                    sendOK  = sendToWebSocket(message, inboundWebSocket, requestId);
+                    sendOK = sendToWebSocket(message, inboundWebSocket, requestId);
 
-                    if (!sendOK ) {
+                    if (!sendOK) {
                         log.trace("Peer: {} Using inbound web socket. failed. Closing", getHostWithPort());
                         inboundWebSocket.close();
                         inboundWebSocket = null;
@@ -276,18 +278,19 @@ public class Peer2PeerTransport {
                     }
                 }
                 if (!sendOK) { //no inbound connection or send failed
-                    if(outboundWebSocket==null){
-                       outboundWebSocket=new PeerWebSocketClient(this);
+                    if (outboundWebSocket == null) {
+                        outboundWebSocket = new PeerWebSocketClient(this);
                     }
                     if (!outboundWebSocket.isClientConnected()) {
                         // Create a new WebSocket session if we don't have one
                         // and do not have inbound
                         Peer p = peerReference.get();
-                        if(p==null){
-                            log.error("Premature destruction of peer");
+                        if (p == null) {
+                            log.debug("Premature destruction of peer");
+                            disconnect();
                             return sendOK;
                         }
-                        String addrWithPort = peerReference.get().getAnnouncedAddress();
+                        String addrWithPort = p.getAnnouncedAddress();
                         if (!StringUtils.isBlank(addrWithPort)) { // we cannot use peers that do not have external address
                             String wsConnectString = "ws://" + addrWithPort + "/apl";
                             URI wsUri = URI.create(wsConnectString);
@@ -298,7 +301,7 @@ public class Peer2PeerTransport {
                             }
                         }
                     } else { //client socket is already open
-                       sendOK = true;
+                        sendOK = true;
                     }
                     if (sendOK) { //send using client socket
                         sendOK = sendToWebSocket(message, outboundWebSocket, requestId);
@@ -306,25 +309,26 @@ public class Peer2PeerTransport {
                 }
             }
             if (!sendOK) { // Send the request using HTTP as fallback
-                sendOK = sendHttp(message,requestId);
-                log.debug("Trying ot use HTTP requests to {} because websockets failed",getHostWithPort());
-                if(!sendOK){
+                sendOK = sendHttp(message, requestId);
+                log.debug("Trying ot use HTTP requests to {} because websockets failed", getHostWithPort());
+                if (!sendOK) {
                     log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
                 }
             }
-            if(!sendOK){
-                String msg ="Error on sending request";
-                Peer p = getPeer();
-                if(p!=null){
-                  p.deactivate(msg);
-                }
-            }else{
-                updateUploadedVolume(message.length());
+       // }
+        if (!sendOK) {
+            String msg = "Error on sending request";
+            Peer p = getPeer();
+            if (p != null) {
+                p.deactivate(msg);
             }
+        } else {
+            updateUploadedVolume(message.length());
+        }
         return sendOK;
     }
 
-    synchronized void disconnect() {
+    void disconnect() {
         if (inboundWebSocket != null) {
             inboundWebSocket.close();
             inboundWebSocket = null;

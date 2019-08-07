@@ -239,7 +239,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param requestId Request identifier
      * @param request Request message
      */
-    private synchronized void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
+    private void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
 
         lookupComponents();
         JSONStreamAware jsonResponse;
@@ -261,7 +261,11 @@ public final class PeerServlet extends WebSocketServlet {
         // Return the response
         try {
             StringWriter writer = new StringWriter(1000);
-            JSON.writeJSONString(jsonResponse, writer);
+            try {
+                JSON.writeJSONString(jsonResponse, writer);
+            } catch (IOException ex) {
+                LOG.debug("Allmost impossible error: Can not wite to StringWtiter",ex);
+            }
             String response = writer.toString();
             transport.send(response, requestId);
             //check if we returned error and should close inbound socket
@@ -271,11 +275,6 @@ public final class PeerServlet extends WebSocketServlet {
         } catch (RuntimeException e) {
             LOG.debug("Exception while responing to {}", transport.which(), e);
             processException(peer, e);
-        } catch (IOException e) {
-            LOG.debug("Exception while responding to {}", transport.which(), e);
-            if (peer != null) {
-                peer.deactivate("IO exception sending response to: " + transport.which());
-            }
         }
     }
 
@@ -299,7 +298,18 @@ public final class PeerServlet extends WebSocketServlet {
                 return null;
             }
             if (request.get("protocol") == null || ((Number)request.get("protocol")).intValue() != 1) {
-                LOG.debug("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"), peer.getHostWithPort(),request.toJSONString());
+                if (LOG.isDebugEnabled()) {
+                    String toJSONString = request.toJSONString();
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Unsupported protocol {} from {}\nRequest:\n{}", request.get("protocol"),
+                                peer.getHostWithPort(), toJSONString);
+                    } else {
+                        // cut off response string in log
+                        LOG.debug("Unsupported protocol {} from {}\nRequest: {}", request.get("protocol"), peer.getHostWithPort(),
+                                toJSONString != null && toJSONString.length() > 200
+                                        ? toJSONString.substring(0, 200) : toJSONString);
+                    }
+                }
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
             PeerRequestHandler peerRequestHandler = getHandler((String)request.get("requestType"));
@@ -316,8 +326,9 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 return PeerResponses.SEQUENCE_ERROR;
             }
-            if (!peer.isInbound()) {
+            if (peer.isInbound()) {
                 if (Peers.hasTooManyInboundPeers()) {
+                    Peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
                 Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
@@ -360,6 +371,7 @@ public final class PeerServlet extends WebSocketServlet {
                 PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
+                Peers.cleanupPeers(null);
                 PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());

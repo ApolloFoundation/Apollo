@@ -212,8 +212,8 @@ public class EntityProducer {
             }
 
             @Override
-            public void handshake(UUID targetChainId) {
-               
+            public boolean handshake(UUID targetChainId) {
+               return true;
             }
 
             @Override

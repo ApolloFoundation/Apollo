@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
-    private EpochTime timeService;
+    private final EpochTime timeService;
      
     public PeerConnectingThread(EpochTime timeService) {
         this.timeService=timeService;

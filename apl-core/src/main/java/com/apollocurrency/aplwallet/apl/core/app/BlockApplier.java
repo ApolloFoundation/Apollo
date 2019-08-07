@@ -31,7 +31,7 @@ public class BlockApplier {
         int height = block.getHeight();
         if (height > 3) {
             long[] backFees = new long[3];
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getOrLoadTransactions()) {
                 long[] fees = ((TransactionImpl)transaction).getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
