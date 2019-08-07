@@ -92,23 +92,19 @@ public class DexController {
     private TimeService timeService;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
-    private DexMatcherServiceImpl dexMatcherService;
     private Integer DEFAULT_DEADLINE_MIN = 60*2;
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
-    DexOfferProcessor dexOfferProcessor;
-    DexSmartContractService dexSmartContractService;
+    private DexSmartContractService dexSmartContractService;
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, TimeService epochTime, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, DexOfferProcessor dexOfferProcessor, DexSmartContractService dexSmartContractService) {
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexEthService dexEthService,
+                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
         this.timeService = Objects.requireNonNull(timeService,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
-        this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
-        this.dexOfferProcessor = dexOfferProcessor;
         this.dexSmartContractService = dexSmartContractService;
     }
 
