@@ -1,4 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.shard;
+/*
+ *  Copyright © 2018-2019 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.shard.model;
 
 import lombok.Builder;
 import lombok.Getter;

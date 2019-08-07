@@ -12,12 +12,12 @@ import javax.inject.Singleton;
  * @author al
  */
 @Singleton
-public class EpochTime implements Time {
+public class TimeServiceImpl implements TimeService {
     
     private final NtpTime ntpTime;
 
     @Inject
-    public EpochTime(NtpTime ntpTime) {
+    public TimeServiceImpl(NtpTime ntpTime) {
         this.ntpTime = ntpTime;
     }
 

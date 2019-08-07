@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -36,6 +37,8 @@ public interface CsvExporter {
      */
     long exportDerivedTable(DerivedTableInterface tableInterface, int targetHeight, int batchLimit);
 
+    long exportPrunableDerivedTable(PrunableDbTable derivedTableInterface, int targetHeight, int currentTime, int batchLimit);
+
     /**
      * Exports one SHARD table and returns number of exported rows
      * The CSV file put into folder specified by implementation component.
@@ -45,6 +48,17 @@ public interface CsvExporter {
      * @return exported quantity
      */
     long exportShardTable(int targetHeight, int batchLimit);
+
+    /**
+     * Perform 'shard' table export as {@link CsvExporter#exportShardTable(int, int)} but
+     * leave last shard entry without zip hashes as it performed during sharding process
+     * to meet shard archive requirements
+     *
+     * @param targetHeight target blockchain height
+     * @param batchLimit rows in batch to process
+     * @return exported quantity
+     */
+    long exportShardTableIgnoringLastZipHashes(int targetHeight, int batchLimit);
 
     long exportTransactionIndex(int targetHeight, int batchLimit);
 

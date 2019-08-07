@@ -4,6 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-public interface Time {
+public interface TimeService {
     int getEpochTime();
 }
