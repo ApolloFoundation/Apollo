@@ -686,7 +686,7 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDao.hardDeleteAllShardRecovery();
         // call ANALYZE to optimize main db performance after massive copy/delete/update actions in it
         sourceDataSource.analyzeTables();
-        log.debug("Shard process finished successfully", paramInfo.getShardId(),
+        log.debug("Shard process finished successfully, shard id - {}", paramInfo.getShardId(),
                 System.currentTimeMillis() - startAllTables);
         durableTaskUpdateByState(state, null, null);
         return state;
