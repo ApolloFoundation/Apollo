@@ -141,9 +141,7 @@ public class Peer2PeerTransport {
         rqId = sendRequest(request);
         if(rqId==null){
             log.debug("Exception while sending to websocket of {}", which());
-            if (isInbound()) {
-                inboundWebSocket.close();
-            }
+            onWebSocketClose(inboundWebSocket);
             sendOK = false;
         }
         if (sendOK) {
@@ -160,13 +158,12 @@ public class Peer2PeerTransport {
                 res = wsrw.get(Peers.readTimeout);
             } catch (SocketTimeoutException ex) {
                 log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
-                if (isInbound()) {
-                    inboundWebSocket.close();
-                }
+                onWebSocketClose(inboundWebSocket);
             }
             requestMap.remove(rqId);
         } else {
             log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
+            onWebSocketClose(inboundWebSocket);
         }
         return res;
     }
@@ -186,10 +183,7 @@ public class Peer2PeerTransport {
         if (p != null) {
             p.deactivate("Websocket close event");
         } else {
-            if (isInbound()) {
-                inboundWebSocket.close();
-            }
-            ws.close();
+            ws.close(); // nothing deactivate
         }
     }
 
@@ -278,8 +272,7 @@ public class Peer2PeerTransport {
 
                     if (!sendOK) {
                         log.trace("Peer: {} Using inbound web socket. failed. Closing", hostWithPort);
-                        inboundWebSocket.close();
-                        inboundWebSocket = null;
+                        onWebSocketClose(inboundWebSocket);
                     } else {
                         log.trace("Peer: {} Send using inbound web socket failed", hostWithPort);
                     }
@@ -307,8 +300,7 @@ public class Peer2PeerTransport {
                                 log.debug("Connected as client to websocket {}", wsConnectString);
                             } else {
                                 log.debug("NOT Connected as client to websocket {}, CLOSE outbound...", wsConnectString);
-                                outboundWebSocket.close();
-                                outboundWebSocket = null;
+                                onWebSocketClose(inboundWebSocket);
                             }
                         }
                     } else { //client socket is already open
@@ -317,8 +309,7 @@ public class Peer2PeerTransport {
                     if (sendOK) { //send using client socket
                         sendOK = sendToWebSocket(message, outboundWebSocket, requestId);
                         if (!sendOK && outboundWebSocket != null) {
-                            outboundWebSocket.close();
-                            outboundWebSocket = null;
+                            onWebSocketClose(inboundWebSocket);
                         }
                     }
                 }

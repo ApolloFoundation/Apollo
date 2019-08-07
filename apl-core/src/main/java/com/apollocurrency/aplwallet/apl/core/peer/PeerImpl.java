@@ -484,8 +484,8 @@ public final class PeerImpl implements Peer {
     public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException{
         
         if(getState()!=PeerState.CONNECTED){
-            LOG.debug("send() called before handshake(). Handshacking to: {}",getHostWithPort());
-            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
+            LOG.debug("send() called before handshake(). Handshaking to: {}",getHostWithPort());
+            throw new PeerNotConnectedException("send() called before handshake(). Handshaking");
         }else{
             return send(request);
         }
@@ -648,12 +648,13 @@ public final class PeerImpl implements Peer {
             } else {
                 int t = processConnectAttempt(true);
                 LOG.debug("Failed to connect to peer: {} ({}) this:{}", getHostWithPort(),t, System.identityHashCode(this));
-//                deactivate("NULL json Response on handshake");
+                deactivate("NULL json Response on handshake");
                 return false;
             }
         } catch (RuntimeException e) {
             LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
             processConnectAttempt(true);
+//            deactivate("RuntimeException on handshake");
             blacklist(e);
             return false;
         }
