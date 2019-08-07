@@ -282,7 +282,7 @@ public class ShardServiceTest {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(true).when(config).isShardingEnabled();
         doReturn(new ShardRecovery(MigrateState.MAIN_DB_BACKUPED)).when(shardRecoveryDao).getLatestShardRecovery();
-        doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[32], new long[0], new int[0], new int[0])).when(shardDao).getLastShard();
+        doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[32], new long[0], new int[0], new int[0], new byte[32])).when(shardDao).getLastShard();
         shardService.recoverSharding();
 
         verify(shardMigrationExecutor).executeAllOperations();

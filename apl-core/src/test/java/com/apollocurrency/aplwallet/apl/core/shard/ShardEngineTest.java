@@ -146,7 +146,7 @@ class ShardEngineTest {
     Weld weld = WeldInitiator.createWeld();
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, , ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
                 DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
                 TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
                 GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
