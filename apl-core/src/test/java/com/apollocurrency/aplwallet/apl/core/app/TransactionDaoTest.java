@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -44,9 +45,10 @@ class TransactionDaoTest {
     public WeldInitiator weld = WeldInitiator.from()
             .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
             .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
             .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .build();
 

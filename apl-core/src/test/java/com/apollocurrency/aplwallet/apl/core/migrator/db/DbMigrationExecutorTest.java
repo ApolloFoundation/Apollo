@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -70,7 +70,7 @@ public class DbMigrationExecutorTest {
             TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
-            FullTextConfigImpl.class, EpochTime.class, NtpTime.class)
+            FullTextConfigImpl.class, TimeServiceImpl.class, NtpTime.class)
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))

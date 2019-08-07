@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +45,9 @@ public class BlockchainConfigUpdater {
         this.blockDao = blockDao;
     }
 
-    public void updateChain(Chain chain) {
+    public void updateChain(Chain chain, PropertiesHolder propertiesHolder) {
         this.chain = chain;
-        blockchainConfig.updateChain(chain);
+        blockchainConfig.updateChain(chain, propertiesHolder);
     }
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {

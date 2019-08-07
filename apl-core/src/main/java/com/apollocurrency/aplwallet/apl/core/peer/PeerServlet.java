@@ -30,7 +30,7 @@ import java.io.StringWriter;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
@@ -78,7 +78,7 @@ public final class PeerServlet extends WebSocketServlet {
     @Inject
     private BlockchainProcessor blockchainProcessor;
     @Inject
-    private volatile EpochTime timeService;   
+    private volatile TimeService timeService;
     @Inject
     private ShardDao shardDao;
     @Inject
@@ -86,14 +86,14 @@ public final class PeerServlet extends WebSocketServlet {
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
     private ExecutorService threadPool;
-    
+
     @Override
     public void init() throws ServletException {
         super.init(); 
         lookupComponents();
         threadPool = new QueuedThreadPool(
                 Runtime.getRuntime().availableProcessors(),
-                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");        
+                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");
     }
 
     protected void lookupComponents() {
@@ -101,7 +101,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
+        if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
         if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     }  
     
@@ -189,12 +189,12 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            if (peer.isBlacklisted()) { 
+            if (peer.isBlacklisted()) {
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
                jsonResponse = process(peer, req.getReader());
             }
-        }        
+        }
         //
         // Return the response
         //
@@ -206,10 +206,10 @@ public final class PeerServlet extends WebSocketServlet {
             JSON.writeJSONString(jsonResponse, writer);
         } catch (RuntimeException e) {
             processException(peer, e);
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);            
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
             throw e;
         }catch ( IOException e){
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e); 
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
         }
     }
 
@@ -252,7 +252,7 @@ public final class PeerServlet extends WebSocketServlet {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             Thread.currentThread().setName("doPostTask-"+peer.getHostWithPort());
-            if (peer.isBlacklisted()) { 
+            if (peer.isBlacklisted()) {
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
                jsonResponse = process(peer, new StringReader(request));
@@ -382,7 +382,7 @@ public final class PeerServlet extends WebSocketServlet {
             return res;
         }
     }
-    
+
     @PreDestroy
     public void shutdown(){
         threadPool.shutdown();
