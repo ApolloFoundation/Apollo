@@ -46,7 +46,7 @@ INSERT INTO PUBLIC.TRANSACTION
 
 insert into account
 (DB_ID  ,ID  	                        ,BALANCE  	             ,UNCONFIRMED_BALANCE  	    ,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
-(1       ,1739068987193023818           ,1999999000000           ,1999999000000           ,false                  ,0                  ,null               ,0     ,true),
+(1       ,1739068987193023818           ,999990000000000    ,999990000000000    ,false                  ,0                  ,null               ,0     ,true),
 (10      ,50                            ,555500000000         ,105500000000           ,false                  ,0                  ,null               ,100000     ,true),
 (20      ,100                           ,100000000             ,100000000               ,false                  ,0                  ,null               ,104595     ,true ),
 (30      ,200                           ,250000000             ,200000000               ,false                  ,0                  ,null               ,104670     ,true ),

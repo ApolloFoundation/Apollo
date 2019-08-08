@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -57,7 +57,8 @@ class PrunableMessageServiceTest {
             BlockchainConfig.class,
             PublicKeyTable.class,
             PropertiesHolder.class,
-            GenesisPublicKeyTable.class
+            GenesisPublicKeyTable.class,
+            AccountPublicKeyServiceImpl.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -109,7 +110,6 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecrypt() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null);
         byte[] decryptedBytes = service.decrypt(data.MESSAGE_2, data.BOB_PASSPHRASE);
         assertEquals(data.DECRYPTED_MESSAGE_2, new String(decryptedBytes));
     }
@@ -133,14 +133,12 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecryptUsingKeySeedByRecipient() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.BOB_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }
 
     @Test
     void testDecryptUsingKeySeedBySender() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.CHUCK_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }

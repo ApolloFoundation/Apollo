@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -58,18 +59,21 @@ class AccountDaoTest  {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, AccountTable.class
+            PropertiesHolder.class, EntityProducer.class, AccountTable.class
             )
             .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+
             .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
             .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();
+
 
     @Inject
     AccountTable table;
@@ -79,6 +83,7 @@ class AccountDaoTest  {
     @BeforeEach
     public void setUp() {
         testData = new AccountTestData();
+        //table = new AccountTable(blockchain, blockchainConfig, testData.CREATOR_ID);
     }
 
     @AfterEach
@@ -145,9 +150,10 @@ class AccountDaoTest  {
 
     @Test
     void getTotalSupply() throws SQLException {
+        //doReturn(1739068987193023818L).when(genesisImporter).getCreatorId();
         try(Connection conn = dbExtension.getDatabaseManager().getDataSource().getConnection()){
             long total = table.getTotalSupply(conn);
-            assertEquals(1999999000000L, total);
+            assertEquals(999990000000000L, total);
         }
     }
 

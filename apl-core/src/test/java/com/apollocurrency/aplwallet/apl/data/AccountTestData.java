@@ -5,9 +5,7 @@
 package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -15,7 +13,9 @@ import java.util.List;
 
 public class AccountTestData {
 
-    public final Account ACC_G = createAccount(1      ,1739068987193023818L,1999999000000L,1999999000000L,false,0,0,0,true);
+    public static final long CREATOR_ID = 1739068987193023818L;
+
+    public final Account ACC_G = createAccount(1      ,1739068987193023818L,999990000000000L,999990000000000L,false,0,0,0,true);
     public final Account ACC_0 = createAccount(10     ,50L        ,555500000000L       ,105500000000L          ,false ,0               ,0 ,100000 ,true);
     public final Account ACC_1 = createAccount(20     ,100L       ,100000000L          ,100000000L             ,false ,0               ,0 ,104595 ,true );
     public final Account ACC_2 = createAccount(30     ,200L       ,250000000L          ,200000000L             ,false ,0               ,0 ,104670 ,true );
