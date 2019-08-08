@@ -5,13 +5,12 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoMinDto;
+
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
-import com.apollocurrency.aplwallet.api.response.ResponseDone;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -24,8 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.crypto.KNV25;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
@@ -55,7 +52,6 @@ import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-import org.web3j.crypto.Hash;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -72,6 +68,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -99,7 +96,7 @@ public class DexController {
 
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
-    private EpochTime epochTime;
+    private TimeService timeService;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
     private DexMatcherServiceImpl dexMatcherService;
@@ -107,11 +104,11 @@ public class DexController {
     private ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexEthService dexEthService,
                          EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
-        this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
+        this.timeService = Objects.requireNonNull(timeService,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
@@ -205,7 +202,7 @@ public class DexController {
             ).build();
         }
 
-        Integer currentTime = epochTime.getEpochTime();
+        Integer currentTime = timeService.getEpochTime();
         JSONStreamAware response = null;
         try {
             Account account = ParameterParser.getSenderAccount(req);
@@ -366,7 +363,7 @@ public class DexController {
                 pairCur = DexCurrencies.getType(pairCurrency);
             }
             if (isAvailableForNow) {
-                currentTime = epochTime.getEpochTime();
+                currentTime = timeService.getEpochTime();
             }
             if(!StringUtils.isBlank(accountIdStr)){
                 accountId = Long.parseUnsignedLong(accountIdStr);

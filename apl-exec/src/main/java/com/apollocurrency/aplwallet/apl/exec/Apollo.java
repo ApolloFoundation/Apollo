@@ -3,18 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.Account;
@@ -60,6 +48,18 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -295,7 +295,7 @@ public class Apollo {
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain(), app.propertiesHolder);
         dirProvider = CDI.current().select(DirProvider.class).get();
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();

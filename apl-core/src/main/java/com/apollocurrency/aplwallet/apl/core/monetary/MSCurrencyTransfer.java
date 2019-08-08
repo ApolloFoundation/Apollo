@@ -4,9 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -53,7 +52,7 @@ class MSCurrencyTransfer extends MonetarySystem {
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
         }
-        if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+        if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Currency transfer to genesis account not allowed");
         }
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());

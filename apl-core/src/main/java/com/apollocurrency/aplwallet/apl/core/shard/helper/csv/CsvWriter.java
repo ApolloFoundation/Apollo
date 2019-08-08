@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Class is used for writing into CSV (comma separated values) file.
@@ -46,6 +47,16 @@ public interface CsvWriter extends AutoCloseable {
      */
     CsvExportData append(String outputFileName, ResultSet rs) throws SQLException;
 
+    /**
+     * Appends rs to the file (if the file exists - will append to the end, otherwise - create new)
+     * Will set default values for specified columns
+     * @param outputFileName name of file to export
+     * @param rs result set with a data to export
+     * @param defaultValues map of pairs (column_name->column_value)
+     * @return {@link CsvExportData} with number of exported rows and last row itself
+     * @throws SQLException when access to the rs cause to the exception
+     */
+    CsvExportData append(String outputFileName, ResultSet rs, Map<String, String> defaultValues) throws SQLException;
     /**
      * Writes the result set of a query to a file in the CSV format.
      *

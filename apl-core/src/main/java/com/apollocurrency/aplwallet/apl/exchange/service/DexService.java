@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
@@ -41,13 +41,13 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class DexService {
@@ -64,17 +64,13 @@ public class DexService {
     private DexTradeDao dexTradeDao;
 
     private DexOfferTransactionCreator dexOfferTransactionCreator;
-    private EpochTime timeService;
+    private TimeService timeService;
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
-// <<<<<<< HEAD
-//                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable, 
-//                       DexTradeDao dexTradeDao ) {
-// =======
                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable,
-                      DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime timeService, DexTradeDao dexTradeDao) {
-// >>>>>>> develop
+                      DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexTradeDao dexTradeDao) {
+
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;

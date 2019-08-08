@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -38,6 +34,10 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
@@ -52,15 +52,20 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("application", Constants.APPLICATION);
         response.put("version", Constants.VERSION.toString());
         response.put("time", timeService.getEpochTime());
-        Block lastBlock = lookupBlockchain().getLastBlock();
-        if (lastBlock != null) { // TODO: YL I hope that is temporary decision to prevent NPE
+        if (lookupBlockchain().isInitialized()) {
+            Block lastBlock = lookupBlockchain().getLastBlock();
             response.put("lastBlock", lastBlock.getStringId());
             response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
             response.put("numberOfBlocks", lastBlock.getHeight() + 1);
+            Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
+            response.put("shardInitialBlock", shardInitialBlock.getId());
+            response.put("lastShardHeight", shardInitialBlock.getHeight());
         } else {
             response.put("lastBlock", "-1");
             response.put("cumulativeDifficulty", "-1");
             response.put("numberOfBlocks", "-1");
+            response.put("shardInitialBlock", "-1");
+            response.put("lastShardHeight", "-1");
         }
         BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         Peer lastBlockchainFeeder = blockchainProcessor.getLastBlockchainFeeder();
