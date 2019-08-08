@@ -3,9 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.DexOfferAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -23,19 +26,16 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 @Singleton
 public class DexOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
-    private EpochTime epochTime = CDI.current().select(EpochTime.class).get();
+    private TimeService timeService = CDI.current().select(TimeService.class).get();
 
     @Override
     public byte getSubtype() {
@@ -97,7 +97,7 @@ public class DexOfferTransaction extends DEX {
         }
 
 
-        Integer currentTime = epochTime.getEpochTime();
+        Integer currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
             throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }

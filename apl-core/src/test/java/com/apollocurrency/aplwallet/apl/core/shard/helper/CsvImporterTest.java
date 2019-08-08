@@ -7,21 +7,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
@@ -32,9 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
@@ -47,8 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -58,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -89,6 +73,22 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class CsvImporterTest {
@@ -108,7 +108,7 @@ class CsvImporterTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            JdbiHandleFactory.class, ShardDaoJdbcImpl.class,
+            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
@@ -121,7 +121,7 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
@@ -134,8 +134,6 @@ class CsvImporterTest {
             .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
             .build();
 
-    @Inject
-    private ShardDaoJdbc daoJdbc;
     @Inject
     private AplAppStatus aplAppStatus;
     CsvImporter csvImporter;
@@ -179,19 +177,7 @@ class CsvImporterTest {
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
 
-            try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
-                 PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
-            ) {
-                long count = -1;
-                ResultSet rs = preparedCount.executeQuery();
-                if (rs.next()) {
-                    count = rs.getLong("count");
-                }
-                assertTrue(count > 0);
-                assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
-            } catch (Exception e) {
-                log.error("Error", e);
-            }
+            verifyCount(tableName, result);
 
             List<String> lineInCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve(tableName + ".csv"));
             int numberOfLines = lineInCsv.size();
@@ -305,7 +291,7 @@ class CsvImporterTest {
         String taskId = aplAppStatus.durableTaskStart("Shard data import", "data import", true);
 
         String tableName = "account"; // 85000 records is prepared
-        long result = csvImporter.importCsv(tableName, 10, true, 0.001, Map.of("height", 100));
+        long result = csvImporter.importCsvWithDefaultParams(tableName, 10, true, Map.of("height", 100));
         assertTrue(result > 0, "incorrect '" + tableName + "'");
         log.debug("Imported '{}' rows for table '{}'", result, tableName);
 
@@ -313,20 +299,7 @@ class CsvImporterTest {
         int numberOfLines = lineInCsv.size();
         assertEquals(numberOfLines - 1, result, "incorrect lines imported from'" + tableName + "'");
 
-        DbUtils.inTransaction(extension, (con)-> {
-            try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
-            ) {
-                long count = -1;
-                ResultSet rs = preparedCount.executeQuery();
-                if (rs.next()) {
-                    count = rs.getLong("count");
-                }
-                assertTrue(count > 0);
-                assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
-            } catch (Exception e) {
-                log.error("Error", e);
-            }
-        });
+        verifyCount(tableName, result);
         DbUtils.inTransaction(extension, (con)-> {
             try (PreparedStatement pstmt = con.prepareStatement("select avg(height) from account")) {
                 ResultSet rs = pstmt.executeQuery();
@@ -355,20 +328,7 @@ class CsvImporterTest {
         int numberOfLines = shardCsv.size();
         assertEquals(numberOfLines - 1, result, "incorrect lines imported from'" + tableName + "'");
 
-        DbUtils.inTransaction(extension, (con)-> {
-            try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
-            ) {
-                long count = -1;
-                ResultSet rs = preparedCount.executeQuery();
-                if (rs.next()) {
-                    count = rs.getLong("count");
-                }
-                assertTrue(count > 0);
-                assertEquals(result, count, "imported and counted number is NOT equal for '" + tableName + "'");
-            } catch (Exception e) {
-                log.error("Error", e);
-            }
-        });
+        verifyCount(tableName, result);
         // try explicitly extract two ARRAY columns with Long and Integer values inside
         DbUtils.inTransaction(extension, (con)-> {
             try (PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
@@ -378,6 +338,37 @@ class CsvImporterTest {
                 assertNotNull(rs.getArray(2).getArray());
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
+            }
+        });
+    }
+
+    @Test
+    void testImportWithRowHook() throws Exception {
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+        AtomicInteger counter = new AtomicInteger(0);
+        long result = csvImporter.importCsvWithRowHook(ShardConstants.PHASING_POLL_TABLE_NAME, 10, true, (row) -> {
+            counter.incrementAndGet();
+        });
+        assertEquals(3, counter.get());
+        assertEquals(result, counter.get());
+        List<String> phasingPollCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve("phasing_poll.csv"));
+        assertEquals(phasingPollCsv.size() - 1, result);
+        verifyCount(ShardConstants.PHASING_POLL_TABLE_NAME, 3);
+    }
+
+    private void verifyCount(String tableName, long count) {
+        DbUtils.inTransaction(extension, (con)-> {
+            try (PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+            ) {
+                long result = -1;
+                ResultSet rs = preparedCount.executeQuery();
+                if (rs.next()) {
+                    result = rs.getLong("count");
+                }
+                assertEquals(count, result);
+            } catch (Exception e) {
+                log.error("Error", e);
             }
         });
     }

@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -94,7 +94,7 @@ public final class PeerImpl implements Peer {
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
-    private volatile EpochTime timeService;
+    private volatile TimeService timeService;
     private final PropertiesHolder propertiesHolder;
     private AccountService accountService;
 
@@ -111,7 +111,7 @@ public final class PeerImpl implements Peer {
             PeerAddress announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
-            EpochTime timeService,
+            TimeService timeService,
             PropertiesHolder propertiesHolder,
             PeerServlet peerServlet,
             AccountService accountService

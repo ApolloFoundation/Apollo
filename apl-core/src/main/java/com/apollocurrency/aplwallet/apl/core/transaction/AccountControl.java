@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -92,7 +92,7 @@ public abstract class AccountControl extends TransactionType {
             if (recipientPublicKey == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid effective balance leasing: " + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Leasing to Genesis account not allowed");
             }
         }

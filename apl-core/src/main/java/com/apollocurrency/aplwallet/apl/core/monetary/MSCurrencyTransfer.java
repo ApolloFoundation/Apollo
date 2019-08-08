@@ -52,7 +52,7 @@ class MSCurrencyTransfer extends MonetarySystem {
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
         }
-        if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+        if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Currency transfer to genesis account not allowed");
         }
         Currency currency = Currency.getCurrency(attachment.getCurrencyId());

@@ -14,21 +14,23 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private static PrunableMessageService messageService = CDI.current().select(PrunableMessageService.class).get();
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
@@ -143,7 +145,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
-            PrunableMessage.add((TransactionImpl)transaction, this);
+            messageService.add(transaction, this);
         }
     }
 
@@ -175,7 +177,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transaction.getId());
+            PrunableMessage prunableMessage = messageService.get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 this.prunableMessage = prunableMessage;
             }
@@ -194,6 +196,6 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+        messageService.add(transaction, this, blockTimestamp, height);
     }
 }

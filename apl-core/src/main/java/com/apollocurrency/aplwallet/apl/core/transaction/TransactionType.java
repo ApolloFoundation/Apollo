@@ -22,14 +22,13 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -113,7 +112,7 @@ public abstract class TransactionType {
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    public static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    public static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService; // = CDI.current().select(AccountServiceImpl.class).get();
     private static AccountCurrencyService accountCurrencyService; // = CDI.current().select(AccountCurrencyServiceImpl.class).get();
     private static  AccountLeaseService accountLeaseService; // = CDI.current().select(AccountLeaseServiceImpl.class).get();

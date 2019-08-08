@@ -4,12 +4,16 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -24,7 +28,13 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferTransactionCreator;
@@ -45,26 +55,29 @@ import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+import org.web3j.crypto.Hash;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
@@ -75,7 +88,7 @@ public class DexController {
     private AccountService accountService;
     private DexService service;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
-    private EpochTime epochTime;
+    private TimeService timeService;
     private DexEthService dexEthService;
     private EthereumWalletService ethereumWalletService;
     private DexMatcherServiceImpl dexMatcherService;
@@ -83,11 +96,11 @@ public class DexController {
     private ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, EpochTime epochTime, DexEthService dexEthService,
+    public DexController(DexService service, DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexEthService dexEthService,
                          EthereumWalletService ethereumWalletService, DexMatcherServiceImpl dexMatcherService, AccountService accountService) {
         this.service = Objects.requireNonNull(service,"DexService is null");
         this.dexOfferTransactionCreator = Objects.requireNonNull(dexOfferTransactionCreator,"DexOfferTransactionCreator is null");
-        this.epochTime = Objects.requireNonNull(epochTime,"EpochTime is null");
+        this.timeService = Objects.requireNonNull(timeService,"EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexMatcherService = Objects.requireNonNull( dexMatcherService,"dexMatcherService is null");
@@ -182,7 +195,7 @@ public class DexController {
             ).build();
         }
 
-        Integer currentTime = epochTime.getEpochTime();
+        Integer currentTime = timeService.getEpochTime();
         JSONStreamAware response = null;
         try {
             Account account = ParameterParser.getSenderAccount(req);
@@ -343,7 +356,7 @@ public class DexController {
                 pairCur = DexCurrencies.getType(pairCurrency);
             }
             if (isAvailableForNow) {
-                currentTime = epochTime.getEpochTime();
+                currentTime = timeService.getEpochTime();
             }
             if(!StringUtils.isBlank(accountIdStr)){
                 accountId = Long.parseUnsignedLong(accountIdStr);

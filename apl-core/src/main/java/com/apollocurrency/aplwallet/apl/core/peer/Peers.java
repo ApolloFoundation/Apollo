@@ -162,7 +162,7 @@ public final class Peers {
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService = CDI.current().select(AccountService.class).get();
     private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();

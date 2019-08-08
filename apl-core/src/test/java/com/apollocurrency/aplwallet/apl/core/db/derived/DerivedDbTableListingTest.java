@@ -1,14 +1,46 @@
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.*;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountInfoTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
@@ -16,7 +48,11 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.*;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -94,8 +130,8 @@ class DerivedDbTableListingTest {
             TaggedDataExtendDao.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class
-            )
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -123,15 +159,6 @@ class DerivedDbTableListingTest {
 
     public DerivedDbTableListingTest() throws Exception {}
 
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     @AfterEach
     void cleanup() {
         registry.getDerivedTables().clear();
@@ -150,6 +177,8 @@ class DerivedDbTableListingTest {
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         genesisPublicKeyTable.init();
+        AccountAssetTable.getInstance().init();
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         AccountLedgerTable accountLedgerTable = new AccountLedgerTable(blockchain, propertiesHolder, globalSync);
@@ -170,13 +199,9 @@ class DerivedDbTableListingTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-            try {
                 MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
                 assertTrue(minMaxDbId.getMaxDbId() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxDbId.getMaxDbId());
                 log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
-            } catch (SQLException e) {
-                log.error("Exception", e);
-            }
         });
     }
 }

@@ -32,15 +32,18 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.net.InetAddress;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
+import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
+    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
@@ -73,7 +76,7 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfTags", service.getTagsCount());
             response.put("numberOfPolls", Poll.getCount());
             response.put("numberOfVotes", Vote.getCount());
-            response.put("numberOfPrunableMessages", PrunableMessage.getCount());
+            response.put("numberOfPrunableMessages", prunableMessageService.getCount());
             response.put("numberOfTaggedData", taggedDataService.getTaggedDataCount());
             response.put("numberOfDataTags", taggedDataService.getDataTagCount());
             response.put("numberOfAccountLeases", lookupAccountLeaseService().getAccountLeaseCount());

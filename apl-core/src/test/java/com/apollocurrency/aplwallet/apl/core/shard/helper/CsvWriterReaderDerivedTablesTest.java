@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.CSV_FILE_EXTENSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -42,7 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
@@ -69,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
@@ -145,14 +147,14 @@ class CsvWriterReaderDerivedTablesTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class
-    )
+            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
@@ -413,5 +415,28 @@ class CsvWriterReaderDerivedTablesTest {
 
         String tableName = "unknown_table_name";
         assertThrows(NullPointerException.class, () -> csvWriter.write(tableName + CSV_FILE_EXTENSION, null));
+    }
+
+    @Test
+    void testAppendWithDefaultParameters() throws SQLException {
+        DirProvider dirProvider = mock(DirProvider.class);
+        doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Set.of("DB_ID"));
+        csvWriter.setOptions("fieldDelimiter=");
+
+        CsvExportData csvExportData = csvWriter.append("public_key", extension.getDatabaseManager().getDataSource().getConnection().createStatement().executeQuery("select * from public_key where height<= 8000"), Map.of("account_id", "batman", "public_key", "null"));
+
+        int processCount = csvExportData.getProcessCount();
+        assertEquals(8, processCount);
+        assertEquals(Map.of("PUBLIC_KEY", "null", "ACCOUNT_ID", "batman", "HEIGHT", 8000, "LATEST", Boolean.TRUE, "DB_ID", 8L), csvExportData.getLastRow());
+
+        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        ResultSet rs = csvReader.read("public_key", null, null);
+        while (rs.next()) {
+            Object publicKey = rs.getObject("public_key");
+            assertNull(publicKey);
+            Object accountId= rs.getObject("account_id");
+            assertEquals("batman", accountId);
+        }
     }
 }

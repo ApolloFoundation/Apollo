@@ -41,7 +41,6 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
@@ -58,6 +57,8 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
@@ -1173,7 +1174,7 @@ public final class JSONData {
         return json;
     }
 
-    public static JSONObject prunableMessage(PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
+    public static JSONObject prunableMessage(PrunableMessageService prunableMessageService, PrunableMessage prunableMessage, byte[] keySeed, byte[] sharedKey) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(prunableMessage.getId()));
         if (prunableMessage.getMessage() == null || prunableMessage.getEncryptedData() == null) {
@@ -1192,9 +1193,9 @@ public final class JSONData {
             byte[] decrypted = null;
             try {
                 if (keySeed != null) {
-                    decrypted = prunableMessage.decryptUsingKeySeed(keySeed);
+                    decrypted = prunableMessageService.decryptUsingKeySeed(prunableMessage, keySeed);
                 } else if (sharedKey != null && sharedKey.length > 0) {
-                    decrypted = prunableMessage.decryptUsingSharedKey(sharedKey);
+                    decrypted = prunableMessageService.decryptUsingSharedKey(prunableMessage, sharedKey);
                 }
                 if (decrypted != null) {
                     json.put("decryptedMessage", Convert.toString(decrypted, prunableMessage.encryptedMessageIsText()));

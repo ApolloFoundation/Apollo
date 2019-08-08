@@ -69,15 +69,16 @@ public class PhasingPollServiceTest {
             PhasingPollLinkedTransactionTable.class,
             PhasingVoteTable.class,
             PublicKeyTable.class,
+            AccountTable.class,
             FullTextConfigImpl.class,
             AccountGuaranteedBalanceTable.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            BlockchainConfig.class
-    )
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            BlockchainConfig.class, GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
@@ -87,7 +88,10 @@ public class PhasingPollServiceTest {
     TransactionDao transactionDao;
     @Inject
     Blockchain blockchain;
-
+    @Inject
+    PublicKeyTable publicKeyTable;
+    @Inject
+    AccountTable accountTable;
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
