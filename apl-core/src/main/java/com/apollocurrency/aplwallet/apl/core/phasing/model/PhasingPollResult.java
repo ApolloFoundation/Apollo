@@ -15,7 +15,6 @@ public class PhasingPollResult extends DerivedEntity {
     private final long id;
     private final long result;
     private final boolean approved;
-    private Long approvedTx;
 
     public PhasingPollResult(PhasingPoll poll, long result, int height) {
         super(poll.getDbId(), height);
@@ -24,12 +23,11 @@ public class PhasingPollResult extends DerivedEntity {
         this.approved = result >= poll.getQuorum();
     }
 
-    public PhasingPollResult(Long dbId, Integer height, long id, long result, boolean approved, Long approvedTx) {
+    public PhasingPollResult(Long dbId, Integer height, long id, long result, boolean approved) {
         super(dbId, height);
         this.id = id;
         this.result = result;
         this.approved = approved;
-        this.approvedTx = approvedTx;
     }
 
 }

@@ -32,13 +32,13 @@ import java.util.Objects;
 public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
-    private DexService dexService;
+    private DexMatchingService dexMatchingService;
     private TimeService timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService, TimeService timeService) {
-        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
+    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService) {
+        this.dexMatchingService =  Objects.requireNonNull( dexMatchingService,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }
     
@@ -147,8 +147,8 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", counterOfferType, currentTime, offerAmount, pairCurrency, pairRate );
                 
         DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(counterOfferType, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate );        
-        List<DexOffer> offers = dexService.getOffersForMatching(dexOfferDBMatchingRequest);
-                       
+        List<DexOffer> offers = dexMatchingService.getOffersForMatching(dexOfferDBMatchingRequest);
+
         // DexOffer match = offers.
         int nOffers = offers.size();
         log.debug("offers found: {}", nOffers );

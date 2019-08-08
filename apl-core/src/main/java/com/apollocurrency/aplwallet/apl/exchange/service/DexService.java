@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
@@ -37,14 +37,12 @@ import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -63,14 +61,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -149,11 +147,6 @@ public class DexService {
     @Transactional
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){
         return dexOfferDao.getOffers(dexOfferDBRequest);
-    }
-
-    @Transactional
-    public List<DexOffer> getOffersForMatching(DexOfferDBMatchingRequest dexOfferDBMatchingRequest){
-        return dexOfferDao.getOffersForMatching(dexOfferDBMatchingRequest);
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest){
@@ -432,16 +425,13 @@ public class DexService {
     }
 
 
-
-
-
     public boolean isTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
         if(offerType.isBuy() && dexCurrencies.isEthOrPax()) {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
         } else if(offerType.isSell()) {
             PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
-            return phasingPoll != null && phasingPoll.getApprovedTx() != null;
+            return phasingPoll != null && phasingPollService.getApprovedTx(phasingPoll.getId()) != null;
         }
 
         throw new AplException.ExecutiveProcessException("Unknown offer pair.");
@@ -460,7 +450,12 @@ public class DexService {
                 return null;
             }
 
-            Long approvedTx = phasingPoll.getApprovedTx();
+            PhasingApprovedResult phasingApprovedResult = phasingPollService.getApprovedTx(phasingPoll.getId());
+            if(phasingApprovedResult == null){
+                return null;
+            }
+            Long approvedTx = phasingApprovedResult.getApprovedTx();
+
             Transaction transaction = blockchain.getTransaction(approvedTx);
             MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();
             return  voteCasting.getRevealedSecret();

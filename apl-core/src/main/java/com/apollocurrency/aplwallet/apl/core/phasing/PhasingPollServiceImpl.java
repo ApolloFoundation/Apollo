@@ -10,11 +10,13 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
@@ -37,6 +39,7 @@ import javax.inject.Singleton;
 @Singleton
 public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingPollResultTable resultTable;
+    private final PhasingApprovedResultTable approvedResultTable;
     private final PhasingPollTable phasingPollTable;
     private final PhasingPollVoterTable voterTable;
     private final PhasingPollLinkedTransactionTable linkedTransactionTable;
@@ -46,13 +49,14 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
-                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, PhasingApprovedResultTable approvedResultTable) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
         this.linkedTransactionTable = linkedTransactionTable;
         this.phasingVoteTable = phasingVoteTable;
         this.blockchain = blockchain;
+        this.approvedResultTable = approvedResultTable;
     }
 
     @Override
@@ -182,8 +186,14 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result, long approvedTx) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum(), approvedTx);
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
         resultTable.insert(phasingPollResult);
+
+        approvedResultTable.insert(new PhasingApprovedResult(phasingPoll.getId(), approvedTx));
+    }
+
+    public PhasingApprovedResult getApprovedTx(long phasingTxId){
+        return approvedResultTable.get(phasingTxId);
     }
 
     public List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll) {
