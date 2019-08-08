@@ -80,6 +80,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryMinToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
@@ -609,7 +610,7 @@ public class DexController {
         dexTradeEntryMin.setOpen(open);
         dexTradeEntryMin.setClose(close);
         
-        return Response.ok( (dexTradeEntryMin.toDto())).build();
+        return Response.ok( ( new DexTradeEntryMinToDtoConverter().apply(dexTradeEntryMin))).build();
                 
     }
 

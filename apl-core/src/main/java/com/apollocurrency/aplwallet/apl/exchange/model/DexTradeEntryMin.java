@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoMinDto;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,13 +18,4 @@ public class DexTradeEntryMin {
      private BigDecimal low;
      private BigDecimal open;
      private BigDecimal close;
-
-public DexTradeInfoMinDto toDto(){       
-        DexTradeInfoMinDto dexTradeInfoMinDto = new DexTradeInfoMinDto();        
-        dexTradeInfoMinDto.hi = this.hi;
-        dexTradeInfoMinDto.low = this.low;
-        dexTradeInfoMinDto.open = this.open;
-        dexTradeInfoMinDto.close = this.close;        
-        return dexTradeInfoMinDto;
-    }
 }

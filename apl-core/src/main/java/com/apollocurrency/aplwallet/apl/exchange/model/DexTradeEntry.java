@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
