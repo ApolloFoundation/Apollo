@@ -82,6 +82,8 @@ public class ShardServiceIntegrationTest {
     @Mock
     Event<TrimConfig> trimEvent;
     @Mock
+    Event<DbHotSwapConfig> dbEvent;
+    @Mock
     GlobalSync globalSync;
 
     private ShardDao createShardDao() {
@@ -92,7 +94,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
         List<Shard> allShards = shardService.getAllShards();
 
         assertEquals(ShardTestData.SHARDS, allShards);
@@ -100,7 +102,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
         List<Shard> allShards = shardService.getAllCompletedShards();
 
         assertEquals(List.of(ShardTestData.SHARD_1), allShards);
@@ -108,7 +110,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedOrArchivedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
 
         List<Shard> shards = shardService.getAllCompletedOrArchivedShards();
 
@@ -124,7 +126,7 @@ public class ShardServiceIntegrationTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(mockChain).getChainId();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
+        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService,dbEvent);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db"));
         Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db"));
@@ -160,6 +162,7 @@ public class ShardServiceIntegrationTest {
         assertEquals(ShardState.FULL, shard.getShardState());
         verify(globalSync).writeLock();
         verify(globalSync).writeUnlock();
+        verify(dbEvent).fire(new DbHotSwapConfig(1));
         verify(firedEvent).fire(new TrimConfig(false,true));
         verify(firedEvent).fire(new TrimConfig(true,false));
         verify(blockchainProcessor).suspendBlockchainDownloading();

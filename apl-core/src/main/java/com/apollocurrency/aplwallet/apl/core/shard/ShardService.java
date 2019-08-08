@@ -52,6 +52,7 @@ public class ShardService {
     private AplAppStatus aplAppStatus;
     private PropertiesHolder propertiesHolder;
     private Event<TrimConfig> trimEvent;
+    private Event<DbHotSwapConfig> dbEvent;
     private TrimService trimService;
     private GlobalSync globalSync;
 
@@ -62,7 +63,7 @@ public class ShardService {
     public final static long LOWER_SHARDING_MEMORY_LIMIT = 1536 * 1024 * 1024; //1.5GB
 
     @Inject
-    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain, DirProvider dirProvider, Zip zip, DatabaseManager databaseManager, BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao, ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus, PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync, TrimService trimService) {
+    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain, DirProvider dirProvider, Zip zip, DatabaseManager databaseManager, BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao, ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus, PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync, TrimService trimService, Event<DbHotSwapConfig> dbEvent) {
         this.shardDao = shardDao;
         this.blockchainProcessor = blockchainProcessor;
         this.blockchain = blockchain;
@@ -76,6 +77,7 @@ public class ShardService {
         this.propertiesHolder = propertiesHolder;
         this.trimEvent = trimEvent;
         this.trimService = trimService;
+        this.dbEvent = dbEvent;
         this.globalSync = globalSync;
     }
 
@@ -127,6 +129,7 @@ public class ShardService {
                 try {
 
                     databaseManager.setAvailable(false);
+                    dbEvent.fire(new DbHotSwapConfig(shardId));
                     databaseManager.shutdown();
                     FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                         Path fileName = p.getFileName();

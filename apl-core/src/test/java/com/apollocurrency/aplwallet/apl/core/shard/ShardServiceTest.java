@@ -77,13 +77,14 @@ public class ShardServiceTest {
     @Mock AplAppStatus aplAppStatus;
     @Mock PropertiesHolder propertiesHolder;
     @Mock Event<TrimConfig> trimEvent;
+    @Mock Event<DbHotSwapConfig> dbEvent;
     @Mock GlobalSync globalSync;
     @Mock
     TrimService trimService;
 
     @BeforeEach
     void setUp() {
-        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService);
+        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
     }
 
     @Test
@@ -269,6 +270,7 @@ public class ShardServiceTest {
         verify(databaseManager).getDataSource();
         verify(globalSync).writeLock();
         verify(globalSync).writeUnlock();
+        verify(dbEvent).fire(new DbHotSwapConfig(1));
         verify(event).fire(new TrimConfig(false, true));
         verify(event).fire(new TrimConfig(true, false));
         verify(blockchainProcessor).suspendBlockchainDownloading();

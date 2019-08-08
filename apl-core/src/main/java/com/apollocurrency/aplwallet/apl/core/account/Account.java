@@ -59,6 +59,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
@@ -157,6 +158,14 @@ public final class Account {
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            clearCache();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
+            clearCache();
+        }
+
+        private void clearCache() {
             if (publicKeyCache != null) {
                 publicKeyCache.clear();
             }
