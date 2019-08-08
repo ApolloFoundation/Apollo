@@ -25,10 +25,12 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
@@ -59,15 +61,19 @@ public class DexService {
     private DexContractTable dexContractTable;
     private TransactionProcessorImpl transactionProcessor;
     private SecureStorageService secureStorageService;
+
+    private DexTradeDao dexTradeDao;
+
     private DexOfferTransactionCreator dexOfferTransactionCreator;
     private TimeService timeService;
     private AccountService accountService;
 
-
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessorImpl transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageServiceImpl secureStorageService, DexContractTable dexContractTable,
-                      DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, AccountService accountService) {
+                      DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexTradeDao dexTradeDao,
+                      AccountService accountService) {
+
         this.ethereumWalletService = ethereumWalletService;
         this.dexOfferDao = dexOfferDao;
         this.dexOfferTable = dexOfferTable;
@@ -75,6 +81,9 @@ public class DexService {
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
         this.dexContractTable = dexContractTable;
+
+        this.dexTradeDao = dexTradeDao;
+
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
         this.timeService = timeService;
         this.accountService = accountService;
@@ -89,6 +98,17 @@ public class DexService {
     @Transactional
     public DexOffer getOfferById(Long id){
         return dexOfferDao.getById(id);
+    }
+
+    @Transactional
+    public List<DexTradeEntry> getTradeInfoForPeriod( Integer start, Integer finish,
+            Byte pairCurrency, Integer offset, Integer limit) {
+        return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
+    }
+
+    @Transactional
+    public void saveDexTradeEntry( DexTradeEntry dexTradeEntry) {
+        dexTradeDao.saveDexTradeEntry(dexTradeEntry);
     }
 
     /**
