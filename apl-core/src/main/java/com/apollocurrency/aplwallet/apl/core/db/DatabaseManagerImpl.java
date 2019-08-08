@@ -219,6 +219,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public void initFullShards(Collection<Long> ids) {
+        fullShardIds.clear();
         fullShardIds.addAll(ids);
     }
 

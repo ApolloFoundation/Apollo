@@ -259,6 +259,17 @@ class DatabaseManagerTest {
         assertSame(fullDatasources.get(0), datasource);
     }
 
+    @Test
+    void testInitAndClearPrevFullShards() {
+        databaseManager.initFullShards(Set.of(1L));
+
+        List<TransactionalDataSource> datasources = databaseManager.getFullDatasources();
+        assertEquals(1, datasources.size());
+        TransactionalDataSource dataSource = datasources.get(0);
+        checkDatasource(dataSource);
+        assertTrue(dataSource.getUrl().contains("shard-1"));
+    }
+
     private void checkDatasource(TransactionalDataSource dataSource) {
         try {
             assertFalse(dataSource.isShutdown());

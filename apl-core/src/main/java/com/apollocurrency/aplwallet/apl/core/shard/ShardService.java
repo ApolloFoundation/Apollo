@@ -143,7 +143,6 @@ public class ShardService {
                     zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString());
                     databaseManager.setAvailable(true);
                     databaseManager.getDataSource(); // force init
-                    trimService.resetTrim();
                     blockchain.update();
                     recoverSharding();
                     return true;

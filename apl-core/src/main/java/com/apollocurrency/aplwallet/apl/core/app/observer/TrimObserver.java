@@ -80,7 +80,7 @@ public class TrimObserver {
 
 
     public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
-        log.info("Set trim to {} ", trimDerivedTables);
+        log.info("Set trim to {} ", trimConfig.isEnableTrim());
         this.trimDerivedTables = trimConfig.isEnableTrim();
         if (trimConfig.isClearTrimQueue()) {
             synchronized (lock) {
