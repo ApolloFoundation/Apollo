@@ -706,9 +706,14 @@ public abstract class Messaging extends TransactionType {
                 if (!Arrays.equals(poll.getFullHash(), hash)) {
                     throw new AplException.NotCurrentlyValidException("Phased transaction hash does not match hash in voting transaction");
                 }
-                if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1) {
+                if (poll.getFinishTime() == -1 && poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1) {
                     throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at height %d which is not after approval transaction height %d", poll.getFinishHeight(), attachment.getFinishValidationHeight(transaction) + 1));
                 }
+
+                if (poll.getFinishHeight() == -1 && poll.getFinishTime() <= transaction.getTimestamp()) {
+                    throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at timestamp %d which is not after approval transaction timestamp %d", poll.getFinishTime(), transaction.getTimestamp()));
+                }
+
             }
         }
 

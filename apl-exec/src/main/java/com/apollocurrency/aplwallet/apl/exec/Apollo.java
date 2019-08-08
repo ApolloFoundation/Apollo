@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
@@ -90,6 +91,7 @@ public class Apollo {
     private static AplContainer container;
 
     private PropertiesHolder propertiesHolder;
+    private TaskDispatchManager taskDispatchManager;
     private static AplCoreRuntime aplCoreRuntime;
     
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
@@ -265,6 +267,7 @@ public class Apollo {
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
+                .recursiveScanPackages(TaskDispatchManager.class)
                 .recursiveScanPackages(Updater.class)
                 .recursiveScanPackages(ServerInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
@@ -288,6 +291,7 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
+        app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
@@ -296,7 +300,7 @@ public class Apollo {
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder);
+        aplCoreRuntime.init(runtimeMode, CDI.current().select(BlockchainConfig.class).get(), app.propertiesHolder, app.taskDispatchManager);
 
         try {
             // updated shutdown hook explicitly created with instances

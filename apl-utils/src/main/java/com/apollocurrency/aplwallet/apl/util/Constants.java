@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.36.0");
+    public static final Version VERSION = new Version("1.36.2");
 
 
     public static final String APPLICATION = "Apollo";
@@ -144,5 +144,12 @@ public final class Constants {
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+    //DEX
+
+    //24 h
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
+
+    private Constants() {} // never
 
 }

@@ -79,7 +79,7 @@ public final class SetPhasingOnlyControl extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
         Account account = ParameterParser.getSenderAccount(request);
-        PhasingParams phasingParams = parsePhasingParams(request, "control");
+        PhasingParams phasingParams = ParameterParser.parsePhasingParams(request, "control");
         long maxFees = ParameterParser.getLong(request, "controlMaxFees", 0, CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), false);
         short minDuration = (short)ParameterParser.getInt(request, "controlMinDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);
         short maxDuration = (short) ParameterParser.getInt(request, "controlMaxDuration", 0, Constants.MAX_PHASING_DURATION - 1, false);

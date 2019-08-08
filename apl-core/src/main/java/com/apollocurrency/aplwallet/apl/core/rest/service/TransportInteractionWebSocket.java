@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@WebSocket(maxTextMessageSize = 64 * 1024)
+@WebSocket(maxTextMessageSize = 64 * 1024, maxIdleTime = Integer.MAX_VALUE)
 public class TransportInteractionWebSocket {
     
     
@@ -107,6 +107,8 @@ public class TransportInteractionWebSocket {
 
         this.closeLatch = new CountDownLatch(1);
         client = new WebSocketClient();
+        client.setMaxIdleTimeout(Long.MAX_VALUE);
+
         client.start();
         ClientUpgradeRequest request = new ClientUpgradeRequest();
         client.connect(this, endpointURI, request);

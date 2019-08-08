@@ -790,7 +790,10 @@ public class AplDbVersion extends DbVersion {
             case 300:
                 apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
             case 301:
-                return 301;
+                apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
+                        "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+            case 302:
+                return 302;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
