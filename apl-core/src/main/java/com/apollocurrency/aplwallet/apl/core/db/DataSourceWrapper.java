@@ -231,6 +231,10 @@ public class DataSourceWrapper implements DataSource {
         setInitialzed();
     }
 
+    public void update(DbVersion dbVersion) {
+        dbVersion.init(this);
+    }
+
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
         if (dbVersion instanceof AplDbVersion) {
             HikariDataSource dataSource = new HikariDataSource(config);

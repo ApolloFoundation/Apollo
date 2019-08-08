@@ -93,4 +93,9 @@ public class ShardInitTableSchemaVersion extends DbVersion {
     public String toString() {
         return "ShardInitTableSchemaVersion";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj.getClass() == this.getClass();
+    }
 }

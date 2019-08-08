@@ -189,7 +189,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
 
 
             if (isConstraintSchema) {

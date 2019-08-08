@@ -161,7 +161,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
         NetworkStats networkStats = new NetworkStats();
         peerBlocks.forEach((peer, result)-> {
-            List<String> shardList = result.getShards().stream().map(ShardDTO::getZipHashCrc).collect(Collectors.toList());
+            List<String> shardList = result.getShards().stream().map(shard-> shard.getCoreZipHash().substring(0, 6)+":" + (shard.getPrunableZipHash() == null ? "---" : shard.getPrunableZipHash().substring(0, 6))).collect(Collectors.toList());
             log.info(String.format("%-16.16s - %8d - %s", peer, result.getHeight(), String.join("->", shardList)));
             networkStats.getPeerHeight().put(peer, result.getHeight());
             networkStats.getPeerShards().put(peer, shardList);
@@ -209,7 +209,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         if (shards.isEmpty()) {
             return "---";
         } else {
-            return shards.get(0).getZipHashCrc().substring(0, 6);
+            return shards.get(0).getCoreZipHash().substring(0, 6);
         }
     }
 

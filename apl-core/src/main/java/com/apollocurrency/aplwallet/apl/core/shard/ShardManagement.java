@@ -66,15 +66,6 @@ public interface ShardManagement {
     TransactionalDataSource getShardDataSourceById(long shardId);
 
     /**
-     * Method gives ability to create new 'shard database' file with fully initialized internal schema.
-     * It opens existing shard file and adds it into cached shard data source list.
-     *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @return shard database connection pool instance is put into internal cache
-     */
-    TransactionalDataSource createAndAddShard(Long shardId);
-
-    /**
      * Method gives ability to create new 'shard database' file with partially initialized internal schema.
      * It opens existing shard file and adds it into cached shard data source list.
      * Partial schema is specified by dbVersion implementation
@@ -83,14 +74,14 @@ public interface ShardManagement {
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
 
 
     /**
      * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
      * @return list of full shard datasources
      */
-    List<TransactionalDataSource> getFullDatasources();
+    List<TransactionalDataSource> getFullDataSources();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource

@@ -573,7 +573,7 @@ public class BlockchainImpl implements Blockchain {
         if (transactions.size() < limit) {
             boolean noTransactions = transactions.size() == 0;
             limit -= transactions.size();
-            List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDatasources();
+            List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
             for (TransactionalDataSource dataSource : fullDatasources) {
                 if (noTransactions && from != 0) {
                     from -= transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(),

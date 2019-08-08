@@ -9,11 +9,20 @@ import java.util.Objects;
 public class ShardDTO {
     private long shardId;
     private String shardHash;
-    private String zipHashCrc;
+    private String coreZipHash;
+    private String prunableZipHash;
     private int shardHeight;
     private int shardState;
 
     public ShardDTO() {
+    }
+
+    public String getPrunableZipHash() {
+        return prunableZipHash;
+    }
+
+    public void setPrunableZipHash(String prunableZipHash) {
+        this.prunableZipHash = prunableZipHash;
     }
 
     public long getShardId() {
@@ -32,12 +41,12 @@ public class ShardDTO {
         this.shardHash = shardHash;
     }
 
-    public String getZipHashCrc() {
-        return zipHashCrc;
+    public String getCoreZipHash() {
+        return coreZipHash;
     }
 
-    public void setZipHashCrc(String zipHashCrc) {
-        this.zipHashCrc = zipHashCrc;
+    public void setCoreZipHash(String coreZipHash) {
+        this.coreZipHash = coreZipHash;
     }
 
     public int getShardHeight() {
@@ -65,11 +74,12 @@ public class ShardDTO {
                 shardHeight == shardDTO.shardHeight &&
                 shardState == shardDTO.shardState &&
                 Objects.equals(shardHash, shardDTO.shardHash) &&
-                Objects.equals(zipHashCrc, shardDTO.zipHashCrc);
+                Objects.equals(coreZipHash, shardDTO.coreZipHash) &&
+                Objects.equals(prunableZipHash, shardDTO.prunableZipHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(shardId, shardHash, zipHashCrc, shardHeight, shardState);
+        return Objects.hash(shardId, shardHash, coreZipHash, prunableZipHash, shardHeight, shardState);
     }
 }
