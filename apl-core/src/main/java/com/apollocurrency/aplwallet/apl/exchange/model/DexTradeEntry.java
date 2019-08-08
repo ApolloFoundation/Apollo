@@ -28,21 +28,5 @@ public class DexTradeEntry {
     private BigDecimal pairRate;
     private Integer finishTime;
     private Integer height; 
-
-    public DexTradeInfoDto toDto(){       
-        DexTradeInfoDto dexTradeInfoDto = new DexTradeInfoDto();        
-        dexTradeInfoDto.dbId = this.dbId;
-        dexTradeInfoDto.transactionID = this.transactionID;
-        dexTradeInfoDto.senderOfferID = this.senderOfferID; 
-        dexTradeInfoDto.receiverOfferID = this.receiverOfferID;   
-        dexTradeInfoDto.senderOfferType = this.senderOfferType; 
-        dexTradeInfoDto.senderOfferCurrency = this.senderOfferCurrency; 
-        dexTradeInfoDto.senderOfferAmount = this.senderOfferAmount;
-        dexTradeInfoDto.pairCurrency = this.pairCurrency;
-        dexTradeInfoDto.pairRate = this.pairRate;
-        dexTradeInfoDto.finishTime = this.finishTime;
-        dexTradeInfoDto.height = this.height;         
-        return dexTradeInfoDto;
-    }
    
 }

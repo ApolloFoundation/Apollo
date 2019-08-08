@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoMinDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
@@ -79,6 +80,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
@@ -558,7 +560,9 @@ public class DexController {
         List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, pairCurrency, offset, limit);
         
         return Response.ok(tradeEntries.stream()
-            .map(o -> o.toDto())
+            .map(o -> {
+            return new DexTradeEntryToDtoConverter().apply(o); 
+        })
             .collect(Collectors.toList())
         ).build();
     }
@@ -586,15 +590,18 @@ public class DexController {
                 
         DexTradeEntryMin dexTradeEntryMin = new DexTradeEntryMin(); // dexTradeInfoMinDto = new DexTradeInfoMinDto();
         
-        BigDecimal hi=tradeEntries.get(0).toDto().pairRate;//,low=t,open,close; 
-        BigDecimal low=tradeEntries.get(0).toDto().pairRate;
-        BigDecimal open = tradeEntries.get(0).toDto().pairRate;
-        BigDecimal close = tradeEntries.get( tradeEntries.size()-1 ).toDto().pairRate;
+        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
+        
+        BigDecimal hi = cnv.apply( tradeEntries.get(0)).pairRate;//,low=t,open,close; 
+        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;
+        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
+        BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
         
         // iterate list to find the highest or the lowest values
-        for (DexTradeEntry currEl : tradeEntries) {            
-            if ( currEl.toDto().pairRate.compareTo( hi ) == 1 ) hi = currEl.toDto().pairRate;
-            if ( currEl.toDto().pairRate.compareTo( low ) == -1 ) low = currEl.toDto().pairRate;
+        for (DexTradeEntry currEl : tradeEntries) {    
+            DexTradeInfoDto currElDto = cnv.apply(currEl);
+            if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
+            if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
         }
         
         dexTradeEntryMin.setHi(hi);
