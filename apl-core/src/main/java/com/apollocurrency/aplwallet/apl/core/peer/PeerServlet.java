@@ -372,11 +372,12 @@ public final class PeerServlet extends WebSocketServlet {
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
                 Peers.cleanupPeers(null);
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
+                PeerImpl peer = Peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);
                     res = pws;
+                    LOG.trace("Created InBound WebSocket + Transport for peer = {}", peer);
                 }
             }
             return res;
