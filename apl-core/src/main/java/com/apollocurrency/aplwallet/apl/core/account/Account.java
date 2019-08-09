@@ -830,7 +830,7 @@ public final class Account {
         long accountId = Convert.getId(key);
         PublicKey t = new PublicKey(accountId, key, 0);
         t.setDbKey(new LongKey(accountId));
-        GenesisPublicKeyTable.getInstance().insert(t);
+        genesisPublicKeyTable.insert(t);
         if (publicKeyCache != null) {
             publicKeyCache.put(t.getDbKey(), key);
         }
