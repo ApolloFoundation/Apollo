@@ -71,6 +71,7 @@ class PeerConnectingThread implements Runnable {
                             if(Peers.isMyAddress(pa)){
                                 return null;
                             }
+                            LOG.debug("start Handshaking with peer = {}", peer.getHostWithPort());
                             peer.handshake(Peers.blockchainConfig.getChain().getChainId());
                             if (peer.getState() == PeerState.CONNECTED 
                                 && Peers.enableHallmarkProtection 
