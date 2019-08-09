@@ -49,14 +49,14 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -72,9 +72,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 public final class Peers {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
 
     public enum Event {
         BLACKLIST, UNBLACKLIST, DEACTIVATE, REMOVE,
@@ -147,7 +146,6 @@ public final class Peers {
      * Map of ANNOUNCED address with port to peer. Contains only peers that are connectable
      * (has announced public address) 
      */
-    
     private static final ConcurrentMap<String, PeerImpl> connectablePeers = new ConcurrentHashMap<>();
     /**
      * Map of incoming peers only. In incoming peer announces some public address, it will
@@ -203,7 +201,7 @@ public final class Peers {
                     }
                 }
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.getMyExtAddress());
+                log.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.getMyExtAddress());
                 throw new RuntimeException(e.toString(), e);
             }
         }
@@ -241,7 +239,7 @@ public final class Peers {
         ignorePeerAnnouncedAddress = propertiesHolder.getBooleanProperty("apl.ignorePeerAnnouncedAddress");
 
         if (useWebSockets && useProxy) {
-            LOG.info("Using a proxy, will not create outbound websockets.");
+            log.info("Using a proxy, will not create outbound websockets.");
         }
 
         fillMyPeerInfo();
@@ -251,7 +249,7 @@ public final class Peers {
                 try {
                     PeerDb.updatePeer((PeerImpl) peer);
                 } catch (RuntimeException e) {
-                    LOG.error("Unable to update peer database", e);
+                    log.error("Unable to update peer database", e);
                 }
             }
         }), Peers.Event.CHANGED_SERVICES);
@@ -310,7 +308,7 @@ public final class Peers {
     private static void fillMyPeerInfo() {
         myPeerInfo = new JSONObject();
         PeerInfo pi = new PeerInfo();
-        LOG.debug("Start filling 'MyPeerInfo'...");
+        log.debug("Start filling 'MyPeerInfo'...");
         List<Peer.Service> servicesList = new ArrayList<>();
         PeerAddress myExtAddress = peerHttpServer.getMyExtAddress();
 
@@ -318,13 +316,13 @@ public final class Peers {
             String host = myExtAddress.getHost();
             int port = myExtAddress.getPort();
             String  announcedAddress = myExtAddress.getAddrWithPort();
-            LOG.debug("Peer external address  = {} : {} + {}", host, port, announcedAddress);
+            log.debug("Peer external address  = {} : {} + {}", host, port, announcedAddress);
             if (announcedAddress.length() > MAX_ANNOUNCED_ADDRESS_LENGTH) {
                  throw new RuntimeException("Invalid announced address length: " + announcedAddress);
             }
             pi.setAnnouncedAddress(announcedAddress);
         }else{
-            LOG.debug("Peer external address is NOT SET");
+            log.debug("Peer external address is NOT SET");
         }
 
         if (myHallmark != null && myHallmark.length() > 0) {
@@ -383,9 +381,9 @@ public final class Peers {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
-        LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
+        log.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
-        LOG.debug("Finished filling 'MyPeerInfo'");
+        log.debug("Finished filling 'MyPeerInfo'");
     }
 
     public static void shutdown() {
@@ -394,12 +392,12 @@ public final class Peers {
             peerHttpServer.shutdown();
             DefaultTaskDispatcher.shutdownExecutor("sendingService", sendingService, 2);
         } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
         try {
             DefaultTaskDispatcher.shutdownExecutor("peersService", peersExecutorService, 5);
         } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
     }
 
@@ -444,7 +442,7 @@ public final class Peers {
     }
     
     public static Collection<Peer> getAllPeers() {
-        List<Peer> peers = new ArrayList(connectablePeers.values());
+        List<Peer> peers = new ArrayList<>(connectablePeers.values());
         peers.addAll(inboundPeers.values());
         Collection<Peer> res =  Collections.unmodifiableCollection(peers);
         return res;
@@ -543,11 +541,11 @@ public final class Peers {
         PeerImpl peer;
         //search by connection addres first
         if ((peer = inboundPeers.get(actualAddr.getAddrWithPort())) != null) {
-            LOG.trace("Returning existing peer from inbound map {}", peer);
+            log.trace("Returning existing peer from inbound map {}", peer);
             return peer;
         }
         if ((peer = connectablePeers.get(actualAddr.getAddrWithPort())) != null) {
-            LOG.trace("Returning existing peer from connectable map {}", peer);
+            log.trace("Returning existing peer from connectable map {}", peer);
             return peer;
         }
         
@@ -568,7 +566,7 @@ public final class Peers {
 
     public static void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
         if (StringUtils.isBlank(newAnnouncedAddress)) {
-            LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
+            log.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
         }
         PeerAddress newPa = resolveAnnouncedAddress(newAnnouncedAddress);
         if(newPa==null){
@@ -582,7 +580,7 @@ public final class Peers {
         if (oldPeer != null) {
             PeerAddress oldPa = new PeerAddress(oldPeer.getAnnouncedAddress());
             if (newPa.compareTo(oldPa) != 0) {
-                LOG.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost() + ":" + oldPeer.getPort());
+                log.debug("Removing old announced address " + oldPa + " for peer " + oldPeer.getHost() + ":" + oldPeer.getPort());
 
                 peer.setAnnouncedAddress(newAnnouncedAddress);
                 oldPeer = removePeer(oldPeer);
@@ -675,7 +673,7 @@ public final class Peers {
     private static void sendToSomePeers(final JSONObject request) {
         if (shutdown || suspend) {
             String errorMessage = String.format("Cannot send request to peers. Peer server was %s", suspend ? "suspended" : "shutdown");
-            LOG.error(errorMessage);
+            log.error(errorMessage);
             throw new RuntimeException(errorMessage);
         }
         sendingService.submit(() -> {
@@ -684,8 +682,9 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
+            Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
             peers.addAll(connectablePeers.values());
+            log.trace("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
@@ -693,10 +692,10 @@ public final class Peers {
                 }
 
                 if ( !peer.isBlacklisted() 
-//                     && peer.getState() == PeerState.CONNECTED 
+                     && peer.getState() == PeerState.CONNECTED // skip not connected peers
                      && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
-                   ) 
-                {
+                   ) {
+                    log.trace("Prepare send to peer = {}", peer);
                     Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
                         peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
                     );
@@ -708,14 +707,18 @@ public final class Peers {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
                                 successful += 1;
+                            } else {
+                                log.trace(
+                                        "Empty/Null response received, because Peer '{}' is NOT CONNECTED = '{}' ?... '{}', successful={}",
+                                        peer.getHostWithPort(), peer.getState(), future.isDone(), successful);
                             }
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
-                            LOG.debug("Error in sendToSomePeers = {}", e.getMessage());
+                            log.debug("Error inside Future's sendToSomePeers(...) = {}", e.getMessage());
                         }
-
                     }
+                    log.trace("expectedResponses = [{}]", expectedResponses.size() );
                     expectedResponses.clear();
                 }
                 if (successful >= sendToPeersLimit) {
@@ -799,7 +802,7 @@ public final class Peers {
             json.put("requestType", "getInfo");
             myPeerInfoRequest = JSON.prepareRequest(json);
             currentBlockchainState = state;
-            LOG.trace("currentBlockchainState = {}", currentBlockchainState);
+            log.trace("currentBlockchainState = {}", currentBlockchainState);
         }
     }
 
