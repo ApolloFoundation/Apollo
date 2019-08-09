@@ -27,6 +27,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
+        log.trace("Create PeerWebSocketClient to P2P transport peer = {}", peer);
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
