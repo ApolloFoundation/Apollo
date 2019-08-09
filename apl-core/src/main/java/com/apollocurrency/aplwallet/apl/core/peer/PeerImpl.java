@@ -171,7 +171,7 @@ public final class PeerImpl implements Peer {
         lock.lock();
         try{            
           if (newState != PeerState.CONNECTED) {
-            p2pTransport.disconnect();
+              p2pTransport.disconnect();
           }
           this.state = newState;
         }finally{
@@ -481,13 +481,14 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException{
-        
-        if(getState()!=PeerState.CONNECTED){
-            LOG.debug("send() called before handshake(). Handshaking to: {}",getHostWithPort());
-            throw new PeerNotConnectedException("send() called before handshake(). Handshaking");
-        }else{
-            return send(request);
+    public JSONObject send(final JSONStreamAware request, UUID chainId) /*throws PeerNotConnectedException*/ {
+        if (getState()!=PeerState.CONNECTED) {
+            LOG.trace("CAN'T PROCESS request DATA, peer NOT CONNECTED yet ? '{}', no handshake, WAIT for end of Handshaking to: {}",
+                    getState(), getHostWithPort());
+//            throw new PeerNotConnectedException("send() called before handshake(). Handshaking");
+            return null;
+        } else {
+            return send(request); // forward request further
         }
     }
     
@@ -506,9 +507,8 @@ public final class PeerImpl implements Peer {
         try {
             String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
-            if(resp == null || resp.isEmpty()) {
+            if(resp == null) {
                 LOG.trace("Null response from: {}", hostWithPort);
-                deactivate("Null response from: " + hostWithPort);
                 return response;
             }
             response = (JSONObject) JSONValue.parseWithException(resp);
@@ -517,9 +517,9 @@ public final class PeerImpl implements Peer {
             //
             if (response != null && response.get("error") != null) {
                 LOG.debug("Peer: {} RESPONSE = {}", hostWithPort, response);
-                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))){
-                    LOG.debug("Sequence error received, reconnecting to " + host);
-                    deactivate("Sequence error, need to handshake");
+                if (Errors.SEQUENCE_ERROR.equals(response.get("error"))) {
+                    LOG.debug("Sequence error received, reconnecting to " + hostWithPort);
+                    deactivate("Sequence error, needs reconnecting with " + hostWithPort);
                 } else {
                     processError(response);
                 }
@@ -550,13 +550,14 @@ public final class PeerImpl implements Peer {
     private int processConnectAttempt(boolean failed){
         if(failed){
           failedConnectAttempts++;
-          if(failedConnectAttempts >= Constants.PEER_RECONNECT_ATTMEPTS_MAX){
-              LOG.debug("Peer {} is not connectable, removing", getAnnouncedAddress());
-              deactivate("Peer is not connectable, removing" + getAnnouncedAddress());
-              Peers.removePeer(this);
-          }
-        }else{  //reset on success
+            LOG.trace("Failed to connect increase failedConnectAttempts = {} for {}", failedConnectAttempts, getHostWithPort());
+            if(failedConnectAttempts >= Constants.PEER_RECONNECT_ATTMEPTS_MAX){
+                LOG.debug("Peer is not connectable, removing from list {}", getHostWithPort());
+                Peers.removePeer(this);
+            }
+        } else {  //reset on success
             failedConnectAttempts = 0;
+            LOG.trace("RESET failedConnectAttempts = {} for {}", failedConnectAttempts, getHostWithPort());
         }
         return failedConnectAttempts;
     }
@@ -564,7 +565,7 @@ public final class PeerImpl implements Peer {
     @Override   
     public synchronized boolean handshake(UUID targetChainId) {
         if(getState()==PeerState.CONNECTED){
-            LOG.trace("Peers {} is already connected.",getHostWithPort());
+            LOG.trace("Peers is already connected {}", getHostWithPort());
             return true;
         }
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
@@ -925,7 +926,7 @@ public final class PeerImpl implements Peer {
                 }
             } catch (IOException ex) {
                 LOG.debug("This is not P2P response from {}", getHostWithPort(), ex);
-                deactivate(Errors.IO_ERROR);
+//                deactivate(Errors.IO_ERROR);
             }
         }
         return res;
