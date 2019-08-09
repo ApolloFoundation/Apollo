@@ -9,9 +9,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
@@ -67,14 +67,15 @@ public class PeerWebSocketClient extends PeerWebSocket{
         super.close();
         connected = false;
         if (client != null) {
-          for(WebSocketSession wss: client.getOpenSessions()){
-              wss.disconnect();
-              wss.close();
-              if(wss!=null){
-                wss.destroy();
-              }
-          }
-          destroyClient();
+            log.trace("Closing PeerWebSocketClient to P2P transport peer = {}", super.getTransport().getPeer());
+            for(WebSocketSession wss: client.getOpenSessions()){
+                wss.disconnect();
+                wss.close();
+                if(wss!=null){
+                    wss.destroy();
+                }
+            }
+            destroyClient();
         }
     }
     
