@@ -14,6 +14,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Use DexContractDao for not transactional operations. ( f.e. search)
+ */
 @Deprecated
 public class DexContractTable   extends EntityDbTable<ExchangeContract> {
     static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("db_id") {

@@ -21,7 +21,7 @@ import java.util.Objects;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
- * Use DexOfferDao
+ * Use DexOfferDao for not transactional operations. (f.e. search)
  */
 @Deprecated
 @Singleton

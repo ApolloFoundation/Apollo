@@ -3,7 +3,13 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public enum ExchangeContractStatus {
+    /**
+     * When a contract is waiting for review and approval.
+     */
     STEP_1,
+    /**
+     * When a contract was approved and atomic swap was started.
+     */
     STEP_2;
 
     public static ExchangeContractStatus getType(int ordinal){
@@ -14,11 +20,11 @@ public enum ExchangeContractStatus {
     }
 
     public boolean isStep1(){
-        return this.ordinal() == ExchangeContractStatus.STEP_1.ordinal();
+        return this.equals(ExchangeContractStatus.STEP_1);
     }
 
     public boolean isStep2(){
-        return this.ordinal() == ExchangeContractStatus.STEP_2.ordinal();
+        return this.equals(ExchangeContractStatus.STEP_2);
     }
 
 

@@ -111,12 +111,12 @@ public class DexService {
     }
 
 
-    @Transactional
+    @Transactional(readOnly = true)
     public DexOffer getOfferByTransactionId(Long transactionId){
         return dexOfferDao.getByTransactionId(transactionId);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public DexOffer getOfferById(Long id){
         return dexOfferDao.getById(id);
     }
@@ -134,17 +134,17 @@ public class DexService {
         dexContractTable.insert(exchangeContract);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ExchangeContract> getDexContracts(DexContractDBRequest dexContractDBRequest){
         return dexContractDao.getAll(dexContractDBRequest);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ExchangeContract getDexContract(DexContractDBRequest dexContractDBRequest){
         return dexContractDao.get(dexContractDBRequest);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest){
         return dexOfferDao.getOffers(dexOfferDBRequest);
     }

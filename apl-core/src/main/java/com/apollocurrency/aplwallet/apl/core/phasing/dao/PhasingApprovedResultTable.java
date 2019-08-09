@@ -16,7 +16,7 @@ import java.sql.SQLException;
 @Singleton
 public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovedResult> {
 
-    private static final String TABLE_NAME = "phasing_approved_result";
+    private static final String TABLE_NAME = "phasing_approval_tx";
     private static final LongKeyFactory<PhasingApprovedResult> KEY_FACTORY = new LongKeyFactory<>("phasing_tx") {
         @Override
         public DbKey newKey(PhasingApprovedResult phasingApproveResult) {
@@ -46,7 +46,7 @@ public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovedRe
 
     @Override
     public void save(Connection con, PhasingApprovedResult phasingPollResult) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_approved_result (phasing_tx, approved_tx, "
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_approval_tx (phasing_tx, approved_tx, "
                 + " height) VALUES (?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, phasingPollResult.getPhasingTx());

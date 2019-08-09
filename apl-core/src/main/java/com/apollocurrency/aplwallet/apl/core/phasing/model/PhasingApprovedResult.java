@@ -11,10 +11,10 @@ public class PhasingApprovedResult extends DerivedEntity {
     private final long phasingTx;
     private final long approvedTx;
 
-    public PhasingApprovedResult(long phasingTx, long approvedTx) {
+    public PhasingApprovedResult(long phasingTx, long approvalTx) {
         super(null, null);
         this.phasingTx = phasingTx;
-        this.approvedTx = approvedTx;
+        this.approvedTx = approvalTx;
     }
 
 }

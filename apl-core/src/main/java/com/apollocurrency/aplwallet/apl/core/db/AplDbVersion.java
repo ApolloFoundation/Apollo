@@ -797,7 +797,7 @@ public class AplDbVersion extends DbVersion {
             case 302:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
             case 303:
-                apply("CREATE TABLE IF NOT EXISTS phasing_approved_result (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
+                apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
                         " height INT NOT NULL)");
             case 304:
                 return 304;

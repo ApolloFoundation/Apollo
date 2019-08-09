@@ -504,12 +504,6 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
     public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, AplException.ExecutiveProcessException {
-
-
-        dexSmartContractService.getSwapData( Convert.parseHexString("c9d59e3398876fb4e63b9a3c36a62a7f561d562ec29615067f16ca34139b560a"));
-
-        log.debug("dexEthInfo: ");
-
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();

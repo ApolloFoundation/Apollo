@@ -6,7 +6,13 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApprovedAndConfirmationTx {
+public class ApprovedAndApprovalTxs {
+    /**
+     * PhasedTransaction
+     */
     private Transaction approved;
-    private Transaction confirmation;
+    /**
+     * Transaction which approving a phased tx.
+     */
+    private Transaction approval;
 }
