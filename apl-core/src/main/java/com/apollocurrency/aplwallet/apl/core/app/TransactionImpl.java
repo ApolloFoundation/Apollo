@@ -687,7 +687,7 @@ public class TransactionImpl implements Transaction {
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
+                buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
                 buffer.putLong(amountATM);
                 buffer.putLong(feeATM);
                 if (referencedTransactionFullHash != null) {

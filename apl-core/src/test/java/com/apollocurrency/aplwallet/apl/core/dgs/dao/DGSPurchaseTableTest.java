@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dgs.dao;
 
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -50,7 +51,8 @@ public class DGSPurchaseTableTest extends VersionedEntityDbTableTest<DGSPurchase
             FullTextConfigImpl.class,
             DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

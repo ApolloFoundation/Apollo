@@ -3,6 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Objects;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -10,23 +18,19 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
-
 /**
  * @author al
  */
+@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
 
-        public PublicKeyDbFactory(String idColumn) {
+        private Blockchain blockchain;
+
+        public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
             super(idColumn);
+            this.blockchain = blockchain;
         }
 
         @Override
@@ -41,22 +45,14 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         public PublicKey newEntity(DbKey dbKey) {
             return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
         }
-
     }
 
-    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
-    private static final GenesisPublicKeyTable publicKeyTable = new GenesisPublicKeyTable();
+    private Blockchain blockchain;
 
-    public static GenesisPublicKeyTable getInstance() {
-        return publicKeyTable;
-    }
-
-    public static DbKey newKey(long id) {
-        return publicKeyDbKeyFactory.newKey(id);
-    }
-
-    protected GenesisPublicKeyTable() {
-        super("genesis_public_key", publicKeyDbKeyFactory, true, null, false);
+    @Inject
+    public GenesisPublicKeyTable(Blockchain blockchain) {
+        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, false);
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
     @Override
@@ -69,8 +65,8 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         publicKey.setHeight(blockchain.getHeight());
         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
             int i = 0;
-            pstmt.setLong(++i, publicKey.accountId);
-            DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
+            pstmt.setLong(++i, publicKey.getAccountId());
+            DbUtils.setBytes(pstmt, ++i, publicKey.getPublicKey());
             pstmt.setInt(++i, publicKey.getHeight());
             pstmt.executeUpdate();
         }

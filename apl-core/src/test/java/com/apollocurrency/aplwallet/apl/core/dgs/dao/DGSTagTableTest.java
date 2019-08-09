@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -52,7 +53,8 @@ public class DGSTagTableTest extends VersionedEntityDbTableTest<DGSTag> {
             FullTextConfigImpl.class,
             DGSTagTable.class,
             DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))

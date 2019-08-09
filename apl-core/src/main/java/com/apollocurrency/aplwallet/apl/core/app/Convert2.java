@@ -42,7 +42,7 @@ public final class Convert2 {
 
 
     public static long fromEpochTime(int epochTime) {
-        return epochTime * 1000L + Genesis.EPOCH_BEGINNING - 500L;
+        return epochTime * 1000L + GenesisImporter.EPOCH_BEGINNING - 500L;
     }
 
     /**
@@ -51,7 +51,7 @@ public final class Convert2 {
      * @return seconds
      */
     public static int toEpochTime(long currentTime) {
-        return (int)((currentTime - Genesis.EPOCH_BEGINNING + 500) / 1000);
+        return (int)((currentTime - GenesisImporter.EPOCH_BEGINNING + 500) / 1000);
     }
 
 }

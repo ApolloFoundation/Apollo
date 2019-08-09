@@ -11,11 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
-import com.apollocurrency.aplwallet.apl.util.Zip;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -41,32 +38,22 @@ public class ShardDownloadPresenceObserver {
     private final Blockchain blockchain;
     private final BlockchainProcessor blockchainProcessor;
     private final DerivedTablesRegistry derivedTablesRegistry;
-    private final CsvImporter csvImporter;
-    private final Zip zipComponent;
-    private final DownloadableFilesManager downloadableFilesManager;
-    private final AplAppStatus aplAppStatus;
-    private final GlobalSync globalSync;
     private final ShardImporter shardImporter;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
+    private final GenesisImporter genesisImporter;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
-                                         Zip zipComponent, CsvImporter csvImporter,
-                                         DownloadableFilesManager downloadableFilesManager,
-                                         AplAppStatus aplAppStatus, GlobalSync globalSync,
-                                         ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater) {
+                                         ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
+                                         GenesisImporter genesisImporter) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.zipComponent = Objects.requireNonNull(zipComponent, "zipComponent is NULL");
-        this.csvImporter = Objects.requireNonNull(csvImporter, "csvImporter is NULL");
-        this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
-        this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.globalSync = Objects.requireNonNull(globalSync, "globalSync is NULL");
         this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
+        this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
     }
 
     /**
@@ -125,11 +112,11 @@ public class ShardDownloadPresenceObserver {
                 log.info("Genesis block not in database, starting from scratch");
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
                 try (Connection con = dataSource.begin()) {
-                    Block genesisBlock = Genesis.newGenesisBlock();
+                    Block genesisBlock = genesisImporter.newGenesisBlock();
                     addBlock(dataSource, genesisBlock);
                     long initialBlockId = genesisBlock.getId();
                     log.debug("Generated Genesis block with Id = {}", initialBlockId);
-                    Genesis.apply(false);
+                    genesisImporter.importGenesisJson(false);
                     for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
                         table.createSearchIndex(con);
                     }

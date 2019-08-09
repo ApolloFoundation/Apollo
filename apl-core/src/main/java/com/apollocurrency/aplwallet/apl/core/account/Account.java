@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.account;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanc
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
@@ -146,7 +147,7 @@ public final class Account {
         accountCurrencyTable = AccountCurrencyTable.getInstance();
         accountLeaseTable = AccountLeaseTable.getInstance();
         accountPropertyTable = AccountPropertyTable.getInstance();
-        genesisPublicKeyTable = GenesisPublicKeyTable.getInstance();
+        genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
 
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
@@ -476,7 +477,7 @@ public final class Account {
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
-        if (accountId == Genesis.CREATOR_ID) {
+        if (accountId == GenesisImporter.CREATOR_ID) {
             return;
         }
         if (confirmed < 0) {
@@ -843,7 +844,7 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             if (isGenesis) {
-                GenesisPublicKeyTable.getInstance().insert(publicKey);
+                genesisPublicKeyTable.insert(publicKey);
             } else {
                publicKeyTable.insert(publicKey);
             }
