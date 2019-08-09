@@ -53,7 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
@@ -432,7 +432,7 @@ class CsvExporterTest {
     void testExportIgnoredTable() {
         DerivedTableInterface genesisTable = mock(DerivedTableInterface.class);
         doReturn("genesis_public_KEY").when(genesisTable).getName();
-        doReturn(new MinMaxDbId(1, 2, 2, 2)).when(genesisTable).getMinMaxDbId(8000);
+        doReturn(new MinMaxValue(1, 2, "db_id",2, 2)).when(genesisTable).getMinMaxValue(8000);
         long exported = csvExporter.exportDerivedTable(genesisTable, 8000, 2);
         assertEquals(-1, exported);
     }

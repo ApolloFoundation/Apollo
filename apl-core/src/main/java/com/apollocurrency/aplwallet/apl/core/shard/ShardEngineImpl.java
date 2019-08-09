@@ -450,7 +450,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id", pruningTime);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), pruningTime);
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
                     }
@@ -502,14 +502,14 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDaoJdbc.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
-    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort, int pruningTime) {
+    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, int pruningTime) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
         if (derivedTable != null) {
             if (!info.isPrunable()) {
-                if (excludedColumns == null && sort == null) {
+                if (excludedColumns == null) {
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
-                    return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+                    return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns);
                 }
             } else {
                 return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
@@ -521,7 +521,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo, int pruningTime) {
-        return exportDerivedTable(tableInfo, paramInfo, null, null, pruningTime);
+        return exportDerivedTable(tableInfo, paramInfo, null, pruningTime);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {

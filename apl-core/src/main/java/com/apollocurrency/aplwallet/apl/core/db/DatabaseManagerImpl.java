@@ -70,11 +70,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Inject
     public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, JdbiHandleFactory jdbiHandleFactory) {
-        baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
-        propertiesHolder = propertiesHolderParam;
+        this.baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
+        this.propertiesHolder = propertiesHolderParam;
         this.jdbiHandleFactory = jdbiHandleFactory;
         initDatasource();
-        available = true;
+        this.available = true;
     }
 
     private void initDatasource() {

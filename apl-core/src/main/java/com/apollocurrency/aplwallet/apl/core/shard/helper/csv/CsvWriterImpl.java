@@ -281,7 +281,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 writeRow(rowColumnNames);
                 rows++;
 
-                //                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
+                //                minMaxDbId.setMin(rs.getLong(defaultPaginationColumnName));
             }
 /*
             if (rows == 1) {

@@ -9,9 +9,10 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class MinMaxDbId {
-    private long minDbId = -1L;
-    private long maxDbId = -1L;
+public class MinMaxValue {
+    private long min;
+    private long max;
+    private String column;
     private long count;
     private int height;
 }

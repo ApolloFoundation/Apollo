@@ -269,7 +269,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             try {
                 peerBlocks.put(host, getBlocksRequests.get(i).get());
             }
-            catch (InterruptedException | ExecutionException e) {
+            catch (Exception e) {
                 log.error("Error getting blocks for " + host, e);
             }
         }
