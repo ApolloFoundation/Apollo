@@ -65,7 +65,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         }       
     }
     
-    public void save(AccountAsset accountAsset) {
+    public void update(AccountAsset accountAsset) {
         AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
         if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
             insert(accountAsset);
@@ -111,14 +111,6 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     public DbIterator<AccountAsset> getAccountAssets(long accountId, int height, int from, int to) {
         return getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to);
-    }
-
-    public AccountAsset getAccountAsset(long accountId, long assetId) {
-        return get(AccountAssetTable.newKey(accountId, assetId));
-    }
-
-    public AccountAsset getAccountAsset(long accountId, long assetId, int height) {
-        return get(AccountAssetTable.newKey(accountId, assetId), height);
     }
 
     public DbIterator<AccountAsset> getAssetAccounts(long assetId, int from, int to) {

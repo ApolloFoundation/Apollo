@@ -155,7 +155,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setQuantityATU(assetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        accountAssetTable.update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
@@ -179,7 +179,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        accountAssetTable.update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -212,7 +212,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        accountAssetTable.update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);

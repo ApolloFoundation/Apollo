@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
@@ -74,39 +73,28 @@ class AccountDaoTest  {
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .build();
 
-
     @Inject
     AccountTable table;
 
-    AccountTestData testData;
-
-    @BeforeEach
-    public void setUp() {
-        testData = new AccountTestData();
-        //table = new AccountTable(blockchain, blockchainConfig, testData.CREATOR_ID);
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
+    AccountTestData testData = new AccountTestData();
 
     @Test
     void testLoad() {
-        Account account = table.get(new LongKey(testData.ACC_0.getId()));
+        Account account = table.get(table.getDbKeyFactory().newKey(testData.ACC_0));
         assertNotNull(account);
         assertEquals(testData.ACC_0, account);
     }
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
-        Account account = table.get(new LongKey(testData.ACC_0.getId()-1));
+        Account account = table.get(table.getDbKeyFactory().newKey(testData.newAccount));
         assertNull(account);
     }
 
     @Test
     void testSave() {
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(testData.newAccount));
-        Account actual = table.get(new LongKey(testData.newAccount.getId()));
+        Account actual = table.get(table.getDbKeyFactory().newKey(testData.newAccount));
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
         assertEquals(testData.newAccount.getId(), actual.getId());
@@ -138,14 +126,14 @@ class AccountDaoTest  {
     @Test
     void testCheckAvailable_on_correct_height() {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        doReturn(testData.BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        assertDoesNotThrow(() -> table.checkAvailable(testData.BLOCKCHAIN_HEIGHT));
+        doReturn(testData.ACC_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
+        assertDoesNotThrow(() -> table.checkAvailable(testData.ACC_BLOCKCHAIN_HEIGHT));
     }
 
     @Test
     void testCheckAvailable_on_wrong_height() {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        assertThrows(IllegalArgumentException.class, () -> table.checkAvailable(testData.BLOCKCHAIN_WRONG_HEIGHT));
+        assertThrows(IllegalArgumentException.class, () -> table.checkAvailable(testData.ACC_BLOCKCHAIN_WRONG_HEIGHT));
     }
 
     @Test
