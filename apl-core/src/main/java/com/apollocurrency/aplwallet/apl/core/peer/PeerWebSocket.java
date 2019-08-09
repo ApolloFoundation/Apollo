@@ -26,7 +26,7 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 public class PeerWebSocket extends WebSocketAdapter {
     
     /** we use reference here to avoid memory leaks */
-    private final SoftReference<Peer2PeerTransport> peerReference;
+    private final SoftReference<Peer2PeerTransport> peerTransportSoftReference;
 
     /**
      * Our WebSocket message version
@@ -42,24 +42,29 @@ public class PeerWebSocket extends WebSocketAdapter {
     private static final int FLAG_COMPRESSED = 1;
     private long lastActivityTime;
 
-    public PeerWebSocket(Peer2PeerTransport peer) {
-        peerReference = new SoftReference<>(peer);
+    public PeerWebSocket(Peer2PeerTransport peerTransport) {
+        log.trace("Create WebSocket to peer+Transport = {}", peerTransport.getPeer());
+        peerTransportSoftReference = new SoftReference<>(peerTransport);
         lastActivityTime=System.currentTimeMillis();
     }
     
     String which(){
         String which="";
-        Peer2PeerTransport p = peerReference.get();
-        if(p!=null){
-            which+=" at "+p.getHostWithPort();
-        }else{
-            Session s = getSession();
-            if (s!=null){
+        Peer2PeerTransport p = peerTransportSoftReference.get();
+        if (p != null) {
+            which+=" at " + p.getHostWithPort();
+        } else {
+            Session s = super.getSession();
+            if (s != null) {
                 RemoteEndpoint r = s.getRemote();
-                if(r!=null){
+                if(r != null) {
                     String addr = r.getInetSocketAddress().getAddress().getHostAddress();
-                    which=addr+":"+r.getInetSocketAddress().getPort();
+                    which = addr + ":" + r.getInetSocketAddress().getPort();
+                } else {
+                    which += "'unknown' remoteAddr?";
                 }
+            } else {
+                which += "'unknown' WS session?";
             }
         }
         return which;
@@ -69,33 +74,33 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
         lastActivityTime=System.currentTimeMillis();
-        log.debug("Peer: {} String received: \n{}",which(),message);
+        log.debug("Peer: '{}' String received: \n{}", which(), message);
     }
 
     @Override
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
-        log.trace("Peer: {} WebSocket error: {}",which(),cause);
-        if(peerReference.get()==null){
-            close();
+        log.trace("Peer: '{}' WebSocket error: '{}'", which(), cause);
+        if(peerTransportSoftReference.get()==null){
+            this.close();
         }
     }
 
     @Override
     public void onWebSocketConnect(Session sess) {
         super.onWebSocketConnect(sess);       
-        log.trace("{} WebSocket connectded:", which());
+        log.trace("WebSocket connected: '{}'", which());
     }
 
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
-        log.trace("Peer: {} WebSocket close: {}",which(),statusCode);
-        Peer2PeerTransport p = peerReference.get();
+        log.trace("Peer: '{}' WebSocket close: {}", which(), statusCode);
+        Peer2PeerTransport p = peerTransportSoftReference.get();
         if(p!=null){
             p.onWebSocketClose(this);
         }else{
-            log.debug("Closing orphaned websocket: {}",which());
+            log.debug("Closing orphaned websocket: '{}'",which());
             this.close();
         }
     }
@@ -127,7 +132,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 }
             }
             String message = new String(msgBytes, "UTF-8");
-            Peer2PeerTransport p = peerReference.get();
+            Peer2PeerTransport p = peerTransportSoftReference.get();
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
             }else{
@@ -176,25 +181,26 @@ public class PeerWebSocket extends WebSocketAdapter {
         if (buf.limit() > Peers.MAX_MESSAGE_SIZE) {
             throw new ProtocolException("POST request length exceeds max message size");
         }
-        Session s =  getSession();
+        Session s =  super.getSession();
         if(s!=null){
            s.getRemote().sendBytes(buf);
         }else{
-          throw new IOException("Websocket session is null for "+which())  ;
+          throw new IOException("Websocket session is null for " + which())  ;
         }
         return true;
     }
 
     public void close(){
-        Session s = getSession();
+        Session s = super.getSession();
         if(s!=null){
             s.close(1001,"Disconnect"); //RFC 6455, Section 7.4.1
             try {
                 s.disconnect();                
             } catch (IOException ex) {
-                log.debug("Excetion on session disconnect to {}",which(),ex);
+                log.debug("Exception on session disconnect to {}",which(),ex);
             }
         }
+        peerTransportSoftReference.clear();
     }
 
     long getLastActivityTime() {
@@ -202,7 +208,7 @@ public class PeerWebSocket extends WebSocketAdapter {
     }
 
     public Peer2PeerTransport getTransport(){
-        return peerReference.get();
+        return peerTransportSoftReference.get();
     }
 
 }
