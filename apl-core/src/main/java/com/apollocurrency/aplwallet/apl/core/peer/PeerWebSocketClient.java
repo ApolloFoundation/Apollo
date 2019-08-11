@@ -47,16 +47,16 @@ public class PeerWebSocketClient extends PeerWebSocket{
             Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
-            log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Interrupted while connecting as client to: {} \n Exception: {}", which(), ex.getMessage());
             Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
-            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Execution failed while connecting as client to: {} \n Exception: {}", which(), ex.getMessage());
         } catch (TimeoutException ex) {
-            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}", which(), ex);
         } catch (IOException ex) {
-            log.trace("I/O error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("I/O error while connecting as client to: {} \n Exception: {}", which(), ex.getMessage());
         } catch (Exception ex) {
-            log.trace("Generic error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Generic error while connecting as client to: {} \n Exception: {}", which(), ex.getMessage());
         }
 
         return connected;
@@ -67,7 +67,11 @@ public class PeerWebSocketClient extends PeerWebSocket{
         super.close();
         connected = false;
         if (client != null) {
-            log.trace("Closing PeerWebSocketClient to P2P transport peer = {}", super.getTransport().getPeer());
+            if (log.isTraceEnabled()) {
+                log.trace("Closing PeerWebSocketClient to P2P transport peer = {}",
+                        super.getTransport() != null ?
+                                super.getTransport() : "noTrasprt/Peer");
+            }
             for(WebSocketSession wss: client.getOpenSessions()){
                 wss.disconnect();
                 wss.close();
