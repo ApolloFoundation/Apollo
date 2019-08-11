@@ -24,7 +24,7 @@ import org.eclipse.jetty.websocket.api.WebSocketAdapter;
  */
 @Slf4j
 public class PeerWebSocket extends WebSocketAdapter {
-    
+
     /** we use reference here to avoid memory leaks */
     private final SoftReference<Peer2PeerTransport> peerTransportSoftReference;
 
@@ -74,13 +74,13 @@ public class PeerWebSocket extends WebSocketAdapter {
     public void onWebSocketText(String message) {
         super.onWebSocketText(message);
         lastActivityTime=System.currentTimeMillis();
-        log.debug("Peer: '{}' String received: \n{}", which(), message);
+        log.debug("Peer String received for ''{}'\n{}", which(), message);
     }
 
     @Override
     public void onWebSocketError(Throwable cause) {
         super.onWebSocketError(cause);
-        log.trace("Peer: '{}' WebSocket error: '{}'", which(), cause);
+        log.trace("Peer on WebSocket error: '{}', '{}'", which(), cause);
         if(peerTransportSoftReference.get()==null){
             this.close();
         }
@@ -88,26 +88,28 @@ public class PeerWebSocket extends WebSocketAdapter {
 
     @Override
     public void onWebSocketConnect(Session sess) {
-        super.onWebSocketConnect(sess);       
-        log.trace("WebSocket connected: '{}'", which());
+        super.onWebSocketConnect(sess);
+        log.trace("onWebSocketConnect: '{}'", which());
     }
 
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
         super.onWebSocketClose(statusCode, reason);
-        log.trace("Peer: '{}' WebSocket close: {}", which(), statusCode);
+        log.trace("Peer WebSocket close for '{}' : code={}", which(), statusCode);
         Peer2PeerTransport p = peerTransportSoftReference.get();
-        if(p!=null){
+        if(p != null){
             p.onWebSocketClose(this);
         }else{
             log.debug("Closing orphaned websocket: '{}'",which());
             this.close();
+            peerTransportSoftReference.clear();
         }
     }
 
     @Override
     public void onWebSocketBinary(byte[] payload, int offset, int len) {
         super.onWebSocketBinary(payload, offset, len);
+        log.trace("Process incoming data... for {}", this.peerTransportSoftReference.get());
         lastActivityTime=System.currentTimeMillis();
         try {
             ByteBuffer buf = ByteBuffer.wrap(payload, offset, len);
@@ -141,8 +143,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             }    
 
         } catch (IOException ex) {
-            log.debug("Peer: {} IO Exception on message receiving: {}", which(), ex);
-            this.close();
+            log.debug("Peer: {} IO Exception on message receiving: " + which(), ex);
         }
     }
 
@@ -155,7 +156,7 @@ public class PeerWebSocket extends WebSocketAdapter {
      * @return requestId
      * @throws IOException
      */
-    public  synchronized boolean send(String message, Long requestId) throws IOException {
+    public synchronized boolean send(String message, Long requestId) throws IOException {
         if(StringUtils.isBlank(message.trim())){
             log.warn("Empty request from us to {}",which());
             return false;
@@ -192,7 +193,7 @@ public class PeerWebSocket extends WebSocketAdapter {
 
     public void close(){
         Session s = super.getSession();
-        if(s!=null){
+        if (s!=null) {
             s.close(1001,"Disconnect"); //RFC 6455, Section 7.4.1
             try {
                 s.disconnect();                
@@ -211,4 +212,15 @@ public class PeerWebSocket extends WebSocketAdapter {
         return peerTransportSoftReference.get();
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("PeerWebSocket{");
+        sb.append("peerTransportSoftReference=").append(
+                peerTransportSoftReference != null
+                        && peerTransportSoftReference.get() != null ? "assignedPeer" : "null");
+        sb.append(", version=").append(version);
+        sb.append(", lastActivityTime=").append(lastActivityTime);
+        sb.append('}');
+        return sb.toString();
+    }
 }

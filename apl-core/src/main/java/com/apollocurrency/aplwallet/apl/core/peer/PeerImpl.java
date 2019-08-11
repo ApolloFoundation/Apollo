@@ -428,7 +428,7 @@ public final class PeerImpl implements Peer {
     @Override
     public void deactivate(String reason) {
         setState(PeerState.NON_CONNECTED);
-        LOG.trace("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
+        LOG.trace("Deactivating peer {}. Reason: {}", getHostWithPort(), reason);
         Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
 
@@ -655,7 +655,7 @@ public final class PeerImpl implements Peer {
         } catch (RuntimeException e) {
             LOG.debug("RuntimeException. Blacklisting {}",getHostWithPort(),e);
             processConnectAttempt(true);
-//            deactivate("RuntimeException on handshake");
+            deactivate("RuntimeException on handshake " + getHostWithPort());
             blacklist(e);
             return false;
         }
@@ -926,7 +926,7 @@ public final class PeerImpl implements Peer {
                 }
             } catch (IOException ex) {
                 LOG.debug("This is not P2P response from {}", getHostWithPort(), ex);
-//                deactivate(Errors.IO_ERROR);
+                deactivate(Errors.IO_ERROR);
             }
         }
         return res;
