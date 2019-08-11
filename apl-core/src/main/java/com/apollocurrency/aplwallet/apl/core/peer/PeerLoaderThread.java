@@ -61,7 +61,7 @@ class PeerLoaderThread implements Runnable {
             }
         }
         if (entries.size() > 0) {
-            LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
+            LOG.debug("'Peer loader': findOrCreatePeer() 'known peers' [{}]...", entries.size());
         }
         entries.forEach((entry) -> {
             Future<String> unresolvedAddress = Peers.peersExecutorService.submit(() -> {
