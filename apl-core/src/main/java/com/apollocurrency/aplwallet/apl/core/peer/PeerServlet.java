@@ -273,7 +273,7 @@ public final class PeerServlet extends WebSocketServlet {
                peer.processError(response);
             }
         } catch (RuntimeException e) {
-            LOG.debug("Exception while responing to {}", transport.which(), e);
+            LOG.debug("Exception while responding to {}", transport.which(), e);
             processException(peer, e);
         }
     }
