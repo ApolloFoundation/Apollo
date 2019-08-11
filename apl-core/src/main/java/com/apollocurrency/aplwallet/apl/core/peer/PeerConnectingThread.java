@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -66,6 +67,8 @@ class PeerConnectingThread implements Runnable {
                             }
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
+                        LOG.debug("Attempt to connect to unconnected Peers: [{}]", connectSet.size());
+                        LOG.trace("-> Peers connect Set = {}", Arrays.toString(connectSet.toArray()));
                         connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
                             PeerAddress pa = new PeerAddress(peer.getAnnouncedAddress());
                             if(Peers.isMyAddress(pa)){
@@ -95,6 +98,7 @@ class PeerConnectingThread implements Runnable {
                 ).forEach((peer) -> {
                         PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
                         if (!Peers.isMyAddress(pa)) {
+                            LOG.debug("Submitting Handshake for {} : {}...", pa, peer);
                             Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
                         }
                 });
