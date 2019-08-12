@@ -88,8 +88,8 @@ public class AccountTestData {
     public List<AccountCurrency> ALL_CURRENCY = List.of(ACC_CUR_0, ACC_CUR_1, ACC_CUR_2, ACC_CUR_3, ACC_CUR_4, ACC_CUR_5, ACC_CUR_6, ACC_CUR_7, ACC_CUR_8, ACC_CUR_9, ACC_CUR_10, ACC_CUR_11, ACC_CUR_12, ACC_CUR_13, ACC_CUR_14);
     public AccountCurrency newCurrency = new AccountCurrency(ACC_1.getId(), ACC_CUR_14.getCurrencyId()+1, 0, 0, ACC_CUR_14.getHeight()+1);
 
-
-
+    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MIN = 858816;
+    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = 882424;
 
     public Account createAccount(long dbId, long accountId, long balance, long unconfirmedBalance, boolean isControlPhasing, long forgedBalance, long activeLessId, int height, boolean latest){
         Account acc = new Account(accountId, balance, unconfirmedBalance, forgedBalance, activeLessId, height);

@@ -2,11 +2,12 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.account.dao;
+package com.apollocurrency.aplwallet.apl.core.account.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,12 +16,12 @@ import lombok.Setter;
  * Entity class
  */
 @Setter @Getter
-public final class AccountGuaranteedBalance {
+public class AccountGuaranteedBalance {
 
-    final long accountId;
-    final DbKey dbKey;
-    long additions;
-    int height;
+    private final long accountId;
+    private final DbKey dbKey;
+    private long additions;
+    private int height;
 
     public AccountGuaranteedBalance(long accountId, long additions, int height) {
         this.accountId = accountId;

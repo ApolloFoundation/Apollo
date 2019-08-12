@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -28,7 +29,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
             accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
         @Override
         public DbKey newKey(AccountGuaranteedBalance accountGuaranteedBalance) {
-            return accountGuaranteedBalance.dbKey;
+            return accountGuaranteedBalance.getDbKey();
         }
     };
 
