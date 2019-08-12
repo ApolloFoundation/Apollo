@@ -70,7 +70,17 @@ class AccountAssetDaoTest {
     @Inject
     AccountAssetTable table;
 
-    AccountTestData testData = new AccountTestData();
+    AccountTestData testData;
+
+    Comparator<AccountAsset> assetComparator = Comparator
+            .comparing(AccountAsset::getQuantityATU, Comparator.reverseOrder())
+            .thenComparing(AccountAsset::getAccountId)
+            .thenComparing(AccountAsset::getAssetId);
+
+    @BeforeEach
+    void setUp() {
+        testData = new AccountTestData();
+    }
 
     @Test
     void testLoad() {
@@ -80,19 +90,38 @@ class AccountAssetDaoTest {
     }
 
     @Test
-    void testLoad_ifNotExist_thenReturnNull() {
+    void testLoad_returnNull_ifNotExist() {
         AccountAsset accountAsset = table.get(table.getDbKeyFactory().newKey(testData.newAsset));
         assertNull(accountAsset);
     }
 
     @Test
-    void testSave() {
+    void testSave_insert_new_entity() {//SQL MERGE -> INSERT
+        AccountAsset previous = table.get(table.getDbKeyFactory().newKey(testData.newAsset));
+        assertNull(previous);
+
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(testData.newAsset));
         AccountAsset actual = table.get(table.getDbKeyFactory().newKey(testData.newAsset));
+
         assertNotNull(actual);
         assertTrue(actual.getDbId() != 0);
         assertEquals(testData.newAsset.getAccountId(), actual.getAccountId());
         assertEquals(testData.newAsset.getAssetId(), actual.getAssetId());
+    }
+
+    @Test
+    void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
+        AccountAsset previous = table.get(table.getDbKeyFactory().newKey(testData.ACC_ASS_0));
+        assertNotNull(previous);
+        previous.setUnconfirmedQuantityATU(previous.getUnconfirmedQuantityATU()+50000);
+
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(previous));
+        AccountAsset actual = table.get(table.getDbKeyFactory().newKey(previous));
+
+        assertNotNull(actual);
+        assertTrue(actual.getUnconfirmedQuantityATU()-testData.ACC_ASS_0.getUnconfirmedQuantityATU() == 50000);
+        assertEquals(previous.getQuantityATU(), actual.getQuantityATU());
+        assertEquals(previous.getAssetId(), actual.getAssetId());
     }
 
     @Test
@@ -118,41 +147,24 @@ class AccountAssetDaoTest {
     }
 
     @Test
-    void testUpdate_as_insert() {
-        AccountAsset expected = new AccountAsset(testData.newAsset.getAccountId(), testData.newAsset.getAssetId(),
-                1000L, 1000L,testData.ASS_BLOCKCHAIN_HEIGHT);
-        DbUtils.inTransaction(dbExtension, (con) -> table.update(expected));
-        AccountAsset actual = table.get(table.getDbKeyFactory().newKey(expected));
-        assertNotNull(actual);
-        assertTrue(actual.getDbId() != 0);
-        assertEquals(expected.getAccountId(), actual.getAccountId());
-        assertEquals(expected.getAssetId(), actual.getAssetId());
-        assertEquals(expected.getQuantityATU(), actual.getQuantityATU());
-        assertEquals(expected.getUnconfirmedQuantityATU(), actual.getUnconfirmedQuantityATU());
-    }
-
-    @Test
-    void testUpdate_as_delete() {
-        DbUtils.inTransaction(dbExtension, (con) -> table.update(testData.newAsset));
-        AccountAsset actual = table.get(table.getDbKeyFactory().newKey(testData.newAsset));
-        assertNull(actual);
-    }
-
-    @Test
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
+        List<AccountAsset> expectedAll = testData.ALL_ASSETS.stream().sorted(assetComparator).collect(Collectors.toList());
+        List<AccountAsset> actualAll = toList(table.getAll(0, Integer.MAX_VALUE));
+        assertEquals(expectedAll, actualAll);
     }
 
     @Test
     void testGetAssetCount() {
-        long count = table.getAssetCount(testData.ACC_ASS_0.getAssetId());
-        assertEquals(2, count);
+        long count = table.getAssetCount(testData.ACC_ASS_6.getAssetId());
+        assertEquals(4, count);
     }
 
     @Test
     void testGetAssetCount_on_Height() {
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
         long count = table.getAssetCount(testData.ACC_ASS_6.getAssetId(), testData.ACC_ASS_6.getHeight());
-        assertEquals(4, count);
+        assertEquals(3, count);
     }
 
     @Test
@@ -163,7 +175,8 @@ class AccountAssetDaoTest {
 
     @Test
     void testGetAccountAssetCount_on_Height() {
-        long count = table.getAccountAssetCount(testData.ACC_ASS_0.getAccountId(), testData.ACC_ASS_0.getHeight());
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
+        long count = table.getAccountAssetCount(testData.ACC_ASS_12.getAccountId(), testData.ACC_ASS_12.getHeight());
         assertEquals(1, count);
     }
 
@@ -177,24 +190,30 @@ class AccountAssetDaoTest {
 
     @Test
     void testGetAccountAssets_on_Height() {
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
         List<AccountAsset> actual = toList(table.getAccountAssets(testData.ACC_ASS_12.getAccountId(), testData.ACC_ASS_12.getHeight(), 0, Integer.MAX_VALUE));
-        assertEquals(2, actual.size());
+        assertEquals(1, actual.size());
         assertEquals(testData.ACC_ASS_12.getAssetId(), actual.get(0).getAssetId());
-        assertEquals(testData.ACC_ASS_13.getAssetId(), actual.get(1).getAssetId());
     }
 
     @Test
     void testGetAssetAccounts() {
-        List<AccountAsset> actual = toList(table.getAssetAccounts(testData.ACC_ASS_6.getAssetId(), 0, Integer.MAX_VALUE)).stream().sorted(Comparator.comparing(AccountAsset::getAccountId)).collect(Collectors.toList());
+        List<AccountAsset> actual = toList(table.getAssetAccounts(testData.ACC_ASS_6.getAssetId(), 0, Integer.MAX_VALUE));
         assertEquals(4, actual.size());
-        List<AccountAsset> expected = testData.ALL_ASSETS.stream().filter(ass -> ass.getAssetId()==testData.ACC_ASS_6.getAssetId()).sorted(Comparator.comparing(AccountAsset::getAccountId)).collect(Collectors.toList());
+        List<AccountAsset> expected = testData.ALL_ASSETS.stream()
+                .filter(ass -> ass.getAssetId()==testData.ACC_ASS_6.getAssetId())
+                .sorted(assetComparator).collect(Collectors.toList());
         assertEquals(expected, actual);
     }
 
     @Test
     void testGetAssetAccounts_on_Height() {
-        List<AccountAsset> actual = toList(table.getAssetAccounts(testData.ACC_ASS_12.getAssetId(), testData.ACC_ASS_12.getHeight(), 0, Integer.MAX_VALUE));
-        assertEquals(1, actual.size());
-        assertEquals(testData.ACC_ASS_12.getAccountId(), actual.get(0).getAccountId());
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
+        List<AccountAsset> actual = toList(table.getAssetAccounts(testData.ACC_ASS_6.getAssetId(), testData.ACC_ASS_6.getHeight(), 0, Integer.MAX_VALUE));
+        List<AccountAsset> expected = testData.ALL_ASSETS.stream()
+                .filter(ass -> ass.getAssetId()==testData.ACC_ASS_6.getAssetId())
+                .sorted(assetComparator).collect(Collectors.toList());
+        assertEquals(3, actual.size());
+        assertEquals(testData.ACC_ASS_6.getAccountId(), actual.get(0).getAccountId());
     }
 }

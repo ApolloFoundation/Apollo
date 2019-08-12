@@ -33,7 +33,6 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
     }
 
     @Override
-    @Deprecated
     public boolean delete(T t) { //TODO remove blockchain
         return delete(t, false, lookupBlockchain().getHeight());
     }

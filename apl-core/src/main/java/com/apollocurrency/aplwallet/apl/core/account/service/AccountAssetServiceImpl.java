@@ -155,7 +155,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setQuantityATU(assetBalance);
         }
-        accountAssetTable.update(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
@@ -179,7 +179,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.update(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -192,6 +192,16 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
                     LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
                     quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock()));
+        }
+    }
+
+    @Override
+    public void update(AccountAsset accountAsset) {
+        AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
+        if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
+            accountAssetTable.insert(accountAsset);
+        } else {
+            accountAssetTable.delete(accountAsset);
         }
     }
 
@@ -212,7 +222,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.update(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);

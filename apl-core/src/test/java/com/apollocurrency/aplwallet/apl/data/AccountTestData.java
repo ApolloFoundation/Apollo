@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.data;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -42,21 +43,21 @@ public class AccountTestData {
 
 
 
-    public final AccountAsset ACC_ASS_0 = createAsset(2, -6165567093261530199L, -7893128314037493631L, 8, 8, 42716, true);
-    public final AccountAsset ACC_ASS_1 = createAsset(3, 5321122420987797313L, -7893128314037493631L, 2, 2, 42716 , true);
-    public final AccountAsset ACC_ASS_2 = createAsset(4, -7322647937425179011L, -6078517019219425255L, 1, 1, 74579 , true);
-    public final AccountAsset ACC_ASS_3 = createAsset(7, -6778759751532475550L, -8295646607890337777L, 10000000000000L, 10000000000000L, 103547, true);
-    public final AccountAsset ACC_ASS_4 = createAsset(9, 1999163479746643929L, -8295646607890337777L, 200000000000000L, 199690000000000L, 104313, true);
-    public final AccountAsset ACC_ASS_5 = createAsset(11, 6869755601928778675L, -4052659063540799517L, 100000000, 0, 106009, true);
-    public final AccountAsset ACC_ASS_6 = createAsset(15, -8961133557088364255L, 4606988662156325931L, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_7 = createAsset(16, -7982593098243895578L, 4606988662156325931L, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_8 = createAsset(17, -2978059282518897292L, 4606988662156325931L, 1000000000, 1000000000, 115621, true);
-    public final AccountAsset ACC_ASS_9 = createAsset(18, -4482816538164919588L, 4606988662156325931L, 997000000000L, 997000000000L, 115625, true);
-    public final AccountAsset ACC_ASS_10= createAsset(21, -6373532437740775524L, 5392821904843656674L, 50000, 1000, 135786, true);
-    public final AccountAsset ACC_ASS_11= createAsset(24, -2019873104351139231L, 1816504597825817175L, 1, 1, 141149, true);
-    public final AccountAsset ACC_ASS_12= createAsset(26, 4771674949294490876L, 1991918493240442696L, 1, 1, 157464, true);
-    public final AccountAsset ACC_ASS_13= createAsset(27, 4771674949294490876L, 3138466618559186009L, 1, 1, 161462, true);
-    public final AccountAsset ACC_ASS_14= createAsset(28, 8133755063160788231L, 8693638682715124444L, 1, 1, 163942, true);
+    public final AccountAsset ACC_ASS_0 = createAsset(2, 100, 10, 8, 8, 42716, true);
+    public final AccountAsset ACC_ASS_1 = createAsset(3, 110, 10, 2, 2, 42716 , true);
+    public final AccountAsset ACC_ASS_2 = createAsset(4, 120, 20, 1, 1, 74579 , true);
+    public final AccountAsset ACC_ASS_3 = createAsset(7, 130, 30, 10000000000000L, 10000000000000L, 103547, true);
+    public final AccountAsset ACC_ASS_4 = createAsset(9, 140, 30, 200000000000000L, 199690000000000L, 104313, true);
+    public final AccountAsset ACC_ASS_5 = createAsset(11, 150, 40, 100000000, 0, 106009, true);
+    public final AccountAsset ACC_ASS_6 = createAsset(15, 160, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASS_7 = createAsset(16, 170, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASS_8 = createAsset(17, 180, 50, 1000000000, 1000000000, 115621, true);
+    public final AccountAsset ACC_ASS_9 = createAsset(18, 190, 50, 997000000000L, 997000000000L, 115625, true);
+    public final AccountAsset ACC_ASS_10= createAsset(21, 200, 60, 50000, 1000, 135786, true);
+    public final AccountAsset ACC_ASS_11= createAsset(24, 210, 70, 1, 1, 141149, true);
+    public final AccountAsset ACC_ASS_12= createAsset(26, 220, 80, 1, 1, 157464, true);
+    public final AccountAsset ACC_ASS_13= createAsset(27, 220, 90, 1, 1, 161462, true);
+    public final AccountAsset ACC_ASS_14= createAsset(28, 230, 100, 1, 1, 163942, true);
 
     public final int ASS_BLOCKCHAIN_HEIGHT = ACC_ASS_14.getHeight();
     public final int ASS_BLOCKCHAIN_WRONG_HEIGHT = ACC_ASS_14.getHeight()+1;
@@ -65,6 +66,27 @@ public class AccountTestData {
     public AccountAsset newAsset = new AccountAsset(ACC_1.getId(), ACC_ASS_14.getAssetId()+1, 0, 0, ACC_ASS_14.getHeight()+1);
 
 
+    public final AccountCurrency ACC_CUR_0 = createCurrency(4, 100, 10, 2000000, 2000000, 9800, true);
+    public final AccountCurrency ACC_CUR_1 = createCurrency(5, 110, 10, 9899999998000000L, 9899999998000000L, 23208, true);
+    public final AccountCurrency ACC_CUR_2 = createCurrency(14, 120, 20, 100, 100, 99999, true);
+    public final AccountCurrency ACC_CUR_3 = createCurrency(18, 130, 20, 100, 100, 100237, true);
+    public final AccountCurrency ACC_CUR_4 = createCurrency(23, 140, 20, 100, 100, 101515, true);
+    public final AccountCurrency ACC_CUR_5 = createCurrency(25, 150, 20, 9800, 9800, 101976, true);
+    public final AccountCurrency ACC_CUR_6 = createCurrency(28, 160, 20, 10000, 10000, 103064, true);
+    public final AccountCurrency ACC_CUR_7 = createCurrency(33, 120, 30, 25000, 25000, 104087, true);
+    public final AccountCurrency ACC_CUR_8 = createCurrency(39, 170, 40, 10000000000L, 10000000000L, 107363, true);
+    public final AccountCurrency ACC_CUR_9 = createCurrency(41, 180, 50, 10000000000L, 10000000000L, 107380, true);
+    public final AccountCurrency ACC_CUR_10= createCurrency(42, 190, 60, 100000, 100000, 109087, true);
+    public final AccountCurrency ACC_CUR_11= createCurrency(47, 200, 20, 19979000, 19979000, 114982, true);
+    public final AccountCurrency ACC_CUR_12= createCurrency(48, 210, 20, 900, 900, 114982, true);
+    public final AccountCurrency ACC_CUR_13= createCurrency(56, 220, 70, 2000000000, 2000000000, 124550, true);
+    public final AccountCurrency ACC_CUR_14= createCurrency(57, 230, 80, 2000000000, 2000000000, 124607, true);
+
+    public final int CUR_BLOCKCHAIN_HEIGHT = ACC_CUR_14.getHeight();
+    public final int CUR_BLOCKCHAIN_WRONG_HEIGHT = ACC_CUR_14.getHeight()+1;
+
+    public List<AccountCurrency> ALL_CURRENCY = List.of(ACC_CUR_0, ACC_CUR_1, ACC_CUR_2, ACC_CUR_3, ACC_CUR_4, ACC_CUR_5, ACC_CUR_6, ACC_CUR_7, ACC_CUR_8, ACC_CUR_9, ACC_CUR_10, ACC_CUR_11, ACC_CUR_12, ACC_CUR_13, ACC_CUR_14);
+    public AccountCurrency newCurrency = new AccountCurrency(ACC_1.getId(), ACC_CUR_14.getCurrencyId()+1, 0, 0, ACC_CUR_14.getHeight()+1);
 
 
 
@@ -85,6 +107,13 @@ public class AccountTestData {
         asset.setDbId(dbId);
         asset.setLatest(latest);
         return asset;
+    }
+
+    public AccountCurrency createCurrency(long dbId, long accountId, long currencyId, long quantity, long unconfirmedQuantity, int height, boolean latest){
+        AccountCurrency currency = new AccountCurrency(accountId, currencyId, quantity, unconfirmedQuantity, height);
+        currency.setDbId(dbId);
+        currency.setLatest(latest);
+        return currency;
     }
 
 

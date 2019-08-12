@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -63,15 +62,6 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             pstmt.setInt(++i, accountAsset.getHeight());
             pstmt.executeUpdate();
         }       
-    }
-    
-    public void update(AccountAsset accountAsset) {
-        AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
-        if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
-            insert(accountAsset);
-        } else {
-            delete(accountAsset);
-        }
     }
 
     @Override

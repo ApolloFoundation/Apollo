@@ -52,6 +52,8 @@ public interface AccountAssetService {
 
     void addToUnconfirmedAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU);
 
+    void update(AccountAsset accountAsset);
+
     void addToAssetAndUnconfirmedAssetBalanceATU(Account account, LedgerEvent event, long eventId, long assetId, long quantityATU);
 
     void payDividends(Account account, long transactionId, ColoredCoinsDividendPayment attachment);
