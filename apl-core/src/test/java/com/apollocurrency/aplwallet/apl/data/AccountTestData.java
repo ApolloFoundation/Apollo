@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -90,6 +91,22 @@ public class AccountTestData {
 
     public final int ACC_GUARANTEE_BALANCE_HEIGHT_MIN = 858816;
     public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = 882424;
+
+    public final AccountInfo ACC_INFO_0 = createInfo(5, 110, "ZT", null, 3073, true);
+    public final AccountInfo ACC_INFO_1 = createInfo(6, 120, "CALIGULA", null, 3559, true);
+    public final AccountInfo ACC_INFO_2 = createInfo(7, 130, "Adnan Celik", null, 3563, true);
+    public final AccountInfo ACC_INFO_3 = createInfo(10, 140, "Vasily", "Front end wallet ui/ux", 26068, true);
+    public final AccountInfo ACC_INFO_4 = createInfo(15, 150, "CALIGULA shubham nitin bhabad", "abuse brain fright always", 70858, true);
+
+    public List<AccountInfo> ALL_INFO = List.of(ACC_INFO_0, ACC_INFO_1, ACC_INFO_2, ACC_INFO_3, ACC_INFO_4);
+    public AccountInfo newInfo = new AccountInfo(ACC_INFO_4.getAccountId()+1, "new account info name", "new description", ACC_INFO_4.getHeight()+1);
+
+    public AccountInfo createInfo(long dbId, long accountId, String name, String description, int height, boolean latest){
+        AccountInfo info = new AccountInfo(accountId, name, description, height);
+        info.setDbId(dbId);
+        info.setLatest(latest);
+        return info;
+    }
 
     public Account createAccount(long dbId, long accountId, long balance, long unconfirmedBalance, boolean isControlPhasing, long forgedBalance, long activeLessId, int height, boolean latest){
         Account acc = new Account(accountId, balance, unconfirmedBalance, forgedBalance, activeLessId, height);
