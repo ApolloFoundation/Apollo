@@ -59,7 +59,6 @@ public class DexCloseOfferTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
-
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         offer.setStatus(OfferStatus.CLOSED);
         dexService.saveOffer(offer);
