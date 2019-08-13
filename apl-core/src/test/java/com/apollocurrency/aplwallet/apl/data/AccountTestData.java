@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
@@ -127,6 +128,29 @@ public class AccountTestData {
     public List<LedgerEntry> ALL_LEDGERS = List.of(ACC_LEDGER_0, ACC_LEDGER_1, ACC_LEDGER_3, ACC_LEDGER_4, ACC_LEDGER_5, ACC_LEDGER_6, ACC_LEDGER_7, ACC_LEDGER_8, ACC_LEDGER_9, ACC_LEDGER_10, ACC_LEDGER_11, ACC_LEDGER_12, ACC_LEDGER_13, ACC_LEDGER_14, ACC_LEDGER_15);
     public LedgerEntry newLedger = new LedgerEntry(ACC_LEDGER_15.getEvent(), ACC_LEDGER_15.getEventId(), 9218185695807163289L, ACC_LEDGER_15.getHolding(), ACC_LEDGER_15.getHoldingId(), 10000L, 2691750001400000000L, ACC_LEDGER_15.getBlockId(), ACC_LEDGER_15.getTimestamp(), ACC_LEDGER_15.getHeight());
     public final int LEDGER_HEIGHT = 846;
+
+    public final AccountProperty ACC_PROP_0 = createProperty(1, 10, 100, 0, "email", "dchosrova@gmail.com", 94335, true);
+    public final AccountProperty ACC_PROP_1 = createProperty(2, 20, 110, 0, "apollo", "1", 106420, true);
+    public final AccountProperty ACC_PROP_2 = createProperty(3, 30, 120, 0, "Para cadastrar no blockchain", "1", 108618, true);
+    public final AccountProperty ACC_PROP_3 = createProperty(4, 40, 130, 0, "Account", null, 108970, true);
+    public final AccountProperty ACC_PROP_4 = createProperty(5, 50, 100, 0, "Apollo", "1", 110754, true);
+    public final AccountProperty ACC_PROP_5 = createProperty(6, 60, 150, 0, "##$$%%alex747ander%%$$##", null, 113510, true);
+    public final AccountProperty ACC_PROP_6 = createProperty(7, 70, 160, 100L, "Hide ip", "1", 117619, true);
+    public final AccountProperty ACC_PROP_7 = createProperty(8, 80, 170, 0, "10", null, 128755, true);
+    public final AccountProperty ACC_PROP_8 = createProperty(10, 90, 100, 0, "mine", null, 134152, true);
+
+    public AccountProperty newProperty = new AccountProperty(ACC_PROP_8.getId()+1, ACC_PROP_8.getRecipientId()+1, ACC_PROP_8.getSetterId(), "Chocoladka", "100g", ACC_PROP_8.getHeight()+1);
+
+
+
+
+
+    public AccountProperty createProperty(long dbId, long propertyId, long recepientId, long setterId, String property, String value, int height, boolean latest){
+        AccountProperty accProperty = new AccountProperty(propertyId, recepientId, setterId, property, value, height);
+        accProperty.setDbId(dbId);
+        accProperty.setLatest(latest);
+        return accProperty;
+    }
 
     public LedgerEntry createLedger(long dbId, long accountId, int eventType, long eventId, int holdingType, Long holdingId, long change, long balance, long blockId, int height, int timeStamp){
         LedgerEvent ledgerEvent = LedgerEvent.fromCode(eventType);
