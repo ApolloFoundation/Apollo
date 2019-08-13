@@ -5,10 +5,16 @@
 package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -100,6 +106,36 @@ public class AccountTestData {
 
     public List<AccountInfo> ALL_INFO = List.of(ACC_INFO_0, ACC_INFO_1, ACC_INFO_2, ACC_INFO_3, ACC_INFO_4);
     public AccountInfo newInfo = new AccountInfo(ACC_INFO_4.getAccountId()+1, "new account info name", "new description", ACC_INFO_4.getHeight()+1);
+
+    public final LedgerEntry ACC_LEDGER_0 = createLedger(53, 110, 3, -7204505074792164093L, 1, null, 250000000000000L, 250000000000000L, 4994769695807437270L, 827, 1054211);
+    public final LedgerEntry ACC_LEDGER_1 = createLedger(54, 110, 50, 9218185695807163289L, 1, null, -200000000, 249999800000000L, -6084261423926609231L, 836, 1054551);
+    public final LedgerEntry ACC_LEDGER_2 = createLedger(55, 120, 1, -6084261423926609231L, 1, null, 200000000, 2692000001000000000L, -6084261423926609231L, 836, 1054551);
+    public final LedgerEntry ACC_LEDGER_3 = createLedger(56, 130, 50, -6534531925815509026L, 1, null, -100000000, 249999500000000L, -8049217029686801713L, 837, 1054648);
+    public final LedgerEntry ACC_LEDGER_4 = createLedger(57, 130, 3, -6534531925815509026L, 1, null, -100000000, 249999400000000L, -8049217029686801713L, 837, 1054648);
+    public final LedgerEntry ACC_LEDGER_5 = createLedger(58, 120, 1, -8049217029686801713L, 1, null, 100000000, 2692000001100000000L, -8049217029686801713L, 837, 1054648);
+    public final LedgerEntry ACC_LEDGER_6 = createLedger(59, 120, 3, -6534531925815509026L, 1, null, 100000000, 2692000001200000000L, -8049217029686801713L, 837, 1054648);
+    public final LedgerEntry ACC_LEDGER_7 = createLedger(60, 110, 50, 1936998860725150465L, 1, null, -100000000, 249999700000000L, 5690171646526982807L, 838, 1054748);
+    public final LedgerEntry ACC_LEDGER_8 = createLedger(61, 110, 3, 1936998860725150465L, 1, null, -2000000000, 249997700000000L, 5690171646526982807L, 838, 1054748);
+    public final LedgerEntry ACC_LEDGER_9 = createLedger(62, 120, 1, 5690171646526982807L, 1, null, 100000000, 2692000001300000000L, 5690171646526982807L, 838, 1054748);
+    public final LedgerEntry ACC_LEDGER_10= createLedger(63, 140, 3, 1936998860725150465L, 1, null, 2000000000, 2000000000, 5690171646526982807L, 838, 1054748);
+    public final LedgerEntry ACC_LEDGER_11= createLedger(64, 110, 50, -2409079077163807920L, 1, null, -100000000, 249997600000000L, 4583712850787255153L, 840, 1054915);
+    public final LedgerEntry ACC_LEDGER_12= createLedger(65, 120, 1, 4583712850787255153L, 1, null, 100000000, 2692000001400000000L, 4583712850787255153L, 840, 1054915);
+    public final LedgerEntry ACC_LEDGER_13= createLedger(66, 120, 50, -5312761317760960087L, 1, null, -100000000, 2692000001300000000L, 7971792663971279902L, 846, 1055410);
+    public final LedgerEntry ACC_LEDGER_14= createLedger(67, 120, 3, -5312761317760960087L, 1, null, -250000000000000L, 2691750001300000000L, 7971792663971279902L, 846, 1055410);
+    public final LedgerEntry ACC_LEDGER_15= createLedger(68, 120, 1, 7971792663971279902L, 1, null, 100000000, 2691750001400000000L, 7971792663971279902L, 846, 1055410);
+
+    public List<LedgerEntry> ALL_LEDGERS = List.of(ACC_LEDGER_0, ACC_LEDGER_1, ACC_LEDGER_3, ACC_LEDGER_4, ACC_LEDGER_5, ACC_LEDGER_6, ACC_LEDGER_7, ACC_LEDGER_8, ACC_LEDGER_9, ACC_LEDGER_10, ACC_LEDGER_11, ACC_LEDGER_12, ACC_LEDGER_13, ACC_LEDGER_14, ACC_LEDGER_15);
+    public LedgerEntry newLedger = new LedgerEntry(ACC_LEDGER_15.getEvent(), ACC_LEDGER_15.getEventId(), 9218185695807163289L, ACC_LEDGER_15.getHolding(), ACC_LEDGER_15.getHoldingId(), 10000L, 2691750001400000000L, ACC_LEDGER_15.getBlockId(), ACC_LEDGER_15.getTimestamp(), ACC_LEDGER_15.getHeight());
+    public final int LEDGER_HEIGHT = 846;
+
+    public LedgerEntry createLedger(long dbId, long accountId, int eventType, long eventId, int holdingType, Long holdingId, long change, long balance, long blockId, int height, int timeStamp){
+        LedgerEvent ledgerEvent = LedgerEvent.fromCode(eventType);
+        LedgerHolding ledgerHolding = LedgerHolding.fromCode(holdingType);
+        LedgerEntry ledger = new LedgerEntry(ledgerEvent, eventId, accountId, ledgerHolding, holdingId, change, balance, blockId, timeStamp, height);
+        ledger.setDbId(dbId);
+        ledger.setLedgerId(dbId);
+        return ledger;
+    }
 
     public AccountInfo createInfo(long dbId, long accountId, String name, String description, int height, boolean latest){
         AccountInfo info = new AccountInfo(accountId, name, description, height);

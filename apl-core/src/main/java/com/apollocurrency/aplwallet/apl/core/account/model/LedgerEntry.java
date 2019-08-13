@@ -52,7 +52,25 @@ public class LedgerEntry extends DerivedEntity {
      * @param   lastBlock               Last block in blockchain
      */
     public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, Block lastBlock) {
-        super(null, lastBlock.getHeight());
+        this(event, eventId ,accountId, holding, holdingId, change, balance, lastBlock.getId(), lastBlock.getTimestamp(), lastBlock.getHeight());
+    }
+
+    /**
+     * Create a ledger entry
+     *
+     * @param   event                   Event
+     * @param   eventId                 Event identifier
+     * @param   accountId               Account identifier
+     * @param   holding                 Holding or null
+     * @param   holdingId               Holding identifier or null
+     * @param   change                  Change in balance
+     * @param   balance                 New balance
+     * @param   lastBlockId             Last block Id in the blockchain
+     * @param   blockTimeStamp          Last block timestamp
+     * @param   height                  the blockchain height
+     */
+    public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, long lastBlockId, int blockTimeStamp, int height) {
+        super(null, height);
         this.event = event;
         this.eventId = eventId;
         this.accountId = accountId;
@@ -60,8 +78,8 @@ public class LedgerEntry extends DerivedEntity {
         this.holdingId = holdingId;
         this.change = change;
         this.balance = balance;
-        this.blockId = lastBlock.getId();
-        this.timestamp = lastBlock.getTimestamp();
+        this.blockId = lastBlockId;
+        this.timestamp = blockTimeStamp;
     }
 
     /**
