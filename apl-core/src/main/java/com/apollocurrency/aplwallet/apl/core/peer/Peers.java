@@ -684,8 +684,9 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
+            Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
             peers.addAll(connectablePeers.values());
+            LOG.trace("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
@@ -693,10 +694,10 @@ public final class Peers {
                 }
 
                 if ( !peer.isBlacklisted() 
-//                     && peer.getState() == PeerState.CONNECTED 
+                     && peer.getState() == PeerState.CONNECTED // skip not connected peers
                      && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
-                   ) 
-                {
+                   ) {
+                    LOG.trace("Prepare send to peer = {}", peer);
                     Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
                         peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
                     );
