@@ -143,7 +143,6 @@ public class DexOfferProcessor {
         for (ExchangeContract incomeContract : incomeContracts) {
             try {
                 DexOffer offer = dexService.getOfferByTransactionId(incomeContract.getOrderId());
-                DexOffer counterOffer = dexService.getOfferByTransactionId(incomeContract.getCounterOrderId());
 
                 if (!offer.getStatus().isWaitingForApproval() || !isContractStep2Valid(incomeContract)){
                     continue;
@@ -184,7 +183,6 @@ public class DexOfferProcessor {
                         .build());
 
                 if(outcomeContract == null){
-                    log.warn("Contract is not valid. OfferId: " + outcomeOffer.getTransactionId());
                     continue;
                 }
                 ExchangeContract initialContract = dexService.getDexContract(DexContractDBRequest.builder()

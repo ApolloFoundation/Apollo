@@ -15,10 +15,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 
 
 public class DexCloseOfferTransaction extends DEX {
@@ -48,7 +51,18 @@ public class DexCloseOfferTransaction extends DEX {
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        //TODO add additional validation. User is owner of this order
+        DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
+        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
+
+        if (offer.getAccountId() != transaction.getSenderId() ) {
+            throw new AplException.NotValidException(JSON.toString(incorrect("orderId", String.format("You can close only your orders."))));
+        }
+
+        if (!offer.getStatus().isWaitingForApproval()) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", String.format("You can close order only in the status WaitingForApproval."))));
+        }
+
+        //TODO add additional validation.
     }
 
     @Override
