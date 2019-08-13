@@ -333,7 +333,6 @@ public class DexService {
 
 
     public boolean approveMoneyTransfer(String passphrase, Long accountId, Long orderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
-
         try {
             DexOffer offer = getOfferByTransactionId(orderId);
 
@@ -351,19 +350,17 @@ public class DexService {
                     .ecBlockId(0L)
                     .build();
 
-            if(offer.getType().isSell()){
+            if (offer.getType().isSell()) {
                 dexSmartContractService.approve(passphrase, secret, offer.getToAddress(), accountId);
-                log.info("Transaction:" + txId +" was approved.");
+                log.info("Transaction:" + txId + " was approved.");
 
                 DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
                 Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Order:" + offer.getTransactionId() +" was closed. TxId:" + respCloseOffer.getId());
+                log.info("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId());
 
-                //TODO add for make graphics
-
-            } else if(offer.getType().isBuy()){
+            } else if (offer.getType().isBuy()) {
 
                 Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(txId));
                 List<byte[]> txHash = new ArrayList<>();
@@ -373,17 +370,16 @@ public class DexService {
                 templatTransactionRequest.setAttachment(attachment);
 
                 Transaction respApproveTx = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Transaction:" + txId +" was approved. TxId: " + respApproveTx.getId());
+                log.info("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId());
 
                 DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
                 Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Order:" + offer.getTransactionId() +" was closed. TxId:" + respCloseOffer.getId());
+                log.info("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId());
 
-                //TODO add for make graphics
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
             throw new AplException.ExecutiveProcessException(ex.getMessage());
         }
 
