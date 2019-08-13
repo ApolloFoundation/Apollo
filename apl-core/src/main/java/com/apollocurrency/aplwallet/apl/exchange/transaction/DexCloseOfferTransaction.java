@@ -2,11 +2,16 @@ package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOfferAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -19,6 +24,7 @@ import java.nio.ByteBuffer;
 public class DexCloseOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
+    private BlockchainImpl blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     @Override
     public byte getSubtype() {
@@ -56,8 +62,25 @@ public class DexCloseOfferTransaction extends DEX {
 
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         offer.setStatus(OfferStatus.CLOSED);
-
         dexService.saveOffer(offer);
+
+        ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
+        Block lastBlock = blockchain.getLastBlock();
+
+        DexTradeEntry dexTradeEntry = DexTradeEntry.builder()
+                .transactionID(transaction.getId())
+                .senderOfferAmount(exchangeContract.getSender())
+                .receiverOfferID(exchangeContract.getRecipient())
+                .senderOfferType((byte) offer.getType().ordinal())
+                .senderOfferCurrency((byte) offer.getOfferCurrency().ordinal())
+                .senderOfferAmount(offer.getOfferAmount())
+                .pairCurrency((byte) offer.getPairCurrency().ordinal())
+                .pairRate(offer.getPairRate())
+                .finishTime(lastBlock.getTimestamp())
+                .height(lastBlock.getHeight())
+                .build();
+
+        dexService.saveDexTradeEntry(dexTradeEntry);
     }
 
 
