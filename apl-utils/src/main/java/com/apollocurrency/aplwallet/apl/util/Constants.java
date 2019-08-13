@@ -148,6 +148,7 @@ public final class Constants {
 
     //DEX
 
+    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
     //24 h
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
     //24 h TODO CHANGe time
