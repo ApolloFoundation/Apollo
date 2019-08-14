@@ -392,6 +392,8 @@ public final class Peers {
         try {
             shutdown = true;
             peerHttpServer.shutdown();
+            TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
+            dispatcher.shutdown();
             DefaultTaskDispatcher.shutdownExecutor("sendingService", sendingService, 2);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
@@ -407,12 +409,19 @@ public final class Peers {
         if(peerHttpServer!=null){
            suspend = peerHttpServer.suspend();
         }
+        TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
+        dispatcher.shutdown();
+        taskDispatchManager.removeDispatcher(dispatcher);
+        getActivePeers().forEach((p) -> {
+            p.deactivate("Suspending peer operations");
+        });
     }
 
     public static void resume() {
         if (suspend && peerHttpServer!=null) {
             suspend = !peerHttpServer.resume();
         }
+        configureBackgroundTasks();
     }
 
     public static boolean addListener(Listener<Peer> listener, Event eventType) {
@@ -450,7 +459,7 @@ public final class Peers {
         return res;
     }
     public static List<Peer> getActivePeers() {
-        return getPeers(peer -> peer.getState() != PeerState.NON_CONNECTED);
+        return getPeers(peer -> peer.getState() == PeerState.CONNECTED);
     }
 
     public static List<Peer> getPeers(final PeerState state) {
