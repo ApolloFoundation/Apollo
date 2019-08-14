@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 
@@ -58,11 +59,9 @@ public class DexCloseOfferTransaction extends DEX {
             throw new AplException.NotValidException(JSON.toString(incorrect("orderId", String.format("You can close only your orders."))));
         }
 
-        if (!offer.getStatus().isWaitingForApproval()) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", String.format("You can close order only in the status WaitingForApproval."))));
+        if (!(offer.getStatus().isWaitingForApproval() || offer.getStatus().isClosed())) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", String.format("You can close order only in the status WaitingForApproval, but: " + offer.getStatus().name()))));
         }
-
-        //TODO add additional validation.
     }
 
     @Override
@@ -100,6 +99,12 @@ public class DexCloseOfferTransaction extends DEX {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
 
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_CLOSE_OFFER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

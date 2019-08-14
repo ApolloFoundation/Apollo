@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 @Data
 @Builder
 @AllArgsConstructor
+@EqualsAndHashCode
 public class DexOffer{
     /**
      * Use transactionId.

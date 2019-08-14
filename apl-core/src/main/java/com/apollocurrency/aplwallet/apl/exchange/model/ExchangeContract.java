@@ -4,10 +4,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAtt
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @Builder
 @AllArgsConstructor
+@EqualsAndHashCode
 public class ExchangeContract {
 
     private Long id;

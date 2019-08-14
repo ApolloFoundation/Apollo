@@ -3,16 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
+import lombok.Data;
+
 import java.math.BigDecimal;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  *
  * @author Serhiy Lymar
  */
 
-@Getter @Setter
+@Data
 public class DexTradeEntryMin {    
      private BigDecimal hi;
      private BigDecimal low;
