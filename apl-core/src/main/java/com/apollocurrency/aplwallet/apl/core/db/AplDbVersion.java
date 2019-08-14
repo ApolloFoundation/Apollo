@@ -791,22 +791,33 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
             case 301:
                 apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
-                        "counter_offer_id BIGINT NOT NULL, status TINYINT NOT NULL, sender BIGINT NOT NULL, recipient BIGINT NOT NULL, secret_hash BINARY(32)," +
-                        " encrypted_secret BINARY(64), transfer_tx_id VARCHAR(120) NOT NULL, " +
-                        " height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 302:
-                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
+                apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32)");
             case 303:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS status TINYINT NOT NULL");
+            case 304:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS sender BIGINT NOT NULL");
+            case 305:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS recipient BIGINT NOT NULL");
+            case 306:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS encrypted_secret BINARY(64)");
+            case 307:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS transfer_tx_id VARCHAR(120) NOT NULL");
+
+            case 308:
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
+            case 309:
                 apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
                         " height INT NOT NULL)");
-            case 304:
+            case 310:
                 apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
                         "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
                         "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
                         "HEIGHT INT not null )" );
 
-            case 305:
-                return 305;
+            case 311:
+                return 311;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
