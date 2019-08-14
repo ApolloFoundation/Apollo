@@ -79,11 +79,20 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     }
 
     @Override
-    public void invoke(Task task) throws RejectedExecutionException{
+    public void invoke(Task task) throws RejectedExecutionException {
+        if (task == null) {
+            log.debug("SKIPPING, task is '{}'...", task);
+            return;
+        }
         createMainExecutor().invoke(task);
     }
 
     protected void invokeAll(Collection<? extends Task> tasks) throws RejectedExecutionException {
+        log.debug("invokeAll on [{}] prepared task(s)", tasks != null ? tasks.size() : -1);
+        if (tasks == null || tasks.size() <= 0) {
+            log.debug("SKIPPING, empty/null task collection '{}'...", tasks);
+            return;
+        }
         tasks.forEach(this::invoke);
     }
 
