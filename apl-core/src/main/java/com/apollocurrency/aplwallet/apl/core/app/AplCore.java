@@ -55,13 +55,11 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
+import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -92,7 +90,7 @@ public final class AplCore {
     private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
     private API apiServer;
-    private DexMatcherServiceImpl tcs;
+    private IDexMatcherInterface tcs;
 
     @Inject @Setter
     private PropertiesHolder propertiesHolder;
@@ -224,7 +222,7 @@ public final class AplCore {
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
 
-                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
+                tcs = CDI.current().select(IDexMatcherInterface.class).get();
                 tcs.initialize();
 
 
