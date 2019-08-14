@@ -8,5 +8,9 @@ public interface TaskExecutorService {
 
     void invoke(Task task);
 
+    void suspend();
+
+    void resume();
+
     ExecutorService executor();
 }

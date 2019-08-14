@@ -19,8 +19,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class DefaultTaskDispatcher implements TaskDispatcher {
@@ -80,11 +84,32 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     @Override
     public void invoke(Task task) throws RejectedExecutionException{
+        if (task == null) {
+            log.debug("SKIPPING, task is 'NULL'");
+            return;
+        }
         createMainExecutor().invoke(task);
     }
 
     protected void invokeAll(Collection<? extends Task> tasks) throws RejectedExecutionException {
+        log.debug("invokeAll on [{}] prepared task(s)", tasks != null ? tasks.size() : -1);
+        if (tasks == null || tasks.size() <= 0) {
+            log.debug("SKIPPING, empty/null task collection.");
+            return;
+        }
         tasks.forEach(this::invoke);
+    }
+
+    @Override
+    public void suspend() {
+        log.debug("Suspend dispatcher={}", serviceName);
+        createMainExecutor().suspend();
+    }
+
+    @Override
+    public void resume() {
+        log.debug("Resume dispatcher={}", serviceName);
+        createMainExecutor().resume();
     }
 
     @Override
@@ -316,8 +341,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         @Override
         public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
             return  new ScheduledTaskExecutorService(
-                    Executors.newScheduledThreadPool(
-                            poolSize,
+                    new PausableScheduledThreadPoolExecutor(poolSize,
                             new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
@@ -326,38 +350,97 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         @Override
         public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
             return  new BackgroundTaskExecutorService(
-                    Executors.newScheduledThreadPool(
-                            poolSize,
+                        new PausableScheduledThreadPoolExecutor(poolSize,
                             new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
         }
     }
 
-    public static class FixedExecutorServiceFactory implements ExecutorServiceFactory {
+   /* public static class FixedExecutorServiceFactory implements ExecutorServiceFactory {
         @Override
         public TaskExecutorService newExecutor(String poolName, int poolSize, boolean daemon) {
             return  new FixedSizeTaskExecutorService(
-                    Executors.newFixedThreadPool(
-                            poolSize,
+                        new ThreadPoolExecutor(poolSize, poolSize,
+                            0L, TimeUnit.MILLISECONDS,
+                            new LinkedBlockingQueue<Runnable>(),
                             new NamedThreadFactory(new ThreadGroup(nextGroupName()), poolName, daemon)));
+        }
+    }*/
+
+    private static class PausableScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor implements PausableExecutorService{
+        private boolean isPaused;
+        private ReentrantLock pauseLock = new ReentrantLock();
+        private Condition condition = pauseLock.newCondition();
+
+        public PausableScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory) {
+            super(corePoolSize, threadFactory);
+        }
+
+        @Override
+        protected void beforeExecute(Thread t, Runnable r) {
+            super.beforeExecute(t, r);
+            pauseLock.lock();
+            try {
+                while (isPaused) condition.await();
+            } catch(InterruptedException ie) {
+                t.interrupt();
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+
+        @Override
+        public boolean isPaused() {
+            return isPaused;
+        }
+
+        @Override
+        public void suspend() {
+            pauseLock.lock();
+            try {
+                isPaused = true;
+            } finally {
+                pauseLock.unlock();
+            }
+        }
+
+        @Override
+        public void resume() {
+            pauseLock.lock();
+            try {
+                isPaused = false;
+                condition.signalAll();
+            } finally {
+                pauseLock.unlock();
+            }
         }
     }
 
     private static abstract class AbstractTaskExecutorService implements TaskExecutorService{
-        protected ExecutorService service;
+        protected PausableExecutorService service;
 
-        public AbstractTaskExecutorService(ExecutorService service) {
+        AbstractTaskExecutorService(PausableExecutorService service) {
             this.service = service;
         }
 
         @Override
-        public ExecutorService executor() {
+        public PausableExecutorService executor() {
             return service;
+        }
+
+        @Override
+        public void suspend() {
+            executor().suspend();
+        }
+
+        @Override
+        public void resume() {
+            executor().resume();
         }
     }
 
     private static class BackgroundTaskExecutorService extends AbstractTaskExecutorService {
 
-        public BackgroundTaskExecutorService(ExecutorService service) {
+        BackgroundTaskExecutorService(PausableExecutorService service) {
             super(service);
         }
 
@@ -383,7 +466,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     private static class ScheduledTaskExecutorService extends AbstractTaskExecutorService {
 
-        public ScheduledTaskExecutorService(ExecutorService service) {
+        ScheduledTaskExecutorService(PausableExecutorService service) {
             super(service);
         }
 
@@ -408,7 +491,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     }
     private static class FixedSizeTaskExecutorService extends AbstractTaskExecutorService {
 
-        public FixedSizeTaskExecutorService(ExecutorService service) {
+        FixedSizeTaskExecutorService(PausableExecutorService service) {
             super(service);
         }
         @Override
