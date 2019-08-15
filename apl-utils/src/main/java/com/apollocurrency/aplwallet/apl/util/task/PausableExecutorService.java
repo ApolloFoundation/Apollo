@@ -6,6 +6,11 @@ package com.apollocurrency.aplwallet.apl.util.task;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * An {@link ExecutorService} that provides methods to manage the executor behavior
+ * for suspending and resuming task execution.
+ *
+ */
 public interface PausableExecutorService extends ExecutorService {
 
     default boolean isRunning() {
@@ -15,12 +20,12 @@ public interface PausableExecutorService extends ExecutorService {
     boolean isPaused();
 
     /**
-     * Pause the execution
+     * Suspend the execution
      */
     void suspend();
 
     /**
-     * Resume pool execution
+     * Resume the execution
      */
     void resume();
 

@@ -26,6 +26,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.task.Tasks.shutdownExecutor;
+
+/**
+ * The default {@link TaskDispatcher} that manages the background tasks
+ */
 @Slf4j
 public class DefaultTaskDispatcher implements TaskDispatcher {
 
@@ -39,16 +44,32 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     protected final Map<String,String> initParameters;
 
     protected ExecutorServiceFactory executorServiceFactory;
+    /**
+     * The main executor
+     */
     protected TaskExecutorService backgroundThread;
     @Getter
     protected String serviceName;
 
     protected volatile boolean started = false;
 
+    /**
+     * The executor that runs INIT and BEFORE tasks
+     */
     private ExecutorService onStartExecutor;
+
+    /**
+     * The tasks queue
+     */
     private HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
+
     private Object taskMonitor = new Object();
 
+    /**
+     * Create dispatcher with initial parameters
+     * @param executorServiceFactory the factory
+     * @param name the dispatcher name
+     */
     public DefaultTaskDispatcher(ExecutorServiceFactory executorServiceFactory, String name) {
         this.executorServiceFactory = Objects.requireNonNull(executorServiceFactory, "ExecutorFactory is NULL");
         this.serviceName = APL_BG_WORKERS +"-"+Objects.requireNonNull(name, "Service name is NULL");
@@ -58,11 +79,14 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     }
 
     @Override
-    public String getName()
-    {
+    public String getName(){
         return serviceName;
     }
 
+    /**
+     * Create main executor for all periodical background tasks
+     * @return
+     */
     protected TaskExecutorService createMainExecutor(){
         if(backgroundThread == null) {
             //TODO: adjust code using init parameters and min/max constraints
@@ -91,6 +115,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         createMainExecutor().invoke(task);
     }
 
+    /**
+     * Submit all tasks from collection
+     * @param tasks the collection of tasks to submit
+     * @throws RejectedExecutionException
+     */
     protected void invokeAll(Collection<? extends Task> tasks) throws RejectedExecutionException {
         log.debug("invokeAll on [{}] prepared task(s)", tasks != null ? tasks.size() : -1);
         if (tasks == null || tasks.size() <= 0) {
@@ -135,6 +164,12 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }
 
+    /**
+     * Put the task into the queue
+     * @param position the task order
+     * @param task the task to put
+     * @return
+     */
     private boolean put(TaskOrder position, Task task){
         List<Task> taskList = tasks.getOrDefault(position, new ArrayList<>());
         taskList.add(task);
@@ -208,33 +243,6 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }
 
-    /**
-     * Initiates an orderly shutdown and blocks until all tasks have completed execution after a shutdown
-     * request, or the timeout occurs.
-     * @param name the executor name for logging
-     * @param executor executor
-     * @param timeout the maximum time to wait in SECONDS
-     */
-    public static void shutdownExecutor(String name, ExecutorService executor, int timeout) {
-        if (executor != null) {
-            try {
-                log.info("Shutting down {}", name);
-                executor.shutdown();
-                try {
-                    executor.awaitTermination(timeout, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                if (!executor.isTerminated()) {
-                    log.info("Some threads in {} didn't terminate, forcing shutdown", name);
-                    executor.shutdownNow();
-                }
-            } catch (Exception ex) {
-                log.error(ex.getMessage(), ex);
-            }
-        }
-    }
-
     @Override
     public boolean isShutdown() {
         if (backgroundThread != null) {
@@ -261,6 +269,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         return started;
     }
 
+    /**
+     * Runs all tasks from the collection and Blocks until all tasks have completed execution, or
+     * the timeout occurs, or the current thread is interrupted, whichever happens first.
+     * @param tasks the tasks collection to run
+     */
     private void runAllAndWait(final Collection<Task> tasks) {
         if (tasks != null && tasks.size() > 0) {
             StringBuffer errors = new StringBuffer();
@@ -298,6 +311,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         }
     }
 
+    @Override
     public String info(){
         StringBuilder info = new StringBuilder("Dispatcher={");
         info.append("name:").append(serviceName);
@@ -489,6 +503,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             }
         }
     }
+
     private static class FixedSizeTaskExecutorService extends AbstractTaskExecutorService {
 
         FixedSizeTaskExecutorService(PausableExecutorService service) {

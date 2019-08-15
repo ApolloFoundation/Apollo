@@ -1,6 +1,11 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
 package com.apollocurrency.aplwallet.apl.util.task;
 
-
+/**
+ * An factory class to construct {@link TaskExecutorService}
+ */
 public interface ExecutorServiceFactory {
     /**
      * Constructs a new {@code ExecutorService}.
