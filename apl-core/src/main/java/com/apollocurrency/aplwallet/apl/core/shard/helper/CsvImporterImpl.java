@@ -91,7 +91,9 @@ public class CsvImporterImpl implements CsvImporter {
     /**
      * {@inheritDoc}
      */
-    private long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease, Map<String, Object> defaultParams, Consumer<Map<String,Object>> rowDataConsumer) throws Exception {
+    private long importCsv(String tableName, int batchLimit, boolean cleanTarget,
+                           Double stateIncrease, Map<String, Object> defaultParams,
+                           Consumer<Map<String,Object>> rowDataConsumer) throws Exception {
 
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
@@ -136,7 +138,7 @@ public class CsvImporterImpl implements CsvImporter {
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
                 ResultSet rs = csvReader.read(
                 inputFileName, null, null);
-             Connection con = dataSource.begin()) {
+             Connection con = dataSource.getConnection()) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
             // get CSV meta data info
@@ -242,8 +244,8 @@ public class CsvImporterImpl implements CsvImporter {
             }
             dataSource.commit(); // final commit
         } catch (Exception e) {
+            log.error("Error during importing '" + tableName + "'", e);
             dataSource.rollback();
-            log.error("Error during importing " + tableName, e);
             throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {
