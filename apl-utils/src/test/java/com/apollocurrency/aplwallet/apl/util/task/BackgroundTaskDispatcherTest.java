@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.RejectedExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
@@ -59,6 +60,38 @@ class BackgroundTaskDispatcherTest {
 
         //expected that thread executed at least 9 times
         verify(runnable, atLeast(9)).run();
+    }
+
+    @Test
+    void scheduleAtFixedRate_withSuspending() throws InterruptedException {
+        taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
+        //task.setTask(runnable);
+        final Count count = new Count(0);
+        task = Task.builder()
+                .name("task-1")
+                .task(()-> {count.inc(); log.info("task-body: task running");})
+                .initialDelay(0)
+                .delay(10)
+                .build();
+
+        taskDispatcher.schedule(task);
+        taskDispatcher.dispatch();
+        log.info("Thread dispatch");
+        Thread.sleep(100);
+        log.info("Suspend dispatcher");
+        taskDispatcher.suspend();
+        int val1 = count.value;
+        Thread.sleep(100);
+        log.info("Resume dispatcher");
+        int val2 = count.value;
+        taskDispatcher.resume();
+        Thread.sleep(100);
+        int val3 = count.value;
+        taskDispatcher.shutdown();
+
+        assertTrue(val1 > 0 );
+        assertEquals(val1, val2);
+        assertTrue(val3 > val2);
     }
 
     @Test

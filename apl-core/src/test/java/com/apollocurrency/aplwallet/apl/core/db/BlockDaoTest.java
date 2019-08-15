@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -66,7 +66,7 @@ class BlockDaoTest {
     public WeldInitiator weld = WeldInitiator.from()
             .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
             .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-            .addBeans(MockBean.of(mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(mock(TimeServiceImpl.class), TimeServiceImpl.class))
             .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

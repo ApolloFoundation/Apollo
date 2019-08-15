@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -22,6 +23,18 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     private static final String TABLE_NAME = "account_guaranteed_balance";
     private BlockchainConfig blockchainConfig;
     private int batchCommitSize;
+
+    private static final LongKeyFactory<AccountGuaranteedBalance>
+            accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
+        @Override
+        public DbKey newKey(AccountGuaranteedBalance accountGuaranteedBalance) {
+            return accountGuaranteedBalance.dbKey;
+        }
+    };
+
+    public static DbKey newKey(long id){
+        return accountGuaranteedBalanceLongKeyFactory.newKey(id);
+    }
 
     @Override
     public void trim(int height) {
@@ -42,8 +55,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     }
 
     @Override
-    protected Object load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        throw new RuntimeException("Method is not implemented yet");
+    public AccountGuaranteedBalance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        return new AccountGuaranteedBalance(rs, dbKey);
     }
 
     @Inject

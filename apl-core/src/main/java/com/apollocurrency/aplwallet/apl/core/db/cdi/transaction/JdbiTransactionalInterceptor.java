@@ -3,7 +3,6 @@ package com.apollocurrency.aplwallet.apl.core.db.cdi.transaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import org.jdbi.v3.sqlobject.transaction.Transaction;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -31,37 +30,50 @@ public class JdbiTransactionalInterceptor {
         }
 
         Transactional annotation = ctx.getMethod().getAnnotation(Transactional.class);
-        Transaction annotation2 = ctx.getMethod().getAnnotation(Transaction.class);
 
-        boolean readOnly = (annotation != null && annotation.readOnly())
-                || (annotation2 != null && annotation2.readOnly());
+        boolean readOnly = annotation.readOnly();
         boolean createHandle = !jdbiHandleFactory.currentHandleOpened();
         if (createHandle) {
              jdbiHandleFactory.open();
+             logIfTraceEnabled("Open handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
         }
         try {
             if (!readOnly) {
+                if (!createHandle && jdbiHandleFactory.isReadOnly()) {
+                    log.warn("Will start transaction on readOnly handle");
+                }
                 jdbiHandleFactory.begin();
-            } else if (createHandle) {
-                jdbiHandleFactory.setReadOnly(true);
+                logIfTraceEnabled("Begin transaction {}.{}", ctx.getTarget(), ctx.getMethod().getName());
+            } else {
+                if (createHandle) {
+                    jdbiHandleFactory.setReadOnly(true);
+                }
             }
             Object result = ctx.proceed();
 
             if (!readOnly) {
                 jdbiHandleFactory.commit();
+                logIfTraceEnabled("Commit transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
 
             return result;
         } catch (Exception e) {
             if (!readOnly) {
                 jdbiHandleFactory.rollback();
+                logIfTraceEnabled("Rollback transaction {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
-            log.error(e.getMessage(), e);
             throw e;
         } finally {
             if (createHandle) {
                 jdbiHandleFactory.close();
+                logIfTraceEnabled("Close handle {}.{}",ctx.getTarget(), ctx.getMethod().getName());
             }
+        }
+    }
+
+    private void logIfTraceEnabled(String pattern, Object... objects) {
+        if (log.isTraceEnabled()) {
+            log.trace(pattern,objects);
         }
     }
 }

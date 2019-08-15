@@ -62,7 +62,7 @@ public final class Generator implements Comparable<Generator> {
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
