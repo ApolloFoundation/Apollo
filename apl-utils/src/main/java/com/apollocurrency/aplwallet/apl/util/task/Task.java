@@ -8,15 +8,30 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * The object that represents a background task.
+ */
 @Getter
 @Builder
 @ToString
 public class Task implements TaskAttributes, Runnable{
 
+    /**
+     * To be executed by a thread
+     */
     @Setter
     private Runnable task;
+    /**
+     * Task name
+     */
     private String name;
+    /**
+     * The initial delay
+     */
     private int initialDelay;
+    /**
+     * The periodic delay
+     */
     private int delay;
 
     @Override
