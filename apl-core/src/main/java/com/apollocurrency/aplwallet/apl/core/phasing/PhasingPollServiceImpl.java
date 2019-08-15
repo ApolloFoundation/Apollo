@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingCreator;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTransaction;
@@ -27,14 +27,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollServiceImpl implements PhasingPollService {
@@ -186,13 +186,18 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public void finish(PhasingPoll phasingPoll, long result, long approvalTx) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
+        int height = blockchain.getHeight();
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, height, phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
         resultTable.insert(phasingPollResult);
 
-        approvedResultTable.insert(new PhasingApprovedResult(phasingPoll.getId(), approvalTx));
+//      result > 0 is for store only approved transactions, but not phasing.
+        //TODO change height on the production!
+        if(result > 0 && height > 675000) {
+            approvedResultTable.insert(new PhasingApprovalResult(height, phasingPoll.getId(), approvalTx));
+        }
     }
 
-    public PhasingApprovedResult getApprovedTx(long phasingTxId){
+    public PhasingApprovalResult getApprovedTx(long phasingTxId){
         return approvedResultTable.get(phasingTxId);
     }
 

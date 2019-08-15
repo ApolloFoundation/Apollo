@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
@@ -462,11 +462,11 @@ public class DexService {
                 return null;
             }
 
-            PhasingApprovedResult phasingApprovedResult = phasingPollService.getApprovedTx(phasingPoll.getId());
-            if(phasingApprovedResult == null){
+            PhasingApprovalResult phasingApprovalResult = phasingPollService.getApprovedTx(phasingPoll.getId());
+            if(phasingApprovalResult == null){
                 return null;
             }
-            Long approvedTx = phasingApprovedResult.getApprovedTx();
+            Long approvedTx = phasingApprovalResult.getApprovedTx();
 
             Transaction transaction = blockchain.getTransaction(approvedTx);
             MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();

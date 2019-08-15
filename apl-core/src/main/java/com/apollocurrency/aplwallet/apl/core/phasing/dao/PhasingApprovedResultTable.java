@@ -5,7 +5,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingApprovedResultMapper;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -14,12 +14,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Singleton
-public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovedResult> {
+public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovalResult> {
 
     private static final String TABLE_NAME = "phasing_approval_tx";
-    private static final LongKeyFactory<PhasingApprovedResult> KEY_FACTORY = new LongKeyFactory<>("phasing_tx") {
+    private static final LongKeyFactory<PhasingApprovalResult> KEY_FACTORY = new LongKeyFactory<>("phasing_tx") {
         @Override
-        public DbKey newKey(PhasingApprovedResult phasingApproveResult) {
+        public DbKey newKey(PhasingApprovalResult phasingApproveResult) {
             if (phasingApproveResult.getDbKey() == null) {
                 DbKey dbKey = KEY_FACTORY.newKey(phasingApproveResult.getDbId());
                 phasingApproveResult.setDbKey(dbKey);
@@ -36,16 +36,16 @@ public class PhasingApprovedResultTable  extends EntityDbTable<PhasingApprovedRe
 
 
     @Override
-    public PhasingApprovedResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public PhasingApprovalResult load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return MAPPER.map(rs, null);
     }
 
-    public PhasingApprovedResult get(long id) {
+    public PhasingApprovalResult get(long id) {
         return get(KEY_FACTORY.newKey(id));
     }
 
     @Override
-    public void save(Connection con, PhasingApprovedResult phasingPollResult) throws SQLException {
+    public void save(Connection con, PhasingApprovalResult phasingPollResult) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO phasing_approval_tx (phasing_tx, approved_tx, "
                 + " height) VALUES (?, ?, ?)")) {
             int i = 0;

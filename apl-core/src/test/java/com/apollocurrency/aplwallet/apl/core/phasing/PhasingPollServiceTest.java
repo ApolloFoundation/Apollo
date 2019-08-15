@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovedResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
@@ -286,11 +286,11 @@ public class PhasingPollServiceTest {
         blockchain.setLastBlock(btd.BLOCK_9);
         inTransaction(con -> service.finish(ptd.POLL_3, 1, 1L));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingApprovedResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
+        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
 
         assertEquals(expected, result);
-        assertEquals(new PhasingApprovedResult(ptd.POLL_3.getId(), 1L), approvedResultTx);
+        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
 
     @Test
@@ -298,11 +298,11 @@ public class PhasingPollServiceTest {
         blockchain.setLastBlock(btd.LAST_BLOCK);
         inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum(), 1L));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingApprovedResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
+        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
 
         assertEquals(expected, result);
-        assertEquals(new PhasingApprovedResult(ptd.POLL_3.getId(), 1L), approvedResultTx);
+        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
 
     @Test

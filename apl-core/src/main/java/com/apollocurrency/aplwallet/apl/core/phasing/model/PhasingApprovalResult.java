@@ -7,12 +7,12 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode
-public class PhasingApprovedResult extends DerivedEntity {
+public class PhasingApprovalResult extends DerivedEntity {
     private final long phasingTx;
     private final long approvedTx;
 
-    public PhasingApprovedResult(long phasingTx, long approvalTx) {
-        super(null, null);
+    public PhasingApprovalResult(Integer height, long phasingTx, long approvalTx) {
+        super(null, height);
         this.phasingTx = phasingTx;
         this.approvedTx = approvalTx;
     }
