@@ -72,17 +72,41 @@ public class TaskDispatchManager {
         }
     }
 
+    /**
+     * Remove and shutdown the dispatcher
+     * @param dispatcher
+     */
     public void removeDispatcher(TaskDispatcher dispatcher){
+        removeDispatcher(dispatcher, true);
+    }
+
+    public void removeDispatcher(TaskDispatcher dispatcher, boolean shutdown){
+        boolean found = false;
         synchronized (dispatchersMonitor) {
             if (dispatchers.containsValue(dispatcher)) {
-                dispatchers.values().removeIf(value -> value.equals(dispatcher));
+                found = dispatchers.values().removeIf(value -> value.equals(dispatcher));
             }
+        }
+        if (found && shutdown) {
+            dispatcher.shutdown();
         }
     }
 
+    /**
+     * Remove and shutdown dispatcher by name
+     * @param name a dispatcher name
+     */
     public void removeDispatcher(String name){
+        removeDispatcher(name, true);
+    }
+
+    public void removeDispatcher(String name, boolean shutdown){
+        TaskDispatcher dispatcher;
         synchronized (dispatchersMonitor) {
-            dispatchers.remove(name);
+            dispatcher = dispatchers.remove(name);
+        }
+        if (dispatcher!=null && shutdown) {
+            dispatcher.shutdown();
         }
     }
 

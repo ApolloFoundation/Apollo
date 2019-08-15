@@ -69,11 +69,11 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -638,7 +638,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     public void shutdown() {
         try {
-            DefaultTaskDispatcher.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
+            Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
             getMoreBlocks = false;
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
