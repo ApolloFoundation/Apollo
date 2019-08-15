@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.36.1</version>
+        <version>1.36.4</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -258,7 +258,7 @@
         <dependency>
             <groupId>com.apollocurrency.antifraud</groupId>
             <artifactId>antifraud</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
 
         <!-- Ethereum API -->
