@@ -688,7 +688,7 @@ public class AplDbVersion extends DbVersion {
             case 252:
                 // SHARDING meta-info inside main database
                 apply("CREATE TABLE IF NOT EXISTS shard (shard_id BIGINT NOT NULL, shard_hash VARBINARY, " +
-                        "shard_height INT not null default 0, shard_state BIGINT default 0, zip_hash_crc VARBINARY, generator_ids ARRAY DEFAULT NULL)");
+                        "shard_height INT not null default 0, shard_state BIGINT default 0, zip_hash_crc VARBINARY, prunable_zip_hash VARBINARY DEFAULT NULL, generator_ids ARRAY DEFAULT NULL)");
             case 253:
                 apply("alter table shard add constraint IF NOT EXISTS PRIMARY_KEY_SHARD_ID primary key (shard_id)"); // primary key + index
             case 254:
@@ -792,8 +792,15 @@ public class AplDbVersion extends DbVersion {
             case 301:
                 apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
                         "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
-            case 302:
-                return 302;
+            case 302: 
+                apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
+                        "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
+                        "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
+                        "HEIGHT INT not null )" );                                                   
+            case 303:
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
+            case 304:
+                return 304;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

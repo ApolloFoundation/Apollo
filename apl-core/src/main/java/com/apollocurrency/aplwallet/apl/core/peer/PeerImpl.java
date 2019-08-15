@@ -41,7 +41,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
@@ -94,7 +94,7 @@ public final class PeerImpl implements Peer {
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
-    private volatile EpochTime timeService;
+    private volatile TimeService timeService;
     private final PropertiesHolder propertiesHolder;
     
     private final PeerInfo pi = new PeerInfo();
@@ -105,12 +105,12 @@ public final class PeerImpl implements Peer {
     private final Peer2PeerTransport p2pTransport;
     @Getter
     private volatile int  failedConnectAttempts = 0;
-    
-    PeerImpl(PeerAddress addrByFact, 
+
+    PeerImpl(PeerAddress addrByFact,
             PeerAddress announcedAddress,
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
-            EpochTime timeService,
+            TimeService timeService,
             PropertiesHolder propertiesHolder,
             PeerServlet peerServlet
     ) {
@@ -118,7 +118,7 @@ public final class PeerImpl implements Peer {
         mapper.registerModule(new JsonOrgModule());
         this.host = addrByFact.getHost();
         this.port = addrByFact.getPort();
-        
+
         this.propertiesHolder=propertiesHolder;
         if(announcedAddress==null){
             LOG.trace("got empty announcedAddress from host {}",getHostWithPort());
@@ -169,7 +169,7 @@ public final class PeerImpl implements Peer {
         PeerState oldState=getState();
         Lock lock = stateLock.writeLock();
         lock.lock();
-        try{            
+        try{
           if (newState != PeerState.CONNECTED) {
             p2pTransport.disconnect();
           }
@@ -475,14 +475,14 @@ public final class PeerImpl implements Peer {
     public int getLastConnectAttempt() {
         return lastConnectAttempt;
     }
-    
+
     public long getLastActivityTime(){
         return p2pTransport.getLastActivity();
     }
 
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException{
-        
+
         if(getState()!=PeerState.CONNECTED){
             LOG.debug("send() called before handshake(). Handshacking to: {}",getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
@@ -490,7 +490,7 @@ public final class PeerImpl implements Peer {
             return send(request);
         }
     }
-    
+
     private JSONObject send(final JSONStreamAware request) {
 
         JSONObject response =null;
@@ -890,7 +890,7 @@ public final class PeerImpl implements Peer {
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
-    
+
     /**
      * process error from transport and application level
      */
@@ -909,11 +909,11 @@ public final class PeerImpl implements Peer {
                         String msg = String.format("We are blacklisted by %s, cause: %s", getHostWithPort(), resp.cause);
                         LOG.debug("Deactivating: "+msg);
                         deactivate(msg);
-                    }else if (Errors.MAX_INBOUND_CONNECTIONS.equalsIgnoreCase(resp.error)) {                        
+                    }else if (Errors.MAX_INBOUND_CONNECTIONS.equalsIgnoreCase(resp.error)) {
                         deactivate(Errors.MAX_INBOUND_CONNECTIONS);
-                    }else if (Errors.INVALID_ANNOUNCED_ADDRESS.equalsIgnoreCase(resp.error)) {                        
+                    }else if (Errors.INVALID_ANNOUNCED_ADDRESS.equalsIgnoreCase(resp.error)) {
                         deactivate(Errors.INVALID_ANNOUNCED_ADDRESS);
-                    }else if (Errors.UNSUPPORTED_PROTOCOL.equalsIgnoreCase(resp.error)) {                        
+                    }else if (Errors.UNSUPPORTED_PROTOCOL.equalsIgnoreCase(resp.error)) {
                         deactivate(Errors.UNSUPPORTED_PROTOCOL);
                     }
                     //check any other error to deactivate?
@@ -927,13 +927,13 @@ public final class PeerImpl implements Peer {
     }
 
     boolean processError(JSONObject message) {
-       if(message!=null){ 
+       if(message!=null){
           return processError(message.toJSONString());
        }else{
             LOG.debug("null message from {}, deactivating", getHostWithPort());
             deactivate(host);
-            return true;           
+            return true;
        }
     }
-    
+
 }

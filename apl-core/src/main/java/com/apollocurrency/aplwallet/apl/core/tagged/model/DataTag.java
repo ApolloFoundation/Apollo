@@ -66,6 +66,12 @@ public class DataTag extends VersionedDerivedEntity {
         this.count = count;
     }
 
+    public DataTag(Long dbId, Integer height, String tag, int count) {
+        super(dbId, height);
+        this.tag = tag;
+        this.count = count;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,5 +85,13 @@ public class DataTag extends VersionedDerivedEntity {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), tag, count);
+    }
+
+    @Override
+    public String toString() {
+        return "DataTag{" +
+                "tag='" + tag + '\'' +
+                ", count=" + count +
+                '}';
     }
 }

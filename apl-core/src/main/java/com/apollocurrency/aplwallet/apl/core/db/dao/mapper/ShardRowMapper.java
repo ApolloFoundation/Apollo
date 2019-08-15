@@ -30,10 +30,11 @@ public class ShardRowMapper implements RowMapper<Shard> {
                 .shardHash(rs.getBytes("shard_hash"))
                 .shardState( ShardState.getType(rs.getLong("shard_state")) )
                 .shardHeight(rs.getInt("shard_height"))
-                .zipHashCrc(rs.getBytes("zip_hash_crc"))
+                .coreZipHash(rs.getBytes("zip_hash_crc"))
                 .generatorIds( generatorIds == null ? null : Convert.toArray(generatorIds)) // should not be empty
                 .blockTimeouts( blockTimeouts == null ? null : Convert.toArrayInt(blockTimeouts)) // should not be empty
                 .blockTimestamps( blockTimestamps == null ? null : Convert.toArrayInt(blockTimestamps)) // should not be empty
+                .prunableZipHash(rs.getBytes("prunable_zip_hash"))
                 .build();
     }
 }

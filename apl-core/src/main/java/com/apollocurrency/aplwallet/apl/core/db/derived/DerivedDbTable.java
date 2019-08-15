@@ -182,29 +182,43 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
      * {@inheritDoc}
      */
     @Override
-    public MinMaxDbId getMinMaxDbId(int height) throws SQLException {
+    public MinMaxDbId getMinMaxDbId(int height){
         // select MIN and MAX dbId values in one query
         String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
-                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count from %s where HEIGHT <= ?",  table);
-        long dbIdMin = -1;
-        long dbIdMax = -1;
-        MinMaxDbId minMaxDbId = new MinMaxDbId();
+                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ?",  table);
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
             pstmt.setInt(1, height);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    dbIdMin = rs.getLong("min_db_id");
-                    dbIdMax = rs.getLong("max_db_id");
-                    long rowCount = rs.getLong("count");
-                    // pagination is exclusive for upper + lower bounds
-                    minMaxDbId = new MinMaxDbId(dbIdMin - 1, dbIdMax + 1); // plus/minus one in Max/Min value
-                    minMaxDbId.setCount(rowCount);
-                }
+            return getMinMaxDbId(pstmt);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void prune(int time) {}
+
+    protected MinMaxDbId getMinMaxDbId(PreparedStatement pstmt) throws SQLException {
+        MinMaxDbId result = null;
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                long dbIdMin = rs.getLong("min_db_id");
+                long dbIdMax = rs.getLong("max_db_id");
+                long rowCount = rs.getLong("count");
+                int height = rs.getInt("max_height");
+                // pagination is exclusive for upper + lower bounds
+                result = new MinMaxDbId(
+                        dbIdMin - 1, // plus/minus one in Max/Min value
+                        dbIdMax + 1,
+                        rowCount,
+                        height
+                );
             }
         }
-        return minMaxDbId;
+        return result;
     }
 
     @Override
@@ -213,7 +227,11 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
     @Override
     public final String toString() {
-        return table;
+        return getName();
     }
 
+    @Override
+    public String getName() {
+        return table;
+    }
 }
