@@ -8,7 +8,7 @@ import java.util.Enumeration;
 public interface TaskDispatcherConfig {
 
     /**
-     *
+     * Name of the dispatcher
      * @return the dispatcher name
      */
     String getName();
