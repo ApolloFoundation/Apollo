@@ -63,7 +63,12 @@ public class ShardService {
     public final static long LOWER_SHARDING_MEMORY_LIMIT = 1536 * 1024 * 1024; //1.5GB
 
     @Inject
-    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain, DirProvider dirProvider, Zip zip, DatabaseManager databaseManager, BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao, ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus, PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync, TrimService trimService, Event<DbHotSwapConfig> dbEvent) {
+    public ShardService(ShardDao shardDao, BlockchainProcessor blockchainProcessor, Blockchain blockchain,
+                        DirProvider dirProvider, Zip zip, DatabaseManager databaseManager,
+                        BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao,
+                        ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus,
+                        PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync,
+                        TrimService trimService, Event<DbHotSwapConfig> dbEvent) {
         this.shardDao = shardDao;
         this.blockchainProcessor = blockchainProcessor;
         this.blockchain = blockchain;
@@ -250,7 +255,8 @@ public class ShardService {
                     updateTrimConfig(false, false);
                     // quick create records for new Shard and Recovery process for later use
                     long nextShardId = shardDao.getNextShardId();
-
+                    log.debug("Prepare for next sharding = '{}' at height = '{}', lastTrimHeight = '{}'",
+                            nextShardId, blockchainHeight, lastTrimBlockHeight);
                     saveShardRecoveryAndShard(nextShardId, lastTrimBlockHeight, blockchainHeight);
 
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));

@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +27,13 @@ public class ShardObserver {
 
     private final BlockchainConfig blockchainConfig;
     private final ShardService shardService;
+    private PropertiesHolder propertiesHolder;
 
     @Inject
-    public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService) {
+    public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.shardService = Objects.requireNonNull(shardService, "shardService is NULL");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
 
@@ -53,11 +56,21 @@ public class ShardObserver {
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<MigrateState> completableFuture = null;
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
-        if (currentConfig.isShardingEnabled()) {
-            log.debug("LastTrimHeight-{}, blockchainHeight - {}", lastTrimBlockHeight, blockchainHeight);
+        boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+        log.debug("Is sharding enabled ? : '{}' && '{}'", currentConfig.isShardingEnabled(), !isShardingOff);
+        if (currentConfig.isShardingEnabled() && !isShardingOff) {
+            log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
+                    + ", shardingFrequency = {}",
+                    lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0,
+                    lastTrimBlockHeight, blockchainHeight,
+                    currentConfig.getShardingFrequency());
             if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
+            } else {
+                log.debug("No attempt to create new shard at height '{}'", blockchainHeight);
             }
+        } else {
+            log.debug("Sharding is disabled on node : {} && {}", currentConfig.isShardingEnabled(), isShardingOff);
         }
         return completableFuture;
     }
