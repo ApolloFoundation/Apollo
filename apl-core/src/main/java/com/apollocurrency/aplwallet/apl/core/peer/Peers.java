@@ -39,11 +39,11 @@ import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONArray;
@@ -158,14 +158,14 @@ public final class Peers {
     private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static AccountService accountService = CDI.current().select(AccountService.class).get();
-    private static PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
-    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private static final AccountService accountService = CDI.current().select(AccountService.class).get();
+    private static final PeerHttpServer peerHttpServer = CDI.current().select(PeerHttpServer.class).get();
+    private static final TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     public static int myPort;
 
@@ -174,9 +174,6 @@ public final class Peers {
 
     public static void init() {
 
-//        MAX_REQUEST_SIZE = propertiesHolder.getIntProperty("apl.maxPeerRequestSize", 4096 * 1024);
-//        MAX_RESPONSE_SIZE = propertiesHolder.getIntProperty("apl.maxPeerResponseSize", 4096 * 1024);
-//        MAX_MESSAGE_SIZE =  propertiesHolder.getIntProperty("apl.maxPeerMessageSize", 40 * 1024 * 1024);
         useProxy = System.getProperty("socksProxyHost") != null || System.getProperty("http.proxyHost") != null;
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails", true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
@@ -404,12 +401,14 @@ public final class Peers {
         try {
             shutdown = true;
             peerHttpServer.shutdown();
-            DefaultTaskDispatcher.shutdownExecutor("sendingService", sendingService, 2);
+            TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
+            dispatcher.shutdown();
+            Tasks.shutdownExecutor("sendingService", sendingService, 2);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         }
         try {
-            DefaultTaskDispatcher.shutdownExecutor("peersService", peersExecutorService, 5);
+            Tasks.shutdownExecutor("peersService", peersExecutorService, 5);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         }
@@ -419,12 +418,19 @@ public final class Peers {
         if(peerHttpServer!=null){
            suspend = peerHttpServer.suspend();
         }
+        TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
+        dispatcher.suspend();
+        getActivePeers().forEach((p) -> {
+            p.deactivate("Suspending peer operations");
+        });
     }
 
     public static void resume() {
         if (suspend && peerHttpServer!=null) {
             suspend = !peerHttpServer.resume();
         }
+        TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
+        dispatcher.resume();
     }
 
     public static boolean addListener(Listener<Peer> listener, Event eventType) {
@@ -462,7 +468,7 @@ public final class Peers {
         return res;
     }
     public static List<Peer> getActivePeers() {
-        return getPeers(peer -> peer.getState() != PeerState.NON_CONNECTED);
+        return getPeers(peer -> peer.getState() == PeerState.CONNECTED);
     }
 
     public static List<Peer> getPeers(final PeerState state) {
@@ -696,20 +702,21 @@ public final class Peers {
 
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
-            Set<Peer> peers = new HashSet(getPeers(PeerState.CONNECTED));
+            Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
             peers.addAll(connectablePeers.values());
+            LOG.trace("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
                     continue;
                 }
 
-                if ( !peer.isBlacklisted()
-//                     && peer.getState() == PeerState.CONNECTED
+                if ( !peer.isBlacklisted() 
+                     && peer.getState() == PeerState.CONNECTED // skip not connected peers
                      && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
-                   )
-                {
-                    Future<JSONObject> futureResponse = peersExecutorService.submit(() ->
+                   ) {
+                    LOG.trace("Prepare send to peer = {}", peer);
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
                         peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
                     );
                     expectedResponses.add(futureResponse);
