@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
+import com.apollocurrency.aplwallet.api.response.NodeForgersResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -57,4 +58,21 @@ public class NodeInfoController {
         return Response.status(Response.Status.OK).entity(infoResponse).build();
     }
     
+    @Path("/forgers")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns node's active forgers",
+            description = "Returns node's active forgers with some aparameters",
+            tags = {"status"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = NodeForgersResponse.class)))
+            }
+    )   
+    public Response getActiveForgers(){
+        NodeForgersResponse resp = new NodeForgersResponse();
+        resp.setGenerators(siService.getActiveForgers(false));
+        return Response.status(Response.Status.OK).entity(resp).build();
+    }
 }
