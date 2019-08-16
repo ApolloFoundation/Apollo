@@ -56,14 +56,14 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
     /**
      * The executor that runs INIT and BEFORE tasks
      */
-    private ExecutorService onStartExecutor;
+    private final ExecutorService onStartExecutor;
 
     /**
      * The tasks queue
      */
-    private HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
+    private final HashMap<TaskOrder, List<Task>> tasks = new HashMap<>();
 
-    private Object taskMonitor = new Object();
+    private final Object taskMonitor = new Object();
 
     /**
      * Create dispatcher with initial parameters

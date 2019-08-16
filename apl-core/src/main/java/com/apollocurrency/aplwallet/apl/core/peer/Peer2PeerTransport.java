@@ -307,8 +307,8 @@ public class Peer2PeerTransport {
                         sendOK = sendToWebSocket(message, outboundWebSocket, requestId);
                     }
                 }
-            }
-            if (!sendOK) { // Send the request using HTTP as fallback
+            }else{
+             // Send the request using HTTP if websockets are disabled
                 sendOK = sendHttp(message, requestId);
                 log.debug("Trying ot use HTTP requests to {} because websockets failed", getHostWithPort());
                 if (!sendOK) {
