@@ -13,11 +13,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
@@ -80,8 +82,8 @@ public class NodeControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    public Response getBackendThreads(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
-        boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
+    public Response getBackendThreads(@Context HttpServletRequest request) {
+        boolean passwordOK = bcService.isAdminPasswordOK(request);
         if(passwordOK){
             RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
             return Response.status(Response.Status.OK).entity(threadsResponse).build();
@@ -103,8 +105,8 @@ public class NodeControlController {
                                     schema = @Schema(implementation = ApolloX509Response.class)))
             }
     )
-    public Response getHealthInfo(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
-        boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
+    public Response getHealthInfo(@Context HttpServletRequest request) {
+        boolean passwordOK = bcService.isAdminPasswordOK(request);
         if (passwordOK) {
             NodeHealthResponse infoResponse = new NodeHealthResponse();
             infoResponse.healthInfo = bcService.getNodeHealth();

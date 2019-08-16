@@ -173,5 +173,8 @@ public class PeerInfo extends BaseP2PResponse {
      * blacklist cause
      */
     private String cause;
-
+    /**
+     * port for external connection
+     */
+    private Integer port;
 }

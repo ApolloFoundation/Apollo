@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.api.dto;
 
-import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,10 +23,10 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodeNetworkingInfo {
     @Schema(name="MyPeerInfo ", description="Info about this P2P node")
-    public PeerInfo myPeerInfo;
+    public PeerDTO myPeerInfo;
     @Schema(name="IboundPeers", description="list of inbound peers")
-    public List<PeerInfo> inboundPeers = new ArrayList<>();
+    public List<PeerDTO> inboundPeers = new ArrayList<>();
     @Schema(name="OutboundPeers", description="list of outbound peers")
-    public List<PeerInfo> outboundPeers = new ArrayList<>();
+    public List<PeerDTO> outboundPeers = new ArrayList<>();
     public String upnpAddress = "";
 }

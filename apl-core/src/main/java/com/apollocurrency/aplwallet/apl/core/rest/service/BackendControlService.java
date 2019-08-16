@@ -7,9 +7,16 @@ import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
 import com.apollocurrency.aplwallet.api.dto.NodeNetworkingInfo;
 import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.lang.management.ManagementFactory;
@@ -20,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import lombok.Setter;
 
 /**
@@ -33,7 +41,19 @@ public class BackendControlService {
     AplAppStatus appStatus;
     
     @Inject @Setter    
-    PropertiesHolder ph;
+    AdminPasswordVerifier apv;
+    
+    @Inject @Setter    
+    Blockchain blockchain;
+    
+    @Inject @Setter
+    private Converter<Peer, PeerDTO> peerConverter;
+ 
+    @Inject @Setter
+    private Converter<PeerInfo, PeerDTO> peerInfoConverter;
+    
+    @Inject @Setter
+    private NetworkService networkService;
     
     public NodeStatusInfo getNodeStatus(){
         NodeStatusInfo res = new NodeStatusInfo();
@@ -80,19 +100,29 @@ public class BackendControlService {
     }
     
    //TODO: use AdminPasswordVerifier component 
-    public boolean isAdminPasswordOK(String password){
-        String pw = ph.getStringProperty("apl.adminPassword");
-        boolean res = (!StringUtils.isBlank(pw)&& password!=null && pw.compareTo(password)==0);
+    public boolean isAdminPasswordOK(HttpServletRequest request){
+        boolean res = apv.checkPassword(request);
         return res;
     }
     
     public NodeHealthInfo getNodeHealth(){
         NodeHealthInfo info = new NodeHealthInfo();
+        info.dbOK = chekDataBaseOK();
+        info.blockchainHeight = blockchain.getHeight();
+        //TODO: YL please look what should be added
         return info;
     }
 
     public NodeNetworkingInfo getNetworkingInfo() {
         NodeNetworkingInfo info = new NodeNetworkingInfo();
+        info.inboundPeers = peerConverter.convert(networkService.getInboundPeers());
+        info.outboundPeers = peerConverter.convert(networkService.getOutboundPeers());
+        info.myPeerInfo = peerInfoConverter.convert(networkService.getMyPeerInfo());
         return info;
+    }
+    
+    private boolean chekDataBaseOK(){
+        //TODO: YL please implement this
+        return true;
     }
 }
