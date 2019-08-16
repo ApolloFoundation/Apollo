@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
@@ -45,11 +46,13 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingPollLinkedTransactionTable linkedTransactionTable;
     private final PhasingVoteTable phasingVoteTable;
     private final Blockchain blockchain;
+    private BlockchainConfig blockchainConfig;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
-                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, PhasingApprovedResultTable approvedResultTable) {
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, PhasingApprovedResultTable approvedResultTable,
+                                  BlockchainConfig blockchainConfig) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -57,6 +60,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.phasingVoteTable = phasingVoteTable;
         this.blockchain = blockchain;
         this.approvedResultTable = approvedResultTable;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @Override
@@ -190,9 +194,10 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         PhasingPollResult phasingPollResult = new PhasingPollResult(null, height, phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
         resultTable.insert(phasingPollResult);
 
-//      result > 0 is for store only approved transactions, but not phasing.
-        //TODO change height on the production!
-        if(result > 0 && height > 675000) {
+        Integer featureHeightRequired = blockchainConfig.getCurrentConfig().getHeightReqForPhasingApprovalTxFeature();
+
+        // result > 0 is for store only approved transactions, but not phasing.
+        if(result > 0 && featureHeightRequired != null && height > featureHeightRequired) {
             approvedResultTable.insert(new PhasingApprovalResult(height, phasingPoll.getId(), approvalTx));
         }
     }

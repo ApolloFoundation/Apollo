@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -45,6 +46,8 @@ import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -122,6 +125,8 @@ public class PhasingPollServiceTest {
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
+    @Inject
+    BlockchainConfig blockchainConfig;
 
 
     @BeforeEach
@@ -129,6 +134,8 @@ public class PhasingPollServiceTest {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
         btd = new BlockTestData();
+
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1,1,1,1,1,1L, new FeaturesHeightRequirement(0))));
     }
 
     @Test
