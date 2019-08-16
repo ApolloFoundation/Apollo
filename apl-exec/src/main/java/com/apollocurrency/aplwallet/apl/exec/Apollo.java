@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -269,7 +269,7 @@ public class Apollo {
                 .recursiveScanPackages(PropertiesHolder.class)
                 .recursiveScanPackages(TaskDispatchManager.class)
                 .recursiveScanPackages(Updater.class)
-                .recursiveScanPackages(ServerInfoController.class)
+                .recursiveScanPackages(NodeInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
                 .recursiveScanPackages(Account.class)
                 .recursiveScanPackages(TransactionType.class)

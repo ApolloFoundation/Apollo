@@ -1,0 +1,33 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+package com.apollocurrency.aplwallet.api.dto;
+
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+/**
+ *
+ * @author alukin@gmail.com
+ */
+
+@Schema(name="NodeNetworkingInfo", description="Information about backend networkinig")
+@Getter @Setter @ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class NodeNetworkingInfo {
+    @Schema(name="MyPeerInfo ", description="Info about this P2P node")
+    public PeerInfo myPeerInfo;
+    @Schema(name="IboundPeers", description="list of inbound peers")
+    public List<PeerInfo> inboundPeers = new ArrayList<>();
+    @Schema(name="OutboundPeers", description="list of outbound peers")
+    public List<PeerInfo> outboundPeers = new ArrayList<>();
+    public String upnpAddress = "";
+}

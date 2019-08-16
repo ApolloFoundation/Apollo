@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
-import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -26,18 +25,16 @@ import org.slf4j.LoggerFactory;
  */
 
 @Path("/serverinfo")
-public class ServerInfoController {
-    private static final Logger log = LoggerFactory.getLogger(ServerInfoController.class);
+public class NodeInfoController {
+    private static final Logger log = LoggerFactory.getLogger(NodeInfoController.class);
     private  ServerInfoService siService;
-    private BackendControlService bcService;
 
     @Inject
-    public ServerInfoController(ServerInfoService siService,BackendControlService bcService) {
+    public NodeInfoController(ServerInfoService siService) {
         this.siService = siService;
-        this.bcService = bcService;
     }
 
-    public ServerInfoController() {
+    public NodeInfoController() {
       log.debug("Empty ServerInfoEndpoint created");
     }
 
@@ -55,25 +52,6 @@ public class ServerInfoController {
             }
     )
     public Response getX509Info(){
-        ApolloX509Response infoResponse = new ApolloX509Response();
-        infoResponse.info = siService.getX509Info();
-        return Response.status(Response.Status.OK).entity(infoResponse).build();
-    }
-    
-    @Path("/health")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns node health info. Protected with admin password",
-            description = "Returns complete information about node health"
-                    + "includind DB, P2P, hardware and resource usage",
-            tags = {"status"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = ApolloX509Response.class)))
-            }
-    )
-    public Response getHealthInfo(){
         ApolloX509Response infoResponse = new ApolloX509Response();
         infoResponse.info = siService.getX509Info();
         return Response.status(Response.Status.OK).entity(infoResponse).build();

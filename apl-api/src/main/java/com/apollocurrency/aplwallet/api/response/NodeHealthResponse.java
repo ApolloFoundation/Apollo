@@ -3,8 +3,9 @@
  */
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
 import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeNetworkingInfo;
 
 
 
@@ -12,8 +13,9 @@ import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
  *
  * @author alukin@gmail.com
  */
-public class ApolloNodeHealthResponse extends ResponseBase{
+public class NodeHealthResponse extends ResponseBase{
     Boolean rebootRequired = false;
     public NodeHealthInfo healthInfo;
-    public NodeHWStatusInfo hwInfo;
+    public NodeStatusInfo statusInfo;
+    public NodeNetworkingInfo networkingInfo;
 }

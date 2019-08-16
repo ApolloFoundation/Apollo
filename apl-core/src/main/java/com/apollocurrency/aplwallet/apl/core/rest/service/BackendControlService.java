@@ -4,7 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeNetworkingInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
@@ -33,8 +35,8 @@ public class BackendControlService {
     @Inject @Setter    
     PropertiesHolder ph;
     
-    public NodeHWStatusInfo getHWStatus(){
-        NodeHWStatusInfo res = new NodeHWStatusInfo();
+    public NodeStatusInfo getNodeStatus(){
+        NodeStatusInfo res = new NodeStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
         res.threadsRunning=java.lang.Thread.activeCount();
         res.cpuCount = Runtime.getRuntime().availableProcessors();
@@ -82,5 +84,15 @@ public class BackendControlService {
         String pw = ph.getStringProperty("apl.adminPassword");
         boolean res = (!StringUtils.isBlank(pw)&& password!=null && pw.compareTo(password)==0);
         return res;
+    }
+    
+    public NodeHealthInfo getNodeHealth(){
+        NodeHealthInfo info = new NodeHealthInfo();
+        return info;
+    }
+
+    public NodeNetworkingInfo getNetworkingInfo() {
+        NodeNetworkingInfo info = new NodeNetworkingInfo();
+        return info;
     }
 }

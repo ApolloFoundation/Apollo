@@ -12,13 +12,13 @@ import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BackendControlController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeControlController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NetworkController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
@@ -34,7 +34,7 @@ public class RestEasyApplication extends Application  {
 
         HashSet<Class<?>> set = new HashSet<>();
         set.add(Metadata.class);
-        set.add(ServerInfoController.class);
+        set.add(NodeInfoController.class);
         set.add(KeyStoreController.class);
         set.add(NetworkController.class);
         set.add(DebugController.class);
@@ -42,7 +42,7 @@ public class RestEasyApplication extends Application  {
 //        set.add(WalletEthController.class);
         set.add(DexController.class);
         set.add(DexMatcherServiceImpl.class);
-        set.add(BackendControlController.class);
+        set.add(NodeControlController.class);
         set.add(TransportInteractionController.class);
         set.add(ShardController.class);
 

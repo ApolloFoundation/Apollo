@@ -4,7 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
-import com.apollocurrency.aplwallet.api.response.NodeHWStatusResponse;
+import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
+import com.apollocurrency.aplwallet.api.response.NodeHealthResponse;
 import com.apollocurrency.aplwallet.api.response.NodeStatusResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,8 +30,8 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 @Path("/control")
-public class BackendControlController {
-    private static final Logger log = LoggerFactory.getLogger(BackendControlController.class);
+public class NodeControlController {
+    private static final Logger log = LoggerFactory.getLogger(NodeControlController.class);
 
     private BackendControlService bcService;
     /**
@@ -38,32 +39,13 @@ public class BackendControlController {
      */
 
 
-    public BackendControlController() {
+    public NodeControlController() {
        log.debug("Empty BackendControlEndpoint created"); 
     }
 
     @Inject
-    public BackendControlController(BackendControlService bcService) {
+    public NodeControlController(BackendControlService bcService) {
         this.bcService = bcService;
-    }
-
-    @Path("/statushw")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns backend hardware status",
-            description = "Returns backend hardware status",
-            tags = {"nodecontrol"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful execution",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = NodeHWStatusResponse.class)))
-            }
-    )
-    public Response getBackendHWStatus() {
-        NodeHWStatusResponse statusResponse = new NodeHWStatusResponse();
-        statusResponse.message = "Seems that server is OK";
-        statusResponse.backendInfo = bcService.getHWStatus();
-        return Response.status(Response.Status.OK).entity(statusResponse).build();
     }
     
     @Path("/status")
@@ -81,7 +63,7 @@ public class BackendControlController {
     )
     public Response getBackendStatus(@QueryParam("status") @DefaultValue("All") String state) {
         NodeStatusResponse statusResponse = new NodeStatusResponse();
-        statusResponse.nodeInfo = bcService.getHWStatus();
+        statusResponse.nodeInfo = bcService.getNodeStatus();
         statusResponse.tasks = bcService.getNodeTasks(state);
         return Response.status(Response.Status.OK).entity(statusResponse).build();
     }
@@ -98,12 +80,38 @@ public class BackendControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    public Response getBackendThreadss(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+    public Response getBackendThreads(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
         boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
         if(passwordOK){
             RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
             return Response.status(Response.Status.OK).entity(threadsResponse).build();
         }else{
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+    }
+    
+    @Path("/health")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns node health info. Protected with admin password",
+            description = "Returns complete information about node health"
+                    + "includind DB, P2P, hardware and resource usage",
+            tags = {"status"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ApolloX509Response.class)))
+            }
+    )
+    public Response getHealthInfo(@QueryParam("adminPassword") @DefaultValue("") String adminPassword) {
+        boolean passwordOK = bcService.isAdminPasswordOK(adminPassword);
+        if (passwordOK) {
+            NodeHealthResponse infoResponse = new NodeHealthResponse();
+            infoResponse.healthInfo = bcService.getNodeHealth();
+            infoResponse.statusInfo = bcService.getNodeStatus();
+            infoResponse.networkingInfo = bcService.getNetworkingInfo();
+            return Response.status(Response.Status.OK).entity(infoResponse).build();
+        } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
     }

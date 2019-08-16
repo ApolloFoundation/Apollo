@@ -15,11 +15,12 @@ import lombok.ToString;
  * @author alukin@gmail.com
  */
 
-@Schema(name="BackStatusInfo", description="Information about backend state")
+@Schema(name="NodeHealthInfo", description="Information about backend health")
 @Getter @Setter @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodeHealthInfo {
     @Schema(name="Blockchain height", description="Current height of blockchain")
-    public Integer cpuCount;
+    public Integer blockchainHeight;
+    public Boolean dbOK;
 }
