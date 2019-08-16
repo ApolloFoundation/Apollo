@@ -57,11 +57,13 @@ public class ShardObserver {
         CompletableFuture<MigrateState> completableFuture = null;
         HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
         boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
-        log.debug("Is sharding enabled ? : '{}' && '{}'", currentConfig.isShardingEnabled(), !isShardingOff);
-        if (currentConfig.isShardingEnabled() && !isShardingOff) {
+        boolean shardingEnabled = currentConfig.isShardingEnabled();
+        log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
+        if (shardingEnabled && !isShardingOff) {
             log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
                     + ", shardingFrequency = {}",
-                    lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0,
+                    currentConfig.getShardingFrequency() != 0 ?
+                            lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0 : "zeroDivision",
                     lastTrimBlockHeight, blockchainHeight,
                     currentConfig.getShardingFrequency());
             if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
@@ -70,7 +72,7 @@ public class ShardObserver {
                 log.debug("No attempt to create new shard at height '{}'", blockchainHeight);
             }
         } else {
-            log.debug("Sharding is disabled on node : {} && {}", currentConfig.isShardingEnabled(), isShardingOff);
+            log.debug("Sharding is disabled on node : {} && {}", shardingEnabled, isShardingOff);
         }
         return completableFuture;
     }

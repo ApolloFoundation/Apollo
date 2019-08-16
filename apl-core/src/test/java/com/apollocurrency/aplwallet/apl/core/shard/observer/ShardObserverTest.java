@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,18 +41,21 @@ public class ShardObserverTest {
     ShardService shardService;
     @Mock
     HeightConfig heightConfig;
+    @Mock
+    PropertiesHolder propertiesHolder;
     private ShardObserver shardObserver;
     private Event firedEvent;
 
     @BeforeEach
     void setUp() {
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
 //        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
     }
 
     private void prepare() {
 
-        shardObserver = new ShardObserver(blockchainConfig, shardService);
+        shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder);
     }
 
     @Test
@@ -81,6 +85,7 @@ public class ShardObserverTest {
     void testDoNotShardWhenLastTrimHeightIsZero() throws ExecutionException, InterruptedException {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
+        doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(0, Integer.MAX_VALUE);
 
@@ -93,7 +98,8 @@ public class ShardObserverTest {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-//        doReturn(new byte[]{1,2}).when(shardMigrationExecutor).calculateHash(DEFAULT_TRIM_HEIGHT);
+        CompletableFuture<MigrateState> completableFuture = new CompletableFuture<>();
+        doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         MigrateState state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE).get();
 
