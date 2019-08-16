@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 
-@Path("/serverinfo")
+@Path("/nodeinfo")
 public class NodeInfoController {
     private static final Logger log = LoggerFactory.getLogger(NodeInfoController.class);
     private  ServerInfoService siService;
