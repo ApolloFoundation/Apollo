@@ -119,8 +119,9 @@ public final class Shuffler {
             } else if (!Arrays.equals(shuffler.shufflingFullHash, shufflingFullHash)) {
                 throw new DuplicateShufflerException("A shuffler with different shufflingFullHash already started");
             } else {
-                LOG.info("Shuffler already started");
+                LOG.info("Shuffler already started by accountId = {}", accountId);
             }
+            LOG.trace("Shuffler created by accountId = {}", accountId);
             return shuffler;
         } finally {
             globalSync.writeUnlock();
@@ -186,6 +187,7 @@ public final class Shuffler {
         try {
             Map<Long, Shuffler> shufflerMap = shufflingsMap.get(Convert.toHexString(shufflingFullHash));
             if (shufflerMap != null) {
+                LOG.trace("Shuffler is stopped by accountId = {}", accountId);
                 return shufflerMap.remove(accountId);
             }
         } finally {
@@ -197,6 +199,7 @@ public final class Shuffler {
     public static void stopAllShufflers() {
         globalSync.writeLock();
         try {
+            LOG.trace("Stopped all [{}] shufflers", shufflingsMap.size());
             shufflingsMap.clear();
         } finally {
             globalSync.writeUnlock();
@@ -520,6 +523,8 @@ public final class Shuffler {
             }
             try {
                 transactionProcessor.broadcast(transaction);
+                LOG.trace("Submitted Shuffling Tx: id: {}, participantAccount:{}, atm: {}, deadline: {}",
+                        transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
             } catch (AplException.NotCurrentlyValidException e) {
                 failedTransaction = transaction;
                 failureCause = e;
