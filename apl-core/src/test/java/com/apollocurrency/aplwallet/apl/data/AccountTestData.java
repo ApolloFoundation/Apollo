@@ -7,15 +7,13 @@ package com.apollocurrency.aplwallet.apl.data;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -25,6 +23,7 @@ public class AccountTestData {
 
     public static final long CREATOR_ID = 1739068987193023818L;
 
+    /* Account */
     public final Account ACC_G = createAccount(1      ,1739068987193023818L,999990000000000L,999990000000000L,false,0,0,0,true);
     public final Account ACC_0 = createAccount(10     ,50L        ,555500000000L       ,105500000000L          ,false ,0               ,0 ,100000 ,true);
     public final Account ACC_1 = createAccount(20     ,100L       ,100000000L          ,100000000L             ,false ,0               ,0 ,104595 ,true );
@@ -48,9 +47,7 @@ public class AccountTestData {
     public  List<Account> ALL_ACCOUNTS = List.of(ACC_G, ACC_0, ACC_1, ACC_2, ACC_3, ACC_4, ACC_5, ACC_6, ACC_7, ACC_8, ACC_9, ACC_10, ACC_11, ACC_12, ACC_13, ACC_14 );
     public Account newAccount = new Account(999L, ACC_14.getHeight()+1);
 
-
-
-
+    /* AccountAsset */
     public final AccountAsset ACC_ASS_0 = createAsset(2, 100, 10, 8, 8, 42716, true);
     public final AccountAsset ACC_ASS_1 = createAsset(3, 110, 10, 2, 2, 42716 , true);
     public final AccountAsset ACC_ASS_2 = createAsset(4, 120, 20, 1, 1, 74579 , true);
@@ -73,7 +70,7 @@ public class AccountTestData {
     public List<AccountAsset> ALL_ASSETS = List.of(ACC_ASS_0, ACC_ASS_1, ACC_ASS_2, ACC_ASS_3, ACC_ASS_4, ACC_ASS_5, ACC_ASS_6, ACC_ASS_7, ACC_ASS_8, ACC_ASS_9, ACC_ASS_10, ACC_ASS_11, ACC_ASS_12, ACC_ASS_13, ACC_ASS_14);
     public AccountAsset newAsset = new AccountAsset(ACC_1.getId(), ACC_ASS_14.getAssetId()+1, 0, 0, ACC_ASS_14.getHeight()+1);
 
-
+    /* AccountCurrency */
     public final AccountCurrency ACC_CUR_0 = createCurrency(4, 100, 10, 2000000, 2000000, 9800, true);
     public final AccountCurrency ACC_CUR_1 = createCurrency(5, 110, 10, 9899999998000000L, 9899999998000000L, 23208, true);
     public final AccountCurrency ACC_CUR_2 = createCurrency(14, 120, 20, 100, 100, 99999, true);
@@ -99,6 +96,7 @@ public class AccountTestData {
     public final int ACC_GUARANTEE_BALANCE_HEIGHT_MIN = 858816;
     public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = 882424;
 
+    /* AccountInfo */
     public final AccountInfo ACC_INFO_0 = createInfo(5, 110, "ZT", null, 3073, true);
     public final AccountInfo ACC_INFO_1 = createInfo(6, 120, "CALIGULA", null, 3559, true);
     public final AccountInfo ACC_INFO_2 = createInfo(7, 130, "Adnan Celik", null, 3563, true);
@@ -108,6 +106,7 @@ public class AccountTestData {
     public List<AccountInfo> ALL_INFO = List.of(ACC_INFO_0, ACC_INFO_1, ACC_INFO_2, ACC_INFO_3, ACC_INFO_4);
     public AccountInfo newInfo = new AccountInfo(ACC_INFO_4.getAccountId()+1, "new account info name", "new description", ACC_INFO_4.getHeight()+1);
 
+    /* AccountLedger */
     public final LedgerEntry ACC_LEDGER_0 = createLedger(53, 110, 3, -7204505074792164093L, 1, null, 250000000000000L, 250000000000000L, 4994769695807437270L, 827, 1054211);
     public final LedgerEntry ACC_LEDGER_1 = createLedger(54, 110, 50, 9218185695807163289L, 1, null, -200000000, 249999800000000L, -6084261423926609231L, 836, 1054551);
     public final LedgerEntry ACC_LEDGER_2 = createLedger(55, 120, 1, -6084261423926609231L, 1, null, 200000000, 2692000001000000000L, -6084261423926609231L, 836, 1054551);
@@ -129,6 +128,7 @@ public class AccountTestData {
     public LedgerEntry newLedger = new LedgerEntry(ACC_LEDGER_15.getEvent(), ACC_LEDGER_15.getEventId(), 9218185695807163289L, ACC_LEDGER_15.getHolding(), ACC_LEDGER_15.getHoldingId(), 10000L, 2691750001400000000L, ACC_LEDGER_15.getBlockId(), ACC_LEDGER_15.getTimestamp(), ACC_LEDGER_15.getHeight());
     public final int LEDGER_HEIGHT = 846;
 
+    /* AccountProperty */
     public final AccountProperty ACC_PROP_0 = createProperty(1, 10, 100, 0, "email", "dchosrova@gmail.com", 94335, true);
     public final AccountProperty ACC_PROP_1 = createProperty(2, 20, 110, 0, "apollo", "1", 106420, true);
     public final AccountProperty ACC_PROP_2 = createProperty(3, 30, 120, 0, "Para cadastrar no blockchain", "1", 108618, true);
@@ -141,9 +141,27 @@ public class AccountTestData {
 
     public AccountProperty newProperty = new AccountProperty(ACC_PROP_8.getId()+1, ACC_PROP_8.getRecipientId()+1, ACC_PROP_8.getSetterId(), "Chocoladka", "100g", ACC_PROP_8.getHeight()+1);
 
+    /* AccountLease */
+    public final AccountLease ACC_LEAS_0 = createLease(1, 100, 200,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_1 = createLease(2, 110, 210,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_2 = createLease(3, 120, 220,10000,11000, 0, 0, 0, 10000, true);
+    public final AccountLease ACC_LEAS_3 = createLease(4, 130, 230,8000, 10000, 0, 0, 0, 8000,  true);
+    public final AccountLease ACC_LEAS_4 = createLease(5, 140, 240,8000, 9000,  0, 0, 0, 8000,  true);
+
+    public List<AccountLease> ALL_LEASE = List.of(ACC_LEAS_0, ACC_LEAS_1, ACC_LEAS_2, ACC_LEAS_3, ACC_LEAS_4);
+    public AccountLease newLease = new AccountLease(ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
 
 
-
+    /* create entity */
+    public AccountLease createLease( long dbId, long lessorId,  long currentLesseeId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long nextLesseeId, int nextLeasingHeightFrom, int nextLeasingHeightTo, int height, boolean latest){
+        AccountLease lease = new AccountLease(lessorId, currentLeasingHeightFrom, currentLeasingHeightTo, currentLesseeId, height);
+        lease.setDbId(dbId);
+        lease.setLatest(latest);
+        lease.setNextLeasingHeightFrom(nextLeasingHeightFrom);
+        lease.setNextLeasingHeightTo(nextLeasingHeightTo);
+        lease.setNextLesseeId(nextLesseeId);
+        return lease;
+    }
 
     public AccountProperty createProperty(long dbId, long propertyId, long recepientId, long setterId, String property, String value, int height, boolean latest){
         AccountProperty accProperty = new AccountProperty(propertyId, recepientId, setterId, property, value, height);
@@ -174,7 +192,6 @@ public class AccountTestData {
             acc.setControls(Collections.unmodifiableSet(EnumSet.of(AccountControlType.PHASING_ONLY)));
         }
         acc.setDbId(dbId);
-        //acc.setDbKey(AccountTable.newKey(accountId));
         acc.setLatest(latest);
         return acc;
     }
@@ -192,7 +209,5 @@ public class AccountTestData {
         currency.setLatest(latest);
         return currency;
     }
-
-
 
 }
