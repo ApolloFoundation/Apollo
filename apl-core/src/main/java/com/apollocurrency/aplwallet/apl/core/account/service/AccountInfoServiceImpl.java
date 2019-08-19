@@ -9,13 +9,13 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -60,15 +60,9 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         save(accountInfo);
     }
 
-
     @Override
     public List<AccountInfo> searchAccounts(String query, int from, int to) {
-        List<AccountInfo> result = new ArrayList<>();
-        try(DbIterator<AccountInfo> rs = accountInfoTable.searchAccounts(query, from, to)) {
-            rs.forEach(result::add);
-        }
-        return result;
+        return toList(accountInfoTable.searchAccounts(query, from, to));
     }
-
 
 }

@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
@@ -20,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -29,15 +29,14 @@ import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -50,6 +49,7 @@ public class AccountServiceImpl implements AccountService {
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
 
     private AccountTable accountTable;
+    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private Blockchain blockchain;
     private BlockchainConfig blockchainConfig;
     private GlobalSync sync;
@@ -216,23 +216,11 @@ public class AccountServiceImpl implements AccountService {
                     || height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
-                         + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
-                pstmt.setLong(1, account.getId());
-                pstmt.setInt(2, height);
-                pstmt.setInt(3, currentHeight);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (!rs.next()) {
-                        return account.getBalanceATM();
-                    }
-                    return Math.max(Math.subtractExact(account.getBalanceATM(), rs.getLong("additions")), 0);
-                }
+            Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(account.getId(), height, currentHeight);
+            if (sum == null) {
+                return account.getBalanceATM();
             }
-            catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
+            return Math.max(Math.subtractExact(account.getBalanceATM(), sum), 0);
         }
         finally {
             sync.readUnlock();
@@ -248,40 +236,26 @@ public class AccountServiceImpl implements AccountService {
             lessorIds[i] = lessors.get(i).getId();
             balances[i] = lessors.get(i).getBalanceATM();
         }
-
-        int blockchainHeight = blockchain.getHeight();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
-                     + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
-                     + (height < blockchainHeight ? " AND height <= ? " : "")
-                     + " GROUP BY account_id ORDER BY account_id")) {
-            pstmt.setObject(1, lessorIds);
-            pstmt.setInt(2, height - blockchainConfig.getGuaranteedBalanceConfirmations());
-            if (height < blockchainHeight) {
-                pstmt.setInt(3, height);
-            }
-            long total = 0;
-            int i = 0;
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    long accountId = rs.getLong("account_id");
-                    while (lessorIds[i] < accountId && i < lessorIds.length) {
-                        total += balances[i++];
-                    }
-                    if (lessorIds[i] == accountId) {
-                        total += Math.max(balances[i++] - rs.getLong("additions"), 0);
-                    }
+        long total = 0L;
+        int i = 0;
+        Map<Long, Long> lessorsAdditions = accountGuaranteedBalanceTable.getLessorsAdditions(
+                lessors.stream().map(Account::getId).collect(Collectors.toList()),
+                height, blockchain.getHeight());
+        if(!lessorsAdditions.isEmpty()) {
+            List<Long> lessorsList = lessorsAdditions.keySet().stream().sorted().collect(Collectors.toList());
+            for (Long accountId : lessorsList) {
+                while (lessorIds[i] < accountId) {
+                    total += balances[i++];
+                }
+                if (Objects.equals(lessorIds[i], accountId)) {
+                    total += Math.max(balances[i++] - lessorsAdditions.get(accountId), 0);
                 }
             }
-            while (i < balances.length) {
-                total += balances[i++];
-            }
-            return total;
         }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
+        while (i < balances.length) {
+            total += balances[i++];
         }
+        return total;
     }
 
     @Override
@@ -296,23 +270,14 @@ public class AccountServiceImpl implements AccountService {
         return iterator;
     }
 
-
     @Override
     public List<Account> getLessors(Account account) {
-        List<Account> result = new ArrayList<>();
-        try(DbIterator<Account> iterator = getLessorsIterator(account)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(getLessorsIterator(account));
     }
 
     @Override
     public List<Account> getLessors(Account account, int height) {
-        List<Account> result = new ArrayList<>();
-        try(DbIterator<Account> iterator = getLessorsIterator(account, height)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(getLessorsIterator(account, height));
     }
 
     private void logEntryConfirmed(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
@@ -353,7 +318,7 @@ public class AccountServiceImpl implements AccountService {
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
-        addToGuaranteedBalanceATM(account, totalAmountATM);
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         save(account);
 
@@ -393,7 +358,7 @@ public class AccountServiceImpl implements AccountService {
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
-        addToGuaranteedBalanceATM(account, totalAmountATM);
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
         save(account);
 
@@ -417,35 +382,6 @@ public class AccountServiceImpl implements AccountService {
                     amountATM, amountATM + account.getBalanceATM(), amountATM + account.getUnconfirmedBalanceATM(), blockchain.getHeight());
         }
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
-    }
-
-    private void addToGuaranteedBalanceATM(Account account, long amountATM) {
-        if (amountATM <= 0) {
-            return;
-        }
-        int blockchainHeight = blockchain.getHeight();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
-                     + "WHERE account_id = ? and height = ?");
-             PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
-                     + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
-            pstmtSelect.setLong(1, account.getId());
-            pstmtSelect.setInt(2, blockchainHeight);
-            try (ResultSet rs = pstmtSelect.executeQuery()) {
-                long additions = amountATM;
-                if (rs.next()) {
-                    additions = Math.addExact(additions, rs.getLong("additions"));
-                }
-                pstmtUpdate.setLong(1, account.getId());
-                pstmtUpdate.setLong(2, additions);
-                pstmtUpdate.setInt(3, blockchainHeight);
-                pstmtUpdate.executeUpdate();
-            }
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @Override
@@ -484,13 +420,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
-            return accountTable.getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return accountTable.getTotalAmountOnTopAccounts(numberOfTopAccounts);
     }
 
     @Override
@@ -501,37 +431,17 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getTotalNumberOfAccounts() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
-            return accountTable.getTotalNumberOfAccounts(con);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return accountTable.getTotalNumberOfAccounts();
     }
 
     @Override
     public List<Account> getTopHolders(int numberOfTopAccounts) {
-        List<Account> result = new ArrayList<>();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection();
-            DbIterator<Account> iterator = accountTable.getTopHolders(con, numberOfTopAccounts)){
-            iterator.forEachRemaining(result::add);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        return result;
+        return toList(accountTable.getTopHolders(numberOfTopAccounts));
     }
 
     @Override
     public long getTotalSupply() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
-            return accountTable.getTotalSupply(con);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return accountTable.getTotalSupply();
     }
 
     @Override

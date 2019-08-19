@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
@@ -34,11 +33,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -135,43 +134,30 @@ class AccountDaoTest  {
     }
 
     @Test
-    void getTotalSupply() throws SQLException {
-        //doReturn(1739068987193023818L).when(genesisImporter).getCreatorId();
-        try(Connection conn = dbExtension.getDatabaseManager().getDataSource().getConnection()){
-            long total = table.getTotalSupply(conn);
-            assertEquals(999990000000000L, total);
-        }
+    void getTotalSupply() {
+        long total = table.getTotalSupply();
+        assertEquals(999990000000000L, total);
     }
 
     @Test
-    void getTopHolders() throws SQLException {
-        try(Connection conn = dbExtension.getDatabaseManager().getDataSource().getConnection()){
-            List<Account> expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
-            List<Account> result = new ArrayList<>();
-            try(DbIterator<Account> iterator = table.getTopHolders(conn, 100)) {
-                assertNotNull(iterator);
-                iterator.forEachRemaining(result::add);
-            }
-            assertEquals(expected.size(), result.size());
-            assertEquals(expected, result.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()));
-        }
+    void getTopHolders() {
+        List<Account> expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
+        List<Account> result = toList(table.getTopHolders(100));
+        assertEquals(expected.size(), result.size());
+        assertEquals(expected, result.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()));
     }
 
     @Test
-    void getTotalAmountOnTopAccounts() throws SQLException {
-        try(Connection conn = dbExtension.getDatabaseManager().getDataSource().getConnection()){
-            long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).map(Account::getBalanceATM).reduce(0L, Long::sum);
-            long result = table.getTotalAmountOnTopAccounts(conn, 100);
-            assertEquals(expected, result);
-        }
+    void getTotalAmountOnTopAccounts() {
+        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).map(Account::getBalanceATM).reduce(0L, Long::sum);
+        long result = table.getTotalAmountOnTopAccounts(100);
+        assertEquals(expected, result);
     }
 
     @Test
     void getTotalNumberOfAccounts() throws SQLException {
-        try(Connection conn = dbExtension.getDatabaseManager().getDataSource().getConnection()){
-            long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).count();
-            long result = table.getTotalNumberOfAccounts(conn);
-            assertEquals(expected, result);
-        }
+        long expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).count();
+        long result = table.getTotalNumberOfAccounts();
+        assertEquals(expected, result);
     }
 }

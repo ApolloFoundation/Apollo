@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
 import javax.inject.Inject;
@@ -104,10 +105,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
         }
     }
- 
-    public long getTotalSupply(Connection con) throws SQLException {
-        try (
-                PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
+
+    public long getTotalSupply() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
+            PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
         ) {
             int i = 0;
             pstmt.setLong(++i, creatorId);
@@ -118,19 +120,28 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                     throw new RuntimeException("Cannot retrieve total_supply: no data");
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+    public  DbIterator<Account> getTopHolders(int numberOfTopAccounts) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1))
+        ){
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             return getManyBy(con, pstmt, false);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
-    public long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
-        try (
+    public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
                 PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
                                 " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
@@ -143,20 +154,25 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                     throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }  
 
-    public long getTotalNumberOfAccounts(Connection con) throws SQLException {
-        try (
-                Statement stmt =con.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
-        ) {
+    public long getTotalNumberOfAccounts() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
+            Statement stmt =con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
+        ){
             if (rs.next()) {
                 return rs.getLong("number_of_accounts");
             } else {
                 throw new RuntimeException("Cannot retrieve number of accounts: no data");
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
-   
+
 }

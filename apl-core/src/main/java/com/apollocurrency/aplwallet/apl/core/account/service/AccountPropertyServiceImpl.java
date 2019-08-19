@@ -10,16 +10,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -52,11 +51,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
 
     @Override
     public List<AccountProperty> getProperties(long recipientId, long setterId, String property, int from, int to) {
-        List<AccountProperty> result = new ArrayList<>();
-        try(DbIterator<AccountProperty> leases = accountPropertyTable.getProperties(recipientId, setterId, property, from, to)) {
-            leases.forEachRemaining(result::add);
-        }
-        return result;
+        return toList( accountPropertyTable.getProperties(recipientId, setterId, property, from, to));
     }
 
     @Override

@@ -12,17 +12,16 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -54,20 +53,12 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
-        List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, from, to)) {
-            iterator.forEachRemaining(accountAssets::add);
-        }
-        return accountAssets;
+        return toList(accountAssetTable.getAssetAccounts(assetId, height, from, to));
     }
 
     @Override
     public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
-        List<AccountAsset> result = new ArrayList<>();
-        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(account.getId(), from, to)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(accountAssetTable.getAccountAssets(account.getId(), from, to));
     }
 
     @Override
@@ -77,11 +68,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
-        List<AccountAsset> result = new ArrayList<>();
-        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(accountId, height, from, to)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(accountAssetTable.getAccountAssets(accountId, height, from, to));
     }
 
     @Override
