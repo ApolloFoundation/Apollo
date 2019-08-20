@@ -124,7 +124,7 @@ public class DexContractAttachment extends AbstractAttachment {
         json.put("counterOrderId", this.getCounterOrderId());
         json.put("secretHash",  Convert.toHexString(this.secretHash));
         json.put("encryptedSecret",  Convert.toHexString(this.encryptedSecret));
-        json.put("contractStatus",  this.contractStatus);
+        json.put("contractStatus",  this.contractStatus.ordinal());
         json.put("transferTxId",  this.transferTxId);
 //        json.put("finishTime", this.finishTime);
     }
