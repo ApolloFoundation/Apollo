@@ -24,9 +24,8 @@ import lombok.ToString;
 public class NodeNetworkingInfo {
     @Schema(name="MyPeerInfo ", description="Info about this P2P node")
     public PeerDTO myPeerInfo;
-    @Schema(name="IboundPeers", description="list of inbound peers")
-    public List<PeerDTO> inboundPeers = new ArrayList<>();
-    @Schema(name="OutboundPeers", description="list of outbound peers")
-    public List<PeerDTO> outboundPeers = new ArrayList<>();
-    public String upnpAddress = "";
+    @Schema(name="IboundPeers", description="Number of inbound peers")
+    public Integer inboundPeers = 0;
+    @Schema(name="OutboundPeers", description="Number of outbound peers")
+    public Integer outboundPeers = 0;
 }

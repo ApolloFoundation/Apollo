@@ -82,7 +82,7 @@ public class NodeControlController {
                                     schema = @Schema(implementation = RunningThreadsInfo.class)))
             }
     )
-    public Response getBackendThreads(@Context HttpServletRequest request) {
+    public Response getBackendThreads(@Context HttpServletRequest request, @QueryParam("adminPassword") String password) {
         boolean passwordOK = bcService.isAdminPasswordOK(request);
         if(passwordOK){
             RunningThreadsInfo threadsResponse=bcService.getThreadsInfo();
@@ -105,13 +105,15 @@ public class NodeControlController {
                                     schema = @Schema(implementation = ApolloX509Response.class)))
             }
     )
-    public Response getHealthInfo(@Context HttpServletRequest request) {
+    public Response getHealthInfo(@Context HttpServletRequest request, @QueryParam("adminPassword") String password) {
         boolean passwordOK = bcService.isAdminPasswordOK(request);
         if (passwordOK) {
             NodeHealthResponse infoResponse = new NodeHealthResponse();
             infoResponse.healthInfo = bcService.getNodeHealth();
             infoResponse.statusInfo = bcService.getNodeStatus();
             infoResponse.networkingInfo = bcService.getNetworkingInfo();
+            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK 
+                    || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
             return Response.status(Response.Status.OK).entity(infoResponse).build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();

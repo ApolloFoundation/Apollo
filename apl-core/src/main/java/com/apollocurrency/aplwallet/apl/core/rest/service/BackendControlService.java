@@ -12,10 +12,14 @@ import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -55,6 +59,12 @@ public class BackendControlService {
     @Inject @Setter
     private NetworkService networkService;
     
+    @Inject @Setter
+    private BlockDao blockDao;
+    
+    @Inject @Setter
+    private DatabaseManager databaseManager;
+        
     public NodeStatusInfo getNodeStatus(){
         NodeStatusInfo res = new NodeStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
@@ -109,20 +119,21 @@ public class BackendControlService {
         NodeHealthInfo info = new NodeHealthInfo();
         info.dbOK = chekDataBaseOK();
         info.blockchainHeight = blockchain.getHeight();
-        //TODO: YL please look what should be added
+        info.usedDbConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
         return info;
     }
 
     public NodeNetworkingInfo getNetworkingInfo() {
         NodeNetworkingInfo info = new NodeNetworkingInfo();
-        info.inboundPeers = peerConverter.convert(networkService.getInboundPeers());
-        info.outboundPeers = peerConverter.convert(networkService.getOutboundPeers());
+        info.inboundPeers = networkService.getInboundPeers().size();
+        info.outboundPeers = networkService.getOutboundPeers().size();
         info.myPeerInfo = peerInfoConverter.convert(networkService.getMyPeerInfo());
         return info;
     }
     
     private boolean chekDataBaseOK(){
-        //TODO: YL please implement this
-        return true;
+        Block b = blockDao.findLastBlock();
+        boolean res = b!=null;
+        return res;
     }
 }
