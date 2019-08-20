@@ -37,7 +37,7 @@ public class DexCloseOfferAttachment extends AbstractAttachment {
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("orderId", this.getOrderId());
+        json.put("orderId", Long.toUnsignedString(this.getOrderId()));
     }
 
     @Override

@@ -120,8 +120,8 @@ public class DexContractAttachment extends AbstractAttachment {
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("orderId", this.getOrderId());
-        json.put("counterOrderId", this.getCounterOrderId());
+        json.put("orderId", Long.toUnsignedString(this.getOrderId()));
+        json.put("counterOrderId", Long.toUnsignedString(this.getCounterOrderId()));
         json.put("secretHash",  Convert.toHexString(this.secretHash));
         json.put("encryptedSecret",  Convert.toHexString(this.encryptedSecret));
         json.put("contractStatus",  this.contractStatus.ordinal());
