@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -26,10 +23,13 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
 public class DexOfferTransaction extends DEX {
@@ -106,6 +106,10 @@ public class DexOfferTransaction extends DEX {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(offerType, offerCurrency, pairCurrency)) {
             Long amountATM = attachment.getOfferAmount();
             Account sender = Account.getAccount(transaction.getSenderId());
+
+            if (sender == null) {
+                throw new AplException.NotValidException("Unknown account:" + transaction.getSenderId());
+            }
 
             if (sender.getUnconfirmedBalanceATM() < amountATM) {
                 throw new AplException.NotValidException("Not enough money.");
