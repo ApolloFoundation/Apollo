@@ -115,7 +115,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(mock(FullTextSearchService.class), FullTextSearchService.class))
             .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))

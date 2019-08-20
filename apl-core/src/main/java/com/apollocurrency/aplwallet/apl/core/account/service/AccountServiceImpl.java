@@ -58,7 +58,11 @@ public class AccountServiceImpl implements AccountService {
     private Event<Account> accountEvent;
 
     @Inject
-    public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig, GlobalSync sync, DatabaseManager databaseManager, AccountPublicKeyService accountPublicKeyService, Event<Account> accountEvent) {
+    public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig,
+                              GlobalSync sync, DatabaseManager databaseManager,
+                              AccountPublicKeyService accountPublicKeyService,
+                              Event<Account> accountEvent,
+                              AccountGuaranteedBalanceTable accountGuaranteedBalanceTable) {
         this.accountTable = accountTable;
         this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
@@ -66,6 +70,7 @@ public class AccountServiceImpl implements AccountService {
         this.databaseManager = databaseManager;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountEvent = accountEvent;
+        this.accountGuaranteedBalanceTable = accountGuaranteedBalanceTable;
     }
 
     @Override
@@ -436,7 +441,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Account> getTopHolders(int numberOfTopAccounts) {
-        return toList(accountTable.getTopHolders(numberOfTopAccounts));
+        return accountTable.getTopHolders(numberOfTopAccounts);
     }
 
     @Override

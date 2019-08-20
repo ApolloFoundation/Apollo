@@ -31,13 +31,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -142,7 +140,7 @@ class AccountDaoTest  {
     @Test
     void getTopHolders() {
         List<Account> expected = testData.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
-        List<Account> result = toList(table.getTopHolders(100));
+        List<Account> result = table.getTopHolders(100);
         assertEquals(expected.size(), result.size());
         assertEquals(expected, result.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()));
     }

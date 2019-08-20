@@ -94,7 +94,7 @@ public class DGSObserverTest {
             .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
 //            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))

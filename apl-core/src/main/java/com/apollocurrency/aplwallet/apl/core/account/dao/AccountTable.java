@@ -23,7 +23,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Objects;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  *
@@ -125,7 +128,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
-    public  DbIterator<Account> getTopHolders(int numberOfTopAccounts) {
+    public List<Account> getTopHolders(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
@@ -133,7 +136,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         ){
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
-            return getManyBy(con, pstmt, false);
+            return toList(getManyBy(con, pstmt, false));
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

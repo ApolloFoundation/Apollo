@@ -90,7 +90,7 @@ class GenesisImporterTest {
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class,
 
             GlobalSyncImpl.class, PublicKeyTable.class,
-            AccountServiceImpl.class, AccountPublicKeyServiceImpl.class
+            AccountGuaranteedBalanceTable.class, AccountServiceImpl.class, AccountPublicKeyServiceImpl.class
     )
             .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
             .addBeans(MockBean.of(configDirProvider, ConfigDirProvider.class))
@@ -115,9 +115,10 @@ class GenesisImporterTest {
     AccountService accountService;
     @Inject
     AccountPublicKeyService accountPublicKeyService;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
     private GenesisPublicKeyTable genesisPublicKeyTable;
-    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private BalancesPublicKeysTestData testData;
 
     private Path createPath(String fileName) {
@@ -136,8 +137,6 @@ class GenesisImporterTest {
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
         genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
-        accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
-        accountGuaranteedBalanceTable.init();
         testData = new BalancesPublicKeysTestData();
     }
 
