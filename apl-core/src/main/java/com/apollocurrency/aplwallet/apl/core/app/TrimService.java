@@ -105,8 +105,9 @@ public class TrimService {
                 }
                 long startTime = System.currentTimeMillis();
                 doTrimDerivedTablesOnBlockchainHeight(height, async);
-                log.debug("Total trim time: {} msec on '{}'", (System.currentTimeMillis() - startTime), height);
-            dataSource.commit(!inTransaction);
+                dataSource.commit(!inTransaction);
+                log.debug("Total trim time: {} msec on '{}', InTr?=('{}')",
+                        (System.currentTimeMillis() - startTime), height, !inTransaction);
             } catch (Exception e) {
             log.info(e.toString(), e);
             dataSource.rollback(!inTransaction);
@@ -130,19 +131,20 @@ public class TrimService {
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
                     log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
-                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
-            } else {
-                log.debug("Fire doTrimDerived sync event height '{}'", blockchainHeight);
+                    trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                } else {
+                    log.debug("Fire doTrimDerived sync event height '{}'", blockchainHeight);
                     trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 }
                 trimEntry.setDone(true);
                 trimDao.save(trimEntry);
-
+                log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
             }
         } finally {
             lock.unlock();
         }
     }
+
     public void resetTrim() {
         trimDao.clear();
     }
