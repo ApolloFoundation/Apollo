@@ -74,6 +74,21 @@ public interface DexOfferDao {
             " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffersForMatchingWnenSell(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest, @Define("orderby") String orderBy  );
+    
+    @AllowUnusedBindings    
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            " WHERE latest = true" +
+            " AND offer.type = :type" + 
+            " AND offer.finish_time > :currentTime" +
+            " AND offer.offer_currency = :offerCur" +
+            " AND offer.offer_amount = :offerAmount" +
+            " AND offer.pair_currency = :pairCur" + 
+            " AND offer.pair_rate == :pairRate" +
+            " AND offer.status = 0" +
+            " ORDER BY offer.pair_rate <orderby> ")
+    @RegisterRowMapper(DexOfferMapper.class)
+    List<DexOffer> getOffersForMatchingPure(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest, @Define("orderby") String orderBy  );
         
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer where latest = true AND transaction_id = :transactionId")
