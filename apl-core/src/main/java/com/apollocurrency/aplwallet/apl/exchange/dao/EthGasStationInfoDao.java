@@ -1,6 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.EthChainGasInfoImpl;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthStationGasInfo;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,17 +18,38 @@ import java.net.URL;
 public class EthGasStationInfoDao {
 
     public EthGasInfo getEthPriceInfo() throws IOException {
-        EthGasInfo ethGasInfo = null;
+        EthStationGasInfo ethGasInfo = null;
         HttpURLConnection con = null;
         try {
-            URL url = new URL(Constants.ETH_GAS_INFO_URL);
+            URL url = new URL(Constants.ETH_STATION_GAS_INFO_URL);
             con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
 
             if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 try (Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
                     ethGasInfo = new ObjectMapper()
-                            .readerFor(EthGasInfo.class)
+                            .readerFor(EthStationGasInfo.class)
+                            .readValue(reader);
+                }
+            }
+        } finally {
+            con.disconnect();
+        }
+        return ethGasInfo;
+    }
+
+    public EthGasInfo getEthChainPriceInfo() throws IOException {
+        EthChainGasInfoImpl ethGasInfo = null;
+        HttpURLConnection con = null;
+        try {
+            URL url = new URL(Constants.ETH_CHAIN_GAS_INFO_URL);
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+
+            if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                try (Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))) {
+                    ethGasInfo = new ObjectMapper()
+                            .readerFor(EthChainGasInfoImpl.class)
                             .readValue(reader);
                 }
             }

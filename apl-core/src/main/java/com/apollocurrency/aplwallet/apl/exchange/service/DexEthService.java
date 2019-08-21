@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Singleton
 public class DexEthService {
-    private static Integer attempts = 5;
+    private static Integer ATTEMPTS = 5;
     private static String ETH_GAS_INFO_KEY = "eth_gas_info";
 
     private EthGasStationInfoDao ethGasStationInfoDao;
@@ -47,11 +47,16 @@ public class DexEthService {
     private EthGasInfo initEthPriceInfo(){
         EthGasInfo ethGasInfo = null;
         Integer counter = 0;
-        while (counter < attempts) {
+        while (counter < ATTEMPTS) {
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
             } catch (Exception e) {
-                log.error("Attempt " + counter +":" + e.getMessage(), e);
+                log.error("(Gas Station) Attempt " + counter + ":" + e.getMessage(), e);
+            }
+            try {
+                ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
+            } catch (Exception e) {
+                log.error("(Eth Chain) Attempt " + counter + ":" + e.getMessage(), e);
             }
 
             if (ethGasInfo != null) {
