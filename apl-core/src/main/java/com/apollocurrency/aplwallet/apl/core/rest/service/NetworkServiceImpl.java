@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
@@ -70,5 +71,15 @@ public class NetworkServiceImpl implements NetworkService {
     @Override
     public Peer setForcedPeer(Peer peer){
         return APIProxy.getInstance().setForcedPeer(peer);
+    }
+
+    @Override
+    public List<Peer> getOutboundPeers() {
+       return Peers.getOutboundPeers(); 
+    }
+
+    @Override
+    public PeerInfo getMyPeerInfo() {
+        return Peers.getMyPeerInfo();
     }
 }
