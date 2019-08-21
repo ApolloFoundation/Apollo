@@ -24,7 +24,7 @@ public class NodeHealthInfo {
     public Integer blockchainHeight=-1;
     @Schema(name="Database is OK", description="Database is able to find blocks")    
     public Boolean dbOK=false;
-    @Schema(name="Node reboot required", description="Node reboot required because it is in unrtecvoverable state")    
+    @Schema(name="Node reboot required", description="Node reboot required because it is in unrecoverable state")    
     public Boolean needReboot = false;    
     @Schema(name="Used DB connection", description="Current total number of DB connections")    
     public Integer usedDbConnections = 0;
