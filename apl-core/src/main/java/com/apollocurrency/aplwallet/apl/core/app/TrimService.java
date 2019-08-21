@@ -67,6 +67,7 @@ public class TrimService {
 
 
     public void init(int height) {
+        log.debug("init() at height = {}", height);
         lock.lock();
         try {
             TrimEntry trimEntry = trimDao.get();
@@ -76,7 +77,8 @@ public class TrimService {
                 return;
             }
             int lastTrimHeight = trimEntry.getHeight();
-            log.info("Last trim height was {}", lastTrimHeight);
+            log.info("Last trim height was done? ='{}' at height '{}', supplied height {}",
+                    trimEntry.isDone(), lastTrimHeight, height);
             if (!trimEntry.isDone()) {
                 log.info("Finish trim at height {}", lastTrimHeight);
                 trimDerivedTables(lastTrimHeight, false);
@@ -103,21 +105,19 @@ public class TrimService {
                 }
                 long startTime = System.currentTimeMillis();
                 doTrimDerivedTablesOnBlockchainHeight(height, async);
-                log.debug("Total trim time: " + (System.currentTimeMillis() - startTime));
-                dataSource.commit(!inTransaction);
-
-            }
-            catch (Exception e) {
-                log.info(e.toString(), e);
-                dataSource.rollback(!inTransaction);
-                throw e;
-            }
+                log.debug("Total trim time: {} msec on '{}'", (System.currentTimeMillis() - startTime), height);
+            dataSource.commit(!inTransaction);
+            } catch (Exception e) {
+            log.info(e.toString(), e);
+            dataSource.rollback(!inTransaction);
+            throw e;}
         } finally {
             lock.unlock();
         }
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight, boolean async) {
+        log.debug("doTrimDerived on height {} as async operation (? = {})", blockchainHeight, async);
         lock.lock();
         try {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
@@ -129,8 +129,10 @@ public class TrimService {
                 dbManager.getDataSource().commit(false);
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
-                    trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
-                } else {
+                    log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
+                trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+            } else {
+                log.debug("Fire doTrimDerived sync event height '{}'", blockchainHeight);
                     trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 }
                 trimEntry.setDone(true);
@@ -180,7 +182,7 @@ public class TrimService {
                     globalSync.readUnlock();
                 }
             }
-            log.debug("Only trim time: " + onlyTrimTime);
+            log.debug("Only trim time: {} on height = {}, pruningTime = {}", onlyTrimTime, height, pruningTime);
             return pruningTime;
         } finally {
             lock.unlock();
