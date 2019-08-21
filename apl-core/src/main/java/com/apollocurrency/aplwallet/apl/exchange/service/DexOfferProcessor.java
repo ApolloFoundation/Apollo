@@ -22,8 +22,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.*;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 
 @Slf4j
 @Singleton
@@ -66,6 +66,17 @@ public class DexOfferProcessor {
                 DexOffer offer = dexService.getOfferByTransactionId(incomeContract.getOrderId());
                 DexOffer counterOffer = dexService.getOfferByTransactionId(incomeContract.getCounterOrderId());
 
+                ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder()
+                        .sender(accountId)
+                        .offerId(counterOffer.getTransactionId())
+                        .recipient(counterOffer.getAccountId())
+                        .build());
+
+                if (exchangeContract != null) {
+                    log.debug("DexContract has been already created. ExchangeContractId:{}", exchangeContract.getId());
+                    continue;
+                }
+
                 if(!counterOffer.getStatus().isOpen() || !isContractStep1Valid(incomeContract)){
                     continue;
                 }
@@ -84,7 +95,11 @@ public class DexOfferProcessor {
                         .ecBlockId(0L)
                         .build();
 
+                log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, offer.getTransactionId(), counterOffer.getTransactionId());
+
                 String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOffer, offer.getToAddress(), incomeContract.getSecretHash(), STEP_2);
+
+                log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, txId);
 
                 if (txId == null) {
                     throw new AplException.ExecutiveProcessException("Transfer money wasn't finish success. Orderid: " + incomeContract.getOrderId() + ", counterOrder:  " + incomeContract.getCounterOrderId() + ", " + incomeContract.getContractStatus());
@@ -109,10 +124,12 @@ public class DexOfferProcessor {
 
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
 
+
                 if (transaction == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + incomeContract.getOrderId() + ", counterOrder:  " + incomeContract.getCounterOrderId() + ", " + incomeContract.getContractStatus());
                 }
-                log.debug("Atomic swap Step_2 Tx id:" + transaction.getStringId());
+
+                log.debug("DexOfferProcessor Step-1. User created contract (Step-2). accountId: {} , txId: {}.", accountId, transaction.getId());
 
 
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
@@ -154,14 +171,21 @@ public class DexOfferProcessor {
                         .status(STEP_1.ordinal())
                         .build());
 
+                log.debug("DexOfferProcessor Step-2 (part-1). accountId: {}", accountId);
+
                 //TODO move to validation
                 if(dexService.isTxApproved(exchangeContract.getSecretHash(), offer.getType(), offer.getPairCurrency(), incomeContract.getTransferTxId())){
+                    log.debug("DexOfferProcessor Step-2(part-1). Transaction approved, incomeContract: {}", incomeContract.getTransferTxId());
                     continue;
                 }
 
                 byte[] secret = Crypto.aesGCMDecrypt(exchangeContract.getEncryptedSecret(), Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
+                log.debug("DexOfferProcessor Step-2(part-1). Approving money transfer. accountId: {}", accountId);
+
                 dexService.approveMoneyTransfer(passphrase, accountId, incomeContract.getCounterOrderId(), incomeContract.getTransferTxId(), secret);
+
+                log.debug("DexOfferProcessor Step-2(part-1). Approved money transfer. accountId: {}", accountId);
             }catch (Exception ex){
                 log.error(ex.getMessage(), ex);
                 continue;
@@ -185,6 +209,9 @@ public class DexOfferProcessor {
                 if(outcomeContract == null){
                     continue;
                 }
+
+                log.debug("DexOfferProcessor Step-2(part-2). accountId: {}", accountId);
+
                 ExchangeContract initialContract = dexService.getDexContract(DexContractDBRequest.builder()
                         .sender(outcomeContract.getRecipient())
                         .offerId(outcomeContract.getCounterOrderId())
@@ -202,8 +229,12 @@ public class DexOfferProcessor {
                     continue;
                 }
 
+                log.debug("DexOfferProcessor Step-2(part-2). Approving money transfer. accountId: {}", accountId);
+
                 byte[] secret = dexService.getSecretIfTxApproved(initialContract.getSecretHash(), outcomeOffer.getType(), outcomeOffer.getPairCurrency(), outcomeContract.getTransferTxId());
                 dexService.approveMoneyTransfer(passphrase, accountId, outcomeOffer.getTransactionId(), initialContract.getTransferTxId(), secret);
+
+                log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 continue;

@@ -208,6 +208,7 @@ public class DexSmartContractService {
         TransactionReceipt transactionReceipt = null;
         try {
             if(token==null) {
+                log.debug("dexContract withdraw, order: {}", orderId);
                 transactionReceipt = dexContract.withdraw(orderId).sendAsync().get();
             }
         } catch (Exception e) {
