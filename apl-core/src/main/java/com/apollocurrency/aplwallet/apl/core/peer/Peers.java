@@ -385,6 +385,10 @@ public final class Peers {
         LOG.debug("Finished filling 'MyPeerInfo'");
     }
 
+    public static PeerInfo getMyPeerInfo() {
+       return myPI;
+    }
+    
     public static void shutdown() {
         try {
             shutdown = true;
@@ -495,6 +499,10 @@ public final class Peers {
 
     public static List<Peer> getInboundPeers() {
         return getPeers(Peer::isInbound);
+    }
+    
+    public static List<Peer> getOutboundPeers() {
+        return getPeers(Peer::isOutbound);
     }
 
     public static boolean hasTooManyInboundPeers() {

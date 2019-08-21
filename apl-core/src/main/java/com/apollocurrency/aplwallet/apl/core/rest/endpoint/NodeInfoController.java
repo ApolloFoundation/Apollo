@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.ApolloX509Response;
+import com.apollocurrency.aplwallet.api.response.NodeForgersResponse;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -24,21 +25,21 @@ import org.slf4j.LoggerFactory;
  * @author alukin@gmail.com
  */
 
-@Path("/serverinfo")
-public class ServerInfoController {
-    private static final Logger log = LoggerFactory.getLogger(ServerInfoController.class);
+@Path("/nodeinfo")
+public class NodeInfoController {
+    private static final Logger log = LoggerFactory.getLogger(NodeInfoController.class);
     private  ServerInfoService siService;
 
     @Inject
-    public ServerInfoController(ServerInfoService siService) {
+    public NodeInfoController(ServerInfoService siService) {
         this.siService = siService;
     }
 
-    public ServerInfoController() {
+    public NodeInfoController() {
       log.debug("Empty ServerInfoEndpoint created");
     }
 
-    @Path("/")
+    @Path("/x509")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns node certificate info",
@@ -55,5 +56,23 @@ public class ServerInfoController {
         ApolloX509Response infoResponse = new ApolloX509Response();
         infoResponse.info = siService.getX509Info();
         return Response.status(Response.Status.OK).entity(infoResponse).build();
+    }
+    
+    @Path("/forgers")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns node's active forgers",
+            description = "Returns node's active forgers with some aparameters",
+            tags = {"status"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful execution",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = NodeForgersResponse.class)))
+            }
+    )   
+    public Response getActiveForgers(){
+        NodeForgersResponse resp = new NodeForgersResponse();
+        resp.setGenerators(siService.getActiveForgers(false));
+        return Response.status(Response.Status.OK).entity(resp).build();
     }
 }

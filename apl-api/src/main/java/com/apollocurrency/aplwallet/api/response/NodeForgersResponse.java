@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.api.dto.GeneratorInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,17 +20,11 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Response that contains node status including
- * running tasks and other information
+ * Response that contains node forgers
  * @author alukin@gmail.com
  */
 @Getter @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiResponse(responseCode = "200", description = "Successful execution",
-        content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = NodeStatusResponse.class)))
-public class NodeStatusResponse extends ResponseBase {
-    public String message="";
-    public List<DurableTaskInfo> tasks = new ArrayList<>();
-    public NodeStatusInfo nodeInfo = new NodeStatusInfo();
+public class NodeForgersResponse extends ResponseBase {
+    public List<GeneratorInfo> generators = new ArrayList<>();
 }
