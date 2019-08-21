@@ -10,13 +10,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.List;
-import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
-import org.jdbi.v3.sqlobject.customizer.Define;
 
 public interface DexOfferDao {
 
@@ -83,8 +83,8 @@ public interface DexOfferDao {
             " AND offer.finish_time > :currentTime" +
             " AND offer.offer_currency = :offerCur" +
             " AND offer.offer_amount = :offerAmount" +
-            " AND offer.pair_currency = :pairCur" + 
-            " AND offer.pair_rate == :pairRate" +
+            " AND offer.pair_currency = :pairCur" +
+            " AND offer.pair_rate = :pairRate" +
             " AND offer.status = 0" +
             " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOfferMapper.class)

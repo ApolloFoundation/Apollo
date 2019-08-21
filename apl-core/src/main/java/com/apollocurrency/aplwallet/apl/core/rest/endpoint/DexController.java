@@ -259,17 +259,22 @@ public class DexController {
 
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
+                log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
             } catch (AplException.ExecutiveProcessException e) {
+                log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
             } catch (AplException.ThirdServiceIsNotAvailable e){
+                log.error(e.getMessage(), e);
                 Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
             } catch (ExecutionException e){
+                log.error(e.getMessage(), e);
                 Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             }
 
-        } catch (ParameterException ex){
-            return Response.ok(JSON.toString(ex.getErrorResponse())).build();
+        } catch (ParameterException e) {
+            log.error(e.getMessage(), e);
+            return Response.ok(JSON.toString(e.getErrorResponse())).build();
         }
 
         return Response.ok().build();
