@@ -390,7 +390,9 @@ public final class Peers {
             shutdown = true;
             peerHttpServer.shutdown();
             TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
-            dispatcher.shutdown();
+            if (dispatcher != null) {
+                dispatcher.shutdown();
+            }
             Tasks.shutdownExecutor("sendingService", sendingService, 2);
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
