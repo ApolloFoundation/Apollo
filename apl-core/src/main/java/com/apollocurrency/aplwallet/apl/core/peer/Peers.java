@@ -386,7 +386,7 @@ public final class Peers {
     }
 
     public static PeerInfo getMyPeerInfo() {
-       return myPI;
+        return myPI;
     }
     
     public static void shutdown() {
@@ -500,7 +500,7 @@ public final class Peers {
     public static List<Peer> getInboundPeers() {
         return getPeers(Peer::isInbound);
     }
-    
+
     public static List<Peer> getOutboundPeers() {
         return getPeers(Peer::isOutbound);
     }

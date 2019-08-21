@@ -75,7 +75,7 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public List<Peer> getOutboundPeers() {
-       return Peers.getOutboundPeers(); 
+        return Peers.getOutboundPeers();
     }
 
     @Override
