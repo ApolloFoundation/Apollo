@@ -155,7 +155,7 @@ public final class Constants {
     //24 h TODO CHANGe time
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2 = 24 * 60 * 60;
     //minutes
-    public static Integer DEX_OFFER_PROCESSOR_DELAY = 5;
+    public static Integer DEX_OFFER_PROCESSOR_DELAY = 1;
 
     private Constants() {} // never
 
