@@ -24,12 +24,6 @@ public class DexMatchingService {
 
     @Transactional
     public List<DexOffer> getOffersForMatching(DexOfferDBMatchingRequest dexOfferDBMatchingRequest, String orderby){
-        if ( dexOfferDBMatchingRequest.getType() == 1 ) {
-            log.debug("Handling it as SALE: " );
-            return dexOfferDao.getOffersForMatchingWnenSell(dexOfferDBMatchingRequest, orderby);
-        } else {
-            log.debug("Handling it as BUY: " );
-            return dexOfferDao.getOffersForMatchingWnenBuy(dexOfferDBMatchingRequest, orderby);
-        }
+        return dexOfferDao.getOffersForMatchingPure(dexOfferDBMatchingRequest, orderby);
     }
 }
