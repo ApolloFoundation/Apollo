@@ -82,14 +82,18 @@ public class FileDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
+    private Peers peers;
+    
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-                          AplAppStatus aplAppStatus) {
+                          AplAppStatus aplAppStatus,
+                          Peers peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        this.peers=peers;
     }
     
     public void setFileId(String fileID){
@@ -134,7 +138,7 @@ public class FileDownloader {
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
         PeersList<PeerFileInfo> pl = new PeersList<>();
         allPeers.forEach((pi) -> {
-            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
+            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi,peers), fileID);
             if(pfi.retreiveHash()!=null){
               pl.add(pfi);
             }
@@ -274,9 +278,9 @@ public class FileDownloader {
         return status;
     }
 
-    public static Set<Peer> getAllAvailablePeers() {
+    public Set<Peer> getAllAvailablePeers() {
         Set<Peer> res = new HashSet<>();
-        Collection<? extends Peer> knownPeers = Peers.getAllConnectablePeers();
+        Collection<? extends Peer> knownPeers = peers.getAllConnectablePeers();
         res.addAll(knownPeers);
         return res;
     }

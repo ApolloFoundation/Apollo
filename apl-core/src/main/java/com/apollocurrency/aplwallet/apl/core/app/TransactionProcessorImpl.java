@@ -94,7 +94,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static DatabaseManager databaseManager;
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-
+    private static Peers peers = CDI.current().select(Peers.class).get();
     private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
     private static int maxUnconfirmedTransactions;
 
@@ -278,7 +278,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (transactionList.size() > 0) {
-                    Peers.sendToSomePeers(transactionList);
+                    peers.sendToSomePeers(transactionList);
                 }
 
             } catch (Exception e) {
@@ -298,7 +298,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
+                Peer peer = peers.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
@@ -514,7 +514,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 processTransaction(unconfirmedTransaction);
                 LOG.debug("Accepted new transaction " + transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
-                Peers.sendToSomePeers(acceptedTransactions);
+                peers.sendToSomePeers(acceptedTransactions);
                 transactionListeners.notify(acceptedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add((TransactionImpl) transaction);
@@ -736,7 +736,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
         }
         if (sendToPeersTransactions.size() > 0) {
-            Peers.sendToSomePeers(sendToPeersTransactions);
+            peers.sendToSomePeers(sendToPeersTransactions);
         }
         if (addedUnconfirmedTransactions.size() > 0) {
             transactionListeners.notify(addedUnconfirmedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);

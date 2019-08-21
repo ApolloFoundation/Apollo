@@ -85,6 +85,9 @@ public final class PeerServlet extends WebSocketServlet {
     private BlockchainConfig blockchainConfig;
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
+    @Inject
+    private Peers peers;
+    
     private ExecutorService threadPool;
 
     @Override
@@ -184,7 +187,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = Peers.findOrCreatePeer(pa,null,true);
+        PeerImpl peer = peers.findOrCreatePeer(pa,null,true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -321,17 +324,17 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
-                    LOG.trace("Peer List =[{}], dumping...", Peers.getAllPeers().size());
-                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("{}", peerHost));
+                    LOG.trace("Peer List =[{}], dumping...", peers.getAllPeers().size());
+                    peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("{}", peerHost));
                 }
                 return PeerResponses.SEQUENCE_ERROR;
             }
             if (peer.isInbound()) {
-                if (Peers.hasTooManyInboundPeers()) {
-                    Peers.removePeer(peer);
+                if (peers.hasTooManyInboundPeers()) {
+                    peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
-                Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
+                peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
@@ -371,8 +374,8 @@ public final class PeerServlet extends WebSocketServlet {
                 PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
-                Peers.cleanupPeers(null);
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
+                peers.cleanupPeers(null);
+                PeerImpl peer = (PeerImpl)peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);

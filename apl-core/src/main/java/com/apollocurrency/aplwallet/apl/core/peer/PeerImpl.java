@@ -95,7 +95,7 @@ public final class PeerImpl implements Peer {
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile TimeService timeService;
-    private final PropertiesHolder propertiesHolder;
+    private final Peers peers;
     
     private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
@@ -111,15 +111,14 @@ public final class PeerImpl implements Peer {
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
             TimeService timeService,
-            PropertiesHolder propertiesHolder,
-            PeerServlet peerServlet
+            PeerServlet peerServlet,
+            Peers peers
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
         this.host = addrByFact.getHost();
         this.port = addrByFact.getPort();
 
-        this.propertiesHolder=propertiesHolder;
         if(announcedAddress==null){
             LOG.trace("got empty announcedAddress from host {}",getHostWithPort());
             pi.setShareAddress(false);
@@ -133,7 +132,8 @@ public final class PeerImpl implements Peer {
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
-        isLightClient=propertiesHolder.isLightClient();
+        this.peers=peers;
+        isLightClient=peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
@@ -367,8 +367,8 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isBlacklisted() {
-        return blacklistingTime > 0 || isOldVersion || Peers.knownBlacklistedPeers.contains(host)
-                || (pi.getAnnouncedAddress() != null && Peers.knownBlacklistedPeers.contains(pi.getAnnouncedAddress()));
+        return blacklistingTime > 0 || isOldVersion || peers.knownBlacklistedPeers.contains(host)
+                || (pi.getAnnouncedAddress() != null && peers.knownBlacklistedPeers.contains(pi.getAnnouncedAddress()));
     }
 
     @Override
@@ -435,8 +435,8 @@ public final class PeerImpl implements Peer {
     @Override
     public void remove() {
         deactivate("Remove peer");
-        Peers.removePeer(this);
-        Peers.notifyListeners(this, Peers.Event.REMOVE);
+        peers.removePeer(this);
+        peers.notifyListeners(this, Peers.Event.REMOVE);
     }
 
     @Override
@@ -550,7 +550,7 @@ public final class PeerImpl implements Peer {
           failedConnectAttempts++;
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
               LOG.debug("Peer {} in noit connecatable, removing",getAnnouncedAddress());
-              Peers.removePeer(this);
+              peers.removePeer(this);
           }
         }else{  //reset on success
             failedConnectAttempts = 0;
@@ -567,7 +567,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = send(Peers.getMyPeerInfoRequest());
+            JSONObject response = send(peers.getMyPeerInfoRequest());
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if(processError(response)){
@@ -629,7 +629,7 @@ public final class PeerImpl implements Peer {
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
                                 LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
-                                Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
+                                peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                                 // force checking connectivity to new announced port
                                 deactivate("Announced address chnage");
                                 return false;
@@ -718,7 +718,7 @@ public final class PeerImpl implements Peer {
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;
-            for (Peer p : Peers.getAllConnectablePeers()) {
+            for (Peer p : peers.getAllConnectablePeers()) {
                 PeerImpl peer = (PeerImpl)p;
                 if (peer.hallmark == null) {
                     continue;
@@ -789,6 +789,7 @@ public final class PeerImpl implements Peer {
         }
     }
 
+    @Override
     public long getServices() {
         synchronized (servicesMonitor) {
             return services;

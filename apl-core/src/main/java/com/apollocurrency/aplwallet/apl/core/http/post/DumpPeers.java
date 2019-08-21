@@ -34,16 +34,15 @@ import java.util.concurrent.Executors;
 
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -52,7 +51,8 @@ import org.slf4j.Logger;
 public final class DumpPeers extends AbstractAPIRequestHandler {
    
     private static final Logger LOG = getLogger(DumpPeers.class);
-
+    @Inject
+    private Peers peers;
     public DumpPeers() {
         super(new APITag[] {APITag.DEBUG}, "version", "weight", "connect", "adminPassword");
     }
@@ -68,8 +68,8 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && apw.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();
-            Peers.getAllPeers().forEach(peer -> connects.add(() -> {
-                Peers.connectPeer(peer);
+            peers.getAllPeers().forEach(peer -> connects.add(() -> {
+                peers.connectPeer(peer);
                 return null;
             }));
             ExecutorService service = Executors.newFixedThreadPool(10);
@@ -80,7 +80,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
             }
         }
         Set<String> addresses = new HashSet<>();
-        Peers.getAllPeers().forEach(peer -> {
+        peers.getAllPeers().forEach(peer -> {
                     if (peer.getState() == PeerState.CONNECTED
                             && peer.shareAddress()
                             && !peer.isBlacklisted()

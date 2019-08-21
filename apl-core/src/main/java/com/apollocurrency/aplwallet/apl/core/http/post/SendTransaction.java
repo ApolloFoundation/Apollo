@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -64,7 +65,8 @@ import org.json.simple.JSONStreamAware;
  */
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
-
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    
     public SendTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
@@ -80,7 +82,7 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            Peers.sendToSomePeers(Collections.singletonList(transaction));
+            peers.sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.NotValidException | RuntimeException e) {

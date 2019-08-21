@@ -106,6 +106,8 @@ public final class AplCore {
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
 
+    @Inject @Setter
+    Peers peers;
     private String initCoreTaskID;
     
     public AplCore() {
@@ -141,7 +143,7 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
-        Peers.shutdown();
+        peers.shutdown();
         fullTextSearchService.shutdown();
         LOG.info("full text service shutdown...");
 
@@ -237,7 +239,7 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
-                Peers.init();
+                peers.init();
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();

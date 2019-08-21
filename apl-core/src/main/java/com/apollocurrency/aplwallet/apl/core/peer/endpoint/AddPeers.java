@@ -24,29 +24,31 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public final class AddPeers extends PeerRequestHandler {
-
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    
     public AddPeers() {}
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        final JSONArray peers = (JSONArray)request.get("peers");
-        if (peers != null && Peers.getMorePeers && !Peers.hasTooManyKnownPeers()) {
+        final JSONArray peersArray = (JSONArray)request.get("peers");
+        if (peersArray != null && peers.getMorePeers && !peers.hasTooManyKnownPeers()) {
             final JSONArray services = (JSONArray)request.get("services");
-            final boolean setServices = (services != null && services.size() == peers.size());
-            Peers.peersExecutorService.submit(() -> {
-                for (int i=0; i<peers.size(); i++) {
-                    String announcedAddress = (String)peers.get(i);
-                    PeerImpl newPeer = Peers.findOrCreatePeer(null, announcedAddress, true);
+            final boolean setServices = (services != null && services.size() == peersArray.size());
+            peers.peersExecutorService.submit(() -> {
+                for (int i=0; i<peersArray.size(); i++) {
+                    String announcedAddress = (String)peersArray.get(i);
+                    PeerImpl newPeer = peers.findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
-                        if (Peers.addPeer(newPeer) && setServices) {
+                        if (peers.addPeer(newPeer) && setServices) {
                             newPeer.setServices(Long.parseUnsignedLong((String)services.get(i)));
                         }
-                        if (Peers.hasTooManyKnownPeers()) {
+                        if (peers.hasTooManyKnownPeers()) {
                             break;
                         }
                     }

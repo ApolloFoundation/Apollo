@@ -35,12 +35,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private final TimeService timeService;
-
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
     private static final JSONStreamAware INVALID_CHAINID;
@@ -83,7 +85,7 @@ public final class GetInfo extends PeerRequestHandler {
                         log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
-                            Peers.setAnnouncedAddress(peerImpl, null);
+                            peers.setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate("Invalid announced address: "+announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
@@ -91,10 +93,10 @@ public final class GetInfo extends PeerRequestHandler {
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
-                        Peers.setAnnouncedAddress(peerImpl, announcedAddress);
+                        peers.setAnnouncedAddress(peerImpl, announcedAddress);
                     }
                 } else {
-                    Peers.setAnnouncedAddress(peerImpl, null);
+                    peers.setAnnouncedAddress(peerImpl, null);
                 }
             }
         }
@@ -140,7 +142,7 @@ public final class GetInfo extends PeerRequestHandler {
         if (peerImpl.getServices() != origServices) {
             Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
         }
-        JSONStreamAware myPeerInfoResponse = Peers.getMyPeerInfoResponse();
+        JSONStreamAware myPeerInfoResponse = peers.getMyPeerInfoResponse();
 
         if (log.isTraceEnabled()) {
             try {
@@ -152,7 +154,7 @@ public final class GetInfo extends PeerRequestHandler {
                 log.error("ERROR, DUMP myPeerInfoResponse", e);
             }
         }
-        Peers.addPeer(peer);
+        peers.addPeer(peer);
         return myPeerInfoResponse;
 
     }

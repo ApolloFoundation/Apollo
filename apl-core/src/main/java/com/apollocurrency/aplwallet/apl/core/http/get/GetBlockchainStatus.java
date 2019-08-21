@@ -41,7 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    
     public GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});
     }
@@ -93,7 +94,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("accountPrefix", blockchainConfig.getAccountPrefix());
         response.put("projectName", blockchainConfig.getProjectName());
         JSONArray servicesArray = new JSONArray();
-        Peers.getServices().forEach(service -> servicesArray.add(service.name()));
+        peers.getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);
         if (APIProxy.isActivated()) {
             String servingPeer = APIProxy.getInstance().getMainPeerAnnouncedAddress();
@@ -104,7 +105,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         }
         response.put("isLightClient", propertiesHolder.isLightClient());
         response.put("maxAPIRecords", API.maxRecords);
-        response.put("blockchainState", Peers.getMyBlockchainState());
+        response.put("blockchainState", peers.getMyBlockchainState());
         return response;
     }
 

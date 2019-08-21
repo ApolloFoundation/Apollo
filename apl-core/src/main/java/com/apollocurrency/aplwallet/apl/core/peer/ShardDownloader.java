@@ -59,13 +59,15 @@ public class ShardDownloader {
 
     private final Instance<FileDownloader> fileDownloaders;
     private final PropertiesHolder propertiesHolder;
+    private final Peers peers;
     
     @Inject
     public ShardDownloader(Instance<FileDownloader> fileDownloaders,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder) {
+            PropertiesHolder propertiesHolder,
+            Peers peers) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
@@ -76,11 +78,12 @@ public class ShardDownloader {
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.fileDownloaders=fileDownloaders;
         this.propertiesHolder=propertiesHolder;
+        this.peers=peers;
     }
 
     private boolean processPeerShardInfo(Peer p) {
         boolean haveShard = false;
-        PeerClient pc = new PeerClient(p);
+        PeerClient pc = new PeerClient(p,peers);
         ShardingInfo si = pc.getShardingInfo();
         log.trace("shardInfo = {}", si);
         if (si != null) {
@@ -114,8 +117,9 @@ public class ShardDownloader {
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
-        int counterTotal = 0;
-        Set<Peer> knownPeers = FileDownloader.getAllAvailablePeers();
+        int counterTotal = 0;        
+        FileDownloader fileDownloader = fileDownloaders.get();        
+        Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
@@ -138,7 +142,7 @@ public class ShardDownloader {
             //avoid modification while iterating
             for (String pa : additionalPeersCopy) {
 
-                Peer p = Peers.findOrCreatePeer(null, pa, true);
+                Peer p = peers.findOrCreatePeer(null, pa, true);
                 if(p!=null) {
                     if (processPeerShardInfo(p)) {
                         counterWinShardInfo++;
@@ -194,7 +198,7 @@ public class ShardDownloader {
         //do statistical analysys of shard's hashes
         PeersList<PeerShardInfo> shardPeerList = new PeersList<>();
         for (Peer p : shardPeers) {
-            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p), shardId, myChainId);
+            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p,peers), shardId, myChainId);
             psi.setHash(getHash(shardId, p.getHostWithPort()));
             shardPeerList.add(psi);
         }

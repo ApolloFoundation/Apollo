@@ -14,9 +14,11 @@ import org.slf4j.LoggerFactory;
 class PeerUnBlacklistingThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerUnBlacklistingThread.class);
     private final TimeService timeService;
+    private Peers peers;
 
-    public PeerUnBlacklistingThread(TimeService timeService) {
+    public PeerUnBlacklistingThread(TimeService timeService, Peers peers) {
         this.timeService = timeService;
+        this.peers=peers;
     }
 
     @Override
@@ -24,7 +26,7 @@ class PeerUnBlacklistingThread implements Runnable {
         try {
             try {
                 int curTime = timeService.getEpochTime();
-                for (Peer peer : Peers.getAllPeers()) {
+                for (Peer peer : peers.getAllPeers()) {
                     ((PeerImpl)peer).updateBlacklistedStatus(curTime);
                 }
             } catch (Exception e) {

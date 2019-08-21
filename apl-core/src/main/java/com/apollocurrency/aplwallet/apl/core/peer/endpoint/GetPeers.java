@@ -24,11 +24,13 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public final class GetPeers extends PeerRequestHandler {
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
 
     public GetPeers() {}
 
@@ -37,7 +39,7 @@ public final class GetPeers extends PeerRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         JSONArray services = new JSONArray();
-        Peers.getAllPeers().forEach(otherPeer -> {
+        peers.getAllPeers().forEach(otherPeer -> {
             if (!otherPeer.isBlacklisted() && otherPeer.getAnnouncedAddress() != null
                     && otherPeer.getState() == PeerState.CONNECTED && otherPeer.shareAddress()) {
                 jsonArray.add(otherPeer.getAnnouncedAddress());

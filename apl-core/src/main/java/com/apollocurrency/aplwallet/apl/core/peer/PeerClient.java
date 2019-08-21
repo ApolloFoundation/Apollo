@@ -34,12 +34,14 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
-
-    public PeerClient(Peer peer) {
+    private Peers peers;
+    
+    public PeerClient(Peer peer, Peers peers) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());        
         this.peer=peer;
+        this.peers=peers;
     }
     
     public Peer gePeer(){
@@ -49,7 +51,7 @@ public class PeerClient {
     public boolean checkConnection(){
         boolean res = false;
         String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = Peers.findOrCreatePeer(null,announcedAddress, true);
+        Peer p = peers.findOrCreatePeer(null,announcedAddress, true);
         if(p!=null){
             peer=p;
             res=true;

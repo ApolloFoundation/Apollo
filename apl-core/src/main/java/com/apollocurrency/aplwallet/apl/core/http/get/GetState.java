@@ -57,7 +57,8 @@ public final class GetState extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
-
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
     }
@@ -98,14 +99,14 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
         }
-        response.put("numberOfPeers", Peers.getAllPeers().size());
-        response.put("numberOfActivePeers", Peers.getActivePeers().size());
+        response.put("numberOfPeers", peers.getAllPeers().size());
+        response.put("numberOfActivePeers", peers.getActivePeers().size());
         response.put("numberOfUnlockedAccounts", Generator.getAllGenerators().size());
         response.put("availableProcessors", Runtime.getRuntime().availableProcessors());
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", Peers.myPort);
+        response.put("peerPort", peers.myPort);
         response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());

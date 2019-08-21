@@ -32,7 +32,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    
+    private Peers peers = CDI.current().select(Peers.class).get(); 
+
 //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
@@ -57,14 +58,14 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     public void suspendBlockchain() {
         lookupBlockchainProcessor().suspendBlockchainDownloading();
         Generator.suspendForging();
-        Peers.suspend();
+        peers.suspend();
     }
 
     @Override
     public void resumeBlockchain() {
         LOG.debug("Restarting peer server, blockchain processor and forging");
         lookupBlockchainProcessor().resumeBlockchainDownloading();
-        Peers.resume();
+        peers.resume();
         Generator.resumeForging();
         LOG.debug("Peer server, blockchain processor and forging were restarted successfully");
     }

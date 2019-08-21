@@ -48,7 +48,7 @@ public class AplCoreRuntime {
     private PropertiesHolder propertiesHolder;
     private final DatabaseManager databaseManager;
     private final AplAppStatus aplAppStatus;
-
+    private final Peers peers;
     //TODO:  check and debug minting    
     private MintWorker mintworker;
     private Thread mintworkerThread;
@@ -61,6 +61,8 @@ public class AplCoreRuntime {
     public AplCoreRuntime() {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
+        this.peers = CDI.current().select(Peers.class).get(); 
+        
     }
 
     public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
@@ -102,10 +104,10 @@ public class AplCoreRuntime {
         sb.append("\nRuntime free  memory :").append(String.format(" %,d KB", (runtime.freeMemory() / 1024)));
         sb.append("\nRuntime max   memory :").append(String.format(" %,d KB", (runtime.maxMemory() / 1024)) );
         sb.append("\nActive threads count :").append(Thread.currentThread().getThreadGroup().getParent().activeCount());
-        sb.append("\nInbound peers count: ").append(Peers.getInboundPeers().size());
-        sb.append(", Active peers count: ").append(Peers.getActivePeers().size());
-        sb.append(", Known peers count: ").append(Peers.getAllPeers().size());
-        sb.append(", Connectable peers count: ").append(Peers.getAllConnectablePeers().size());
+        sb.append("\nInbound peers count: ").append(peers.getInboundPeers().size());
+        sb.append(", Active peers count: ").append(peers.getActivePeers().size());
+        sb.append(", Known peers count: ").append(peers.getAllPeers().size());
+        sb.append(", Connectable peers count: ").append(peers.getAllConnectablePeers().size());
         return sb.toString();
     }
 

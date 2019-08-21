@@ -30,11 +30,13 @@ public class GetShardingInfo extends PeerRequestHandler{
 
     private final ShardDao shardDao;
     private final BlockchainConfig blockchainConfig;
+    private final Peers peers;
     
     @Inject
-    public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig) {
+    public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig, Peers peers) {
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;
+        this.peers=peers;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class GetShardingInfo extends PeerRequestHandler{
         log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
         if( rq.full ){ //add list of known peers
 //            for(Peer p: Peers.getAllPeers()){ too many peers that we can't connect
-            for(Peer p: Peers.getActivePeers()){
+            for(Peer p: peers.getActivePeers()){
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
                     address=p.getHostWithPort();

@@ -58,10 +58,11 @@ public class APIProxy {
     }
     
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TimeService timeService = CDI.current().select(TimeService.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private static Peers peers = CDI.current().select(Peers.class).get(); 
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -109,7 +110,7 @@ public class APIProxy {
             for (String host : currentPeersHosts) {
                 Peer peer = Peers.getPeer(host);
                 if (peer != null) {
-                    Peers.connectPeer(peer);
+                    peers.connectPeer(peer);
                 }
             }
         }
@@ -147,7 +148,7 @@ public class APIProxy {
             }
         }
 
-        List<Peer> connectablePeers = Peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
+        List<Peer> connectablePeers = peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
         if (connectablePeers.isEmpty()) {
             return null;
         }
