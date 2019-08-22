@@ -41,24 +41,22 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.net.InetAddress;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.net.InetAddress;
 @Vetoed
 public final class GetState extends AbstractAPIRequestHandler {
     private UPnP upnp = CDI.current().select(UPnP.class).get();
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
-    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
-    
+
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");
     }
@@ -99,14 +97,14 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
         }
-        response.put("numberOfPeers", peers.getAllPeers().size());
-        response.put("numberOfActivePeers", peers.getActivePeers().size());
+        response.put("numberOfPeers", lookupPeersService().getAllPeers().size());
+        response.put("numberOfActivePeers", lookupPeersService().getActivePeers().size());
         response.put("numberOfUnlockedAccounts", Generator.getAllGenerators().size());
         response.put("availableProcessors", Runtime.getRuntime().availableProcessors());
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", peers.myPort);
+        response.put("peerPort", lookupPeersService().myPort);
         response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());

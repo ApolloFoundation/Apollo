@@ -88,10 +88,10 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     public static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
-    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
+    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();;
 
     /** Transaction processor */
-    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
     private static PeersService peers = CDI.current().select(PeersService.class).get();
     /** Active event users */

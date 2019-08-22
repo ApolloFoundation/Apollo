@@ -21,23 +21,20 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
-    private PeersService peers = CDI.current().select(PeersService.class).get();
-    
+
     public ProcessBlock() {}
 
     @Override
@@ -54,7 +51,7 @@ public final class ProcessBlock extends PeerRequestHandler {
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp ||
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
-            peers.peersExecutorService.submit(() -> {
+            lookupPeersService().peersExecutorService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);

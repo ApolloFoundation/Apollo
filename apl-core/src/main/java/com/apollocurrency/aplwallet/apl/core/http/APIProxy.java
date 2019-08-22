@@ -59,7 +59,7 @@ public class APIProxy {
     
     // TODO: YL remove static instance later
     private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
     private static TimeService timeService = CDI.current().select(TimeService.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     private static PeersService peers = CDI.current().select(PeersService.class).get(); 
