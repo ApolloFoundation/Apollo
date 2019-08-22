@@ -285,7 +285,7 @@ public class Apollo {
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
-//                .devMode() // enable for dev only
+                .devMode() // enable for dev only
                 .build();
 
         // init config holders
