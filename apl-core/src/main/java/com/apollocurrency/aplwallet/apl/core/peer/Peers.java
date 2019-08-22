@@ -176,7 +176,7 @@ public class Peers {
     public final boolean isLightClient;
     
     @Inject
-    private Peers( PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain, 
+    public Peers( PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain, 
             TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer  ) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
