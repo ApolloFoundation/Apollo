@@ -51,14 +51,12 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -95,7 +93,7 @@ public final class PeerImpl implements Peer {
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile TimeService timeService;
-    private final PropertiesHolder propertiesHolder;
+    private final PeersService peers;
     
     private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
@@ -111,15 +109,14 @@ public final class PeerImpl implements Peer {
             BlockchainConfig blockchainConfig,
             Blockchain blockchain,
             TimeService timeService,
-            PropertiesHolder propertiesHolder,
-            PeerServlet peerServlet
+            PeerServlet peerServlet,
+            PeersService peers
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
         this.host = addrByFact.getHost();
         this.port = addrByFact.getPort();
 
-        this.propertiesHolder=propertiesHolder;
         if(announcedAddress==null){
             LOG.trace("got empty announcedAddress from host {}",getHostWithPort());
             pi.setShareAddress(false);
@@ -133,7 +130,8 @@ public final class PeerImpl implements Peer {
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
-        isLightClient=propertiesHolder.isLightClient();
+        this.peers=peers;
+        isLightClient=peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
@@ -178,9 +176,9 @@ public final class PeerImpl implements Peer {
             lock.unlock();
         }
         if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
-            Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
+            peers.notifyListeners(this, PeersService.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
+            peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
         //we have to change state anyway
     }
@@ -214,7 +212,7 @@ public final class PeerImpl implements Peer {
                 }
                 blacklistingCause = "Old version: " + version;
                 setState(PeerState.NON_CONNECTED);
-                Peers.notifyListeners(this, Peers.Event.BLACKLIST);
+                peers.notifyListeners(this, PeersService.Event.BLACKLIST);
             }
         }
         LOG.trace("VERSION - Peer - {} set version - {}", host, version);
@@ -228,7 +226,7 @@ public final class PeerImpl implements Peer {
     public boolean setApplication(String application) {
         boolean res = true;
         if (application == null 
-                || application.length() > Peers.MAX_APPLICATION_LENGTH
+                || application.length() > PeersService.MAX_APPLICATION_LENGTH
                 || ! application.equalsIgnoreCase(Constants.APPLICATION)
            ) {
             LOG.debug("Invalid application value='{}' from host:{}", application, host);
@@ -329,11 +327,11 @@ public final class PeerImpl implements Peer {
     }
     /**
      * Sets address of peer for outbound connections
-     * Shoul not be used directly but from Peers service only
+ Shoul not be used directly but from PeersService service only
      * @param announcedAddress address with port  optionally
      */
     void setAnnouncedAddress(String announcedAddress) {
-        if (announcedAddress != null && announcedAddress.length() > Peers.MAX_ANNOUNCED_ADDRESS_LENGTH) {
+        if (announcedAddress != null && announcedAddress.length() > PeersService.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
         PeerAddress pa = new PeerAddress(announcedAddress);
@@ -367,8 +365,8 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isBlacklisted() {
-        return blacklistingTime > 0 || isOldVersion || Peers.knownBlacklistedPeers.contains(host)
-                || (pi.getAnnouncedAddress() != null && Peers.knownBlacklistedPeers.contains(pi.getAnnouncedAddress()));
+        return blacklistingTime > 0 || isOldVersion || peers.knownBlacklistedPeers.contains(host)
+                || (pi.getAnnouncedAddress() != null && peers.knownBlacklistedPeers.contains(pi.getAnnouncedAddress()));
     }
 
     @Override
@@ -394,7 +392,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString(), cause);
             }
         }
-        blacklist(cause.toString() == null || Peers.hideErrorDetails ? cause.getClass().getName() : cause.toString());
+        blacklist(cause.toString() == null || PeersService.hideErrorDetails ? cause.getClass().getName() : cause.toString());
     }
 
     @Override
@@ -402,7 +400,7 @@ public final class PeerImpl implements Peer {
         blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
         deactivate("Blacklisting because of: "+cause);
-        Peers.notifyListeners(this, Peers.Event.BLACKLIST);
+        peers.notifyListeners(this, PeersService.Event.BLACKLIST);
     }
 
     @Override
@@ -413,11 +411,11 @@ public final class PeerImpl implements Peer {
         LOG.debug("Unblacklisting " + host);
         blacklistingTime = 0;
         blacklistingCause = null;
-        Peers.notifyListeners(this, Peers.Event.UNBLACKLIST);
+        peers.notifyListeners(this, PeersService.Event.UNBLACKLIST);
     }
 
     void updateBlacklistedStatus(int curTime) {
-        if (blacklistingTime > 0 && blacklistingTime + Peers.blacklistingPeriod <= curTime) {
+        if (blacklistingTime > 0 && blacklistingTime + PeersService.blacklistingPeriod <= curTime) {
             unBlacklist();
         }
         if (isOldVersion && lastUpdated < curTime - 3600) {
@@ -429,14 +427,14 @@ public final class PeerImpl implements Peer {
     public void deactivate(String reason) {
         setState(PeerState.NON_CONNECTED);
         LOG.trace("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
-        Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
+        peers.notifyListeners(this, PeersService.Event.DEACTIVATE);
     }
 
     @Override
     public void remove() {
         deactivate("Remove peer");
-        Peers.removePeer(this);
-        Peers.notifyListeners(this, Peers.Event.REMOVE);
+        peers.removePeer(this);
+        peers.notifyListeners(this, PeersService.Event.REMOVE);
     }
 
     @Override
@@ -494,7 +492,7 @@ public final class PeerImpl implements Peer {
     private JSONObject send(final JSONStreamAware request) {
 
         JSONObject response =null;
-        StringWriter wsWriter = new StringWriter(Peers.MAX_REQUEST_SIZE);
+        StringWriter wsWriter = new StringWriter(PeersService.MAX_REQUEST_SIZE);
         try {
             request.writeJSONString(wsWriter);
         } catch (IOException ex) {
@@ -550,7 +548,7 @@ public final class PeerImpl implements Peer {
           failedConnectAttempts++;
           if(failedConnectAttempts>=Constants.PEER_RECONNECT_ATTMEPTS_MAX){
               LOG.debug("Peer {} in noit connecatable, removing",getAnnouncedAddress());
-              Peers.removePeer(this);
+              peers.removePeer(this);
           }
         }else{  //reset on success
             failedConnectAttempts = 0;
@@ -567,7 +565,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = send(Peers.getMyPeerInfoRequest());
+            JSONObject response = send(peers.getMyPeerInfoRequest());
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if(processError(response)){
@@ -619,7 +617,7 @@ public final class PeerImpl implements Peer {
                 setPlatform(newPi.getPlatform());
                 setShareAddress(newPi.getShareAddress());
  
-                if (!Peers.ignorePeerAnnouncedAddress) {
+                if (!PeersService.ignorePeerAnnouncedAddress) {
                     if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
                             if (!verifyAnnouncedAddress(newPi.getAnnouncedAddress())) {
                                 LOG.debug("Connect: new announced address: {} for host: {}  not accepted", newPi.getAnnouncedAddress(), host);
@@ -629,7 +627,7 @@ public final class PeerImpl implements Peer {
                             if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
                                 LOG.debug("peer '{}' has new announced address '{}', old is '{}'",
                                         host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
-                                Peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
+                                peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                                 // force checking connectivity to new announced port
                                 deactivate("Announced address chnage");
                                 return false;
@@ -638,7 +636,7 @@ public final class PeerImpl implements Peer {
                 }
                 setState(PeerState.CONNECTED);
                 if (getServices() != origServices) {
-                    Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+                    peers.notifyListeners(this, PeersService.Event.CHANGED_SERVICES);
                 }
                 LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
                 processConnectAttempt(false);
@@ -718,7 +716,7 @@ public final class PeerImpl implements Peer {
             List<PeerImpl> groupedPeers = new ArrayList<>();
             int mostRecentDate = 0;
             long totalWeight = 0;
-            for (Peer p : Peers.getAllConnectablePeers()) {
+            for (Peer p : peers.getAllConnectablePeers()) {
                 PeerImpl peer = (PeerImpl)p;
                 if (peer.hallmark == null) {
                     continue;
@@ -736,7 +734,7 @@ public final class PeerImpl implements Peer {
 
             for (PeerImpl peer : groupedPeers) {
                 peer.adjustedWeight = blockchainConfig.getCurrentConfig().getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
-                Peers.notifyListeners(peer, Peers.Event.WEIGHT);
+                peers.notifyListeners(peer, PeersService.Event.WEIGHT);
             }
 
             return true;
@@ -774,7 +772,7 @@ public final class PeerImpl implements Peer {
             services |= service.getCode();
         }
         if (notifyListeners && doNotify) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(this, PeersService.Event.CHANGED_SERVICES);
         }
     }
 
@@ -785,10 +783,11 @@ public final class PeerImpl implements Peer {
             services &= (~service.getCode());
         }
         if (notifyListeners && doNotify) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(this, PeersService.Event.CHANGED_SERVICES);
         }
     }
 
+    @Override
     public long getServices() {
         synchronized (servicesMonitor) {
             return services;

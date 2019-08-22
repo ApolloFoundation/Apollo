@@ -19,7 +19,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -32,7 +32,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    
+    private PeersService peers = CDI.current().select(PeersService.class).get(); 
+
 //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
@@ -57,14 +58,14 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     public void suspendBlockchain() {
         lookupBlockchainProcessor().suspendBlockchainDownloading();
         Generator.suspendForging();
-        Peers.suspend();
+        peers.suspend();
     }
 
     @Override
     public void resumeBlockchain() {
         LOG.debug("Restarting peer server, blockchain processor and forging");
         lookupBlockchainProcessor().resumeBlockchainDownloading();
-        Peers.resume();
+        peers.resume();
         Generator.resumeForging();
         LOG.debug("Peer server, blockchain processor and forging were restarted successfully");
     }

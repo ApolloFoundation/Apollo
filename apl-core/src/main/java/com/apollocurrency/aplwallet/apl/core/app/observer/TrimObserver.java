@@ -27,12 +27,12 @@ import javax.inject.Singleton;
 @Singleton
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
-    private TrimService trimService;
+    private final TrimService trimService;
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
     private final Object lock = new Object();
-    private Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
-    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     @PostConstruct
     void init() {
@@ -75,6 +75,7 @@ public class TrimObserver {
     }
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
+        //TODO: please replace 5000 with meaningfull constant name
         if (block.getHeight() % 5000 == 0) {
             log.info("processed block " + block.getHeight());
         }

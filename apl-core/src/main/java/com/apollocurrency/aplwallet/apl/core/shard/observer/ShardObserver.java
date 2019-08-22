@@ -46,7 +46,7 @@ public class ShardObserver {
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
     private PeerHttpServer peerHttpServer;
-    private Blockchain blockchain;
+    private final Blockchain blockchain;
     private final PropertiesHolder propertiesHolder;
     public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
@@ -55,7 +55,6 @@ public class ShardObserver {
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
                          PropertiesHolder propertiesHolder,
-                         PeerHttpServer peerHttpServer,
                          Blockchain blockchain,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
@@ -169,14 +168,7 @@ public class ShardObserver {
         }
         return res;
     }
-    private void stopNetOperations(){
-        peerHttpServer.suspend();
-        blockchainProcessor.setGetMoreBlocks(false);
-    }
-    private void resumeNetOperations(){
-        peerHttpServer.resume();
-        blockchainProcessor.setGetMoreBlocks(true);        
-    }
+
     public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){
@@ -187,7 +179,6 @@ public class ShardObserver {
             return false;            
         }
         boolean result = false;
-        stopNetOperations();
         MigrateState state = MigrateState.INIT;
         long start = System.currentTimeMillis();
         log.info("Start sharding....");
@@ -205,7 +196,6 @@ public class ShardObserver {
             log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
         } finally {
             isSharding = false;
-            resumeNetOperations();
         }
         if (state != MigrateState.FAILED && state != MigrateState.INIT) {
             log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
