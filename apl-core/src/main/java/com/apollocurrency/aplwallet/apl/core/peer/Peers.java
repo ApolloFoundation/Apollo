@@ -75,7 +75,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public final class Peers {
+public class Peers {
 
     private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
 
