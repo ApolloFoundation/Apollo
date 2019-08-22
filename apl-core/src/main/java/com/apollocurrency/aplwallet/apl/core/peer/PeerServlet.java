@@ -20,14 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -54,11 +46,6 @@ import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.nio.channels.ClosedChannelException;
-import java.util.concurrent.ExecutorService;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -70,6 +57,19 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.PreDestroy;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.ExecutorService;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
@@ -105,7 +105,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
         if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
-        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        if (propertiesHolder == null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
     }  
     
@@ -188,7 +188,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = peers.findOrCreatePeer(pa,null,true);
+        PeerImpl peer = peers.findOrCreatePeer(pa, null, true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -376,7 +376,7 @@ public final class PeerServlet extends WebSocketServlet {
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
                 peers.cleanupPeers(null);
-                PeerImpl peer = (PeerImpl)peers.findOrCreatePeer(pa, null, true);
+                PeerImpl peer = (PeerImpl) peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);

@@ -4,18 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Properties;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
@@ -52,6 +44,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
+
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
@@ -79,7 +80,7 @@ public class DbMigrationExecutorTest {
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
-            .addBeans(MockBean.of(mock(PrunableMessageService.class),PrunableMessageService.class, PrunableMessageServiceImpl.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
             .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;

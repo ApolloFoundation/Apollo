@@ -122,6 +122,7 @@ public class DexOfferProcessor {
                         .attachment(contractAttachment)
                         .build();
 
+                //TODO check (wasn't created)
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
 
 
