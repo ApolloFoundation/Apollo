@@ -93,7 +93,7 @@ public class AplCoreRuntime {
                 sb.append(info.toString()).append("\n");
             }
         }else{
-            sb.append("No dead-locked threads found.\n");
+            sb.append("\nNo dead-locked threads found.\n");
         }        
     }
 
