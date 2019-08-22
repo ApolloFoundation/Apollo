@@ -88,11 +88,13 @@ public class AplCoreRuntime {
         if (ids != null) {
             sb.append("DeadLocked threads found:\n");
             ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
-            System.out.println("Following Threads are deadlocked");
+            sb.append("Following Threads are deadlocked:\n");
             for (ThreadInfo info : infos) {
                 sb.append(info.toString()).append("\n");
             }
-        }
+        }else{
+            sb.append("No dead-locked threads found.\n");
+        }        
     }
 
     private String getNodeHealth(){
@@ -108,6 +110,7 @@ public class AplCoreRuntime {
         sb.append(", Active peers count: ").append(peers.getActivePeers().size());
         sb.append(", Known peers count: ").append(peers.getAllPeers().size());
         sb.append(", Connectable peers count: ").append(peers.getAllConnectablePeers().size());
+        findDeadLocks(sb);
         return sb.toString();
     }
 
