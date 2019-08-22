@@ -83,7 +83,7 @@ public class ShardDownloader {
 
     private boolean processPeerShardInfo(Peer p) {
         boolean haveShard = false;
-        PeerClient pc = new PeerClient(p,peers);
+        PeerClient pc = new PeerClient(p);
         ShardingInfo si = pc.getShardingInfo();
         log.trace("shardInfo = {}", si);
         if (si != null) {
@@ -198,7 +198,7 @@ public class ShardDownloader {
         //do statistical analysys of shard's hashes
         PeersList<PeerShardInfo> shardPeerList = new PeersList<>();
         for (Peer p : shardPeers) {
-            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p,peers), shardId, myChainId);
+            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p), shardId, myChainId);
             psi.setHash(getHash(shardId, p.getHostWithPort()));
             shardPeerList.add(psi);
         }

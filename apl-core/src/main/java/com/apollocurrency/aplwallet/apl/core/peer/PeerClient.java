@@ -34,14 +34,12 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
-    private PeersService peers;
     
-    public PeerClient(Peer peer, PeersService peers) {
+    public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());        
         this.peer=peer;
-        this.peers=peers;
     }
     
     public Peer gePeer(){
@@ -49,20 +47,14 @@ public class PeerClient {
     }
     
     public boolean checkConnection(){
-        boolean res = false;
-        String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = peers.findOrCreatePeer(null,announcedAddress, true);
-        if(p!=null){
-            peer=p;
-            res=true;
-        }
+        boolean res = peer.getState() == PeerState.CONNECTED;
         return res;
     }
     
     public FileDownloadInfo getFileInfo(String entityId){
         log.debug("getFileInfo() entityId = {}", entityId);
         if(!checkConnection()){
-            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            log.debug("Peer: {} is not connected",peer.getAnnouncedAddress());
             return null;
         }        
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();

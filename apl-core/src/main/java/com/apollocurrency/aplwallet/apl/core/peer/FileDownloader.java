@@ -138,7 +138,7 @@ public class FileDownloader {
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
         PeersList<PeerFileInfo> pl = new PeersList<>();
         allPeers.forEach((pi) -> {
-            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi,peers), fileID);
+            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
             if(pfi.retreiveHash()!=null){
               pl.add(pfi);
             }
