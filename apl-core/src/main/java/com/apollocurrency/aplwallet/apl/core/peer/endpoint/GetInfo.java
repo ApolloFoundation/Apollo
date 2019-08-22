@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -33,9 +33,9 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
-import javax.inject.Inject;
 
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
@@ -74,7 +74,7 @@ public final class GetInfo extends PeerRequestHandler {
         String announcedAddress;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
         peerImpl.analyzeHallmark(pi.getHallmark());
-        if (!Peers.ignorePeerAnnouncedAddress) {
+        if (!PeersService.ignorePeerAnnouncedAddress) {
            announcedAddress = Convert.emptyToNull(pi.getAnnouncedAddress());
             if (announcedAddress != null) {
                 announcedAddress = announcedAddress.toLowerCase();
@@ -83,7 +83,7 @@ public final class GetInfo extends PeerRequestHandler {
                         log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
-                            Peers.setAnnouncedAddress(peerImpl, null);
+                            lookupPeersService().setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate("Invalid announced address: "+announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
@@ -91,10 +91,10 @@ public final class GetInfo extends PeerRequestHandler {
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
-                        Peers.setAnnouncedAddress(peerImpl, announcedAddress);
+                        lookupPeersService().setAnnouncedAddress(peerImpl, announcedAddress);
                     }
                 } else {
-                    Peers.setAnnouncedAddress(peerImpl, null);
+                    lookupPeersService().setAnnouncedAddress(peerImpl, null);
                 }
             }
         }
@@ -106,7 +106,7 @@ public final class GetInfo extends PeerRequestHandler {
             return INVALID_APPLICATION;
         }
         
-        if(!Peers.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
+        if(!PeersService.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
             peerImpl.remove();
             return INVALID_CHAINID;
         }
@@ -138,9 +138,9 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setBlockchainState(pi.getBlockchainState());
 
         if (peerImpl.getServices() != origServices) {
-            Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
+            lookupPeersService().notifyListeners(peerImpl, PeersService.Event.CHANGED_SERVICES);
         }
-        JSONStreamAware myPeerInfoResponse = Peers.getMyPeerInfoResponse();
+        JSONStreamAware myPeerInfoResponse = lookupPeersService().getMyPeerInfoResponse();
 
         if (log.isTraceEnabled()) {
             try {
@@ -152,7 +152,7 @@ public final class GetInfo extends PeerRequestHandler {
                 log.error("ERROR, DUMP myPeerInfoResponse", e);
             }
         }
-        Peers.addPeer(peer);
+        lookupPeersService().addPeer(peer);
         return myPeerInfoResponse;
 
     }

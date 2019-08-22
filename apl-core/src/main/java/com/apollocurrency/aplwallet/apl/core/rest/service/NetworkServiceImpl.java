@@ -9,55 +9,62 @@ import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * @see NetworkService
  */
 public class NetworkServiceImpl implements NetworkService {
+    private final PeersService peers;
+
+    @Inject
+    public NetworkServiceImpl(PeersService peers) {
+        this.peers = peers;
+    }
 
     @Override
     public Peer findPeerByAddress(String peerAddress){
-        return Peers.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
+        return peers.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
     }
 
     @Override
     public Peer findOrCreatePeerByAddress(String peerAddress){
-        return Peers.findOrCreatePeer(null,peerAddress, true);
+        return peers.findOrCreatePeer(null,peerAddress, true);
     }
 
     @Override
     public boolean addPeer(Peer peer, String peerAddress){
-        return Peers.addPeer(peer, peerAddress);
+        return peers.addPeer(peer, peerAddress);
     }
 
     @Override
     public List<Peer> getPeersByStateAndService(boolean active, PeerState state, final long services){
         List<Peer> result;
-        List<Peer> peers = active ? Peers.getActivePeers() : state != null ? Peers.getPeers(state) : new ArrayList<>(Peers.getAllPeers());
+        List<Peer> peersList = active ? peers.getActivePeers() : state != null ? peers.getPeers(state) : new ArrayList<>(peers.getAllPeers());
 
         if (services != 0) {
-            result = peers.stream().filter(o -> o.providesServices(services)).collect(Collectors.toList());
+            result = peersList.stream().filter(o -> o.providesServices(services)).collect(Collectors.toList());
         }else {
-            result = peers;
+            result = peersList;
         }
         return result;
     }
 
     @Override
     public List<Peer> getInboundPeers() {
-        return Peers.getInboundPeers();
+        return peers.getInboundPeers();
     }
 
     @Override
     public Peer putPeerInBlackList(String peerAddress) {
-        Peer peer = Peers.findOrCreatePeer(null,peerAddress, true);
+        Peer peer = peers.findOrCreatePeer(null,peerAddress, true);
         if (peer != null) {
-            Peers.addPeer(peer);
+            peers.addPeer(peer);
             peer.blacklist("Manual blacklist");
         }
         return peer;
@@ -75,11 +82,11 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public List<Peer> getOutboundPeers() {
-        return Peers.getOutboundPeers();
+       return peers.getOutboundPeers();
     }
 
     @Override
     public PeerInfo getMyPeerInfo() {
-        return Peers.getMyPeerInfo();
+        return peers.getMyPeerInfo();
     }
 }

@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
@@ -241,7 +241,7 @@ public final class API {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
             gzipHandler.addExcludedPaths("/blocks");
             apiHandler.setGzipHandler(gzipHandler);
 
