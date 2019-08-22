@@ -28,6 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -50,6 +52,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class DbMigrationExecutorTest {
@@ -76,6 +79,7 @@ public class DbMigrationExecutorTest {
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(targetDbProperties, DbProperties.class))
             .addBeans(MockBean.of(fullTextSearchProvider, FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class),PrunableMessageService.class, PrunableMessageServiceImpl.class))
             .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;
