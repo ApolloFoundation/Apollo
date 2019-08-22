@@ -166,7 +166,7 @@ public final class Peers {
     private final PropertiesHolder propertiesHolder;
     final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
-    private final BlockchainProcessor blockchainProcessor;
+    private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
 
     private final PeerHttpServer peerHttpServer;
@@ -177,18 +177,21 @@ public final class Peers {
     
     @Inject
     private Peers( PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain, 
-            BlockchainProcessor blockchainProcessor, TimeService timeService, 
-            TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer  ) {
+            TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer  ) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
-        this.blockchainProcessor = blockchainProcessor;
         this.timeService = timeService;
         this.taskDispatchManager = taskDispatchManager;
         this.peerHttpServer = peerHttpServer;
         
         isLightClient = propertiesHolder.isLightClient();
-    } 
+    }
+
+    private BlockchainProcessor lookupBlockchainProcessor(){
+        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
+        return blockchainProcessor;
+    }
 
     public void init() {
 
@@ -819,7 +822,7 @@ public final class Peers {
     private void checkBlockchainState() {
         BlockchainState state = propertiesHolder.isLightClient()
                 ? BlockchainState.LIGHT_CLIENT
-                : (blockchainProcessor.isDownloading() || blockchain.getLastBlockTimestamp() < timeService.getEpochTime() - 600)
+                : (lookupBlockchainProcessor().isDownloading() || blockchain.getLastBlockTimestamp() < timeService.getEpochTime() - 600)
                 ? BlockchainState.DOWNLOADING
                 : (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10)
                 ? BlockchainState.FORK

@@ -118,8 +118,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private final Peers peers = CDI.current().select(Peers.class).get();
-    
+
+    private Peers peers;
     private final DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
@@ -180,6 +180,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
+    private Peers lookupPeers() {
+        if (peers == null) peers = CDI.current().select(Peers.class).get();
+        return peers;
+    }
 
     //private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
 
@@ -196,12 +200,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 // Locate an archive peer
                 //
-                List<Peer> peersList = peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+                List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                         !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
                 while (!peersList.isEmpty()) {
                     Peer chkPeer = peersList.get(ThreadLocalRandom.current().nextInt(peersList.size()));
                     if (chkPeer.getState() != PeerState.CONNECTED) {
-                        peers.connectPeer(chkPeer);
+                        lookupPeers().connectPeer(chkPeer);
                     }
                     if (chkPeer.getState() == PeerState.CONNECTED) {
                         peer = chkPeer;
@@ -556,7 +560,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!isPruned) {
             return transaction;
         }
-        List<Peer> peersList = peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+        List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                 !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
         if (peersList.isEmpty()) {
             log.debug("Cannot find any archive peers");
@@ -571,7 +575,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
-                peers.connectPeer(peer);
+                lookupPeers().connectPeer(peer);
             }
             if (peer.getState() != PeerState.CONNECTED) {
                 continue;
@@ -780,7 +784,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getTimestamp() >= curTime - 600) {
             log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                     Convert2.rsAccount(block.getGeneratorId()));
-            peers.sendToSomePeers(block);
+            lookupPeers().sendToSomePeers(block);
         }
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
     }
@@ -1529,14 +1533,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = lookupBlockhain().getHeight() > Constants.LAST_CHECKSUM_BLOCK - 720 ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = peers.getPublicPeers(PeerState.CONNECTED, true);
+                connectedPublicPeers = lookupPeers().getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                             connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;
-                final Peer peer = peers.getWeightedPeer(connectedPublicPeers);
+                final Peer peer = lookupPeers().getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
                     log.debug("Can not find weighted peer");
                     return;
