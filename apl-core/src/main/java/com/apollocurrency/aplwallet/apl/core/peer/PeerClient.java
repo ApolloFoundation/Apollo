@@ -34,7 +34,7 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
-
+    
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
@@ -47,20 +47,14 @@ public class PeerClient {
     }
     
     public boolean checkConnection(){
-        boolean res = false;
-        String announcedAddress = peer.getAnnouncedAddress();
-        Peer p = Peers.findOrCreatePeer(null,announcedAddress, true);
-        if(p!=null){
-            peer=p;
-            res=true;
-        }
+        boolean res = peer.getState() == PeerState.CONNECTED;
         return res;
     }
     
     public FileDownloadInfo getFileInfo(String entityId){
         log.debug("getFileInfo() entityId = {}", entityId);
         if(!checkConnection()){
-            log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
+            log.debug("Peer: {} is not connected",peer.getAnnouncedAddress());
             return null;
         }        
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
@@ -69,7 +63,7 @@ public class PeerClient {
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }
@@ -105,7 +99,7 @@ public class PeerClient {
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
        JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }
@@ -133,7 +127,7 @@ public class PeerClient {
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }

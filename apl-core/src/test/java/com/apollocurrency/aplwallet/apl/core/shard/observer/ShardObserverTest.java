@@ -89,7 +89,7 @@ public class ShardObserverTest {
 
         shardObserver = new ShardObserver(blockchainProcessor, blockchainConfig,
                 shardMigrationExecutor,
-                shardDao, recoveryDao, propertiesHolder, peerHttpServer, blockchain, firedEvent);
+                shardDao, recoveryDao, propertiesHolder, blockchain, firedEvent);
     }
 
     @Test

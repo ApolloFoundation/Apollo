@@ -3,17 +3,17 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eclipse.jetty.websocket.client.common.WebSocketSession;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
 /**
  *
@@ -28,8 +28,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
         client = new WebSocketClient();
-        client.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
-        client.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
+        client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         client.setStopAtShutdown(true);        
     }
     
@@ -43,7 +43,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         try {
             client.start();
             Future<Session> conn = client.connect(this, uri);
-            Session session = conn.get(Peers.connectTimeout + 100, TimeUnit.MILLISECONDS);
+            Session session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
             log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());

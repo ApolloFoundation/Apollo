@@ -20,8 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
+import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -32,21 +43,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class DumpPeers extends AbstractAPIRequestHandler {
@@ -68,8 +65,8 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && apw.checkPassword(req);
         if (connect) {
             List<Callable<Object>> connects = new ArrayList<>();
-            Peers.getAllPeers().forEach(peer -> connects.add(() -> {
-                Peers.connectPeer(peer);
+            lookupPeersService().getAllPeers().forEach(peer -> connects.add(() -> {
+                lookupPeersService().connectPeer(peer);
                 return null;
             }));
             ExecutorService service = Executors.newFixedThreadPool(10);
@@ -80,7 +77,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
             }
         }
         Set<String> addresses = new HashSet<>();
-        Peers.getAllPeers().forEach(peer -> {
+        lookupPeersService().getAllPeers().forEach(peer -> {
                     if (peer.getState() == PeerState.CONNECTED
                             && peer.shareAddress()
                             && !peer.isBlacklisted()
