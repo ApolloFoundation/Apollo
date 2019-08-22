@@ -42,7 +42,7 @@ public class Peer2PeerTransport {
     private final ConcurrentHashMap<Long, ResponseWaiter> requestMap = new ConcurrentHashMap<>();
     private final Random rnd;
     private final PeerServlet peerServlet;
-    private final boolean useWebSocket = Peers.useWebSockets && !Peers.useProxy;
+    private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
     private volatile long downloadedVolume;
     private volatile long uploadedVolume;
     private final Object volumeMonitor = new Object();
@@ -93,7 +93,7 @@ public class Peer2PeerTransport {
             downloadedVolume += volume;
         }
        //TODO: do we need this here? 
-       // Peers.notifyListeners(getPeer(), Peers.Event.DOWNLOADED_VOLUME);
+       // PeersService.notifyListeners(getPeer(), PeersService.Event.DOWNLOADED_VOLUME);
     }
 
     public long getUploadedVolume() {
@@ -105,7 +105,7 @@ public class Peer2PeerTransport {
             uploadedVolume += volume;
         }
        //TODO: do we need this here? 
-       // Peers.notifyListeners(getPeer(), Peers.Event.UPLOADED_VOLUME);
+       // PeersService.notifyListeners(getPeer(), PeersService.Event.UPLOADED_VOLUME);
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
@@ -156,7 +156,7 @@ public class Peer2PeerTransport {
         ResponseWaiter wsrw = requestMap.get(rqId);
         if (wsrw != null) {
             try {
-                res = wsrw.get(Peers.readTimeout);
+                res = wsrw.get(PeersService.readTimeout);
             } catch (SocketTimeoutException ex) {
                 log.trace("Timeout excided while waiting response from: {} ID: {}",which(),rqId);
             }
@@ -205,8 +205,8 @@ public class Peer2PeerTransport {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
-            connection.setConnectTimeout(Peers.connectTimeout);
-            connection.setReadTimeout(Peers.readTimeout);
+            connection.setConnectTimeout(PeersService.connectTimeout);
+            connection.setReadTimeout(PeersService.readTimeout);
             connection.setRequestProperty("Accept-Encoding", "gzip");
             connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
@@ -225,7 +225,7 @@ public class Peer2PeerTransport {
                     responseStream = new GZIPInputStream(responseStream);
                 }
                 try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
-                    CountingInputReader cir = new CountingInputReader(reader, Peers.MAX_RESPONSE_SIZE);
+                    CountingInputReader cir = new CountingInputReader(reader, PeersService.MAX_RESPONSE_SIZE);
                     updateDownloadedVolume(cir.getCount());
                     StringWriter sw = new StringWriter(1000);
                     cir.transferTo(sw);

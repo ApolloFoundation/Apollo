@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 
@@ -65,7 +65,7 @@ import org.json.simple.JSONStreamAware;
  */
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
     
     public SendTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");

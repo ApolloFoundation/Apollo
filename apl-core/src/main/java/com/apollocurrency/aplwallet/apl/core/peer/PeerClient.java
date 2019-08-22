@@ -34,9 +34,9 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
-    private Peers peers;
+    private PeersService peers;
     
-    public PeerClient(Peer peer, Peers peers) {
+    public PeerClient(Peer peer, PeersService peers) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());        
@@ -71,7 +71,7 @@ public class PeerClient {
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }
@@ -107,7 +107,7 @@ public class PeerClient {
        JSONObject req = mapper.convertValue(rq, JSONObject.class);
        JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }
@@ -135,7 +135,7 @@ public class PeerClient {
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
         JSONObject resp;
         try {
-            resp = peer.send(req, UUID.fromString(Peers.myPI.getChainId()));
+            resp = peer.send(req, UUID.fromString(PeersService.myPI.getChainId()));
         } catch (PeerNotConnectedException ex) {
             resp=null;
         }

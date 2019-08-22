@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 class PeerUnBlacklistingThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerUnBlacklistingThread.class);
     private final TimeService timeService;
-    private Peers peers;
+    private PeersService peers;
 
-    public PeerUnBlacklistingThread(TimeService timeService, Peers peers) {
+    public PeerUnBlacklistingThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
         this.peers=peers;
     }

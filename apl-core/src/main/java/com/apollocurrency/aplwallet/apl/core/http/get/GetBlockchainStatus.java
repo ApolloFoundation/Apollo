@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
     
     public GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});

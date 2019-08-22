@@ -41,7 +41,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
@@ -57,7 +57,7 @@ public final class GetState extends AbstractAPIRequestHandler {
     private DGSService service = CDI.current().select(DGSService.class).get();
     private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
     private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
     
     public GetState() {
         super(new APITag[] {APITag.INFO}, "includeCounts", "adminPassword");

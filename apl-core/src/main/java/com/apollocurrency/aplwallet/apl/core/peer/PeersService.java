@@ -75,9 +75,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class Peers {
+public class PeersService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Peers.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
 
 
     public enum Event {
@@ -176,7 +176,7 @@ public class Peers {
     public final boolean isLightClient;
     
     @Inject
-    public Peers( PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain, 
+    public PeersService( PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain, 
             TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer  ) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
@@ -205,7 +205,7 @@ public class Peers {
                 myPort = pa.getPort();
         }
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
-        if (myHallmark != null && Peers.myHallmark.length() > 0) {
+        if (myHallmark != null && PeersService.myHallmark.length() > 0) {
             try {
                 Hallmark hallmark = Hallmark.parseHallmark(myHallmark);
                 if (!hallmark.isValid()) {
@@ -271,7 +271,7 @@ public class Peers {
                     LOG.error("Unable to update peer database", e);
                 }
             }
-        }), Peers.Event.CHANGED_SERVICES);
+        }), PeersService.Event.CHANGED_SERVICES);
 
         Account.addListener(account -> connectablePeers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {

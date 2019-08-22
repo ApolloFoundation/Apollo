@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -41,7 +41,7 @@ import javax.inject.Inject;
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private final TimeService timeService;
-    private Peers peers = CDI.current().select(Peers.class).get(); 
+    private PeersService peers = CDI.current().select(PeersService.class).get(); 
     
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
@@ -76,7 +76,7 @@ public final class GetInfo extends PeerRequestHandler {
         String announcedAddress;
         peerImpl.setServices(servicesString != null ? Long.parseUnsignedLong(servicesString) : 0);
         peerImpl.analyzeHallmark(pi.getHallmark());
-        if (!Peers.ignorePeerAnnouncedAddress) {
+        if (!PeersService.ignorePeerAnnouncedAddress) {
            announcedAddress = Convert.emptyToNull(pi.getAnnouncedAddress());
             if (announcedAddress != null) {
                 announcedAddress = announcedAddress.toLowerCase();
@@ -108,7 +108,7 @@ public final class GetInfo extends PeerRequestHandler {
             return INVALID_APPLICATION;
         }
         
-        if(!Peers.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
+        if(!PeersService.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
             peerImpl.remove();
             return INVALID_CHAINID;
         }
@@ -140,7 +140,7 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setBlockchainState(pi.getBlockchainState());
 
         if (peerImpl.getServices() != origServices) {
-            peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(peerImpl, PeersService.Event.CHANGED_SERVICES);
         }
         JSONStreamAware myPeerInfoResponse = peers.getMyPeerInfoResponse();
 

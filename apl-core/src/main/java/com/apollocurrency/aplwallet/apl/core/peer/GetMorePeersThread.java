@@ -26,10 +26,10 @@ import java.util.UUID;
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
     private final TimeService timeService;
-    private final Peers peers;
+    private final PeersService peers;
     private final JSONStreamAware getPeersRequest;
       
-    public GetMorePeersThread(TimeService timeService, Peers peers) {
+    public GetMorePeersThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
         this.peers = peers;
         JSONObject request = new JSONObject();
@@ -80,7 +80,7 @@ class GetMorePeersThread implements Runnable {
                             }
                         }
                     }
-                    if (Peers.savePeers && updatedPeer) {
+                    if (PeersService.savePeers && updatedPeer) {
                         updateSavedPeers();
                         updatedPeer = false;
                     }

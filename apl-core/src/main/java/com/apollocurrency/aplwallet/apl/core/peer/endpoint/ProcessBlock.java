@@ -26,7 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.spi.CDI;
@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 
 public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
-    private Peers peers = CDI.current().select(Peers.class).get();
+    private PeersService peers = CDI.current().select(PeersService.class).get();
     
     public ProcessBlock() {}
 

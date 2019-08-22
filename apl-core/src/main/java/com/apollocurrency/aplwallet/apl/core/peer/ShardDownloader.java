@@ -59,7 +59,7 @@ public class ShardDownloader {
 
     private final Instance<FileDownloader> fileDownloaders;
     private final PropertiesHolder propertiesHolder;
-    private final Peers peers;
+    private final PeersService peers;
     
     @Inject
     public ShardDownloader(Instance<FileDownloader> fileDownloaders,
@@ -67,7 +67,7 @@ public class ShardDownloader {
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
             PropertiesHolder propertiesHolder,
-            Peers peers) {
+            PeersService peers) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());

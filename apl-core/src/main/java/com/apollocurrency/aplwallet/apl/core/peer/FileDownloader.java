@@ -82,13 +82,13 @@ public class FileDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
-    private Peers peers;
+    private PeersService peers;
     
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
                           AplAppStatus aplAppStatus,
-                          Peers peers) {
+                          PeersService peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");

@@ -23,9 +23,9 @@ class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
     private final TimeService timeService;
-    private final Peers peers;
+    private final PeersService peers;
      
-    public PeerConnectingThread(TimeService timeService, Peers peers) {
+    public PeerConnectingThread(TimeService timeService, PeersService peers) {
         this.timeService=timeService;
         this.peers = peers;
     }
@@ -38,7 +38,7 @@ class PeerConnectingThread implements Runnable {
         try {
             try {
                 final int now = timeService.getEpochTime();
-                if (!peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) 
+                if (!peers.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers)) 
                 {
                     List<Future<?>> futures = new ArrayList<>();
                     List<Peer> hallmarkedPeers = peers.getPeers((peer) -> 
@@ -75,7 +75,7 @@ class PeerConnectingThread implements Runnable {
                             }
                             peer.handshake(peers.blockchainConfig.getChain().getChainId());
                             if (peer.getState() == PeerState.CONNECTED 
-                                && Peers.enableHallmarkProtection 
+                                && PeersService.enableHallmarkProtection 
                                 && peer.getWeight() == 0 
                                 && peers.hasTooManyOutboundConnections()) 
                             {
@@ -109,7 +109,7 @@ class PeerConnectingThread implements Runnable {
                     if (peers.hasTooManyKnownPeers()) {
                         PriorityQueue<Peer> sortedPeers = new PriorityQueue<>(peers.getAllConnectablePeers());
                         int skipped = 0;
-                        while (skipped < Peers.minNumberOfKnownPeers) {
+                        while (skipped < PeersService.minNumberOfKnownPeers) {
                             if (sortedPeers.poll() == null) {
                                 break;
                             }

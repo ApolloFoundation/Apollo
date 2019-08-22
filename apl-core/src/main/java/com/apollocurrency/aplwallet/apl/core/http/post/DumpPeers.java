@@ -39,7 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
@@ -52,7 +52,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
    
     private static final Logger LOG = getLogger(DumpPeers.class);
     @Inject
-    private Peers peers;
+    private PeersService peers;
     public DumpPeers() {
         super(new APITag[] {APITag.DEBUG}, "version", "weight", "connect", "adminPassword");
     }

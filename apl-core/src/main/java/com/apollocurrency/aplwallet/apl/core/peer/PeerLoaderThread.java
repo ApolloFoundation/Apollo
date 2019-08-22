@@ -22,9 +22,9 @@ class PeerLoaderThread implements Runnable {
     private final List<String> defaultPeers;
     private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
-    private Peers peers;
+    private PeersService peers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, Peers peers) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, PeersService peers) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;

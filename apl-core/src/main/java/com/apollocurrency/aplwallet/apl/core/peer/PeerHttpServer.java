@@ -135,7 +135,7 @@ public class PeerHttpServer {
                 GzipHandler gzipHandler = new GzipHandler();
                 gzipHandler.setIncludedMethods("GET", "POST");
                 gzipHandler.setIncludedPaths("/*");
-                gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
+                gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
                 ctxHandler.setGzipHandler(gzipHandler);
             }
             peerServer.setHandler(ctxHandler);

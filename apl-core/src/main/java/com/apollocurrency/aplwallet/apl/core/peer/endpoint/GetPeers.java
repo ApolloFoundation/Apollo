@@ -23,14 +23,14 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public final class GetPeers extends PeerRequestHandler {
-    private Peers peers = CDI.current().select(Peers.class).get(); 
+    private PeersService peers = CDI.current().select(PeersService.class).get(); 
 
     public GetPeers() {}
 

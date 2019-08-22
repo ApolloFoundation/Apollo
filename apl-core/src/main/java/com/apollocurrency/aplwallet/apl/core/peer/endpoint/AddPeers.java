@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONArray;
@@ -30,7 +30,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public final class AddPeers extends PeerRequestHandler {
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
     
     public AddPeers() {}
 

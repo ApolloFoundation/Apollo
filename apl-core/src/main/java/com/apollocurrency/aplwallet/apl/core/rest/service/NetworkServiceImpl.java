@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +20,10 @@ import javax.inject.Inject;
  * @see NetworkService
  */
 public class NetworkServiceImpl implements NetworkService {
-    private final Peers peers;
+    private final PeersService peers;
     
     @Inject
-    public NetworkServiceImpl(Peers peers) {
+    public NetworkServiceImpl(PeersService peers) {
         this.peers = peers;
     }
     

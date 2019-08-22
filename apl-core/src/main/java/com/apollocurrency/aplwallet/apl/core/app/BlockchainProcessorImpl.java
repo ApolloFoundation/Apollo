@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -119,7 +119,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
-    private Peers peers;
+    private PeersService peers;
     private final DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
@@ -180,8 +180,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
-    private Peers lookupPeers() {
-        if (peers == null) peers = CDI.current().select(Peers.class).get();
+    private PeersService lookupPeers() {
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }
 
@@ -678,8 +678,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
                     "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
-            // try make delay before Peers are up and running
-            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
+            // try make delay before PeersService are up and running
+            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
             disableScheduleOneScan();
@@ -1893,7 +1893,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 
             }
-            if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
+            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate("This peer is slowest");
             }

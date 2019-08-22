@@ -86,7 +86,7 @@ public final class PeerServlet extends WebSocketServlet {
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
     @Inject
-    private Peers peers;
+    private PeersService peers;
     
     private ExecutorService threadPool;
 
@@ -167,8 +167,8 @@ public final class PeerServlet extends WebSocketServlet {
      */
     @Override
     public void configure(WebSocketServletFactory factory) {
-        factory.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
-        factory.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
+        factory.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        factory.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         factory.setCreator(new PeerSocketCreator());
     }
 
@@ -294,7 +294,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Process the request
         //
-        try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
+        try (CountingInputReader cr = new CountingInputReader(inputReader, PeersService.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             //we have to process errors here because of http requests
             if(peer.processError(request)){
@@ -334,7 +334,7 @@ public final class PeerServlet extends WebSocketServlet {
                     peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
-                peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
+                peers.notifyListeners(peer, PeersService.Event.ADD_INBOUND);
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
@@ -368,7 +368,7 @@ public final class PeerServlet extends WebSocketServlet {
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
             Object res = null;
-            if (Peers.useWebSockets) {
+            if (PeersService.useWebSockets) {
                 String host = req.getRemoteAddress();
                 int port = req.getRemotePort();
                 PeerAddress pa = new PeerAddress(port,host);

@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CreateShardSchemaCommand;
@@ -61,7 +61,7 @@ public class ShardMigrationExecutor {
     private final PrevBlockInfoExtractor prevBlockInfoExtractor;
     private volatile boolean backupDb;
     private BlockchainProcessor blockchainProcessor;
-    private Peers peers;
+    private PeersService peers;
     public boolean backupDb() {
         return backupDb;
     }
@@ -79,7 +79,7 @@ public class ShardMigrationExecutor {
                                   PrevBlockInfoExtractor prevBlockInfoExtractor,
                                   DerivedTablesRegistry registry,
                                   BlockchainProcessor blockchainProcessor,
-                                  Peers peers,
+                                  PeersService peers,
                                   @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
