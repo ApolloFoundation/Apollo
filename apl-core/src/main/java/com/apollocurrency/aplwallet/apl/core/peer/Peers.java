@@ -136,15 +136,15 @@ public class Peers {
 
     private static JSONObject myPeerInfo;
     public static PeerInfo myPI;
-    private static List<Peer.Service> myServices;
-    private static volatile BlockchainState currentBlockchainState;
-    private static volatile JSONStreamAware myPeerInfoRequest;
-    private static volatile JSONStreamAware myPeerInfoResponse;
+    private List<Peer.Service> myServices;
+    private volatile BlockchainState currentBlockchainState;
+    private volatile JSONStreamAware myPeerInfoRequest;
+    private volatile JSONStreamAware myPeerInfoResponse;
 
-    static boolean shutdown = false;
-    static boolean suspend = false;
+    boolean shutdown = false;
+    boolean suspend = false;
 
-    private static final Listeners<Peer, Event> listeners = new Listeners<>();
+    private final Listeners<Peer, Event> listeners = new Listeners<>();
 
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     /**
@@ -152,15 +152,15 @@ public class Peers {
      * (has announced public address) 
      */
     
-    private static final ConcurrentMap<String, PeerImpl> connectablePeers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, PeerImpl> connectablePeers = new ConcurrentHashMap<>();
     /**
      * Map of incoming peers only. In incoming peer announces some public address, it will
      * be added to connectablePeers
      */     
-    private static final ConcurrentMap<String, PeerImpl> inboundPeers = new ConcurrentHashMap<>();
-    public static final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
+    private final ConcurrentMap<String, PeerImpl> inboundPeers = new ConcurrentHashMap<>();
+    public  final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
 
-    private static final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
+    private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
 
     // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
@@ -445,19 +445,19 @@ public class Peers {
         dispatcher.resume();
     }
 
-    public static boolean addListener(Listener<Peer> listener, Event eventType) {
+    public  boolean addListener(Listener<Peer> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
     }
 
-    public static boolean removeListener(Listener<Peer> listener, Event eventType) {
+    public boolean removeListener(Listener<Peer> listener, Event eventType) {
         return listeners.removeListener(listener, eventType);
     }
 
-    public static void notifyListeners(Peer peer, Event eventType) {
+    public void notifyListeners(Peer peer, Event eventType) {
         listeners.notify(peer, eventType);
     }
     
-    public static PeerAddress resolveAnnouncedAddress(String adrWithPort){        
+    public PeerAddress resolveAnnouncedAddress(String adrWithPort){        
         PeerAddress pa = null;
         if(adrWithPort!=null && adrWithPort.length()<=MAX_ANNOUNCED_ADDRESS_LENGTH){
             pa = new PeerAddress(adrWithPort);
@@ -512,7 +512,7 @@ public class Peers {
         return result;
     }
 
-    public static Peer getPeer(String hostWithPort) {
+    public Peer getPeer(String hostWithPort) {
         PeerAddress pa = new PeerAddress( hostWithPort);
         return connectablePeers.get(pa.getAddrWithPort());
     }

@@ -32,7 +32,7 @@ class PeerConnectingThread implements Runnable {
 
     @Override
     public void run() {
-        if (Peers.shutdown || Peers.suspend) {
+        if (peers.shutdown || peers.suspend) {
             return;
         }
         try {
@@ -68,7 +68,7 @@ class PeerConnectingThread implements Runnable {
                             }
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
-                        connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
+                        connectSet.forEach((peer) -> futures.add(peers.peersExecutorService.submit(() -> {
                             PeerAddress pa = new PeerAddress(peer.getAnnouncedAddress());
                             if(peers.isMyAddress(pa)){
                                 return null;
@@ -126,7 +126,7 @@ class PeerConnectingThread implements Runnable {
                          && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
                          && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
                         
-                        Peers.peersExecutorService.submit(() -> {
+                        peers.peersExecutorService.submit(() -> {
                                 peers.addPeer(peer);
                                 peers.connectPeer(peer);
                         });

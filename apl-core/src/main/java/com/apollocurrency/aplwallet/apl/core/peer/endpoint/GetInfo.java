@@ -41,7 +41,7 @@ import javax.inject.Inject;
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private final TimeService timeService;
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private Peers peers = CDI.current().select(Peers.class).get(); 
     
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
@@ -140,7 +140,7 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setBlockchainState(pi.getBlockchainState());
 
         if (peerImpl.getServices() != origServices) {
-            Peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(peerImpl, Peers.Event.CHANGED_SERVICES);
         }
         JSONStreamAware myPeerInfoResponse = peers.getMyPeerInfoResponse();
 

@@ -93,7 +93,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     /** Transaction processor */
     static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-
+    private static Peers peers = CDI.current().select(Peers.class).get();
     /** Active event users */
     public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
 
@@ -844,7 +844,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                Peers.addListener(this, (Peers.Event)event);
+                peers.addListener(this, (Peers.Event)event);
             }
 
             /**
@@ -852,7 +852,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                Peers.removeListener(this, (Peers.Event)event);
+                peers.removeListener(this, (Peers.Event)event);
             }
 
             /**

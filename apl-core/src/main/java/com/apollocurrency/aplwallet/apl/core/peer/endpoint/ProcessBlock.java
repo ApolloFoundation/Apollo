@@ -29,13 +29,15 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 public final class ProcessBlock extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessBlock.class);
-
+    private Peers peers = CDI.current().select(Peers.class).get();
+    
     public ProcessBlock() {}
 
     @Override
@@ -52,7 +54,7 @@ public final class ProcessBlock extends PeerRequestHandler {
                 (Convert.parseUnsignedLong(previousBlockId) == lastBlock.getPreviousBlockId()
                         && (lastBlock.getTimestamp() > peerBlockTimestamp ||
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
-            Peers.peersExecutorService.submit(() -> {
+            peers.peersExecutorService.submit(() -> {
                 try {
                     LOG.debug("API: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);

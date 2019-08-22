@@ -108,7 +108,7 @@ public class APIProxy {
         List<String> currentPeersHosts = getInstance().peersHosts;
         if (currentPeersHosts != null) {
             for (String host : currentPeersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null) {
                     peers.connectPeer(peer);
                 }
@@ -135,13 +135,13 @@ public class APIProxy {
 
     Peer getServingPeer(String requestType) {
         if (forcedPeerHost != null) {
-            return Peers.getPeer(forcedPeerHost);
+            return peers.getPeer(forcedPeerHost);
         }
 
         APIEnum requestAPI = APIEnum.fromName(requestType);
         if (!peersHosts.isEmpty()) {
             for (String host : peersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null && peer.isApiConnectable() && !peer.getDisabledAPIs().contains(requestAPI)) {
                     return peer;
                 }

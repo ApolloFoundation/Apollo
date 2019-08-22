@@ -92,7 +92,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             downloadedVolume += volume;
         }
-        Peers.notifyListeners(getPeer(), Peers.Event.DOWNLOADED_VOLUME);
+       //TODO: do we need this here? 
+       // Peers.notifyListeners(getPeer(), Peers.Event.DOWNLOADED_VOLUME);
     }
 
     public long getUploadedVolume() {
@@ -103,7 +104,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             uploadedVolume += volume;
         }
-        Peers.notifyListeners(getPeer(), Peers.Event.UPLOADED_VOLUME);
+       //TODO: do we need this here? 
+       // Peers.notifyListeners(getPeer(), Peers.Event.UPLOADED_VOLUME);
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {

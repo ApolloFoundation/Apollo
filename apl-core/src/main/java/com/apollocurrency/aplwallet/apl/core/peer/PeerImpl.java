@@ -51,14 +51,12 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -178,9 +176,9 @@ public final class PeerImpl implements Peer {
             lock.unlock();
         }
         if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
-            Peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
+            peers.notifyListeners(this, Peers.Event.ADDED_ACTIVE_PEER);
         } else if (newState == PeerState.NON_CONNECTED) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
+            peers.notifyListeners(this, Peers.Event.CHANGED_ACTIVE_PEER);
         }
         //we have to change state anyway
     }
@@ -214,7 +212,7 @@ public final class PeerImpl implements Peer {
                 }
                 blacklistingCause = "Old version: " + version;
                 setState(PeerState.NON_CONNECTED);
-                Peers.notifyListeners(this, Peers.Event.BLACKLIST);
+                peers.notifyListeners(this, Peers.Event.BLACKLIST);
             }
         }
         LOG.trace("VERSION - Peer - {} set version - {}", host, version);
@@ -402,7 +400,7 @@ public final class PeerImpl implements Peer {
         blacklistingTime = timeService.getEpochTime();
         blacklistingCause = cause;
         deactivate("Blacklisting because of: "+cause);
-        Peers.notifyListeners(this, Peers.Event.BLACKLIST);
+        peers.notifyListeners(this, Peers.Event.BLACKLIST);
     }
 
     @Override
@@ -413,7 +411,7 @@ public final class PeerImpl implements Peer {
         LOG.debug("Unblacklisting " + host);
         blacklistingTime = 0;
         blacklistingCause = null;
-        Peers.notifyListeners(this, Peers.Event.UNBLACKLIST);
+        peers.notifyListeners(this, Peers.Event.UNBLACKLIST);
     }
 
     void updateBlacklistedStatus(int curTime) {
@@ -429,7 +427,7 @@ public final class PeerImpl implements Peer {
     public void deactivate(String reason) {
         setState(PeerState.NON_CONNECTED);
         LOG.trace("Deactivating peer {}. Reason: {}",getHostWithPort(),reason);
-        Peers.notifyListeners(this, Peers.Event.DEACTIVATE);
+        peers.notifyListeners(this, Peers.Event.DEACTIVATE);
     }
 
     @Override
@@ -638,7 +636,7 @@ public final class PeerImpl implements Peer {
                 }
                 setState(PeerState.CONNECTED);
                 if (getServices() != origServices) {
-                    Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+                    peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
                 }
                 LOG.debug("Handshake as client is OK with peer: {} ", getHostWithPort());
                 processConnectAttempt(false);
@@ -736,7 +734,7 @@ public final class PeerImpl implements Peer {
 
             for (PeerImpl peer : groupedPeers) {
                 peer.adjustedWeight = blockchainConfig.getCurrentConfig().getMaxBalanceAPL() * peer.getHallmarkWeight(mostRecentDate) / totalWeight;
-                Peers.notifyListeners(peer, Peers.Event.WEIGHT);
+                peers.notifyListeners(peer, Peers.Event.WEIGHT);
             }
 
             return true;
@@ -774,7 +772,7 @@ public final class PeerImpl implements Peer {
             services |= service.getCode();
         }
         if (notifyListeners && doNotify) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
         }
     }
 
@@ -785,7 +783,7 @@ public final class PeerImpl implements Peer {
             services &= (~service.getCode());
         }
         if (notifyListeners && doNotify) {
-            Peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
+            peers.notifyListeners(this, Peers.Event.CHANGED_SERVICES);
         }
     }
 

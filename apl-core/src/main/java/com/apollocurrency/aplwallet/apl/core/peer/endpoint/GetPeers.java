@@ -30,7 +30,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 public final class GetPeers extends PeerRequestHandler {
-    private static Peers peers = CDI.current().select(Peers.class).get(); 
+    private Peers peers = CDI.current().select(Peers.class).get(); 
 
     public GetPeers() {}
 
