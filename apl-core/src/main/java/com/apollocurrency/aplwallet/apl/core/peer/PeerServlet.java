@@ -105,7 +105,8 @@ public final class PeerServlet extends WebSocketServlet {
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
         if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
-        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
     }  
     
     public PeerRequestHandler getHandler(String rtype) {

@@ -33,16 +33,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringWriter;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 
 public final class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private final TimeService timeService;
-    private PeersService peers = CDI.current().select(PeersService.class).get(); 
-    
+
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
     private static final JSONStreamAware INVALID_CHAINID;
@@ -85,7 +83,7 @@ public final class GetInfo extends PeerRequestHandler {
                         log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
                             log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
-                            peers.setAnnouncedAddress(peerImpl, null);
+                            lookupPeersService().setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate("Invalid announced address: "+announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
@@ -93,10 +91,10 @@ public final class GetInfo extends PeerRequestHandler {
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
                         int oldPort = peerImpl.getPort();
-                        peers.setAnnouncedAddress(peerImpl, announcedAddress);
+                        lookupPeersService().setAnnouncedAddress(peerImpl, announcedAddress);
                     }
                 } else {
-                    peers.setAnnouncedAddress(peerImpl, null);
+                    lookupPeersService().setAnnouncedAddress(peerImpl, null);
                 }
             }
         }
@@ -140,9 +138,9 @@ public final class GetInfo extends PeerRequestHandler {
         peerImpl.setBlockchainState(pi.getBlockchainState());
 
         if (peerImpl.getServices() != origServices) {
-            peers.notifyListeners(peerImpl, PeersService.Event.CHANGED_SERVICES);
+            lookupPeersService().notifyListeners(peerImpl, PeersService.Event.CHANGED_SERVICES);
         }
-        JSONStreamAware myPeerInfoResponse = peers.getMyPeerInfoResponse();
+        JSONStreamAware myPeerInfoResponse = lookupPeersService().getMyPeerInfoResponse();
 
         if (log.isTraceEnabled()) {
             try {
@@ -154,7 +152,7 @@ public final class GetInfo extends PeerRequestHandler {
                 log.error("ERROR, DUMP myPeerInfoResponse", e);
             }
         }
-        peers.addPeer(peer);
+        lookupPeersService().addPeer(peer);
         return myPeerInfoResponse;
 
     }

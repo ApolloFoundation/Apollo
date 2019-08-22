@@ -20,23 +20,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
-
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import javax.enterprise.inject.spi.CDI;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
 
 /**
  * Sends a transaction to some peers.
@@ -65,8 +62,7 @@ import org.json.simple.JSONStreamAware;
  */
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
-    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
-    
+
     public SendTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
@@ -82,7 +78,7 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = ParameterParser.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            peers.sendToSomePeers(Collections.singletonList(transaction));
+            lookupPeersService().sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.NotValidException | RuntimeException e) {
