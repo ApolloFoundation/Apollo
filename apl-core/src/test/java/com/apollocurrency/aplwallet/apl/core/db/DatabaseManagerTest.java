@@ -14,7 +14,8 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -141,11 +142,11 @@ class DatabaseManagerTest {
 
     @Test
     void testFindFullDatasources() {
-        List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDatasources();
+        Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
         assertEquals(2, fullDatasources.size());
-        assertTrue(fullDatasources.get(0).getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
-        assertTrue(fullDatasources.get(1).getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
-
+        Iterator<TransactionalDataSource> iterator = fullDatasources.iterator();
+        assertTrue(iterator.next().getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
     }
 
     @Test
