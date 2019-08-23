@@ -70,8 +70,8 @@ public class DexContractAttachment extends AbstractAttachment {
         super(attachmentData);
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
         this.counterOrderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("counterOrderId")));
-        this.secretHash = Convert.parseHexString(String.valueOf(attachmentData.get("secretHash")));
-        this.encryptedSecret = Convert.parseHexString(String.valueOf(attachmentData.get("encryptedSecret")));
+        this.secretHash = attachmentData.get("secretHash") != null ? Convert.parseHexString(String.valueOf(attachmentData.get("secretHash"))) : null;
+        this.encryptedSecret = attachmentData.get("encryptedSecret") != null ? Convert.parseHexString(String.valueOf(attachmentData.get("encryptedSecret"))) : null;
         this.contractStatus = ExchangeContractStatus.getType(Byte.valueOf(String.valueOf(attachmentData.get("contractStatus"))));
         this.transferTxId = String.valueOf(attachmentData.get("transferTxId"));
 //        this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
@@ -122,10 +122,14 @@ public class DexContractAttachment extends AbstractAttachment {
     public void putMyJSON(JSONObject json) {
         json.put("orderId", Long.toUnsignedString(this.getOrderId()));
         json.put("counterOrderId", Long.toUnsignedString(this.getCounterOrderId()));
-        json.put("secretHash",  Convert.toHexString(this.secretHash));
-        json.put("encryptedSecret",  Convert.toHexString(this.encryptedSecret));
-        json.put("contractStatus",  this.contractStatus.ordinal());
-        json.put("transferTxId",  this.transferTxId);
+        if (this.secretHash != null) {
+            json.put("secretHash", Convert.toHexString(this.secretHash));
+        }
+        if (this.encryptedSecret != null) {
+            json.put("encryptedSecret", Convert.toHexString(this.encryptedSecret));
+        }
+        json.put("contractStatus", this.contractStatus.ordinal());
+        json.put("transferTxId", this.transferTxId);
 //        json.put("finishTime", this.finishTime);
     }
 
