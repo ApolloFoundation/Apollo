@@ -55,7 +55,6 @@ public class EthGasStationInfoDaoTest {
              
                 EthGasInfo ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();            
                 assert (ethGasInfo != null);
-            
                 
                 logger.log(Level.INFO, "average : " + ethGasInfo.getAverageSpeedPrice());
                 logger.log(Level.INFO,  "fast : " + ethGasInfo.getFastSpeedPrice());
@@ -91,5 +90,36 @@ public class EthGasStationInfoDaoTest {
         }        
         
     }
+    
+
+    
+    @Test
+    void testChainQuery() {
+        
+        logger.log(Level.INFO,"Teting ETH Chain Gas station query: ");
+
+        try {
+
+            for (int i = 0; i<nTests; i++) {
+
+                logger.log(Level.INFO,"test " + (i+1) + " out of " + nTests );
+             
+                EthGasInfo ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();            
+                assert (ethGasInfo != null);
+                
+                logger.log(Level.INFO, "average : " + ethGasInfo.getAverageSpeedPrice());
+                logger.log(Level.INFO,  "fast : " + ethGasInfo.getFastSpeedPrice());
+                logger.log(Level.INFO,  "low  : " + ethGasInfo.getSafeLowSpeedPrice());
+                
+            }
+            
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
+    
+    
     
 }
