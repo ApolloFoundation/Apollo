@@ -7,8 +7,10 @@ import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -27,6 +29,8 @@ import org.web3j.tx.gas.StaticGasProvider;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -138,6 +142,30 @@ public class DexSmartContractService {
             SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretKey).sendAsync().get());
             return swapDataInfo;
         } catch (Exception e){
+            log.error(e.getMessage(), e);
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+
+    public List<UserEthDepositInfo> getUserFilledDepositsgetUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            List<UserEthDepositInfo> userDeposit = new ArrayList<>(UserEthDepositInfoMapper.map(dexContract.getUserFilledDeposits(user).sendAsync().get()));
+            return userDeposit;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+    public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
+        List<UserEthDepositInfo> userDeposit = new ArrayList<>();
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            userDeposit.addAll(UserEthDepositInfoMapper.map(dexContract.getUserFilledOrders(user).sendAsync().get()));
+            return userDeposit;
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }

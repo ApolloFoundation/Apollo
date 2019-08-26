@@ -520,9 +520,7 @@ public class DexController {
         List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, pairCurrency, offset, limit);
         
         return Response.ok(tradeEntries.stream()
-            .map(o -> {
-            return new DexTradeEntryToDtoConverter().apply(o); 
-        })
+                .map(o -> new DexTradeEntryToDtoConverter().apply(o))
             .collect(Collectors.toList())
         ).build();
     }
