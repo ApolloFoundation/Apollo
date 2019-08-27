@@ -11,8 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -21,6 +23,11 @@ import javax.inject.Singleton;
 @Singleton
 public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityRepository<Shuffling> implements ShufflingRepository{
     private ShufflingKeyFactory shufflingKeyFactory;
+    private static final String RECIPIENTS_PUBLIC_KEYS = "recipient_public_keys";
+    private static final String BLOCKS_REMAINING       = "blocks_remaining";
+    private static final String ASSIGNEE_ACCOUNT_ID    = "assignee_account_id";
+    private static final String REGISTRAN_COUNT        = "registrant_count";
+    private static final String STAGE                  ="stage";
     private static final Comparator<Shuffling> DEFAULT_COMPARATOR = Comparator.comparing(Shuffling::getId);
     private static final Comparator<Shuffling> FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR = (o1, o2) -> {
         // blocks_remaining asc nulls last
@@ -153,7 +160,31 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
     @Override
     public Object analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
-        return null;
+        switch (columnName) {
+            case BLOCKS_REMAINING:
+                return getChange(entity.getBlocksRemaining(), prevValue);
+            case STAGE:
+                return getChange(entity.getStage(), prevValue);
+            case ASSIGNEE_ACCOUNT_ID:
+                return getChange(entity.getAssigneeAccountId(), prevValue);
+            case RECIPIENTS_PUBLIC_KEYS:
+                return getDoubleByteArrayChange(entity.getRecipientPublicKeys(), prevValue);
+            case REGISTRAN_COUNT:
+                return getChange(entity.getRegistrantCount(), prevValue);
+            default:
+                throw new IllegalArgumentException("Unable to find change analyzer for column '" + columnName + "'");
+        }
+    }
+
+    private Object getChange(Object value, Object prevValue, BiFunction<Object, Object,Boolean> equalFunction) {
+        return prevValue == null ? value : value == null || equalFunction.apply(value, prevValue) ? null : value;
+    }
+    private Object getChange(Object value, Object prevValue) {
+        return getChange(value, prevValue, (v1, v2) -> value.equals(prevValue));
+    }
+
+    private Object getDoubleByteArrayChange(Object value, Object prevValue) {
+        return getChange(value, prevValue, (arr1, arr2) -> Arrays.deepEquals((byte[][]) arr1, (byte[][]) arr2));
     }
 
     @Override

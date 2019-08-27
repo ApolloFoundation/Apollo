@@ -92,7 +92,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
                     chageableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
-                        Object columnChange = analyzeChanges(name, columnChanges.size() == 0 ? null : last(columnChanges).getValue(), historicalEntity);
+                        Object columnChange = analyzeChanges(name, getPrevValue(columnChanges), historicalEntity);
                         if (columnChange != null) {
                             columnChanges.add(new Change(historicalEntity.getHeight(), columnChange));
                         }
@@ -107,7 +107,22 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
         });
     }
 
-    // alternatively, we could use reflection, but it will be slower significantly
+    private Object getPrevValue(List<Change> changes) {
+        return changes.size() == 0 ? null : last(changes).getValue();
+    }
+
+    /**
+     * Analyze changes for column with specified {@code columnName} using {@code prevValue} on new {@code entity}.
+     * Should return null, if column value was not changed.
+     * Should return new value for column in specified entity when prevValue differs from current value.
+     * <p>
+     *     Note, that alternatively, we could use reflection, but it will be significantly slower
+     * </p>
+     * @param columnName name of the column to analyze changes
+     * @param prevValue previous value of this column (can be null)
+     * @param entity new entity, which may contain change for specified column
+     * @return new value for column or null, when column value was not changed
+     */
     public abstract Object analyzeChanges(String columnName, Object prevValue, T entity);
 
     // set value for column with such name for entity
@@ -139,7 +154,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                         List<Change> columnChanges = changes.get(c);
                         Change lastChange = last(columnChanges);
                         Object change = analyzeChanges(c, lastChange.getValue(), entity);
-                        if (change != null && lastChange.getValue() != null) { // change was performed
+                        if (change != null || lastChange.getValue() != null) { // change was performed
                             if (lastChange.getHeight() == entity.getHeight()) {
                                 lastChange.setValue(change);
                             } else {
@@ -153,9 +168,9 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     Map<String, List<Change>> changes = existingEntity.getChanges();
                     chageableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
-                        Change lastChange = last(columnChanges);
-                        Object change = analyzeChanges(c, lastChange.getValue(), entity);
-                        if (change != null && lastChange.getValue() != null) { // change was performed
+                        Object prevValue = getPrevValue(columnChanges);
+                        Object change = analyzeChanges(c, prevValue, entity);
+                        if (change != null || prevValue != null) { // new value exists or equal to null
                             columnChanges.add(new Change(entity.getHeight(), change));
                         }
                     });
