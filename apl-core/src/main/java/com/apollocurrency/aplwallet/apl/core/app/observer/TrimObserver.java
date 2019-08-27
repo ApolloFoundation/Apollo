@@ -13,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -30,8 +30,8 @@ public class TrimObserver {
     private final TrimService trimService;
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
-//    private final Object lock = new Object();
-    private final Queue<Integer> trimHeights = new PriorityBlockingQueue<>(); // will sort heights from lowest to highest automatically
+    private final Object lock = new Object();
+    private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     @PostConstruct
@@ -51,11 +51,11 @@ public class TrimObserver {
     private void processTrimEvent() {
         if (trimDerivedTables) {
             Integer trimHeight = null;
-//            synchronized (lock) {
+            synchronized (lock) {
                 if (trimDerivedTables) {
                     trimHeight = trimHeights.poll();
                 }
-//            }
+            }
             if (trimHeight != null) {
                 log.debug("Perform trim on blockchain height {}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
@@ -86,9 +86,9 @@ public class TrimObserver {
 
     public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
         if (block.getHeight() % trimFrequency == 0) {
-//            synchronized (lock) {
+            synchronized (lock) {
                 trimHeights.add(block.getHeight());
-//            }
+            }
         }
     }
 }
