@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
@@ -101,6 +101,8 @@ public final class AplCore {
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
 
+    @Inject @Setter
+    PeersService peers;
     private String initCoreTaskID;
     
     public AplCore() {
@@ -136,7 +138,7 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
-        Peers.shutdown();
+        peers.shutdown();
         fullTextSearchService.shutdown();
         LOG.info("full text service shutdown...");
 
@@ -232,7 +234,7 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
-                Peers.init();
+                peers.init();
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();

@@ -6,20 +6,20 @@ package com.apollocurrency.aplwallet.api.dto;
 
 import java.util.Objects;
 
-public class Generator {
+public class GeneratorInfo {
     private Long effectiveBalanceAPL;
     private Long deadline;
     private Long hitTime;
     private BasicAccount account;
 
-    public Generator(Long effectiveBalanceAPL, Long deadline, String account, Long hitTime) {
+    public GeneratorInfo(Long effectiveBalanceAPL, Long deadline, String account, Long hitTime) {
         this.effectiveBalanceAPL = effectiveBalanceAPL;
         this.deadline = deadline;
         this.account = new BasicAccount(account);
         this.hitTime = hitTime;
     }
 
-    public Generator() {
+    public GeneratorInfo() {
     }
 
     public Long getEffectiveBalanceAPL() {
@@ -43,8 +43,8 @@ public class Generator {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Generator)) return false;
-        Generator generator = (Generator) o;
+        if (!(o instanceof GeneratorInfo)) return false;
+        GeneratorInfo generator = (GeneratorInfo) o;
         return Objects.equals(effectiveBalanceAPL, generator.effectiveBalanceAPL) &&
                 Objects.equals(deadline, generator.deadline) &&
                 Objects.equals(account, generator.account) &&

@@ -10,7 +10,7 @@ import java.util.Objects;
 public class NextGenerators {
     private Long activeCount;
     private String lastBlock;
-    private List<Generator> generators;
+    private List<GeneratorInfo> generators;
     private Long height;
     private Long timestamp;
 
@@ -61,11 +61,11 @@ public class NextGenerators {
         this.lastBlock = lastBlock;
     }
 
-    public List<Generator> getGenerators() {
+    public List<GeneratorInfo> getGenerators() {
         return generators;
     }
 
-    public void setGenerators(List<Generator> generators) {
+    public void setGenerators(List<GeneratorInfo> generators) {
         this.generators = generators;
     }
 
@@ -85,7 +85,7 @@ public class NextGenerators {
         this.timestamp = timestamp;
     }
 
-    public NextGenerators(Long activeCount, String lastBlock, List<Generator> generators, Long height, Long timestamp) {
+    public NextGenerators(Long activeCount, String lastBlock, List<GeneratorInfo> generators, Long height, Long timestamp) {
 
         this.activeCount = activeCount;
         this.lastBlock = lastBlock;

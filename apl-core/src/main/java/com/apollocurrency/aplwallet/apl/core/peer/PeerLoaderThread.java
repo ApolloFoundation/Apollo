@@ -22,11 +22,13 @@ class PeerLoaderThread implements Runnable {
     private final List<String> defaultPeers;
     private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
+    private PeersService peers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, PeersService peers) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;
+        this.peers=peers;
     }
     private final Set<PeerDb.Entry> entries = new HashSet<>();
     private PeerDb peerDb;
@@ -38,17 +40,17 @@ class PeerLoaderThread implements Runnable {
             peerDb = CDI.current().select(PeerDb.class).get();
         }
         final int now = timeService.getEpochTime();
-        Peers.wellKnownPeers.forEach((address) -> {
+        peers.wellKnownPeers.forEach((address) -> {
             PeerAddress pa = new PeerAddress(address);
             entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
         });
-        if (Peers.usePeersDb) {
+        if (peers.usePeersDb) {
             LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
             defaultPeers.forEach((address) -> {
                 PeerAddress pa = new PeerAddress(address);
                 entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
             });
-            if (Peers.savePeers) {
+            if (peers.savePeers) {
                 List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
                 dbPeers.forEach((entry) -> {
                     if (!entries.add(entry)) {
@@ -64,12 +66,12 @@ class PeerLoaderThread implements Runnable {
             LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
         }
         entries.forEach((entry) -> {
-            Future<String> unresolvedAddress = Peers.peersExecutorService.submit(() -> {
-                PeerImpl peer = Peers.findOrCreatePeer(null,entry.getAddress(), true);
+            Future<String> unresolvedAddress = peers.peersExecutorService.submit(() -> {
+                PeerImpl peer = peers.findOrCreatePeer(null,entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());
                     peer.setServices(entry.getServices());
-                    Peers.addPeer(peer);
+                    peers.addPeer(peer);
                     LOG.trace("'Peer loader': Put 'well known' Peer from db into 'Peers Map' = {}", entry);
                     return null;
                 }
@@ -78,7 +80,7 @@ class PeerLoaderThread implements Runnable {
             unresolvedPeers.add(unresolvedAddress);
         });
         LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
-        Peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
+        peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
     
 }
