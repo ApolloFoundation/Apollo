@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -27,6 +28,8 @@ public class DexContractAttachment extends AbstractAttachment {
     private byte[] secretHash;
 
     private String transferTxId;
+
+    private String counterTransferTxId;
     /**
      * Encrypted secret key to have able to restore secret.
      */
@@ -63,6 +66,14 @@ public class DexContractAttachment extends AbstractAttachment {
         } catch (NotValidException ex) {
             throw new AplException.NotValidException(ex.getMessage());
         }
+
+        try {
+            this.setCounterTransferTxId(Convert.emptyToNull(Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH)));
+        } catch (NotValidException ex) {
+            throw new AplException.NotValidException(ex.getMessage());
+        }
+
+
 //        this.finishTime = buffer.getInt();
     }
 
@@ -74,7 +85,18 @@ public class DexContractAttachment extends AbstractAttachment {
         this.encryptedSecret = attachmentData.get("encryptedSecret") != null ? Convert.parseHexString(String.valueOf(attachmentData.get("encryptedSecret"))) : null;
         this.contractStatus = ExchangeContractStatus.getType(Byte.valueOf(String.valueOf(attachmentData.get("contractStatus"))));
         this.transferTxId = String.valueOf(attachmentData.get("transferTxId"));
+        this.transferTxId = String.valueOf(attachmentData.get("counterTransferTxId"));
 //        this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
+    }
+
+    public DexContractAttachment(ExchangeContract exchangeContract) {
+        this.orderId = exchangeContract.getOrderId();
+        this.counterOrderId = exchangeContract.getCounterOrderId();
+        this.secretHash = exchangeContract.getSecretHash();
+        this.encryptedSecret = exchangeContract.getEncryptedSecret();
+        this.contractStatus = exchangeContract.getContractStatus();
+        this.transferTxId = exchangeContract.getTransferTxId();
+        this.counterTransferTxId = exchangeContract.getCounterTransferTxId();
     }
 
     @Override
@@ -84,6 +106,7 @@ public class DexContractAttachment extends AbstractAttachment {
                 + 1 + (this.encryptedSecret != null ? 64 : 0)
                 + 1
                 + 2 + Convert.toBytes(transferTxId).length
+                + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
 //                + 4
                 ;
     }
@@ -114,6 +137,13 @@ public class DexContractAttachment extends AbstractAttachment {
         byte[] transferTxId = Convert.toBytes(this.transferTxId);
         buffer.putShort((short) transferTxId.length);
         buffer.put(transferTxId);
+
+        byte[] counterTransferTxId = this.counterTransferTxId != null ? Convert.toBytes(this.counterTransferTxId) : null;
+        buffer.putShort(counterTransferTxId != null ? (short) counterTransferTxId.length : 0);
+        if (counterTransferTxId != null) {
+            buffer.put(counterTransferTxId);
+        }
+
 //        buffer.putInt(finishTime);
 
     }
@@ -130,6 +160,7 @@ public class DexContractAttachment extends AbstractAttachment {
         }
         json.put("contractStatus", this.contractStatus.ordinal());
         json.put("transferTxId", this.transferTxId);
+        json.put("counterTransferTxId", this.counterTransferTxId);
 //        json.put("finishTime", this.finishTime);
     }
 

@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
@@ -53,8 +54,8 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getOrderId());
            }
 
-           if(offer.getAccountId() != transaction.getSenderId()){
-               throw new AplException.NotValidException("Can create request contract only from your account.");
+           if (transaction.getSenderId() != offer.getAccountId() && transaction.getSenderId() != counterOffer.getAccountId()) {
+               throw new AplException.NotValidException("Can send tx dex contract only from sender or recipient account.");
            }
        }
 
@@ -65,6 +66,18 @@ public class DexContractTransaction extends DEX {
         if(attachment.getEncryptedSecret() != null && attachment.getEncryptedSecret().length != 64){
             throw new AplException.NotValidException("Encrypted secret is null or length is not right.");
         }
+
+
+        ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
+                .offerId(attachment.getOrderId())
+                .counterOfferId(attachment.getCounterOrderId())
+                .build());
+
+        if (attachment.getContractStatus().isStep2() && contract == null) {
+            throw new AplException.NotValidException("Don't find contract.");
+        }
+
+
     }
 
     @Override
@@ -78,12 +91,26 @@ public class DexContractTransaction extends DEX {
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
-        if(attachment.getContractStatus().isStep2()) {
-            offer.setStatus(OfferStatus.WAITING_APPROVAL);
-            dexService.saveOffer(offer);
+        if (attachment.getContractStatus().isStep2() && counterOffer.getStatus().isOpen()) {
+            counterOffer.setStatus(OfferStatus.WAITING_APPROVAL);
+            dexService.saveOffer(counterOffer);
         }
 
-        dexService.saveDexContract(new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment));
+        ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
+                .offerId(attachment.getOrderId())
+                .counterOfferId(attachment.getCounterOrderId())
+                .build());
+
+        // contract == null it means, that it's a first step.
+        if (contract == null) {
+            dexService.saveDexContract(new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment));
+        } else {
+            contract.setCounterOrderId(attachment.getCounterOrderId());
+            contract.setCounterTransferTxId(attachment.getCounterTransferTxId());
+            contract.setContractStatus(attachment.getContractStatus());
+
+            dexService.saveDexContract(contract);
+        }
     }
 
     @Override

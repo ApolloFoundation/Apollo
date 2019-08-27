@@ -148,7 +148,7 @@ public class DexSmartContractService {
     }
 
 
-    public List<UserEthDepositInfo> getUserFilledDepositsgetUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
+    public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             List<UserEthDepositInfo> userDeposit = new ArrayList<>(UserEthDepositInfoMapper.map(dexContract.getUserFilledDeposits(user).sendAsync().get()));
@@ -169,6 +169,16 @@ public class DexSmartContractService {
             log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
+    }
+
+
+    public boolean isDepositForOrderExist(String user, Long orderId) throws AplException.ExecutiveProcessException {
+        for (UserEthDepositInfo userFilledDeposit : getUserFilledDeposits(user)) {
+            if (userFilledDeposit.getOrderId().equals(orderId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){

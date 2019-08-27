@@ -23,6 +23,7 @@ public class ExchangeContract {
      */
     private byte[] secretHash;
     private String transferTxId;
+    private String counterTransferTxId;
     /**
      * Encrypted secret key to have able to restore secret.
      */
@@ -38,6 +39,7 @@ public class ExchangeContract {
         this.secretHash = dexContractAttachment.getSecretHash();
         this.encryptedSecret = dexContractAttachment.getEncryptedSecret();
         this.transferTxId = dexContractAttachment.getTransferTxId();
+        this.counterTransferTxId = dexContractAttachment.getCounterTransferTxId();
         this.contractStatus = dexContractAttachment.getContractStatus();
 //        this.finishTime = dexContractAttachment.getFinishTime();
     }

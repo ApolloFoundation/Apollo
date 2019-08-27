@@ -77,6 +77,11 @@ public class DexCloseOfferTransaction extends DEX {
         dexService.saveOffer(offer);
 
         ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
+
+        if (exchangeContract == null) {
+            exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().counterOfferId(offer.getTransactionId()).build());
+        }
+
         Block lastBlock = blockchain.getLastBlock();
 
         DexTradeEntry dexTradeEntry = DexTradeEntry.builder()

@@ -12,5 +12,6 @@ public class DexContractDBRequest {
     private Long sender;
     private Integer status;
     private Long offerId;
+    private Long counterOfferId;
 
 }

@@ -15,6 +15,7 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
@@ -77,6 +78,12 @@ public class DexTransferMoneyTransaction extends DEX {
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
 
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_TRANSFER_MONEY_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

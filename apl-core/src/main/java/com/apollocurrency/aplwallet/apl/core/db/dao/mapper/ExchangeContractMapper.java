@@ -21,6 +21,7 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
                 .secretHash(rs.getBytes("secret_hash"))
                 .encryptedSecret(rs.getBytes("encrypted_secret"))
                 .transferTxId(rs.getString("transfer_tx_id"))
+                .counterTransferTxId(rs.getString("counter_transfer_tx_id"))
 //                .finishTime(rs.getInt("finish_time"))
                 .build();
     }

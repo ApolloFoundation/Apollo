@@ -50,7 +50,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -289,6 +288,7 @@ public class DexService {
         String transactionStr = null;
 
         if(offer.getType().isSell()) {
+
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
             createTransactionRequest.setAmountATM(offer.getOfferAmount());
             createTransactionRequest.setDeadlineValue("1440");
@@ -316,13 +316,13 @@ public class DexService {
                 token = ethereumWalletService.PAX_CONTRACT_ADDRESS;
             }
 
-            if(contractStatus.isStep1()) {
+            if (!dexSmartContractService.isDepositForOrderExist(offer.getFromAddress(), offer.getTransactionId())) {
                 transactionStr = dexSmartContractService.depositAndInitiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
                         offer.getFromAddress(), offer.getTransactionId(),
                         EthUtil.etherToWei(haveToPay),
                         secretHash, toAddress, contractStatus.timeOfWaiting(),
                         null, token);
-            } else if (contractStatus.isStep2()){
+            } else {
                 transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
                         offer.getFromAddress(), offer.getTransactionId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
             }
@@ -358,9 +358,9 @@ public class DexService {
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
                 Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId());
+                log.debug("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
 
-            } else if (offer.getType().isBuy()) {
+            } else {
 
                 Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(txId));
                 List<byte[]> txHash = new ArrayList<>();
@@ -370,13 +370,13 @@ public class DexService {
                 templatTransactionRequest.setAttachment(attachment);
 
                 Transaction respApproveTx = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId());
+                log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
 
                 DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
                 Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.info("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId());
+                log.debug("Order:" + offer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
 
             }
         } catch (Exception ex) {
@@ -416,7 +416,7 @@ public class DexService {
             }
 
             // 3. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, encryptedSecretX, ExchangeContractStatus.STEP_1);
+            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, null, encryptedSecretX, ExchangeContractStatus.STEP_1);
             response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
@@ -437,26 +437,25 @@ public class DexService {
     }
 
 
-    public boolean isTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
-        if(offerType.isBuy() && dexCurrencies.isEthOrPax()) {
+    public boolean isTxApproved(byte[] secretHash, String transferTxId) throws AplException.ExecutiveProcessException {
+        if (DexCurrencyValidator.isEthOrPaxAddress(transferTxId)) {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
-        } else if(offerType.isSell()) {
+        } else {
             PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
             return phasingPoll != null && phasingPollService.getApprovedTx(phasingPoll.getId()) != null;
         }
 
-        throw new AplException.ExecutiveProcessException("Unknown offer pair.");
     }
 
-    public byte[] getSecretIfTxApproved(byte[] secretHash, OfferType offerType, DexCurrencies dexCurrencies, String transferTxId) throws AplException.ExecutiveProcessException {
+    public byte[] getSecretIfTxApproved(byte[] secretHash, String transferTxId) throws AplException.ExecutiveProcessException {
 
-        if(offerType.isBuy() && dexCurrencies.isEthOrPax()) {
+        if (DexCurrencyValidator.isEthOrPaxAddress(transferTxId)) {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             if(swapDataInfo!=null && swapDataInfo.getSecret()!= null) {
                 return swapDataInfo.getSecret();
             }
-        } else if(offerType.isSell()) {
+        } else {
             PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
             if(phasingPoll == null){
                 return null;
