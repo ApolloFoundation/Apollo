@@ -65,6 +65,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.resteasy.cdi.i18n.LogMessages_$logger;
 import org.slf4j.Logger;
 
 public final class Shuffling {
@@ -315,32 +316,36 @@ public final class Shuffling {
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             long startTime = System.currentTimeMillis();
+            LOG.trace("Shuffling observer call at {}", block.getHeight());
             if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
                     || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
+                LOG.trace("Will not process shufflings at {}", block.getHeight());
                 return;
             }
             List<Shuffling> shufflings = new ArrayList<>();
-            try (DbIterator<Shuffling> iterator = getActiveShufflings(0, -1)) {
-                for (Shuffling shuffling : iterator) {
-                    if (!shuffling.isFull(block)) {
-                        shufflings.add(shuffling);
-                    }
+            List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
+            LOG.trace("Got {} active shufflings", activeShufflings.size());
+            for (Shuffling shuffling : activeShufflings) {
+                if (!shuffling.isFull(block)) {
+                    shufflings.add(shuffling);
+                } else {
+                    LOG.trace("Skip shuffling {}, block is full");
                 }
             }
-            final AtomicIntegerArray indexArray = new AtomicIntegerArray(new int[1]);
-            indexArray.set(0, 0);
-            shufflings.forEach(shuffling -> {
+            LOG.trace("Shufflings to process - {} ", shufflings.size());
+            int cancelled = 0, inserted = 0;
+            for (Shuffling shuffling : shufflings) {
                 if (--shuffling.blocksRemaining <= 0) {
+                    cancelled++;
                     shuffling.cancel(block);
                 } else {
                     LOG.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
                             shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(),  shuffling.last3Stacktrace());
+                    inserted++;
                     shufflingTable.insert(shuffling);
-                    indexArray.set(0, indexArray.getAndIncrement(0));
                 }
-            });
-            LOG.trace("Shuffling observer, inserted [{}] in time: {} msec",
-                    indexArray.length(), System.currentTimeMillis() - startTime);
+            }
+            LOG.trace("Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
         }
 
 /*
