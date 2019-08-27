@@ -6,7 +6,7 @@
 APPLICATION="${HOME}/.apl-blockchain"
 
 MIN_MEMORY_RQ=700m
-JAVA_OPT="-Xms${MIN_MEMORY_RQ}"
+JAVA_OPT="${JAVA_OPT} -Xms${MIN_MEMORY_RQ}"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # " 
