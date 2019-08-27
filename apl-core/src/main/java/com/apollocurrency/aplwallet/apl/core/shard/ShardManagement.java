@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -93,12 +94,14 @@ public interface ShardManagement {
      * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
      * @return list of full shard datasources
      */
-    List<TransactionalDataSource> getFullDataSources();
+    List<TransactionalDataSource> getFullDataSources(Long numberOfShards);
+
+    Iterator<TransactionalDataSource> getFullDataSourcesIterator();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
      * @return number of closed datasources
      */
-    int closeAllShardDataSources();
+    long closeAllShardDataSources();
 
 }

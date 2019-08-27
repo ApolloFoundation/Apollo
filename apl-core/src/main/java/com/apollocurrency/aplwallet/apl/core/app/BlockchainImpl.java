@@ -47,6 +47,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -566,12 +567,15 @@ public class BlockchainImpl implements Blockchain {
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-
+        long initialLimit = limit;
         if (transactions.size() < limit) {
             boolean noTransactions = transactions.size() == 0;
             limit -= transactions.size();
-            List<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getFullDataSources();
-            for (TransactionalDataSource dataSource : fullDataSources) {
+//            List<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getFullDataSources(3L);
+//            for (TransactionalDataSource dataSource : fullDataSources) {
+            Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getFullDataSourcesIterator();
+            while (fullDataSources.hasNext()) {
+                TransactionalDataSource dataSource = fullDataSources.next();
                 if (noTransactions && from != 0) {
                     from -= transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(),
                             accountId, numberOfConfirmations, type, subtype,
@@ -593,7 +597,8 @@ public class BlockchainImpl implements Blockchain {
                 limit -= foundTxs.size();
             }
         }
-
+        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", transactions.size(), initialLimit,
+                transactions.size() < initialLimit ? "Wrong Number" : "OK !");
         return transactions;
     }
 
