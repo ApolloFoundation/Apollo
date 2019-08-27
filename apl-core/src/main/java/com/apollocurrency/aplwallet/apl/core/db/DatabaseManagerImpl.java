@@ -132,18 +132,18 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return result;
     }
 
-    private Set<Long> findAllFullShards() {
+    private Set<Long> findAllFullShardId() {
         Set<Long> result = new HashSet<>();
         try (Connection con = getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
-            pstmt.setLong(1, ShardState.FULL.getValue());
+            pstmt.setLong(1, ShardState.FULL.getValue()); // full state shard db only
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     result.add(rs.getLong("shard_id"));
                 }
             }
         } catch (SQLException e) {
-            log.error("Error retrieve shards...", e);
+            log.error("Error retrieve full shard Ids...", e);
         }
         return result;
     }
@@ -185,9 +185,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     }
 
     @Override
-    public synchronized List<TransactionalDataSource> getFullDatasources() {
-        Set<Long> allFullShards = findAllFullShards();
-        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(Comparator.reverseOrder()).map(id-> getOrCreateShardDataSourceById(id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
+    public synchronized List<TransactionalDataSource> getFullDataSources() {
+        Set<Long> allFullShards = findAllFullShardId();
+        List<TransactionalDataSource> dataSources = allFullShards.stream().sorted(
+                Comparator.reverseOrder()).map(id-> getOrCreateShardDataSourceById(
+                        id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
         return dataSources;
     }
 
@@ -232,7 +234,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     }
 
     @Override
-    public synchronized TransactionalDataSource getShardDataSourceById(long shardId) {
+    public /*synchronized*/ TransactionalDataSource getShardDataSourceById(long shardId) {
         return connectedShardDataSourceMap.get(shardId);
     }
 
@@ -265,8 +267,8 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
-        Set<Long> fullShards = findAllFullShards();
+    public /*synchronized*/ TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
+        Set<Long> fullShards = findAllFullShardId();
         if (fullShards.contains(shardId)) {
             return getOrCreateShardDataSourceById(shardId, new ShardAddConstraintsSchemaVersion());
         } else {
@@ -318,18 +320,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     }
 
     public DatabaseManagerImpl() {} // never use it directly
-
-//    /**
-//     * Optional method, needs revising for shards
-//     * @throws IOException
-//     */
-//    public static void tryToDeleteDb() throws IOException {
-//            currentTransactionalDataSource.shutdown();
-//            log.info("Removing current Db...");
-//            Path dbPath = AplCoreRuntime.getInstance().getDbDir();
-//            removeDb(dbPath);
-//            log.info("Db: " + dbPath.toAbsolutePath().toString() + " was successfully removed!");
-//    }
 
     @Override
     public String toString() {
