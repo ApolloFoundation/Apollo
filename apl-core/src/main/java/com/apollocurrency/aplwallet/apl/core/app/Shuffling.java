@@ -197,8 +197,20 @@ public final class Shuffling {
         @Override
         public void save(Connection con, Shuffling shuffling) throws SQLException {
             shuffling.save(con);
+            LOG.trace("Save shuffling {} - height - {} remaining - {} Trace - {}",
+                    shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(),  shuffling.last3Stacktrace());
         }
     };
+    String last3Stacktrace() {
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
+    }
+
+    String getStacktraceSpec(StackTraceElement element) {
+        String className = element.getClassName();
+        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
+    }
+
 
     public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -683,6 +695,9 @@ public final class Shuffling {
         if (stage == Stage.PROCESSING) {
             listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
         }
+        LOG.trace("Shuffling addParticipant {} entered stage {}, assignee {}, remaining blocks {}",
+                Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
+
     }
 
     void updateParticipantData(Transaction transaction, ShufflingProcessingAttachment attachment) {
@@ -700,6 +715,8 @@ public final class Shuffling {
         this.blocksRemaining = blockchainConfig.getShufflingProcessingDeadline();
         insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_ASSIGNED);
+        LOG.trace("Shuffling updateParticipant {} entered stage {}, assignee {}, remaining blocks {}",
+                Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
     void updateRecipients(Transaction transaction, ShufflingRecipientsAttachment attachment) {
@@ -723,6 +740,8 @@ public final class Shuffling {
         setStage(Stage.VERIFICATION, 0, (short)(blockchainConfig.getShufflingProcessingDeadline() + participantCount));
         insert(this);
         listeners.notify(this, Event.SHUFFLING_PROCESSING_FINISHED);
+        LOG.trace("Shuffling updateRecipient {} entered stage {}, assignee {}, remaining blocks {}",
+                Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
     void verify(long accountId) {
@@ -742,6 +761,8 @@ public final class Shuffling {
         if (startingBlame) {
             listeners.notify(this, Event.SHUFFLING_BLAME_STARTED);
         }
+        LOG.trace("Shuffling cancelBy {} entered stage {}, blamingAcc {}, remaining blocks {}",
+                Long.toUnsignedString(this.id), this.stage, participant.getAccountId(), this.blocksRemaining);
     }
 
     private void cancelBy(ShufflingParticipant participant) {
@@ -787,6 +808,8 @@ public final class Shuffling {
             delete();
         }
         LOG.debug("Shuffling {} was distributed", Long.toUnsignedString(id));
+        LOG.trace("Shuffling distributed {} entered stage {}, assignee {}, remaining blocks {}",
+                Long.toUnsignedString(this.id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
     }
 
     private void cancel(Block block) {
@@ -959,6 +982,9 @@ public final class Shuffling {
             }
         }
         shufflingTable.delete(this);
+        LOG.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
+                Long.toUnsignedString(id), this.stage, Long.toUnsignedString(this.assigneeAccountId), this.blocksRemaining);
+
     }
 
     private boolean isFull(Block block) {
