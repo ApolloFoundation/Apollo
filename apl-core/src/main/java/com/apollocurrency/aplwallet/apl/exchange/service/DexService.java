@@ -350,9 +350,15 @@ public class DexService {
                     .ecBlockId(0L)
                     .build();
 
-            if (offer.getType().isSell()) {
-                dexSmartContractService.approve(passphrase, secret, offer.getToAddress(), accountId);
-                log.info("Transaction:" + txId + " was approved.");
+            if (DexCurrencyValidator.isEthOrPaxAddress(txId)) {
+
+                boolean approved = dexSmartContractService.approve(passphrase, secret, offer.getToAddress(), accountId);
+
+                if (!approved) {
+                    throw new AplException.ExecutiveProcessException("Transaction:" + txId + " was not approved. (Eth/Pax)");
+                }
+
+                log.debug("Transaction:" + txId + " was approved. (Eth/Pax)");
 
                 DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(offer.getTransactionId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
