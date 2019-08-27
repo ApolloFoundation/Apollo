@@ -77,7 +77,7 @@ public class TrimObserver {
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
         //TODO: please replace 5000 with meaningfull constant name
         if (block.getHeight() % 5000 == 0) {
-            log.info("processed block " + block.getHeight());
+            log.info("Scan: processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
             trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
