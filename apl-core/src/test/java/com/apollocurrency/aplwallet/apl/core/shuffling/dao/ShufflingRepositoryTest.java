@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public abstract class ShufflingRepositoryTest {
+abstract class ShufflingRepositoryTest {
     ShufflingTestData std;
     ShufflingRepository shufflingRepository;
     @BeforeEach
@@ -143,7 +142,11 @@ public abstract class ShufflingRepositoryTest {
         List<Shuffling> holdingShufflings = shufflingRepository.getHoldingShufflings(std.SHUFFLING_6_1_CURRENCY_REGISTRATION.getHoldingId(), null, true, 1, 2);
         assertEquals(List.of(std.SHUFFLING_6_1_CURRENCY_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED), holdingShufflings);
     }
-
+    @Test
+    void testGetCurrencyHoldingShufflingsWithoutFinished() {
+        List<Shuffling> holdingShufflings = shufflingRepository.getHoldingShufflings(std.SHUFFLING_6_1_CURRENCY_REGISTRATION.getHoldingId(), null, false, 0, Integer.MAX_VALUE);
+        assertEquals(List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_6_1_CURRENCY_REGISTRATION), holdingShufflings);
+    }
     @Test
     void testGetAplShufflingsOnRegistrationStage() {
         List<Shuffling> holdingShufflings = shufflingRepository.getHoldingShufflings(0L, Stage.REGISTRATION, true, 0, Integer.MAX_VALUE);
@@ -183,9 +186,6 @@ public abstract class ShufflingRepositoryTest {
         shufflingRepository.delete(toDelete);
         Shuffling shuffling = shufflingRepository.get(std.SHUFFLING_4_2_APL_FINISHED.getId());
         assertNull(shuffling);
-        assertFalse(std.SHUFFLING_4_2_APL_FINISHED.isLatest());
-        assertFalse(toDelete.isLatest());
     }
-
 
 }

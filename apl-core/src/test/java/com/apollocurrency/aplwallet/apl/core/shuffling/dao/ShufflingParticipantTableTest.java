@@ -9,11 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.ShufflingTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -49,7 +51,7 @@ public class ShufflingParticipantTableTest {
     void testGetParticipants() {
         List<ShufflingParticipant> participants = table.getParticipants(std.SHUFFLING_1_1_APL_VERIF_DELETED.getId());
 
-        assertEquals(List.of(std.PARTICIPANT_1_1_C_3_VERIFIC, std.PARTICIPANT_1_1_B_3_VERIFIC, std.PARTICIPANT_1_0_A_2_PROCESS), participants);
+        assertEquals(List.of(std.PARTICIPANT_1_C_3_VERIFIC, std.PARTICIPANT_1_B_3_VERIFIC, std.PARTICIPANT_1_A_2_PROCESS), participants);
     }
 
     @Test
@@ -62,7 +64,7 @@ public class ShufflingParticipantTableTest {
     void testGetByIndex() {
         ShufflingParticipant participant = table.getByIndex(std.SHUFFLING_1_1_APL_VERIF_DELETED.getId(), 2);
 
-        assertEquals(std.PARTICIPANT_1_0_A_2_PROCESS, participant);
+        assertEquals(std.PARTICIPANT_1_A_2_PROCESS, participant);
     }
 
     @Test
@@ -76,7 +78,7 @@ public class ShufflingParticipantTableTest {
     void testGetLastParticipant() {
         ShufflingParticipant last = table.getLast(std.SHUFFLING_2_2_ASSET_REGISTRATION.getId());
 
-        assertEquals(std.PARTICIPANT_2_1_C_1_REGISTR, last);
+        assertEquals(std.PARTICIPANT_2_C_1_REGISTR, last);
     }
 
     @Test
@@ -102,9 +104,27 @@ public class ShufflingParticipantTableTest {
 
     @Test
     void testGetByShufflingIdAndAccountId() {
-        ShufflingParticipant participant = table.get(std.PARTICIPANT_2_1_B_1_REGISTR.getShufflingId(), std.PARTICIPANT_2_1_B_1_REGISTR.getAccountId());
+        ShufflingParticipant participant = table.get(std.PARTICIPANT_2_B_1_REGISTR.getShufflingId(), std.PARTICIPANT_2_B_1_REGISTR.getAccountId());
 
-        assertEquals(std.PARTICIPANT_2_1_B_2_REGISTR, participant);
+        assertEquals(std.PARTICIPANT_2_B_2_REGISTR, participant);
+    }
+
+    @Test
+    void testInsert() {
+        DbUtils.inTransaction(extension, (con) -> table.insert(std.NEW_PARTICIPANT));
+
+        ShufflingParticipant savedParticipant = table.get(std.NEW_PARTICIPANT.getShufflingId(), std.NEW_PARTICIPANT.getAccountId());
+        assertEquals(std.NEW_PARTICIPANT, savedParticipant);
+
+        std.NEW_PARTICIPANT.setDbKey(new LinkKey(std.NEW_PARTICIPANT.getShufflingId(), std.NEW_PARTICIPANT.getAccountId()));
+        std.NEW_PARTICIPANT.setHeight(std.NEW_PARTICIPANT.getHeight() + 1);
+        std.NEW_PARTICIPANT.setDbId(std.NEW_PARTICIPANT.getDbId() + 1);
+
+        DbUtils.inTransaction(extension, (con) -> table.insert(std.NEW_PARTICIPANT));
+
+        savedParticipant = table.get(std.NEW_PARTICIPANT.getShufflingId(), std.NEW_PARTICIPANT.getAccountId());
+        assertEquals(std.NEW_PARTICIPANT, savedParticipant);
+
     }
 
 }

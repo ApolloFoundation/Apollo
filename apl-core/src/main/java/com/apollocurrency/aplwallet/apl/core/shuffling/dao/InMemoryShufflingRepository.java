@@ -5,16 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.shuffling.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.ChangeUtils;
 import com.apollocurrency.aplwallet.apl.core.db.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.shuffling.model.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.shuffling.service.Stage;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -26,7 +25,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     private static final String RECIPIENTS_PUBLIC_KEYS = "recipient_public_keys";
     private static final String BLOCKS_REMAINING       = "blocks_remaining";
     private static final String ASSIGNEE_ACCOUNT_ID    = "assignee_account_id";
-    private static final String REGISTRAN_COUNT        = "registrant_count";
+    private static final String REGISTRANT_COUNT = "registrant_count";
     private static final String STAGE                  ="stage";
     private static final Comparator<Shuffling> DEFAULT_COMPARATOR = Comparator.comparing(Shuffling::getId);
     private static final Comparator<Shuffling> FINISHED_LAST_BLOCKS_REMAINING_ASC_HEIGHT_DESC_COMPARATOR = (o1, o2) -> {
@@ -159,36 +158,44 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     }
 
     @Override
-    public Object analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
+    protected Object analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
         switch (columnName) {
             case BLOCKS_REMAINING:
-                return getChange(entity.getBlocksRemaining(), prevValue);
+                return ChangeUtils.getChange(entity.getBlocksRemaining(), prevValue);
             case STAGE:
-                return getChange(entity.getStage(), prevValue);
+                return ChangeUtils.getChange(entity.getStage(), prevValue);
             case ASSIGNEE_ACCOUNT_ID:
-                return getChange(entity.getAssigneeAccountId(), prevValue);
+                return ChangeUtils.getChange(entity.getAssigneeAccountId(), prevValue);
             case RECIPIENTS_PUBLIC_KEYS:
-                return getDoubleByteArrayChange(entity.getRecipientPublicKeys(), prevValue);
-            case REGISTRAN_COUNT:
-                return getChange(entity.getRegistrantCount(), prevValue);
+                return ChangeUtils.getDoubleByteArrayChange(entity.getRecipientPublicKeys(), prevValue);
+            case REGISTRANT_COUNT:
+                return ChangeUtils.getChange(entity.getRegistrantCount(), prevValue);
             default:
                 throw new IllegalArgumentException("Unable to find change analyzer for column '" + columnName + "'");
         }
     }
 
-    private Object getChange(Object value, Object prevValue, BiFunction<Object, Object,Boolean> equalFunction) {
-        return prevValue == null ? value : value == null || equalFunction.apply(value, prevValue) ? null : value;
-    }
-    private Object getChange(Object value, Object prevValue) {
-        return getChange(value, prevValue, (v1, v2) -> value.equals(prevValue));
-    }
-
-    private Object getDoubleByteArrayChange(Object value, Object prevValue) {
-        return getChange(value, prevValue, (arr1, arr2) -> Arrays.deepEquals((byte[][]) arr1, (byte[][]) arr2));
-    }
 
     @Override
-    public void setColumn(String columnName, Object value, Shuffling entity) {
-
+    protected void setColumn(String columnName, Object value, Shuffling entity) {
+        switch (columnName) {
+            case BLOCKS_REMAINING:
+                entity.setBlocksRemaining(((short) value));
+                break;
+            case STAGE:
+                entity.setStage((Stage) value);
+                break;
+            case ASSIGNEE_ACCOUNT_ID:
+                entity.setAssigneeAccountId((long) value);
+                break;
+            case RECIPIENTS_PUBLIC_KEYS:
+                entity.setRecipientPublicKeys((byte[][]) value);
+                break;
+            case REGISTRANT_COUNT:
+                entity.setRegistrantCount((byte)value);
+                break;
+            default:
+                throw new IllegalArgumentException("Unable to set column '" + columnName + "'");
+        }
     }
 }

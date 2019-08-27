@@ -42,11 +42,11 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     private long counter = 0;
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private KeyFactory<T> keyFactory;
-    private List<String> chageableColumns;
+    private List<String> changeableColumns;
 
     public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory, List<String> changeableColumns) {
         this.keyFactory = Objects.requireNonNull(keyFactory);
-        this.chageableColumns = Objects.requireNonNull(changeableColumns);
+        this.changeableColumns = Objects.requireNonNull(changeableColumns);
     }
 
     protected KeyFactory<T> getKeyFactory() {
@@ -86,11 +86,11 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 DbKey dbKey = entry.getKey();
                 List<T> historicalEntities = entry.getValue();
                 T lastValue = last(historicalEntities);
-                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), s -> new ArrayList<>()));
+                Map<String, List<Change>> changes = changeableColumns.stream().collect(toMap(Function.identity(), s -> new ArrayList<>()));
                 List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
                 for (T historicalEntity : historicalEntities) {
                     dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
-                    chageableColumns.forEach(name -> {
+                    changeableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
                         Object columnChange = analyzeChanges(name, getPrevValue(columnChanges), historicalEntity);
                         if (columnChange != null) {
@@ -123,10 +123,15 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
      * @param entity new entity, which may contain change for specified column
      * @return new value for column or null, when column value was not changed
      */
-    public abstract Object analyzeChanges(String columnName, Object prevValue, T entity);
+    protected abstract Object analyzeChanges(String columnName, Object prevValue, T entity);
 
-    // set value for column with such name for entity
-    public abstract void setColumn(String columnName, Object value, T entity);
+    /**
+     * Set value for column with such name for given entity
+     * @param columnName name of the column to set
+     * @param value value of the column to set, can be null
+     * @param entity entity which should be updated using given value and column name
+     */
+    protected abstract void setColumn(String columnName, Object value, T entity);
 
     public void clear() {
         inWriteLock(() -> allEntities.clear());
@@ -139,8 +144,8 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
             if (existingEntity == null) { // save new
                 entity.setDbId(++counter);
-                Map<String, List<Change>> changes = chageableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
-                chageableColumns.forEach(c -> {
+                Map<String, List<Change>> changes = changeableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
+                changeableColumns.forEach(c -> {
                     Object change = analyzeChanges(c, null, entity);
                     changes.get(c).add(new Change(entity.getHeight(), change));
                 });
@@ -150,7 +155,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             } else {
                 if (existingEntity.getEntity().getHeight() == entity.getHeight()) { // do merge
                     Map<String, List<Change>> changes = existingEntity.getChanges();
-                    chageableColumns.forEach(c -> {
+                    changeableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
                         Change lastChange = last(columnChanges);
                         Object change = analyzeChanges(c, lastChange.getValue(), entity);
@@ -166,7 +171,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 } else { // do insert new value
                     entity.setDbId(++counter);
                     Map<String, List<Change>> changes = existingEntity.getChanges();
-                    chageableColumns.forEach(c -> {
+                    changeableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
                         Object prevValue = getPrevValue(columnChanges);
                         Object change = analyzeChanges(c, prevValue, entity);

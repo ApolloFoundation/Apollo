@@ -33,7 +33,7 @@ public class ShufflingData extends DerivedEntity {
         return shufflingId == that.shufflingId &&
                 accountId == that.accountId &&
                 transactionTimestamp == that.transactionTimestamp &&
-                Arrays.equals(data, that.data);
+                Arrays.deepEquals(data, that.data);
     }
 
     @Override
