@@ -596,7 +596,7 @@ public class BlockchainImpl implements Blockchain {
                 limit -= foundTxs.size();
             }
         }
-        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", transactions.size(), initialLimit,
+        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
                 transactions.size() < initialLimit ? "Wrong Number" : "OK !");
         return transactions;
     }
