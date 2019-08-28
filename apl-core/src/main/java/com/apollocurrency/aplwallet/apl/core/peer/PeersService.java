@@ -20,15 +20,10 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -58,8 +53,8 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -326,18 +321,6 @@ public class PeersService {
                         .task(new GetMorePeersThread(timeService,this))
                         .build(), TaskOrder.TASK);
             }
-        }
-    }
-
-    @Singleton
-    static class AccountEventHandler {
-        public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account){
-            LOG.trace("Catch event {} accaount={}" ,AccountEventType.BALANCE, account);
-            connectablePeers.values().forEach(peer -> {
-                if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                    listeners.notify(peer, Event.WEIGHT);
-                }
-            });
         }
     }
 
@@ -608,7 +591,7 @@ public class PeersService {
         //check not-null announced address and do not create peer
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);        
-        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService,  peerHttpServer.getPeerServlet(), this);
+        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService,  peerHttpServer.getPeerServlet(), accountService,this);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{
