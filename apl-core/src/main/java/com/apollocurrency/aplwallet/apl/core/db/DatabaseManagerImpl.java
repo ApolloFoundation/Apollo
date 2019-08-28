@@ -48,6 +48,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private PropertiesHolder propertiesHolder;
     private TransactionalDataSource currentTransactionalDataSource; // main/shard database
 
+    /**
+     * Shard data sources cache loader
+     */
     private CacheLoader<Long, TransactionalDataSource> loader = new CacheLoader<>() {
         public TransactionalDataSource load(Long shardId) throws CacheLoader.InvalidCacheLoadException {
             log.debug("Put DS shardId = '{}' into cache...", shardId);
@@ -59,6 +62,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
     };
 
+    /**
+     * Listener to close + remove evicted shard data source
+     */
     private RemovalListener<Long, TransactionalDataSource> listener = dataSource -> {
         if (dataSource.wasEvicted()) {
             String cause = dataSource.getCause().name();
@@ -67,9 +73,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
     };
 
+    /**
+     * Cached shard data sources with timed eviction policy
+     */
     private LoadingCache<Long, TransactionalDataSource> connectedShardDataSourceMap = CacheBuilder.newBuilder()
-            .maximumSize(6)
-            .expireAfterAccess(15, TimeUnit.MINUTES)
+            .maximumSize(MAX_CACHED_SHARDS_NUMBER) // 6 by default
+            .expireAfterAccess(SHARD_EVICTION_TIME, TimeUnit.MINUTES) // 15 minutes
             .weakKeys()
             .removalListener(listener)
             .build(loader);
@@ -214,8 +223,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public synchronized List<TransactionalDataSource> getFullDataSources(Long numberOfShards) {
+    public synchronized List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards) {
         Set<Long> allFullShards = findAllFullShardId();
         List<TransactionalDataSource> dataSources;
         if (numberOfShards != null) {
@@ -230,8 +243,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return dataSources;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Iterator<TransactionalDataSource> getFullDataSourcesIterator() {
+    public Iterator<TransactionalDataSource> getAllFullDataSourcesIterator() {
         Set<Long> allFullShards = findAllFullShardId();
         Iterator<TransactionalDataSource> dataSourcesIterator = allFullShards.stream().sorted(
                     Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
@@ -239,6 +255,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return dataSourcesIterator;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized long closeAllShardDataSources() {
         log.debug("Prepare closing [{}] shard data source(s)", connectedShardDataSourceMap.size());
@@ -335,8 +354,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     }
 
     /**
-     * Shutdown main db and secondary shards.
-     * After that the db can be reinitialized/opened again
+     * {@inheritDoc}
      */
     @Override
     public synchronized void shutdown() {

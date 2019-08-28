@@ -19,6 +19,16 @@ public interface ShardManagement {
 
     long TEMP_DB_IDENTITY = -1L;
 
+    /**
+     * Number of shard data sources totally keeped in cache
+     */
+    long MAX_CACHED_SHARDS_NUMBER = 6;
+
+    /**
+     * Total time after latest cache entry access before it gets evicted from cache.
+     */
+    long SHARD_EVICTION_TIME = 15;
+
 
     /**
      * Find and return all available shard Ids from main db 'SHARD' table
@@ -91,12 +101,16 @@ public interface ShardManagement {
 
 
     /**
-     * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
-     * @return list of full shard datasources
+     * Return list of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard data sources
      */
-    List<TransactionalDataSource> getFullDataSources(Long numberOfShards);
+    List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards);
 
-    Iterator<TransactionalDataSource> getFullDataSourcesIterator();
+    /**
+     * Return Iterator of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard data sources
+     */
+    Iterator<TransactionalDataSource> getAllFullDataSourcesIterator();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
