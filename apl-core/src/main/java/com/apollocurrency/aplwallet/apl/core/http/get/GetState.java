@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import org.json.simple.JSONObject;
@@ -96,14 +95,14 @@ public final class GetState extends AbstractAPIRequestHandler {
             response.put("numberOfActiveShufflings", Shuffling.getActiveCount());
             response.put("numberOfPhasingOnlyAccounts", PhasingOnly.getCount());
         }
-        response.put("numberOfPeers", Peers.getAllPeers().size());
-        response.put("numberOfActivePeers", Peers.getActivePeers().size());
+        response.put("numberOfPeers", lookupPeersService().getAllPeers().size());
+        response.put("numberOfActivePeers", lookupPeersService().getActivePeers().size());
         response.put("numberOfUnlockedAccounts", Generator.getAllGenerators().size());
         response.put("availableProcessors", Runtime.getRuntime().availableProcessors());
         response.put("maxMemory", Runtime.getRuntime().maxMemory());
         response.put("totalMemory", Runtime.getRuntime().totalMemory());
         response.put("freeMemory", Runtime.getRuntime().freeMemory());
-        response.put("peerPort", Peers.myPort);
+        response.put("peerPort", lookupPeersService().myPort);
         response.put("isOffline", propertiesHolder.isOffline());
         response.put("needsAdminPassword", !apw.disableAdminPassword);
         response.put("customLoginWarning", propertiesHolder.customLoginWarning());

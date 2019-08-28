@@ -22,12 +22,10 @@ package com.apollocurrency.aplwallet.apldesktop;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import org.slf4j.Logger;
@@ -220,7 +218,8 @@ public class DesktopSystemTray {
 */
         addEmptyRow(statusPanel);
         addLabelRow(statusPanel, "Environment");
-        addDataRow(statusPanel, "Number of peers", String.valueOf(Peers.getAllPeers().size()));
+//TODO: inject Peers        
+//        addDataRow(statusPanel, "Number of peers", String.valueOf(peers.getAllPeers().size()));
         addDataRow(statusPanel, "Available processors", String.valueOf(Runtime.getRuntime().availableProcessors()));
         addDataRow(statusPanel, "Max memory", humanReadableByteCount(Runtime.getRuntime().maxMemory()));
         addDataRow(statusPanel, "Total memory", humanReadableByteCount(Runtime.getRuntime().totalMemory()));

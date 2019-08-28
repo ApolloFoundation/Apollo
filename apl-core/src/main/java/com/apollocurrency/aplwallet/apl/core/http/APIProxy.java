@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
@@ -58,10 +58,11 @@ public class APIProxy {
     }
     
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
     private static TimeService timeService = CDI.current().select(TimeService.class).get();
     private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -107,9 +108,9 @@ public class APIProxy {
         List<String> currentPeersHosts = getInstance().peersHosts;
         if (currentPeersHosts != null) {
             for (String host : currentPeersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null) {
-                    Peers.connectPeer(peer);
+                    peers.connectPeer(peer);
                 }
             }
         }
@@ -134,20 +135,20 @@ public class APIProxy {
 
     Peer getServingPeer(String requestType) {
         if (forcedPeerHost != null) {
-            return Peers.getPeer(forcedPeerHost);
+            return peers.getPeer(forcedPeerHost);
         }
 
         APIEnum requestAPI = APIEnum.fromName(requestType);
         if (!peersHosts.isEmpty()) {
             for (String host : peersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null && peer.isApiConnectable() && !peer.getDisabledAPIs().contains(requestAPI)) {
                     return peer;
                 }
             }
         }
 
-        List<Peer> connectablePeers = Peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
+        List<Peer> connectablePeers = peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
         if (connectablePeers.isEmpty()) {
             return null;
         }

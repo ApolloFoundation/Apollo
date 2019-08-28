@@ -3,24 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
@@ -36,14 +18,31 @@ import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecision
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.PreDestroy;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class performs complete file downloading from peers
@@ -82,14 +81,18 @@ public class FileDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
+    private PeersService peers;
+    
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-                          AplAppStatus aplAppStatus) {
+                          AplAppStatus aplAppStatus,
+                          PeersService peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        this.peers=peers;
     }
     
     public void setFileId(String fileID){
@@ -274,9 +277,9 @@ public class FileDownloader {
         return status;
     }
 
-    public static Set<Peer> getAllAvailablePeers() {
+    public Set<Peer> getAllAvailablePeers() {
         Set<Peer> res = new HashSet<>();
-        Collection<? extends Peer> knownPeers = Peers.getAllConnectablePeers();
+        Collection<? extends Peer> knownPeers = peers.getAllConnectablePeers();
         res.addAll(knownPeers);
         return res;
     }

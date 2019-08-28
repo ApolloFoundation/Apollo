@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Vetoed;
@@ -59,6 +60,12 @@ public abstract class AbstractAPIRequestHandler {
     private static AccountInfoService accountInfoService;
     private static AccountLeaseService accountLeaseService;
     private static AccountPropertyService accountPropertyService;
+    private PeersService peers;
+
+    protected PeersService lookupPeersService(){
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
+        return peers;
+    }
 
     protected AccountPropertyService lookupAccountPropertyService(){
         if (accountPropertyService == null){

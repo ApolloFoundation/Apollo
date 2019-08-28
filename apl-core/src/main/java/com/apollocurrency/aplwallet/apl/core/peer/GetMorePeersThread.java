@@ -25,67 +25,69 @@ import java.util.UUID;
  */
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
-    private TimeService timeService;
-     
-    public GetMorePeersThread(TimeService timeService) {
-        this.timeService = timeService;
-    }
-       
+    private final TimeService timeService;
+    private final PeersService peers;
     private final JSONStreamAware getPeersRequest;
-    {
+      
+    public GetMorePeersThread(TimeService timeService, PeersService peers) {
+        this.timeService = timeService;
+        this.peers = peers;
         JSONObject request = new JSONObject();
         request.put("requestType", "getPeers");
-        request.put("chainId", Peers.blockchainConfig.getChain().getChainId());
-        getPeersRequest = JSON.prepareRequest(request);
+        request.put("chainId", peers.blockchainConfig.getChain().getChainId());
+        getPeersRequest = JSON.prepareRequest(request);        
     }
+       
+
+
     private volatile boolean updatedPeer;
 
     @Override
     public void run() {
         try {
             try {
-                if (Peers.hasTooManyKnownPeers()) {
+                if (peers.hasTooManyKnownPeers()) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
+                Peer peer = peers.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
-                JSONObject response = peer.send(getPeersRequest, Peers.blockchainConfig.getChain().getChainId());
+                JSONObject response = peer.send(getPeersRequest, peers.blockchainConfig.getChain().getChainId());
                 if (response == null) {
                     return;
                 }
-                JSONArray peers = (JSONArray) response.get("peers");
+                JSONArray peersArray = (JSONArray) response.get("peers");
                 Set<String> addedAddresses = new HashSet<>();
-                if (peers != null) {
+                if (peersArray != null) {
                     JSONArray services = (JSONArray) response.get("services");
-                    boolean setServices = services != null && services.size() == peers.size();
+                    boolean setServices = services != null && services.size() == peersArray.size();
                     int now = timeService.getEpochTime();
-                    for (int i = 0; i < peers.size(); i++) {
-                        String announcedAddress = (String) peers.get(i);
-                        PeerImpl newPeer = Peers.findOrCreatePeer(null,announcedAddress, true);
+                    for (int i = 0; i < peersArray.size(); i++) {
+                        String announcedAddress = (String) peersArray.get(i);
+                        PeerImpl newPeer = peers.findOrCreatePeer(null,announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);
                                 updatedPeer = true;
                             }
-                            if (Peers.addPeer(newPeer) && setServices) {
+                            if (peers.addPeer(newPeer) && setServices) {
                                 newPeer.setServices(Long.parseUnsignedLong((String) services.get(i)));
                             }
                             addedAddresses.add(announcedAddress);
-                            if (Peers.hasTooManyKnownPeers()) {
+                            if (peers.hasTooManyKnownPeers()) {
                                 break;
                             }
                         }
                     }
-                    if (Peers.savePeers && updatedPeer) {
+                    if (PeersService.savePeers && updatedPeer) {
                         updateSavedPeers();
                         updatedPeer = false;
                     }
                 }
                 JSONArray myPeers = new JSONArray();
                 JSONArray myServices = new JSONArray();
-                Peers.getAllConnectablePeers().forEach((myPeer) -> {
+                peers.getAllConnectablePeers().forEach((myPeer) -> {
                     if (!myPeer.isBlacklisted() && myPeer.getAnnouncedAddress() != null && myPeer.getState() == PeerState.CONNECTED && myPeer.shareAddress() && !addedAddresses.contains(myPeer.getAnnouncedAddress()) && !myPeer.getAnnouncedAddress().equals(peer.getAnnouncedAddress())) {
                         myPeers.add(myPeer.getAnnouncedAddress());
                         myServices.add(Long.toUnsignedString(((PeerImpl) myPeer).getServices()));
@@ -96,8 +98,8 @@ class GetMorePeersThread implements Runnable {
                     request.put("requestType", "addPeers");
                     request.put("peers", myPeers);
                     request.put("services", myServices); // Separate array for backwards compatibility
-                    request.put("chainId", Peers.blockchainConfig.getChain().getChainId());
-                    peer.send(JSON.prepareRequest(request), Peers.blockchainConfig.getChain().getChainId());
+                    request.put("chainId", peers.blockchainConfig.getChain().getChainId());
+                    peer.send(JSON.prepareRequest(request), peers.blockchainConfig.getChain().getChainId());
                 }
             } catch (Exception e) {
                 LOG.debug("Error requesting peers from a peer", e);
@@ -122,8 +124,8 @@ class GetMorePeersThread implements Runnable {
         // the same announced address)
         //
         Map<String, PeerDb.Entry> currentPeers = new HashMap<>();
-        UUID chainId = Peers.blockchainConfig.getChain().getChainId();
-        Peers.getPeers(
+        UUID chainId = peers.blockchainConfig.getChain().getChainId();
+        peers.getPeers(
                 peer->peer.getAnnouncedAddress()!= null
              && !peer.isBlacklisted() 
              && chainId.equals(peer.getChainId()) 

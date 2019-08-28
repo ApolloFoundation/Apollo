@@ -93,7 +93,7 @@ public interface ShardManagement {
      * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
      * @return list of full shard datasources
      */
-    List<TransactionalDataSource> getFullDatasources();
+    List<TransactionalDataSource> getFullDataSources();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource

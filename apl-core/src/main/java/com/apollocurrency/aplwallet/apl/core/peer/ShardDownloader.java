@@ -59,13 +59,15 @@ public class ShardDownloader {
 
     private final Instance<FileDownloader> fileDownloaders;
     private final PropertiesHolder propertiesHolder;
+    private final PeersService peers;
     
     @Inject
     public ShardDownloader(Instance<FileDownloader> fileDownloaders,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder) {
+            PropertiesHolder propertiesHolder,
+            PeersService peers) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
@@ -76,6 +78,7 @@ public class ShardDownloader {
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.fileDownloaders=fileDownloaders;
         this.propertiesHolder=propertiesHolder;
+        this.peers=peers;
     }
 
     private boolean processPeerShardInfo(Peer p) {
@@ -114,8 +117,9 @@ public class ShardDownloader {
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
-        int counterTotal = 0;
-        Set<Peer> knownPeers = FileDownloader.getAllAvailablePeers();
+        int counterTotal = 0;        
+        FileDownloader fileDownloader = fileDownloaders.get();        
+        Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
@@ -138,7 +142,7 @@ public class ShardDownloader {
             //avoid modification while iterating
             for (String pa : additionalPeersCopy) {
 
-                Peer p = Peers.findOrCreatePeer(null, pa, true);
+                Peer p = peers.findOrCreatePeer(null, pa, true);
                 if(p!=null) {
                     if (processPeerShardInfo(p)) {
                         counterWinShardInfo++;
