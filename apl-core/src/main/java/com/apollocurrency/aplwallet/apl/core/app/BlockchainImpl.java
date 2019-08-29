@@ -580,6 +580,7 @@ public class BlockchainImpl implements Blockchain {
                             accountId, numberOfConfirmations, type, subtype,
                             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                             includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                    log.debug("MAIN DS, count from={}", from);
                 } else {
                     from = 0;
                 }
@@ -589,8 +590,10 @@ public class BlockchainImpl implements Blockchain {
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 transactions.addAll(foundTxs);
-                noTransactions = foundTxs.size() == 0;
-                if (foundTxs.size() == limit) {
+                log.debug("DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                noTransactions = foundTxs.size() == 0 && transactions.size() == 0;
+                if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
+                    log.debug("stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                     break;
                 }
                 limit -= foundTxs.size();

@@ -48,7 +48,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
     private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
@@ -383,6 +385,7 @@ public class TransactionDaoImpl implements TransactionDao {
             return CollectionUtil.toList(getTransactions(con, pstmt));
         }
         catch (SQLException e) {
+            log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
