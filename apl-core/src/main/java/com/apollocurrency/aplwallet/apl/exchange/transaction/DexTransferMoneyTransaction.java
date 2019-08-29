@@ -7,15 +7,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
@@ -45,11 +46,14 @@ public class DexTransferMoneyTransaction extends DEX {
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Transaction amount is not valid.");
+        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        DexOffer dexOffer = dexService.getOfferByTransactionId(attachment.getOrderId());
+        if (dexOffer == null) {
+            throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
-
-        //TODO add additional validation.
+        if (dexOffer.getStatus() != OfferStatus.WAITING_APPROVAL) {
+            throw new AplException.NotCurrentlyValidException("Wrong state of the offer, expected - " + OfferStatus.WAITING_APPROVAL + " , got - " + dexOffer.getStatus());
+        }
     }
 
     @Override

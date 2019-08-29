@@ -2,27 +2,28 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKey;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMapper;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.google.common.collect.Table;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.inject.Inject;
 
 /**
  * Use DexContractDao for not transactional operations. ( f.e. search)
  */
-@Deprecated
-public class DexContractTable   extends EntityDbTable<ExchangeContract> {
-    static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("db_id") {
+public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {
+
+    static final LinkKeyFactory<ExchangeContract> KEY_FACTORY = new LinkKeyFactory<>("offer_id", "counter_offer_id") {
         @Override
         public DbKey newKey(ExchangeContract offer) {
-            return new LongKey(offer.getOrderId());
+            return new LinkKey(offer.getOrderId(), offer.getCounterOrderId());
         }
     };
 
@@ -32,7 +33,7 @@ public class DexContractTable   extends EntityDbTable<ExchangeContract> {
 
     @Inject
     public DexContractTable(ExchangeContractMapper mapper, Blockchain blockchain) {
-        super(TABLE_NAME, KEY_FACTORY);
+        super(TABLE_NAME, KEY_FACTORY, false);
         this.mapper = mapper;
         this.blockchain = blockchain;
     }

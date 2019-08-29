@@ -27,9 +27,7 @@ import java.util.Objects;
 @Singleton
 public class DexOfferTable  extends EntityDbTable<DexOffer> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DexOfferTable.class);
-
-    static final LongKeyFactory<DexOffer> KEY_FACTORY = new LongKeyFactory<>("transaction_id") {
+    private static final LongKeyFactory<DexOffer> KEY_FACTORY = new LongKeyFactory<>("transaction_id") {
         @Override
         public DbKey newKey(DexOffer offer) {
             return new LongKey(offer.getTransactionId());

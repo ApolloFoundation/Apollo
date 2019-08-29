@@ -62,14 +62,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -287,7 +287,7 @@ public class DexService {
     public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, String toAddress, byte [] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
         String transactionStr = null;
 
-        if(offer.getType().isSell()) {
+        if(offer.getType().isSell()) { // just send apl  transaction with phasing (secret)
 
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
             createTransactionRequest.setAmountATM(offer.getOfferAmount());

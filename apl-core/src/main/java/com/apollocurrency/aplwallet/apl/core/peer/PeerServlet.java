@@ -58,18 +58,18 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.ExecutorService;
+import javax.annotation.PreDestroy;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public final class PeerServlet extends WebSocketServlet {
     private static final Logger LOG = LoggerFactory.getLogger(PeerServlet.class);
