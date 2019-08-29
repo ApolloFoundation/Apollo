@@ -142,7 +142,7 @@ class DatabaseManagerTest {
 
     @Test
     void testFindFullDatasources() {
-        Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
+        Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(2L);
         assertEquals(2, fullDatasources.size());
         Iterator<TransactionalDataSource> iterator = fullDatasources.iterator();
         assertTrue(iterator.next().getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
