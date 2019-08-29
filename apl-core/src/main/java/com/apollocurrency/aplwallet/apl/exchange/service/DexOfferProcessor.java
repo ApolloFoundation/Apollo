@@ -1,5 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -19,12 +22,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
-
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 
 @Slf4j
 @Singleton
@@ -72,14 +72,8 @@ public class DexOfferProcessor {
                 DexOffer offer = dexService.getOfferByTransactionId(incomeContract.getOrderId());
                 DexOffer counterOffer = dexService.getOfferByTransactionId(incomeContract.getCounterOrderId());
 
-                ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder()
-                        .sender(accountId)
-                        .offerId(counterOffer.getTransactionId())
-                        .recipient(counterOffer.getAccountId())
-                        .build());
-
                 if (incomeContract.getCounterTransferTxId() != null) {
-                    log.debug("DexContract has been already created. ExchangeContractId:{}", exchangeContract.getId());
+                    log.debug("DexContract has been already created. ExchangeContractId:{}", incomeContract.getId());
                     continue;
                 }
 
@@ -183,7 +177,6 @@ public class DexOfferProcessor {
                 log.debug("DexOfferProcessor Step-2(part-1). Approved money transfer. accountId: {}", accountId);
             }catch (Exception ex){
                 log.error(ex.getMessage(), ex);
-                continue;
             }
         }
 
@@ -232,7 +225,6 @@ public class DexOfferProcessor {
                 log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                continue;
             }
         }
 

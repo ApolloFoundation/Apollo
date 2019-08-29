@@ -14,9 +14,9 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 
 public class DexContractTransaction extends DEX {
 
@@ -88,7 +88,6 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOffer.getStatus().isOpen()) {

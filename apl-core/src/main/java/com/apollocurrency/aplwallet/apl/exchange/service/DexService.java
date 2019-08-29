@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -399,6 +400,9 @@ public class DexService {
         JSONStreamAware response = new JSONObject();
 
         if (counterOffer != null) {
+            if (counterOffer.getAccountId().equals(offer.getAccountId())) {
+                throw new ParameterException(JSONResponses.DEX_SELF_ORDER_MATCHING_DENIED);
+            }
             // 1. Create offer.
             offer.setStatus(OfferStatus.WAITING_APPROVAL);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
@@ -448,10 +452,9 @@ public class DexService {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
         } else {
-            PhasingPollResult phasingPoll = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
-            return phasingPoll != null && phasingPollService.getApprovedTx(phasingPoll.getId()) != null;
+            PhasingPollResult phasingResult = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
+            return phasingResult != null && phasingPollService.getApprovedTx(phasingResult.getId()) != null;
         }
-
     }
 
     public byte[] getSecretIfTxApproved(byte[] secretHash, String transferTxId) throws AplException.ExecutiveProcessException {
@@ -471,7 +474,7 @@ public class DexService {
             if(phasingApprovalResult == null){
                 return null;
             }
-            Long approvedTx = phasingApprovalResult.getApprovedTx();
+            long approvedTx = phasingApprovalResult.getApprovedTx();
 
             Transaction transaction = blockchain.getTransaction(approvedTx);
             MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();

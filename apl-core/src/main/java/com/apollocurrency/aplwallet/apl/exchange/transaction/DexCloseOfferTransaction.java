@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -18,11 +20,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import javax.enterprise.inject.spi.CDI;
 
 
 public class DexCloseOfferTransaction extends DEX {
@@ -56,11 +56,11 @@ public class DexCloseOfferTransaction extends DEX {
         DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
 
         if (offer.getAccountId() != transaction.getSenderId() ) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("orderId", String.format("You can close only your orders."))));
+            throw new AplException.NotValidException(JSON.toString(incorrect("orderId", "You can close only your orders.")));
         }
 
-        if (!(offer.getStatus().isWaitingForApproval() || offer.getStatus().isClosed())) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", String.format("You can close order only in the status WaitingForApproval, but: " + offer.getStatus().name()))));
+        if (!offer.getStatus().isWaitingForApproval()) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order only in the status WaitingForApproval, but: " + offer.getStatus().name())));
         }
     }
 
@@ -86,7 +86,7 @@ public class DexCloseOfferTransaction extends DEX {
 
         DexTradeEntry dexTradeEntry = DexTradeEntry.builder()
                 .transactionID(transaction.getId())
-                .senderOfferAmount(exchangeContract.getSender())
+                .senderOfferID(exchangeContract.getSender())
                 .receiverOfferID(exchangeContract.getRecipient())
                 .senderOfferType((byte) offer.getType().ordinal())
                 .senderOfferCurrency((byte) offer.getOfferCurrency().ordinal())

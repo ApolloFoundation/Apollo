@@ -51,8 +51,8 @@ public class DexTransferMoneyTransaction extends DEX {
         if (dexOffer == null) {
             throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
-        if (dexOffer.getStatus() != OfferStatus.WAITING_APPROVAL) {
-            throw new AplException.NotCurrentlyValidException("Wrong state of the offer, expected - " + OfferStatus.WAITING_APPROVAL + " , got - " + dexOffer.getStatus());
+        if (dexOffer.getStatus() != OfferStatus.WAITING_APPROVAL && dexOffer.getStatus() != OfferStatus.OPEN) {
+            throw new AplException.NotCurrentlyValidException("Wrong state of the counter offer, expected - " + OfferStatus.WAITING_APPROVAL + " or " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
         }
     }
 
