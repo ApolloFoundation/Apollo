@@ -561,13 +561,16 @@ public class BlockchainImpl implements Blockchain {
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
                 timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
+        log.debug("getTx 1. - from={}, to={}", from, to);
         int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
+        log.debug("getTx 2. - limit={}", limit);
         List<Transaction> transactions = transactionDao.getTransactions(
                 databaseManager.getDataSource(),
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         long initialLimit = limit;
+        log.debug("getTx 3. found Tx in main ={}, initLimit={}", transactions.size(), initialLimit);
         if (transactions.size() < limit) {
             boolean noTransactions = transactions.size() == 0;
             limit -= transactions.size();
@@ -580,20 +583,20 @@ public class BlockchainImpl implements Blockchain {
                             accountId, numberOfConfirmations, type, subtype,
                             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                             includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                    log.debug("MAIN DS, count from={}", from);
                 } else {
                     from = 0;
                 }
+                log.debug("getTx 4. MAIN DS, count from={}, to={}", from, limit - 1);
                 List<Transaction> foundTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 transactions.addAll(foundTxs);
-                log.debug("DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                log.debug("getTx 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                 noTransactions = foundTxs.size() == 0 && transactions.size() == 0;
                 if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
-                    log.debug("stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                    log.debug("getTx 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                     break;
                 }
                 limit -= foundTxs.size();
