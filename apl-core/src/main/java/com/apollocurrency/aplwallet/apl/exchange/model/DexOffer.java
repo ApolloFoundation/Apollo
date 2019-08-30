@@ -71,7 +71,7 @@ public class DexOffer{
         dexOfferDto.type = this.getType().ordinal();
         dexOfferDto.offerCurrency = this.getOfferCurrency().ordinal();
         //TODO make changes on UI. Send Apl as apl.
-        dexOfferDto.offerAmount = EthUtil.aplToGwei(this.getOfferAmount());
+        dexOfferDto.offerAmount = EthUtil.atmToGwei(this.getOfferAmount());
         dexOfferDto.pairCurrency = this.getPairCurrency().ordinal();
         dexOfferDto.finishTime = this.getFinishTime();
         dexOfferDto.status = this.getStatus().ordinal();

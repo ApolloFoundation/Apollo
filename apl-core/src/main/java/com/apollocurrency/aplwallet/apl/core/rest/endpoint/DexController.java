@@ -4,6 +4,10 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -51,6 +55,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -66,16 +76,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
@@ -160,17 +160,17 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response createOffer(@Parameter(description = "Type of the offer. (BUY/SELL) 0/1", required = true) @FormParam("offerType") Byte offerType,
+    public Response createOffer(@Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
-                                @Parameter(description = "Offer amount in Gwei (1 Gwei = 0.000000001)", required = true) @FormParam("offerAmount") Long offerAmount,
-                                @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
-                                @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001)", required = true) @FormParam("pairRate") Long pairRate,
+                                @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
+                                        "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") Long offerAmount,
+                                @Parameter(description = "Paired currency. (ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
+                                @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001). Represent real pair rate, multiplied by 10^9", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
 
         log.debug("createOffer: offerType: {}, walletAddress: {}, offerAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime );
-
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
@@ -194,14 +194,18 @@ public class DexController {
             OfferType type = OfferType.getType(offerType);
             DexOffer offer;
             try {
+                DexCurrencies pairedCurrency = DexCurrencies.getType(pairCurrency);
+                if (pairedCurrency == DexCurrencies.APL) {
+                    return Response.ok(incorrect("pairedCurrency", "APL is not allowed to be a paired currency")).build();
+                }
                 offer = DexOffer.builder()
                         .accountId(account.getId())
                         .type(type)
-                        .offerAmount(EthUtil.gweiToApl(offerAmount))
+                        .offerAmount(EthUtil.gweiToAtm(offerAmount))
                         .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
                         .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
                         .offerCurrency(DexCurrencies.APL)
-                        .pairCurrency(DexCurrencies.getType(pairCurrency))
+                        .pairCurrency(pairedCurrency)
                         .pairRate(EthUtil.gweiToEth(pairRate))
                         .status(OfferStatus.OPEN)
                         .finishTime(currentTime + amountOfTime)
@@ -244,7 +248,7 @@ public class DexController {
                 }
             } else if(offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()){
                 BigInteger amount = ethereumWalletService.getBalanceWei(offer.getFromAddress(), offer.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
+                BigDecimal haveToPay = EthUtil.atmToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
 
                 if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();

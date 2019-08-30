@@ -243,7 +243,7 @@ public class DexService {
 
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
 
-        BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
+        BigDecimal haveToPay = EthUtil.atmToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
         txHash = dexSmartContractService.deposit(passphrase, offer.getTransactionId(), offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
 
 
@@ -291,7 +291,8 @@ public class DexService {
         if(offer.getType().isSell()) { // just send apl  transaction with phasing (secret)
 
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
-            createTransactionRequest.setAmountATM(offer.getOfferAmount());
+            // set amount into attachment to apply balance changes on attachment level
+            //            createTransactionRequest.setAmountATM(offer.getOfferAmount());
             createTransactionRequest.setDeadlineValue("1440");
 
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
@@ -300,7 +301,7 @@ public class DexService {
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
             //contractStatus.isStep1 doesn't have frozen money.
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), contractStatus.isStep2()));
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), offer.getOfferAmount(), contractStatus.isStep2()));
 
             try {
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
@@ -310,7 +311,7 @@ public class DexService {
                 throw new AplException.ExecutiveProcessException(e.getMessage());
             }
         } else if(offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()){
-            BigDecimal haveToPay = EthUtil.aplToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
+            BigDecimal haveToPay = EthUtil.atmToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
             String token = null;
 
             if(offer.getPairCurrency().isPax()){
@@ -419,14 +420,14 @@ public class DexService {
             // 2. Send money to the counter offer.
             CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, counterOffer.getAccountId(), offer.getOfferAmount(), null);
-            String transactionId = transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
+            String transferTxId = transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
 
-            if(StringUtils.isBlank(transactionId)){
+            if(StringUtils.isBlank(transferTxId)){
                 throw new AplException.ExecutiveProcessException("Money wasn't send to the counter offer.");
             }
 
             // 3. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transactionId, null, encryptedSecretX, ExchangeContractStatus.STEP_1);
+            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transferTxId, null, encryptedSecretX, ExchangeContractStatus.STEP_1);
             response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter

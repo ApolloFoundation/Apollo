@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFr
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -46,13 +45,18 @@ public class DexTransferMoneyTransaction extends DEX {
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
         DexOffer dexOffer = dexService.getOfferByTransactionId(attachment.getOrderId());
         if (dexOffer == null) {
             throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
-        if (dexOffer.getStatus() != OfferStatus.WAITING_APPROVAL && dexOffer.getStatus() != OfferStatus.OPEN) {
-            throw new AplException.NotCurrentlyValidException("Wrong state of the counter offer, expected - " + OfferStatus.WAITING_APPROVAL + " or " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
+        if (dexOffer.getStatus() != OfferStatus.OPEN) {
+            throw new AplException.NotValidException("Wrong state of the offer, expected - " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
+        }
+        //TODO add contract validation, when A.K. will implement contract handshake
+        if (dexOffer.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + dexOffer.getAccountId());
         }
     }
 
@@ -61,28 +65,29 @@ public class DexTransferMoneyTransaction extends DEX {
         return true;
     }
 
+
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        senderAccount.addToBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
+        recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getOfferAmount());
 
-        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
-
-        if(attachment.isHasFrozenMoney() && DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
-            try {
-                dexService.refundAPLFrozenMoney(offer);
-            } catch (AplException.ExecutiveProcessException e) {
-                log.error(e.getMessage(), e);
-                throw new RuntimeException(e);
-            }
-        }
-
+//        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+//
+//        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
+//
+//        if(attachment.isHasFrozenMoney() && DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
+//            try {
+//                dexService.refundAPLFrozenMoney(offer);
+//            } catch (AplException.ExecutiveProcessException e) {
+//                log.error(e.getMessage(), e);
+//                throw new RuntimeException(e);
+//            }
+//        }
     }
-
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-
-    }
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
