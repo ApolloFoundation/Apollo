@@ -17,13 +17,11 @@ public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
 
     private long orderId;
     private long offerAmount; // measured in ATM
-    private boolean hasFrozenMoney;
 
     public DexControlOfFrozenMoneyAttachment(ByteBuffer buffer) {
         super(buffer);
         this.orderId = buffer.getLong();
         this.offerAmount = buffer.getLong();
-        this.hasFrozenMoney = buffer.get() == 1;
     }
 
     public DexControlOfFrozenMoneyAttachment(JSONObject attachmentData) {
@@ -34,21 +32,19 @@ public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
 
     @Override
     public int getMySize() {
-        return 8 + 8 + 1;
+        return 8 + 8;
     }
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(this.orderId);
         buffer.putLong(this.offerAmount);
-        buffer.put(hasFrozenMoney ? (byte)1 : (byte)0);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
         json.put("orderId", Long.toUnsignedString(this.getOrderId()));
         json.put("offerAmount", offerAmount);
-        json.put("hasFrozenMoney", this.isHasFrozenMoney());
     }
 
     @Override

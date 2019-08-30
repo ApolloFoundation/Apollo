@@ -7,15 +7,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
@@ -51,9 +50,9 @@ public class DexTransferMoneyTransaction extends DEX {
         if (dexOffer == null) {
             throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
-        if (dexOffer.getStatus() != OfferStatus.OPEN) {
-            throw new AplException.NotValidException("Wrong state of the offer, expected - " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
-        }
+//        if (dexOffer.getStatus() != OfferStatus.OPEN) {
+//            throw new AplException.NotValidException("Wrong state of the offer, expected - " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
+//        }
         //TODO add contract validation, when A.K. will implement contract handshake
         if (dexOffer.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + dexOffer.getAccountId());
@@ -76,7 +75,7 @@ public class DexTransferMoneyTransaction extends DEX {
 //
 //        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
 //
-//        if(attachment.isHasFrozenMoney() && DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
+//        if(DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
 //            try {
 //                dexService.refundAPLFrozenMoney(offer);
 //            } catch (AplException.ExecutiveProcessException e) {

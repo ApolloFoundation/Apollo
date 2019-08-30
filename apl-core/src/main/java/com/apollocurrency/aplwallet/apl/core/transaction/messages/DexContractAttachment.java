@@ -58,7 +58,7 @@ public class DexContractAttachment extends AbstractAttachment {
 
         this.contractStatus = ExchangeContractStatus.getType(buffer.get());
         try {
-            this.transferTxId = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH);
+            this.transferTxId = Convert.emptyToNull(Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH));
             this.counterTransferTxId = Convert.emptyToNull(Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH));
         } catch (NotValidException ex) {
             throw new AplException.NotValidException(ex.getMessage());
@@ -72,12 +72,12 @@ public class DexContractAttachment extends AbstractAttachment {
         super(attachmentData);
         this.orderId = Convert.parseUnsignedLong((String) attachmentData.get("orderId"));
         this.counterOrderId = Convert.parseUnsignedLong((String) attachmentData.get("counterOrderId"));
-        this.secretHash = Convert.parseHexString((String)(attachmentData.get("secretHash")));
-        this.encryptedSecret = Convert.parseHexString((String) attachmentData.get("encryptedSecret"));
+        this.secretHash = attachmentData.get("secretHash") != null ? Convert.parseHexString((String) (attachmentData.get("secretHash"))) : null;
+        this.encryptedSecret = attachmentData.get("encryptedSecret") != null ? Convert.parseHexString((String) attachmentData.get("encryptedSecret")) : null;
         this.contractStatus = ExchangeContractStatus.values()[((Number) attachmentData.get("contractStatus")).intValue()];
 
-        this.transferTxId = String.valueOf(attachmentData.get("transferTxId"));
-        this.counterTransferTxId = String.valueOf(attachmentData.get("counterTransferTxId"));
+        this.transferTxId = attachmentData.get("transferTxId") != null ? String.valueOf(attachmentData.get("transferTxId")) : null;
+        this.counterTransferTxId = attachmentData.get("counterTransferTxId") != null ? String.valueOf(attachmentData.get("counterTransferTxId")) : null;
 //        this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
     }
 
@@ -96,7 +96,7 @@ public class DexContractAttachment extends AbstractAttachment {
         return 8 + 8
                 + 1 + (this.secretHash != null ? 32 + 64 : 0)
                 + 1
-                + 2 + Convert.toBytes(transferTxId).length
+                + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
                 + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
 //                + 4
                 ;
@@ -118,9 +118,11 @@ public class DexContractAttachment extends AbstractAttachment {
 
         buffer.put((byte) this.contractStatus.ordinal());
 
-        byte[] transferTxId = Convert.toBytes(this.transferTxId);
-        buffer.putShort((short) transferTxId.length);
-        buffer.put(transferTxId);
+        byte[] transferTxId = this.transferTxId != null ? Convert.toBytes(this.transferTxId) : null;
+        buffer.putShort(transferTxId != null ? (short) transferTxId.length : 0);
+        if (transferTxId != null) {
+            buffer.put(transferTxId);
+        }
 
         byte[] counterTransferTxId = this.counterTransferTxId != null ? Convert.toBytes(this.counterTransferTxId) : null;
         buffer.putShort(counterTransferTxId != null ? (short) counterTransferTxId.length : 0);

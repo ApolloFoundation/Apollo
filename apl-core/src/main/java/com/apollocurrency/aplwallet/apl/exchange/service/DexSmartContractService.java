@@ -181,6 +181,16 @@ public class DexSmartContractService {
         return false;
     }
 
+    public boolean isUserTransferMoney(String user, Long orderId) throws AplException.ExecutiveProcessException {
+        for (UserEthDepositInfo userInfo : getUserFilledOrders(user)) {
+            if (userInfo.getOrderId().equals(orderId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);

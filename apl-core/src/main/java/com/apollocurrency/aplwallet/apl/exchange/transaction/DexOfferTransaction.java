@@ -133,7 +133,7 @@ public class DexOfferTransaction extends DEX {
 
         DexOffer offer = new DexOffer(transaction, attachment);
         // On the Apl side.
-        if(DexCurrencyValidator.haveFreezeOrRefundApl(offer) && offer.getStatus().isOpen()) {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
             lockOnAplSide(transaction, senderAccount);
         }
 

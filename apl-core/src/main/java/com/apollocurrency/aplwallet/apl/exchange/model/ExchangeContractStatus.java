@@ -10,7 +10,11 @@ public enum ExchangeContractStatus {
     /**
      * When a contract was approved and atomic swap was started.
      */
-    STEP_2;
+    STEP_2,
+    /**
+     * When a contract was approved and atomic swap was started.
+     */
+    STEP_3;
 
     public static ExchangeContractStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferType.values().length){
@@ -25,6 +29,10 @@ public enum ExchangeContractStatus {
 
     public boolean isStep2(){
         return this.equals(ExchangeContractStatus.STEP_2);
+    }
+
+    public boolean isStep3() {
+        return this.equals(ExchangeContractStatus.STEP_3);
     }
 
 

@@ -63,14 +63,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -286,9 +286,23 @@ public class DexService {
      * @return Tx hash id/link
      */
     public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, String toAddress, byte [] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
-        String transactionStr = null;
+        String transactionStr;
 
-        if(offer.getType().isSell()) { // just send apl  transaction with phasing (secret)
+        if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
+            if (dexSmartContractService.isUserTransferMoney(offer.getFromAddress(), offer.getTransactionId())) {
+                //TODO get eth tx, and return tx ID. Hadn't implemented yet.
+                //we don't use tx id.
+                return "0xETH";
+            }
+
+            if (dexSmartContractService.isDepositForOrderExist(offer.getFromAddress(), offer.getTransactionId())) {
+                transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
+                        offer.getFromAddress(), offer.getTransactionId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+            } else {
+                throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + offer.getTransactionId());
+            }
+
+        } else { // just send apl  transaction with phasing (secret)
 
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
             // set amount into attachment to apply balance changes on attachment level
@@ -300,8 +314,7 @@ public class DexService {
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
-            //contractStatus.isStep1 doesn't have frozen money.
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), offer.getOfferAmount(), contractStatus.isStep2()));
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), offer.getOfferAmount()));
 
             try {
                 Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
@@ -309,24 +322,6 @@ public class DexService {
             } catch (AplException.ValidationException | ParameterException e) {
                 LOG.error(e.getMessage(), e);
                 throw new AplException.ExecutiveProcessException(e.getMessage());
-            }
-        } else if(offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()){
-            BigDecimal haveToPay = EthUtil.atmToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
-            String token = null;
-
-            if(offer.getPairCurrency().isPax()){
-                token = ethereumWalletService.PAX_CONTRACT_ADDRESS;
-            }
-
-            if (!dexSmartContractService.isDepositForOrderExist(offer.getFromAddress(), offer.getTransactionId())) {
-                transactionStr = dexSmartContractService.depositAndInitiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        offer.getFromAddress(), offer.getTransactionId(),
-                        EthUtil.etherToWei(haveToPay),
-                        secretHash, toAddress, contractStatus.timeOfWaiting(),
-                        null, token);
-            } else {
-                transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        offer.getFromAddress(), offer.getTransactionId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
             }
 
         }
@@ -411,23 +406,8 @@ public class DexService {
             Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
             offer.setTransactionId(offerTx.getId());
 
-            byte[] secretX = new byte[32];
-            Crypto.getSecureRandom().nextBytes(secretX);
-            byte[] secretHash = Crypto.sha256().digest(secretX);
-            String passphrase = ParameterParser.getPassphrase(requestWrapper, true);
-            byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
-
-            // 2. Send money to the counter offer.
-            CreateTransactionRequest transferMoneyWithApprovalRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, counterOffer.getAccountId(), offer.getOfferAmount(), null);
-            String transferTxId = transferMoneyWithApproval(transferMoneyWithApprovalRequest, offer, counterOffer.getToAddress(), secretHash, ExchangeContractStatus.STEP_1);
-
-            if(StringUtils.isBlank(transferTxId)){
-                throw new AplException.ExecutiveProcessException("Money wasn't send to the counter offer.");
-            }
-
-            // 3. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), secretHash, transferTxId, null, encryptedSecretX, ExchangeContractStatus.STEP_1);
+            // 2. Create contract.
+            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), null, null, null, null, ExchangeContractStatus.STEP_1);
             response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter

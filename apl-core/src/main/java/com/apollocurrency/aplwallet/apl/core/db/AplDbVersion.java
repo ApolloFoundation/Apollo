@@ -791,7 +791,7 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
             case 301:
                 apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
-                        "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 302:
                 apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL");
             case 303:
@@ -803,7 +803,7 @@ public class AplDbVersion extends DbVersion {
             case 306:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS encrypted_secret BINARY(64) NULL");
             case 307:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS transfer_tx_id VARCHAR(120) NOT NULL");
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS transfer_tx_id VARCHAR(120) NULL");
             case 308:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS counter_transfer_tx_id VARCHAR(120) NULL");
 
