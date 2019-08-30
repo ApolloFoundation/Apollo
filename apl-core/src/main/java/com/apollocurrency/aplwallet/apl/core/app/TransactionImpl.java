@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
-    @Inject
+//    @Inject
     private static BlockchainImpl blockchain;
 
     public static final class BuilderImpl implements Builder {

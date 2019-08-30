@@ -171,12 +171,33 @@ public final class DbUtils {
         }
     }
 
+    public static String limitsClauseInShardDb(int from, int to) {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        if (limit > 0) { // offset doesn't work in shard db because records were moved
+            return " LIMIT ? ";
+        } else if (limit == 0 && from > 0) {
+            return " LIMIT ? ";
+        } else {
+            return "";
+        }
+    }
+
     public static int setLimits(int index, PreparedStatement pstmt, int from, int to) throws SQLException {
         int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
         if (limit > 0) {
             pstmt.setInt(index++, limit);
         }
         if (from > 0) {
+            pstmt.setInt(index++, from);
+        }
+        return index;
+    }
+
+    public static int setLimitsShardDb(int index, PreparedStatement pstmt, int from, int to) throws SQLException {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        if (limit > 0) { // offset doesn't work in shard db because records were moved
+            pstmt.setInt(index++, limit);
+        } else if (limit == 0 && from > 0) {
             pstmt.setInt(index++, from);
         }
         return index;

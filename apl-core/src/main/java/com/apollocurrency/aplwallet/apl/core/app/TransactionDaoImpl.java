@@ -374,14 +374,28 @@ public class TransactionDaoImpl implements TransactionDao {
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
-        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        buf.append(DbUtils.limitsClause(from, to));
+        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype,
+                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        // condition for main or shard db
+        if (dataSource.getDbIdentity().isEmpty()) {
+            buf.append(DbUtils.limitsClause(from, to)); // main db
+        } else {
+            buf.append(DbUtils.limitsClauseInShardDb(from, to)); // shard db
+        }
         Connection con = null;
         try {
             con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(buf.toString());
-            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-            DbUtils.setLimits(++i, pstmt, from, to);
+            String sql = buf.toString();
+            log.trace("getTx sql = {}", sql);
+            PreparedStatement pstmt = con.prepareStatement(sql);
+            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
+                    withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            // condition for main or shard db
+            if (dataSource.getDbIdentity().isEmpty()) {
+                DbUtils.setLimits(++i, pstmt, from, to); // main db
+            } else {
+                DbUtils.setLimitsShardDb(++i, pstmt, from, to); // shard db
+            }
             return CollectionUtil.toList(getTransactions(con, pstmt));
         }
         catch (SQLException e) {
@@ -477,8 +491,10 @@ public class TransactionDaoImpl implements TransactionDao {
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
         createTransactionSelectSql(buf, "transaction.id", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         buf.append(")");
+        String sql = buf.toString();
+        log.trace("getCountTx() sql = {}", sql);
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(buf.toString())) {
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
             setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
@@ -513,6 +529,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (withMessage) {
             pstmt.setInt(++i, prunableExpiration);
         }
+        // bind all the same parameters doe second part sql after 'UNION ALL'
         pstmt.setLong(++i, accountId);
         if (blockTimestamp > 0) {
             pstmt.setInt(++i, blockTimestamp);

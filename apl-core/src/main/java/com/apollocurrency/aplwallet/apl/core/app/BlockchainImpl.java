@@ -561,49 +561,56 @@ public class BlockchainImpl implements Blockchain {
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
                 timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
-        log.debug("getTx 1. - from={}, to={}", from, to);
         int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
-        log.debug("getTx 2. - limit={}", limit);
+        log.trace("getTx() 1. from={}, to={}, limit={}, accountId={}, type={}, subtype={}",
+                from, to, limit, accountId, type, subtype);
+        if (limit > 500) { // warn for too big values
+            log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
+        }
+        // start fetch from main db
         List<Transaction> transactions = transactionDao.getTransactions(
                 databaseManager.getDataSource(),
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         long initialLimit = limit;
-        log.debug("getTx 3. found Tx in main ={}, initLimit={}", transactions.size(), initialLimit);
+        log.trace("getTx() 2. fetched from mainDb=[{}], initLimit={}, accountId={}, type={}, subtype={}", transactions.size(), initialLimit, accountId, type, subtype);
         if (transactions.size() < limit) {
-            boolean noTransactions = transactions.size() == 0;
-            limit -= transactions.size();
-
+            // not all requested Tx were fetched from main, loop over shards
+            from += transactions.size();
+            // loop over all shard in descent order and fetch left Tx number
             Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
             while (fullDataSources.hasNext()) {
                 TransactionalDataSource dataSource = fullDataSources.next();
-                if (noTransactions && from != 0) {
-                    from -= transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(),
-                            accountId, numberOfConfirmations, type, subtype,
-                            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                            includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                } else {
-                    from = 0;
-                }
-                log.debug("getTx 4. MAIN DS, count from={}, to={}", from, limit - 1);
+                // count Tx records before fetch Tx records
+                int foundCount = transactionDao.getTransactionCountByFilter(dataSource,
+                        accountId, numberOfConfirmations, type, subtype,
+                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                        includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                log.trace("countTx 3. DS={},  from={}, to={}, found Tx Count={} (skip='{}')\naccountId={}, type={}, subt={}",
+                        dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
+                        accountId, type, subtype);
+                if (foundCount <= 0) continue; // skip shard without records
+                // fetch Tx from shard db with existing records
+                log.trace("getTx() 4. fetch Tx records from={}, to={}", from, to);
                 List<Transaction> foundTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                        from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                        from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 transactions.addAll(foundTxs);
-                log.debug("getTx 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
-                noTransactions = foundTxs.size() == 0 && transactions.size() == 0;
+                log.trace("getTx() 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                // check conditions to stop loop over shard db
                 if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
-                    log.debug("getTx 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                    log.trace("getTx() 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                     break;
                 }
+                from += foundTxs.size();
                 limit -= foundTxs.size();
             }
         }
         log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
-                transactions.size() < initialLimit ? "Wrong Number" : "OK !");
+                (transactions.size() < initialLimit ? "Less" : (transactions.size() == initialLimit ? "OK !" : "BIGGER!")));
         return transactions;
     }
 
