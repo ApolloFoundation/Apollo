@@ -35,19 +35,16 @@ public class DexOfferProcessor {
     private SecureStorageService secureStorageService;
     private DexService dexService;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
-    private DexSmartContractService dexSmartContractService;
 
     @Inject
-    public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, DexOfferTransactionCreator dexOfferTransactionCreator,
-                             DexSmartContractService dexSmartContractService) {
+    public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, DexOfferTransactionCreator dexOfferTransactionCreator) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
-        this.dexSmartContractService = dexSmartContractService;
     }
 
 
-    public void processContracts(){
+    public void processContracts() {
         List<Long> accounts = secureStorageService.getAccounts();
 
         for (Long account : accounts) {
@@ -62,9 +59,10 @@ public class DexOfferProcessor {
 
     /**
      * Processing contracts with status step_1.
+     *
      * @param accountId
      */
-    private void processContractsForUserStep1(Long accountId){
+    private void processContractsForUserStep1(Long accountId) {
         List<ExchangeContract> contracts = dexService.getDexContracts(DexContractDBRequest.builder()
                 .recipient(accountId)
                 .status(STEP_1.ordinal())
@@ -129,7 +127,7 @@ public class DexOfferProcessor {
         }
     }
 
-    private boolean isContractStep1Valid(ExchangeContract exchangeContract){
+    private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
         return true;
     }
@@ -137,6 +135,7 @@ public class DexOfferProcessor {
 
     /**
      * Processing contracts with status step_2.
+     *
      * @param accountId
      */
     private void processContractsForUserStep2(Long accountId) {
@@ -218,9 +217,9 @@ public class DexOfferProcessor {
                 .build());
         for (ExchangeContract contract : contracts) {
             try {
-                DexOffer offer = dexService.getOfferByTransactionId(contract.getOrderId());
+                DexOffer offer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
-                if (!offer.getStatus().isWaitingForApproval() || !isContractStep3Valid(contract) || contract.getCounterTransferTxId() == null) {
+                if (!offer.getStatus().isWaitingForApproval() || !isContractStep3Valid(contract) || contract.getTransferTxId() == null) {
                     continue;
                 }
 
