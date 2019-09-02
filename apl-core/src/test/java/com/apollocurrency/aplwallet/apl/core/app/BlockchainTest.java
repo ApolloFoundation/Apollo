@@ -931,8 +931,8 @@ class BlockchainTest {
     void testGetTransactionsFromDifferentDataSources() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_2, TR_3, TR_7, TR_11, TR_12
         assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_12, txd.TRANSACTION_11, txd.TRANSACTION_9, txd.TRANSACTION_8, txd.TRANSACTION_7, txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2, txd.TRANSACTION_1, txd.TRANSACTION_0), transactions);
     }
 
@@ -950,8 +950,8 @@ class BlockchainTest {
     void testGetTransactionsFromDifferentDataSourcesWhenSkipFirstNEntriesWithLimit() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 8, 10, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false, 8, 10, false, false, true);
+        // candidates by type+subtype are TR_2, TR_3, TR_7, TR_11, TR_12
         assertEquals(List.of(txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
     }
 
@@ -960,8 +960,8 @@ class BlockchainTest {
     void testGetTransactionsFromDifferentDataSourcesWhenSkipFirstNEntriesWithLimitWithoutSearchingFirstShardDataSource() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 4, 8, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false, 4, 8, false, false, true);
+        // candidates by type+subtype are TR_2, TR_3, TR_7, TR_11, TR_12
         assertEquals(List.of(txd.TRANSACTION_8, txd.TRANSACTION_7, txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4), transactions);
     }
 
