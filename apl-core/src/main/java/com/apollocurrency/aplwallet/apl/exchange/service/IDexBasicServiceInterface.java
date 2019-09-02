@@ -9,7 +9,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
  * @author Serhiy Lymar
  */
 
-public interface IDexMatcherInterface {
+public interface IDexBasicServiceInterface {
      /** 
      * Start transport interaction service
      */

@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -10,6 +14,11 @@ import javax.inject.Singleton;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+/**
+ *
+ * @author Serhiy Lymar
+ */
 
 @Singleton
 public class DexMatchingService {

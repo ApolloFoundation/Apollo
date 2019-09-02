@@ -29,7 +29,7 @@ import java.util.Objects;
 
 
 @Singleton
-public class DexMatcherServiceImpl implements IDexMatcherInterface {
+public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     private DexMatchingService dexMatchingService;
