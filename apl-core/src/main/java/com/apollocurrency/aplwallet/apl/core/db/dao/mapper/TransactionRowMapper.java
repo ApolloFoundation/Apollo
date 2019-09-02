@@ -66,7 +66,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                    amountATM, feeATM, deadline, transactionType.parseAttachment(buffer), timestamp)
+                    amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
                     .blockId(blockId)
@@ -79,7 +79,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                     .ecBlockId(ecBlockId)
                     .dbId(dbId)
                     .index(transactionIndex);
-            if (transactionType.canHaveRecipient()) {
+            if (transactionType != null && transactionType.canHaveRecipient()) {
                 long recipientId = rs.getLong("recipient_id");
                 if (!rs.wasNull()) {
                     builder.recipientId(recipientId);
