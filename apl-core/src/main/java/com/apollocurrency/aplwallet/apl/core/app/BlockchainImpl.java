@@ -555,48 +555,64 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                                   int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
                 timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
         int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
-        int initialLimit = limit;
+        log.trace("getTx() 1. from={}, to={}, limit={}, accountId={}, type={}, subtype={}",
+                from, to, limit, accountId, type, subtype);
+        if (limit > 500) { // warn for too big values
+            log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
+        }
+        // start fetch from main db
         List<Transaction> transactions = transactionDao.getTransactions(
                 databaseManager.getDataSource(),
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-
+        long initialLimit = limit;
+        log.trace("getTx() 2. fetched from mainDb=[{}], initLimit={}, accountId={}, type={}, subtype={}", transactions.size(), initialLimit, accountId, type, subtype);
+        // check if all Txs are fetched from main db, continue inside shard dbs otherwise
         if (transactions.size() < limit) {
-            boolean noTransactions = transactions.size() == 0;
-            limit -= transactions.size();
-            List<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSources(10L);
-            for (TransactionalDataSource dataSource : fullDataSources) {
-                if (noTransactions && from != 0) {
-                    from -= transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(),
-                            accountId, numberOfConfirmations, type, subtype,
-                            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                            includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                } else {
-                    from = 0;
-                }
+            // not all requested Tx were fetched from main, loop over shards
+            from += transactions.size();
+            // loop over all shard in descent order and fetch left Tx number
+            Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
+            while (fullDataSources.hasNext()) {
+                TransactionalDataSource dataSource = fullDataSources.next();
+                // count Tx records before fetch Tx records
+                int foundCount = transactionDao.getTransactionCountByFilter(dataSource,
+                        accountId, numberOfConfirmations, type, subtype,
+                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                        includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                log.trace("countTx 3. DS={},  from={}, to={}, found Tx Count={} (skip='{}')\naccountId={}, type={}, subt={}",
+                        dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
+                        accountId, type, subtype);
+                if (foundCount <= 0) continue; // skip shard without records
+
+                // because count is > 0 then fetch Txrecords from shard db
+                log.trace("getTx() 4. fetch Tx records from={}, to={}", from, to);
                 List<Transaction> foundTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-                        from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                        from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 transactions.addAll(foundTxs);
-                noTransactions = foundTxs.size() == 0;
-                if (foundTxs.size() == limit) {
+                log.trace("getTx() 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                // check conditions to stop loop over shard db
+                if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
+                    log.trace("getTx() 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                     break;
                 }
+                from += foundTxs.size();
                 limit -= foundTxs.size();
             }
         }
-        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
-                transactions.size() < initialLimit ? "Less" : "OK !");
+        log.trace("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
+                (transactions.size() < initialLimit ? "Less" : (transactions.size() == initialLimit ? "OK !" : "BIGGER!")));
         return transactions;
     }
 

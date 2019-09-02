@@ -365,7 +365,8 @@ public class TransactionDaoImpl implements TransactionDao {
 */
 
     @Override
-    public synchronized List<Transaction> getTransactions(TransactionalDataSource dataSource,
+    public synchronized List<Transaction> getTransactions(
+            TransactionalDataSource dataSource,
             long accountId, int numberOfConfirmations, byte type, byte subtype,
             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
@@ -374,21 +375,37 @@ public class TransactionDaoImpl implements TransactionDao {
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
-        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        buf.append(DbUtils.limitsClause(from, to));
+        createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype,
+                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        // condition for main or shard db
+        if (dataSource.getDbIdentity().isEmpty()) {
+            buf.append(DbUtils.limitsClause(from, to)); // main db
+        } else {
+            buf.append(DbUtils.limitsClauseInShardDb(from, to)); // shard db
+        }
         Connection con = null;
         try {
             con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(buf.toString());
-            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-            DbUtils.setLimits(++i, pstmt, from, to);
+            String sql = buf.toString();
+            log.trace("getTx sql = {}", sql);
+            PreparedStatement pstmt = con.prepareStatement(sql);
+            int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
+                    withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+            // condition for main or shard db
+            if (dataSource.getDbIdentity().isEmpty()) {
+                DbUtils.setLimits(++i, pstmt, from, to); // main db
+            } else {
+                DbUtils.setLimitsShardDb(++i, pstmt, from, to); // shard db
+            }
             return CollectionUtil.toList(getTransactions(con, pstmt));
         }
         catch (SQLException e) {
+            log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
+
 
     private StringBuilder createTransactionSelectSql(StringBuilder buf, String selectString, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
         if (executedOnly && !nonPhasedOnly) {
