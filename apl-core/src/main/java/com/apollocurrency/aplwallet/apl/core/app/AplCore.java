@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexValidationServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -103,6 +104,7 @@ public final class AplCore {
     private static TransportInteractionService transportInteractionService;
     private API apiServer;
     private DexMatcherServiceImpl tcs;
+    private DexValidationServiceImpl dexValidationServiceImpl;
 
     @Inject @Setter
     private PropertiesHolder propertiesHolder;
@@ -174,6 +176,7 @@ public final class AplCore {
         AplCore.shutdown = true;
 
         tcs.deinitialize();
+        dexValidationServiceImpl.deinitialize();
     }
 
     private static volatile boolean initialized = false;
@@ -244,6 +247,13 @@ public final class AplCore {
                 tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
                 tcs.initialize();
 
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  53.0, "Exchange matcher initialization");
+
+                
+                dexValidationServiceImpl = CDI.current().select(DexValidationServiceImpl.class).get();
+                dexValidationServiceImpl.initialize();
+                
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  53.5, "Exchange matcher initialization");
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
