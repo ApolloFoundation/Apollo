@@ -583,11 +583,24 @@ public class BlockchainImpl implements Blockchain {
                 } else {
                     from = 0;
                 }
+                // just for check
+                int foundTxsCount = transactionDao.getTransactionCountByFilter(
+                        dataSource,
+                        accountId, numberOfConfirmations, type, subtype,
+                        blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                        includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
                 List<Transaction> foundTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         from, limit - 1, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+                // compare and log, just for check
+                if (foundTxsCount > foundTxs.size()) {
+                    log.debug("Compare getTx() shard={}, from..to [{}..{}], select-count='{}' is not equal tx select+offset='{}'",
+                            dataSource.getDbIdentity(),
+                            from, limit - 1,
+                            foundTxsCount, foundTxs.size());
+                }
                 transactions.addAll(foundTxs);
                 noTransactions = foundTxs.size() == 0;
                 if (foundTxs.size() == limit) {
@@ -596,8 +609,8 @@ public class BlockchainImpl implements Blockchain {
                 limit -= foundTxs.size();
             }
         }
-        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", transactions.size(), initialLimit,
-                transactions.size() < initialLimit ? "Wrong Number" : "OK !");
+        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
+                (transactions.size() < initialLimit ? "Less" : (transactions.size() == initialLimit ? "OK !" : "BIGGER!")));
         return transactions;
     }
 
