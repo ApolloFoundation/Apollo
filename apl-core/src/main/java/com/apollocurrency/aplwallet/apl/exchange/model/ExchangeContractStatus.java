@@ -4,15 +4,15 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public enum ExchangeContractStatus {
     /**
-     * When a contract is waiting for review and approval.
+     * The first user sent a contract and he is waiting for review and approval. (On this step user doesn't transfer money.)
      */
     STEP_1,
     /**
-     * When a contract was approved and atomic swap was started.
+     * The second user approved the contract, transferred the money and waiting for counter transfer.
      */
     STEP_2,
     /**
-     * When a contract was approved and atomic swap was started.
+     * The first user sent counter transfer. (Process of the atomic swap is started.)
      */
     STEP_3;
 

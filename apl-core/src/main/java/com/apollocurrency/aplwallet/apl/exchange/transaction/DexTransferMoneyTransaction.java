@@ -50,9 +50,7 @@ public class DexTransferMoneyTransaction extends DEX {
         if (dexOffer == null) {
             throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
-//        if (dexOffer.getStatus() != OfferStatus.OPEN) {
-//            throw new AplException.NotValidException("Wrong state of the offer, expected - " + OfferStatus.OPEN + " , got - " + dexOffer.getStatus());
-//        }
+
         //TODO add contract validation, when A.K. will implement contract handshake
         if (dexOffer.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + dexOffer.getAccountId());
