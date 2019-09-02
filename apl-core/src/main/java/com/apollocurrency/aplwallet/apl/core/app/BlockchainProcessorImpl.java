@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.model.ApprovedAndApprovalTxs;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -180,6 +181,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
+
     private PeersService lookupPeers() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
@@ -934,19 +936,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new BlockchainProcessor.TransactionNotAcceptedException(e, transaction);
                 }
             }
-            SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            SortedSet<ApprovedAndApprovalTxs> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getOrLoadTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
-                        possiblyApprovedTransactions.add(phasedTransaction);
+                        possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(phasedTransaction, transaction));
                     }
                 });
                 if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
-                        if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                            possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
+                        if (phasingPoll.allowEarlyFinish() &&
+                                (phasingPoll.getFinishHeight() > block.getHeight() || phasingPoll.getFinishTime() > block.getTimestamp())) {
+                            Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
+                            possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(approvedTx, transaction));
                         }
                     });
                 }
@@ -959,19 +963,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
+                                Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
+                                possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(approvedTx, phasedTransaction));
                             }
                         });
                     }
                 }
             });
-            possiblyApprovedTransactions.forEach(transaction -> {
-                if (phasingPollService.getResult(transaction.getId()) == null) {
+            possiblyApprovedTransactions.forEach(approvedAndConfirmation -> {
+                Transaction approvedTx = approvedAndConfirmation.getApproved();
+                if (phasingPollService.getResult(approvedTx.getId()) == null) {
                     try {
-                        transactionValidator.validate(transaction);
-                        transaction.getPhasing().tryCountVotes(transaction, duplicates);
+                        transactionValidator.validate(approvedTx);
+                        approvedTx.getPhasing().tryCountVotes(approvedTx, duplicates, approvedAndConfirmation.getApproval());
                     } catch (AplException.ValidationException e) {
-                        log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
+                        log.debug("At height " + block.getHeight() + " phased transaction " + approvedTx.getStringId()
                                 + " no longer passes validation: " + e.getMessage() + ", cannot finish early");
                     }
                 }
@@ -992,10 +998,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private static final Comparator<Transaction> finishingTransactionsComparator = Comparator
-            .comparingInt(Transaction::getHeight)
-            .thenComparingInt(Transaction::getIndex)
-            .thenComparingLong(Transaction::getId);
+    private static final Comparator<ApprovedAndApprovalTxs> finishingTransactionsComparator = Comparator
+            .<ApprovedAndApprovalTxs>comparingInt(o -> o.getApproved().getHeight())
+            .thenComparingInt(o -> o.getApproved().getIndex())
+            .thenComparingLong(o -> o.getApproved().getId());
 
     public List<Block> popOffTo(Block commonBlock) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -1868,7 +1874,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we
 //                        nextBlocks.getPeer().deactivate();
                         continue;
                     }

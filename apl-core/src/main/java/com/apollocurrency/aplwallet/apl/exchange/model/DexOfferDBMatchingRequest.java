@@ -5,14 +5,19 @@
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
 import java.math.BigDecimal;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
  * @author Serhiy Lymar
  */
+
+@Getter @Setter
 public class DexOfferDBMatchingRequest {
 
-    public DexOfferDBMatchingRequest(OfferType type, Integer currentTime, Integer offerCur, BigDecimal offerAmount, Integer pairCur, BigDecimal pairRate) {
+    public DexOfferDBMatchingRequest(OfferType type, Integer currentTime, Integer offerCur, BigDecimal offerAmount, 
+            Integer pairCur, BigDecimal pairRate, String order) {
         this.type = this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
         this.offerCur = offerCur;                     
@@ -27,53 +32,5 @@ public class DexOfferDBMatchingRequest {
     private BigDecimal offerAmount;
     private Integer pairCur;
     private BigDecimal pairRate;
-
-    public Integer getType() {
-        return type;
-    }
-
-    public Integer getCurrentTime() {
-        return currentTime;
-    }
-
-    public Integer getOfferCur() {
-        return offerCur;
-    }
-
-    public BigDecimal getOfferAmount() {
-        return offerAmount;
-    }
-
-    public Integer getPairCur() {
-        return pairCur;
-    }
-
-    public BigDecimal getPairRate() {
-        return pairRate;
-    }
-        
-    public void setType(Integer type) {
-        this.type = type;
-    }
-
-    public void setCurrentTime(Integer currentTime) {
-        this.currentTime = currentTime;
-    }
-
-    public void setOfferCur(Integer offerCur) {
-        this.offerCur = offerCur;
-    }
-
-    public void setOfferAmount(BigDecimal offerAmount) {
-        this.offerAmount = offerAmount;
-    }
-
-    public void setPairCur(Integer pairCur) {
-        this.pairCur = pairCur;
-    }
-
-    public void setPairRate(BigDecimal pairRate) {
-        this.pairRate = pairRate;
-    }
-    
+           
 }

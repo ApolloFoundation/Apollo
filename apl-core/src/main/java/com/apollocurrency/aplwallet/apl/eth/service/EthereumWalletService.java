@@ -1,19 +1,5 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -50,16 +36,38 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 @Singleton
 public class EthereumWalletService {
     private static final Logger log = getLogger(EthereumWalletService.class);
 
-    private Web3j web3j = CDI.current().select(Web3j.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
-    private final DexEthService dexEthService = CDI.current().select(DexEthService.class).get();
+    private Web3j web3j;
+    private KeyStoreService keyStoreService;
+    private DexEthService dexEthService;
 
-    private String paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+    public String PAX_CONTRACT_ADDRESS;
+
+    @Inject
+    public EthereumWalletService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService) {
+        this.web3j = web3j;
+        this.keyStoreService = keyStoreService;
+        this.dexEthService = dexEthService;
+
+        this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
+    }
 
     /**
      * Get balances for Eth/tokens.
@@ -102,7 +110,7 @@ public class EthereumWalletService {
      */
     public BigInteger getPaxBalanceWei(String address){
         Objects.requireNonNull(address);
-        return getTokenBalance(paxContractAddress, address);
+        return getTokenBalance(PAX_CONTRACT_ADDRESS, address);
     }
 
     /**
@@ -142,7 +150,7 @@ public class EthereumWalletService {
         if (DexCurrencies.ETH.equals(currencies)) {
             return transferEth(ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
         } else if (DexCurrencies.PAX.equals(currencies)) {
-            return transferERC20(paxContractAddress, ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
+            return transferERC20(PAX_CONTRACT_ADDRESS, ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
         }
@@ -169,7 +177,7 @@ public class EthereumWalletService {
         String tx = null;
         try {
             Function function = approve(spenderAddress, value);
-            tx = execute(credentials, function, paxContractAddress, gasPrice);
+            tx = execute(credentials, function, PAX_CONTRACT_ADDRESS, gasPrice);
         } catch (Exception e){
             log.error(e.getMessage());
         }

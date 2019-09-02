@@ -333,7 +333,7 @@ public class PhasingAppendix extends AbstractAppendix {
         }
         PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
         long result = phasingPollService.countVotes(poll);
-        phasingPollService.finish(poll, result);
+        phasingPollService.finish(poll, result, transaction.getId());
         if (result >= poll.getQuorum()) {
             try {
                 release(transaction);
@@ -346,7 +346,7 @@ public class PhasingAppendix extends AbstractAppendix {
         }
     }
 
-    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates, Transaction approvalTx) {
         PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
         long result = phasingPollService.countVotes(poll);
         lookupBlockchain();
@@ -354,7 +354,7 @@ public class PhasingAppendix extends AbstractAppendix {
             if (!transaction.attachmentIsDuplicate(duplicates, false)) {
                 try {
                     release(transaction);
-                    phasingPollService.finish(poll, result);
+                    phasingPollService.finish(poll, result, approvalTx.getId());
                     LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
                 } catch (RuntimeException e) {
                     LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);

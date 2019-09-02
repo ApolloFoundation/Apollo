@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 
@@ -60,6 +61,11 @@ public class DaoConfig {
         return createDaoInterfaceProxy(DexTradeDao.class);
     }
     
+
+    @Produces
+    private DexContractDao dexContractDao() {
+        return createDaoInterfaceProxy(DexContractDao.class);
+    }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(

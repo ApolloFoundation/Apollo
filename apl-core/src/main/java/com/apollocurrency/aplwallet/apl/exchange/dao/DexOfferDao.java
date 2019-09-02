@@ -10,12 +10,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.List;
-import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 
 public interface DexOfferDao {
 
@@ -43,6 +44,21 @@ public interface DexOfferDao {
     )
     @RegisterRowMapper(DexOfferMapper.class)
     List<DexOffer> getOffers(@BindBean DexOfferDBRequest dexOfferDBRequest);
+    
+    @AllowUnusedBindings    
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            " WHERE latest = true" +
+            " AND offer.type = :type" + 
+            " AND offer.finish_time > :currentTime" +
+            " AND offer.offer_currency = :offerCur" +
+            " AND offer.offer_amount = :offerAmount" +
+            " AND offer.pair_currency = :pairCur" + 
+            " AND offer.pair_rate >= :pairRate" +
+            " AND offer.status = 0" +
+            " ORDER BY offer.pair_rate <orderby> ")
+    @RegisterRowMapper(DexOfferMapper.class)
+    List<DexOffer> getOffersForMatchingWnenBuy(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest, @Define("orderby") String orderBy  );
 
     @AllowUnusedBindings    
     @Transactional(readOnly = true)
@@ -55,10 +71,25 @@ public interface DexOfferDao {
             " AND offer.pair_currency = :pairCur" + 
             " AND offer.pair_rate <= :pairRate" +
             " AND offer.status = 0" +
-            " ORDER BY offer.pair_rate ASC")
+            " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOfferMapper.class)
-    List<DexOffer> getOffersForMatching(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest );
-
+    List<DexOffer> getOffersForMatchingWnenSell(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest, @Define("orderby") String orderBy  );
+    
+    @AllowUnusedBindings    
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            " WHERE latest = true" +
+            " AND offer.type = :type" + 
+            " AND offer.finish_time > :currentTime" +
+            " AND offer.offer_currency = :offerCur" +
+            " AND offer.offer_amount = :offerAmount" +
+            " AND offer.pair_currency = :pairCur" +
+            " AND offer.pair_rate = :pairRate" +
+            " AND offer.status = 0" +
+            " ORDER BY offer.pair_rate <orderby> ")
+    @RegisterRowMapper(DexOfferMapper.class)
+    List<DexOffer> getOffersForMatchingPure(@BindBean DexOfferDBMatchingRequest dexOfferDBMatchingRequest, @Define("orderby") String orderBy  );
+        
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer where latest = true AND transaction_id = :transactionId")
     @RegisterRowMapper(DexOfferMapper.class)

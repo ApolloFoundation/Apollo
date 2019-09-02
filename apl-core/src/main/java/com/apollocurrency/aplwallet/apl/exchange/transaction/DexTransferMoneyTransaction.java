@@ -8,13 +8,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
+@Slf4j
 public class DexTransferMoneyTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
@@ -42,11 +44,17 @@ public class DexTransferMoneyTransaction extends DEX {
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Transaction amount is not valid.");
+        // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
+        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        DexOffer dexOffer = dexService.getOfferByTransactionId(attachment.getOrderId());
+        if (dexOffer == null) {
+            throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
 
-        //TODO add additional validation.
+        //TODO add contract validation, when A.K. will implement contract handshake
+        if (dexOffer.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + dexOffer.getAccountId());
+        }
     }
 
     @Override
@@ -54,28 +62,34 @@ public class DexTransferMoneyTransaction extends DEX {
         return true;
     }
 
+
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        senderAccount.addToBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
+        recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getOfferAmount());
 
-        DexOffer offer = dexService.getOfferById(attachment.getOrderId());
-
-        //TODO change order status.
-        if(attachment.isHasFrozenMoney() && DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
-            try {
-                dexService.refundAPLFrozenMoney(offer);
-            } catch (AplException.ExecutiveProcessException e) {
-                //TODO think it over.
-                throw new RuntimeException(e);
-            }
-        }
-
+//        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+//
+//        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
+//
+//        if(DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
+//            try {
+//                dexService.refundAPLFrozenMoney(offer);
+//            } catch (AplException.ExecutiveProcessException e) {
+//                log.error(e.getMessage(), e);
+//                throw new RuntimeException(e);
+//            }
+//        }
     }
 
+    @Override
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {}
 
     @Override
-    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-
+    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_TRANSFER_MONEY_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

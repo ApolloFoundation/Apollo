@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -64,6 +66,11 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     @Override
     public String getUserPassPhrase(Long accountId){
         return store.get(accountId);
+    }
+
+    @Override
+    public List<Long> getAccounts() {
+        return new ArrayList<>(store.keySet());
     }
 
     /**

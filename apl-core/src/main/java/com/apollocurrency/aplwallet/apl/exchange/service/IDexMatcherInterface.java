@@ -3,26 +3,21 @@
  */
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
-import javax.inject.Singleton;
-
 
 /**
  *
  * @author Serhiy Lymar
  */
 
-@Singleton
 public interface IDexMatcherInterface {
      /** 
      * Start transport interaction service
      */
-     
-    public void initialize();
+     void initialize();
    
     /** 
      * Stop transport interaction service
      */
-     
-    public void deinitialize();
+    void deinitialize();
     
 }

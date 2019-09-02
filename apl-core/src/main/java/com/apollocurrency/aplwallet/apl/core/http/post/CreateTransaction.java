@@ -20,13 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -51,9 +44,16 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.Arrays;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
@@ -112,13 +112,9 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 .convert(req, senderAccount, recipientId, amountATM, attachment);
 
 
-        Transaction transaction;
         JSONObject response = new JSONObject();
-        try {
-            transaction = createTransaction(createTransactionRequest);
-        } catch (AplException.ValidationException e) {
-            return e.getJsonResponce();
-        }
+        Transaction transaction = createTransaction(createTransactionRequest);
+
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
         response.put("transactionJSON", transactionJSON);
@@ -228,8 +224,6 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         } catch (AplException.NotYetEnabledException e) {
             throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
         } catch (AplException.InsufficientBalanceException e) {
-            throw e;
-        } catch (AplException.ValidationException e) {
             throw e;
         }
 

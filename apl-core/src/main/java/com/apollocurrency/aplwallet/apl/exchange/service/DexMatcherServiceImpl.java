@@ -14,11 +14,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -32,13 +32,13 @@ import javax.inject.Singleton;
 public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
-    DexService dexService;
+    private DexMatchingService dexMatchingService;
     private TimeService timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexService dexService, TimeService timeService) {
-        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");
+    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService) {
+        this.dexMatchingService =  Objects.requireNonNull( dexMatchingService,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }
     
@@ -136,34 +136,35 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     public DexOffer findCounterOffer(DexOffer createdOffer) {
         log.debug("DexMatcherServiceImpl:findCounterOffer()");
     
-        OfferType counterOfferType = createdOffer.getType().isSell() ? OfferType.BUY : OfferType.SELL;
-
+        // it should be done the opposite way
+        OfferType counterOfferType = createdOffer.getType().isBuy() ? OfferType.SELL : OfferType.BUY;
+        // Be careful: for selling - it should be more expensive. Buying - for cheaper price.  
+        String orderby = createdOffer.getType().isSell() ? "DESC" : "ASC";
+        
         Integer currentTime = timeService.getEpochTime();
         BigDecimal offerAmount = new BigDecimal(createdOffer.getOfferAmount());        
         Integer pairCurrency = DexCurrencies.getValue( createdOffer.getPairCurrency());
         
         BigDecimal pairRate = new BigDecimal( EthUtil.ethToGwei( createdOffer.getPairRate()) ); 
         
-        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}", counterOfferType, currentTime, offerAmount, pairCurrency, pairRate );
+        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}, order: {}", 
+                counterOfferType, currentTime, offerAmount, pairCurrency, pairRate, orderby );
                 
-        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(counterOfferType, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate );        
-        List<DexOffer> offers = dexService.getOffersForMatching(dexOfferDBMatchingRequest);
-                       
-        // DexOffer match = offers.
+        DexOfferDBMatchingRequest  dexOfferDBMatchingRequest =  new DexOfferDBMatchingRequest(counterOfferType, currentTime,  0 , offerAmount, pairCurrency.intValue(), pairRate, orderby );        
+        List<DexOffer> offers = dexMatchingService.getOffersForMatching(dexOfferDBMatchingRequest, orderby);
+        
         int nOffers = offers.size();
         log.debug("offers found: {}", nOffers );
-        
-        if ( nOffers >= 1) {                        
-            for (int i=0; i<nOffers; i++) {
-                DexOffer currentOffer = offers.get(i);                
-                if (validateOffer(currentOffer)) {
-                    // matched...
-                    log.debug("match found: {}", currentOffer.getId() );                    
-                    return currentOffer;
-                }
-            }                     
-        }
 
+        if ( nOffers >= 1) { 
+            DexOffer counterOffer = offers.get(0);
+            if (validateOffer(counterOffer)) {                    
+                    log.debug("match found, id: {}, amount: {}, pairCurrency: {}, pairRate: {}  ", counterOffer.getId(), 
+                            counterOffer.getOfferAmount(), counterOffer.getPairCurrency(), 
+                            counterOffer.getPairRate() );                    
+                    return counterOffer;
+                }
+        }
         return null;
     }
     

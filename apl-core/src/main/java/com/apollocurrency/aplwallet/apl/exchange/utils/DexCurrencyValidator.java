@@ -55,6 +55,10 @@ public class DexCurrencyValidator {
     }
 
 
+    public static boolean isEthOrPaxAddress(String address) {
+        return address.contains("0x");
+    }
+
 
 
 }

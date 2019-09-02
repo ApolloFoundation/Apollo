@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -26,10 +23,13 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
 public class DexOfferTransaction extends DEX {
@@ -72,40 +72,44 @@ public class DexOfferTransaction extends DEX {
             offerCurrency = DexCurrencies.getType(attachment.getOfferCurrency());
             pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
             offerType = OfferType.getType(attachment.getType());
-        } catch (Exception ex){
-            throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency() +" / " + attachment.getType());
+        } catch (Exception ex) {
+            throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
         }
 
-        if (attachment.getPairRate() <= 0 ) {
+        if (attachment.getPairRate() <= 0) {
             throw new AplException.NotValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
         }
         if (attachment.getOfferAmount() <= 0) {
             throw new AplException.NotValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
         }
 
-        if(attachment instanceof DexOfferAttachmentV2){
-            String address = ((DexOfferAttachmentV2)attachment).getFromAddress();
-            if(StringUtils.isBlank(address) || address.length() > Constants.MAX_ADDRESS_LENGTH){
+        if (attachment instanceof DexOfferAttachmentV2) {
+            String address = ((DexOfferAttachmentV2) attachment).getFromAddress();
+            if (StringUtils.isBlank(address) || address.length() > Constants.MAX_ADDRESS_LENGTH) {
                 throw new AplException.NotValidException(JSON.toString(incorrect("FromAddress", String.format("Should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH))));
             }
         }
 
         try {
             Math.multiplyExact(attachment.getPairRate(), attachment.getOfferAmount());
-        } catch (ArithmeticException ex){
+        } catch (ArithmeticException ex) {
             throw new AplException.NotValidException("PairRate or OfferAmount is too big.");
         }
 
 
         Integer currentTime = timeService.getEpochTime();
-        if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime  > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+        if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
+            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
 
 
         if (DexCurrencyValidator.haveFreezeOrRefundApl(offerType, offerCurrency, pairCurrency)) {
             Long amountATM = attachment.getOfferAmount();
             Account sender = Account.getAccount(transaction.getSenderId());
+
+            if (sender == null) {
+                throw new AplException.NotValidException("Unknown account:" + transaction.getSenderId());
+            }
 
             if (sender.getUnconfirmedBalanceATM() < amountATM) {
                 throw new AplException.NotValidException("Not enough money.");
@@ -127,8 +131,9 @@ public class DexOfferTransaction extends DEX {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
 
+        DexOffer offer = new DexOffer(transaction, attachment);
         // On the Apl side.
-        if(DexCurrencyValidator.haveFreezeOrRefundApl(new DexOffer(transaction, attachment))) {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
             lockOnAplSide(transaction, senderAccount);
         }
 

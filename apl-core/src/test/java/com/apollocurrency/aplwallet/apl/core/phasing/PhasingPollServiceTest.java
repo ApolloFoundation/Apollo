@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -24,15 +14,16 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -40,11 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
@@ -53,6 +46,8 @@ import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -65,13 +60,23 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -79,6 +84,8 @@ public class PhasingPollServiceTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension();
+
+
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -89,6 +96,7 @@ public class PhasingPollServiceTest {
             PhasingPollResultTable.class,
             PhasingPollTable.class,
             PhasingPollVoterTable.class,
+            PhasingApprovedResultTable.class,
             PhasingPollLinkedTransactionTable.class,
             PhasingVoteTable.class,
             PublicKeyTable.class,
@@ -105,7 +113,7 @@ public class PhasingPollServiceTest {
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
     @Inject
-    PhasingPollService service;
+    PhasingPollServiceImpl service;
     @Inject
     TransactionDao transactionDao;
     @Inject
@@ -117,6 +125,8 @@ public class PhasingPollServiceTest {
     PhasingTestData ptd;
     TransactionTestData ttd;
     BlockTestData btd;
+    @Inject
+    BlockchainConfig blockchainConfig;
 
 
     @BeforeEach
@@ -124,6 +134,8 @@ public class PhasingPollServiceTest {
         ptd = new PhasingTestData();
         ttd = new TransactionTestData();
         btd = new BlockTestData();
+
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1,1,1,1,1,1L, new FeaturesHeightRequirement(0))));
     }
 
     @Test
@@ -279,49 +291,26 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollNotApproved() throws SQLException {
         blockchain.setLastBlock(btd.BLOCK_9);
-        inTransaction(con -> service.finish(ptd.POLL_3, 1));
+        inTransaction(con -> service.finish(ptd.POLL_3, 1, 1L));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
+        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
 
         assertEquals(expected, result);
+        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
-/*
-    @Test // FROM ANDRII K. branch
-    void testFinishPollNotApproved2() throws SQLException {
-        inTransaction(con -> {
-            blockchain.setLastBlock(btd.BLOCK_9);
-            service.finish(ptd.POLL_3, 1);
-
-            PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, 1, btd.BLOCK_9.getHeight());
-
-            assertEquals(expected, result);
-        });
-    }
-*/
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
+        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum(), 1L));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
+        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
 
         assertEquals(expected, result);
+        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
-/*
-    @Test  // FROM ANDRII K. branch
-    void testFinishPollApprovedByLinkedTransactions2() throws SQLException {
-        inTransaction(con -> {
-            blockchain.setLastBlock(btd.LAST_BLOCK);
-            service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum());
-            PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-            PhasingPollResult expected = new PhasingPollResult(ptd.POLL_3, ptd.POLL_3.getQuorum(), btd.LAST_BLOCK.getHeight());
-
-            assertEquals(expected, result);
-        });
-    }
-*/
 
     @Test
     void testCountVotesForPollWithLinkedTransactions() {

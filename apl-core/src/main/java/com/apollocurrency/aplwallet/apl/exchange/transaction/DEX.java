@@ -17,5 +17,6 @@ public abstract class DEX extends TransactionType {
     public static final TransactionType DEX_CANCEL_OFFER_TRANSACTION = new DexCancelOfferTransaction();
     public static final TransactionType DEX_CONTRACT_TRANSACTION = new DexContractTransaction();
     public static final TransactionType DEX_TRANSFER_MONEY_TRANSACTION = new DexTransferMoneyTransaction();
+    public static final TransactionType DEX_CLOSE_OFFER = new DexCloseOfferTransaction();
 
 }

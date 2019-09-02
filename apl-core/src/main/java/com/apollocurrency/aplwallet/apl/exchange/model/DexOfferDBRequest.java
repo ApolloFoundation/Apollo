@@ -3,8 +3,17 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DexOfferDBRequest {
 
     private Integer type;
@@ -17,98 +26,4 @@ public class DexOfferDBRequest {
     private BigDecimal maxBidPrice;
     private Integer offset;
     private Integer limit;
-
-    public DexOfferDBRequest(OfferType type, Integer currentTime, DexCurrencies offerCur, DexCurrencies pairCur, Long accountId, OfferStatus status,
-                             BigDecimal minAskPrice, BigDecimal maxBidPrice, Integer offset, Integer limit) {
-        this.type = type != null ? type.ordinal() : null;
-        this.currentTime = currentTime;
-        this.offerCur = offerCur != null ? offerCur.ordinal() : null;
-        this.pairCur = pairCur != null ? pairCur.ordinal() : null;
-        this.minAskPrice = minAskPrice;
-        this.maxBidPrice = maxBidPrice;
-        this.accountId = accountId;
-        this.status = status;
-        this.offset = offset;
-        this.limit = limit;
-    }
-
-    public Integer getType() {
-        return type;
-    }
-
-    public void setType(Integer type) {
-        this.type = type;
-    }
-
-    public Integer getOfferCur() {
-        return offerCur;
-    }
-
-    public void setOfferCur(Integer offerCur) {
-        this.offerCur = offerCur;
-    }
-
-    public Integer getPairCur() {
-        return pairCur;
-    }
-
-    public void setPairCur(Integer pairCur) {
-        this.pairCur = pairCur;
-    }
-
-    public BigDecimal getMinAskPrice() {
-        return minAskPrice;
-    }
-
-    public void setMinAskPrice(BigDecimal minAskPrice) {
-        this.minAskPrice = minAskPrice;
-    }
-
-    public BigDecimal getMaxBidPrice() {
-        return maxBidPrice;
-    }
-
-    public void setMaxBidPrice(BigDecimal maxBidPrice) {
-        this.maxBidPrice = maxBidPrice;
-    }
-
-    public Integer getCurrentTime() {
-        return currentTime;
-    }
-
-    public void setCurrentTime(Integer currentTime) {
-        this.currentTime = currentTime;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public OfferStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OfferStatus status) {
-        this.status = status;
-    }
-
-    public Integer getOffset() {
-        return offset;
-    }
-
-    public void setOffset(Integer offset) {
-        this.offset = offset;
-    }
-
-    public Integer getLimit() {
-        return limit;
-    }
-
-    public void setLimit(Integer limit) {
-        this.limit = limit;
-    }
 }

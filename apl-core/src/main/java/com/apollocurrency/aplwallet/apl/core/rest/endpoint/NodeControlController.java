@@ -12,6 +12,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
@@ -22,8 +25,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This endpoint gives info about backend status and allows some control. Should
@@ -91,7 +92,7 @@ public class NodeControlController {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
     }
-    
+
     @Path("/health")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -112,8 +113,8 @@ public class NodeControlController {
             infoResponse.healthInfo = bcService.getNodeHealth();
             infoResponse.statusInfo = bcService.getNodeStatus();
             infoResponse.networkingInfo = bcService.getNetworkingInfo();
-            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK 
-                    || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
+            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
+                    || (infoResponse.networkingInfo.inboundPeers == 0 && infoResponse.networkingInfo.outboundPeers == 0);
             return Response.status(Response.Status.OK).entity(infoResponse).build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();

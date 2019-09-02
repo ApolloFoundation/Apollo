@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ public class PeerInfoConverter implements Converter<PeerInfo, PeerDTO> {
         dto.setDownloadedVolume(peer.getDownloadedVolume());
         dto.setUploadedVolume(peer.getUploadedVolume());
         dto.setApplication(peer.getApplication());
-        dto.setVersion(peer.getVersion() == null?null:peer.getVersion());
+        dto.setVersion(peer.getVersion() == null ? null : peer.getVersion());
         dto.setPlatform(peer.getPlatform());
         if (peer.getApiPort() != 0) {
             dto.setApiPort(peer.getApiPort());
@@ -38,12 +37,12 @@ public class PeerInfoConverter implements Converter<PeerInfo, PeerDTO> {
         dto.setOutboundWebSocket(false);
 
         List<String> availableServices = new ArrayList<>();
-        if (!availableServices.isEmpty()){
+        if (!availableServices.isEmpty()) {
             dto.setServices(availableServices);
         }
 
         dto.setBlockchainState(null);
-        dto.setChainId(peer.getChainId()==null?null:peer.getChainId());
+        dto.setChainId(peer.getChainId() == null ? null : peer.getChainId());
         return dto;
 
     }

@@ -16,34 +16,35 @@ import java.nio.ByteBuffer;
 public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
 
     private long orderId;
-    private boolean hasFrozenMoney;
+    private long offerAmount; // measured in ATM
 
     public DexControlOfFrozenMoneyAttachment(ByteBuffer buffer) {
         super(buffer);
         this.orderId = buffer.getLong();
-        this.hasFrozenMoney = buffer.get() == 1;
+        this.offerAmount = buffer.getLong();
     }
 
     public DexControlOfFrozenMoneyAttachment(JSONObject attachmentData) {
         super(attachmentData);
+        this.offerAmount = Convert.parseLong(attachmentData.get("offerAmount"));
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
     }
 
     @Override
     public int getMySize() {
-        return 8 + 1;
+        return 8 + 8;
     }
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(this.orderId);
-        buffer.put(hasFrozenMoney ? (byte)1 : (byte)0);
+        buffer.putLong(this.offerAmount);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("orderId", this.getOrderId());
-        json.put("hasFrozenMoney", this.isHasFrozenMoney());
+        json.put("orderId", Long.toUnsignedString(this.getOrderId()));
+        json.put("offerAmount", offerAmount);
     }
 
     @Override

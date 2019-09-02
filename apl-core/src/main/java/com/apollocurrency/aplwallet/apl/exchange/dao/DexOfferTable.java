@@ -21,15 +21,13 @@ import java.util.Objects;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
- * Use DexOfferDao
+ * Use DexOfferDao for not transactional operations. (f.e. search)
  */
 @Deprecated
 @Singleton
 public class DexOfferTable  extends EntityDbTable<DexOffer> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DexOfferTable.class);
-
-    static final LongKeyFactory<DexOffer> KEY_FACTORY = new LongKeyFactory<>("transaction_id") {
+    private static final LongKeyFactory<DexOffer> KEY_FACTORY = new LongKeyFactory<>("transaction_id") {
         @Override
         public DbKey newKey(DexOffer offer) {
             return new LongKey(offer.getTransactionId());

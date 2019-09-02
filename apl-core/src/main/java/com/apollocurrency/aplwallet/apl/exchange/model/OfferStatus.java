@@ -5,12 +5,24 @@ public enum  OfferStatus {
     OPEN,
     PENDING,
     EXPIRED,
-    CANCEL;
+    CANCEL,
+    WAITING_APPROVAL,
+    CLOSED;
 
     public static OfferStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferStatus.values().length){
             return null;
         }
         return OfferStatus.values()[ordinal];
+    }
+
+    public boolean isOpen(){
+        return this == OfferStatus.OPEN;
+    }
+    public boolean isClosed(){
+        return this == OfferStatus.CLOSED;
+    }
+    public boolean isWaitingForApproval(){
+        return this == OfferStatus.WAITING_APPROVAL;
     }
 }

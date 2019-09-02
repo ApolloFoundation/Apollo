@@ -59,7 +59,7 @@ public interface PhasingPollService {
 
     void addPoll(Transaction transaction, PhasingAppendix appendix);
 
-    void finish(PhasingPoll phasingPoll, long result);
+    void finish(PhasingPoll phasingPoll, long result, long approvedTx);
 
     List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll);
 
