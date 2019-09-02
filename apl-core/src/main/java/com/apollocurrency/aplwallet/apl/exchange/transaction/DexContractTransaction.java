@@ -9,14 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAtt
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 
 public class DexContractTransaction extends DEX {
 
@@ -102,14 +103,18 @@ public class DexContractTransaction extends DEX {
 
         // contract == null it means, that it's a first step.
         if (contract == null) {
-            dexService.saveDexContract(new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment));
-        } else {
-            contract.setCounterOrderId(attachment.getCounterOrderId());
+            contract = new ExchangeContract(senderAccount.getId(), counterOffer.getAccountId(), attachment);
+        } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
+            contract.setEncryptedSecret(attachment.getEncryptedSecret());
+            contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());
-            contract.setContractStatus(attachment.getContractStatus());
-
-            dexService.saveDexContract(contract);
+            contract.setContractStatus(ExchangeContractStatus.STEP_2);
+        } else if (attachment.getContractStatus().isStep3() && contract.getContractStatus().isStep2()) {
+            contract.setTransferTxId(attachment.getTransferTxId());
+            contract.setContractStatus(ExchangeContractStatus.STEP_3);
         }
+
+        dexService.saveDexContract(contract);
     }
 
     @Override

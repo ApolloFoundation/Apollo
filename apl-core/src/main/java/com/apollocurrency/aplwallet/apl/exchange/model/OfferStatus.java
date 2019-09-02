@@ -17,12 +17,12 @@ public enum  OfferStatus {
     }
 
     public boolean isOpen(){
-        return this.equals(OfferStatus.OPEN);
+        return this == OfferStatus.OPEN;
     }
     public boolean isClosed(){
-        return this.equals(OfferStatus.CLOSED);
+        return this == OfferStatus.CLOSED;
     }
     public boolean isWaitingForApproval(){
-        return this.equals(OfferStatus.WAITING_APPROVAL);
+        return this == OfferStatus.WAITING_APPROVAL;
     }
 }

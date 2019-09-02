@@ -4,13 +4,17 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public enum ExchangeContractStatus {
     /**
-     * When a contract is waiting for review and approval.
+     * The first user sent a contract and he is waiting for review and approval. (On this step user doesn't transfer money.)
      */
     STEP_1,
     /**
-     * When a contract was approved and atomic swap was started.
+     * The second user approved the contract, transferred the money and waiting for counter transfer.
      */
-    STEP_2;
+    STEP_2,
+    /**
+     * The first user sent counter transfer. (Process of the atomic swap is started.)
+     */
+    STEP_3;
 
     public static ExchangeContractStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferType.values().length){
@@ -20,11 +24,15 @@ public enum ExchangeContractStatus {
     }
 
     public boolean isStep1(){
-        return this.equals(ExchangeContractStatus.STEP_1);
+        return this == ExchangeContractStatus.STEP_1;
     }
 
     public boolean isStep2(){
-        return this.equals(ExchangeContractStatus.STEP_2);
+        return this == ExchangeContractStatus.STEP_2;
+    }
+
+    public boolean isStep3() {
+        return this == ExchangeContractStatus.STEP_3;
     }
 
 
