@@ -53,12 +53,12 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
-        return toList(accountAssetTable.getAssetAccounts(assetId, height, from, to));
+        return accountAssetTable.getAssetAccounts(assetId, height, from, to);
     }
 
     @Override
     public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
-        return toList(accountAssetTable.getAccountAssets(account.getId(), from, to));
+        return accountAssetTable.getAccountAssets(account.getId(), from, to);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
-        return toList(accountAssetTable.getAccountAssets(accountId, height, from, to));
+        return accountAssetTable.getAccountAssets(accountId, height, from, to);
     }
 
     @Override
