@@ -24,15 +24,15 @@ public enum ExchangeContractStatus {
     }
 
     public boolean isStep1(){
-        return this.equals(ExchangeContractStatus.STEP_1);
+        return this == ExchangeContractStatus.STEP_1;
     }
 
     public boolean isStep2(){
-        return this.equals(ExchangeContractStatus.STEP_2);
+        return this == ExchangeContractStatus.STEP_2;
     }
 
     public boolean isStep3() {
-        return this.equals(ExchangeContractStatus.STEP_3);
+        return this == ExchangeContractStatus.STEP_3;
     }
 
 
