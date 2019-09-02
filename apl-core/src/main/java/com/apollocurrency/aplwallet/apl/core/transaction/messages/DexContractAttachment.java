@@ -72,8 +72,8 @@ public class DexContractAttachment extends AbstractAttachment {
         super(attachmentData);
         this.orderId = Convert.parseUnsignedLong((String) attachmentData.get("orderId"));
         this.counterOrderId = Convert.parseUnsignedLong((String) attachmentData.get("counterOrderId"));
-        this.secretHash = attachmentData.get("secretHash") != null ? Convert.parseHexString((String) (attachmentData.get("secretHash"))) : null;
-        this.encryptedSecret = attachmentData.get("encryptedSecret") != null ? Convert.parseHexString((String) attachmentData.get("encryptedSecret")) : null;
+        this.secretHash = Convert.parseHexString((String) (attachmentData.get("secretHash")));
+        this.encryptedSecret = Convert.parseHexString((String) attachmentData.get("encryptedSecret"));
         this.contractStatus = ExchangeContractStatus.values()[((Number) attachmentData.get("contractStatus")).intValue()];
 
         this.transferTxId = attachmentData.get("transferTxId") != null ? String.valueOf(attachmentData.get("transferTxId")) : null;

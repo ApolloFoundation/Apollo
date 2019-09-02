@@ -79,7 +79,7 @@ public class DexOfferProcessor {
                 }
 
                 if (!counterOffer.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-                    //TODO do something.
+                    log.debug("Order is in the status: {}, not valid now.", counterOffer.getStatus());//TODO do something.
                     continue;
                 }
 
