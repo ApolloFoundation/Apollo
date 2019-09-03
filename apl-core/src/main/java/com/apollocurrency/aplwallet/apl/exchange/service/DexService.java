@@ -42,17 +42,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -475,6 +465,18 @@ public class DexService {
         }
 
         return null;
+    }
+
+    public boolean hasConfirmations(ExchangeContract contract, DexOffer dexOffer) {
+        if (dexOffer.getType() == OfferType.BUY) {
+            int currentHeight = blockchain.getHeight();
+            int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
+            return blockchain.hasTransaction(Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
+        } else if (dexOffer.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
+            return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
+        } else {
+            throw new IllegalArgumentException("Unable to calculate number of confirmations for paired currency - " + dexOffer.getPairCurrency());
+        }
     }
 
 

@@ -10,12 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -219,7 +214,7 @@ public class DexOfferProcessor {
             try {
                 DexOffer offer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
-                if (!offer.getStatus().isWaitingForApproval() || !isContractStep3Valid(contract) || contract.getTransferTxId() == null) {
+                if (!offer.getStatus().isWaitingForApproval() || !isContractStep3Valid(contract) || contract.getTransferTxId() == null || !dexService.hasConfirmations(contract, offer)) {
                     continue;
                 }
 
