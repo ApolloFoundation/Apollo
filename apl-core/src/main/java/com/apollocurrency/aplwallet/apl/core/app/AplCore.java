@@ -242,18 +242,16 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.1, "Apollo core cleaases initialization");
 
 
-                aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
-
-                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
-                tcs.initialize();
-
-                aplAppStatus.durableTaskUpdate(initCoreTaskID,  53.0, "Exchange matcher initialization");
-
-                
                 dexValidationServiceImpl = CDI.current().select(DexValidationServiceImpl.class).get();
                 dexValidationServiceImpl.initialize();
                 
-                aplAppStatus.durableTaskUpdate(initCoreTaskID,  53.5, "Exchange matcher initialization");
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  53.0, "Exchange validation initialization");                
+                
+                
+                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
+                tcs.initialize();
+
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  54.5, "Exchange matcher initialization");
 
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();

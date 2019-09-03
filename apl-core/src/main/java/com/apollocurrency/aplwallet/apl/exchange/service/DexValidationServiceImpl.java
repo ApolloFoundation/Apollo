@@ -36,14 +36,14 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDexValidator {
     
-    private static final Logger log = LoggerFactory.getLogger(DexMatchingService.class);
-    private DexService dexService;
+    private static final Logger log = LoggerFactory.getLogger(DexValidationServiceImpl.class);
+    // private DexService dexService;
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     
     @Inject
-    DexValidationServiceImpl( DexService dexService, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService ) {
-        this.dexService =  Objects.requireNonNull( dexService,"dexService is null");   
+    DexValidationServiceImpl( /*DexService dexService,*/ DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService ) {
+        //this.dexService =  Objects.requireNonNull( dexService,"dexService is null");   
         this.dexSmartContractService =  Objects.requireNonNull( dexSmartContractService,"dexSmartContractService is null");           
         this.ethereumWalletService =  Objects.requireNonNull( ethereumWalletService,"dexSmartContractService is null");           
 

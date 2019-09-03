@@ -33,12 +33,14 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     private DexMatchingService dexMatchingService;
+    private DexValidationServiceImpl dexValidationServiceImpl;
     private TimeService timeService;
         
 
     @Inject
-    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService) {
+    DexMatcherServiceImpl( DexMatchingService dexMatchingService, DexValidationServiceImpl dexValidationServiceImpl, TimeService timeService) {
         this.dexMatchingService =  Objects.requireNonNull( dexMatchingService,"dexService is null");
+        this.dexValidationServiceImpl = Objects.requireNonNull( dexValidationServiceImpl,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
     }
     
@@ -65,8 +67,9 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * currency-specific validation (Ethereum)
      * @param DexOffer  offer to validate
      */ 
-    private boolean validateOfferETH(DexOffer offer) {
+    private boolean validateOfferETH(DexOffer myOffer, DexOffer hisOffer) {
         // TODO: add validation routine
+        log.debug("validateOfferETH: " );        
         return true;         
     }
 
@@ -74,8 +77,9 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * currency-specific validation (Apollo)
      * @param DexOffer  offer to validate
      */ 
-    private boolean validateOfferAPL(DexOffer offer) {
+    private boolean validateOfferAPL(DexOffer myOffer, DexOffer hisOffer) {        
         // TODO: add validation routine
+        log.debug("validateOfferAPL: " );
         return true;         
     }
     
@@ -83,8 +87,9 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * currency-specific validation (Pax)
      * @param DexOffer  offer to validate
      */ 
-    private boolean validateOfferPAX(DexOffer offer) {
+    private boolean validateOfferPAX(DexOffer myOffer, DexOffer hisOffer) {
         // TODO: add validation routine
+        log.debug("validateOfferPAX: " );
         return true;         
     }
     
@@ -93,15 +98,15 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * Common validation routine for offer  
      * @param DexOffer  offer - offer to validate
      */ 
-    private boolean validateOffer( DexOffer offer) {
+    private boolean validateOffer(DexOffer myOffer, DexOffer hisOffer) {
         
-        DexCurrencies curr = offer.getOfferCurrency(); 
+        DexCurrencies curr = hisOffer.getOfferCurrency(); 
         log.debug("currency: {}", curr );
         
         switch (curr) {
-            case APL: return validateOfferAPL(offer);
-            case ETH: return validateOfferETH(offer);
-            case PAX: return validateOfferPAX(offer);
+            case APL: return validateOfferAPL(myOffer,hisOffer);
+            case ETH: return validateOfferETH(myOffer,hisOffer);
+            case PAX: return validateOfferPAX(myOffer,hisOffer);
             default: return false;
         }        
         
@@ -158,7 +163,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
 
         if ( nOffers >= 1) { 
             DexOffer counterOffer = offers.get(0);
-            if (validateOffer(counterOffer)) {                    
+            if (validateOffer(createdOffer, counterOffer)) {                    
                     log.debug("match found, id: {}, amount: {}, pairCurrency: {}, pairRate: {}  ", counterOffer.getId(), 
                             counterOffer.getOfferAmount(), counterOffer.getPairCurrency(), 
                             counterOffer.getPairRate() );                    
