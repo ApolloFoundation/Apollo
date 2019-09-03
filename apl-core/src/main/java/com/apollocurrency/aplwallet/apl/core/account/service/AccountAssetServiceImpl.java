@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import javax.enterprise.event.Event;
@@ -21,7 +21,6 @@ import javax.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
-import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -35,15 +34,17 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     private Event<Account> accountEvent;
     private Event<AccountAsset> accountAssetEvent;
     private AccountLedgerService accountLedgerService;
+    private AssetDividendService assetDividendService;
 
     @Inject
-    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, AccountLedgerService accountLedgerService) {
+    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, AccountLedgerService accountLedgerService, AssetDividendService assetDividendService) {
         this.blockchain = blockchain;
         this.accountAssetTable = accountAssetTable;
         this.accountService = accountService;
         this.accountEvent = accountEvent;
         this.accountAssetEvent = accountAssetEvent;
         this.accountLedgerService = accountLedgerService;
+        this.assetDividendService = assetDividendService;
     }
 
     @Override
@@ -247,6 +248,6 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             }
         }
         accountService.addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
+        assetDividendService.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 }

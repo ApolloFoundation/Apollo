@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -26,14 +26,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.enterprise.event.Event;
-import javax.inject.Inject;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
-import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,6 +51,7 @@ class AccountAssetServiceTest {
     private Event accountAssetEvent = mock(Event.class);
     private AccountService accountService = mock(AccountService.class);
     private AccountLedgerService accountLedgerService = mock(AccountLedgerService.class);
+    private AssetDividendService assetDividendService = mock(AssetDividendServiceImpl.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -75,7 +73,8 @@ class AccountAssetServiceTest {
                 accountService,
                 accountEvent,
                 accountAssetEvent,
-                accountLedgerService )
+                accountLedgerService,
+                assetDividendService)
         );
     }
 
@@ -234,6 +233,7 @@ class AccountAssetServiceTest {
                 .filter(ass -> ass.getAssetId()==testData.ACC_ASS_6.getAssetId())
                 .sorted(assetComparator).collect(Collectors.toList());
 
+        long numCount = expected.size();
         long totalDivident = expected.stream()
                 .collect(Collectors.summingLong(
                         accountAsset -> Math.multiplyExact(accountAsset.getQuantityATU(), amountATMPerATU)));
@@ -244,5 +244,6 @@ class AccountAssetServiceTest {
         accountAssetService.payDividends(testData.ACC_6, transactionId, attachment);
         verify(accountService, times(4)).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), eq(LedgerEvent.ASSET_DIVIDEND_PAYMENT), eq(transactionId), any(long.class));
         verify(accountService).addToBalanceATM(testData.ACC_6, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDivident);
+        verify(assetDividendService).addAssetDividend(eq(transactionId), any(ColoredCoinsDividendPayment.class), eq(totalDivident), eq(numCount));
     }
 }
