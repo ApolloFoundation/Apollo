@@ -568,24 +568,31 @@ public class BlockchainImpl implements Blockchain {
         if (limit > 500) { // warn for too big values
             log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
         }
+        long initialLimit = limit;
         // start fetch from main db
+        TransactionalDataSource mainDataSource = databaseManager.getDataSource();
         List<Transaction> transactions = transactionDao.getTransactions(
-                databaseManager.getDataSource(),
+                mainDataSource,
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        long initialLimit = limit;
-        log.trace("getTx() 2. fetched from mainDb=[{}], initLimit={}, accountId={}, type={}, subtype={}", transactions.size(), initialLimit, accountId, type, subtype);
+        int foundCount = transactionDao.getTransactionCountByFilter(mainDataSource,
+                accountId, numberOfConfirmations, type, subtype,
+                blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
+                includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        log.trace("getTx() 2. fetched from mainDb, fetch=[{}] / count={}, initLimit={}, accountId={}, type={}, subtype={}",
+                transactions.size(), foundCount, initialLimit, accountId, type, subtype);
+
         // check if all Txs are fetched from main db, continue inside shard dbs otherwise
         if (transactions.size() < limit) {
             // not all requested Tx were fetched from main, loop over shards
-            from += transactions.size();
+            from += transactions.size() > 0 ? transactions.size() : foundCount;
             // loop over all shard in descent order and fetch left Tx number
             Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
             while (fullDataSources.hasNext()) {
                 TransactionalDataSource dataSource = fullDataSources.next();
                 // count Tx records before fetch Tx records
-                int foundCount = transactionDao.getTransactionCountByFilter(dataSource,
+                foundCount = transactionDao.getTransactionCountByFilter(dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
