@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -37,8 +36,8 @@ class AccountCurrencyServiceImplTest {
     private Event accountCurrencyEvent = mock(Event.class);
     private AccountLedgerService accountLedgerService = mock(AccountLedgerService.class);
 
-    AccountCurrencyService accountCurrencyService;
-    AccountTestData testData;
+    private AccountCurrencyService accountCurrencyService;
+    private AccountTestData testData;
 
     @BeforeEach
     void setUp() {
