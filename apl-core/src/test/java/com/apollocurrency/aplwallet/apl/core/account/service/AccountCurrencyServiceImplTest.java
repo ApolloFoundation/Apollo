@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -24,7 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountCurrencyServiceImplTest {
@@ -32,7 +35,6 @@ class AccountCurrencyServiceImplTest {
     private AccountCurrencyTable accountCurrencyTable = mock(AccountCurrencyTable.class);
     private Event accountEvent = mock(Event.class);
     private Event accountCurrencyEvent = mock(Event.class);
-    private AccountService accountService = mock(AccountService.class);
     private AccountLedgerService accountLedgerService = mock(AccountLedgerService.class);
 
     AccountCurrencyService accountCurrencyService;
@@ -183,4 +185,22 @@ class AccountCurrencyServiceImplTest {
         verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
         verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
     }
+
+    @Test
+    void testUpdate_as_insert() {
+        AccountCurrency newCurrency = new AccountCurrency(
+                testData.newCurrency.getAccountId(), testData.newCurrency.getCurrencyId(),
+                1000L, 1000L,testData.CUR_BLOCKCHAIN_HEIGHT);
+        accountCurrencyService.update(newCurrency);
+        verify(accountCurrencyTable, times(1)).insert(newCurrency);
+        verify(accountCurrencyTable, never()).delete(any(AccountCurrency.class));
+    }
+
+    @Test
+    void testUpdate_as_delete() {
+        accountCurrencyService.update(testData.newCurrency);
+        verify(accountCurrencyTable, times(1)).delete(testData.newCurrency);
+        verify(accountCurrencyTable, never()).insert(any(AccountCurrency.class));
+    }
+
 }

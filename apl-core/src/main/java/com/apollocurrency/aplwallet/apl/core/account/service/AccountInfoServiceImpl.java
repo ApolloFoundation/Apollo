@@ -33,7 +33,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
     }
 
     @Override
-    public void save(AccountInfo accountInfo) {
+    public void update(AccountInfo accountInfo) {
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
             accountInfoTable.insert(accountInfo);
         } else {
@@ -57,7 +57,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
             accountInfo.setName(name);
             accountInfo.setDescription(description);
         }
-        save(accountInfo);
+        update(accountInfo);
     }
 
     @Override

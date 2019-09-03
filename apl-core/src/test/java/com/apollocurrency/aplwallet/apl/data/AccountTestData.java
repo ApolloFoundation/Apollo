@@ -97,11 +97,13 @@ public class AccountTestData {
     public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = 882424;
 
     /* AccountInfo */
-    public final AccountInfo ACC_INFO_0 = createInfo(5, 110, "ZT", null, 3073, true);
+    public final AccountInfo ACC_INFO_0 = createInfo(5, 100, "ZT", null, 3073, true);
     public final AccountInfo ACC_INFO_1 = createInfo(6, 120, "CALIGULA", null, 3559, true);
     public final AccountInfo ACC_INFO_2 = createInfo(7, 130, "Adnan Celik", null, 3563, true);
     public final AccountInfo ACC_INFO_3 = createInfo(10, 140, "Vasily", "Front end wallet ui/ux", 26068, true);
     public final AccountInfo ACC_INFO_4 = createInfo(15, 150, "CALIGULA shubham nitin bhabad", "abuse brain fright always", 70858, true);
+
+    public final int INFO_BLOCKCHAIN_HEIGHT = ACC_INFO_4.getHeight();
 
     public List<AccountInfo> ALL_INFO = List.of(ACC_INFO_0, ACC_INFO_1, ACC_INFO_2, ACC_INFO_3, ACC_INFO_4);
     public AccountInfo newInfo = new AccountInfo(ACC_INFO_4.getAccountId()+1, "new account info name", "new description", ACC_INFO_4.getHeight()+1);
