@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface AccountCurrencyService {
 
-    void save(AccountCurrency currency);
+    void update(AccountCurrency currency);
 
     AccountCurrency getAccountCurrency(Account account, long currencyId);
 

@@ -101,6 +101,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(testData.ACC_ASS_0);
         verify(firedEventAcc).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_0);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
     }
 
     @Test
@@ -121,6 +122,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(expectedNewAsset);
         verify(firedEventAcc).fire(testData.ACC_0);
         verify(firedEventAss).fire(expectedNewAsset);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_0.getId(), false);
     }
 
     @Test
@@ -154,6 +156,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(testData.ACC_ASS_3);
         verify(firedEventAcc).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_3);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
     }
 
     @Test
@@ -215,6 +218,8 @@ class AccountAssetServiceTest {
         verify(firedEventAccUnconfirmed).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_3);
         verify(firedEventAssUnconfirmed).fire(testData.ACC_ASS_3);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
     }
 
     @Test

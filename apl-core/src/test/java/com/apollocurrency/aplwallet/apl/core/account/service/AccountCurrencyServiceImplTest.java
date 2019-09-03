@@ -1,0 +1,186 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.account.service;
+
+import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.data.AccountTestData;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import javax.enterprise.event.Event;
+
+import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
+class AccountCurrencyServiceImplTest {
+    private Blockchain blockchain = mock(BlockchainImpl.class);
+    private AccountCurrencyTable accountCurrencyTable = mock(AccountCurrencyTable.class);
+    private Event accountEvent = mock(Event.class);
+    private Event accountCurrencyEvent = mock(Event.class);
+    private AccountService accountService = mock(AccountService.class);
+    private AccountLedgerService accountLedgerService = mock(AccountLedgerService.class);
+
+    AccountCurrencyService accountCurrencyService;
+    AccountTestData testData;
+
+    @BeforeEach
+    void setUp() {
+        testData = new AccountTestData();
+        accountCurrencyService = spy(new AccountCurrencyServiceImpl(
+                blockchain,
+                accountCurrencyTable,
+                accountLedgerService,
+                accountEvent,
+                accountCurrencyEvent
+                ));
+    }
+
+    @AfterEach
+    void tearDown() {
+    }
+
+    @Test
+    void addToCurrencyUnits() {
+        long units = 50000L;
+        long currencyId = testData.ACC_CUR_0.getCurrencyId();
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+        long balance = Math.addExact(testData.ACC_CUR_0.getUnits(), units);
+
+        Event firedEventAcc = mock(Event.class);
+        Event firedEventCurr = mock(Event.class);
+        doReturn(firedEventAcc).when(accountEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(firedEventCurr).when(accountCurrencyEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(testData.ACC_CUR_0).when(accountCurrencyTable).get(any());
+
+        accountCurrencyService.addToCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units);
+
+        assertEquals(balance, testData.ACC_CUR_0.getUnits());
+        verify(accountCurrencyService).update(testData.ACC_CUR_0);
+        verify(firedEventAcc).fire(testData.ACC_1);
+        verify(firedEventCurr).fire(testData.ACC_CUR_0);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
+    }
+
+    @Test
+    void addToCurrencyUnits_newCurrency() {
+        long units = 50000L;
+        long currencyId = testData.ACC_CUR_0.getCurrencyId();
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+        long balance = Math.addExact(testData.ACC_CUR_0.getUnits(), units);
+        AccountCurrency expectedNewCurrency = new AccountCurrency(testData.ACC_0.getId(), currencyId, units, 0, blockchain.getHeight());
+
+        Event firedEventAcc = mock(Event.class);
+        Event firedEventCurr = mock(Event.class);
+        doReturn(firedEventAcc).when(accountEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(firedEventCurr).when(accountCurrencyEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(null).when(accountCurrencyTable).get(any());
+
+        accountCurrencyService.addToCurrencyUnits(testData.ACC_0, event, eventId, currencyId, units);
+
+        verify(accountCurrencyService).update(expectedNewCurrency);
+        verify(firedEventAcc).fire(testData.ACC_0);
+        verify(firedEventCurr).fire(expectedNewCurrency);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_0.getId(), false);
+    }
+
+    @Test
+    void addToUnconfirmedCurrencyUnits_expectedException() {
+        long units = 50000L;
+        long currencyId = testData.ACC_CUR_0.getCurrencyId();
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+
+        doReturn(testData.ACC_CUR_0).when(accountCurrencyTable).get(any());
+        assertThrows(DoubleSpendingException.class, () ->
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
+
+    }
+
+    @Test
+    void addToUnconfirmedCurrencyUnits() {
+        long units = -50000L;
+        long currencyId = 50L;
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+        long balance = Math.addExact(testData.ACC_CUR_8.getUnconfirmedUnits(), units);
+
+        Event firedEventAcc = mock(Event.class);
+        Event firedEventCurr = mock(Event.class);
+        doReturn(firedEventAcc).when(accountEvent).select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE));
+        doReturn(firedEventCurr).when(accountCurrencyEvent).select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE));
+        doReturn(testData.ACC_CUR_8).when(accountCurrencyTable).get(any());
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units);
+
+        assertEquals(balance, testData.ACC_CUR_8.getUnconfirmedUnits());
+        verify(accountCurrencyService).update(testData.ACC_CUR_8);
+        verify(firedEventAcc).fire(testData.ACC_1);
+        verify(firedEventCurr).fire(testData.ACC_CUR_8);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
+    }
+
+    @Test
+    void addToUnconfirmedCurrencyUnits_newCurrencyWithException() {
+        long units = -50000L;
+        long currencyId = 50L;
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+
+        doReturn(null).when(accountCurrencyTable).get(any());
+
+        assertThrows(DoubleSpendingException.class, () ->
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units));
+    }
+
+    @Test
+    void addToCurrencyAndUnconfirmedCurrencyUnits() {
+        long units = 50000L;
+        long currencyId = testData.ACC_CUR_0.getCurrencyId();
+        LedgerEvent event = LedgerEvent.CURRENCY_TRANSFER;
+        long eventId = 10L;
+        long balance = Math.addExact(testData.ACC_CUR_0.getUnits(), units);
+        long unconfirmedBalance = Math.addExact(testData.ACC_CUR_0.getUnconfirmedUnits(), units);
+
+        Event firedEventAcc = mock(Event.class);
+        Event firedEventCurr = mock(Event.class);
+        Event firedEventAccUnconfirmed = mock(Event.class);
+        Event firedEventCurrUnconfirmed = mock(Event.class);
+
+        doReturn(firedEventAcc).when(accountEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(firedEventAccUnconfirmed).when(accountEvent).select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE));
+
+        doReturn(firedEventCurr).when(accountCurrencyEvent).select(literal(AccountEventType.CURRENCY_BALANCE));
+        doReturn(firedEventCurrUnconfirmed).when(accountCurrencyEvent).select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE));
+
+        doReturn(testData.ACC_CUR_0).when(accountCurrencyTable).get(any());
+
+        accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(testData.ACC_1, event, eventId, currencyId, units);
+
+        assertEquals(balance, testData.ACC_CUR_0.getUnits());
+        assertEquals(unconfirmedBalance, testData.ACC_CUR_0.getUnconfirmedUnits());
+        verify(accountCurrencyService).update(testData.ACC_CUR_0);
+        verify(firedEventAcc).fire(testData.ACC_1);
+        verify(firedEventAccUnconfirmed).fire(testData.ACC_1);
+        verify(firedEventCurr).fire(testData.ACC_CUR_0);
+        verify(firedEventCurrUnconfirmed).fire(testData.ACC_CUR_0);
+
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
+        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
+    }
+}

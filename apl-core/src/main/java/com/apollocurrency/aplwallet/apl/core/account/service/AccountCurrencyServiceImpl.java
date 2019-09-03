@@ -44,7 +44,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public void save(AccountCurrency currency) {
+    public void update(AccountCurrency currency) {
         checkBalance(currency.getAccountId(), currency.getUnits(), currency.getUnconfirmedUnits());
         if (currency.getUnits() > 0 || currency.getUnconfirmedUnits() > 0) {
             accountCurrencyTable.insert(currency);
@@ -169,7 +169,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         } else {
             accountCurrency.setUnits(currencyUnits);
         }
-        save(accountCurrency);
+        update(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
         //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
@@ -193,7 +193,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         } else {
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
-        save(accountCurrency);
+        update(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
         //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
@@ -222,7 +222,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.setUnits(currencyUnits);
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
-        save(accountCurrency);
+        update(accountCurrency);
         //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
