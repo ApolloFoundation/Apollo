@@ -557,6 +557,7 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                    int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+        long start = System.currentTimeMillis();
         int height = numberOfConfirmations > 0 ? getHeight() - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
@@ -588,31 +589,41 @@ public class BlockchainImpl implements Blockchain {
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                log.trace("countTx 3. DS={},  from={}, to={}, found Tx Count={} (skip='{}')\naccountId={}, type={}, subt={}",
+                log.trace("countTx 3. DS={}, from={}, to={}, found Tx Count={} (skip='{}')\naccountId={}, type={}, subtype={}",
                         dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
                         accountId, type, subtype);
-                if (foundCount <= 0) continue; // skip shard without records
+                if (foundCount <= 0) continue; // skip shard without any suitable records
 
-                // because count is > 0 then fetch Txrecords from shard db
-                log.trace("getTx() 4. fetch Tx records from={}, to={}", from, to);
+                // because count is > 0 then try to fetch Tx records from shard db
                 List<Transaction> foundTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                transactions.addAll(foundTxs);
+                log.trace("getTx() 4. DS={} fetched [{}] (count={}) Tx records from={}, to={}", dataSource.getDbIdentity(),
+                        foundTxs.size(), foundCount, from, to);
+                if (foundTxs.size() <= 0) {
+                    // if count finds records in shard but they are not fetched by OFFSET,
+                    // then change both values 'from' (offset) + 'to' (limit) and continue on next shard
+                    from -= foundCount;
+                    to -= foundCount;
+                } else {
+                    transactions.addAll(foundTxs);
+                    from += foundTxs.size(); // change 'from' (bottom offset) when rows were fetched from shard
+                }
                 log.trace("getTx() 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
-                // check conditions to stop loop over shard db
+                // check conditions to stop loop over current shard db
                 if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
                     log.trace("getTx() 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
                     break;
                 }
-                from += foundTxs.size();
-                limit -= foundTxs.size();
+                limit -= foundTxs.size(); // decrease limit by really fetched records
+                log.trace("getTx() 6. next DS from={}, to={}", from, to);
             }
         }
-        log.trace("Tx number Requested / Loaded : [{}] / [{}] ? = {}", initialLimit, transactions.size(),
-                (transactions.size() < initialLimit ? "Less" : (transactions.size() == initialLimit ? "OK !" : "BIGGER!")));
+        log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = '{}' in {} ms", initialLimit, transactions.size(),
+                (transactions.size() < initialLimit ? "Less" : (transactions.size() == initialLimit ? "OK !" : "BIGGER!")),
+                System.currentTimeMillis() - start);
         return transactions;
     }
 

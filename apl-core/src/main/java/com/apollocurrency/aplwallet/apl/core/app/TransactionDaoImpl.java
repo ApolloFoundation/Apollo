@@ -377,26 +377,16 @@ public class TransactionDaoImpl implements TransactionDao {
         buf.append("SELECT transaction.* FROM transaction ");
         createTransactionSelectSql(buf, "transaction.*", accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        // condition for main or shard db
-        if (dataSource.getDbIdentity().isEmpty()) {
-            buf.append(DbUtils.limitsClause(from, to)); // main db
-        } else {
-            buf.append(DbUtils.limitsClauseInShardDb(from, to)); // shard db
-        }
+        buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clauese
         Connection con = null;
         try {
             con = dataSource.getConnection();
             String sql = buf.toString();
-            log.trace("getTx sql = {}", sql);
+            log.trace("getTx sql = {}\naccountId={}, from={}, to={}", sql, accountId, from, to);
             PreparedStatement pstmt = con.prepareStatement(sql);
             int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
                     withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-            // condition for main or shard db
-            if (dataSource.getDbIdentity().isEmpty()) {
-                DbUtils.setLimits(++i, pstmt, from, to); // main db
-            } else {
-                DbUtils.setLimitsShardDb(++i, pstmt, from, to); // shard db
-            }
+            DbUtils.setLimits(++i, pstmt, from, to); // // append 'limit offset' clauese values
             return CollectionUtil.toList(getTransactions(con, pstmt));
         }
         catch (SQLException e) {
@@ -487,14 +477,20 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized int getTransactionCountByFilter(TransactionalDataSource dataSource, long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
+    public synchronized int getTransactionCountByFilter(
+            TransactionalDataSource dataSource, long accountId,
+            int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly,
+            boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly,
+            boolean includePrivate, int height, int prunableExpiration) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
         createTransactionSelectSql(buf, "transaction.id", accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         buf.append(")");
+        String sql = buf.toString();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(buf.toString())) {
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            log.trace("getTxCount sql = {}\naccountId={}, dataSource={}", sql, accountId, dataSource.getDbIdentity());
             setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
