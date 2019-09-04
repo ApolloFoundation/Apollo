@@ -123,12 +123,26 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
     }
 
     @Override
-    public boolean validateStep1(DexOffer myOffer, DexOffer counterOffer) {
+    public boolean validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {
+        log.debug("validateOfferBuyAplEth: ");
         return true;
     }
 
     @Override
-    public boolean validateStep2(DexOffer myOffer, DexOffer counterOffer) {
+    public boolean validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {
+        log.debug("validateOfferSellAplEth: ");
+        return true;
+    }
+
+    @Override
+    public boolean validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
+        log.debug("validateOfferBuyAplPax: ");
+        return true;
+    }
+
+    @Override
+    public boolean validateOfferSellAplPax(DexOffer myOffer, DexOffer hisOffer) {
+        log.debug("validateOfferSellAplPax: ");
         return true;
     }
     

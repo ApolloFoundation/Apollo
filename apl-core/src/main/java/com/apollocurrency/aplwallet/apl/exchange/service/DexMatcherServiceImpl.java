@@ -61,38 +61,43 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
     public void deinitialize() {
         log.debug("DexMatcherService : deinitialization routine");        
     }
-    
-    
+        
     /**
      * currency-specific validation (Ethereum)
-     * @param DexOffer  offer to validate
-     */ 
-    private boolean validateOfferETH(DexOffer myOffer, DexOffer hisOffer) {
-        // TODO: add validation routine
-        log.debug("validateOfferETH: " );        
-        return true;         
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private boolean validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {        
+        return dexValidationServiceImpl.validateOfferBuyAplEth(myOffer, hisOffer);         
     }
 
     /**
-     * currency-specific validation (Apollo)
-     * @param DexOffer  offer to validate
-     */ 
-    private boolean validateOfferAPL(DexOffer myOffer, DexOffer hisOffer) {        
-        // TODO: add validation routine
-        log.debug("validateOfferAPL: " );
-        return true;         
+     * currency-specific validation (Ethereum)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */     
+    private boolean validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {                
+        return dexValidationServiceImpl.validateOfferSellAplEth(myOffer, hisOffer);      
     }
-    
+
     /**
      * currency-specific validation (Pax)
-     * @param DexOffer  offer to validate
-     */ 
-    private boolean validateOfferPAX(DexOffer myOffer, DexOffer hisOffer) {
-        // TODO: add validation routine
-        log.debug("validateOfferPAX: " );
-        return true;         
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private boolean validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
+        return dexValidationServiceImpl.validateOfferBuyAplPax(myOffer, hisOffer);       
     }
-    
+
+    /**
+     * currency-specific validation (Pax)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private boolean validateOfferSellAplPax( DexOffer myOffer, DexOffer hisOffer) {
+        return dexValidationServiceImpl.validateOfferSellAplPax(myOffer, hisOffer);         
+    }    
+        
     
     /**
      * Common validation routine for offer  
@@ -100,19 +105,29 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      */ 
     private boolean validateOffer(DexOffer myOffer, DexOffer hisOffer) {
         
-        DexCurrencies curr = hisOffer.getOfferCurrency(); 
-        log.debug("currency: {}", curr );
+        DexCurrencies curr = hisOffer.getPairCurrency();
+        log.debug("my offer: offerCurrency: {}, pairCurrency: {}", myOffer.getOfferCurrency(), myOffer.getPairCurrency() );
+        log.debug("his offer: offerCurrency: {}, pairCurrency: {}", hisOffer.getOfferCurrency(), hisOffer.getPairCurrency() );
         
         switch (curr) {
-            case APL: return validateOfferAPL(myOffer,hisOffer);
-            case ETH: return validateOfferETH(myOffer,hisOffer);
-            case PAX: return validateOfferPAX(myOffer,hisOffer);
+
+            case ETH: { 
+                // return validateOfferETH(myOffer,hisOffer);
+                if (myOffer.getType() == OfferType.SELL) 
+                    return validateOfferSellAplEth(myOffer, hisOffer); 
+                else return validateOfferBuyAplEth(myOffer, hisOffer);                
+            }
+            
+            case PAX: {
+                if (myOffer.getType() == OfferType.SELL) 
+                    return validateOfferSellAplPax(myOffer, hisOffer); 
+                else return validateOfferBuyAplPax(myOffer, hisOffer);                                
+            }
+            
             default: return false;
         }        
         
     }
-    
-            
 
     /**
      * Core event for matcher - when offer is created, it is called back     

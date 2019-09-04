@@ -21,22 +21,28 @@ public interface IDexValidator {
  
     boolean validateEthBuy( DexOffer myOffer, DexOffer counterOffer );
     
-    /**
-     *
-     * @param myOffer offer that has been created locally
-     * @param counterOffer offer which is from the other side of the wire
-     * @return
-     */
-    public boolean validateStep1(DexOffer myOffer, DexOffer counterOffer);
     
-    /**
-     *
-     * @param myOffer offer that has been created locally
-     * @param counterOffer offer which is from the other side of the wire
-     * @return
-     */
-    public boolean validateStep2(DexOffer myOffer, DexOffer counterOffer);
-    
+    boolean validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer);
 
+    /**
+     * currency-specific validation (Ethereum)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */     
+    boolean validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer);
+
+    /**
+     * currency-specific validation (Pax)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    boolean validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer);
+
+    /**
+     * currency-specific validation (Pax)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    boolean validateOfferSellAplPax( DexOffer myOffer, DexOffer hisOffer);
     
 }
