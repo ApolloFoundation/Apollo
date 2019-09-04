@@ -952,7 +952,7 @@ class BlockchainTest {
         blockchain.setLastBlock(btd.BLOCK_13);
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false,
-                2, 4, false, false, true);
+                1, 4, false, false, true);
         // candidates by type+subtype are TR_2, TR_3, TR_7, TR_11, TR_12
         assertEquals(List.of(txd.TRANSACTION_2), transactions);
     }
@@ -980,7 +980,7 @@ class BlockchainTest {
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false,
                 1, 8, false, false, true);
         // candidates by type+subtype are TR_2, TR_3, TR_7, TR_11, TR_12
-        assertEquals(List.of(txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+        assertEquals(List.of(txd.TRANSACTION_2), transactions);
 
         transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)8, (byte)0, 0, false, false, false,
                 0, 3, false, false, true);
