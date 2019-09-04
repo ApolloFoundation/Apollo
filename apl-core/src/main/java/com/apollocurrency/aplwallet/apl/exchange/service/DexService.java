@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -63,14 +64,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -385,12 +386,12 @@ public class DexService {
 
                 Transaction respApproveTx = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
+//              order will be closed automatically
+//                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
+//                templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
-                templatTransactionRequest.setAttachment(closeOfferAttachment);
-
-                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
+//                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+//                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
 
             }
         } catch (Exception ex) {
@@ -477,5 +478,32 @@ public class DexService {
         return null;
     }
 
+    public void closeOrder(long transactionId, long orderId) {
+        DexOffer offer = getOfferByTransactionId(orderId);
+        offer.setStatus(OfferStatus.CLOSED);
+        saveOffer(offer);
 
+        ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
+
+        if (exchangeContract == null) {
+            exchangeContract = getDexContract(DexContractDBRequest.builder().counterOfferId(offer.getTransactionId()).build());
+        }
+
+        Block lastBlock = blockchain.getLastBlock();
+
+        DexTradeEntry dexTradeEntry = DexTradeEntry.builder()
+                .transactionID(transactionId)
+                .senderOfferID(exchangeContract.getSender())
+                .receiverOfferID(exchangeContract.getRecipient())
+                .senderOfferType((byte) offer.getType().ordinal())
+                .senderOfferCurrency((byte) offer.getOfferCurrency().ordinal())
+                .senderOfferAmount(offer.getOfferAmount())
+                .pairCurrency((byte) offer.getPairCurrency().ordinal())
+                .pairRate(offer.getPairRate())
+                .finishTime(lastBlock.getTimestamp())
+                .height(lastBlock.getHeight())
+                .build();
+
+        saveDexTradeEntry(dexTradeEntry);
+    }
 }

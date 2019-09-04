@@ -8,6 +8,7 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class DexContractDBRequest {
+    private Long id;
     private Long recipient;
     private Long sender;
     private Integer status;

@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class ExchangeContract {
 
+    private Long dbId;
     private Long id;
     private Long orderId;
     private Long counterOrderId;
@@ -30,7 +31,8 @@ public class ExchangeContract {
     private byte[] encryptedSecret;
 //    private Integer finishTime;
 
-    public ExchangeContract(Long senderId, Long recipientId, DexContractAttachment dexContractAttachment) {
+    public ExchangeContract(Long transactionId, Long senderId, Long recipientId, DexContractAttachment dexContractAttachment) {
+        this.id = transactionId;
         this.orderId = dexContractAttachment.getOrderId();
         this.counterOrderId = dexContractAttachment.getCounterOrderId();
         this.sender = senderId;
