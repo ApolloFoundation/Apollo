@@ -22,7 +22,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-class AccountInfoServiceImplTest {
+class AccountInfoServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
 

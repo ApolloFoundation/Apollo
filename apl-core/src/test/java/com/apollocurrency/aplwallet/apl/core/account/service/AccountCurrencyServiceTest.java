@@ -29,7 +29,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-class AccountCurrencyServiceImplTest {
+class AccountCurrencyServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountCurrencyTable accountCurrencyTable = mock(AccountCurrencyTable.class);
     private Event accountEvent = mock(Event.class);

@@ -12,6 +12,7 @@ import lombok.Setter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Ledger entry
@@ -125,7 +126,7 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Return the hash code
      *
-     * @return                          Hash code
+     * @return  Hash code
      */
     @Override
     public int hashCode() {
@@ -135,12 +136,12 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Check if two ledger events are equal
      *
-     * @param   obj                     Ledger event to check
-     * @return                          TRUE if the ledger events are the same
+     * @param   obj Ledger event to check
+     * @return  TRUE if the ledger events are the same
      */
     @Override
     public boolean equals(Object obj) {
-        return obj != null && (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId && event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId && holding == ((LedgerEntry) obj).holding && (holdingId != null ? holdingId.equals(((LedgerEntry) obj).holdingId) : ((LedgerEntry) obj).holdingId == null);
+        return (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId && event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId && holding == ((LedgerEntry) obj).holding && (Objects.equals(holdingId, ((LedgerEntry) obj).holdingId));
     }
     
 }

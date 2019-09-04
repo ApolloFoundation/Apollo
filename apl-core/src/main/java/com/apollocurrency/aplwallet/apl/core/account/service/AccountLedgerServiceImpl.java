@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEv
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
@@ -49,12 +50,12 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     /** Blockchain processor */
     private BlockchainProcessor blockchainProcessor;
 
-    private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
 
     private AccountLedgerTable accountLedgerTable;
 
     /** Pending ledger entries */
+    @Getter
     private final List<LedgerEntry> pendingEntries = new ArrayList<>();
 
     private Event<LedgerEntry> accountLedgerEntryEvent;
@@ -64,7 +65,6 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
         this.accountLedgerTable = accountLedgerTable;
         this.blockchain = blockchain;
         this.blockchainProcessor = blockchainProcessor;
-        this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.accountLedgerEntryEvent = accountLedgerEntryEvent;
 
