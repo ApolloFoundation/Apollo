@@ -108,7 +108,7 @@ INSERT INTO PUBLIC.ACCOUNT_PROPERTY
 (2, 20, 110, null, 'apollo', '1', 106420, true),
 (3, 30, 120, null, 'Para cadastrar no blockchain', '1', 108618, true),
 (4, 40, 130, null, 'Account', null, 108970, true),
-(5, 50, 100, null, 'Apollo', '1', 110754, true),
+(5, 50, 100, 160, 'Apollo', '1', 110754, true),
 (6, 60, 150, null, '##$$%%alex747ander%%$$##', null, 113510, true),
 (7, 70, 160, 100, 'Hide ip', '1', 117619, true),
 (8, 80, 170, null, '10', null, 128755, true),

@@ -138,9 +138,9 @@ public class AccountTestData {
     public final AccountProperty ACC_PROP_1 = createProperty(2, 20, 110, 0, "apollo", "1", 106420, true);
     public final AccountProperty ACC_PROP_2 = createProperty(3, 30, 120, 0, "Para cadastrar no blockchain", "1", 108618, true);
     public final AccountProperty ACC_PROP_3 = createProperty(4, 40, 130, 0, "Account", null, 108970, true);
-    public final AccountProperty ACC_PROP_4 = createProperty(5, 50, 100, 0, "Apollo", "1", 110754, true);
+    public final AccountProperty ACC_PROP_4 = createProperty(5, 50, 100, 160, "Apollo", "1", 110754, true);
     public final AccountProperty ACC_PROP_5 = createProperty(6, 60, 150, 0, "##$$%%alex747ander%%$$##", null, 113510, true);
-    public final AccountProperty ACC_PROP_6 = createProperty(7, 70, 160, 100L, "Hide ip", "1", 117619, true);
+    public final AccountProperty ACC_PROP_6 = createProperty(7, 70, 160, 100, "Hide ip", "1", 117619, true);
     public final AccountProperty ACC_PROP_7 = createProperty(8, 80, 170, 0, "10", null, 128755, true);
     public final AccountProperty ACC_PROP_8 = createProperty(10, 90, 100, 0, "mine", null, 134152, true);
 
