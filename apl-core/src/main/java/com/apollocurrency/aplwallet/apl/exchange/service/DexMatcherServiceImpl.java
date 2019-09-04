@@ -14,11 +14,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  *
@@ -132,7 +132,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         }
     }
 
-
+    @Override
     public DexOffer findCounterOffer(DexOffer createdOffer) {
         log.debug("DexMatcherServiceImpl:findCounterOffer()");
     

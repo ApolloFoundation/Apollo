@@ -28,14 +28,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollServiceImpl implements PhasingPollService {
@@ -202,6 +202,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
     }
 
+    @Override
     public PhasingApprovalResult getApprovedTx(long phasingTxId){
         return approvedResultTable.get(phasingTxId);
     }

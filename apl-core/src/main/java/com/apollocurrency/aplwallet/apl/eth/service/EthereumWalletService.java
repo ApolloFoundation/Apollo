@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -30,11 +32,16 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.request.Transaction;
-import org.web3j.protocol.core.methods.response.*;
+import org.web3j.protocol.core.methods.response.EthBlockNumber;
+import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.EthTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -44,8 +51,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class EthereumWalletService {
@@ -116,7 +123,9 @@ public class EthereumWalletService {
                     BigInteger txBlockNumber = tx.getBlockNumber();
                     EthBlockNumber blockNumberResponse = web3j.ethBlockNumber().send();
                 String blockNumber = getResultFrom(blockNumberResponse);
-                confirmations = Numeric.decodeQuantity(blockNumber).subtract(txBlockNumber).intValue();
+                if (blockNumber != null) {
+                    confirmations = Numeric.decodeQuantity(blockNumber).subtract(txBlockNumber).intValue();
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
