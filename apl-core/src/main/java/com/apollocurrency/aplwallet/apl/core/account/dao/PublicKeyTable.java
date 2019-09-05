@@ -20,7 +20,6 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 /**
- *
  * @author al
  */
 @Singleton

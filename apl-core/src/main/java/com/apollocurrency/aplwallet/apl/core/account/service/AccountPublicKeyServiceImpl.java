@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -207,14 +208,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
-        PublicKey publicKey;
-        if (isGenesis) {
-                publicKey = genesisPublicKeyTable.newEntity(dbKey);
-                genesisPublicKeyTable.insert(publicKey);
-        } else {
-                publicKey = publicKeyTable.newEntity(dbKey);
-                publicKeyTable.insert(publicKey);
-        }
+        EntityDbTable<PublicKey> table = isGenesis ? genesisPublicKeyTable: publicKeyTable;
+        PublicKey publicKey = table.newEntity(dbKey);
+        table.insert(publicKey);
         return publicKey;
     }
 }

@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +18,7 @@ import java.util.Objects;
  *
  * @author al
  */
+@ToString(callSuper = true, exclude = {"publicKey"})
 @Getter @Setter
 public final class PublicKey extends VersionedDerivedEntity {
 
