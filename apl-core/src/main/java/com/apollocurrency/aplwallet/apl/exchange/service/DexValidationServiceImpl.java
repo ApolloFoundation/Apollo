@@ -112,6 +112,34 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        
     }
        
+    
+    boolean checkAplCommisionPayingAbility(Long hisAplBalance) {
+            // checking out whether there are commission available
+        Long fee = APL_COMMISSION * ONE_APL;
+        log.debug("fee: " + fee);        
+        // boolean ableToPayCommission = hisAplBalance >= fee;
+        return hisAplBalance >= fee;
+    }
+    
+    boolean checkGasPayingAbility(DexOffer hisOffer) {
+       EthGasInfo ethGasInfo = null;
+        try {
+            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+        } catch (IOException ex) {
+            log.error("Exception got while getting eth gas price: ", ex);
+        }        
+        // here we have double conversion, gw-eth-wei        
+        Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
+        BigInteger hisEthBalanceWei = getEthBalanceWei(hisOffer.getToAddress(), DexCurrencies.ETH);
+        BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
+        BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
+        log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
+       
+        boolean ethCheckResult = (1 == hisEthBalanceWei.compareTo(averageGasPriceWei.multiply(BigInteger.valueOf(ETH_GAS_MULTIPLIER)))); 
+        // for logging
+        return ethCheckResult;
+    }
+    
 
     @Override
     public int validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {                
@@ -140,28 +168,31 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         if (!isFrozenEnough) return OFFER_VALIDATE_ERROR_APL_FREEZE;
         
                 
-        // checking out whether there are commission available
-        Long fee = APL_COMMISSION * ONE_APL;
-        log.debug("fee: " + fee);        
-        boolean ableToPayCommission = hisAplBalance >= fee;
+//        // checking out whether there are commission available
+//        Long fee = APL_COMMISSION * ONE_APL;
+//        log.debug("fee: " + fee);        
+        boolean ableToPayCommission = checkAplCommisionPayingAbility(hisAplBalance);// hisAplBalance >= fee;
         log.debug("ableToPayCommission: {}", ableToPayCommission);
+                
         if (!ableToPayCommission) return OFFER_VALIDATE_ERROR_APL_COMMISSION;
                                                 
-        EthGasInfo ethGasInfo = null;
-        try {
-            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
-        } catch (IOException ex) {
-            log.error("Exception got while getting eth gas price: ", ex);
-        }        
-        // here we have double conversion, gw-eth-wei
+//        EthGasInfo ethGasInfo = null;
+//        try {
+//            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+//        } catch (IOException ex) {
+//            log.error("Exception got while getting eth gas price: ", ex);
+//        }        
+//        // here we have double conversion, gw-eth-wei
+//        
+//        Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
+//        BigInteger hisEthBalanceWei = getEthBalanceWei(hisOffer.getToAddress(), DexCurrencies.ETH);
+//        BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
+//        BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
+//        log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
+//       
+//        boolean ethCheckResult = (1 == hisEthBalanceWei.compareTo(averageGasPriceWei.multiply(BigInteger.valueOf(ETH_GAS_MULTIPLIER))));        
         
-        Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
-        BigInteger hisEthBalanceWei = getEthBalanceWei(hisOffer.getToAddress(), DexCurrencies.ETH);
-        BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
-        BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
-        log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
-       
-        boolean ethCheckResult = (1 == hisEthBalanceWei.compareTo(averageGasPriceWei.multiply(BigInteger.valueOf(ETH_GAS_MULTIPLIER))));        
+        boolean ethCheckResult = checkGasPayingAbility(hisOffer);        
         log.debug("ethCheckResult: {} ", ethCheckResult);
         if (!ethCheckResult) return OFFER_VALIDATE_ERROR_ETH_COMMISSION;
         
@@ -199,6 +230,8 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         }
         
         log.debug("deposit detected: {}", depositDetected);
+        
+        
         
         return 1;
     }
