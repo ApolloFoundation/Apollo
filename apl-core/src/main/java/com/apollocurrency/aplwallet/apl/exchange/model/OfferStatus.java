@@ -19,6 +19,10 @@ public enum  OfferStatus {
     public boolean isOpen(){
         return this == OfferStatus.OPEN;
     }
+
+    public boolean isPending() {
+        return this == OfferStatus.PENDING;
+    }
     public boolean isClosed(){
         return this == OfferStatus.CLOSED;
     }

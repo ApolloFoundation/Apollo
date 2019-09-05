@@ -14,7 +14,11 @@ public enum ExchangeContractStatus {
     /**
      * The first user sent counter transfer. (Process of the atomic swap is started.)
      */
-    STEP_3;
+    STEP_3,
+    /**
+     * Closed.
+     */
+    STEP_4;
 
     public static ExchangeContractStatus getType(int ordinal){
         if(ordinal < 0 || ordinal > OfferType.values().length){

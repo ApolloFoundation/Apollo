@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -17,11 +18,14 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DexContractTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
+    private DexOfferTable dexOfferTable = CDI.current().select(DexOfferTable.class).get();
 
     @Override
     public byte getSubtype() {
@@ -89,9 +93,13 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
+        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
         DexOffer counterOffer = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOffer.getStatus().isOpen()) {
+            offer.setStatus(OfferStatus.WAITING_APPROVAL);
+            dexService.saveOffer(offer);
+
             counterOffer.setStatus(OfferStatus.WAITING_APPROVAL);
             dexService.saveOffer(counterOffer);
         }
@@ -109,6 +117,10 @@ public class DexContractTransaction extends DEX {
             contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_2);
+
+            //TODO change another orders to the status Open.
+            reopenNotMatchedOrders(contract);
+
         } else if (attachment.getContractStatus().isStep3() && contract.getContractStatus().isStep2()) {
             contract.setTransferTxId(attachment.getTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_3);
@@ -140,5 +152,29 @@ public class DexContractTransaction extends DEX {
     @Override
     public String getName() {
         return "DexContract";
+    }
+
+
+    private void reopenNotMatchedOrders(ExchangeContract contract) {
+        List<ExchangeContract> allContracts = dexService.getDexContracts(DexContractDBRequest.builder()
+                .counterOfferId(contract.getCounterOrderId())
+                .build());
+
+        //Exclude current contract.
+        List<ExchangeContract> contractsForReopen = allContracts.stream()
+                .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
+                .collect(Collectors.toList());
+
+        for (ExchangeContract exchangeContract : contractsForReopen) {
+            //Reopen order.
+            DexOffer offer = dexService.getOfferByTransactionId(exchangeContract.getOrderId());
+            if (offer.getStatus().isPending()) {
+                offer.setStatus(OfferStatus.OPEN);
+                //Close contract.
+                exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);
+                dexService.saveDexContract(contract);
+            }
+        }
+
     }
 }

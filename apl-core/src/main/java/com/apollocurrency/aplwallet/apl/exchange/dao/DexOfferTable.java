@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -8,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOfferMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,6 +48,10 @@ public class DexOfferTable  extends EntityDbTable<DexOffer> {
     @Override
     public DexOffer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return dexOfferMapper.map(rs, null);
+    }
+
+    public DexOffer getByTxId(Long transactionId) {
+        return getBy(new DbClause.LongClause("transaction_id", transactionId));
     }
 
     @Override

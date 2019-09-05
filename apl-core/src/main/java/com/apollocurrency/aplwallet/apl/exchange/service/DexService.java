@@ -64,14 +64,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -117,9 +117,9 @@ public class DexService {
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DexOffer getOfferByTransactionId(Long transactionId) {
-        return dexOfferDao.getByTransactionId(transactionId);
+        return dexOfferTable.getByTxId(transactionId);
     }
 
     @Transactional(readOnly = true)
@@ -292,9 +292,7 @@ public class DexService {
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
             if (dexSmartContractService.isUserTransferMoney(offer.getFromAddress(), offer.getTransactionId())) {
-                //TODO get eth tx, and return tx ID. Hadn't implemented yet.
-                //we don't use tx id.
-                return "0xETH";
+                throw new AplException.ExecutiveProcessException("User has already started exchange process with another user. OrderId: " + offer.getTransactionId());
             }
 
             if (dexSmartContractService.isDepositForOrderExist(offer.getFromAddress(), offer.getTransactionId())) {
@@ -412,7 +410,7 @@ public class DexService {
                 throw new ParameterException(JSONResponses.DEX_SELF_ORDER_MATCHING_DENIED);
             }
             // 1. Create offer.
-            offer.setStatus(OfferStatus.WAITING_APPROVAL);
+            offer.setStatus(OfferStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
             Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
