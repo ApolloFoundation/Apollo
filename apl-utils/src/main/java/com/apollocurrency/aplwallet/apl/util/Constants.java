@@ -40,6 +40,7 @@ public final class Constants {
     public static final int OFFER_VALIDATE_ERROR_APL_FREEZE = -1; 
     public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2; 
     public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3; 
+    public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
     
     
     
