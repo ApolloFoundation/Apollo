@@ -57,14 +57,14 @@ public class AccountObserver {
     }
 
     public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        if (accountPublicKeyService.getPublicKeyCache() != null) {
+        if (accountPublicKeyService.isCacheEnabled()) {//TODO: make cache injectable
             accountPublicKeyService.getPublicKeyCache().clear();
         }
     }
 
     public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
         log.trace("Catch event (BLOCK_POPPED) {}", block);
-        if (accountPublicKeyService.getPublicKeyCache() != null) {
+        if (accountPublicKeyService.isCacheEnabled()) {
             accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
             block.getOrLoadTransactions().forEach(transaction -> {
                 accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));

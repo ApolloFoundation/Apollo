@@ -30,8 +30,9 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    //TODO: make cache nonstatic and injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
-    private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    //TODO: make cache injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
+    private ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    private boolean cacheEnabled = false;
 
     private PropertiesHolder propertiesHolder;
     private Blockchain blockchain;
@@ -50,6 +51,32 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     void init(){
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
+            cacheEnabled = true;
+        }
+    }
+
+    @Override
+    public boolean isCacheEnabled() {
+        return cacheEnabled;
+    }
+    @Override
+    public Map<DbKey, byte[]> getPublicKeyCache() {
+        return publicKeyCache;
+    }
+
+    private byte[] putInCache(DbKey key, byte[] value){
+        if (isCacheEnabled()){
+            return publicKeyCache.put(key, value);
+        }else {
+            return null;
+        }
+    }
+
+    private byte[] getFromCache(DbKey key){
+        if (isCacheEnabled()){
+            return publicKeyCache.get(key);
+        }else{
+            return null;
         }
     }
 
@@ -59,25 +86,15 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public Map<DbKey, byte[]> getPublicKeyCache() {
-        return publicKeyCache;
-    }
-
-    @Override
     public byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyTable.newKey(id);
-        byte[] key = null;
-        if (publicKeyCache != null) {
-            key = publicKeyCache.get(dbKey);
-        }
+        byte[] key = getFromCache(dbKey);
         if (key == null) {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null || (key = publicKey.getPublicKey()) == null) {
                 return null;
             }
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, key);
-            }
+            putInCache(dbKey, key);
         }
         return key;
     }
@@ -184,9 +201,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
                 publicKeyTable.insert(publicKey);
             }
         }
-        if (publicKeyCache != null) {
-            publicKeyCache.put(account.getDbKey(), key);
-        }
+        putInCache(account.getDbKey(), key);
         account.setPublicKey(publicKey);
     }
 
