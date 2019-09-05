@@ -67,7 +67,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
     */ 
-    private boolean validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {        
+    private int validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {        
         return dexValidationServiceImpl.validateOfferBuyAplEth(myOffer, hisOffer);         
     }
 
@@ -76,7 +76,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
     */     
-    private boolean validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {                
+    private int validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {                
         return dexValidationServiceImpl.validateOfferSellAplEth(myOffer, hisOffer);      
     }
 
@@ -85,7 +85,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
     */ 
-    private boolean validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
+    private int validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
         return dexValidationServiceImpl.validateOfferBuyAplPax(myOffer, hisOffer);       
     }
 
@@ -94,7 +94,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
     */ 
-    private boolean validateOfferSellAplPax( DexOffer myOffer, DexOffer hisOffer) {
+    private int validateOfferSellAplPax( DexOffer myOffer, DexOffer hisOffer) {
         return dexValidationServiceImpl.validateOfferSellAplPax(myOffer, hisOffer);         
     }    
         
@@ -103,7 +103,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
      * Common validation routine for offer  
      * @param DexOffer  offer - offer to validate
      */ 
-    private boolean validateOffer(DexOffer myOffer, DexOffer hisOffer) {
+    private int validateOffer(DexOffer myOffer, DexOffer hisOffer) {
         
         DexCurrencies curr = hisOffer.getPairCurrency();
         log.debug("my offer: offerCurrency: {}, pairCurrency: {}", myOffer.getOfferCurrency(), myOffer.getPairCurrency() );
@@ -124,7 +124,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
                 else return validateOfferBuyAplPax(myOffer, hisOffer);                                
             }
             
-            default: return false;
+            default: return -2;
         }        
         
     }
@@ -178,7 +178,7 @@ public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
 
         if ( nOffers >= 1) { 
             DexOffer counterOffer = offers.get(0);
-            if (validateOffer(createdOffer, counterOffer)) {                    
+            if (validateOffer(createdOffer, counterOffer)==1) {                    
                     log.debug("match found, id: {}, amount: {}, pairCurrency: {}, pairRate: {}  ", counterOffer.getId(), 
                             counterOffer.getOfferAmount(), counterOffer.getPairCurrency(), 
                             counterOffer.getPairRate() );                    

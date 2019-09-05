@@ -10,12 +10,22 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import static com.apollocurrency.aplwallet.apl.util.Constants.ONE_APL;
+import static com.apollocurrency.aplwallet.apl.util.Constants.APL_COMMISSION;
+import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_GAS_MULTIPLIER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_FREEZE;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_COMMISSION;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_COMMISSION;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
@@ -40,12 +50,17 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
     // private DexService dexService;
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
+    private EthGasStationInfoDao ethGasStationInfoDao;
+    
+    // minimal value for the amount of money required for commission
+
+    
     
     @Inject
-    DexValidationServiceImpl( /*DexService dexService,*/ DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService ) {
-        //this.dexService =  Objects.requireNonNull( dexService,"dexService is null");   
+    DexValidationServiceImpl( DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao ) {        
         this.dexSmartContractService =  Objects.requireNonNull( dexSmartContractService,"dexSmartContractService is null");           
         this.ethereumWalletService =  Objects.requireNonNull( ethereumWalletService,"dexSmartContractService is null");           
+        this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
 
     }
 
@@ -66,11 +81,11 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         return hisUnconfirmedAplBalance;
     }
     
-    Long getAplBalance(Long hisAccountID) {
+    Long getAplBalanceAtm(Long hisAccountID) {
         AccountTable at = new AccountTable();
         Account hisAccount = Account.getAccount(hisAccountID);        
-        long hisUnconfirmedAplBalance = hisAccount.getUnconfirmedBalanceATM();                        
-        return hisUnconfirmedAplBalance;
+        Long hisAplBalance = hisAccount.getBalanceATM();
+        return hisAplBalance;
     }
     
     private List<UserEthDepositInfo> getUserEthDeposits(String user) {
@@ -97,53 +112,79 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        
     }
        
-    @Override
-    public boolean validateAplSell(DexOffer myOffer, DexOffer counterOffer) {
-       
-        
-        // placeholder
-        return true; 
-    }
 
     @Override
-    public boolean validateAplBuy(DexOffer myOffer, DexOffer counterOffer) {
-        // placeholder
-        return true;
-    }
-
-    @Override
-    public boolean validatEthSell(DexOffer myOffer, DexOffer counterOffer) {
-        // placeholder
-        return true;
-    }
-
-    @Override
-    public boolean validateEthBuy(DexOffer myOffer, DexOffer counterOffer) {
-        return true;
-    }
-
-    @Override
-    public boolean validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {
+    public int validateOfferBuyAplEth(DexOffer myOffer, DexOffer hisOffer) {                
         log.debug("validateOfferBuyAplEth: ");
-        return true;
+        
+        // 1) Checking out whether HE has the corresponding amount on his APL balance        
+        Long hisAccountID = hisOffer.getAccountId();
+        log.debug("hisAccountID(apl): {}, his fromAddr : {}, his toAddr   : {}", hisAccountID,hisOffer.getFromAddress(),hisOffer.getToAddress());
+        
+        Long hisUnconfirmedAplBalance = getAplUnconfirmedBalance(hisAccountID);
+        Long hisAplBalance = getAplBalanceAtm(hisAccountID);
+        
+        
+        log.debug("Parameters to validate.. hisUnconfirmedAplBalance: {}, hisAplBalance: {}, hisEthBalanceWei: {} ", hisUnconfirmedAplBalance, hisAplBalance  );
+        
+        Long aplToPay = EthUtil.gweiToAtm(hisOffer.getOfferAmount());
+        Long aplUnconfirmed = EthUtil.gweiToAtm(hisUnconfirmedAplBalance);
+        Long aplConfirmed = EthUtil.gweiToAtm(hisAplBalance);
+        
+        log.debug("aplToPay: {}, aplUnconfirmed: {}, aplConfirmed: {} ", aplToPay, aplUnconfirmed, aplConfirmed );
+        
+        // checking out whether there are enough money on his APL 'deposit'
+        Long balanceDelta = hisAplBalance - hisUnconfirmedAplBalance;
+        boolean isFrozenEnough = balanceDelta >= hisOffer.getOfferAmount();
+        log.debug("isFrozenEnough: {} ", isFrozenEnough);
+        if (!isFrozenEnough) return OFFER_VALIDATE_ERROR_APL_FREEZE;
+        
+                
+        // checking out whether there are commission available
+        Long fee = APL_COMMISSION * ONE_APL;
+        log.debug("fee: " + fee);        
+        boolean ableToPayCommission = hisAplBalance >= fee;
+        log.debug("ableToPayCommission: {}", ableToPayCommission);
+        if (!ableToPayCommission) return OFFER_VALIDATE_ERROR_APL_COMMISSION;
+                                                
+        EthGasInfo ethGasInfo = null;
+        try {
+            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+        } catch (IOException ex) {
+            log.error("Exception got while getting eth gas price: ", ex);
+        }        
+        // here we have double conversion, gw-eth-wei
+        
+        Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
+        BigInteger hisEthBalanceWei = getEthBalanceWei(hisOffer.getToAddress(), DexCurrencies.ETH);
+        BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
+        BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
+        log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
+       
+        boolean ethCheckResult = (1 == hisEthBalanceWei.compareTo(averageGasPriceWei.multiply(BigInteger.valueOf(ETH_GAS_MULTIPLIER))));        
+        log.debug("ethCheckResult: {} ", ethCheckResult);
+        if (!ethCheckResult) return OFFER_VALIDATE_ERROR_ETH_COMMISSION;
+        
+        
+        return OFFER_VALIDATE_OK;
     }
 
     @Override
-    public boolean validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {
+    public int validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {
         log.debug("validateOfferSellAplEth: ");
-        return true;
+        return 1;
     }
 
     @Override
-    public boolean validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
+    public int validateOfferBuyAplPax(DexOffer myOffer, DexOffer hisOffer) {
         log.debug("validateOfferBuyAplPax: ");
-        return true;
+        return 1;
     }
 
     @Override
-    public boolean validateOfferSellAplPax(DexOffer myOffer, DexOffer hisOffer) {
+    public int validateOfferSellAplPax(DexOffer myOffer, DexOffer hisOffer) {
         log.debug("validateOfferSellAplPax: ");
-        return true;
+        return 1;
     }
     
 }
