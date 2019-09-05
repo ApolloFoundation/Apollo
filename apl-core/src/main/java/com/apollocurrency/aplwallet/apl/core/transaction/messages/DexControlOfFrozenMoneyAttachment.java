@@ -26,7 +26,7 @@ public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
 
     public DexControlOfFrozenMoneyAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.offerAmount = Convert.parseLong(attachmentData.get("orderAmount"));
+        this.offerAmount = Convert.parseLong(attachmentData.get("offerAmount"));
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
     }
 
@@ -44,7 +44,7 @@ public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
     @Override
     public void putMyJSON(JSONObject json) {
         json.put("orderId", Long.toUnsignedString(this.getOrderId()));
-        json.put("orderAmount", offerAmount);
+        json.put("offerAmount", offerAmount);
     }
 
     @Override

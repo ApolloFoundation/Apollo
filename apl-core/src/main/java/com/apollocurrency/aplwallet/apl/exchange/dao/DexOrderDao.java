@@ -26,7 +26,7 @@ public interface DexOrderDao {
 //    @Transactional
 //    @SqlUpdate("INSERT INTO dex_offer (transaction_id, account_id, type, " +
 //            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status)" +
-//            "VALUES (:transactionId, :accountId, :type, :orderCurrency, :orderAmount, :pairCurrency, :pairRate, :finishTime, :status)"
+//            "VALUES (:transactionId, :accountId, :type, :offerCurrency, :offerAmount, :pairCurrency, :pairRate, :finishTime, :status)"
 //    )
 //    void save(@BindBean DexOffer dexOffer);
 
@@ -52,7 +52,7 @@ public interface DexOrderDao {
             " AND offer.type = :type" + 
             " AND offer.finish_time > :currentTime" +
             " AND offer.offer_currency = :offerCur" +
-            " AND offer.offer_amount = :orderAmount" +
+            " AND offer.offer_amount = :offerAmount" +
             " AND offer.pair_currency = :pairCur" + 
             " AND offer.pair_rate >= :pairRate" +
             " AND offer.status = 0" +
@@ -67,7 +67,7 @@ public interface DexOrderDao {
             " AND offer.type = :type" + 
             " AND offer.finish_time > :currentTime" +
             " AND offer.offer_currency = :offerCur" +
-            " AND offer.offer_amount = :orderAmount" +
+            " AND offer.offer_amount = :offerAmount" +
             " AND offer.pair_currency = :pairCur" + 
             " AND offer.pair_rate <= :pairRate" +
             " AND offer.status = 0" +
@@ -82,7 +82,7 @@ public interface DexOrderDao {
             " AND offer.type = :type" + 
             " AND offer.finish_time > :currentTime" +
             " AND offer.offer_currency = :offerCur" +
-            " AND offer.offer_amount = :orderAmount" +
+            " AND offer.offer_amount = :offerAmount" +
             " AND offer.pair_currency = :pairCur" +
             " AND offer.pair_rate = :pairRate" +
             " AND offer.status = 0" +

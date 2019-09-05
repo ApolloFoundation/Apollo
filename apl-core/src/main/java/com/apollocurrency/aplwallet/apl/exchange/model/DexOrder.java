@@ -68,9 +68,9 @@ public class DexOrder {
         dexOrderDto.fromAddress = this.getFromAddress();
         dexOrderDto.toAddress = this.getToAddress();
         dexOrderDto.type = this.getType().ordinal();
-        dexOrderDto.orderCurrency = this.getOrderCurrency().ordinal();
+        dexOrderDto.offerCurrency = this.getOrderCurrency().ordinal();
         //TODO make changes on UI. Send Apl as apl.
-        dexOrderDto.orderAmount = EthUtil.atmToGwei(this.getOrderAmount());
+        dexOrderDto.offerAmount = EthUtil.atmToGwei(this.getOrderAmount());
         dexOrderDto.pairCurrency = this.getPairCurrency().ordinal();
         dexOrderDto.finishTime = this.getFinishTime();
         dexOrderDto.status = this.getStatus().ordinal();

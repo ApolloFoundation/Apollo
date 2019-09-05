@@ -117,7 +117,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
     private void onOfferMatch(DexOrder myOffer, DexOrder hisOffer) {
         log.debug("DexMatcherService.onOfferMatch callback ");
-        log.debug("match..  id: {}, orderCurrency: {}, orderAmount: {}, pairCurrency: {}, pairRate: {} ", hisOffer.getAccountId(), hisOffer.getOrderCurrency(), hisOffer.getOrderAmount(), hisOffer.getPairCurrency(), hisOffer.getPairRate());
+        log.debug("match..  id: {}, offerCurrency: {}, offerAmount: {}, pairCurrency: {}, pairRate: {} ", hisOffer.getAccountId(), hisOffer.getOrderCurrency(), hisOffer.getOrderAmount(), hisOffer.getPairCurrency(), hisOffer.getPairRate());
     }
     
         
@@ -147,7 +147,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
         BigDecimal pairRate = new BigDecimal( EthUtil.ethToGwei( createdOffer.getPairRate()) );
 
-        log.debug("Dumping arguments: type: {}, currentTime: {}, orderAmount: {}, orderCurrency: {}, pairRate: {}, order: {}",
+        log.debug("Dumping arguments: type: {}, currentTime: {}, offerAmount: {}, offerCurrency: {}, pairRate: {}, order: {}",
                 counterOrderType, currentTime, offerAmount, pairCurrency, pairRate, orderby);
 
         DexOfferDBMatchingRequest dexOfferDBMatchingRequest = new DexOfferDBMatchingRequest(counterOrderType, currentTime, 0, offerAmount, pairCurrency.intValue(), pairRate, orderby);

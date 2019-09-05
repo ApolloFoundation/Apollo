@@ -163,22 +163,22 @@ public class DexController {
     public Response createOffer(@Parameter(description = "Type of the APL offer. (BUY APL / SELL APL) 0/1", required = true) @FormParam("offerType") Byte offerType,
                                 @Parameter(description = "From address", required = true) @FormParam("walletAddress") String walletAddress,
                                 @Parameter(description = "APL amount (buy or sell) for order in Gwei (1 Gwei = 0.000000001), " +
-                                        "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("orderAmount") Long offerAmount,
+                                        "in other words  - amount of apollo atoms multiplied by 10. 1 Gwei = 10^-9, 1 ATM = 10^-8", required = true) @FormParam("offerAmount") Long orderAmount,
                                 @Parameter(description = "Paired currency. (ETH=1, PAX=2)", required = true) @FormParam("pairCurrency") Byte pairCurrency,
                                 @Parameter(description = "Pair rate in Gwei. (1 Gwei = 0.000000001). Represent real pair rate, multiplied by 10^9", required = true) @FormParam("pairRate") Long pairRate,
                                 @Parameter(description = "Amount of time for this offer. (seconds)", required = true) @FormParam("amountOfTime") Integer amountOfTime,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
 
-        log.debug("createOffer: offerType: {}, walletAddress: {}, orderAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, offerAmount, pairCurrency, pairRate, amountOfTime);
+        log.debug("createOffer: offerType: {}, walletAddress: {}, orderAmount: {}, pairCurrency: {}, pairRate: {}, amountOfTime: {}", offerType, walletAddress, orderAmount, pairCurrency, pairRate, amountOfTime);
         if (pairRate <= 0 ) {
             return Response.ok(JSON.toString(incorrect("pairRate", "Should be more than zero."))).build();
         }
-        if (offerAmount <= 0 ) {
+        if (orderAmount <= 0) {
             return Response.ok(JSON.toString(incorrect("orderAmount", "Should be more than zero."))).build();
         }
         try {
-            Math.multiplyExact(pairRate, offerAmount);
+            Math.multiplyExact(pairRate, orderAmount);
         } catch (ArithmeticException ex){
             return Response.ok(JSON.toString(incorrect("pairRate or orderAmount", "Are too big."))).build();
         }
@@ -201,7 +201,7 @@ public class DexController {
                 order = DexOrder.builder()
                         .accountId(account.getId())
                         .type(type)
-                        .orderAmount(EthUtil.gweiToAtm(offerAmount))
+                        .orderAmount(EthUtil.gweiToAtm(orderAmount))
                         .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
                         .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
                         .orderCurrency(DexCurrencies.APL)

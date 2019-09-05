@@ -23,10 +23,12 @@ public class DexOrderDto {
 
     @Schema(name="Exchange type", description="buy / sell")
     public Integer type;
+    //todo rename to orderCurrency (fix on UI)
     @Schema(name="Offer currency", description="eth / pax / apl")
-    public Integer orderCurrency;
+    public Integer offerCurrency;
+    //todo rename to orderAmount (fix on UI)
     @Schema(name="Offer amount", description="Amount of currency for exchange ")
-    public Long orderAmount;
+    public Long offerAmount;
     @Schema(name="Pair rate", description="Rate to exchange")
     public Long pairRate;
 

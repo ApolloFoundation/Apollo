@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 public class DexOrderTransactionCreator extends CreateTransaction {
 
     private DexOrderTransactionCreator() {
-        super(new APITag[]{APITag.CREATE_TRANSACTION}, "orderType", "orderAmount", "orderCurrency", "pairCurrency", "pairRate", "finishTime");
+        super(new APITag[]{APITag.CREATE_TRANSACTION}, "orderType", "offerAmount", "offerCurrency", "pairCurrency", "pairRate", "finishTime");
     }
 
     @Override

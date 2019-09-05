@@ -80,7 +80,7 @@ public class DexOrderTransaction extends DEX {
             throw new AplException.NotValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
         }
         if (attachment.getOrderAmount() <= 0) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("orderAmount", String.format("Should be more than zero."))));
+            throw new AplException.NotValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
         }
 
         if (attachment instanceof DexOrderAttachmentV2) {

@@ -46,8 +46,8 @@ public class DexOrderAttachment extends AbstractAttachment {
     public DexOrderAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.type = Byte.valueOf(String.valueOf(attachmentData.get("type")));
-        this.orderCurrency = Byte.valueOf(String.valueOf(attachmentData.get("orderCurrency")));
-        this.orderAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderAmount")));
+        this.orderCurrency = Byte.valueOf(String.valueOf(attachmentData.get("offerCurrency")));
+        this.orderAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("offerAmount")));
         this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
         this.pairRate = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("pairRate")));
         this.status = Byte.valueOf(String.valueOf( attachmentData.get("status")));
@@ -78,8 +78,8 @@ public class DexOrderAttachment extends AbstractAttachment {
     @Override
     public void putMyJSON(JSONObject json) {
         json.put("type", this.type);
-        json.put("orderCurrency", this.orderCurrency);
-        json.put("orderAmount", this.orderAmount);
+        json.put("offerCurrency", this.orderCurrency);
+        json.put("offerAmount", this.orderAmount);
         json.put("pairCurrency", this.pairCurrency);
         json.put("pairRate", this.pairRate);
         json.put("status", this.status);
