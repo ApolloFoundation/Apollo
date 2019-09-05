@@ -563,12 +563,13 @@ public class BlockchainImpl implements Blockchain {
                 timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime() :
                 timeService.getEpochTime() - blockchainConfig.getMinPrunableLifetime());
         int limit = to == Integer.MAX_VALUE ? Integer.MAX_VALUE : to - from + 1;
-        log.trace("getTx() 1. from={}, to={}, limit={}, accountId={}, type={}, subtype={}",
+        log.trace("getTx() 1. from={}, to={}, initialLimit={}, accountId={}, type={}, subtype={}",
                 from, to, limit, accountId, type, subtype);
         if (limit > 500) { // warn for too big values
             log.warn("Computed limit is BIGGER then 500 = {} !!", limit);
         }
         long initialLimit = limit;
+        int skippedByOffsetCount = from; // value to keep number of skipped records
         // start fetch from main db
         TransactionalDataSource mainDataSource = databaseManager.getDataSource();
         List<Transaction> transactions = transactionDao.getTransactions(
@@ -580,13 +581,24 @@ public class BlockchainImpl implements Blockchain {
                 accountId, numberOfConfirmations, type, subtype,
                 blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                 includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-        log.trace("getTx() 2. fetched from mainDb, fetch=[{}] / count={}, initLimit={}, accountId={}, type={}, subtype={}",
+        log.trace("getTx() 2. fetched from mainDb, fetch=[{}] / foundCount={}, initLimit={}, accountId={}, type={}, subtype={}",
                 transactions.size(), foundCount, initialLimit, accountId, type, subtype);
 
         // check if all Txs are fetched from main db, continue inside shard dbs otherwise
         if (transactions.size() < limit) {
             // not all requested Tx were fetched from main, loop over shards
-            from += transactions.size() > 0 ? transactions.size() : foundCount;
+            if (transactions.size() > 0) {
+                from = 0; // set to zero for shard db
+                limit -= transactions.size(); // decrease limit by really fetched records
+                to -= transactions.size(); // decrease limit by really fetched records
+                if (skippedByOffsetCount > 0 && skippedByOffsetCount >= transactions.size()) {
+                    skippedByOffsetCount -= transactions.size(); // decrease skipped records
+                }
+            } if (foundCount > 0 && skippedByOffsetCount > 0 && skippedByOffsetCount >= foundCount) {
+                skippedByOffsetCount -= foundCount; // decrease skipped records
+                from = 0; // start zero for shard
+            }
+
             // loop over all shard in descent order and fetch left Tx number
             Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
             while (fullDataSources.hasNext()) {
@@ -596,36 +608,69 @@ public class BlockchainImpl implements Blockchain {
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                log.trace("countTx 3. DS={}, from={}, to={}, found Tx Count={} (skip='{}')\naccountId={}, type={}, subtype={}",
-                        dataSource.getDbIdentity(), from, to, foundCount, (foundCount <= 0),
+                log.trace("countTx 3. DS={}, from={} (skippedByOffsetCount={}), to={}, foundCount={} (skip='{}')\naccountId={}, type={}, subtype={}",
+                        dataSource.getDbIdentity(), from, skippedByOffsetCount, to, foundCount, (foundCount <= 0),
                         accountId, type, subtype);
                 if (foundCount <= 0) continue; // skip shard without any suitable records
 
                 // because count is > 0 then try to fetch Tx records from shard db
-                List<Transaction> foundTxs = transactionDao.getTransactions(
+                List<Transaction> fetchedTxs = transactionDao.getTransactions(
                         dataSource,
                         accountId, numberOfConfirmations, type, subtype,
                         blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
                         from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
-                log.trace("getTx() 4. DS={} fetched [{}] (count={}) Tx records from={}, to={}", dataSource.getDbIdentity(),
-                        foundTxs.size(), foundCount, from, to);
-                if (foundTxs.size() <= 0) {
+                log.trace("getTx() 4. DS={} fetched [{}] (foundCount={}) from={} (skippedByOffsetCount={}), to={}", dataSource.getDbIdentity(),
+                        fetchedTxs.size(), foundCount, from, skippedByOffsetCount, to);
+
+                // HERE GOES fancy processing logic...
+                if (fetchedTxs.size() <= 0) {
                     // if count finds records in shard but they are not fetched by OFFSET,
-                    // then change both values 'from' (offset) + 'to' (limit) and continue on next shard
-                    from -= foundCount;
+                    // then change both values 'skippedByOffsetCount' + 'to' (limit) and continue on next shard
                     to -= foundCount;
+                    if (skippedByOffsetCount > 0 && skippedByOffsetCount - foundCount > 0) {
+                        skippedByOffsetCount -= foundCount;
+                    } else {
+                        skippedByOffsetCount = 0;
+                    }
                 } else {
-                    transactions.addAll(foundTxs);
-                    from += foundTxs.size(); // change 'from' (bottom offset) when rows were fetched from shard
+                    if (fetchedTxs.size() > skippedByOffsetCount && skippedByOffsetCount > 0) {
+                        // we need only sub-set
+                        // remove skipped records (below 'offset'), rewrite fetched list
+                        fetchedTxs = fetchedTxs.subList(skippedByOffsetCount, fetchedTxs.size());
+                        if (limit > 0 && limit < fetchedTxs.size()) {
+                            // remove records above our 'limit'
+                            fetchedTxs = fetchedTxs.subList(0, limit);// rewrite fetched list
+                        }
+                        transactions.addAll(fetchedTxs);
+                        skippedByOffsetCount = 0;
+                    } else if (fetchedTxs.size() <= skippedByOffsetCount) {
+                        // we DON'T need sub-set, skip it
+                        skippedByOffsetCount -= fetchedTxs.size();
+                        fetchedTxs.clear();
+                    } else {
+                        // here we are at the end of processing
+                        if (limit > 0 && limit < fetchedTxs.size()) {
+                            // remove not needed records (above 'limit')
+                            fetchedTxs = fetchedTxs.subList(0, limit);// rewrite fetched list
+                            transactions.addAll(fetchedTxs);
+                        } else {
+                            // all found records are needed
+                            transactions.addAll(fetchedTxs);
+                        }
+                    }
                 }
-                log.trace("getTx() 5. DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
+                from = 0;
+                limit -= fetchedTxs.size(); // decrease limit by really fetched records
+                log.trace("getTx() 5. DS={}, allTx={}, fetched={}, limit={}", dataSource.getDbIdentity(), transactions.size(), fetchedTxs.size(), limit);
                 // check conditions to stop loop over current shard db
-                if (foundTxs.size() >= limit || transactions.size() >= initialLimit) {
-                    log.trace("getTx() 6. stop loop on DS={}, allTx={}, foundTx={}", dataSource.getDbIdentity(), transactions.size(), foundTxs.size());
-                    break;
+                if (fetchedTxs.size() >= limit && transactions.size() >= initialLimit) {
+                    log.trace("getTx() 6. stop loop on DS={}, allTx={}, fetched={}, initLimit={} / limit={}", dataSource.getDbIdentity(), transactions.size(), fetchedTxs.size(),
+                            initialLimit, limit);
+                    break; // STOP fancy processing logic...
                 }
-                limit -= foundTxs.size(); // decrease limit by really fetched records
-                log.trace("getTx() 6. next DS from={}, to={}", from, to);
+                to -= fetchedTxs.size(); // decrease 'to' by really fetched records
+                // shard loop is over
+                log.trace("getTx() 6. next DS from={} (skippedByOffsetCount={}), to={}, limit={}", from, skippedByOffsetCount, to, limit);
             }
         }
         log.debug("Tx number Requested / Loaded : [{}] / [{}] ? = '{}' in {} ms", initialLimit, transactions.size(),
