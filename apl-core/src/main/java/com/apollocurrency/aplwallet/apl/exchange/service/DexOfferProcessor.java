@@ -1,5 +1,9 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -10,18 +14,19 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
-
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
 
 @Slf4j
 @Singleton
@@ -214,7 +219,7 @@ public class DexOfferProcessor {
             try {
                 DexOffer offer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
-                if (!offer.getStatus().isWaitingForApproval() || !isContractStep3Valid(contract) || contract.getTransferTxId() == null || !dexService.hasConfirmations(contract, offer)) {
+                if (!isContractStep3Valid(contract, offer)) {
                     continue;
                 }
 
@@ -282,9 +287,9 @@ public class DexOfferProcessor {
 
     }
 
-    private boolean isContractStep3Valid(ExchangeContract exchangeContract) {
-        //TODO add validation.
-        return true;
+    private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOffer dexOffer) {
+        //TODO add additional validation.
+        return dexOffer.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOffer);
     }
 
 
