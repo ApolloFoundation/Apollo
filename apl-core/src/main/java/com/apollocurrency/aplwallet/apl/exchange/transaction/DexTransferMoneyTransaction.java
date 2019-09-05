@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -61,9 +62,12 @@ public class DexTransferMoneyTransaction extends DEX {
         if (recipient != transaction.getRecipientId()) {
             throw new AplException.NotValidException("Tx recipient differs from account, specified in the contract");
         }
-        long transactionId = Long.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
+        long transactionId = Convert.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
+        if (transactionId == 0) {
+            throw new AplException.NotCurrentlyValidException("Contract transaction was not pre confirmed or missing");
+        }
         if (transaction.getId() != transactionId) {
-            throw new AplException.NotValidException("Transaction was not registered in the contract");
+            throw new AplException.NotValidException("Transaction was not registered in the contract. ");
         }
         long orderId =  isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
         DexOffer order = dexService.getOfferById(orderId);

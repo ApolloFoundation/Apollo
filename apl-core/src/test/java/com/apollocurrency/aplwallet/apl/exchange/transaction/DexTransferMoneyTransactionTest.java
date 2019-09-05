@@ -1,14 +1,20 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.jboss.weld.junit.MockBean;
@@ -76,8 +82,26 @@ class DexTransferMoneyTransactionTest {
     }
 
     @Test
-    void validateAttachment() {
+    void testSerializeDeserializeAttachmentToJson() throws AplException.NotValidException {
+        JSONObject jsonObject = attachment.getJSONObject();
+
+        AbstractAttachment parsedAttachment = transactionType.parseAttachment(jsonObject);
+
+        assertEquals(attachment, parsedAttachment);
     }
+
+    @Test
+    void testValidateAttachment() {
+        Transaction tx = mock(Transaction.class);
+        doReturn(attachment).when(tx).getAttachment();
+
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
+
+        ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32]);
+        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+    }
+
 
     @Test
     void applyAttachment() {
