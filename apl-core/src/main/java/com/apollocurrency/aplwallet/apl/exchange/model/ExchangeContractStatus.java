@@ -21,7 +21,7 @@ public enum ExchangeContractStatus {
     STEP_4;
 
     public static ExchangeContractStatus getType(int ordinal){
-        if(ordinal < 0 || ordinal > OfferType.values().length){
+        if (ordinal < 0 || ordinal > OrderType.values().length) {
             return null;
         }
         return ExchangeContractStatus.values()[ordinal];

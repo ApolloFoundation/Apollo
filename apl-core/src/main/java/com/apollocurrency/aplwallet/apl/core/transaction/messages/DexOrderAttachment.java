@@ -6,48 +6,48 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-public class DexOfferAttachment extends AbstractAttachment {
+public class DexOrderAttachment extends AbstractAttachment {
     private byte type;
-    private byte offerCurrency;
-    private long offerAmount;
+    private byte orderCurrency;
+    private long orderAmount;
     private byte pairCurrency;
     private byte status;
     //TODO change it on double.
     private long pairRate;
     private int finishTime;
 
-    public DexOfferAttachment(DexOffer offer) {
-        this.type = Byte.valueOf(String.valueOf(offer.getType().ordinal()));
-        this.offerCurrency = Byte.valueOf(String.valueOf(offer.getOfferCurrency().ordinal()));
-        this.offerAmount = offer.getOfferAmount();
-        this.pairCurrency = Byte.valueOf(String.valueOf(offer.getPairCurrency().ordinal()));
+    public DexOrderAttachment(DexOrder order) {
+        this.type = Byte.valueOf(String.valueOf(order.getType().ordinal()));
+        this.orderCurrency = Byte.valueOf(String.valueOf(order.getOrderCurrency().ordinal()));
+        this.orderAmount = order.getOrderAmount();
+        this.pairCurrency = Byte.valueOf(String.valueOf(order.getPairCurrency().ordinal()));
         //TODO change on double.
-        this.pairRate = EthUtil.ethToGwei(offer.getPairRate());
-        this.finishTime = offer.getFinishTime();
-        this.status = Byte.valueOf(String.valueOf(offer.getStatus().ordinal()));
+        this.pairRate = EthUtil.ethToGwei(order.getPairRate());
+        this.finishTime = order.getFinishTime();
+        this.status = Byte.valueOf(String.valueOf(order.getStatus().ordinal()));
     }
 
-    public DexOfferAttachment(ByteBuffer buffer) {
+    public DexOrderAttachment(ByteBuffer buffer) {
         this.type = buffer.get();
-        this.offerCurrency = buffer.get();
-        this.offerAmount = buffer.getLong();
+        this.orderCurrency = buffer.get();
+        this.orderAmount = buffer.getLong();
         this.pairCurrency = buffer.get();
         this.pairRate = buffer.getLong();
         this.status = buffer.get();
         this.finishTime = buffer.getInt();
     }
 
-    public DexOfferAttachment(JSONObject attachmentData) {
+    public DexOrderAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.type = Byte.valueOf(String.valueOf(attachmentData.get("type")));
-        this.offerCurrency = Byte.valueOf(String.valueOf(attachmentData.get("offerCurrency")));
-        this.offerAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("offerAmount")));
+        this.orderCurrency = Byte.valueOf(String.valueOf(attachmentData.get("orderCurrency")));
+        this.orderAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderAmount")));
         this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
         this.pairRate = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("pairRate")));
         this.status = Byte.valueOf(String.valueOf( attachmentData.get("status")));
@@ -56,7 +56,7 @@ public class DexOfferAttachment extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return DEX.DEX_OFFER_TRANSACTION;
+        return DEX.DEX_ORDER_TRANSACTION;
     }
 
     @Override
@@ -67,8 +67,8 @@ public class DexOfferAttachment extends AbstractAttachment {
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.put(this.type);
-        buffer.put(this.offerCurrency);
-        buffer.putLong(this.offerAmount);
+        buffer.put(this.orderCurrency);
+        buffer.putLong(this.orderAmount);
         buffer.put(this.pairCurrency);
         buffer.putLong(this.pairRate);
         buffer.put(this.status);
@@ -78,8 +78,8 @@ public class DexOfferAttachment extends AbstractAttachment {
     @Override
     public void putMyJSON(JSONObject json) {
         json.put("type", this.type);
-        json.put("offerCurrency", this.offerCurrency);
-        json.put("offerAmount", this.offerAmount);
+        json.put("orderCurrency", this.orderCurrency);
+        json.put("orderAmount", this.orderAmount);
         json.put("pairCurrency", this.pairCurrency);
         json.put("pairRate", this.pairRate);
         json.put("status", this.status);
@@ -99,20 +99,20 @@ public class DexOfferAttachment extends AbstractAttachment {
         this.type = type;
     }
 
-    public byte getOfferCurrency() {
-        return offerCurrency;
+    public byte getOrderCurrency() {
+        return orderCurrency;
     }
 
-    public void setOfferCurrency(byte offerCurrency) {
-        this.offerCurrency = offerCurrency;
+    public void setOrderCurrency(byte orderCurrency) {
+        this.orderCurrency = orderCurrency;
     }
 
-    public long getOfferAmount() {
-        return offerAmount;
+    public long getOrderAmount() {
+        return orderAmount;
     }
 
-    public void setOfferAmount(long offerAmount) {
-        this.offerAmount = offerAmount;
+    public void setOrderAmount(long orderAmount) {
+        this.orderAmount = orderAmount;
     }
 
     public byte getPairCurrency() {

@@ -1,33 +1,33 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-public class DexOfferAttachmentFactory {
+public class DexOrderAttachmentFactory {
 
-    public static DexOfferAttachment build(ByteBuffer buffer) throws AplException.NotValidException {
+    public static DexOrderAttachment build(ByteBuffer buffer) throws AplException.NotValidException {
         byte version = buffer.get();
 
         switch (version)  {
             case 1 :
-                return new DexOfferAttachment(buffer);
+                return new DexOrderAttachment(buffer);
             case 2 :
-                return new DexOfferAttachmentV2(buffer);
+                return new DexOrderAttachmentV2(buffer);
             default:
                 throw new UnsupportedOperationException("Version: " + version + ", not supported.");
         }
     }
 
-    public static DexOfferAttachment parse(JSONObject attachmentData) {
+    public static DexOrderAttachment parse(JSONObject attachmentData) {
         if (Appendix.hasAppendix( "DexOrder", attachmentData)) {
-            return new DexOfferAttachment(attachmentData);
+            return new DexOrderAttachment(attachmentData);
         } else if (Appendix.hasAppendix("DexOrder_v2", attachmentData)){
-            return new DexOfferAttachmentV2(attachmentData);
+            return new DexOrderAttachmentV2(attachmentData);
         }
         return null;
     }

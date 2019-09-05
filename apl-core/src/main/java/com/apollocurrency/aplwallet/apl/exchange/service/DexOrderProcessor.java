@@ -1,9 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -15,32 +11,36 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAtt
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
 
 @Slf4j
 @Singleton
-public class DexOfferProcessor {
+public class DexOrderProcessor {
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
-    private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private DexOrderTransactionCreator dexOrderTransactionCreator;
 
     @Inject
-    public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, DexOfferTransactionCreator dexOfferTransactionCreator) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
-        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.dexOrderTransactionCreator = dexOrderTransactionCreator;
     }
 
 
@@ -70,16 +70,16 @@ public class DexOfferProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOffer offer = dexService.getOfferByTransactionId(contract.getOrderId());
-                DexOffer counterOffer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOfferByTransactionId(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
                 if (contract.getCounterTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
                     continue;
                 }
 
-                if (!counterOffer.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-                    log.debug("Order is in the status: {}, not valid now.", counterOffer.getStatus());//TODO do something.
+                if (!counterOrder.getStatus().isOpen() || !isContractStep1Valid(contract)) {
+                    log.debug("Order is in the status: {}, not valid now.", counterOrder.getStatus());//TODO do something.
                     continue;
                 }
 
@@ -92,9 +92,9 @@ public class DexOfferProcessor {
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
-                log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, offer.getTransactionId(), counterOffer.getTransactionId());
+                log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getTransactionId(), counterOrder.getTransactionId());
 
-                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOffer, offer.getToAddress(), secretHash, STEP_2);
+                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), secretHash, STEP_2);
 
                 log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, txId);
 
@@ -112,7 +112,7 @@ public class DexOfferProcessor {
                 //TODO move it to some util
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
 
-                Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
 
                 if (transaction == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
@@ -146,8 +146,8 @@ public class DexOfferProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOffer offer = dexService.getOfferByTransactionId(contract.getOrderId());
-                DexOffer counterOffer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOfferByTransactionId(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
                 if (contract.getTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-2) TransferTxId is not null. ExchangeContractId:{}", contract.getId());
@@ -167,9 +167,9 @@ public class DexOfferProcessor {
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
-                log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, offer.getTransactionId(), counterOffer.getTransactionId());
+                log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getTransactionId(), counterOrder.getTransactionId());
 
-                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, offer, counterOffer.getToAddress(), contract.getSecretHash(), STEP_2);
+                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getSecretHash(), STEP_2);
 
                 log.debug("DexOfferProcessor Step-2. User transferred money accountId: {} , txId: {}.", accountId, txId);
 
@@ -184,7 +184,7 @@ public class DexOfferProcessor {
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
 
-                Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
 
                 if (transaction == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
@@ -217,9 +217,9 @@ public class DexOfferProcessor {
                 .build());
         for (ExchangeContract contract : contracts) {
             try {
-                DexOffer offer = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOfferByTransactionId(contract.getCounterOrderId());
 
-                if (!isContractStep3Valid(contract, offer)) {
+                if (!isContractStep3Valid(contract, order)) {
                     continue;
                 }
 
@@ -243,16 +243,16 @@ public class DexOfferProcessor {
     private void processOutcomeContractsForUserStep3(Long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
-        DexOfferDBRequest dexOfferDBRequest = new DexOfferDBRequest();
-        dexOfferDBRequest.setAccountId(accountId);
-        dexOfferDBRequest.setStatus(OfferStatus.WAITING_APPROVAL);
-        List<DexOffer> outComeOffers = dexService.getOffers(dexOfferDBRequest);
+        DexOrderDBRequest dexOrderDBRequest = new DexOrderDBRequest();
+        dexOrderDBRequest.setAccountId(accountId);
+        dexOrderDBRequest.setStatus(OrderStatus.WAITING_APPROVAL);
+        List<DexOrder> outComeOrders = dexService.getOffers(dexOrderDBRequest);
 
-        for (DexOffer outcomeOffer : outComeOffers) {
+        for (DexOrder outcomeOrder : outComeOrders) {
             try {
                 ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
                         .sender(accountId)
-                        .offerId(outcomeOffer.getTransactionId())
+                        .offerId(outcomeOrder.getTransactionId())
                         .status(STEP_3.ordinal())
                         .build());
 
@@ -277,7 +277,7 @@ public class DexOfferProcessor {
 
                 byte[] secret = dexService.getSecretIfTxApproved(contract.getSecretHash(), contract.getTransferTxId());
 
-                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOffer.getTransactionId(), contract.getCounterTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getTransactionId(), contract.getCounterTransferTxId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {
@@ -287,9 +287,9 @@ public class DexOfferProcessor {
 
     }
 
-    private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOffer dexOffer) {
+    private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOrder dexOrder) {
         //TODO add additional validation.
-        return dexOffer.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOffer);
+        return dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
     }
 
 

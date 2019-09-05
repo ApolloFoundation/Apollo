@@ -11,16 +11,16 @@ import java.nio.ByteBuffer;
 
 @Data
 @AllArgsConstructor
-public class DexCloseOfferAttachment extends AbstractAttachment {
+public class DexCloseOrderAttachment extends AbstractAttachment {
 
     private long orderId;
 
-    public DexCloseOfferAttachment(ByteBuffer buffer) {
+    public DexCloseOrderAttachment(ByteBuffer buffer) {
         super(buffer);
         this.orderId = buffer.getLong();
     }
 
-    public DexCloseOfferAttachment(JSONObject attachmentData) {
+    public DexCloseOrderAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
     }
@@ -42,6 +42,6 @@ public class DexCloseOfferAttachment extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return DEX.DEX_CLOSE_OFFER;
+        return DEX.DEX_CLOSE_ORDER;
     }
 }

@@ -7,20 +7,20 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-public class DexOfferCancelAttachment extends AbstractAttachment {
+public class DexOrderCancelAttachment extends AbstractAttachment {
 
     private long transactionId;
 
-    public DexOfferCancelAttachment(long transactionId) {
+    public DexOrderCancelAttachment(long transactionId) {
         this.transactionId = transactionId;
     }
 
-    public DexOfferCancelAttachment(ByteBuffer buffer) {
+    public DexOrderCancelAttachment(ByteBuffer buffer) {
         super(buffer);
         this.transactionId = buffer.getLong();
     }
 
-    public DexOfferCancelAttachment(JSONObject attachmentData) {
+    public DexOrderCancelAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.transactionId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("transactionId")));
     }
@@ -42,7 +42,7 @@ public class DexOfferCancelAttachment extends AbstractAttachment {
 
     @Override
     public TransactionType getTransactionType() {
-        return DEX.DEX_CANCEL_OFFER_TRANSACTION;
+        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
     }
 
     public long getTransactionId() {

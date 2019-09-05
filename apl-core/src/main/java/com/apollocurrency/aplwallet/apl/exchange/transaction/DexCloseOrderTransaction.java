@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -9,23 +7,25 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOfferAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 
 
-public class DexCloseOfferTransaction extends DEX {
+public class DexCloseOrderTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
     private BlockchainImpl blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -42,25 +42,25 @@ public class DexCloseOfferTransaction extends DEX {
 
     @Override
     public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new DexCloseOfferAttachment(buffer);
+        return new DexCloseOrderAttachment(buffer);
     }
 
     @Override
     public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new DexCloseOfferAttachment(attachmentData);
+        return new DexCloseOrderAttachment(attachmentData);
     }
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
-        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
+        DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
+        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
 
-        if (offer.getAccountId() != transaction.getSenderId() ) {
+        if (order.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotValidException(JSON.toString(incorrect("orderId", "You can close only your orders.")));
         }
 
-        if (!offer.getStatus().isWaitingForApproval()) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order only in the status WaitingForApproval, but: " + offer.getStatus().name())));
+        if (!order.getStatus().isWaitingForApproval()) {
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order only in the status WaitingForApproval, but: " + order.getStatus().name())));
         }
     }
 
@@ -71,15 +71,15 @@ public class DexCloseOfferTransaction extends DEX {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
-        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
-        offer.setStatus(OfferStatus.CLOSED);
-        dexService.saveOffer(offer);
+        DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
+        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
+        order.setStatus(OrderStatus.CLOSED);
+        dexService.saveOrder(order);
 
-        ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
+        ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(order.getTransactionId()).build());
 
         if (exchangeContract == null) {
-            exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().counterOfferId(offer.getTransactionId()).build());
+            exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().counterOfferId(order.getTransactionId()).build());
         }
 
         Block lastBlock = blockchain.getLastBlock();
@@ -88,11 +88,11 @@ public class DexCloseOfferTransaction extends DEX {
                 .transactionID(transaction.getId())
                 .senderOfferID(exchangeContract.getSender())
                 .receiverOfferID(exchangeContract.getRecipient())
-                .senderOfferType((byte) offer.getType().ordinal())
-                .senderOfferCurrency((byte) offer.getOfferCurrency().ordinal())
-                .senderOfferAmount(offer.getOfferAmount())
-                .pairCurrency((byte) offer.getPairCurrency().ordinal())
-                .pairRate(offer.getPairRate())
+                .senderOfferType((byte) order.getType().ordinal())
+                .senderOfferCurrency((byte) order.getOrderCurrency().ordinal())
+                .senderOfferAmount(order.getOrderAmount())
+                .pairCurrency((byte) order.getPairCurrency().ordinal())
+                .pairRate(order.getPairRate())
                 .finishTime(lastBlock.getTimestamp())
                 .height(lastBlock.getHeight())
                 .build();
@@ -108,8 +108,8 @@ public class DexCloseOfferTransaction extends DEX {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CLOSE_OFFER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
+        return isDuplicate(DEX.DEX_CLOSE_ORDER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

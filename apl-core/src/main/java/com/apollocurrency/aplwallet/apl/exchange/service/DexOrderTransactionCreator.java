@@ -12,10 +12,10 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 @Singleton
-public class DexOfferTransactionCreator extends CreateTransaction {
+public class DexOrderTransactionCreator extends CreateTransaction {
 
-    private DexOfferTransactionCreator() {
-        super(new APITag[] {APITag.CREATE_TRANSACTION}, "orderType","offerAmount", "offerCurrency", "pairCurrency", "pairRate", "finishTime");
+    private DexOrderTransactionCreator() {
+        super(new APITag[]{APITag.CREATE_TRANSACTION}, "orderType", "orderAmount", "orderCurrency", "pairCurrency", "pairRate", "finishTime");
     }
 
     @Override
