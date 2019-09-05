@@ -20,24 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+
 import javax.enterprise.inject.spi.CDI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
 public final class Hallmark {
    
-    private static PropertiesHolder propertiesHolder= CDI.current().select(PropertiesHolder.class).get();;
-    
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    
+
+    private static AccountService accountService;
+
+    private static AccountService lookupAccountService(){
+        if (accountService == null) accountService = CDI.current().select(AccountService.class).get();
+        return accountService;
+    }
+
     public static int parseDate(String dateValue) {
         return Integer.parseInt(dateValue.substring(0, 4)) * 10000
                 + Integer.parseInt(dateValue.substring(5, 7)) * 100
@@ -179,6 +184,10 @@ public final class Hallmark {
 
     public long getAccountId() {
         return accountId;
+    }
+
+    public Account getAccount(){
+        return lookupAccountService().getAccount(getAccountId());
     }
 
     public boolean isValid() {

@@ -35,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import lombok.Getter;
@@ -95,7 +94,6 @@ public final class PeerImpl implements Peer {
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile TimeService timeService;
-    private AccountService accountService;
     private final PeersService peers;
 
     private PeerInfo pi = new PeerInfo();
@@ -113,7 +111,6 @@ public final class PeerImpl implements Peer {
             Blockchain blockchain,
             TimeService timeService,
             PeerServlet peerServlet,
-            AccountService accountService,
             PeersService peers
     ) {
         //TODO: remove Json.org entirely from P2P
@@ -138,7 +135,6 @@ public final class PeerImpl implements Peer {
         isLightClient=peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
-        this.accountService = accountService;
     }
     
     @Override
@@ -360,8 +356,7 @@ public final class PeerImpl implements Peer {
             return 0;
         }
         if (hallmarkBalance == -1 || hallmarkBalanceHeight < blockchain.getHeight() - 60) {
-            long accountId = hallmark.getAccountId();
-            Account account = accountService.getAccount(accountId);
+            Account account = hallmark.getAccount();
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = blockchain.getHeight();
         }

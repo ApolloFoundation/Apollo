@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -62,11 +62,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Inject
     //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
-    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig, @Named("CREATOR_ID")long creatorId) {
+    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/) {
         super("account", accountDbKeyFactory, false);
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL.");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
-        this.creatorId = creatorId;
+        this.creatorId = GenesisImporter.CREATOR_ID;
     }
 
     @Override

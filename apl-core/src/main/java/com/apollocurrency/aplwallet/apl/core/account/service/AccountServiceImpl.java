@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -53,13 +52,12 @@ public class AccountServiceImpl implements AccountService {
     private Blockchain blockchain;
     private BlockchainConfig blockchainConfig;
     private GlobalSync sync;
-    private DatabaseManager databaseManager;
     private AccountPublicKeyService accountPublicKeyService;
     private Event<Account> accountEvent;
 
     @Inject
     public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig,
-                              GlobalSync sync, DatabaseManager databaseManager,
+                              GlobalSync sync,
                               AccountPublicKeyService accountPublicKeyService,
                               Event<Account> accountEvent,
                               AccountGuaranteedBalanceTable accountGuaranteedBalanceTable) {
@@ -67,7 +65,6 @@ public class AccountServiceImpl implements AccountService {
         this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
         this.sync = sync;
-        this.databaseManager = databaseManager;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountEvent = accountEvent;
         this.accountGuaranteedBalanceTable = accountGuaranteedBalanceTable;
@@ -80,10 +77,11 @@ public class AccountServiceImpl implements AccountService {
 
     private BlockchainProcessor blockchainProcessor;
     //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
-    private void lookupAndInjectBlockchainProcessor() {
+    private BlockchainProcessor lookupBlockchainProcessor() {
         if (this.blockchainProcessor == null) {
             this.blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         }
+        return blockchainProcessor;
     }
     //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
     private AccountLedgerService accountLedgerService;
@@ -164,7 +162,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void save(Account account) {
+    public void update(Account account) {
         account.setHeight(blockchain.getHeight());
         if (account.getBalanceATM() == 0
                 && account.getUnconfirmedBalanceATM() == 0
@@ -213,11 +211,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public long getGuaranteedBalanceATM(Account account, final int numberOfConfirmations, final int currentHeight) {
-        lookupAndInjectBlockchainProcessor();
         sync.readLock();
         try {
             int height = currentHeight - numberOfConfirmations;
-            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
+            if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < lookupBlockchainProcessor().getMinRollbackHeight()
                     || height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
             }
@@ -325,7 +322,7 @@ public class AccountServiceImpl implements AccountService {
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
-        save(account);
+        update(account);
 
         log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
@@ -365,7 +362,7 @@ public class AccountServiceImpl implements AccountService {
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
         accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockchain.getHeight());
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
-        save(account);
+        update(account);
 
         log.trace("Fire event {} account={}", AccountEventType.BALANCE, account);
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
@@ -402,7 +399,7 @@ public class AccountServiceImpl implements AccountService {
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
-        save(account);
+        update(account);
 
         log.trace("Fire event {} account={}", AccountEventType.UNCONFIRMED_BALANCE, account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);

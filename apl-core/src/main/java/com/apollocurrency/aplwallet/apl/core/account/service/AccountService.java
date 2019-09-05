@@ -36,7 +36,7 @@ public interface AccountService {
 
     Account addOrGetAccount(long id, boolean isGenesis);
 
-    void save(Account account);
+    void update(Account account);
 
     long getEffectiveBalanceAPL(Account account, int height, boolean lock);
 

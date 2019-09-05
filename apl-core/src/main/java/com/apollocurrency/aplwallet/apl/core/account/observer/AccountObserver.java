@@ -116,7 +116,7 @@ public class AccountObserver {
                     }
                 }
             }
-            accountService.save(lessor);
+            accountService.update(lessor);
         }
     }
 
