@@ -172,6 +172,34 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
     @Override
     public int validateOfferSellAplEth(DexOffer myOffer, DexOffer hisOffer) {
         log.debug("validateOfferSellAplEth: ");
+        // checking out eth deposits.. 
+        String hisToEthAddr = hisOffer.getToAddress(); 
+        String hisFromEthAddr = hisOffer.getFromAddress(); 
+        log.debug("hisToEthAddr: {}, hisToEthAddr:{}", hisToEthAddr, hisFromEthAddr);
+        
+        List<UserEthDepositInfo> hisEthDeposits =  getUserEthDeposits(hisFromEthAddr);
+                
+        log.debug("his offer: transactionid: {}, ", hisOffer.getTransactionId());
+
+        // BigDecimal hasToPay = BigDecimal.valueOf(hisOffer.getOfferAmount() ).divide( BigDecimal.valueOf(ONE_APL) ).divide();
+        
+        BigDecimal hasToPay = EthUtil.atmToEth(hisOffer.getOfferAmount()).multiply(hisOffer.getPairRate());
+        
+        log.debug("hasToPay: {} ", hasToPay);
+        
+        boolean depositDetected = false; 
+        for (UserEthDepositInfo current : hisEthDeposits) {
+            log.debug( "amount: {}, orderID: {}, compare1: {}, compare2: {}  ", current.getAmount(), current.getOrderId(), hasToPay.compareTo(current.getAmount()), current.getOrderId().equals(hisOffer.getTransactionId()) );
+            
+            if ( (hasToPay.compareTo( current.getAmount())==0) && current.getOrderId().equals(hisOffer.getTransactionId()) ) {
+                log.debug("Bingo, deposit is detected");
+                depositDetected = true;
+                break;                
+            }
+        }
+        
+        log.debug("deposit detected: {}", depositDetected);
+        
         return 1;
     }
 
