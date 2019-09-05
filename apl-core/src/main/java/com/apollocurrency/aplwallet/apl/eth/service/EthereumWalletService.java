@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -10,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
@@ -27,17 +30,18 @@ import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -47,8 +51,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class EthereumWalletService {
@@ -101,6 +105,43 @@ public class EthereumWalletService {
         } else {
             throw new UnsupportedOperationException();
         }
+    }
+
+    /**
+     * Calculate number of confirmations for transaction referred by given hash
+     * @param txHash hash of transaction to get number of confirmations
+     * @return -1 when transaction does not exists or node responded with error, otherwise return number of confirmations
+     * @throws RuntimeException when IO error occurred
+     */
+    public int getNumberOfConfirmations(String txHash) throws RuntimeException {
+        StringValidator.requireNonBlank(txHash);
+        int confirmations = -1;
+        try {
+            EthTransaction txResponse = web3j.ethGetTransactionByHash(txHash).send();
+            org.web3j.protocol.core.methods.response.Transaction tx = getResultFrom(txResponse);
+            if (tx != null) {
+                    BigInteger txBlockNumber = tx.getBlockNumber();
+                    EthBlockNumber blockNumberResponse = web3j.ethBlockNumber().send();
+                String blockNumber = getResultFrom(blockNumberResponse);
+                if (blockNumber != null) {
+                    confirmations = Numeric.decodeQuantity(blockNumber).subtract(txBlockNumber).intValue();
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return confirmations;
+    }
+
+    private <T> T getResultFrom(Response<T> response) {
+        if (response == null) {
+            return null;
+        }
+        if (response.getResult() == null) {
+            log.debug("Unable to get result from response - {}" + response.getRawResponse());
+            return null;
+        }
+        return response.getResult();
     }
 
     /**

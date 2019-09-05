@@ -20,6 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -44,22 +51,15 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.Arrays;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.FEATURE_NOT_AVAILABLE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
-    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
+    private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
