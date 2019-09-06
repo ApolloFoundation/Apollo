@@ -48,20 +48,15 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDexValidator {
     
-    private static final Logger log = LoggerFactory.getLogger(DexValidationServiceImpl.class);
-    // private DexService dexService;
+    private static final Logger log = LoggerFactory.getLogger(DexValidationServiceImpl.class);   
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     private EthGasStationInfoDao ethGasStationInfoDao;
-    
-    // minimal value for the amount of money required for commission
-
-    
-    
+        
     @Inject
     DexValidationServiceImpl( DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao ) {        
         this.dexSmartContractService =  Objects.requireNonNull( dexSmartContractService,"dexSmartContractService is null");           
-        this.ethereumWalletService =  Objects.requireNonNull( ethereumWalletService,"dexSmartContractService is null");           
+        this.ethereumWalletService =  Objects.requireNonNull( ethereumWalletService,"ethereumWalletService is null");           
         this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
 
     }
@@ -94,7 +89,7 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         try {
             return dexSmartContractService.getUserFilledDeposits(user);
         } catch (AplException.ExecutiveProcessException ex) {
-            java.util.logging.Logger.getLogger(DexValidationServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+           log.debug( "Exception caught while getting eth deposits: {} ", ex);
         }
         return null;
     }
@@ -107,8 +102,7 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         return ethereumWalletService.getBalanceWei(user, currencyType );
     }
     
-    boolean validateEthDeposit(DexOffer myOffer, DexOffer counterOffer) {
-        // right now it is checking the balance. TODO: switch to checking out deposits
+    boolean validateEthDeposit(DexOffer myOffer, DexOffer counterOffer) {        
         BigInteger amountOnHisWallet = getEthBalanceWei(counterOffer.getFromAddress(), counterOffer.getPairCurrency());
         BigDecimal haveToPay = EthUtil.atmToEth(counterOffer.getOfferAmount()).multiply(counterOffer.getPairRate());
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        
@@ -118,8 +112,7 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
     boolean checkAplCommisionPayingAbility(Long hisAplBalance) {
         // checking out whether there are commission available
         Long fee = APL_COMMISSION * ONE_APL;
-        log.debug("fee: " + fee);        
-        // boolean ableToPayCommission = hisAplBalance >= fee;
+        log.debug("fee: " + fee);              
         return hisAplBalance >= fee;
     }
     
@@ -170,8 +163,7 @@ public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDex
         if (!ableToPayCommission) return OFFER_VALIDATE_ERROR_APL_COMMISSION;        
         boolean ethCheckResult = checkGasPayingAbility(hisOffer);        
         log.debug("ethCheckResult: {} ", ethCheckResult);
-        if (!ethCheckResult) return OFFER_VALIDATE_ERROR_ETH_COMMISSION;
-        
+        if (!ethCheckResult) return OFFER_VALIDATE_ERROR_ETH_COMMISSION;        
         return OFFER_VALIDATE_OK;
     }
 
