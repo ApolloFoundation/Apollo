@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+
 /**
  *
  * @author Serhiy Lymar
@@ -19,5 +21,6 @@ public interface IDexBasicServiceInterface {
      * Stop transport interaction service
      */
     void deinitialize();
-    
+
+    DexOffer findCounterOffer(DexOffer createdOffer);
 }
