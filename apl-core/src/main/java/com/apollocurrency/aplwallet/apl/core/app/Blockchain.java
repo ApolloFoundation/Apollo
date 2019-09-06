@@ -144,11 +144,6 @@ public interface Blockchain {
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-//    DbIterator<Transaction> getAllTransactions();
-
-//    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-//                                                      boolean includeExpiredPrunable);
-
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);

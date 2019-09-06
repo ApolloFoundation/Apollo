@@ -534,24 +534,6 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionCount(dataSource, from, to);
     }
 
-/*
-    @Override
-    public DbIterator<Transaction> getAllTransactions() {
-        return transactionDao.getAllTransactions();
-    }
-*/
-
-/*
-    @Override
-    public DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                       boolean includeExpiredPrunable) {
-        return getTransactions(
-                accountId, 0, type, subtype,
-                blockTimestamp, false, false, false,
-                0, -1, includeExpiredPrunable, false, true);
-    }
-*/
-
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
@@ -629,7 +611,7 @@ public class BlockchainImpl implements Blockchain {
                 }
             }
         }
-        log.debug("Tx number Requested / Loaded : [{}] / [{}] = in {} ms", limit, transactions.size(), System.currentTimeMillis() - start);
+        log.trace("Tx number Requested / Loaded : [{}] / [{}] = in {} ms", limit, transactions.size(), System.currentTimeMillis() - start);
         return transactions;
     }
 
