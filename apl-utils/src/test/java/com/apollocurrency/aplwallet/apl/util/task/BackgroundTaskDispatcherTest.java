@@ -64,6 +64,7 @@ class BackgroundTaskDispatcherTest {
 
     @Test
     void scheduleAtFixedRate_withSuspending() throws InterruptedException {
+        int sleepDelay = 200;
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
         //task.setTask(runnable);
         final Count count = new Count(0);
@@ -77,15 +78,15 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
         log.info("Thread dispatch");
-        Thread.sleep(100);
+        Thread.sleep(sleepDelay);
         log.info("Suspend dispatcher");
         taskDispatcher.suspend();
         int val1 = count.value;
-        Thread.sleep(100);
+        Thread.sleep(sleepDelay);
         log.info("Resume dispatcher");
         int val2 = count.value;
         taskDispatcher.resume();
-        Thread.sleep(100);
+        Thread.sleep(sleepDelay);
         int val3 = count.value;
         taskDispatcher.shutdown();
 
