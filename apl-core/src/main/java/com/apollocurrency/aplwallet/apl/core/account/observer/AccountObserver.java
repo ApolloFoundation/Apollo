@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
@@ -130,4 +131,21 @@ public class AccountObserver {
         accountLedgerService.clearEntries();
     }
 
+    public void onLogLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_ENTRY) LedgerEntry entry ){
+        log.trace("Catch event (LOG_ENTRY) {}", entry);
+        if (accountLedgerService.mustLogEntry(entry.getAccountId(), false)) {
+            accountLedgerService.logEntry(entry);
+        }else{
+            log.trace("The account {} mustn't be tracked", entry.getAccountId());
+        }
+    }
+
+    public void onLogUnconfirmedLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY) LedgerEntry entry ){
+        log.trace("Catch event (LOG_UNCONFIRMED_ENTRY) {}", entry);
+        if (accountLedgerService.mustLogEntry(entry.getAccountId(), true)) {
+            accountLedgerService.logEntry(entry);
+        }else{
+            log.trace("The account {} mustn't be tracked", entry.getAccountId());
+        }
+    }
 }

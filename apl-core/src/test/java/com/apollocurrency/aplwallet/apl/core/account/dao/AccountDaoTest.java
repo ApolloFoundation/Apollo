@@ -27,6 +27,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -71,7 +72,13 @@ class AccountDaoTest  {
     @Inject
     AccountTable table;
 
-    AccountTestData testData = new AccountTestData();
+    AccountTestData testData;
+
+    @BeforeEach
+    void setUp() {
+        testData = new AccountTestData();
+        table.setCreatorId(testData.CREATOR_ID);
+    }
 
     @Test
     void testLoad() {

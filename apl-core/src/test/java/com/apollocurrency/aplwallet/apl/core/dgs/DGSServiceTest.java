@@ -1166,9 +1166,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
@@ -1182,9 +1185,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
@@ -1196,9 +1202,12 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
@@ -1210,12 +1219,14 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
         long senderId = 200;
-
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
         doReturn(height).when(blockchain).getHeight();
         EncryptedMessageAppendix note = new EncryptedMessageAppendix(new EncryptedData("Image".getBytes(), new byte[32]), false, true);
         doReturn(note).when(deliverTransaction).getEncryptedMessage();
@@ -1240,9 +1251,13 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        //Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
-        doReturn(1_500_000).when(blockchain).getHeight();
+        int height = 1_500_000;
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
             service.refund(LedgerEvent.DIGITAL_GOODS_REFUND, 100, SELLER_0_ID, dtd.PURCHASE_14.getId(), 300_000_000L, new EncryptedMessageAppendix(refundNote, true, false));
         });

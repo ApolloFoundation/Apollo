@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -54,12 +56,14 @@ public class AccountServiceImpl implements AccountService {
     private GlobalSync sync;
     private AccountPublicKeyService accountPublicKeyService;
     private Event<Account> accountEvent;
+    private Event<LedgerEntry> logLedgerEvent;
+    private BlockchainProcessor blockchainProcessor;
 
     @Inject
     public AccountServiceImpl(AccountTable accountTable, Blockchain blockchain, BlockchainConfig blockchainConfig,
                               GlobalSync sync,
                               AccountPublicKeyService accountPublicKeyService,
-                              Event<Account> accountEvent,
+                              Event<Account> accountEvent, Event<LedgerEntry> logLedgerEvent,
                               AccountGuaranteedBalanceTable accountGuaranteedBalanceTable) {
         this.accountTable = accountTable;
         this.blockchain = blockchain;
@@ -67,29 +71,21 @@ public class AccountServiceImpl implements AccountService {
         this.sync = sync;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountEvent = accountEvent;
+        this.logLedgerEvent = logLedgerEvent;
         this.accountGuaranteedBalanceTable = accountGuaranteedBalanceTable;
     }
 
-    @Override
-    public int getActiveLeaseCount() {
-        return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
-    }
-
-    private BlockchainProcessor blockchainProcessor;
     //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
-    private BlockchainProcessor lookupBlockchainProcessor() {
+    protected BlockchainProcessor lookupBlockchainProcessor() {
         if (this.blockchainProcessor == null) {
             this.blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         }
         return blockchainProcessor;
     }
-    //TODO this lookup-method prevents the cyclic dependencies, need to be removed after refactoring the BlockchainProcessor class
-    private AccountLedgerService accountLedgerService;
-    private AccountLedgerService lookupAccountLedgerService() {
-        if (this.accountLedgerService == null) {
-            this.accountLedgerService = CDI.current().select(AccountLedgerServiceImpl.class).get();
-        }
-        return accountLedgerService;
+
+    @Override
+    public int getActiveLeaseCount() {
+        return accountTable.getCount(new DbClause.NotNullClause("active_lessee_id"));
     }
 
     @Override
@@ -283,28 +279,30 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void logEntryConfirmed(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
-        if (lookupAccountLedgerService().mustLogEntry(account.getId(), false)) {
-            if (feeATM != 0) {
-                lookupAccountLedgerService().logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockchain.getLastBlock()));
-            }
-            if (amountATM != 0) {
-                lookupAccountLedgerService().logEntry(new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockchain.getLastBlock()));
-            }
+        LedgerEntry entry;
+        if (feeATM != 0) {
+            entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
+                        LedgerHolding.APL_BALANCE, null, feeATM, account.getBalanceATM() - amountATM, blockchain.getLastBlock());
+            logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
+        }
+        if (amountATM != 0) {
+            entry = new LedgerEntry(event, eventId, account.getId(),
+                        LedgerHolding.APL_BALANCE, null, amountATM, account.getBalanceATM(), blockchain.getLastBlock());
+            logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
         }
     }
 
     private void logEntryUnconfirmed(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
-        if (lookupAccountLedgerService().mustLogEntry(account.getId(), true)) {
-            if (feeATM != 0) {
-                lookupAccountLedgerService().logEntry(new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockchain.getLastBlock()));
-            }
-            if (amountATM != 0) {
-                lookupAccountLedgerService().logEntry(new LedgerEntry(event, eventId, account.getId(),
-                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockchain.getLastBlock()));
-            }
+        LedgerEntry entry;
+        if (feeATM != 0) {
+            entry = new LedgerEntry(LedgerEvent.TRANSACTION_FEE, eventId, account.getId(),
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, feeATM, account.getUnconfirmedBalanceATM() - amountATM, blockchain.getLastBlock());
+            logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
+        }
+        if (amountATM != 0) {
+            entry = new LedgerEntry(event, eventId, account.getId(),
+                        LedgerHolding.UNCONFIRMED_APL_BALANCE, null, amountATM, account.getUnconfirmedBalanceATM(), blockchain.getLastBlock());
+            logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
         }
     }
 

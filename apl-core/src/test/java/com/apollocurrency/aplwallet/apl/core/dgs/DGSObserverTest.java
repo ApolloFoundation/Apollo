@@ -125,6 +125,7 @@ public class DGSObserverTest {
         doReturn(dtd.PURCHASE_2.getDeadline() + 60).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(prevBlock).when(blockchain).getBlock(1L);
+        doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(1_000_000).when(lastBlock).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(lastBlock);
