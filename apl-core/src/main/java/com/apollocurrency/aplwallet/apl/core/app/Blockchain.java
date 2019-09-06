@@ -58,13 +58,9 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
-    //    DbIterator<? extends Block> getAllBlocks();
-
     DbIterator<Block> getBlocks(int from, int to);
 
     Block findFirstBlock();
-
-//    DbIterator<Block> getBlocks(long accountId, int timestamp);
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
@@ -85,13 +81,9 @@ public interface Blockchain {
 
     void setShardInitialBlock(Block block);
 
-//    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
-
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
     List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
-
-//    List<Block> getBlocksAfter(long blockId, int limit);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
@@ -104,8 +96,6 @@ public interface Blockchain {
     Block deleteBlocksFrom(long blockId);
 
     void deleteAll();
-
-//    Map<Long, Transaction> getTransactionCache();
 
     Transaction getTransaction(long transactionId);
 

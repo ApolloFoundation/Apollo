@@ -151,13 +151,6 @@ public class BlockchainImpl implements Blockchain {
         return hasBlock(blockId, Integer.MAX_VALUE);
     }
 
-/*
-    @Override
-    public DbIterator<Block> getAllBlocks() {
-        return lookupBlockDao().getAllBlocks();
-    }
-*/
-
     @Transactional(readOnly = true)
     @Override
     public DbIterator<Block> getBlocks(int from, int to) {
@@ -172,13 +165,6 @@ public class BlockchainImpl implements Blockchain {
     public Block findFirstBlock() {
         return blockDao.findFirstBlock();
     }
-
-/*
-    @Override
-    public DbIterator<Block> getBlocks(long accountId, int timestamp) {
-        return getBlocks(accountId, timestamp, 0, -1);
-    }
-*/
 
     @Transactional(readOnly = true)
     @Override
@@ -226,13 +212,6 @@ public class BlockchainImpl implements Blockchain {
     public int getBlockCount(long accountId) {
         return blockDao.getBlockCount(accountId);
     }
-
-/*
-    @Override
-    public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return lookupBlockDao().getBlocks(con, pstmt);
-    }
-*/
 
     @Override
     @Transactional(readOnly = true)
