@@ -26,7 +26,7 @@ class BackgroundTaskDispatcherTest {
     private TaskDispatcher taskDispatcher;
     private Runnable runnable;
     private Task task;
-
+    private static int SLEEP_DELAY = 160;
     @BeforeEach
     void setUp() {
         runnable = mock(Runnable.class);
@@ -53,7 +53,7 @@ class BackgroundTaskDispatcherTest {
         log.info("Thread dispatch");
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -64,7 +64,7 @@ class BackgroundTaskDispatcherTest {
 
     @Test
     void scheduleAtFixedRate_withSuspending() throws InterruptedException {
-        int sleepDelay = 200;
+        
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
         //task.setTask(runnable);
         final Count count = new Count(0);
@@ -78,15 +78,15 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
         log.info("Thread dispatch");
-        Thread.sleep(sleepDelay);
+        Thread.sleep(SLEEP_DELAY);
         log.info("Suspend dispatcher");
         taskDispatcher.suspend();
         int val1 = count.value;
-        Thread.sleep(sleepDelay);
+        Thread.sleep(SLEEP_DELAY);
         log.info("Resume dispatcher");
         int val2 = count.value;
         taskDispatcher.resume();
-        Thread.sleep(sleepDelay);
+        Thread.sleep(SLEEP_DELAY);
         int val3 = count.value;
         taskDispatcher.shutdown();
 
@@ -136,7 +136,7 @@ class BackgroundTaskDispatcherTest {
                         count1.dec();
                         log.info("task-body: count0={} count1={}", count0.get(), count1.get());
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(SLEEP_DELAY);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
@@ -171,7 +171,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.dispatch();
         log.info("Thread dispatch");
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException ignored) {}
 
         taskDispatcher.shutdown();
