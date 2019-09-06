@@ -28,6 +28,11 @@
         <repository>
             <id>apl</id>
             <name>arti.firstbridge.work-releases</name>
+            <url>https://arti.firstbridge.work/artifactory/apl</url>
+        </repository>
+        <repository>
+            <id>apl-releases</id>
+            <name>arti.firstbridge.work-releases</name>
             <url>https://arti.firstbridge.work/artifactory/apl-release</url>
         </repository>
     </repositories>
