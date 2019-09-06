@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
@@ -200,11 +201,13 @@ public class ShardMigrationExecutor {
     }
     private void stopNetOperations(){
         peers.suspend();
+        Generator.suspendForging();
         blockchainProcessor.setGetMoreBlocks(false);
     }
     private void resumeNetOperations(){
         peers.resume();
-        blockchainProcessor.setGetMoreBlocks(true);        
+        blockchainProcessor.setGetMoreBlocks(true);
+        Generator.resumeForging();
     }
     public MigrateState executeAllOperations() {
         stopNetOperations();
