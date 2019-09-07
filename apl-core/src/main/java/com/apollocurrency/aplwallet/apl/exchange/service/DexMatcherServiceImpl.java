@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 
 
 @Singleton
-public class DexMatcherServiceImpl implements IDexBasicServiceInterface {
+public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     private DexMatchingService dexMatchingService;

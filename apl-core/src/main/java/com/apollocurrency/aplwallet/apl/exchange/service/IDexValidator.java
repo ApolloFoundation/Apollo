@@ -12,7 +12,16 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
  */
 public interface IDexValidator {
     
-
+     /** 
+     * Initialization routines
+     */
+     void initialize();
+     
+    /** 
+     * Deinitialize the scope of internals
+     */
+    void deinitialize();
+    
     /**
      * currency-specific validation (Ethereum)
      * @param DexOffer  myOffer - created offer to validate

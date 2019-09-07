@@ -11,14 +11,14 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
  * @author Serhiy Lymar
  */
 
-public interface IDexBasicServiceInterface {
+public interface IDexMatcherInterface {
      /** 
-     * Start transport interaction service
+     * Initialization routines
      */
      void initialize();
    
     /** 
-     * Stop transport interaction service
+     * Deinitialize the scope of internals
      */
     void deinitialize();
 

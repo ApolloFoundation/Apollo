@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 
 @Singleton
-public class DexValidationServiceImpl implements IDexBasicServiceInterface, IDexValidator {
+public class DexValidationServiceImpl implements IDexValidator {
     
     private static final Logger log = LoggerFactory.getLogger(DexValidationServiceImpl.class);   
     private DexSmartContractService dexSmartContractService;
