@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +126,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
                 else return validateOfferBuyAplPax(myOffer, hisOffer);                                
             }
             
-            default: return -2;
+            default: return OFFER_VALIDATE_ERROR_IN_PARAMETER;
         }        
         
     }

@@ -22,11 +22,16 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import lombok.extern.slf4j.Slf4j;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+
 
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.jetty.websocket.client.common.io.payload.DeMaskProcessor;
 
 @Slf4j
 @Singleton
@@ -35,6 +40,8 @@ public class DexOfferProcessor {
     private SecureStorageService secureStorageService;
     private DexService dexService;
     private DexOfferTransactionCreator dexOfferTransactionCreator;
+    
+    private IDexValidator dexValidator;
 
     @Inject
     public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, DexOfferTransactionCreator dexOfferTransactionCreator) {
@@ -77,12 +84,33 @@ public class DexOfferProcessor {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
                     continue;
                 }
-
-                if (!counterOffer.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-                    log.debug("Order is in the status: {}, not valid now.", counterOffer.getStatus());//TODO do something.
+                
+                
+                if (!counterOffer.getStatus().isOpen() )  {
+                    log.debug("order: {} is not in open status (status: {}), skipping", counterOffer.getAccountId(), counterOffer.getStatus() );
                     continue;
+                } else {
+                    log.debug("order: {} is open, doing further checkups", counterOffer.getAccountId() );
                 }
+                
+                if (!isContractStep1Valid(contract)) {
+                    log.debug("Order is in the status: {}, not valid now.", counterOffer.getStatus());//TODO do something.
+                    continue;                    
+                } else {
+                    log.debug("Order {} is validated, going deeper", counterOffer.getAccountId());
+                }
+                
+                
+//                if (!counterOffer.getStatus().isOpen() || !isContractStep1Valid(contract)) {
+//                    log.debug("Order is in the status: {}, not valid now.", counterOffer.getStatus());//TODO do something.
+//                    continue;
+//                }
+            
 
+
+
+                
+                
                 //Generate secret X
                 byte[] secretX = new byte[32];
                 Crypto.getSecureRandom().nextBytes(secretX);
@@ -129,6 +157,53 @@ public class DexOfferProcessor {
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
+        
+        // dexService.getDexContract(dexContractDBRequest)        
+        // DexContractDBRequest dBRequest = new DeMaskProcessor
+        
+        long counterOrderID = exchangeContract.getCounterOrderId();                
+        long orderID = exchangeContract.getOrderId();
+        
+        DexOffer mainOffer = dexService.getOfferById(orderID);
+        DexOffer counterOffer = dexService.getOfferById(counterOrderID);
+        
+        // DUMPING main offer 
+        
+        log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOffer.getType(), mainOffer.getAccountId(), 
+                mainOffer.getToAddress(), mainOffer.getFromAddress(), mainOffer.getPairCurrency(), mainOffer.getPairRate());
+
+        log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOffer.getType(), counterOffer.getAccountId(), 
+                counterOffer.getToAddress(), counterOffer.getFromAddress(), counterOffer.getPairCurrency(), counterOffer.getPairRate());
+        
+        DexCurrencies curr = counterOffer.getPairCurrency();
+        
+        int rx=0;
+        
+        switch (curr) {
+
+            case ETH: { 
+                // return validateOfferETH(myOffer,hisOffer);
+                if (mainOffer.getType() == OfferType.SELL) 
+                    rx =  dexValidator.validateOfferSellAplEth(mainOffer, counterOffer); 
+                else rx=  dexValidator.validateOfferBuyAplEth(mainOffer, counterOffer);                
+                break;
+            }
+            
+            case PAX: {
+                if (mainOffer.getType() == OfferType.SELL) 
+                    rx = dexValidator.validateOfferSellAplPax(mainOffer, counterOffer); 
+                else rx = dexValidator.validateOfferBuyAplPax(mainOffer, counterOffer);                                
+            }
+            
+            default: // return OFFER_VALIDATE_ERROR_IN_PARAMETER;
+                rx = OFFER_VALIDATE_ERROR_IN_PARAMETER;
+                break;
+        }        
+        
+        log.debug("validation result: {}",rx);
+        
+        
+        
         return true;
     }
 

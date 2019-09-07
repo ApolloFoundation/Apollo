@@ -41,6 +41,9 @@ public final class Constants {
     public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2; 
     public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3; 
     public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
+    public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
+    
     
     
     
