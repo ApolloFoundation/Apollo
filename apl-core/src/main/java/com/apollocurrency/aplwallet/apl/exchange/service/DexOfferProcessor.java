@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.jetty.websocket.client.common.io.payload.DeMaskProcessor;
+
 
 @Slf4j
 @Singleton
@@ -44,10 +44,12 @@ public class DexOfferProcessor {
     private IDexValidator dexValidator;
 
     @Inject
-    public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, DexOfferTransactionCreator dexOfferTransactionCreator) {
+    public DexOfferProcessor(SecureStorageService secureStorageService, DexService dexService, 
+            DexValidationServiceImpl dexValidator, DexOfferTransactionCreator dexOfferTransactionCreator) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.dexValidator = dexValidator;
     }
 
 
