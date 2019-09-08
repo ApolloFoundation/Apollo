@@ -158,6 +158,7 @@ public class DexOfferProcessor {
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
         
+        
         // dexService.getDexContract(dexContractDBRequest)        
         // DexContractDBRequest dBRequest = new DeMaskProcessor
         log.debug("isContractStep1Valid entry point");
@@ -166,7 +167,7 @@ public class DexOfferProcessor {
         
         log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
         
-        DexOffer mainOffer = dexService.getOfferById(orderID);
+        DexOffer mainOffer = dexService.getOfferByTransactionId(orderID);
         
         if (mainOffer == null) {
             log.debug("main offer search error: ");
@@ -176,7 +177,7 @@ public class DexOfferProcessor {
         }
         
                       
-        DexOffer counterOffer = dexService.getOfferById(counterOrderID);
+        DexOffer counterOffer = dexService.getOfferByTransactionId(counterOrderID);
 
         if (counterOffer == null) {
             log.debug("counterOffer search error: ");
