@@ -119,7 +119,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
      * Should be removed asap
      */
     @Deprecated
-    public final T newEntity(DbKey dbKey) {
+    public T newEntity(DbKey dbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean cache = dataSource.isInTransaction();
         if (cache) {

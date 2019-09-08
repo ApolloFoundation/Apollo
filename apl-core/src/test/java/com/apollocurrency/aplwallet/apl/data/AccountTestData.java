@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -21,6 +22,8 @@ import java.util.List;
 
 public class AccountTestData {
 
+    public static String PUBLIC_KEY_STR = "A3C4BF8B2CBB8863C3E30EB4590FB22839311A95CF1FD716C211AE38C7D47B33";
+    public static String PUBLIC_KEY_STR2 = "B5C4BF8B2CBB8863C3E30E1293847A67C89DD005CF1FD716C211AE38C7D47B55";
     public static final long CREATOR_ID = 1739068987193023818L;
 
     /* Account */
@@ -156,6 +159,8 @@ public class AccountTestData {
     public List<AccountLease> ALL_LEASE = List.of(ACC_LEAS_0, ACC_LEAS_1, ACC_LEAS_2, ACC_LEAS_3, ACC_LEAS_4);
     public AccountLease newLease = new AccountLease(ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
 
+    public PublicKey PUBLIC_KEY1 = new PublicKey(-2509437615322027040L, PUBLIC_KEY_STR.getBytes(),1000);
+    public PublicKey PUBLIC_KEY2 = new PublicKey(-2361982985055136186L, PUBLIC_KEY_STR2.getBytes(),1000);
 
     /* create entity */
     public AccountLease createLease( long dbId, long lessorId,  long currentLesseeId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long nextLesseeId, int nextLeasingHeightFrom, int nextLeasingHeightTo, int height, boolean latest){

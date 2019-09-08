@@ -29,9 +29,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountPublicKeyServiceTest {
-    public static String PUBLIC_KEY_STR = "A3C4BF8B2CBB8863C3E30EB4590FB22839311A95CF1FD716C211AE38C7D47B33";
-    public static String PUBLIC_KEY_STR2 = "B5C4BF8B2CBB8863C3E30E1293847A67C89DD005CF1FD716C211AE38C7D47B55";
-
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private PublicKeyTable publicKeyTable = mock(PublicKeyTable.class);
@@ -75,7 +72,7 @@ class AccountPublicKeyServiceTest {
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         assertNull(accountPublicKeyService.getPublicKey(accountId));
 
-        expectedPublicKey = new PublicKey(accountId, PUBLIC_KEY_STR.getBytes(),1000);
+        expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKey(accountId));
     }
@@ -86,15 +83,15 @@ class AccountPublicKeyServiceTest {
         PublicKey expectedPublicKey = new PublicKey(accountId,null,1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //set new key
-        assertTrue(accountPublicKeyService.setOrVerify(accountId, PUBLIC_KEY_STR.getBytes()));
+        assertTrue(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR.getBytes()));
 
         //verify
-        expectedPublicKey = new PublicKey(accountId, PUBLIC_KEY_STR.getBytes(),1000);
+        expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //true, the same keys
-        assertTrue(accountPublicKeyService.setOrVerify(accountId, PUBLIC_KEY_STR.getBytes()));
+        assertTrue(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR.getBytes()));
         //false, different keys
-        assertFalse(accountPublicKeyService.setOrVerify(accountId, PUBLIC_KEY_STR2.getBytes()));
+        assertFalse(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR2.getBytes()));
     }
 
     @Test
@@ -103,7 +100,7 @@ class AccountPublicKeyServiceTest {
         PublicKey expectedPublicKey = new PublicKey(accountId,null,1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //publickKey == null
-        accountPublicKeyService.apply(testData.ACC_1, PUBLIC_KEY_STR.getBytes(), false);
+        accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
         verify(publicKeyTable, times(1)).insert(any(PublicKey.class));
         verify(genesisPublicKeyTable, never()).insert(any(PublicKey.class));
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
@@ -115,12 +112,12 @@ class AccountPublicKeyServiceTest {
         PublicKey expectedPublicKey = null;
 
         //check public keys
-        expectedPublicKey = new PublicKey(accountId, PUBLIC_KEY_STR.getBytes(),1000);
+        expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //key mismatch
-        assertThrows(IllegalStateException.class,() -> accountPublicKeyService.apply(testData.ACC_1, PUBLIC_KEY_STR2.getBytes(), false));
+        assertThrows(IllegalStateException.class,() -> accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR2.getBytes(), false));
         //key match
-        accountPublicKeyService.apply(testData.ACC_1, PUBLIC_KEY_STR.getBytes(), false);
+        accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
         verify(publicKeyTable, times(1)).insert(any(PublicKey.class));
         verify(genesisPublicKeyTable, never()).insert(any(PublicKey.class));
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());

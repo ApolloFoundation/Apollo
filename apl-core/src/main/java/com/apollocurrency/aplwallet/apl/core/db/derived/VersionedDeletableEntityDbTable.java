@@ -37,7 +37,7 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         return delete(t, false, lookupBlockchain().getHeight());
     }
 
-    public final boolean delete(T t, boolean keepInCache, int height) {
+    public boolean delete(T t, boolean keepInCache, int height) {
         if (t == null) {
             return false;
         }
