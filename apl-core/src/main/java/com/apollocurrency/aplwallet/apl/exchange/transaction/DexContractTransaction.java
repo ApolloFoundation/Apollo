@@ -176,7 +176,7 @@ public class DexContractTransaction extends DEX {
 
                 order.setStatus(OrderStatus.OPEN);
                 dexService.saveOrder(order);
-                log.debug("Order was closed. OrderId: {}", order.getTransactionId());
+                log.debug("Order was closed. OrderId: {}", order.getId());
             }
         }
 

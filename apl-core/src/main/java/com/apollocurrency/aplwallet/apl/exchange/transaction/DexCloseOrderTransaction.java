@@ -76,10 +76,10 @@ public class DexCloseOrderTransaction extends DEX {
         order.setStatus(OrderStatus.CLOSED);
         dexService.saveOrder(order);
 
-        ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(order.getTransactionId()).build());
+        ExchangeContract exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().offerId(order.getId()).build());
 
         if (exchangeContract == null) {
-            exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().counterOfferId(order.getTransactionId()).build());
+            exchangeContract = dexService.getDexContract(DexContractDBRequest.builder().counterOfferId(order.getId()).build());
         }
 
         Block lastBlock = blockchain.getLastBlock();

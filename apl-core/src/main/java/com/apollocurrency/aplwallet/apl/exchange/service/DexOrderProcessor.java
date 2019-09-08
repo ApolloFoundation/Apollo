@@ -92,7 +92,7 @@ public class DexOrderProcessor {
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
-                log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getTransactionId(), counterOrder.getTransactionId());
+                log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
                 String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), secretHash, STEP_2);
 
@@ -167,7 +167,7 @@ public class DexOrderProcessor {
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
-                log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getTransactionId(), counterOrder.getTransactionId());
+                log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
                 String txId = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getSecretHash(), STEP_2);
 
@@ -252,7 +252,7 @@ public class DexOrderProcessor {
             try {
                 ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
                         .sender(accountId)
-                        .offerId(outcomeOrder.getTransactionId())
+                        .offerId(outcomeOrder.getId())
                         .status(STEP_3.ordinal())
                         .build());
 
@@ -277,7 +277,7 @@ public class DexOrderProcessor {
 
                 byte[] secret = dexService.getSecretIfTxApproved(contract.getSecretHash(), contract.getTransferTxId());
 
-                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getTransactionId(), contract.getCounterTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {

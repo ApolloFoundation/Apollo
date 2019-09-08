@@ -9,20 +9,20 @@ import java.nio.ByteBuffer;
 
 public class DexOrderCancelAttachment extends AbstractAttachment {
 
-    private long transactionId;
+    private long orderId;
 
-    public DexOrderCancelAttachment(long transactionId) {
-        this.transactionId = transactionId;
+    public DexOrderCancelAttachment(long orderId) {
+        this.orderId = orderId;
     }
 
     public DexOrderCancelAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.transactionId = buffer.getLong();
+        this.orderId = buffer.getLong();
     }
 
     public DexOrderCancelAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.transactionId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("transactionId")));
+        this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("transactionId")));
     }
 
     @Override
@@ -32,12 +32,12 @@ public class DexOrderCancelAttachment extends AbstractAttachment {
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(transactionId);
+        buffer.putLong(orderId);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("transactionId", Long.toUnsignedString(this.transactionId));
+        json.put("transactionId", Long.toUnsignedString(this.orderId));
     }
 
     @Override
@@ -45,11 +45,11 @@ public class DexOrderCancelAttachment extends AbstractAttachment {
         return DEX.DEX_CANCEL_ORDER_TRANSACTION;
     }
 
-    public long getTransactionId() {
-        return transactionId;
+    public long getOrderId() {
+        return orderId;
     }
 
-    public void setTransactionId(long transactionId) {
-        this.transactionId = transactionId;
+    public void setOrderId(long orderId) {
+        this.orderId = orderId;
     }
 }

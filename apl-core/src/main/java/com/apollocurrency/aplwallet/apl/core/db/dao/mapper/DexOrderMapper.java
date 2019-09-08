@@ -14,14 +14,14 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class DexOfferMapper implements RowMapper<DexOrder> {
+public class DexOrderMapper implements RowMapper<DexOrder> {
 
     @Override
     public DexOrder map(ResultSet rs, StatementContext ctx) throws SQLException {
         DexOrder dexOrder = new DexOrder();
 
-        dexOrder.setId(rs.getLong("db_id"));
-        dexOrder.setTransactionId(rs.getLong("transaction_id"));
+        dexOrder.setDbId(rs.getLong("db_id"));
+        dexOrder.setId(rs.getLong("id"));
         dexOrder.setAccountId(rs.getLong("account_id"));
         dexOrder.setType(OrderType.getType(rs.getInt("type")));
         dexOrder.setOrderCurrency(DexCurrencies.getType(rs.getInt("offer_currency")));

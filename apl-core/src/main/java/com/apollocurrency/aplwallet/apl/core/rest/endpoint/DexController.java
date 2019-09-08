@@ -364,22 +364,22 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String transactionIdStr,
+    public Response cancelOrderByOrderID(@Parameter(description = "Order id") @FormParam("orderId") String orderId,
                                          @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("cancelOrderByOrderID: {}", transactionIdStr);
+        log.debug("cancelOrderByOrderID: {}", orderId);
 
         try{
             Long transactionId;
             Account account = ParameterParser.getSenderAccount(req);
 
-            if (StringUtils.isBlank(transactionIdStr)) {
-                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("transactionId", "Can't be null."))).build();
+            if (StringUtils.isBlank(orderId)) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("id", "Can't be null."))).build();
             }
             try{
-                transactionId = Long.parseUnsignedLong(transactionIdStr);
+                transactionId = Long.parseUnsignedLong(orderId);
             } catch (Exception ex){
-                return Response.ok(JSON.toString(incorrect("transactionId", "Transaction ID is not correct."))).build();
+                return Response.ok(JSON.toString(incorrect("id", "Transaction ID is not correct."))).build();
             }
             DexOrder order = service.getOfferByTransactionId(transactionId);
             if (order == null) {

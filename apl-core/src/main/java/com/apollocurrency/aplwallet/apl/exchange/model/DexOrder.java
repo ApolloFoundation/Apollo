@@ -21,12 +21,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class DexOrder {
-    /**
-     * Use transactionId.
-     */
-    @Deprecated
+
+    private Long dbId;
     private Long id;
-    private Long transactionId;
     private Long accountId;
     private String fromAddress;
     private String toAddress;
@@ -44,7 +41,7 @@ public class DexOrder {
     }
 
     public DexOrder(Transaction transaction, DexOrderAttachment dexOrderAttachment) {
-        this.transactionId = transaction.getId();
+        this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.type = OrderType.getType(dexOrderAttachment.getType());
         this.orderCurrency = DexCurrencies.getType(dexOrderAttachment.getOrderCurrency());
@@ -63,7 +60,7 @@ public class DexOrder {
     public DexOrderDto toDto() {
         DexOrderDto dexOrderDto = new DexOrderDto();
 
-        dexOrderDto.id = Long.toUnsignedString(this.getTransactionId());
+        dexOrderDto.id = Long.toUnsignedString(this.getId());
         dexOrderDto.accountId = Long.toUnsignedString(this.getAccountId());
         dexOrderDto.fromAddress = this.getFromAddress();
         dexOrderDto.toAddress = this.getToAddress();
@@ -80,16 +77,4 @@ public class DexOrder {
         return dexOrderDto;
     }
 
-
-    /**
-     * Use TransactionId
-     */
-    @Deprecated
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 }
