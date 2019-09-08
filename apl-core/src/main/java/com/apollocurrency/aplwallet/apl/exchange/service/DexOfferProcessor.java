@@ -160,12 +160,31 @@ public class DexOfferProcessor {
         
         // dexService.getDexContract(dexContractDBRequest)        
         // DexContractDBRequest dBRequest = new DeMaskProcessor
-        
+        log.debug("isContractStep1Valid entry point");
         long counterOrderID = exchangeContract.getCounterOrderId();                
         long orderID = exchangeContract.getOrderId();
         
+        log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
+        
         DexOffer mainOffer = dexService.getOfferById(orderID);
+        
+        if (mainOffer == null) {
+            log.debug("main offer search error: ");
+            return false;
+        } else {
+            log.debug("mainOffer search: ok, going further");
+        }
+        
+                      
         DexOffer counterOffer = dexService.getOfferById(counterOrderID);
+
+        if (counterOffer == null) {
+            log.debug("counterOffer search error: ");
+            return false;
+        } else {
+            log.debug("counterOffer search: ok, going further");
+        }
+
         
         // DUMPING main offer 
         
