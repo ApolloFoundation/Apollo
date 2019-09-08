@@ -25,11 +25,11 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateT
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOfferAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferCancelAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -39,19 +39,19 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -64,14 +64,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -80,8 +80,8 @@ public class DexService {
 
     private EthereumWalletService ethereumWalletService;
     private DexSmartContractService dexSmartContractService;
-    private DexOfferDao dexOfferDao;
-    private DexOfferTable dexOfferTable;
+    private DexOrderDao dexOrderDao;
+    private DexOrderTable dexOrderTable;
     private DexContractTable dexContractTable;
     private DexContractDao dexContractDao;
     private TransactionProcessor transactionProcessor;
@@ -89,26 +89,26 @@ public class DexService {
 
     private DexTradeDao dexTradeDao;
 
-    private DexOfferTransactionCreator dexOfferTransactionCreator;
+    private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
     private Blockchain blockchain;
     private PhasingPollService phasingPollService;
     private IDexMatcherInterface dexMatcherService;
 
     @Inject
-    public DexService(EthereumWalletService ethereumWalletService, DexOfferDao dexOfferDao, DexOfferTable dexOfferTable, TransactionProcessor transactionProcessor,
+    public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
-                      DexOfferTransactionCreator dexOfferTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
+                      DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
                       IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao) {
         this.ethereumWalletService = ethereumWalletService;
-        this.dexOfferDao = dexOfferDao;
-        this.dexOfferTable = dexOfferTable;
+        this.dexOrderDao = dexOrderDao;
+        this.dexOrderTable = dexOrderTable;
         this.transactionProcessor = transactionProcessor;
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
         this.dexContractTable = dexContractTable;
         this.dexTradeDao = dexTradeDao;
-        this.dexOfferTransactionCreator = dexOfferTransactionCreator;
+        this.dexOrderTransactionCreator = dexOrderTransactionCreator;
         this.timeService = timeService;
         this.dexContractDao = dexContractDao;
         this.blockchain = blockchain;
@@ -117,14 +117,9 @@ public class DexService {
     }
 
 
-    @Transactional(readOnly = true)
-    public DexOffer getOfferByTransactionId(Long transactionId) {
-        return dexOfferDao.getByTransactionId(transactionId);
-    }
-
-    @Transactional(readOnly = true)
-    public DexOffer getOfferById(Long id) {
-        return dexOfferDao.getById(id);
+    @Transactional
+    public DexOrder getOfferByTransactionId(Long transactionId) {
+        return dexOrderTable.getByTxId(transactionId);
     }
 
     @Transactional
@@ -142,8 +137,8 @@ public class DexService {
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
     @Transactional
-    public void saveOffer(DexOffer offer) {
-        dexOfferTable.insert(offer);
+    public void saveOrder(DexOrder order) {
+        dexOrderTable.insert(order);
     }
 
     @Transactional
@@ -162,8 +157,8 @@ public class DexService {
     }
 
     @Transactional(readOnly = true)
-    public List<DexOffer> getOffers(DexOfferDBRequest dexOfferDBRequest) {
-        return dexOfferDao.getOffers(dexOfferDBRequest);
+    public List<DexOrder> getOffers(DexOrderDBRequest dexOrderDBRequest) {
+        return dexOrderDao.getOffers(dexOrderDBRequest);
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {
@@ -192,12 +187,12 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) {
-        List<DexOffer> offers = dexOfferDao.getOverdueOrders(time);
+        List<DexOrder> offers = dexOrderDao.getOverdueOrders(time);
 
-        for (DexOffer offer : offers) {
+        for (DexOrder offer : offers) {
             try {
-                offer.setStatus(OfferStatus.EXPIRED);
-                dexOfferTable.insert(offer);
+                offer.setStatus(OrderStatus.EXPIRED);
+                dexOrderTable.insert(offer);
 
                 refundFrozenMoneyForOffer(offer);
             } catch (AplException.ExecutiveProcessException ex) {
@@ -209,29 +204,29 @@ public class DexService {
 
     }
 
-    public void refundFrozenMoneyForOffer(DexOffer offer) throws AplException.ExecutiveProcessException {
-        if (DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
-            refundAPLFrozenMoney(offer);
-        } else if (DexCurrencyValidator.haveFreezeOrRefundEthOrPax(offer)) {
-            String passphrase = secureStorageService.getUserPassPhrase(offer.getAccountId());
+    public void refundFrozenMoneyForOffer(DexOrder order) throws AplException.ExecutiveProcessException {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
+            refundAPLFrozenMoney(order);
+        } else if (DexCurrencyValidator.haveFreezeOrRefundEthOrPax(order)) {
+            String passphrase = secureStorageService.getUserPassPhrase(order.getAccountId());
             if (StringUtils.isNotBlank(passphrase)) {
-                refundEthPaxFrozenMoney(passphrase, offer);
+                refundEthPaxFrozenMoney(passphrase, order);
             }
         }
     }
 
-    public void refundAPLFrozenMoney(DexOffer offer) throws AplException.ExecutiveProcessException {
-        DexCurrencyValidator.checkHaveFreezeOrRefundApl(offer);
+    public void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
+        DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
 
         //Return APL.
-        Account account = Account.getAccount(offer.getAccountId());
-        account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, offer.getTransactionId(), offer.getOfferAmount());
+        Account account = Account.getAccount(order.getAccountId());
+        account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, order.getId(), order.getOrderAmount());
     }
 
-    public String refundEthPaxFrozenMoney(String passphrase, DexOffer offer) throws AplException.ExecutiveProcessException {
-        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
+    public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
+        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(order);
 
-        String txHash = dexSmartContractService.withdraw(passphrase, offer.getAccountId(), offer.getFromAddress(), new BigInteger(Long.toUnsignedString(offer.getTransactionId())), null, offer.getPairCurrency());
+        String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null, order.getPairCurrency());
 
         if (txHash == null) {
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
@@ -239,13 +234,13 @@ public class DexService {
         return txHash;
     }
 
-    public String freezeEthPax(String passphrase, DexOffer offer) throws ExecutionException, AplException.ExecutiveProcessException {
+    public String freezeEthPax(String passphrase, DexOrder order) throws ExecutionException, AplException.ExecutiveProcessException {
         String txHash;
 
-        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(offer);
+        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(order);
 
-        BigDecimal haveToPay = EthUtil.atmToEth(offer.getOfferAmount()).multiply(offer.getPairRate());
-        txHash = dexSmartContractService.deposit(passphrase, offer.getTransactionId(), offer.getAccountId(), offer.getFromAddress(), EthUtil.etherToWei(haveToPay), null, offer.getPairCurrency());
+        BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+        txHash = dexSmartContractService.deposit(passphrase, order.getId(), order.getAccountId(), order.getFromAddress(), EthUtil.etherToWei(haveToPay), null, order.getPairCurrency());
 
 
         if (txHash == null) {
@@ -255,9 +250,9 @@ public class DexService {
         return txHash;
     }
 
-    public void cancelOffer(DexOffer offer) {
-        offer.setStatus(OfferStatus.CANCEL);
-        saveOffer(offer);
+    public void cancelOffer(DexOrder order) {
+        order.setStatus(OrderStatus.CANCEL);
+        saveOrder(order);
     }
 
     /**
@@ -269,9 +264,9 @@ public class DexService {
                 UnconfirmedTransaction unconfirmedTransaction = tx.next();
                 if (TransactionType.TYPE_DEX == unconfirmedTransaction.getTransaction().getType().getType() &&
                         TransactionType.SUBTYPE_DEX_OFFER_CANCEL == unconfirmedTransaction.getTransaction().getType().getSubtype()) {
-                    DexOfferCancelAttachment dexOfferCancelAttachment = (DexOfferCancelAttachment) unconfirmedTransaction.getTransaction().getAttachment();
+                    DexOrderCancelAttachment dexOrderCancelAttachment = (DexOrderCancelAttachment) unconfirmedTransaction.getTransaction().getAttachment();
 
-                    if (dexOfferCancelAttachment.getTransactionId() == orderId &&
+                    if (dexOrderCancelAttachment.getOrderId() == orderId &&
                             !Objects.equals(unconfirmedTransaction.getTransaction().getId(), cancelTrId)) {
                         return true;
                     }
@@ -287,28 +282,26 @@ public class DexService {
      *
      * @return Tx hash id/link
      */
-    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOffer offer, String toAddress, byte[] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
+    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, byte[] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
         String transactionStr;
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
-            if (dexSmartContractService.isUserTransferMoney(offer.getFromAddress(), offer.getTransactionId())) {
-                //TODO get eth tx, and return tx ID. Hadn't implemented yet.
-                //we don't use tx id.
-                return "0xETH";
+            if (dexSmartContractService.isUserTransferMoney(order.getFromAddress(), order.getId())) {
+                throw new AplException.ExecutiveProcessException("User has already started exchange process with another user. OrderId: " + order.getId());
             }
 
-            if (dexSmartContractService.isDepositForOrderExist(offer.getFromAddress(), offer.getTransactionId())) {
+            if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
                 transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        offer.getFromAddress(), offer.getTransactionId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
             } else {
-                throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + offer.getTransactionId());
+                throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + order.getId());
             }
 
         } else { // just send apl  transaction with phasing (secret)
 
             createTransactionRequest.setRecipientId(Convert.parseAccountId(toAddress));
             // set amount into attachment to apply balance changes on attachment level
-            //            createTransactionRequest.setAmountATM(offer.getOfferAmount());
+            //            createTransactionRequest.setAmountATM(offer.getOrderAmount());
             createTransactionRequest.setDeadlineValue("1440");
 
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
@@ -316,10 +309,10 @@ public class DexService {
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(offer.getTransactionId(), offer.getOfferAmount()));
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(order.getId(), order.getOrderAmount()));
 
             try {
-                Transaction transaction = dexOfferTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
                 transactionStr = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
             } catch (AplException.ValidationException | ParameterException e) {
                 LOG.error(e.getMessage(), e);
@@ -343,7 +336,7 @@ public class DexService {
      */
     public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
-            DexOffer userOffer = getOfferByTransactionId(userOrderId);
+            DexOrder userOffer = getOfferByTransactionId(userOrderId);
 
             CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
                     .builder()
@@ -369,11 +362,11 @@ public class DexService {
 
                 log.debug("Transaction:" + txId + " was approved. (Eth/Pax)");
 
-                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
+                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(userOffer.getId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
+                Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
+                log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
 
             } else {
 
@@ -384,14 +377,14 @@ public class DexService {
                 Attachment attachment = new MessagingPhasingVoteCasting(txHash, secret);
                 templatTransactionRequest.setAttachment(attachment);
 
-                Transaction respApproveTx = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+                Transaction respApproveTx = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
 
-                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
+                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(userOffer.getId());
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
+                Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
+                log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
 
             }
         } catch (Exception ex) {
@@ -402,36 +395,36 @@ public class DexService {
     }
 
 
-    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOffer offer) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
-        DexOffer counterOffer = dexMatcherService.findCounterOffer(offer);
+    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
+        DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
 
         if (counterOffer != null) {
-            if (counterOffer.getAccountId().equals(offer.getAccountId())) {
+            if (counterOffer.getAccountId().equals(order.getAccountId())) {
                 throw new ParameterException(JSONResponses.DEX_SELF_ORDER_MATCHING_DENIED);
             }
-            // 1. Create offer.
-            offer.setStatus(OfferStatus.WAITING_APPROVAL);
+            // 1. Create order.
+            order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
-            Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
-            offer.setTransactionId(offerTx.getId());
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order));
+            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(offerTx.getId());
 
             // 2. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(offer.getTransactionId(), counterOffer.getTransactionId(), null, null, null, null, ExchangeContractStatus.STEP_1);
-            response = dexOfferTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
+            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1);
+            response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOfferAttachmentV2(offer));
-            Transaction offerTx = dexOfferTransactionCreator.createTransaction(createOfferTransactionRequest);
-            offer.setTransactionId(offerTx.getId());
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order));
+            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(offerTx.getId());
         }
 
-        if (offer.getPairCurrency().isEthOrPax() && offer.getType().isBuy()) {
+        if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
-            freezeTx = freezeEthPax(passphrase, offer);
-            log.debug("Create offer - frozen money, accountId: {}, offerId: {}", account.getId(), offer.getTransactionId());
+            freezeTx = freezeEthPax(passphrase, order);
+            log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
         }
         if (freezeTx != null) {
             ((JSONObject) response).put("frozenTx", freezeTx);
@@ -478,15 +471,15 @@ public class DexService {
         return null;
     }
 
-    public boolean hasConfirmations(ExchangeContract contract, DexOffer dexOffer) {
-        if (dexOffer.getType() == OfferType.BUY) {
+    public boolean hasConfirmations(ExchangeContract contract, DexOrder dexOrder) {
+        if (dexOrder.getType() == OrderType.BUY) {
             int currentHeight = blockchain.getHeight();
             int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
             return blockchain.hasTransaction(Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
-        } else if (dexOffer.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
+        } else if (dexOrder.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
             return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
         } else {
-            throw new IllegalArgumentException("Unable to calculate number of confirmations for paired currency - " + dexOffer.getPairCurrency());
+            throw new IllegalArgumentException("Unable to calculate number of confirmations for paired currency - " + dexOrder.getPairCurrency());
         }
     }
 

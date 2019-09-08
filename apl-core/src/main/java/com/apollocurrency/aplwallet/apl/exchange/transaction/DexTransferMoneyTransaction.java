@@ -6,7 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -46,14 +46,14 @@ public class DexTransferMoneyTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        DexOffer dexOffer = dexService.getOfferByTransactionId(attachment.getOrderId());
-        if (dexOffer == null) {
+        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
+        if (order == null) {
             throw new AplException.NotValidException("Offer does not exist: id - " + attachment.getOrderId());
         }
 
         //TODO add contract validation, when A.K. will implement contract handshake
-        if (dexOffer.getAccountId() != transaction.getSenderId()) {
-            throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + dexOffer.getAccountId());
+        if (order.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotValidException("Unable to send tx for offer with different account id. Expected - " + transaction.getSenderId() + ", got - " + order.getAccountId());
         }
     }
 

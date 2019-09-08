@@ -12,11 +12,13 @@ public class SwapDataInfo {
     private Long timeDeadLine;
     private byte[] secretHash;
     private byte[] secret;
-    private Integer status;
-    private String address;
-    private String address2;
+
+    private String addressFrom;
+    private String addressTo;
+    private String addressAsset;
 
     //Wei
     private BigInteger amount;
+    private String status;
 
 }

@@ -2,25 +2,25 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-public class DexOfferAttachmentV2 extends DexOfferAttachment {
+public class DexOrderAttachmentV2 extends DexOrderAttachment {
 
     private String fromAddress;
     private String toAddress;
 
-    public DexOfferAttachmentV2(DexOffer offer) {
-        super(offer);
-        this.fromAddress = offer.getFromAddress();
-        this.toAddress = offer.getToAddress();
+    public DexOrderAttachmentV2(DexOrder order) {
+        super(order);
+        this.fromAddress = order.getFromAddress();
+        this.toAddress = order.getToAddress();
     }
 
-    public DexOfferAttachmentV2(ByteBuffer buffer) throws AplException.NotValidException {
+    public DexOrderAttachmentV2(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try{
             this.fromAddress = Convert.readString(buffer, buffer.getShort(), Constants.MAX_ADDRESS_LENGTH);
@@ -30,7 +30,7 @@ public class DexOfferAttachmentV2 extends DexOfferAttachment {
         }
     }
 
-    public DexOfferAttachmentV2(JSONObject attachmentData) {
+    public DexOrderAttachmentV2(JSONObject attachmentData) {
         super(attachmentData);
         this.fromAddress = String.valueOf(attachmentData.get("fromAddress"));
         this.toAddress = String.valueOf(attachmentData.get("toAddress"));

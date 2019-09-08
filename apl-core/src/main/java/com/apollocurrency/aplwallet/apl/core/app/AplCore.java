@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOfferProcessor;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -113,7 +113,7 @@ public final class AplCore {
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
     @Inject @Setter
-    private DexOfferProcessor dexOfferProcessor;
+    private DexOrderProcessor dexOrderProcessor;
 
     @Inject
     @Setter
@@ -303,7 +303,7 @@ public final class AplCore {
                 //TODO move to taskDispatchManager Andrii K
                 Runnable task = () -> {
                     log.info("DexOfferProcessor: start");
-                    dexOfferProcessor.processContracts();
+                    dexOrderProcessor.processContracts();
                     log.info("DexOfferProcessor: finish");
                 };
                 executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);

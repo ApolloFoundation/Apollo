@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 
 import javax.enterprise.inject.Produces;
@@ -52,8 +52,8 @@ public class DaoConfig {
     }
 
     @Produces
-    private DexOfferDao dexOfferDao() {
-        return createDaoInterfaceProxy(DexOfferDao.class);
+    private DexOrderDao dexOfferDao() {
+        return createDaoInterfaceProxy(DexOrderDao.class);
     }
     
     @Produces

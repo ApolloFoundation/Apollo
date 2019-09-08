@@ -114,16 +114,6 @@ public class DexSmartContractService {
         return initiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), secretHash, recipient, refundTimestamp, gasPrice);
     }
 
-    public String depositAndInitiate(String passphrase, long accountId, String fromAddress, Long orderId, BigInteger weiValue, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas,  String token) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
-        Long gasPrice = gas;
-        if(gasPrice == null){
-            gasPrice = getEthGasPrice();
-        }
-
-        return depositAndInitiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), weiValue, secretHash, recipient, refundTimestamp,gasPrice, token);
-    }
-
     public boolean approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
@@ -132,14 +122,14 @@ public class DexSmartContractService {
         return isApproved;
     }
 
-    public SwapDataInfo getSwapData(byte[] secretKey) throws AplException.ExecutiveProcessException {
-        return getSwapData(Credentials.create(ACCOUNT_TO_READ_DATA), secretKey);
+    public SwapDataInfo getSwapData(byte[] secretHash) throws AplException.ExecutiveProcessException {
+        return getSwapData(Credentials.create(ACCOUNT_TO_READ_DATA), secretHash);
     }
 
-    public SwapDataInfo getSwapData(Credentials credentials, byte[] secretKey) throws AplException.ExecutiveProcessException {
+    public SwapDataInfo getSwapData(Credentials credentials, byte[] secretHash) throws AplException.ExecutiveProcessException {
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, null);
         try {
-            SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretKey).sendAsync().get());
+            SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretHash).sendAsync().get());
             return swapDataInfo;
         } catch (Exception e){
             log.error(e.getMessage(), e);
