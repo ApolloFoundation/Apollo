@@ -5,6 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.Generator;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -31,15 +34,13 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeSt
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Component for starting sharding process which contains several steps/states.
@@ -201,12 +202,14 @@ public class ShardMigrationExecutor {
 
     private void stopNetOperations() {
         peers.suspend();
+        Generator.suspendForging();
         blockchainProcessor.setGetMoreBlocks(false);
     }
 
     private void resumeNetOperations() {
         peers.resume();
         blockchainProcessor.setGetMoreBlocks(true);
+        Generator.resumeForging();
     }
     public MigrateState executeAllOperations() {
         stopNetOperations();

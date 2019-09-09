@@ -469,7 +469,13 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private int trimDerivedTables(int height) {
-        databaseManager.getDataSource().begin();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
+        log.debug("trimDerivedTables height = '{}', inTransaction = '{}'",
+                height, inTransaction);
+        if (!inTransaction) {
+            dataSource.begin();
+        }
         try {
             return trimService.doTrimDerivedTablesOnHeight(height);
         } catch (Exception e) {

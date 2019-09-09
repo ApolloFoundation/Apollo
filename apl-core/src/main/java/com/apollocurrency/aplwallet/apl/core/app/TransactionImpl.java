@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
-    @Inject
+//    @Inject
     private static BlockchainImpl blockchain;
 
     public static final class BuilderImpl implements Builder {
@@ -107,7 +107,7 @@ public class TransactionImpl implements Transaction {
             this.amountATM = amountATM;
             this.feeATM = feeATM;
             this.attachment = attachment;
-            this.type = attachment.getTransactionType();
+            this.type = attachment != null ? attachment.getTransactionType() : null;
             if (timestamp < 0) {
                 throw new IllegalArgumentException("Timestamp cannot be less than 0");
             }

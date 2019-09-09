@@ -84,19 +84,18 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
-    private static Blockchain blockchain;
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-    private static DatabaseManager databaseManager;
-    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-    private static PeersService peers = CDI.current().select(PeersService.class).get();
-    private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static int maxUnconfirmedTransactions;
+    private Blockchain blockchain;
+    private BlockchainProcessor blockchainProcessor;
+    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private DatabaseManager databaseManager;
+    private TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private PeersService peers = CDI.current().select(PeersService.class).get();
+    private final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
+    private int maxUnconfirmedTransactions;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
