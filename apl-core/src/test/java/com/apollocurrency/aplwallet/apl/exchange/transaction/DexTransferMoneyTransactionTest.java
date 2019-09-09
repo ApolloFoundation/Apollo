@@ -20,11 +20,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.jboss.weld.junit.MockBean;
@@ -127,19 +127,19 @@ class DexTransferMoneyTransactionTest {
         doReturn(100L).when(tx).getId();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        DexOffer offer = new DexOffer(1L, 300L, 0L, "", "", OfferType.BUY, OfferStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
-        doReturn(offer).when(dexService).getOfferById(300L);
+        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        doReturn(offer).when(dexService).getOrderByTransactionId(300L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setAccountId(2000L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        offer.setStatus(OfferStatus.WAITING_APPROVAL);
+        offer.setStatus(OrderStatus.WAITING_APPROVAL);
         transactionType.validateAttachment(tx);
 
         doReturn(1000L).when(tx).getSenderId();
         doReturn(2000L).when(tx).getRecipientId();
-        doReturn(offer).when(dexService).getOfferById(200L);
+        doReturn(offer).when(dexService).getOrderByTransactionId(200L);
         contract.setCounterTransferTxId("1");
         contract.setTransferTxId("100");
         offer.setAccountId(1000L);

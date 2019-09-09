@@ -1,26 +1,23 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import javax.enterprise.inject.spi.CDI;
 
 
 public class DexCloseOrderTransaction extends DEX {
@@ -85,7 +82,7 @@ public class DexCloseOrderTransaction extends DEX {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CLOSE_OFFER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        return isDuplicate(DEX.DEX_CLOSE_ORDER, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

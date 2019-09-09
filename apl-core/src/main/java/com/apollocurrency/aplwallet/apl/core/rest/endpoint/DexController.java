@@ -381,7 +381,7 @@ public class DexController {
             } catch (Exception ex){
                 return Response.ok(JSON.toString(incorrect("id", "Transaction ID is not correct."))).build();
             }
-            DexOrder order = service.getOfferByTransactionId(transactionId);
+            DexOrder order = service.getOrderByTransactionId(transactionId);
             if (order == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Order was not found."))).build();
             }

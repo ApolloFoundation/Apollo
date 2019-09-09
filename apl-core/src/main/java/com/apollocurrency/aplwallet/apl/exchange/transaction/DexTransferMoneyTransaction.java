@@ -6,7 +6,11 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +70,7 @@ public class DexTransferMoneyTransaction extends DEX {
             throw new AplException.NotValidException("Transaction was not registered in the contract. ");
         }
         long orderId =  isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
-        DexOrder order = dexService.getOrderById(orderId);
+        DexOrder order = dexService.getOrderByTransactionId(orderId);
         if (order == null) {
             throw new AplException.NotValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
         }
@@ -92,18 +96,6 @@ public class DexTransferMoneyTransaction extends DEX {
         ExchangeContract dexContract = dexService.getDexContract(DexContractDBRequest.builder().id(attachment.getContractId()).build());
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
         dexService.finishExchange(tx.getId(), orderToClose);
-//        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-//
-//        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
-//
-//        if(DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
-//            try {
-//                dexService.refundAPLFrozenMoney(offer);
-//            } catch (AplException.ExecutiveProcessException e) {
-//                log.error(e.getMessage(), e);
-//                throw new RuntimeException(e);
-//            }
-//        }
     }
 
     @Override

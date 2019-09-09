@@ -1,12 +1,10 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOfferAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
 import org.junit.jupiter.api.Test;
 
 class DexCloseOfferTransactionTest {
-    DexCloseOfferAttachment dexCloseOfferAttachment = new DexCloseOfferAttachment(10);
+    DexCloseOrderAttachment dexCloseOfferAttachment = new DexCloseOrderAttachment(10);
 
     @Test
     void parseAttachment() {

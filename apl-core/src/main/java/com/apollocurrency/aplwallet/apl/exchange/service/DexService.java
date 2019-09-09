@@ -119,7 +119,7 @@ public class DexService {
 
 
     @Transactional
-    public DexOrder getOfferByTransactionId(Long transactionId) {
+    public DexOrder getOrderByTransactionId(Long transactionId) {
         return dexOrderTable.getByTxId(transactionId);
     }
 
@@ -337,7 +337,7 @@ public class DexService {
      */
     public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
-            DexOrder userOffer = getOfferByTransactionId(userOrderId);
+            DexOrder userOffer = getOrderByTransactionId(userOrderId);
 
             CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
                     .builder()
@@ -484,20 +484,20 @@ public class DexService {
         }
     }
 
-    public DexOffer closeOrder(long orderId) {
-        DexOffer offer = getOfferByTransactionId(orderId);
-        offer.setStatus(OfferStatus.CLOSED);
-        saveOffer(offer);
-        return offer;
+    public DexOrder closeOrder(long orderId) {
+        DexOrder order = getOrderByTransactionId(orderId);
+        order.setStatus(OrderStatus.CLOSED);
+        saveOrder(order);
+        return order;
     }
 
     public void finishExchange(long transactionId, long orderId) {
-        DexOffer offer = closeOrder(orderId);
+        DexOrder order = closeOrder(orderId);
 
-        ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
+        ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(order.getId()).build());
 
         if (exchangeContract == null) {
-            exchangeContract = getDexContract(DexContractDBRequest.builder().counterOfferId(offer.getTransactionId()).build());
+            exchangeContract = getDexContract(DexContractDBRequest.builder().counterOfferId(order.getId()).build());
         }
 
         Block lastBlock = blockchain.getLastBlock();
@@ -506,11 +506,11 @@ public class DexService {
                 .transactionID(transactionId)
                 .senderOfferID(exchangeContract.getSender())
                 .receiverOfferID(exchangeContract.getRecipient())
-                .senderOfferType((byte) offer.getType().ordinal())
-                .senderOfferCurrency((byte) offer.getOfferCurrency().ordinal())
-                .senderOfferAmount(offer.getOfferAmount())
-                .pairCurrency((byte) offer.getPairCurrency().ordinal())
-                .pairRate(offer.getPairRate())
+                .senderOfferType((byte) order.getType().ordinal())
+                .senderOfferCurrency((byte) order.getOrderCurrency().ordinal())
+                .senderOfferAmount(order.getOrderAmount())
+                .pairCurrency((byte) order.getPairCurrency().ordinal())
+                .pairRate(order.getPairRate())
                 .finishTime(lastBlock.getTimestamp())
                 .height(lastBlock.getHeight())
                 .build();

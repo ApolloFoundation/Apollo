@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public class DexContractTransaction extends DEX {
@@ -50,8 +51,8 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrderByTransactionId(attachment.getCounterOrderId());
 
         if(attachment.getContractStatus().isStep2()){
             if (order == null) {
@@ -92,8 +93,8 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrderByTransactionId(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
             order.setStatus(OrderStatus.WAITING_APPROVAL);
@@ -166,7 +167,7 @@ public class DexContractTransaction extends DEX {
 
         for (ExchangeContract exchangeContract : contractsForReopen) {
             //Reopen order.
-            DexOrder order = dexService.getOfferByTransactionId(exchangeContract.getOrderId());
+            DexOrder order = dexService.getOrderByTransactionId(exchangeContract.getOrderId());
             if (order.getStatus().isPending()) {
                 //Close contract.
                 exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);

@@ -46,7 +46,7 @@ public class DexCancelOfferTransaction extends DEX {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
-        DexOrder order = dexService.getOfferByTransactionId(orderTransactionId);
+        DexOrder order = dexService.getOrderByTransactionId(orderTransactionId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
@@ -70,7 +70,7 @@ public class DexCancelOfferTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
+        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
 
         try {
             if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
