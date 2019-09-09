@@ -75,7 +75,7 @@ import org.slf4j.Logger;
  * Used as global access point to all interactions with account and public keys
  * TODO Required massive refactoring
  */
-public final class Account {
+public class Account {
 
     private static final Logger LOG = getLogger(Account.class);
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;

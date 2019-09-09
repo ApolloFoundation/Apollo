@@ -1,19 +1,30 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.jboss.weld.junit.MockBean;
@@ -26,6 +37,9 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+
 @EnableWeld
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
@@ -139,11 +153,43 @@ class DexTransferMoneyTransactionTest {
         doReturn(attachment).when(tx).getAttachment();
         doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
 
-        transactionType.applyAttachment(tx, new Account(1000L), new Account(2000L));
+        Account sender = mock(Account.class);
+        Account recipient = mock(Account.class);
+        doReturn(1000L).when(sender).getId();
+        doReturn(2000L).when(recipient).getId();
 
+        transactionType.applyAttachment(tx, sender, recipient);
+
+        verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(dexService).closeOrder(0, 300);
     }
 
     @Test
-    void isDuplicate() {
+    void testApplyAttachmentForContractRecipient() {
+        Transaction tx = mock(Transaction.class);
+        doReturn(attachment).when(tx).getAttachment();
+        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+        Account sender = mock(Account.class);
+        Account recipient = mock(Account.class);
+        doReturn(2000L).when(sender).getId();
+        doReturn(1000L).when(recipient).getId();
+
+        transactionType.applyAttachment(tx, sender, recipient);
+
+        verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(dexService).closeOrder(0, 200);
+    }
+
+    @Test
+    void testIsDuplicate() {
+        Transaction tx = mock(Transaction.class);
+        doReturn(attachment).when(tx).getAttachment();
+
+        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+
+        assertFalse(transactionType.isDuplicate(tx, duplicates)); // populate map
+        assertTrue(transactionType.isDuplicate(tx, duplicates)); // now contract with id = 64 added to map and another tx, which refer to this contract will be rejected as duplicate
     }
 }

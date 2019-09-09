@@ -4,7 +4,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -24,7 +23,6 @@ import javax.enterprise.inject.spi.CDI;
 public class DexCloseOfferTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
-    private BlockchainImpl blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     @Override
     public byte getSubtype() {
@@ -60,7 +58,7 @@ public class DexCloseOfferTransaction extends DEX {
             throw new AplException.NotValidException("APL buy orders are closing automatically");
         }
         if (!offer.getStatus().isWaitingForApproval()) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order only in the status WaitingForApproval, but: " + offer.getStatus().name())));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but: " + offer.getStatus().name())));
         }
     }
 
