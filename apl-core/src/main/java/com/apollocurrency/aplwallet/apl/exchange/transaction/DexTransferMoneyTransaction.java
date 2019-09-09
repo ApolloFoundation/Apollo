@@ -89,13 +89,13 @@ public class DexTransferMoneyTransaction extends DEX {
 
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        senderAccount.addToBalanceATM(getLedgerEvent(), transaction.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
-        recipientAccount.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), transaction.getId(), attachment.getOfferAmount());
+    public void applyAttachment(Transaction tx, Account sender, Account recipient) {
+        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) tx.getAttachment();
+        sender.addToBalanceATM(getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
+        recipient.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
         ExchangeContract dexContract = dexService.getDexContract(DexContractDBRequest.builder().id(attachment.getContractId()).build());
-        long orderToClose = dexContract.getSender() == senderAccount.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
-        dexService.closeOrder(transaction.getId(), orderToClose);
+        long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
+        dexService.closeOrder(tx.getId(), orderToClose);
 //        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
 //
 //        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());

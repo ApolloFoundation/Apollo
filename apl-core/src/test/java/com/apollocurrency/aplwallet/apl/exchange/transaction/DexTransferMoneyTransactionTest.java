@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -12,9 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.jboss.weld.junit.MockBean;
@@ -25,10 +24,12 @@ import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 @EnableWeld
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
+    ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32]);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
@@ -91,20 +92,25 @@ class DexTransferMoneyTransactionTest {
     }
 
     @Test
-    void testValidateAttachment() {
+    void testValidateAttachment() throws AplException.ValidationException {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
 
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
 
-        ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32]);
         doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
     }
 
 
     @Test
-    void applyAttachment() {
+    void testApplyAttachment() {
+        Transaction tx = mock(Transaction.class);
+        doReturn(attachment).when(tx).getAttachment();
+        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+
+        transactionType.applyAttachment(tx, new Account(1000L), new Account(2000L));
+
     }
 
     @Test
