@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
@@ -39,7 +41,6 @@ import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
-import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -47,8 +48,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.sql.DataSource;
 
 /**
  * Represent basic implementation of DataSource
@@ -251,6 +251,7 @@ public class DataSourceWrapper implements DataSource {
     }
 
     public void shutdown() {
+        long start = System.currentTimeMillis();
         if (!initialized) {
             return;
         }
@@ -262,8 +263,7 @@ public class DataSourceWrapper implements DataSource {
             initialized = false;
             dataSource.close();
 //            dataSource.dispose();
-            log.trace("Database shutdown completed");
-
+            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
