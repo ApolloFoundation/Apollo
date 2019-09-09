@@ -7,14 +7,14 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.rest.service.DexOfferAttachmentFactory;
+import com.apollocurrency.aplwallet.apl.core.rest.service.DexOrderAttachmentFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOfferAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -32,7 +32,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
-public class DexOfferTransaction extends DEX {
+public class DexOrderTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
     private TimeService timeService = CDI.current().select(TimeService.class).get();
@@ -49,49 +49,49 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return DexOfferAttachmentFactory.build(buffer);
+        return DexOrderAttachmentFactory.build(buffer);
     }
 
     @Override
     public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return DexOfferAttachmentFactory.parse(attachmentData);
+        return DexOrderAttachmentFactory.parse(attachmentData);
     }
 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
+        DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
 
-        if (attachment.getOfferCurrency() == attachment.getPairCurrency()) {
-            throw new AplException.NotValidException("Invalid Currency codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency());
+        if (attachment.getOrderCurrency() == attachment.getPairCurrency()) {
+            throw new AplException.NotValidException("Invalid Currency codes: " + attachment.getOrderCurrency() + " / " + attachment.getPairCurrency());
         }
 
         DexCurrencies offerCurrency;
         DexCurrencies pairCurrency;
-        OfferType offerType;
+        OrderType orderType;
         try {
-            offerCurrency = DexCurrencies.getType(attachment.getOfferCurrency());
+            offerCurrency = DexCurrencies.getType(attachment.getOrderCurrency());
             pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
-            offerType = OfferType.getType(attachment.getType());
+            orderType = OrderType.getType(attachment.getType());
         } catch (Exception ex) {
-            throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOfferCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
+            throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOrderCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
         }
 
         if (attachment.getPairRate() <= 0) {
             throw new AplException.NotValidException(JSON.toString(incorrect("pairRate", String.format("Should be more than zero."))));
         }
-        if (attachment.getOfferAmount() <= 0) {
+        if (attachment.getOrderAmount() <= 0) {
             throw new AplException.NotValidException(JSON.toString(incorrect("offerAmount", String.format("Should be more than zero."))));
         }
 
-        if (attachment instanceof DexOfferAttachmentV2) {
-            String address = ((DexOfferAttachmentV2) attachment).getFromAddress();
+        if (attachment instanceof DexOrderAttachmentV2) {
+            String address = ((DexOrderAttachmentV2) attachment).getFromAddress();
             if (StringUtils.isBlank(address) || address.length() > Constants.MAX_ADDRESS_LENGTH) {
                 throw new AplException.NotValidException(JSON.toString(incorrect("FromAddress", String.format("Should be not null and address length less then " + Constants.MAX_ADDRESS_LENGTH))));
             }
         }
 
         try {
-            Math.multiplyExact(attachment.getPairRate(), attachment.getOfferAmount());
+            Math.multiplyExact(attachment.getPairRate(), attachment.getOrderAmount());
         } catch (ArithmeticException ex) {
             throw new AplException.NotValidException("PairRate or OfferAmount is too big.");
         }
@@ -103,8 +103,8 @@ public class DexOfferTransaction extends DEX {
         }
 
 
-        if (DexCurrencyValidator.haveFreezeOrRefundApl(offerType, offerCurrency, pairCurrency)) {
-            Long amountATM = attachment.getOfferAmount();
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(orderType, offerCurrency, pairCurrency)) {
+            Long amountATM = attachment.getOrderAmount();
             Account sender = Account.getAccount(transaction.getSenderId());
 
             if (sender == null) {
@@ -119,7 +119,7 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        return isDuplicate(DEX.DEX_OFFER_TRANSACTION, Long.toUnsignedString(transaction.getId()), duplicates, true);
+        return isDuplicate(DEX.DEX_ORDER_TRANSACTION, Long.toUnsignedString(transaction.getId()), duplicates, true);
     }
 
     @Override
@@ -129,20 +129,20 @@ public class DexOfferTransaction extends DEX {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        DexOfferAttachment attachment = (DexOfferAttachment) transaction.getAttachment();
+        DexOrderAttachment attachment = (DexOrderAttachment) transaction.getAttachment();
 
-        DexOffer offer = new DexOffer(transaction, attachment);
+        DexOrder order = new DexOrder(transaction, attachment);
         // On the Apl side.
-        if (DexCurrencyValidator.haveFreezeOrRefundApl(offer)) {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             lockOnAplSide(transaction, senderAccount);
         }
 
-        dexService.saveOffer(new DexOffer(transaction, attachment));
+        dexService.saveOrder(new DexOrder(transaction, attachment));
     }
 
     private void lockOnAplSide(Transaction transaction, Account senderAccount){
-        DexOfferAttachment dexOfferAttachment = (DexOfferAttachment) transaction.getAttachment();
-        long amountATM = dexOfferAttachment.getOfferAmount();
+        DexOrderAttachment dexOrderAttachment = (DexOrderAttachment) transaction.getAttachment();
+        long amountATM = dexOrderAttachment.getOrderAmount();
 
         senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.DEX_FREEZE_MONEY, transaction.getId(), -amountATM);
     }

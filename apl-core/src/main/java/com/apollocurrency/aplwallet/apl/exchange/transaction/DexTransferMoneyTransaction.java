@@ -6,11 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -70,15 +66,15 @@ public class DexTransferMoneyTransaction extends DEX {
             throw new AplException.NotValidException("Transaction was not registered in the contract. ");
         }
         long orderId =  isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
-        DexOffer order = dexService.getOfferById(orderId);
+        DexOrder order = dexService.getOrderById(orderId);
         if (order == null) {
             throw new AplException.NotValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
         }
         if (order.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotValidException("Order" + orderId + " should belong to the account: " + transaction.getSenderId());
         }
-        if (order.getStatus() != OfferStatus.WAITING_APPROVAL) {
-            throw new AplException.NotValidException("Inconsistent order state for id: " + order + ", expected - " + OfferStatus.WAITING_APPROVAL + ", got " + order.getStatus());
+        if (order.getStatus() != OrderStatus.WAITING_APPROVAL) {
+            throw new AplException.NotValidException("Inconsistent order state for id: " + order + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + order.getStatus());
         }
     }
 

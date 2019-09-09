@@ -3,26 +3,26 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 
-@Data
-@AllArgsConstructor
-public class DexCloseOfferAttachment extends AbstractAttachment {
+public class DexOrderCancelAttachment extends AbstractAttachment {
 
     private long orderId;
 
-    public DexCloseOfferAttachment(ByteBuffer buffer) {
+    public DexOrderCancelAttachment(long orderId) {
+        this.orderId = orderId;
+    }
+
+    public DexOrderCancelAttachment(ByteBuffer buffer) {
         super(buffer);
         this.orderId = buffer.getLong();
     }
 
-    public DexCloseOfferAttachment(JSONObject attachmentData) {
+    public DexOrderCancelAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
+        this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("transactionId")));
     }
 
     @Override
@@ -32,16 +32,24 @@ public class DexCloseOfferAttachment extends AbstractAttachment {
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(this.orderId);
+        buffer.putLong(orderId);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("orderId", Long.toUnsignedString(this.getOrderId()));
+        json.put("transactionId", Long.toUnsignedString(this.orderId));
     }
 
     @Override
     public TransactionType getTransactionType() {
-        return DEX.DEX_CLOSE_OFFER;
+        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
+    }
+
+    public long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(long orderId) {
+        this.orderId = orderId;
     }
 }

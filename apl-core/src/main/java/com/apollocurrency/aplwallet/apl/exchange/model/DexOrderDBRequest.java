@@ -14,14 +14,14 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DexOfferDBRequest {
+public class DexOrderDBRequest {
 
     private Integer type;
     private Long accountId;
     private Integer currentTime;
     private Integer offerCur;
     private Integer pairCur;
-    private OfferStatus status;
+    private OrderStatus status;
     private BigDecimal minAskPrice;
     private BigDecimal maxBidPrice;
     private Integer offset;

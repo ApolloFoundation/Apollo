@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
@@ -60,6 +61,8 @@ public interface PhasingPollService {
     void addPoll(Transaction transaction, PhasingAppendix appendix);
 
     void finish(PhasingPoll phasingPoll, long result, long approvedTx);
+
+    PhasingApprovalResult getApprovedTx(long phasingTxId);
 
     List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll);
 

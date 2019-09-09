@@ -18,16 +18,16 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONStreamAware;
 
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Vetoed
 public abstract class AbstractAPIRequestHandler {
@@ -38,11 +38,11 @@ public abstract class AbstractAPIRequestHandler {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
-    protected static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private PeersService peers;
 
     protected PeersService lookupPeersService() {

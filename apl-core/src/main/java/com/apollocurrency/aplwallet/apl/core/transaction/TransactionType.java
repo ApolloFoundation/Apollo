@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -40,10 +38,12 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public abstract class TransactionType {
@@ -233,15 +233,15 @@ public abstract class TransactionType {
             case TYPE_DEX:
                 switch (subtype) {
                     case SUBTYPE_DEX_OFFER :
-                        return DEX.DEX_OFFER_TRANSACTION;
+                        return DEX.DEX_ORDER_TRANSACTION;
                     case SUBTYPE_DEX_OFFER_CANCEL :
-                        return DEX.DEX_CANCEL_OFFER_TRANSACTION;
+                        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
                     case SUBTYPE_DEX_CONTRACT :
                         return DEX.DEX_CONTRACT_TRANSACTION;
                     case SUBTYPE_DEX_TRANSFER_MONEY :
                         return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
                     case SUBTYPE_DEX_CLOSE_OFFER:
-                        return DEX.DEX_CLOSE_OFFER;
+                        return DEX.DEX_CLOSE_ORDER;
                     default:
                         return null;
                 }

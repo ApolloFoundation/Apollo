@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.api.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name="DexOffer", description="Dex offer")
-public class DexOfferDto {
+public class DexOrderDto {
 
     /**
      * id for entity offer is a transaction id.
@@ -23,8 +23,10 @@ public class DexOfferDto {
 
     @Schema(name="Exchange type", description="buy / sell")
     public Integer type;
+    //todo rename to orderCurrency (fix on UI)
     @Schema(name="Offer currency", description="eth / pax / apl")
     public Integer offerCurrency;
+    //todo rename to orderAmount (fix on UI)
     @Schema(name="Offer amount", description="Amount of currency for exchange ")
     public Long offerAmount;
     @Schema(name="Pair rate", description="Rate to exchange")
