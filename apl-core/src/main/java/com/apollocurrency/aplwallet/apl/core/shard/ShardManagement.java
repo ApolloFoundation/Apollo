@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -18,6 +19,16 @@ import java.util.List;
 public interface ShardManagement {
 
     long TEMP_DB_IDENTITY = -1L;
+
+    /**
+     * Number of shard data sources totally keeped in cache
+     */
+    long MAX_CACHED_SHARDS_NUMBER = 6;
+
+    /**
+     * Total time after latest cache entry access before it gets evicted from cache.
+     */
+    long SHARD_EVICTION_TIME = 15;
 
 
     void initFullShards(Collection<Long> ids);
@@ -74,19 +85,25 @@ public interface ShardManagement {
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
 
 
     /**
-     * Return list of datasources. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
-     * @return list of full shard datasources
+     * Return list of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard data sources
      */
-    List<TransactionalDataSource> getFullDataSources();
+    List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards);
+
+    /**
+     * Return Iterator of data sources with state = FULL. Each datasource point to not empty shard db, which store blocks and transactions for specific shard
+     * @return list of full shard data sources
+     */
+    Iterator<TransactionalDataSource> getAllFullDataSourcesIterator();
 
     /**
      * Close all datasources related to shards, this method will close all opened datasources excluding current main datasource
      * @return number of closed datasources
      */
-    int closeAllShardDataSources();
+    long closeAllShardDataSources();
 
 }

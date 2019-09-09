@@ -19,6 +19,10 @@ public interface DatabaseManager {
 
     PropertiesHolder getPropertiesHolder();
 
+    /**
+     * Shutdown main db and secondary shards.
+     * After that the db can be reinitialized/opened again
+     */
     void shutdown();
 
     void setAvailable(boolean available);

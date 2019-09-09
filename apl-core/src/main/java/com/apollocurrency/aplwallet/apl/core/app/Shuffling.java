@@ -315,37 +315,38 @@ public final class Shuffling {
     @Singleton
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            long startTime = System.currentTimeMillis();
-            LOG.trace("Shuffling observer call at {}", block.getHeight());
-            if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-                    || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
-                LOG.trace("Will not process shufflings at {}", block.getHeight());
-                return;
-            }
-            List<Shuffling> shufflings = new ArrayList<>();
-            List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-            LOG.trace("Got {} active shufflings", activeShufflings.size());
-            for (Shuffling shuffling : activeShufflings) {
-                if (!shuffling.isFull(block)) {
-                    shufflings.add(shuffling);
-                } else {
-                    LOG.trace("Skip shuffling {}, block is full");
+                long startTime = System.currentTimeMillis();
+                LOG.trace("Shuffling observer call at {}", block.getHeight());
+                if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+                        || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
+                    LOG.trace("Will not process shufflings at {}", block.getHeight());
+                    return;
                 }
-            }
-            LOG.trace("Shufflings to process - {} ", shufflings.size());
-            int cancelled = 0, inserted = 0;
-            for (Shuffling shuffling : shufflings) {
-                if (--shuffling.blocksRemaining <= 0) {
-                    cancelled++;
-                    shuffling.cancel(block);
-                } else {
-                    LOG.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
-                            shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(),  shuffling.last3Stacktrace());
-                    inserted++;
-                    shufflingTable.insert(shuffling);
+                List<Shuffling> shufflings = new ArrayList<>();
+                List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
+                LOG.trace("Got {} active shufflings", activeShufflings.size());
+                for (Shuffling shuffling : activeShufflings) {
+                    if (!shuffling.isFull(block)) {
+                        shufflings.add(shuffling);
+                    } else {
+                        LOG.trace("Skip shuffling {}, block is full");
+                    }
                 }
+                LOG.trace("Shufflings to process - {} ", shufflings.size());
+                int cancelled = 0, inserted = 0;
+                for (Shuffling shuffling : shufflings) {
+                    if (--shuffling.blocksRemaining <= 0) {
+                        cancelled++;
+                        shuffling.cancel(block);
+                    } else {
+                        LOG.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
+                                shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining());
+                        inserted++;
+                        shufflingTable.insert(shuffling);
+                    }
+                }
+                LOG.trace("Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
-            LOG.trace("Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
         }
 
 /*
@@ -357,7 +358,7 @@ public final class Shuffling {
             activeShufflingsCache = null;
         }
 */
-    }
+
 
     private final long id;
     private final DbKey dbKey;

@@ -14,6 +14,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
@@ -80,7 +88,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -100,7 +108,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -112,10 +120,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -134,11 +142,11 @@ class DatabaseManagerTest {
 
     @Test
     void testFindFullDatasources() {
-        List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
+        Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(2L);
         assertEquals(2, fullDatasources.size());
-        assertTrue(fullDatasources.get(0).getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
-        assertTrue(fullDatasources.get(1).getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
-
+        Iterator<TransactionalDataSource> iterator = fullDatasources.iterator();
+        assertTrue(iterator.next().getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
     }
 
     @Test
@@ -188,7 +196,7 @@ class DatabaseManagerTest {
     @Test
     void testDoubleShutdownAndGetDatasource() {
         TransactionalDataSource currentDatasource = databaseManager.getDataSource();
-        List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
+        List<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(null);
         databaseManager.shutdown();
         databaseManager.shutdown();
         assertTrue(currentDatasource.isShutdown());
@@ -199,7 +207,7 @@ class DatabaseManagerTest {
         assertNotSame(currentDatasource, newCurrentDatasource);
         checkDatasource(newCurrentDatasource);
 
-        List<TransactionalDataSource> newFullDatasources = ((ShardManagement) databaseManager).getFullDataSources();
+        List<TransactionalDataSource> newFullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(null);
         for (int i = 0; i < newFullDatasources.size(); i++) {
             assertNotSame(fullDatasources.get(i), newFullDatasources.get(i));
             checkDatasource(newFullDatasources.get(i));
@@ -209,7 +217,7 @@ class DatabaseManagerTest {
     @Test
     void testAddNewFullShardId() {
         databaseManager.addFullShard(1L);
-        List<TransactionalDataSource> fullDatasources = databaseManager.getFullDataSources();
+        List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(3L);
         assertEquals(3, fullDatasources.size());
         for (int i = 0; i < 3; i++) {
             assertTrue(fullDatasources.get(i).getUrl().contains("shard-" + (3 - i)));
@@ -226,7 +234,7 @@ class DatabaseManagerTest {
     }
     @Test
     void testGetExistingShardDataSourceById() {
-        List<TransactionalDataSource> fullDatasources = databaseManager.getFullDataSources();
+        List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(2L);
         checkDatasource(datasource);
         assertTrue(datasource.getUrl().contains("shard-2"));
@@ -235,7 +243,7 @@ class DatabaseManagerTest {
 
     @Test
     void testGetExistingShardDataSourceByIdWithVersion() {
-        List<TransactionalDataSource> fullDatasources = databaseManager.getFullDataSources();
+        List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitTableSchemaVersion());
         checkDatasource(datasource);
         assertTrue(datasource.getUrl().contains("shard-3"));
@@ -246,7 +254,7 @@ class DatabaseManagerTest {
     void testInitAndClearPrevFullShards() {
         databaseManager.initFullShards(Set.of(1L));
 
-        List<TransactionalDataSource> datasources = databaseManager.getFullDataSources();
+        List<TransactionalDataSource> datasources = databaseManager.getAllFullDataSources(1L);
         assertEquals(1, datasources.size());
         TransactionalDataSource dataSource = datasources.get(0);
         checkDatasource(dataSource);
@@ -263,6 +271,7 @@ class DatabaseManagerTest {
             throw new RuntimeException(e.toString());
         }
     }
+
     @Test
     void testTryInitSeveralSameDatasourcesFromThreads() throws ExecutionException, InterruptedException {
         DatabaseManagerImpl spyDbManager = spy(databaseManager);
@@ -277,7 +286,7 @@ class DatabaseManagerTest {
         for (int i = 0; i < 20; i++) {
             futures.get(i).get();
         }
-        verify(spyDbManager).createShardDatasource(1L, new ShardInitTableSchemaVersion());
+        verify(spyDbManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
 
     }
 

@@ -423,6 +423,7 @@ public enum APIEnum {
     GET_EXPECTED_ASSET_TRANSFERS("getExpectedAssetTransfers", new GetExpectedAssetTransfers()),
     GET_EXPECTED_ASSET_DELETES("getExpectedAssetDeletes", new GetExpectedAssetDeletes()),
     GET_EL_GAMAL_PUBLIC_KEY("getElGamalPublicKey", new GetElGamalPublicKey()),
+    GET_FORGING_PUBLIC_KEY("getForgingPublicKey", new GetElGamalPublicKey()),
     GET_CURRENCY_TRANSFERS("getCurrencyTransfers", new GetCurrencyTransfers()),
     GET_EXPECTED_CURRENCY_TRANSFERS("getExpectedCurrencyTransfers", new GetExpectedCurrencyTransfers()),
     GET_TRANSACTION("getTransaction", new GetTransaction()),

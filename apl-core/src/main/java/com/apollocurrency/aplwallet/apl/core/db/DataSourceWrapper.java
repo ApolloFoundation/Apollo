@@ -255,6 +255,7 @@ public class DataSourceWrapper implements DataSource {
     }
 
     public void shutdown() {
+        long start = System.currentTimeMillis();
         if (!initialized) {
             return;
         }
@@ -264,10 +265,10 @@ public class DataSourceWrapper implements DataSource {
             stmt.execute("SHUTDOWN COMPACT");
             shutdown = true;
             initialized = false;
+            con.close();
             dataSource.close();
 //            dataSource.dispose();
-            log.trace("Database shutdown completed");
-
+            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }

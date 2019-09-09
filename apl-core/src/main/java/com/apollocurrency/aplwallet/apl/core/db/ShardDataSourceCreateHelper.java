@@ -66,13 +66,15 @@ public class ShardDataSourceCreateHelper {
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
         checkGenerateShardName();
         log.debug("Create new SHARD '{}'", shardName);
-        DbProperties shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
-                    .dbFileName(shardName) // change file name
-                    .maxCacheSize(MAX_CACHE_SIZE)
-                    .maxConnections(MAX_CONNECTIONS)
-                    .maxMemoryRows(MAX_MEMORY_ROWS)
-                    .dbUrl(null)  // nullify dbUrl intentionally!;
-                    .dbIdentity(shardId); // put shard related info
+//        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
+        DbProperties shardDbProperties = null;
+        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
+                .dbFileName(shardName) // change file name
+                .maxCacheSize(MAX_CACHE_SIZE)
+                .maxConnections(MAX_CONNECTIONS)
+                .maxMemoryRows(MAX_MEMORY_ROWS)
+                .dbUrl(null)  // nullify dbUrl intentionally!;
+                .dbIdentity(shardId); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
         return this;
     }
@@ -97,4 +99,15 @@ public class ShardDataSourceCreateHelper {
         shardName = new ShardNameHelper().getShardNameByShardId(shardId, chainId);
         return shardName;
     }
+
+    private static void logStackTrace(String initString, StackTraceElement[] stackTrace) {
+        StringBuilder sb = new StringBuilder(512);
+        sb.append(initString).append('\n');
+        for (int i=1; i<stackTrace.length; i++) {
+            String line = stackTrace[i].toString();
+            sb.append("\t\t").append(line).append('\n');
+        }
+        log.debug(sb.toString());
+    }
+
 }

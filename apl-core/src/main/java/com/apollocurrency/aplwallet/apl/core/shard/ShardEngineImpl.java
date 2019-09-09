@@ -189,7 +189,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(commandParamInfo.getShardId(), dbVersion);
 
 
             if (isConstraintSchema) {
@@ -470,7 +470,13 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private int trimDerivedTables(int height) {
-        databaseManager.getDataSource().begin();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
+        log.debug("trimDerivedTables height = '{}', inTransaction = '{}'",
+                height, inTransaction);
+        if (!inTransaction) {
+            dataSource.begin();
+        }
         try {
             return trimService.doTrimDerivedTablesOnHeight(height, true);
         } catch (Exception e) {
