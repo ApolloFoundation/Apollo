@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;

@@ -9,38 +9,32 @@ import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
- * Entity class
+ * Account Guaranty Balance Entity class
  */
 @Setter @Getter
-public class AccountGuaranteedBalance {
+@ToString(callSuper = true)
+public class AccountGuaranteedBalance extends DerivedEntity {
 
     private final long accountId;
-    private final DbKey dbKey;
     private long additions;
-    private int height;
 
     public AccountGuaranteedBalance(long accountId, long additions, int height) {
+        super(null, height);
         this.accountId = accountId;
         this.additions = additions;
-        this.dbKey = AccountGuaranteedBalanceTable.newKey(this.accountId);
-        this.height = height;
+        setDbKey(AccountGuaranteedBalanceTable.newKey(this.accountId));
     }
 
     public AccountGuaranteedBalance(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
         this.accountId = rs.getLong("account_id");
         this.additions = rs.getLong("additions");
-        this.height = rs.getInt("height");
-        this.dbKey = dbKey;
+        setDbKey(dbKey);
     }
-
-    @Override
-    public String toString() {
-        return "AccountGuaranteedBalance account_id: "
-                + Long.toUnsignedString(accountId) + " additions: " + additions + " height: " + height;
-    }
-    
 }

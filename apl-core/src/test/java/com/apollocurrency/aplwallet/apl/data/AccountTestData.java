@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
@@ -96,9 +97,6 @@ public class AccountTestData {
     public List<AccountCurrency> ALL_CURRENCY = List.of(ACC_CUR_0, ACC_CUR_1, ACC_CUR_2, ACC_CUR_3, ACC_CUR_4, ACC_CUR_5, ACC_CUR_6, ACC_CUR_7, ACC_CUR_8, ACC_CUR_9, ACC_CUR_10, ACC_CUR_11, ACC_CUR_12, ACC_CUR_13, ACC_CUR_14);
     public AccountCurrency newCurrency = new AccountCurrency(ACC_1.getId(), ACC_CUR_14.getCurrencyId()+1, 0, 0, ACC_CUR_14.getHeight()+1);
 
-    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MIN = 858816;
-    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = 882424;
-
     /* AccountInfo */
     public final AccountInfo ACC_INFO_0 = createInfo(5, 100, "ZT", null, 3073, true);
     public final AccountInfo ACC_INFO_1 = createInfo(6, 120, "CALIGULA", null, 3559, true);
@@ -159,10 +157,32 @@ public class AccountTestData {
     public List<AccountLease> ALL_LEASE = List.of(ACC_LEAS_0, ACC_LEAS_1, ACC_LEAS_2, ACC_LEAS_3, ACC_LEAS_4);
     public AccountLease newLease = new AccountLease(ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
 
+    /* PublicKey */
     public PublicKey PUBLIC_KEY1 = new PublicKey(-2509437615322027040L, PUBLIC_KEY_STR.getBytes(),1000);
     public PublicKey PUBLIC_KEY2 = new PublicKey(-2361982985055136186L, PUBLIC_KEY_STR2.getBytes(),1000);
 
+    /* AccountGuaranteedBalance */
+    public final AccountGuaranteedBalance ACC_BALANCE_1 = createBalance(1695301, 100, 27044000000L, 2502007);
+    public final AccountGuaranteedBalance ACC_BALANCE_2 = createBalance(1695302, 100, 157452000000L,2502014);
+    public final AccountGuaranteedBalance ACC_BALANCE_3 = createBalance(1695503, 200, 900000000,    2502060);
+    public final AccountGuaranteedBalance ACC_BALANCE_4 = createBalance(1695304, 100, 64604000000L, 2502265);
+    public final AccountGuaranteedBalance ACC_BALANCE_5 = createBalance(1695305, 300, 100000000,    2502568);
+    public final AccountGuaranteedBalance ACC_BALANCE_6 = createBalance(1695306, 300, 100000000,    2502600);
+    public final AccountGuaranteedBalance ACC_BALANCE_7 = createBalance(1695307, 100, 100100000000L,2502845);
+
+    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MIN = ACC_BALANCE_1.getHeight()-1;
+    public final int ACC_GUARANTEE_BALANCE_HEIGHT_MAX = ACC_BALANCE_7.getHeight();
+
+    public List<AccountGuaranteedBalance> ALL_BALANCES = List.of(ACC_BALANCE_1, ACC_BALANCE_2, ACC_BALANCE_3, ACC_BALANCE_4, ACC_BALANCE_5, ACC_BALANCE_6, ACC_BALANCE_7);
+    public AccountGuaranteedBalance newBalance = new AccountGuaranteedBalance(ACC_BALANCE_1.getAccountId(), 10000000L, ACC_BALANCE_1.getHeight()+1);
+
     /* create entity */
+    public AccountGuaranteedBalance createBalance(long dbId, long accountId, long additiions, int height){
+        AccountGuaranteedBalance balance = new AccountGuaranteedBalance(accountId, additiions, height);
+        balance.setDbId(dbId);
+        return balance;
+    }
+
     public AccountLease createLease( long dbId, long lessorId,  long currentLesseeId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long nextLesseeId, int nextLeasingHeightFrom, int nextLeasingHeightTo, int height, boolean latest){
         AccountLease lease = new AccountLease(lessorId, currentLeasingHeightFrom, currentLeasingHeightTo, currentLesseeId, height);
         lease.setDbId(dbId);
