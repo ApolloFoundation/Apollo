@@ -16,11 +16,11 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public class DexContractTransaction extends DEX {
@@ -51,8 +51,8 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if(attachment.getContractStatus().isStep2()){
             if (order == null) {
@@ -93,8 +93,8 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
             order.setStatus(OrderStatus.WAITING_APPROVAL);
@@ -111,7 +111,7 @@ public class DexContractTransaction extends DEX {
 
         // contract == null it means, that it's a first step.
         if (contract == null) {
-            contract = new ExchangeContract(senderAccount.getId(), counterOrder.getAccountId(), attachment);
+            contract = new ExchangeContract(transaction.getId(), senderAccount.getId(), counterOrder.getAccountId(), attachment);
         } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
             contract.setEncryptedSecret(attachment.getEncryptedSecret());
             contract.setSecretHash(attachment.getSecretHash());
@@ -167,7 +167,7 @@ public class DexContractTransaction extends DEX {
 
         for (ExchangeContract exchangeContract : contractsForReopen) {
             //Reopen order.
-            DexOrder order = dexService.getOfferByTransactionId(exchangeContract.getOrderId());
+            DexOrder order = dexService.getOrder(exchangeContract.getOrderId());
             if (order.getStatus().isPending()) {
                 //Close contract.
                 exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);

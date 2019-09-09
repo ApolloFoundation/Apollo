@@ -25,6 +25,7 @@ public interface DexContractDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_contract " +
             "where latest=true " +
+            "AND (:id is NULL or id=:id) " +
             "AND (:recipient is NULL or recipient=:recipient) " +
             "AND (:sender is NULL or sender=:sender) " +
             "AND (:offerId is NULL or offer_id=:offerId) " +

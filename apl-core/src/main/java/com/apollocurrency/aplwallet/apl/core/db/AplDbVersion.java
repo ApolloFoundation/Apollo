@@ -790,7 +790,7 @@ public class AplDbVersion extends DbVersion {
             case 300:
                 apply("ALTER TABLE IF EXISTS shard ADD COLUMN IF NOT EXISTS block_timestamps ARRAY DEFAULT NULL");
             case 301:
-                apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, offer_id BIGINT NOT NULL, " +
+                apply("CREATE TABLE IF NOT EXISTS dex_contract (db_id IDENTITY NOT NULL, id BIGINT DEFAULT NOT NULL, offer_id BIGINT NOT NULL, " +
                         "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NULL DEFAULT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 302:
                 apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL DEFAULT NULL");
@@ -817,12 +817,12 @@ public class AplDbVersion extends DbVersion {
                         "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
                         "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
                         "HEIGHT INT not null )" );
-
             case 312:
                 apply("ALTER TABLE dex_offer ALTER COLUMN transaction_id RENAME TO id");
-
             case 313:
-                return 313;
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS id BIGINT DEFAULT NOT NULL");
+            case 314:
+                return 314;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

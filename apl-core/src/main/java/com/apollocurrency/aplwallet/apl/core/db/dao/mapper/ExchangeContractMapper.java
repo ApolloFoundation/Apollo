@@ -12,7 +12,8 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
     @Override
     public ExchangeContract map(ResultSet rs, StatementContext ctx) throws SQLException {
         return ExchangeContract.builder()
-                .id(rs.getLong("db_id"))
+                .dbId(rs.getLong("db_id"))
+                .id(rs.getLong("id"))
                 .orderId(rs.getLong("offer_id"))
                 .recipient(rs.getLong("recipient"))
                 .sender(rs.getLong("sender"))

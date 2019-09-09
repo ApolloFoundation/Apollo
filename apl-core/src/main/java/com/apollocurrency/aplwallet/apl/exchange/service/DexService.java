@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -64,14 +65,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -118,7 +119,7 @@ public class DexService {
 
 
     @Transactional
-    public DexOrder getOfferByTransactionId(Long transactionId) {
+    public DexOrder getOrder(Long transactionId) {
         return dexOrderTable.getByTxId(transactionId);
     }
 
@@ -154,6 +155,11 @@ public class DexService {
     @Transactional(readOnly = true)
     public ExchangeContract getDexContract(DexContractDBRequest dexContractDBRequest) {
         return dexContractDao.get(dexContractDBRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public ExchangeContract getDexContractById(long id) {
+        return dexContractDao.get(DexContractDBRequest.builder().id(id).build());
     }
 
     @Transactional(readOnly = true)
@@ -336,7 +342,7 @@ public class DexService {
      */
     public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
-            DexOrder userOffer = getOfferByTransactionId(userOrderId);
+            DexOrder userOffer = getOrder(userOrderId);
 
             CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
                     .builder()
@@ -379,12 +385,12 @@ public class DexService {
 
                 Transaction respApproveTx = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
+//              order will be closed automatically
+//                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
+//                templatTransactionRequest.setAttachment(closeOfferAttachment);
 
-                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(userOffer.getId());
-                templatTransactionRequest.setAttachment(closeOfferAttachment);
-
-                Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
-                log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
+//                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
+//                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
 
             }
         } catch (Exception ex) {
@@ -483,5 +489,37 @@ public class DexService {
         }
     }
 
+    public DexOrder closeOrder(long orderId) {
+        DexOrder order = getOrder(orderId);
+        order.setStatus(OrderStatus.CLOSED);
+        saveOrder(order);
+        return order;
+    }
 
+    public void finishExchange(long transactionId, long orderId) {
+        DexOrder order = closeOrder(orderId);
+
+        ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(order.getId()).build());
+
+        if (exchangeContract == null) {
+            exchangeContract = getDexContract(DexContractDBRequest.builder().counterOfferId(order.getId()).build());
+        }
+
+        Block lastBlock = blockchain.getLastBlock();
+
+        DexTradeEntry dexTradeEntry = DexTradeEntry.builder()
+                .transactionID(transactionId)
+                .senderOfferID(exchangeContract.getSender())
+                .receiverOfferID(exchangeContract.getRecipient())
+                .senderOfferType((byte) order.getType().ordinal())
+                .senderOfferCurrency((byte) order.getOrderCurrency().ordinal())
+                .senderOfferAmount(order.getOrderAmount())
+                .pairCurrency((byte) order.getPairCurrency().ordinal())
+                .pairRate(order.getPairRate())
+                .finishTime(lastBlock.getTimestamp())
+                .height(lastBlock.getHeight())
+                .build();
+
+        saveDexTradeEntry(dexTradeEntry);
+    }
 }
