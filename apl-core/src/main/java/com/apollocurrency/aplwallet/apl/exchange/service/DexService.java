@@ -478,10 +478,15 @@ public class DexService {
         return null;
     }
 
-    public void closeOrder(long transactionId, long orderId) {
+    public DexOffer closeOrder(long orderId) {
         DexOffer offer = getOfferByTransactionId(orderId);
         offer.setStatus(OfferStatus.CLOSED);
         saveOffer(offer);
+        return offer;
+    }
+
+    public void finishExchange(long transactionId, long orderId) {
+        DexOffer offer = closeOrder(orderId);
 
         ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(offer.getTransactionId()).build());
 

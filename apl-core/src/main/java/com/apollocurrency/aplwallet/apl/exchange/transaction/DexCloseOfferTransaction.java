@@ -70,7 +70,7 @@ public class DexCloseOfferTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexCloseOfferAttachment attachment = (DexCloseOfferAttachment) transaction.getAttachment();
-        dexService.closeOrder(transaction.getId(), attachment.getOrderId());
+        dexService.closeOrder(attachment.getOrderId());
     }
 
 

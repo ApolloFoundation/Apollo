@@ -95,7 +95,7 @@ public class DexTransferMoneyTransaction extends DEX {
         recipient.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
         ExchangeContract dexContract = dexService.getDexContract(DexContractDBRequest.builder().id(attachment.getContractId()).build());
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
-        dexService.closeOrder(tx.getId(), orderToClose);
+        dexService.finishExchange(tx.getId(), orderToClose);
 //        DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
 //
 //        DexOffer offer = dexService.getOfferByTransactionId(attachment.getOrderId());
