@@ -95,11 +95,41 @@ class DexTransferMoneyTransactionTest {
     void testValidateAttachment() throws AplException.ValidationException {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
 
         doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        doReturn(1000L).when(tx).getSenderId();
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        doReturn(2000L).when(tx).getSenderId();
+        doReturn(1000L).when(tx).getRecipientId();
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+
+        contract.setCounterTransferTxId("100");
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        doReturn(100L).when(tx).getId();
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        DexOffer offer = new DexOffer(1L, 300L, 0L, "", "", OfferType.BUY, OfferStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        doReturn(offer).when(dexService).getOfferById(300L);
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        offer.setAccountId(2000L);
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        offer.setStatus(OfferStatus.WAITING_APPROVAL);
+        transactionType.validateAttachment(tx);
+
+        doReturn(1000L).when(tx).getSenderId();
+        doReturn(2000L).when(tx).getRecipientId();
+        doReturn(offer).when(dexService).getOfferById(200L);
+        contract.setCounterTransferTxId("1");
+        contract.setTransferTxId("100");
+        offer.setAccountId(1000L);
+        transactionType.validateAttachment(tx);
     }
 
 
