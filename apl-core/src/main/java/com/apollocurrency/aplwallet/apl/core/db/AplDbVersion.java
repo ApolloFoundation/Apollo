@@ -726,7 +726,7 @@ public class AplDbVersion extends DbVersion {
             case 269:
                 apply("ALTER TABLE phasing_poll ADD IF NOT EXISTS finish_time INT NOT NULL DEFAULT -1");
             case 270:
-                apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY NOT NULL, id BIGINT NOT NULL, type TINYINT NOT NULL, " +
+                apply("CREATE TABLE IF NOT EXISTS dex_offer (db_id IDENTITY NOT NULL, transaction_id BIGINT NOT NULL, type TINYINT NOT NULL, " +
                         "account_id BIGINT NOT NULL, offer_currency TINYINT NOT NULL, offer_amount BIGINT NOT NULL, pair_currency TINYINT NOT NULL, " +
                         "pair_rate DECIMAL NOT NULL, finish_time INT NOT NULL, status TINYINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 271 :
