@@ -70,7 +70,7 @@ public class DexTransferMoneyTransaction extends DEX {
             throw new AplException.NotValidException("Transaction was not registered in the contract. ");
         }
         long orderId =  isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
-        DexOrder order = dexService.getOrderByTransactionId(orderId);
+        DexOrder order = dexService.getOrder(orderId);
         if (order == null) {
             throw new AplException.NotValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
         }

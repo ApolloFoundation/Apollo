@@ -13,16 +13,16 @@ import java.nio.ByteBuffer;
 @AllArgsConstructor
 public class DexCloseOrderAttachment extends AbstractAttachment {
 
-    private long orderId;
+    private long contractId;
 
     public DexCloseOrderAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.orderId = buffer.getLong();
+        this.contractId = buffer.getLong();
     }
 
     public DexCloseOrderAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
+        this.contractId = Convert.parseUnsignedLong((String) attachmentData.get("contractId"));
     }
 
     @Override
@@ -32,12 +32,12 @@ public class DexCloseOrderAttachment extends AbstractAttachment {
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(this.orderId);
+        buffer.putLong(this.contractId);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("orderId", Long.toUnsignedString(this.getOrderId()));
+        json.put("contractId", Long.toUnsignedString(this.getContractId()));
     }
 
     @Override

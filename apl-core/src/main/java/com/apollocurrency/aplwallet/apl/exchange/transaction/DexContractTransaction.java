@@ -51,8 +51,8 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOrderByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if(attachment.getContractStatus().isStep2()){
             if (order == null) {
@@ -93,8 +93,8 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOrderByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
             order.setStatus(OrderStatus.WAITING_APPROVAL);
@@ -167,7 +167,7 @@ public class DexContractTransaction extends DEX {
 
         for (ExchangeContract exchangeContract : contractsForReopen) {
             //Reopen order.
-            DexOrder order = dexService.getOrderByTransactionId(exchangeContract.getOrderId());
+            DexOrder order = dexService.getOrder(exchangeContract.getOrderId());
             if (order.getStatus().isPending()) {
                 //Close contract.
                 exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);

@@ -119,7 +119,7 @@ public class DexService {
 
 
     @Transactional
-    public DexOrder getOrderByTransactionId(Long transactionId) {
+    public DexOrder getOrder(Long transactionId) {
         return dexOrderTable.getByTxId(transactionId);
     }
 
@@ -155,6 +155,11 @@ public class DexService {
     @Transactional(readOnly = true)
     public ExchangeContract getDexContract(DexContractDBRequest dexContractDBRequest) {
         return dexContractDao.get(dexContractDBRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public ExchangeContract getDexContractById(long id) {
+        return dexContractDao.get(DexContractDBRequest.builder().id(id).build());
     }
 
     @Transactional(readOnly = true)
@@ -337,7 +342,7 @@ public class DexService {
      */
     public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
-            DexOrder userOffer = getOrderByTransactionId(userOrderId);
+            DexOrder userOffer = getOrder(userOrderId);
 
             CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
                     .builder()
@@ -485,7 +490,7 @@ public class DexService {
     }
 
     public DexOrder closeOrder(long orderId) {
-        DexOrder order = getOrderByTransactionId(orderId);
+        DexOrder order = getOrder(orderId);
         order.setStatus(OrderStatus.CLOSED);
         saveOrder(order);
         return order;

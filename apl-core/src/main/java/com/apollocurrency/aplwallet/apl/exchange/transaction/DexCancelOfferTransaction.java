@@ -13,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 
 public class DexCancelOfferTransaction extends DEX {
 
@@ -46,7 +46,7 @@ public class DexCancelOfferTransaction extends DEX {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
-        DexOrder order = dexService.getOrderByTransactionId(orderTransactionId);
+        DexOrder order = dexService.getOrder(orderTransactionId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
@@ -70,7 +70,7 @@ public class DexCancelOfferTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOrderByTransactionId(attachment.getOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
             if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {

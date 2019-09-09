@@ -70,8 +70,8 @@ public class DexOrderProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOrderByTransactionId(contract.getOrderId());
-                DexOrder counterOrder = dexService.getOrderByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOrder(contract.getCounterOrderId());
 
                 if (contract.getCounterTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
@@ -146,8 +146,8 @@ public class DexOrderProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOrderByTransactionId(contract.getOrderId());
-                DexOrder counterOrder = dexService.getOrderByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOrder(contract.getCounterOrderId());
 
                 if (contract.getTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-2) TransferTxId is not null. ExchangeContractId:{}", contract.getId());
@@ -217,7 +217,7 @@ public class DexOrderProcessor {
                 .build());
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOrderByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getCounterOrderId());
 
                 if (!isContractStep3Valid(contract, order)) {
                     continue;
