@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

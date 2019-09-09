@@ -37,29 +37,28 @@ public class TaggedTestData {
 
     public TaggedTestData() throws AplException.NotValidException {
         td = new TransactionTestData();
-
         dataUploadAttachment_1 = new TaggedDataUploadAttachment(
-                "tag1", "tag1 descr", null, "file test type", null,
+                "tag1", "tag1 descr", "tag1,tag2,tag3,tag2,sl", "file test type", null,
                 true, "test file name 1", "c11dd7986e".getBytes());
         TaggedData_1 = new TaggedData(td.TRANSACTION_3, dataUploadAttachment_1, td.TRANSACTION_3.getTimestamp(), td.TRANSACTION_3.getHeight());
 
         dataUploadAttachment_2 = new TaggedDataUploadAttachment(
-                "tag2", "tag2 descr", null, "file test type", null,
+                "tag2", "tag2 descr", "tag2,tag2,ss", "file test type", null,
                 true, "test file name 2", "c11dd7986e".getBytes());
         TaggedData_2 = new TaggedData(td.TRANSACTION_4, dataUploadAttachment_2, td.TRANSACTION_4.getTimestamp(), td.TRANSACTION_4.getHeight());
 
         dataUploadAttachment_3 = new TaggedDataUploadAttachment(
-                "tag3", "tag3 descr", null, "file test type", null,
+                "tag3", "tag3 descr", "tag3,tag4,tag3,newtag", "file test type", null,
                 true, "test file name 3", "c11d8344588e".getBytes());
         TaggedData_3 = new TaggedData(td.TRANSACTION_5, dataUploadAttachment_3, td.TRANSACTION_5.getTimestamp(), td.TRANSACTION_5.getHeight());
 
         dataUploadAttachment_4 = new TaggedDataUploadAttachment(
-                "tag4", "tag4 descr", null, "file test type", null,
+                "tag4", "tag4 descr", "tag3,tag3,tag3,tag2,tag2", "file test type", null,
                 true, "test file name 4", "c11d1234589e".getBytes());
         TaggedData_4 = new TaggedData(td.TRANSACTION_7, dataUploadAttachment_4, td.TRANSACTION_7.getTimestamp(), td.TRANSACTION_7.getHeight());
 
         dataUploadAttachment_5 = new TaggedDataUploadAttachment(
-                "tag5", "tag5 descr", null, "file test type", null,
+                "tag5", "tag5 descr", "iambatman", "file test type", null,
                 true, "test file name 5", "c11d1234586e".getBytes());
         TaggedData_5 = new TaggedData(td.TRANSACTION_8, dataUploadAttachment_5, td.TRANSACTION_8.getTimestamp(), td.TRANSACTION_8.getHeight());
 

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -50,7 +50,7 @@ public class ReferencedTransactionMigratorTest {
              ChainsConfigHolder.class)
             .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
-            .addBeans(MockBean.of(Mockito.mock(EpochTime.class), EpochTime.class))
+            .addBeans(MockBean.of(Mockito.mock(TimeServiceImpl.class), TimeServiceImpl.class))
             .build();
     @Inject
     ReferencedTransactionDaoImpl referencedTransactionDao;

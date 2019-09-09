@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 @Singleton

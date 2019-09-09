@@ -30,7 +30,7 @@ import java.io.StringWriter;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
@@ -78,22 +78,25 @@ public final class PeerServlet extends WebSocketServlet {
     @Inject
     private BlockchainProcessor blockchainProcessor;
     @Inject
-    private volatile EpochTime timeService;   
+    private volatile TimeService timeService;
     @Inject
     private ShardDao shardDao;
     @Inject
     private BlockchainConfig blockchainConfig;
     @Inject
     private DownloadableFilesManager downloadableFilesManager;
-    private ExecutorService threadPool;
+    @Inject
+    private PeersService peers;
     
+    private ExecutorService threadPool;
+
     @Override
     public void init() throws ServletException {
         super.init(); 
         lookupComponents();
         threadPool = new QueuedThreadPool(
                 Runtime.getRuntime().availableProcessors(),
-                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");        
+                Runtime.getRuntime().availableProcessors() * 4, "PeersWebsocketThreadPool");
     }
 
     protected void lookupComponents() {
@@ -101,8 +104,9 @@ public final class PeerServlet extends WebSocketServlet {
         if (shardDao == null) shardDao = CDI.current().select(ShardDao.class).get();
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
-        if (timeService ==null) timeService = CDI.current().select(EpochTime.class).get();
-        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+        if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
+        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
     }  
     
     public PeerRequestHandler getHandler(String rtype) {
@@ -164,8 +168,8 @@ public final class PeerServlet extends WebSocketServlet {
      */
     @Override
     public void configure(WebSocketServletFactory factory) {
-        factory.getPolicy().setIdleTimeout(Peers.webSocketIdleTimeout);
-        factory.getPolicy().setMaxBinaryMessageSize(Peers.MAX_MESSAGE_SIZE);
+        factory.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        factory.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         factory.setCreator(new PeerSocketCreator());
     }
 
@@ -184,17 +188,17 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = Peers.findOrCreatePeer(pa,null,true);
+        PeerImpl peer = peers.findOrCreatePeer(pa,null,true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            if (peer.isBlacklisted()) { 
+            if (peer.isBlacklisted()) {
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
                jsonResponse = process(peer, req.getReader());
             }
-        }        
+        }
         //
         // Return the response
         //
@@ -206,10 +210,10 @@ public final class PeerServlet extends WebSocketServlet {
             JSON.writeJSONString(jsonResponse, writer);
         } catch (RuntimeException e) {
             processException(peer, e);
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);            
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
             throw e;
         }catch ( IOException e){
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e); 
+            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
         }
     }
 
@@ -252,7 +256,7 @@ public final class PeerServlet extends WebSocketServlet {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
             Thread.currentThread().setName("doPostTask-"+peer.getHostWithPort());
-            if (peer.isBlacklisted()) { 
+            if (peer.isBlacklisted()) {
                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             }else{
                jsonResponse = process(peer, new StringReader(request));
@@ -291,7 +295,7 @@ public final class PeerServlet extends WebSocketServlet {
         //
         // Process the request
         //
-        try (CountingInputReader cr = new CountingInputReader(inputReader, Peers.MAX_REQUEST_SIZE)) {
+        try (CountingInputReader cr = new CountingInputReader(inputReader, PeersService.MAX_REQUEST_SIZE)) {
             JSONObject request = (JSONObject)JSONValue.parseWithException(cr);
             //we have to process errors here because of http requests
             if(peer.processError(request)){
@@ -321,17 +325,17 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
-                    LOG.trace("Peer List =[{}], dumping...", Peers.getAllPeers().size());
-                    Peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("{}", peerHost));
+                    LOG.trace("Peer List =[{}], dumping...", peers.getAllPeers().size());
+                    peers.getAllPeers().stream().forEach(peerHost -> LOG.trace("{}", peerHost));
                 }
                 return PeerResponses.SEQUENCE_ERROR;
             }
             if (peer.isInbound()) {
-                if (Peers.hasTooManyInboundPeers()) {
-                    Peers.removePeer(peer);
+                if (peers.hasTooManyInboundPeers()) {
+                    peers.removePeer(peer);
                     return PeerResponses.MAX_INBOUND_CONNECTIONS;
                 }
-                Peers.notifyListeners(peer, Peers.Event.ADD_INBOUND);
+                peers.notifyListeners(peer, PeersService.Event.ADD_INBOUND);
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
@@ -365,14 +369,14 @@ public final class PeerServlet extends WebSocketServlet {
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
             Object res = null;
-            if (Peers.useWebSockets) {
+            if (PeersService.useWebSockets) {
                 String host = req.getRemoteAddress();
                 int port = req.getRemotePort();
                 PeerAddress pa = new PeerAddress(port,host);
 //we use remote port to distinguish peers behind the NAT/UPnP
 //TODO: it is bad and we have to use reliable node ID to distinguish peers
-                Peers.cleanupPeers(null);
-                PeerImpl peer = (PeerImpl)Peers.findOrCreatePeer(pa, null, true);
+                peers.cleanupPeers(null);
+                PeerImpl peer = (PeerImpl)peers.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);
@@ -382,7 +386,7 @@ public final class PeerServlet extends WebSocketServlet {
             return res;
         }
     }
-    
+
     @PreDestroy
     public void shutdown(){
         threadPool.shutdown();

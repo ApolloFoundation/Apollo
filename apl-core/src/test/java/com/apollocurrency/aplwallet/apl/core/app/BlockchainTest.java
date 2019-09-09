@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -84,7 +85,7 @@ class BlockchainTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(blockchainTestDbPath,"mainDb", "db/shard-main-data.sql");
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
-    EpochTime epochTime = mock(EpochTime.class);
+    TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @WeldSetup
@@ -92,10 +93,11 @@ class BlockchainTest {
             JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-            .addBeans(MockBean.of(epochTime, EpochTime.class))
+            .addBeans(MockBean.of(timeService, TimeService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .build();
 
@@ -881,7 +883,7 @@ class BlockchainTest {
     void testGetTransactionsExcludingExpiredPrunable() {
         blockchain.setLastBlock(btd.BLOCK_13);
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset + 1).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);
@@ -894,7 +896,7 @@ class BlockchainTest {
         blockchain.setLastBlock(btd.BLOCK_13);
         doReturn(true).when(propertiesHolder).INCLUDE_EXPIRED_PRUNABLE();
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset + 1).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);
@@ -907,7 +909,7 @@ class BlockchainTest {
         blockchain.setLastBlock(btd.BLOCK_13);
         doReturn(true).when(propertiesHolder).INCLUDE_EXPIRED_PRUNABLE();
         int timeOffset = 10_000;
-        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(epochTime).getEpochTime();
+        doReturn(txd.TRANSACTION_14.getTimestamp() + timeOffset).when(timeService).getEpochTime();
         doReturn(timeOffset).when(blockchainConfig).getMinPrunableLifetime();
 
         List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true);
@@ -920,18 +922,25 @@ class BlockchainTest {
     void testGetTransactionsWithConfirmation() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), txd.TRANSACTION_14.getHeight() - txd.TRANSACTION_8.getHeight() + 1, (byte) -1, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true);
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), txd.TRANSACTION_14.getHeight() - txd.TRANSACTION_8.getHeight() + 1,
+                (byte) -1, (byte) -1, 0, false, false, false,
+                0, Integer.MAX_VALUE, false, false, true);
+        assertEquals(List.of(txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
 
-        assertEquals(List.of(txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2, txd.TRANSACTION_1, txd.TRANSACTION_0), transactions);
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), txd.TRANSACTION_14.getHeight() - txd.TRANSACTION_8.getHeight() + 1,
+                (byte) -1, (byte) -1, 0, false, false, false,
+                3, 5, false, false, true);
+        assertEquals(List.of(txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
     }
 
     @Test
     void testGetTransactionsFromDifferentDataSources() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true);
-
-        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_12, txd.TRANSACTION_11, txd.TRANSACTION_9, txd.TRANSACTION_8, txd.TRANSACTION_7, txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2, txd.TRANSACTION_1, txd.TRANSACTION_0), transactions);
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                0, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_12, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_9, txd.TRANSACTION_7, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
     }
 
 
@@ -939,18 +948,93 @@ class BlockchainTest {
     void testGetTransactionsFromDifferentDataSourcesWhenSkipFirstNEntries() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 8, 10, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)-1, (byte)-1, 0, false, false, false,
+                8, Integer.MAX_VALUE, false, false, true);
         assertEquals(List.of(txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                1, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_9, txd.TRANSACTION_7, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                2, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_7, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                3, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                4, Integer.MAX_VALUE, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_2), transactions);
+    }
+
+    @Test
+    void testGetTransactionsFromDifferentDataSourcesSkipSecondShard() {
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_10.getSenderId(), 0, (byte) 0, (byte) 1, 0, false, false, false,
+                0, Integer.MAX_VALUE, false, false, true);
+        assertEquals(List.of(txd.TRANSACTION_10, txd.TRANSACTION_1, txd.TRANSACTION_0), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_10.getSenderId(), 0, (byte) 0, (byte) 1, 0, false, false, false,
+                1, 1, false, false, true);
+        assertEquals(List.of(txd.TRANSACTION_1), transactions);
+    }
+
+    @Test
+    void testGetTransactionsFromDifferentDataSourcesWithLimit() {
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                0, 1, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_9), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                0, 2, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_9, txd.TRANSACTION_7), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                0, 3, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_9, txd.TRANSACTION_7, txd.TRANSACTION_3), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                0, 4, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_13, txd.TRANSACTION_9, txd.TRANSACTION_7, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
     }
 
     @Test
     void testGetTransactionsFromDifferentDataSourcesWhenSkipFirstNEntriesWithLimit() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 8, 10, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)-1, (byte)-1, 0, false, false, false,
+                8, 10, false, false, true);
         assertEquals(List.of(txd.TRANSACTION_4, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                3, 4, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                3, 5, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                4, 5, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_2), transactions);
+
+        transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)0, (byte)1, 0, false, false, false,
+                2, 4, false, false, true);
+        // candidates by type+subtype are TR_13, TR_9, TR_7, TR_3, TR_2
+        assertEquals(List.of(txd.TRANSACTION_7, txd.TRANSACTION_3, txd.TRANSACTION_2), transactions);
+
     }
 
 
@@ -958,8 +1042,8 @@ class BlockchainTest {
     void testGetTransactionsFromDifferentDataSourcesWhenSkipFirstNEntriesWithLimitWithoutSearchingFirstShardDataSource() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte) -1, (byte) -1, 0, false, false, false, 4, 8, false, false, true);
-
+        List<Transaction> transactions = blockchain.getTransactions(txd.TRANSACTION_2.getSenderId(), 0, (byte)-1, (byte)-1, 0, false, false, false,
+                4, 8, false, false, true);
         assertEquals(List.of(txd.TRANSACTION_8, txd.TRANSACTION_7, txd.TRANSACTION_6, txd.TRANSACTION_5, txd.TRANSACTION_4), transactions);
     }
 
@@ -1007,15 +1091,21 @@ class BlockchainTest {
     }
 
     @Test
+    void testGetPrivateTransactionsByType() {
+        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 0, (byte) 1, 1, 3));
+        // transactions exists but cannot be extracted
+        assertEquals(List.of(), transactions);
+    }
+    @Test
     void testGetTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 0, (byte) 0, 1, 3));
+        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 8, (byte) 0, 1, 3));
 
-        assertEquals(List.of(txd.TRANSACTION_10, txd.TRANSACTION_9), transactions);
+        assertEquals(List.of(txd.TRANSACTION_11), transactions);
     }
 
     @Test
     void testTransactionCountByAccount() {
-        int transactionCount = blockchain.getTransactionCount(txd.TRANSACTION_2.getSenderId(), (byte) 0, (byte) 0);
+        int transactionCount = blockchain.getTransactionCount(txd.TRANSACTION_2.getSenderId(), (byte) 8, (byte) 0);
 
         assertEquals(2, transactionCount);
     }
@@ -1131,6 +1221,33 @@ class BlockchainTest {
     void testGetTransactionsBeforeHeightOfLastBlockHeight() {
         List<TransactionDbInfo> result = blockchain.getTransactionsBeforeHeight(txd.TRANSACTION_12.getHeight());
         assertEquals(List.of(), result);
+    }
+
+    @Test
+    void testIsInitializedWhenLastBlockNotSet() {
+        blockchain.setLastBlock(null);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertFalse(initialized);
+    }
+    @Test
+    void testIsInitializedWhenShardInitialBlockNotSet() {
+        blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(null);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertFalse(initialized);
+    }
+    @Test
+    void testIsInitializedWhenShardInitialBlockAndLastBlockSet() {
+        blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(btd.BLOCK_10);
+
+        boolean initialized = blockchain.isInitialized();
+
+        assertTrue(initialized);
     }
 
     private byte[] fullHashWithCollision(byte[] fullHash) {

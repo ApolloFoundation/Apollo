@@ -55,10 +55,11 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -86,7 +87,7 @@ public final class AplCore {
 
     private static volatile boolean shutdown = false;
 
-    private Time time;
+    private TimeService time;
     private static Blockchain blockchain;
     private static BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -105,10 +106,12 @@ public final class AplCore {
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
 
+    @Inject @Setter
+    PeersService peers;
     private String initCoreTaskID;
     
     public AplCore() {
-        time = CDI.current().select(EpochTime.class).get();
+        time = CDI.current().select(TimeService.class).get();
     }
 
     public static boolean isShutdown() {
@@ -140,7 +143,7 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             LOG.info("blockchainProcessor Shutdown...");
         }
-        Peers.shutdown();
+        peers.shutdown();
         fullTextSearchService.shutdown();
         LOG.info("full text service shutdown...");
 
@@ -236,7 +239,7 @@ public final class AplCore {
                 blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 GlobalSync sync = CDI.current().select(GlobalSync.class).get();
-                Peers.init();
+                peers.init();
                 transactionProcessor.init();
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
@@ -267,7 +270,6 @@ public final class AplCore {
                 ExchangeRequest.init();
                 Shuffling.init();
                 ShufflingParticipant.init();
-                PrunableMessage.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
                 APIProxy.init();
@@ -278,6 +280,8 @@ public final class AplCore {
 //signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
                 ApiSplitFilter.isCoreReady = true;
 
+                PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
+                migrator.migrate();
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
 

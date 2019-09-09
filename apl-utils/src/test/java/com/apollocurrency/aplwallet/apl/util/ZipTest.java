@@ -1,21 +1,11 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.io.FileUtils;
@@ -27,6 +17,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import javax.inject.Inject;
 
 @EnableWeld
 class ZipTest {
@@ -110,9 +111,7 @@ class ZipTest {
         File folderNoCsvInside = temporaryFolderExtension.getRoot().toPath().toFile();
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderNoCsvInside + File.separator + zipFileName;
-        assertThrows(RuntimeException.class, () ->
-                zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false)
-        );
+        assertFalse(zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false));
     }
 
     @Test

@@ -42,13 +42,12 @@ public class TrimDao {
                             trimEntry.setId(keySet.getLong(1));
                             return trimEntry;
                         } else {
-                            throw new IllegalStateException("Primary autoincremnt key was not generated");
+                            throw new IllegalStateException("Primary auto-increment key was not generated");
                         }
                     }
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -62,8 +61,7 @@ public class TrimDao {
             } else {
                 return null;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -73,8 +71,7 @@ public class TrimDao {
             PreparedStatement pstmt = con.prepareStatement("DELETE FROM trim");
             ) {
             pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -86,8 +83,7 @@ public class TrimDao {
         ) {
             rs.next();
             return rs.getInt(1);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

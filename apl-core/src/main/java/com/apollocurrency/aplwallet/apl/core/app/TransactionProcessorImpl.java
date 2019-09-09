@@ -24,9 +24,40 @@ import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,59 +76,26 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TransactionProcessorImpl implements TransactionProcessor {
     private static final Logger LOG = getLogger(TransactionProcessorImpl.class);
 
-    // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();    
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private NtpTime ntpTime = CDI.current().select(NtpTime.class).get();
-    private static Blockchain blockchain;
-    private static BlockchainProcessor blockchainProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-    private static DatabaseManager databaseManager;
-    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-
-    private static final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
-    private static int maxUnconfirmedTransactions;
+    private Blockchain blockchain;
+    private BlockchainProcessor blockchainProcessor;
+    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
+    private DatabaseManager databaseManager;
+    private TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private PeersService peers = CDI.current().select(PeersService.class).get();
+    private final boolean enableTransactionRebroadcasting = propertiesHolder.getBooleanProperty("apl.enableTransactionRebroadcasting");
+    private int maxUnconfirmedTransactions;
 
     private BlockchainProcessor lookupBlockchainProcessor() {
         if (blockchainProcessor == null) {
@@ -279,7 +277,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 
                 if (transactionList.size() > 0) {
-                    Peers.sendToSomePeers(transactionList);
+                    peers.sendToSomePeers(transactionList);
                 }
 
             } catch (Exception e) {
@@ -299,7 +297,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                Peer peer = Peers.getAnyPeer(PeerState.CONNECTED, true);
+                Peer peer = peers.getAnyPeer(PeerState.CONNECTED, true);
                 if (peer == null) {
                     return;
                 }
@@ -515,7 +513,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 processTransaction(unconfirmedTransaction);
                 LOG.debug("Accepted new transaction " + transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
-                Peers.sendToSomePeers(acceptedTransactions);
+                peers.sendToSomePeers(acceptedTransactions);
                 transactionListeners.notify(acceptedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
                 if (enableTransactionRebroadcasting) {
                     broadcastedTransactions.add((TransactionImpl) transaction);
@@ -737,7 +735,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
         }
         if (sendToPeersTransactions.size() > 0) {
-            Peers.sendToSomePeers(sendToPeersTransactions);
+            peers.sendToSomePeers(sendToPeersTransactions);
         }
         if (addedUnconfirmedTransactions.size() > 0) {
             transactionListeners.notify(addedUnconfirmedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
@@ -880,10 +878,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                 //
                                 for (Appendix myAppendage : myTransaction.getAppendages()) {
                                     if (myAppendage.getClass() == appendage.getClass()) {
-                                        ((AbstractAppendix)myAppendage).loadPrunable(myTransaction, true);
+                                        myAppendage.loadPrunable(myTransaction, true);
                                         if (((Prunable)myAppendage).hasPrunableData()) {
                                             LOG.debug(String.format("Already have prunable data for transaction %s %s appendage",
-                                                    myTransaction.getStringId(), ((AbstractAppendix)myAppendage).getAppendixName()));
+                                                    myTransaction.getStringId(), myAppendage.getAppendixName()));
                                             continue appendageLoop;
                                         }
                                         break;
@@ -893,8 +891,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                 // Load the prunable data
                                 //
                                 if (((Prunable)appendage).hasPrunableData()) {
-                                    LOG.debug(String.format("Loading prunable data for transaction %s %s appendage",
-                                            Long.toUnsignedString(transaction.getId()), ((AbstractAppendix)appendage).getAppendixName()));
+                                    LOG.debug("Loading prunable data for transaction {} {} appendage",
+                                            Long.toUnsignedString(transaction.getId()), appendage.getAppendixName());
                                     ((Prunable)appendage).restorePrunableData(transaction, myTransaction.getBlockTimestamp(), myTransaction.getHeight());
                                 } else {
                                     foundAllData = false;

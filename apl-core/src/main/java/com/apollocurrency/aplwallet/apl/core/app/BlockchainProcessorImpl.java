@@ -36,10 +36,11 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -67,11 +68,11 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -117,6 +118,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
+    private PeersService peers;
     private final DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
@@ -125,7 +128,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TaskDispatchManager taskDispatchManager;
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private TimeService timeService = CDI.current().select(TimeService.class).get();
     private final DatabaseManager databaseManager;
 
     private final ExecutorService networkService = Executors.newCachedThreadPool(new NamedThreadFactory("BlockchainProcessor:networkService"));
@@ -151,6 +154,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardDownloader shardDownloader;
+    private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -176,6 +180,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
+    private PeersService lookupPeers() {
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
+        return peers;
+    }
 
     //private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
 
@@ -192,12 +200,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 // Locate an archive peer
                 //
-                List<Peer> peers = Peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+                List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                         !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
-                while (!peers.isEmpty()) {
-                    Peer chkPeer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
+                while (!peersList.isEmpty()) {
+                    Peer chkPeer = peersList.get(ThreadLocalRandom.current().nextInt(peersList.size()));
                     if (chkPeer.getState() != PeerState.CONNECTED) {
-                        Peers.connectPeer(chkPeer);
+                        lookupPeers().connectPeer(chkPeer);
                     }
                     if (chkPeer.getState() == PeerState.CONNECTED) {
                         peer = chkPeer;
@@ -288,7 +296,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
-                                   ShardImporter importer,
+                                   ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
@@ -305,6 +313,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
         this.shardImporter = importer;
+        this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
 
         configureBackgroundTasks();
@@ -515,7 +524,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                        PrunableMessage.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
+                        prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(id);
                     }
@@ -551,9 +560,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!isPruned) {
             return transaction;
         }
-        List<Peer> peers = Peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+        List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                 !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
-        if (peers.isEmpty()) {
+        if (peersList.isEmpty()) {
             log.debug("Cannot find any archive peers");
             return null;
         }
@@ -564,9 +573,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         json.put("transactionIds", requestList);
         json.put("chainId", blockchainConfig.getChain().getChainId());
         JSONStreamAware request = JSON.prepareRequest(json);
-        for (Peer peer : peers) {
+        for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
-                Peers.connectPeer(peer);
+                lookupPeers().connectPeer(peer);
             }
             if (peer.getState() != PeerState.CONNECTED) {
                 continue;
@@ -634,7 +643,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     public void shutdown() {
         try {
-            DefaultTaskDispatcher.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
+            Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
             getMoreBlocks = false;
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -669,8 +678,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
                     "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
-            // try make delay before Peers are up and running
-            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
+            // try make delay before PeersService are up and running
+            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
             disableScheduleOneScan();
@@ -775,7 +784,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getTimestamp() >= curTime - 600) {
             log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                     Convert2.rsAccount(block.getGeneratorId()));
-            Peers.sendToSomePeers(block);
+            lookupPeers().sendToSomePeers(block);
         }
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
     }
@@ -1524,14 +1533,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = lookupBlockhain().getHeight() > Constants.LAST_CHECKSUM_BLOCK - 720 ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
+                connectedPublicPeers = lookupPeers().getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                             connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;
-                final Peer peer = Peers.getWeightedPeer(connectedPublicPeers);
+                final Peer peer = lookupPeers().getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
                     log.debug("Can not find weighted peer");
                     return;
@@ -1884,7 +1893,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 
             }
-            if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
+            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate("This peer is slowest");
             }

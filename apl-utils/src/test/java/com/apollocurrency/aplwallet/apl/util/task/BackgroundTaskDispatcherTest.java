@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.RejectedExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
@@ -25,7 +26,7 @@ class BackgroundTaskDispatcherTest {
     private TaskDispatcher taskDispatcher;
     private Runnable runnable;
     private Task task;
-
+    private static int SLEEP_DELAY = 160;
     @BeforeEach
     void setUp() {
         runnable = mock(Runnable.class);
@@ -52,13 +53,46 @@ class BackgroundTaskDispatcherTest {
         log.info("Thread dispatch");
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
         //expected that thread executed at least 9 times
         verify(runnable, atLeast(9)).run();
+    }
+
+    @Test
+    void scheduleAtFixedRate_withSuspending() throws InterruptedException {
+        
+        taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
+        //task.setTask(runnable);
+        final Count count = new Count(0);
+        task = Task.builder()
+                .name("task-1")
+                .task(()-> {count.inc(); log.info("task-body: task running");})
+                .initialDelay(0)
+                .delay(10)
+                .build();
+
+        taskDispatcher.schedule(task);
+        taskDispatcher.dispatch();
+        log.info("Thread dispatch");
+        Thread.sleep(SLEEP_DELAY);
+        log.info("Suspend dispatcher");
+        taskDispatcher.suspend();
+        int val1 = count.value;
+        Thread.sleep(SLEEP_DELAY);
+        log.info("Resume dispatcher");
+        int val2 = count.value;
+        taskDispatcher.resume();
+        Thread.sleep(SLEEP_DELAY);
+        int val3 = count.value;
+        taskDispatcher.shutdown();
+
+        assertTrue(val1 > 0 );
+        assertEquals(val1, val2);
+        assertTrue(val3 > val2);
     }
 
     @Test
@@ -102,7 +136,7 @@ class BackgroundTaskDispatcherTest {
                         count1.dec();
                         log.info("task-body: count0={} count1={}", count0.get(), count1.get());
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(SLEEP_DELAY);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
@@ -137,7 +171,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.dispatch();
         log.info("Thread dispatch");
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException ignored) {}
 
         taskDispatcher.shutdown();

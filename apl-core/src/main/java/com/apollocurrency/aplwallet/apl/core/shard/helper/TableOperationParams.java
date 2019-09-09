@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.shard.ExcludeInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 
 /**
  * Composes several parameters used by different operations.
