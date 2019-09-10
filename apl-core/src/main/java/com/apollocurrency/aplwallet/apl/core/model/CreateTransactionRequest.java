@@ -18,6 +18,7 @@ public class CreateTransactionRequest {
     private String publicKeyValue;
     private String passphrase;
     private boolean broadcast;
+    private boolean validate = true;
 
 
     private boolean encryptedMessageIsPrunable;
