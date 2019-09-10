@@ -184,7 +184,7 @@ public class DexOrderProcessor {
             }
             
             case PAX: {
-                if (mainOrder.getType() == OrderType.SELL.SELL) 
+                if (mainOrder.getType() == OrderType.SELL) 
                     rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder); 
                 else rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);                                
             }
