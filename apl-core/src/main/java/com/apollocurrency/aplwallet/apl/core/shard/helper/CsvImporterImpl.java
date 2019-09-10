@@ -138,7 +138,7 @@ public class CsvImporterImpl implements CsvImporter {
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
                 ResultSet rs = csvReader.read(
                 inputFileName, null, null);
-             Connection con = dataSource.getConnection()) {
+             Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin() ) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
             // get CSV meta data info
@@ -229,7 +229,7 @@ public class CsvImporterImpl implements CsvImporter {
 
                 log.trace("sql = {}", sqlInsert.toString());
                 importedCount += preparedInsertStatement.executeUpdate();
-                if (rowDataConsumer != null) {
+                if (rowDataConsumer != null/* && dataSource.isInTransaction()*/) {
                     rowDataConsumer.accept(row);
                 }
                 if (rsCounter % batchLimit == 0) {
