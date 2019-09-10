@@ -4,10 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
@@ -98,11 +96,12 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
     
     boolean validateEthDeposit(DexOrder myOffer, DexOrder counterOffer) {        
-        BigInteger amountOnHisWallet = getEthBalanceWei(counterOffer.toDto().fromAddress , DexCurrencies.getType( counterOffer.toDto().pairCurrency) );
-        BigDecimal haveToPay = EthUtil.atmToEth(counterOffer.toDto().offerAmount ).multiply( BigDecimal.valueOf(counterOffer.toDto().pairRate)  );
+        BigInteger amountOnHisWallet = getEthBalanceWei(counterOffer.getFromAddress(), counterOffer.getPairCurrency());
+        BigDecimal haveToPay = EthUtil.atmToEth(counterOffer.getOrderAmount()).multiply(counterOffer.getPairRate());
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        
     }
-           
+       
+    
     boolean checkAplCommisionPayingAbility(Long hisAplBalance) {
         // checking out whether there are commission available
         Long fee = APL_COMMISSION * ONE_APL;
@@ -111,9 +110,6 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
     
     boolean checkGasPayingAbility(DexOrder hisOrder) {
-        
-        DexOrderDto hisOrderD = hisOrder.toDto();
-        
         EthGasInfo ethGasInfo = null;
         try {
             ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
@@ -121,19 +117,17 @@ public class DexValidationServiceImpl implements IDexValidator {
             log.error("Exception got while getting eth gas price: ", ex);
         }        
         
-        log.debug("type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", hisOrderD.type,
-                hisOrderD.toAddress, hisOrderD.fromAddress, hisOrderD.pairCurrency);
+        log.debug("type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", hisOrder.getType(),
+                hisOrder.getToAddress(), hisOrder.getFromAddress(), hisOrder.getPairCurrency());
         
         String hisAddress = null;
-        
-        OrderType hisOrderType = OrderType.getType(hisOrderD.type);
-        if (hisOrderType == OfferType.BUY) 
-            hisAddress = hisOrderD.fromAddress;
-        else hisAddress = hisOrderD.toAddress;
+        if (hisOrder.getType() == OrderType.BUY) 
+            hisAddress = hisOrder.getFromAddress();
+        else hisAddress = hisOrder.getToAddress();
         log.debug("selected: {}",hisAddress);
         // here we have double conversion, gw-eth-wei        
         Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
-        BigInteger hisEthBalanceWei = getEthBalanceWei(/*hisOffer.getToAddress(),*/hisAddress, DexCurrencies.getType(hisOrderD.pairCurrency));// hisOffer.getPairCurrency() );
+        BigInteger hisEthBalanceWei = getEthBalanceWei(/*hisOffer.getToAddress(),*/hisAddress, hisOrder.getPairCurrency());
         BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
         BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
         log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
@@ -148,16 +142,13 @@ public class DexValidationServiceImpl implements IDexValidator {
     public int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {                
         log.debug("validateOfferBuyAplEth: ");
         
-        DexOrderDto hisOrderD = hisOrder.toDto();
-        
         // 1) Checking out whether HE has the corresponding amount on his APL balance        
-        Long hisAccountID = Long.valueOf(hisOrderD.accountId);
-                
-        log.debug("hisAccountID(apl): {}, his fromAddr : {}, his toAddr: {}", hisAccountID,hisOrderD.fromAddress,hisOrderD.toAddress);
+        Long hisAccountID = hisOrder.getAccountId();
+        log.debug("hisAccountID(apl): {}, his fromAddr : {}, his toAddr: {}", hisAccountID,hisOrder.getFromAddress(),hisOrder.getToAddress());
         Long hisUnconfirmedAplBalance = getAplUnconfirmedBalance(hisAccountID);
         Long hisAplBalance = getAplBalanceAtm(hisAccountID);  
         Long balanceDelta = hisAplBalance - hisUnconfirmedAplBalance;
-        boolean isFrozenEnough = balanceDelta >= hisOrderD.offerAmount;
+        boolean isFrozenEnough = balanceDelta >= hisOrder.getOrderAmount();
         log.debug("isFrozenEnough: {} ", isFrozenEnough);
         if (!isFrozenEnough) return OFFER_VALIDATE_ERROR_APL_FREEZE;      
         boolean ableToPayCommission = checkAplCommisionPayingAbility(hisAplBalance);
@@ -170,18 +161,16 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
     @Override
-    public int validateOfferSellAplEth(DexOrder myOrder, DexOrder hisOrder) {
+    public int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {
         log.debug("validateOfferSellAplEth: ");
-        DexOrderDto hisOrderD = hisOrder.toDto();
-        
-        String hisFromEthAddr = hisOrderD.fromAddress;
-        log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrderD.id );        
+        String hisFromEthAddr = hisOrder.getFromAddress(); 
+        log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId() );        
         List<UserEthDepositInfo> hisEthDeposits =  getUserEthDeposits(hisFromEthAddr);                                      
-        BigDecimal hasToPay = EthUtil.atmToEth(hisOrderD.offerAmount ).multiply( BigDecimal.valueOf(hisOrderD.pairRate) );        
+        BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());        
         log.debug("hasToPay: {} ", hasToPay);        
         boolean depositDetected = false; 
         for (UserEthDepositInfo current : hisEthDeposits) {            
-            if ( (hasToPay.compareTo( current.getAmount())==0) && current.getOrderId().equals(hisOrderD.id ) ) {
+            if ( (hasToPay.compareTo( current.getAmount())==0) && current.getOrderId().equals(hisOrder.getId()) ) {
                 log.debug("Eth deposit is detected");
                 depositDetected = true;
                 break;                
@@ -191,7 +180,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         if (!depositDetected) return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
         
         // checking if they are able to pay apl commission
-        Long hisAccountID = Long.valueOf(hisOrderD.accountId); // getAccountId();
+        Long hisAccountID = hisOrder.getAccountId();
         Long hisAplBalance = getAplBalanceAtm(hisAccountID);  
         boolean ableToPayCommission = checkAplCommisionPayingAbility(hisAplBalance);        
         log.debug("ableToPayCommission: {}", ableToPayCommission);                

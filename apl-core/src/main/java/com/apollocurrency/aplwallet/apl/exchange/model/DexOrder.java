@@ -14,12 +14,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import lombok.Getter;
 
 
 @Data
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
+@Getter
 public class DexOrder {
 
     private Long dbId;
