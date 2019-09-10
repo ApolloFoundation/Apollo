@@ -23,7 +23,7 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
                 .encryptedSecret(rs.getBytes("encrypted_secret"))
                 .transferTxId(rs.getString("transfer_tx_id"))
                 .counterTransferTxId(rs.getString("counter_transfer_tx_id"))
-//                .finishTime(rs.getInt("finish_time"))
+                .deadlineToReply(rs.getInt("deadline_to_reply"))
                 .build();
     }
 }

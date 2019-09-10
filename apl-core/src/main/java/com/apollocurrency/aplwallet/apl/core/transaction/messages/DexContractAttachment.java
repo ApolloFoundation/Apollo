@@ -40,7 +40,7 @@ public class DexContractAttachment extends AbstractAttachment {
      */
     private ExchangeContractStatus contractStatus;
 
-//    private Integer finishTime;
+    private Integer timeToReply;
 
     public DexContractAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -64,8 +64,7 @@ public class DexContractAttachment extends AbstractAttachment {
             throw new AplException.NotValidException(ex.getMessage());
         }
 
-
-//        this.finishTime = buffer.getInt();
+        this.timeToReply = buffer.getInt();
     }
 
     public DexContractAttachment(JSONObject attachmentData) {
@@ -78,7 +77,7 @@ public class DexContractAttachment extends AbstractAttachment {
 
         this.transferTxId = (String) attachmentData.get("transferTxId");
         this.counterTransferTxId = (String) attachmentData.get("counterTransferTxId");
-//        this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
+        this.timeToReply = Integer.valueOf(String.valueOf(attachmentData.get("timeToReply")));
     }
 
     public DexContractAttachment(ExchangeContract exchangeContract) {
@@ -98,8 +97,7 @@ public class DexContractAttachment extends AbstractAttachment {
                 + 1
                 + 2 + (this.transferTxId != null ? Convert.toBytes(transferTxId).length : 0)
                 + 2 + (this.counterTransferTxId != null ? Convert.toBytes(counterTransferTxId).length : 0)
-//                + 4
-                ;
+                + 4;
     }
 
     @Override
@@ -130,7 +128,7 @@ public class DexContractAttachment extends AbstractAttachment {
             buffer.put(counterTransferTxId);
         }
 
-//        buffer.putInt(finishTime);
+        buffer.putInt(timeToReply);
 
     }
 
@@ -145,7 +143,7 @@ public class DexContractAttachment extends AbstractAttachment {
         json.put("contractStatus", this.contractStatus.ordinal());
         json.put("transferTxId", this.transferTxId);
         json.put("counterTransferTxId", this.counterTransferTxId);
-//        json.put("finishTime", this.finishTime);
+        json.put("timeToReply", this.timeToReply);
     }
 
     @Override

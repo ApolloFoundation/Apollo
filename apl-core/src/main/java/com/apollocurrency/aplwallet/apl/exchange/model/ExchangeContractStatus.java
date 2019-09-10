@@ -6,19 +6,19 @@ public enum ExchangeContractStatus {
     /**
      * The first user sent a contract and he is waiting for review and approval. (On this step user doesn't transfer money.)
      */
-    STEP_1,
+    STEP_1,     // 0
     /**
      * The second user approved the contract, transferred the money and waiting for counter transfer.
      */
-    STEP_2,
+    STEP_2,     // 1
     /**
      * The first user sent counter transfer. (Process of the atomic swap is started.)
      */
-    STEP_3,
+    STEP_3,     // 2
     /**
      * Closed.
      */
-    STEP_4;
+    STEP_4;     // 3
 
     public static ExchangeContractStatus getType(int ordinal){
         if (ordinal < 0 || ordinal > OrderType.values().length) {
