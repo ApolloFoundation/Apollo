@@ -10,8 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
@@ -49,8 +53,8 @@ class AccountAssetServiceTest {
     private AccountAssetTable accountAssetTable = mock(AccountAssetTable.class);
     private Event accountEvent = mock(Event.class);
     private Event accountAssetEvent = mock(Event.class);
+    private Event ledgerEvent = mock(Event.class);
     private AccountService accountService = mock(AccountService.class);
-    private AccountLedgerService accountLedgerService = mock(AccountLedgerService.class);
     private AssetDividendService assetDividendService = mock(AssetDividendServiceImpl.class);
 
     @WeldSetup
@@ -73,7 +77,7 @@ class AccountAssetServiceTest {
                 accountService,
                 accountEvent,
                 accountAssetEvent,
-                accountLedgerService,
+                ledgerEvent,
                 assetDividendService)
         );
     }
@@ -89,6 +93,15 @@ class AccountAssetServiceTest {
         LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
         long eventId = 10L;
         long balance = Math.addExact(testData.ACC_ASS_0.getQuantityATU(), quantity);
+        int height = 100_000;
+        Event firedEventLedger = mock(Event.class);
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
         Event firedEventAcc = mock(Event.class);
         Event firedEventAss = mock(Event.class);
@@ -101,7 +114,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(testData.ACC_ASS_0);
         verify(firedEventAcc).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_0);
-        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
+        verify(firedEventLedger, times(1)).fire(any(LedgerEntry.class));
     }
 
     @Test
@@ -110,6 +123,15 @@ class AccountAssetServiceTest {
         long assetId = 50L;
         LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
         long eventId = 10L;
+        int height = 100_000;
+        Event firedEventLedger = mock(Event.class);
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
         AccountAsset expectedNewAsset = new AccountAsset(testData.ACC_0.getId(), assetId, quantity, 0, blockchain.getHeight());
 
         Event firedEventAcc = mock(Event.class);
@@ -122,7 +144,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(expectedNewAsset);
         verify(firedEventAcc).fire(testData.ACC_0);
         verify(firedEventAss).fire(expectedNewAsset);
-        verify(accountLedgerService).mustLogEntry(testData.ACC_0.getId(), false);
+        verify(firedEventLedger, times(1)).fire(any(LedgerEntry.class));
     }
 
     @Test
@@ -144,6 +166,15 @@ class AccountAssetServiceTest {
         LedgerEvent event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
         long eventId = 10L;
         long balance = Math.addExact(testData.ACC_ASS_3.getUnconfirmedQuantityATU(), quantity);
+        int height = 100_000;
+        Event firedEventLedger = mock(Event.class);
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
         Event firedEventAcc = mock(Event.class);
         Event firedEventAss = mock(Event.class);
@@ -156,7 +187,7 @@ class AccountAssetServiceTest {
         verify(accountAssetService).update(testData.ACC_ASS_3);
         verify(firedEventAcc).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_3);
-        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
+        verify(firedEventLedger, times(1)).fire(any(LedgerEntry.class));
     }
 
     @Test
@@ -197,6 +228,15 @@ class AccountAssetServiceTest {
         long eventId = 10L;
         long balance = Math.addExact(testData.ACC_ASS_3.getQuantityATU(), quantity);
         long unconfirmedBalance = Math.addExact(testData.ACC_ASS_3.getUnconfirmedQuantityATU(), quantity);
+        int height = 100_000;
+        Event firedEventLedger = mock(Event.class);
+        Block lastBlock = mock(Block.class);
+        doReturn(1L).when(lastBlock).getPreviousBlockId();
+        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(height).when(lastBlock).getHeight();
+        doReturn(height).when(blockchain).getHeight();
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
+        doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
         Event firedEventAcc = mock(Event.class);
         Event firedEventAss = mock(Event.class);
@@ -218,8 +258,7 @@ class AccountAssetServiceTest {
         verify(firedEventAccUnconfirmed).fire(testData.ACC_1);
         verify(firedEventAss).fire(testData.ACC_ASS_3);
         verify(firedEventAssUnconfirmed).fire(testData.ACC_ASS_3);
-        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), true);
-        verify(accountLedgerService).mustLogEntry(testData.ACC_1.getId(), false);
+        verify(firedEventLedger, times(2)).fire(any(LedgerEntry.class));
     }
 
     @Test
