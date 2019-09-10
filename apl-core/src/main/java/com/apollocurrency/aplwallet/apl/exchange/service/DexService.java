@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -283,13 +284,22 @@ public class DexService {
         return false;
     }
 
+    public void broadcast(Transaction transaction) {
+        try {
+            transactionProcessor.broadcast(transaction);
+        }
+        catch (AplException.ValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Transfer money with approve for APL/ETH/PAX
      *
-     * @return Tx hash id/link
+     * @return Tx hash id/link and non-broadcasted apl transaction if created
      */
-    public String transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, byte[] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
-        String transactionStr;
+    public TransferTransactionInfo transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, long contractId, byte[] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
+        TransferTransactionInfo result = new TransferTransactionInfo();
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
             if (dexSmartContractService.isUserTransferMoney(order.getFromAddress(), order.getId())) {
@@ -297,8 +307,9 @@ public class DexService {
             }
 
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
-                transactionStr = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
+                String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
                         order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+                result.setTxId(txHash);
             } else {
                 throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + order.getId());
             }
@@ -315,18 +326,25 @@ public class DexService {
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
-            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(order.getId(), order.getOrderAmount()));
-
+            createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(contractId, order.getOrderAmount()));
+            createTransactionRequest.setBroadcast(false);
+            createTransactionRequest.setValidate(false);
             try {
                 Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
-                transactionStr = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
+                String txId = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
+                result.setTransaction(transaction);
+                result.setTxId(txId);
             } catch (AplException.ValidationException | ParameterException e) {
                 LOG.error(e.getMessage(), e);
                 throw new AplException.ExecutiveProcessException(e.getMessage());
             }
 
         }
-        return transactionStr;
+        return result;
+    }
+
+    public boolean txExists(long aplTxId) {
+        return blockchain.hasTransaction(aplTxId);
     }
 
     /**
