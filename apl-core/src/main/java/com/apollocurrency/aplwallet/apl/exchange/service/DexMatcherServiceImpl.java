@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,12 +36,14 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     private static final Logger log = LoggerFactory.getLogger(DexMatcherServiceImpl.class);
     private DexMatchingService dexMatchingService;
     private TimeService timeService;
+    private IDexValidator dexValidator;
         
 
     @Inject
-    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService) {
+    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService, DexValidationServiceImpl dexValidationServiceImpl) {
         this.dexMatchingService =  Objects.requireNonNull( dexMatchingService,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
+        this.dexValidator = Objects.requireNonNull( dexValidationServiceImpl,"dexService is null");
     }
     
     /**
@@ -60,49 +64,69 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         log.debug("DexMatcherService : deinitialization routine");        
     }
     
-    
-    /**
+ /**
      * currency-specific validation (Ethereum)
-     * @param DexOrder  offer to validate
-     */
-    private boolean validateOfferETH(DexOrder offer) {
-        // TODO: add validation routine
-        return true;         
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {        
+        return dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);         
     }
 
     /**
-     * currency-specific validation (Apollo)
-     * @param DexOffer  offer to validate
-     */
-    private boolean validateOfferAPL(DexOrder offer) {
-        // TODO: add validation routine
-        return true;         
+     * currency-specific validation (Ethereum)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */     
+    private int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {                
+        return dexValidator.validateOfferSellAplEth(myOffer, hisOrder);      
     }
-    
+
     /**
      * currency-specific validation (Pax)
-     * @param DexOffer  offer to validate
-     */
-    private boolean validateOfferPAX(DexOrder offer) {
-        // TODO: add validation routine
-        return true;         
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private int validateOfferBuyAplPax(DexOrder myOrder, DexOrder hisOrder) {
+        return dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);       
     }
-    
+
+    /**
+     * currency-specific validation (Pax)
+     * @param DexOffer  myOffer - created offer to validate
+     * @param DexOffer  hisOffer - matched offer
+    */ 
+    private int validateOfferSellAplPax( DexOrder myOrder, DexOrder hisOrder) {
+        return dexValidator.validateOfferSellAplPax(myOrder, hisOrder);         
+    }    
+        
     
     /**
      * Common validation routine for offer  
      * @param DexOffer  offer - offer to validate
-     */
-    private boolean validateOffer(DexOrder offer) {
-
-        DexCurrencies curr = offer.getOrderCurrency();
-        log.debug("currency: {}", curr );
+     */ 
+    private int validateOffer(DexOrder myOrder, DexOrder hisOrder) {
+        
+        DexCurrencies curr = hisOrder.getPairCurrency();
+        log.debug("my order: orderCurrency: {}, pairCurrency: {}", myOrder.getOrderCurrency(), myOrder.getPairCurrency() );
+        log.debug("his order: orderCurrency: {}, pairCurrency: {}", hisOrder.getOrderCurrency(), hisOrder.getPairCurrency() );
         
         switch (curr) {
-            case APL: return validateOfferAPL(offer);
-            case ETH: return validateOfferETH(offer);
-            case PAX: return validateOfferPAX(offer);
-            default: return false;
+
+            case ETH: { 
+                // return validateOfferETH(myOffer,hisOffer);
+                if (myOrder.getType() == OrderType.SELL) 
+                    return validateOfferSellAplEth(myOrder, hisOrder); 
+                else return validateOfferBuyAplEth(myOrder, hisOrder);                
+            }
+            
+            case PAX: {
+                if (myOrder.getType() == OrderType.SELL) 
+                    return validateOfferSellAplPax(myOrder, hisOrder); 
+                else return validateOfferBuyAplPax(myOrder, hisOrder);                                
+            }
+            
+            default: return OFFER_VALIDATE_ERROR_IN_PARAMETER;
         }        
         
     }
@@ -158,7 +182,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
         if ( nOffers >= 1) {
             DexOrder counterOffer = offers.get(0);
-            if (validateOffer(counterOffer)) {                    
+            if (validateOffer(createdOffer, counterOffer) == OFFER_VALIDATE_OK) {                    
                     log.debug("match found, id: {}, amount: {}, pairCurrency: {}, pairRate: {}  ", counterOffer.getId(),
                             counterOffer.getOrderAmount(), counterOffer.getPairCurrency(),
                             counterOffer.getPairRate() );                    
