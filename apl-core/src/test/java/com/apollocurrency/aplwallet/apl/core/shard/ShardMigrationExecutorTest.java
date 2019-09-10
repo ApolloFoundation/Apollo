@@ -28,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -165,6 +167,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+            .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
