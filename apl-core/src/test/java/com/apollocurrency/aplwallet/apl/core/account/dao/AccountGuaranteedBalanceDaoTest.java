@@ -67,8 +67,8 @@ class AccountGuaranteedBalanceDaoTest {
 
     @Test
     void testGetSumOfAdditions(){
-        long accountId = testData.ACC_BALANCE_3.getAccountId();
-        int height1 = testData.ACC_BALANCE_3.getHeight();
+        long accountId = testData.ACC_BALANCE_1.getAccountId();
+        int height1 = testData.ACC_BALANCE_1.getHeight();
         int height2 = height1 + 1000;
 
         long expectedSum = testData.ALL_BALANCES.stream().

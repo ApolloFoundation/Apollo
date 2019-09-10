@@ -171,6 +171,14 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+
+    /**
+     * The effective balance of an account is used as the basis for an account's forging calculations. An account's
+     * effective balance consists of all tokens that have been stationary in that account for 1440 blocks. In addition,
+     * the Account Leasing feature allows an account's effective balance to be assigned to another account for a temporary
+     * period. The account effective balance is calculated from the confirmed balance by reducing all balance additions
+     * during the last 1440 blocks.
+     */
     @Override
     public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
         if (height <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
@@ -205,6 +213,10 @@ public class AccountServiceImpl implements AccountService {
         return getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), blockchain.getHeight());
     }
 
+    /**
+     * The guaranteed balance of an account consists of all tokens that have been stationary in an account for 1440 (numberOfConfirmations) blocks.
+     * Unlike the effective balance, this balance cannot be assigned to any other account.
+     */
     @Override
     public long getGuaranteedBalanceATM(Account account, final int numberOfConfirmations, final int currentHeight) {
         sync.readLock();
@@ -228,30 +240,18 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public long getLessorsGuaranteedBalanceATM(Account account, int height) {
         List<Account> lessors = getLessors(account, height);
-        Long[] lessorIds = new Long[lessors.size()];
-        long[] balances = new long[lessors.size()];
-        for (int i = 0; i < lessors.size(); i++) {
-            lessorIds[i] = lessors.get(i).getId();
-            balances[i] = lessors.get(i).getBalanceATM();
-        }
         long total = 0L;
-        int i = 0;
         Map<Long, Long> lessorsAdditions = accountGuaranteedBalanceTable.getLessorsAdditions(
                 lessors.stream().map(Account::getId).collect(Collectors.toList()),
                 height, blockchain.getHeight());
-        if(!lessorsAdditions.isEmpty()) {
-            List<Long> lessorsList = lessorsAdditions.keySet().stream().sorted().collect(Collectors.toList());
-            for (Long accountId : lessorsList) {
-                while (lessorIds[i] < accountId) {
-                    total += balances[i++];
-                }
-                if (Objects.equals(lessorIds[i], accountId)) {
-                    total += Math.max(balances[i++] - lessorsAdditions.get(accountId), 0);
-                }
+        for (Account lessor : lessors) {
+            long balance = lessor.getBalanceATM();
+            Long additions = lessorsAdditions.get(lessor.getId());
+            if (additions != null) {
+                total += Math.max(balance - additions, 0);
+            }else{
+                total += balance;
             }
-        }
-        while (i < balances.length) {
-            total += balances[i++];
         }
         return total;
     }
@@ -449,7 +449,7 @@ public class AccountServiceImpl implements AccountService {
         return blockchain.getHeight();
     }
 
-    //Delegated from  AccountPublicKeyService
+    //Delegated from AccountPublicKeyService
     @Override
     public boolean setOrVerify(long accountId, byte[] key) {
         return accountPublicKeyService.setOrVerify(accountId, key);

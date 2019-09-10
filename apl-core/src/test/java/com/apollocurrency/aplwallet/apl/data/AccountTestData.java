@@ -30,12 +30,12 @@ public class AccountTestData {
     /* Account */
     public final Account ACC_G = createAccount(1      ,1739068987193023818L,999990000000000L,999990000000000L,false,0,0,0,true);
     public final Account ACC_0 = createAccount(10     ,50L        ,555500000000L       ,105500000000L          ,false ,0               ,0 ,100000 ,true);
-    public final Account ACC_1 = createAccount(20     ,100L       ,100000000L          ,100000000L             ,false ,0               ,0 ,104595 ,true );
+    public final Account ACC_1 = createAccount(20     ,100L       ,100000000L          ,100000000L             ,false ,0               ,50 ,104595 ,true );
     public final Account ACC_2 = createAccount(30     ,200L       ,250000000L          ,200000000L             ,false ,0               ,0 ,104670 ,true );
     public final Account ACC_3 = createAccount(40     ,7821792282123976600L       ,15025000000000L     ,14725000000000L        ,false ,0               ,0 ,105000 ,true );
     public final Account ACC_4 = createAccount(50     ,9211698109297098287L       ,25100000000000L     ,22700000000000L        ,false ,0               ,0 ,106000 ,true );
-    public final Account ACC_5 = createAccount(60     ,500L       ,77182383705332315L  ,77182383705332315L     ,false ,0               ,0 ,141839 ,false);
-    public final Account ACC_6 = createAccount(70     ,500L       ,77216366305332315L  ,77216366305332315L     ,false ,0               ,0 ,141844 ,false);
+    public final Account ACC_5 = createAccount(60     ,500L       ,77182383705332315L  ,77182383705332315L     ,false ,0               ,50 ,141839 ,false);
+    public final Account ACC_6 = createAccount(70     ,500L       ,77216366305332315L  ,77216366305332315L     ,false ,0               ,50 ,141844 ,false);
     public final Account ACC_7 = createAccount(80     ,500L       ,77798522705332315L  ,77798522705332315L     ,false ,0               ,0 ,141853 ,true);
     public final Account ACC_8 = createAccount(90     ,600L       ,40767800000000L     ,40767800000000L        ,false ,0               ,0 ,141855 ,false);
     public final Account ACC_9 = createAccount(100    ,600L       ,41167700000000L     ,41167700000000L        ,false ,0               ,0 ,141858 ,true);
@@ -158,8 +158,8 @@ public class AccountTestData {
     public AccountLease newLease = new AccountLease(ACC_LEAS_2.getLessorId()+1, ACC_LEAS_2.getCurrentLeasingHeightFrom()+100, ACC_LEAS_2.getCurrentLeasingHeightTo()+100, ACC_LEAS_2.getCurrentLesseeId()+1, ACC_LEAS_2.getHeight());
 
     /* PublicKey */
-    public PublicKey PUBLIC_KEY1 = new PublicKey(-2509437615322027040L, PUBLIC_KEY_STR.getBytes(),1000);
-    public PublicKey PUBLIC_KEY2 = new PublicKey(-2361982985055136186L, PUBLIC_KEY_STR2.getBytes(),1000);
+    public PublicKey PUBLIC_KEY1 = new PublicKey(-2509437615322027040L, PUBLIC_KEY_STR.getBytes(),10000);
+    public PublicKey PUBLIC_KEY2 = new PublicKey(-2361982985055136186L, PUBLIC_KEY_STR2.getBytes(),10000);
 
     /* AccountGuaranteedBalance */
     public final AccountGuaranteedBalance ACC_BALANCE_1 = createBalance(1695301, 100, 27044000000L, 2502007);
