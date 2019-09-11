@@ -254,7 +254,7 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-2(part-1). Approving money transfer. accountId: {}", accountId);
 
-                dexService.approveMoneyTransfer(passphrase, accountId, contract.getCounterOrderId(), contract.getTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, contract.getCounterOrderId(), contract.getTransferTxId(), contract.getId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-1). Approved money transfer. accountId: {}", accountId);
             } catch (Exception ex) {
@@ -302,7 +302,7 @@ public class DexOrderProcessor {
 
                 byte[] secret = dexService.getSecretIfTxApproved(contract.getSecretHash(), contract.getTransferTxId());
 
-                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), contract.getId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {

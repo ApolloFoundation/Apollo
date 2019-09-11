@@ -358,7 +358,7 @@ public class DexService {
      * @return true - was approved, false - wasn't approved.
      * @throws AplException.ExecutiveProcessException
      */
-    public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
+    public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, long contractId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
             DexOrder userOffer = getOrder(userOrderId);
 
@@ -386,7 +386,7 @@ public class DexService {
 
                 log.debug("Transaction:" + txId + " was approved. (Eth/Pax)");
 
-                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(userOffer.getId());
+                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(contractId);
                 templatTransactionRequest.setAttachment(closeOfferAttachment);
 
                 Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);

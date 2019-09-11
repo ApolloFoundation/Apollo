@@ -120,7 +120,7 @@ class DexTransferMoneyTransactionTest {
 
         doReturn(2000L).when(tx).getSenderId();
         doReturn(1000L).when(tx).getRecipientId();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         contract.setCounterTransferTxId("100");
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
@@ -128,22 +128,25 @@ class DexTransferMoneyTransactionTest {
         doReturn(100L).when(tx).getId();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
-        doReturn(offer).when(dexService).getOrder(300L);
+        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        doReturn(offer).when(dexService).getOrder(200L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        offer.setAccountId(2000L);
+        offer.setAccountId(1000L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setStatus(OrderStatus.WAITING_APPROVAL);
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        offer.setType(OrderType.BUY);
         transactionType.validateAttachment(tx);
 
         doReturn(1000L).when(tx).getSenderId();
         doReturn(2000L).when(tx).getRecipientId();
-        doReturn(offer).when(dexService).getOrder(200L);
+        doReturn(offer).when(dexService).getOrder(300L);
         contract.setCounterTransferTxId("1");
         contract.setTransferTxId("100");
-        offer.setAccountId(1000L);
+        offer.setAccountId(2000L);
         transactionType.validateAttachment(tx);
     }
 

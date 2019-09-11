@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -64,21 +65,24 @@ public class DexTransferMoneyTransaction extends DEX {
         }
         long transactionId = Convert.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
         if (transactionId == 0) {
-            throw new AplException.NotCurrentlyValidException("Contract transaction was not pre confirmed or missing");
+            throw new AplException.NotValidException("Contract transaction was not pre confirmed or missing");
         }
         if (transaction.getId() != transactionId) {
             throw new AplException.NotValidException("Transaction was not registered in the contract. ");
         }
-        long orderId =  isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
+        long orderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
         DexOrder order = dexService.getOrder(orderId);
         if (order == null) {
             throw new AplException.NotValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
         }
-        if (order.getAccountId() != transaction.getSenderId()) {
-            throw new AplException.NotValidException("Order" + orderId + " should belong to the account: " + transaction.getSenderId());
+        if (order.getAccountId() != transaction.getRecipientId()) {
+            throw new AplException.NotValidException("Order" + orderId + " should belong to the account: " + transaction.getRecipientId());
         }
         if (order.getStatus() != OrderStatus.WAITING_APPROVAL) {
             throw new AplException.NotValidException("Inconsistent order state for id: " + order + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + order.getStatus());
+        }
+        if (order.getType() != OrderType.BUY) {
+            throw new AplException.NotValidException("Required SELL type for order " + orderId);
         }
     }
 
