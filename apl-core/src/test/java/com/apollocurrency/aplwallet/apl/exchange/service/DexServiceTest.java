@@ -109,4 +109,37 @@ class DexServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, offer));
     }
+
+
+//    @Test
+//    void closeOverdueContracts() {
+//        Integer currentTime = 1000;
+//        List<ExchangeContract> contracts = new ArrayList();
+//
+//        ExchangeContract exchangeContract = ExchangeContract.builder()
+//                .orderId(1L)
+//                .counterOrderId(2L)
+//                .build();
+//        contracts.add(exchangeContract);
+//
+//        DexOrder order = DexOrder.builder()
+//                .finishTime(currentTime + 1)
+//                .build();
+//
+//        DexOrder expiredOrder = DexOrder.builder()
+//                .finishTime(currentTime - 1)
+//                .type(OrderType.BUY)
+//                .pairCurrency(DexCurrencies.ETH)
+//                .build();
+//
+//
+//        doReturn(contracts).when(dexContractDao).getOverdueContractsStep1and2(anyInt());
+//        doReturn(order).when(dexOrderTable).getByTxId(1L);
+//        doReturn(expiredOrder).when(dexOrderTable).getByTxId(2L);
+//        doReturn(null).when(secureStorageService).getUserPassPhrase(2L);
+//        doNothing().when(dexOrderTable).insert(any());
+//
+//
+//        dexService.closeOverdueContracts(currentTime);
+//    }
 }

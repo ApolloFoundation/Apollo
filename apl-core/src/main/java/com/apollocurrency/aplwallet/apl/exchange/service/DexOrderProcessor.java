@@ -271,7 +271,7 @@ public class DexOrderProcessor {
         DexOrderDBRequest dexOrderDBRequest = new DexOrderDBRequest();
         dexOrderDBRequest.setAccountId(accountId);
         dexOrderDBRequest.setStatus(OrderStatus.WAITING_APPROVAL);
-        List<DexOrder> outComeOrders = dexService.getOffers(dexOrderDBRequest);
+        List<DexOrder> outComeOrders = dexService.getOrders(dexOrderDBRequest);
 
         for (DexOrder outcomeOrder : outComeOrders) {
             try {
