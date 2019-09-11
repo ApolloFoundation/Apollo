@@ -289,6 +289,8 @@ public class DexOrderProcessor {
 
     private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOrder dexOrder) {
         //TODO add additional validation.
+        log.debug("Validation 3 Reached here");
+        
         return dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
     }
 
