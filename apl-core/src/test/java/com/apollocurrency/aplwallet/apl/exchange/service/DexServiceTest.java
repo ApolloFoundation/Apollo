@@ -1,10 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -22,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +25,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 class DexServiceTest {
@@ -52,7 +53,7 @@ class DexServiceTest {
     @Mock DexTradeDao dexTradeDao;
 
     DexOrder offer = new DexOrder(1L, 2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
-    ExchangeContract contract = new ExchangeContract(0L, 2L, 1L, 3L, 200L, 100L, ExchangeContractStatus.STEP_3, new byte[32], "123", "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935", new byte[32]);
+    ExchangeContract contract = new ExchangeContract(0L, 2L, 1L, 3L, 200L, 100L, ExchangeContractStatus.STEP_3, new byte[32], "123", "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935", new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
 
     DexService dexService;
 
@@ -108,4 +109,37 @@ class DexServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, offer));
     }
+
+
+//    @Test
+//    void closeOverdueContracts() {
+//        Integer currentTime = 1000;
+//        List<ExchangeContract> contracts = new ArrayList();
+//
+//        ExchangeContract exchangeContract = ExchangeContract.builder()
+//                .orderId(1L)
+//                .counterOrderId(2L)
+//                .build();
+//        contracts.add(exchangeContract);
+//
+//        DexOrder order = DexOrder.builder()
+//                .finishTime(currentTime + 1)
+//                .build();
+//
+//        DexOrder expiredOrder = DexOrder.builder()
+//                .finishTime(currentTime - 1)
+//                .type(OrderType.BUY)
+//                .pairCurrency(DexCurrencies.ETH)
+//                .build();
+//
+//
+//        doReturn(contracts).when(dexContractDao).getOverdueContractsStep1and2(anyInt());
+//        doReturn(order).when(dexOrderTable).getByTxId(1L);
+//        doReturn(expiredOrder).when(dexOrderTable).getByTxId(2L);
+//        doReturn(null).when(secureStorageService).getUserPassPhrase(2L);
+//        doNothing().when(dexOrderTable).insert(any());
+//
+//
+//        dexService.closeOverdueContracts(currentTime);
+//    }
 }

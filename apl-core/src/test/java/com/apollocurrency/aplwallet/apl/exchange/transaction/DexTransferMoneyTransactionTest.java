@@ -1,13 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -27,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -40,10 +33,18 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 @EnableWeld
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
-    ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32]);
+    ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
@@ -119,7 +120,7 @@ class DexTransferMoneyTransactionTest {
 
         doReturn(2000L).when(tx).getSenderId();
         doReturn(1000L).when(tx).getRecipientId();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         contract.setCounterTransferTxId("100");
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
@@ -127,22 +128,25 @@ class DexTransferMoneyTransactionTest {
         doReturn(100L).when(tx).getId();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
-        doReturn(offer).when(dexService).getOrder(300L);
+        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        doReturn(offer).when(dexService).getOrder(200L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        offer.setAccountId(2000L);
+        offer.setAccountId(1000L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         offer.setStatus(OrderStatus.WAITING_APPROVAL);
+        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+
+        offer.setType(OrderType.BUY);
         transactionType.validateAttachment(tx);
 
         doReturn(1000L).when(tx).getSenderId();
         doReturn(2000L).when(tx).getRecipientId();
-        doReturn(offer).when(dexService).getOrder(200L);
+        doReturn(offer).when(dexService).getOrder(300L);
         contract.setCounterTransferTxId("1");
         contract.setTransferTxId("100");
-        offer.setAccountId(1000L);
+        offer.setAccountId(2000L);
         transactionType.validateAttachment(tx);
     }
 

@@ -66,14 +66,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -164,8 +164,8 @@ public class DexService {
     }
 
     @Transactional(readOnly = true)
-    public List<DexOrder> getOffers(DexOrderDBRequest dexOrderDBRequest) {
-        return dexOrderDao.getOffers(dexOrderDBRequest);
+    public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
+        return dexOrderDao.getOrders(dexOrderDBRequest);
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {
@@ -194,21 +194,47 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) {
-        List<DexOrder> offers = dexOrderDao.getOverdueOrders(time);
+        List<DexOrder> orders = dexOrderDao.getOverdueOrders(time);
 
-        for (DexOrder offer : offers) {
+        for (DexOrder order : orders) {
             try {
-                offer.setStatus(OrderStatus.EXPIRED);
-                dexOrderTable.insert(offer);
+                order.setStatus(OrderStatus.EXPIRED);
+                dexOrderTable.insert(order);
 
-                refundFrozenMoneyForOffer(offer);
+                refundFrozenMoneyForOffer(order);
             } catch (AplException.ExecutiveProcessException ex) {
                 LOG.error(ex.getMessage(), ex);
                 //TODO take a look ones again do we need throw exception here.
 //                throw new RuntimeException(ex);
             }
         }
+    }
 
+    public void closeOverdueContracts(Integer time) {
+        List<ExchangeContract> contracts = dexContractDao.getOverdueContractsStep1and2(time);
+
+        for (ExchangeContract contract : contracts) {
+            DexOrder order = getOrder(contract.getOrderId());
+            DexOrder counterOrder = getOrder(contract.getCounterOrderId());
+
+            try {
+                closeOverdueContract(order, time);
+                closeOverdueContract(counterOrder, time);
+            } catch (AplException.ExecutiveProcessException ex) {
+                LOG.error(ex.getMessage(), ex);
+            }
+        }
+    }
+
+    public void closeOverdueContract(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
+        if (order.getFinishTime() > time) {
+            order.setStatus(OrderStatus.OPEN);
+        } else {
+            order.setStatus(OrderStatus.EXPIRED);
+            refundFrozenMoneyForOffer(order);
+        }
+
+        dexOrderTable.insert(order);
     }
 
     public void refundFrozenMoneyForOffer(DexOrder order) throws AplException.ExecutiveProcessException {
@@ -232,6 +258,13 @@ public class DexService {
 
     public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(order);
+
+        //Check if deposit exist.
+        String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+        if (dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+            log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
+            return "";
+        }
 
         String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null, order.getPairCurrency());
 
@@ -358,7 +391,7 @@ public class DexService {
      * @return true - was approved, false - wasn't approved.
      * @throws AplException.ExecutiveProcessException
      */
-    public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, byte[] secret) throws AplException.ExecutiveProcessException {
+    public boolean approveMoneyTransfer(String passphrase, Long userAccountId, Long userOrderId, String txId, long contractId, byte[] secret) throws AplException.ExecutiveProcessException {
         try {
             DexOrder userOffer = getOrder(userOrderId);
 
@@ -386,8 +419,8 @@ public class DexService {
 
                 log.debug("Transaction:" + txId + " was approved. (Eth/Pax)");
 
-                DexCloseOrderAttachment closeOfferAttachment = new DexCloseOrderAttachment(userOffer.getId());
-                templatTransactionRequest.setAttachment(closeOfferAttachment);
+                DexCloseOrderAttachment closeOrderAttachment = new DexCloseOrderAttachment(contractId);
+                templatTransactionRequest.setAttachment(closeOrderAttachment);
 
                 Transaction respCloseOffer = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
@@ -436,7 +469,7 @@ public class DexService {
             order.setId(offerTx.getId());
 
             // 2. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1);
+            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
             response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
