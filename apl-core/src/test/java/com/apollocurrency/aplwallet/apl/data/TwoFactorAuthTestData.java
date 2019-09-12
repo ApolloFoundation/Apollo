@@ -22,9 +22,9 @@ public class TwoFactorAuthTestData extends AccountTestData{
     public static final byte[] ACCOUNT3_2FA_SECRET_BYTES = Convert.parseHexString(ACCOUNT3_2FA_SECRET_HEX);
     public static final String ACCOUNT3_2FA_SECRET_BASE32 = new Base32().encodeToString(ACCOUNT3_2FA_SECRET_BYTES);
 
-    public final TwoFactorAuthEntity ENTITY1 = new TwoFactorAuthEntity(ACCOUNT1.getId(), ACCOUNT1_2FA_SECRET_BYTES, true);
-    public final TwoFactorAuthEntity ENTITY2 = new TwoFactorAuthEntity(ACCOUNT2.getId(), ACCOUNT2_2FA_SECRET_BYTES, false);
-    public final TwoFactorAuthEntity ENTITY3 = new TwoFactorAuthEntity(ACCOUNT3.getId(), ACCOUNT3_2FA_SECRET_BYTES, false);
+    public final TwoFactorAuthEntity ENTITY1 = new TwoFactorAuthEntity(ACC_1.getId(), ACCOUNT1_2FA_SECRET_BYTES, true);
+    public final TwoFactorAuthEntity ENTITY2 = new TwoFactorAuthEntity(ACC_2.getId(), ACCOUNT2_2FA_SECRET_BYTES, false);
+    public final TwoFactorAuthEntity NEW_ENTITY = new TwoFactorAuthEntity(newAccount.getId(), ACCOUNT3_2FA_SECRET_BYTES, false);
     public static final int INVALID_CODE = 100200;
     public static final String INVALID_PASSPHRASE = "InvalidPassphrase";
 

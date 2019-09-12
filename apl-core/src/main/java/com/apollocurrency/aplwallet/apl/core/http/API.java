@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
@@ -56,6 +57,7 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
@@ -174,7 +176,7 @@ public final class API {
     
     public static String findWebUiDir(){
         String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
-        dir=dir+File.separator+"build";
+        dir=dir+ File.separator+"build";
         File res = new File(dir);
         if(!res.exists()){ //we are in develop IDE or tests
             dir=DirProvider.getBinDir()+"/apl-exec/target/"+WEB_UI_DIR+"/build";
