@@ -14,15 +14,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
  */
 public interface IDexValidator {
     
-     /** 
-     * Initialization routines
-     */
-     void initialize();
-     
-    /** 
-     * Deinitialize the scope of internals
-     */
-    void deinitialize();
     
     /**
      * currency-specific validation (Ethereum)

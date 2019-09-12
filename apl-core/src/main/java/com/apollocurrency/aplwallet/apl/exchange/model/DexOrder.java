@@ -21,7 +21,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
-@Getter
 public class DexOrder {
 
     private Long dbId;

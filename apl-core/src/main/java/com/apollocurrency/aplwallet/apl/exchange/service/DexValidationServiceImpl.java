@@ -53,26 +53,14 @@ public class DexValidationServiceImpl implements IDexValidator {
         this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
 
     }
-
-    @Override
-    public void initialize() {
-        // placeholder
-    }
-
-    @Override
-    public void deinitialize() {
-        // placeholder
-    }
         
     Long getAplUnconfirmedBalance(Long hisAccountID) {
-        AccountTable at = new AccountTable();
         Account hisAccount = Account.getAccount(hisAccountID);        
         long hisUnconfirmedAplBalance = hisAccount.getUnconfirmedBalanceATM();                        
         return hisUnconfirmedAplBalance;
     }
     
-    Long getAplBalanceAtm(Long hisAccountID) {
-        AccountTable at = new AccountTable();
+    Long getAplBalanceAtm(Long hisAccountID) {        
         Account hisAccount = Account.getAccount(hisAccountID);        
         Long hisAplBalance = hisAccount.getBalanceATM();
         return hisAplBalance;
@@ -95,7 +83,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         return ethereumWalletService.getBalanceWei(user, currencyType );
     }
     
-    boolean validateEthDeposit(DexOrder myOffer, DexOrder counterOffer) {        
+    boolean isEthDepositValid(DexOrder myOffer, DexOrder counterOffer) {        
         BigInteger amountOnHisWallet = getEthBalanceWei(counterOffer.getFromAddress(), counterOffer.getPairCurrency());
         BigDecimal haveToPay = EthUtil.atmToEth(counterOffer.getOrderAmount()).multiply(counterOffer.getPairRate());
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        

@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
 
 /**
  *
@@ -105,7 +106,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * Common validation routine for offer  
      * @param DexOffer  offer - offer to validate
      */ 
-    private int validateOffer(DexOrder myOrder, DexOrder hisOrder) {
+    private int validateOffer(DexOrder myOrder, DexOrder hisOrder) throws Exception {
         
         DexCurrencies curr = hisOrder.getPairCurrency();
         log.debug("my order: orderCurrency: {}, pairCurrency: {}", myOrder.getOrderCurrency(), myOrder.getPairCurrency() );
@@ -115,18 +116,22 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
             case ETH: { 
                 // return validateOfferETH(myOffer,hisOffer);
-                if (myOrder.getType() == OrderType.SELL) 
+                if (myOrder.getType() == OrderType.SELL) {
                     return validateOfferSellAplEth(myOrder, hisOrder); 
-                else return validateOfferBuyAplEth(myOrder, hisOrder);                
+                } else {
+                    return validateOfferBuyAplEth(myOrder, hisOrder);
+                }                
             }
             
             case PAX: {
-                if (myOrder.getType() == OrderType.SELL) 
+                if (myOrder.getType() == OrderType.SELL) {
                     return validateOfferSellAplPax(myOrder, hisOrder); 
-                else return validateOfferBuyAplPax(myOrder, hisOrder);                                
+                } else {
+                    return validateOfferBuyAplPax(myOrder, hisOrder);
+                }                                
             }
             
-            default: return OFFER_VALIDATE_ERROR_IN_PARAMETER;
+            default: throw new Exception("Provided currency is not supported yet");
         }        
         
     }
@@ -182,12 +187,16 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
         if ( nOffers >= 1) {
             DexOrder counterOffer = offers.get(0);
-            if (validateOffer(createdOffer, counterOffer) == OFFER_VALIDATE_OK) {                    
+            try {                    
+                if (validateOffer(createdOffer, counterOffer) == OFFER_VALIDATE_OK) {
                     log.debug("match found, id: {}, amount: {}, pairCurrency: {}, pairRate: {}  ", counterOffer.getId(),
                             counterOffer.getOrderAmount(), counterOffer.getPairCurrency(),
                             counterOffer.getPairRate() );                    
                     return counterOffer;
                 }
+            } catch (Exception ex) {
+                log.debug("Validation error: {}", ex.toString());
+            }
         }
         return null;
     }

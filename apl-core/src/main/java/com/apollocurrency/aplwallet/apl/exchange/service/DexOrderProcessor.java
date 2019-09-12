@@ -32,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-<<<<<<< HEAD
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
@@ -41,8 +40,6 @@ import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractSt
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
-=======
->>>>>>> 558006c1c591a83ecb6e4fc3825b8c8c50deecd1
 
 @Slf4j
 @Singleton
@@ -208,9 +205,12 @@ public class DexOrderProcessor {
 
             case ETH: { 
                 // return validateOfferETH(myOffer,hisOffer);
-                if (mainOrder.getType() == OrderType.SELL) 
+                if (mainOrder.getType() == OrderType.SELL)  {
                     rx =  dexValidator.validateOfferSellAplEth(mainOrder, counterOrder); 
-                else rx=  dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);                
+                }
+                else { 
+                    rx=  dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);
+                }                
                 break;
             }
             
