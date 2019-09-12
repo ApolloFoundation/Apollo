@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
@@ -115,9 +114,16 @@ public class DexValidationServiceImpl implements IDexValidator {
         log.debug("selected: {}",hisAddress);
         // here we have double conversion, gw-eth-wei        
         Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();  
-        BigInteger hisEthBalanceWei = getEthBalanceWei(/*hisOffer.getToAddress(),*/hisAddress, hisOrder.getPairCurrency());
-        BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
-        BigInteger averageGasPriceWei = EthUtil.etherToWei(averageGasPriceEth);
+        
+        if (averageGasPriceGw == null) {
+            log.error("Error getting gas info");
+            return false;
+        }
+        
+        BigInteger hisEthBalanceWei = getEthBalanceWei(hisAddress, hisOrder.getPairCurrency());
+        // BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
+                        //EthUtil.etherToWei(averageGasPriceEth);
+        BigInteger averageGasPriceWei = EthUtil.gweiToWei(averageGasPriceGw);
         log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
        
         boolean ethCheckResult = (1 == hisEthBalanceWei.compareTo(averageGasPriceWei.multiply(BigInteger.valueOf(ETH_GAS_MULTIPLIER)))); 

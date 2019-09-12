@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
@@ -27,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -215,9 +211,12 @@ public class DexOrderProcessor {
             }
             
             case PAX: {
-                if (mainOrder.getType() == OrderType.SELL) 
+                if (mainOrder.getType() == OrderType.SELL) { 
                     rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder); 
-                else rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);                                
+                } else { 
+                    rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);
+                }
+                break;
             }
             
             default: // return OFFER_VALIDATE_ERROR_IN_PARAMETER;
