@@ -12,7 +12,8 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
     @Override
     public ExchangeContract map(ResultSet rs, StatementContext ctx) throws SQLException {
         return ExchangeContract.builder()
-                .id(rs.getLong("db_id"))
+                .dbId(rs.getLong("db_id"))
+                .id(rs.getLong("id"))
                 .orderId(rs.getLong("offer_id"))
                 .recipient(rs.getLong("recipient"))
                 .sender(rs.getLong("sender"))
@@ -22,7 +23,7 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
                 .encryptedSecret(rs.getBytes("encrypted_secret"))
                 .transferTxId(rs.getString("transfer_tx_id"))
                 .counterTransferTxId(rs.getString("counter_transfer_tx_id"))
-//                .finishTime(rs.getInt("finish_time"))
+                .deadlineToReply(rs.getInt("deadline_to_reply"))
                 .build();
     }
 }

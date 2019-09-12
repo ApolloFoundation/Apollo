@@ -300,7 +300,7 @@ public class DexController {
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getOffers:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}",orderType, pairCurrency,status, accountIdStr,isAvailableForNow, minAskPrice, maxBidPrice);
+        log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
 
         OrderType type = null;
         OrderStatus orderStatus = null;
@@ -349,7 +349,7 @@ public class DexController {
                 .limit(limit)
                 .build();
 
-        List<DexOrder> order = service.getOffers(dexOrderDBRequest);
+        List<DexOrder> order = service.getOrders(dexOrderDBRequest);
 
         return Response.ok(order.stream()
                 .map(o -> o.toDto())
@@ -381,11 +381,11 @@ public class DexController {
             } catch (Exception ex){
                 return Response.ok(JSON.toString(incorrect("id", "Transaction ID is not correct."))).build();
             }
-            DexOrder order = service.getOfferByTransactionId(transactionId);
+            DexOrder order = service.getOrder(transactionId);
             if (order == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Order was not found."))).build();
             }
-            if (!Long.valueOf(order.getAccountId()).equals(account.getId())) {
+            if (!order.getAccountId().equals(account.getId())) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("accountId", "Can cancel only your orders."))).build();
             }
             if (!OrderStatus.OPEN.equals(order.getStatus())) {

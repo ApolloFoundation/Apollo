@@ -984,6 +984,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
 
             dexService.closeOverdueOrders(block.getTimestamp());
+            dexService.closeOverdueContracts(block.getTimestamp());
 
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 

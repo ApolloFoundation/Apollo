@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -51,8 +52,8 @@ public class DexContractTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if(attachment.getContractStatus().isStep2()){
             if (order == null) {
@@ -70,6 +71,10 @@ public class DexContractTransaction extends DEX {
 
         if(attachment.getEncryptedSecret() != null && attachment.getEncryptedSecret().length != 64){
             throw new AplException.NotValidException("Encrypted secret is null or length is not right.");
+        }
+
+        if (attachment.getTimeToReply() < Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY) {
+            throw new AplException.NotValidException("Time to reply is less than minimal.");
         }
 
 
@@ -93,8 +98,8 @@ public class DexContractTransaction extends DEX {
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        DexOrder order = dexService.getOfferByTransactionId(attachment.getOrderId());
-        DexOrder counterOrder = dexService.getOfferByTransactionId(attachment.getCounterOrderId());
+        DexOrder order = dexService.getOrder(attachment.getOrderId());
+        DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
         if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
             order.setStatus(OrderStatus.WAITING_APPROVAL);
@@ -109,24 +114,38 @@ public class DexContractTransaction extends DEX {
                 .counterOfferId(attachment.getCounterOrderId())
                 .build());
 
+
         // contract == null it means, that it's a first step.
         if (contract == null) {
-            contract = new ExchangeContract(senderAccount.getId(), counterOrder.getAccountId(), attachment);
+            contract = new ExchangeContract(transaction.getId(),
+                    senderAccount.getId(),
+                    counterOrder.getAccountId(),
+                    transaction.getBlock().getTimestamp() + attachment.getTimeToReply(),
+                    attachment);
+
+            dexService.saveDexContract(contract);
         } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
             contract.setEncryptedSecret(attachment.getEncryptedSecret());
             contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_2);
+            contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
 
             //TODO change another orders to the status Open.
             reopenNotMatchedOrders(contract);
 
+            dexService.saveDexContract(contract);
         } else if (attachment.getContractStatus().isStep3() && contract.getContractStatus().isStep2()) {
             contract.setTransferTxId(attachment.getTransferTxId());
             contract.setContractStatus(ExchangeContractStatus.STEP_3);
+            contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
+
+            dexService.saveDexContract(contract);
+        } else {
+            log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
+            throw new RuntimeException("Illegal contract state. Perhaps this contract has processed already.");
         }
 
-        dexService.saveDexContract(contract);
     }
 
     @Override
@@ -167,7 +186,7 @@ public class DexContractTransaction extends DEX {
 
         for (ExchangeContract exchangeContract : contractsForReopen) {
             //Reopen order.
-            DexOrder order = dexService.getOfferByTransactionId(exchangeContract.getOrderId());
+            DexOrder order = dexService.getOrder(exchangeContract.getOrderId());
             if (order.getStatus().isPending()) {
                 //Close contract.
                 exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);

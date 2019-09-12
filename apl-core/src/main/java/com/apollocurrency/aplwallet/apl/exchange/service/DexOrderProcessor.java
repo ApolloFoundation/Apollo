@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
@@ -34,6 +38,7 @@ public class DexOrderProcessor {
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
+    private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
 
     @Inject
@@ -70,8 +75,8 @@ public class DexOrderProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOfferByTransactionId(contract.getOrderId());
-                DexOrder counterOrder = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOrder(contract.getCounterOrderId());
 
                 if (contract.getCounterTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
@@ -94,20 +99,20 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
-                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), secretHash, STEP_2);
+                TransferTransactionInfo transactionInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, STEP_2);
 
-                log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, txId);
+                log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, transactionInfo);
 
-                if (txId == null) {
+                if (transactionInfo.getTxId() == null) {
                     throw new AplException.ExecutiveProcessException("Transfer money wasn't finish success. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract);
                 contractAttachment.setContractStatus(ExchangeContractStatus.STEP_2);
-                contractAttachment.setCounterTransferTxId(txId);
+                contractAttachment.setCounterTransferTxId(transactionInfo.getTxId());
                 contractAttachment.setSecretHash(secretHash);
                 contractAttachment.setEncryptedSecret(encryptedSecretX);
-
+                contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 //TODO move it to some util
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
@@ -117,13 +122,32 @@ public class DexOrderProcessor {
                 if (transaction == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
-                log.debug("DexOfferProcessor Step-1. User created contract (Step-2). accountId: {} , txId: {}.", accountId, transaction.getId());
+                broadcastWhenConfirmed(transactionInfo.getTransaction(), transaction);
 
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
                 log.error(e.getMessage(), e);
                 continue;
             }
 
+        }
+    }
+
+    private void broadcastWhenConfirmed(Transaction txToBroadcast, Transaction unconfirmedTx) {
+        if (txToBroadcast != null) {
+            CompletableFuture.runAsync(() -> {
+                while (!dexService.txExists(unconfirmedTx.getId())) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(250);
+                    }
+                    catch (InterruptedException ignored) {}
+                }
+                try {
+                    dexService.broadcast(txToBroadcast);
+                }
+                catch (Exception e) {
+                    log.error(e.toString(), e);
+                }
+            });
         }
     }
 
@@ -146,8 +170,8 @@ public class DexOrderProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOfferByTransactionId(contract.getOrderId());
-                DexOrder counterOrder = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getOrderId());
+                DexOrder counterOrder = dexService.getOrder(contract.getCounterOrderId());
 
                 if (contract.getTransferTxId() != null) {
                     log.debug("DexContract has been already created.(Step-2) TransferTxId is not null. ExchangeContractId:{}", contract.getId());
@@ -169,18 +193,19 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
-                String txId = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getSecretHash(), STEP_2);
+                TransferTransactionInfo transferTransactionInfo = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getId(), contract.getSecretHash(), STEP_2);
 
-                log.debug("DexOfferProcessor Step-2. User transferred money accountId: {} , txId: {}.", accountId, txId);
+                log.debug("DexOfferProcessor Step-2. User transferred money accountId: {} , txId: {}.", accountId, transferTransactionInfo.getTxId());
 
-                if (txId == null) {
+                if (transferTransactionInfo.getTxId() == null) {
                     throw new AplException.ExecutiveProcessException("Transfer money wasn't finish success.(Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
 
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract);
                 contractAttachment.setContractStatus(ExchangeContractStatus.STEP_3);
-                contractAttachment.setTransferTxId(txId);
+                contractAttachment.setTransferTxId(transferTransactionInfo.getTxId());
+                contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
 
@@ -189,11 +214,11 @@ public class DexOrderProcessor {
                 if (transaction == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
                 }
+                broadcastWhenConfirmed(transferTransactionInfo.getTransaction(), transaction);
                 log.debug("DexOfferProcessor Step-2. User created contract (Step-3). accountId: {} , txId: {}.", accountId, transaction.getId());
 
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
                 log.error(e.getMessage(), e);
-                continue;
             }
         }
     }
@@ -217,7 +242,7 @@ public class DexOrderProcessor {
                 .build());
         for (ExchangeContract contract : contracts) {
             try {
-                DexOrder order = dexService.getOfferByTransactionId(contract.getCounterOrderId());
+                DexOrder order = dexService.getOrder(contract.getCounterOrderId());
 
                 if (!isContractStep3Valid(contract, order)) {
                     continue;
@@ -229,7 +254,7 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-2(part-1). Approving money transfer. accountId: {}", accountId);
 
-                dexService.approveMoneyTransfer(passphrase, accountId, contract.getCounterOrderId(), contract.getTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, contract.getCounterOrderId(), contract.getTransferTxId(), contract.getId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-1). Approved money transfer. accountId: {}", accountId);
             } catch (Exception ex) {
@@ -246,7 +271,7 @@ public class DexOrderProcessor {
         DexOrderDBRequest dexOrderDBRequest = new DexOrderDBRequest();
         dexOrderDBRequest.setAccountId(accountId);
         dexOrderDBRequest.setStatus(OrderStatus.WAITING_APPROVAL);
-        List<DexOrder> outComeOrders = dexService.getOffers(dexOrderDBRequest);
+        List<DexOrder> outComeOrders = dexService.getOrders(dexOrderDBRequest);
 
         for (DexOrder outcomeOrder : outComeOrders) {
             try {
@@ -277,7 +302,7 @@ public class DexOrderProcessor {
 
                 byte[] secret = dexService.getSecretIfTxApproved(contract.getSecretHash(), contract.getTransferTxId());
 
-                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), secret);
+                dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), contract.getId(), secret);
 
                 log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {

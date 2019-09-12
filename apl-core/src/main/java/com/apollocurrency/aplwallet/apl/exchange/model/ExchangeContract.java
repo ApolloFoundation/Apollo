@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class ExchangeContract {
 
+    private Long dbId;
     private Long id;
     private Long orderId;
     private Long counterOrderId;
@@ -28,9 +29,10 @@ public class ExchangeContract {
      * Encrypted secret key to have able to restore secret.
      */
     private byte[] encryptedSecret;
-//    private Integer finishTime;
+    private Integer deadlineToReply;
 
-    public ExchangeContract(Long senderId, Long recipientId, DexContractAttachment dexContractAttachment) {
+    public ExchangeContract(Long transactionId, Long senderId, Long recipientId, Integer deadlineToReply, DexContractAttachment dexContractAttachment) {
+        this.id = transactionId;
         this.orderId = dexContractAttachment.getOrderId();
         this.counterOrderId = dexContractAttachment.getCounterOrderId();
         this.sender = senderId;
@@ -41,7 +43,7 @@ public class ExchangeContract {
         this.transferTxId = dexContractAttachment.getTransferTxId();
         this.counterTransferTxId = dexContractAttachment.getCounterTransferTxId();
         this.contractStatus = dexContractAttachment.getContractStatus();
-//        this.finishTime = dexContractAttachment.getFinishTime();
+        this.deadlineToReply = deadlineToReply;
     }
 
 }
