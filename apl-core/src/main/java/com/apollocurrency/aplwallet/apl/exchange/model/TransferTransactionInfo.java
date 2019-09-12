@@ -5,7 +5,13 @@ import lombok.Data;
 
 @Data
 public class TransferTransactionInfo {
+    /**
+     * Transaction in the APL blockchain.
+     */
     private Transaction transaction;
+    /**
+     * Transaction in the ETH blockchain.
+     */
     private String txId;
 
 }

@@ -2,12 +2,12 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 
 public enum OrderStatus {
 
-    OPEN,
-    PENDING,
-    EXPIRED,
-    CANCEL,
-    WAITING_APPROVAL,
-    CLOSED;
+    OPEN,       //0
+    PENDING,    //1
+    EXPIRED,    //2
+    CANCEL,     //3
+    WAITING_APPROVAL,   //4
+    CLOSED;     //5
 
     public static OrderStatus getType(int ordinal) {
         if (ordinal < 0 || ordinal > OrderStatus.values().length) {

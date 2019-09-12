@@ -8,11 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMappe
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Inject;
 
 /**
  * Use DexContractDao for not transactional operations. ( f.e. search)
@@ -45,8 +45,8 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
-                "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());
@@ -57,6 +57,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
             pstmt.setBytes(++i, entity.getEncryptedSecret());
             pstmt.setString(++i, entity.getTransferTxId());
             pstmt.setString(++i, entity.getCounterTransferTxId());
+            pstmt.setInt(++i, entity.getDeadlineToReply());
             pstmt.setByte(++i, (byte) entity.getContractStatus().ordinal());
             pstmt.setInt(++i, blockchain.getHeight());
 

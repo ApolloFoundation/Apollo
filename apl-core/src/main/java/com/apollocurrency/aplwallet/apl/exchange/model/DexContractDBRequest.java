@@ -14,5 +14,6 @@ public class DexContractDBRequest {
     private Integer status;
     private Long offerId;
     private Long counterOfferId;
+    private Integer deadlineToReply;
 
 }
