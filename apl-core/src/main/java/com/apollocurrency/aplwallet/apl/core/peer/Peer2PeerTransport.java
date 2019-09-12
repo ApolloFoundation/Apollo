@@ -188,9 +188,11 @@ public class Peer2PeerTransport {
 
     private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
-        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
-            toDelete.add(wsw);
-        });
+        if (!requestMap.isEmpty()) {
+            requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
+                toDelete.add(wsw);
+            });
+        }
         toDelete.forEach((key) -> {
             requestMap.remove(key);
         });

@@ -688,6 +688,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         JSONObject request = block.getJSONObject();
         request.put("requestType", "processBlock");
+        LOG.debug("Pushing block: {} at height: {}",block.getId(), block.getHeight());
         sendToSomePeers(request);
     }
 
@@ -719,8 +720,8 @@ public class PeersService {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
-            peers.addAll(connectablePeers.values());
-            LOG.trace("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
+           // peers.addAll(connectablePeers.values());
+            LOG.debug("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
@@ -743,6 +744,9 @@ public class PeersService {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
                                 successful += 1;
+                                LOG.debug("Send ot peer success.");
+                            }else{
+                                LOG.debug("Send ot peer error");
                             }
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
