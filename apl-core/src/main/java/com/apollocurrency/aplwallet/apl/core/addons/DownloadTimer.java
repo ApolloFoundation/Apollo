@@ -62,7 +62,7 @@ public final class DownloadTimer implements AddOn {
 
     }
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
-        int n = block.getTransactions().size();
+        int n = block.getOrLoadTransactions().size();
         transactions += n;
         dtransactions += n;
         int height = block.getHeight();

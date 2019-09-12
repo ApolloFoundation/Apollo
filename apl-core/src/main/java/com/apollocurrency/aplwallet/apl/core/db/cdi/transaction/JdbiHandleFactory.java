@@ -66,6 +66,10 @@ public class JdbiHandleFactory {
         }
     }
 
+    protected boolean isReadOnly() {
+        return currentHandleOpened() && getCurrentHandle().isReadOnly();
+    }
+
     protected boolean currentHandleOpened() {
         return getCurrentHandle() != null;
     }

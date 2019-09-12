@@ -5,21 +5,28 @@
 package com.apollocurrency.aplwallet.apl.testutil;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class DbUtils {
+
     public static void inTransaction(DbExtension extension, Consumer<Connection> consumer) {
         inTransaction(extension.getDatabaseManager(), consumer);
     }
+
     public static void inTransaction(DatabaseManager manager, Consumer<Connection> consumer) {
         inTransaction(manager.getDataSource(), consumer);
     }
+
     public static void inTransaction(TransactionalDataSource dataSource, Consumer<Connection> consumer) {
         try (Connection con = dataSource.begin()) { // start new transaction
             consumer.accept(con);
@@ -30,8 +37,6 @@ public class DbUtils {
             throw new RuntimeException(e);
         }
     }
-
-
 
     public static<T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
@@ -44,5 +49,14 @@ public class DbUtils {
             dataSource.rollback();
             throw new RuntimeException(e);
         }
+    }
+
+    public static <T> List<T> toList(DbIterator<T> iterator){
+        Objects.requireNonNull(iterator, "iterator is NULL");
+        List<T> result = new ArrayList<>();
+        try(iterator){
+            iterator.forEachRemaining(result::add);
+        }
+        return result;
     }
 }

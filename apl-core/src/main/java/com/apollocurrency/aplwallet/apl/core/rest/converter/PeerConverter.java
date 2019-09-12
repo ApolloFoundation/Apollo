@@ -39,8 +39,8 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
         dto.setLastUpdated(peer.getLastUpdated());
         dto.setLastConnectAttempt(peer.getLastConnectAttempt());
         dto.setInbound(peer.isInbound());
-        dto.setInboundWebSocket(peer.isInboundWebSocket());
-        dto.setOutboundWebSocket(peer.isOutboundWebSocket());
+        dto.setInboundWebSocket(peer.isInboundSocket());
+        dto.setOutboundWebSocket(peer.isOutboundSocket());
         if (peer.isBlacklisted()) {
             dto.setBlacklistingCause(peer.getBlacklistingCause());
         }

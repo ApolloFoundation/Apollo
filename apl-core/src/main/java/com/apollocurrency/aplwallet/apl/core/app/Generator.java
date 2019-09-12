@@ -26,11 +26,13 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -43,11 +45,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.spi.CDI;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
+    private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
 
 
     public enum Event {
@@ -62,8 +64,9 @@ public final class Generator implements Comparable<Generator> {
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
     private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     private static final int MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
     private static final byte[] fakeForgingPublicKey;
     private static volatile boolean suspendForging = false;
@@ -110,7 +113,7 @@ public final class Generator implements Comparable<Generator> {
                                         LOG.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
                                         List<Block> poppedOffBlock = blockchainProcessor.popOffTo(previousBlock);
                                         for (Block block : poppedOffBlock) {
-                                            transactionProcessor.processLater(block.getTransactions());
+                                            transactionProcessor.processLater(block.getOrLoadTransactions());
                                         }
                                         lastBlock = previousBlock;
                                         lastBlockId = previousBlock.getId();
@@ -161,7 +164,12 @@ public final class Generator implements Comparable<Generator> {
 
     static void init() {
         if (!propertiesHolder.isLightClient()) {
-            ThreadPool.scheduleThread("GenerateBlocks", generateBlocksThread, 500, TimeUnit.MILLISECONDS);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("GenerateBlocks")
+                            .delay(500)
+                            .task(generateBlocksThread)
+                            .build(), TaskOrder.TASK);
         }        
     }
 

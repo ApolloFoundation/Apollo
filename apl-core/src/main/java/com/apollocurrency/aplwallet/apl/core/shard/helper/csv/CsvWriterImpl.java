@@ -6,13 +6,17 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import org.slf4j.Logger;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -32,11 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import org.slf4j.Logger;
-
 /**
  * {@inheritDoc}
  */
@@ -47,7 +46,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final String EMPTY_ARRAY = "()";
     private Set<String> excludeColumn = new HashSet<>();
-    private Set<Integer> excludeColumnIndex = new HashSet<>(); // if HEADER is not written (writeColumnHeader=false), we CAN'T store skipped column index !!
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
@@ -64,7 +62,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     @Override
     public CsvExportData write(Writer writer, ResultSet rs) throws SQLException {
         this.output = writer;
-        return writeResultSet(rs, true);
+        return writeResultSet(rs, true, Map.of());
     }
 
     /**
@@ -74,10 +72,10 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     public CsvExportData write(String outputFileName, ResultSet rs) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
-        assignNewFileName(outputFileName, true);
+        assignNewFileName(outputFileName);
         try {
             initWrite(false);
-            return writeResultSet(rs, true);
+            return writeResultSet(rs, true, Map.of());
         } catch (IOException e) {
             throw new SQLException("IOException writing " + outputFileName, e);
         }
@@ -88,17 +86,26 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      */
     @Override
     public CsvExportData append(String outputFileName, ResultSet rs) throws SQLException {
+        return append(outputFileName, rs, Map.of());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CsvExportData append(String outputFileName, ResultSet rs, Map<String, String> defaultValues) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
 //        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
-        assignNewFileName(outputFileName, false);
+        assignNewFileName(outputFileName);
         try {
             initWrite(true);
-            return writeResultSet(rs, false);
+            return writeResultSet(rs, false, defaultValues);
         } catch (IOException e) {
             throw new SQLException("IOException writing " + outputFileName, e);
         }
     }
+
 
     /**
      * {@inheritDoc}
@@ -138,20 +145,16 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         }
     }
 
-    protected void assignNewFileName(String newFileName, boolean closeWhenAppend) {
+    protected void assignNewFileName(String newFileName) {
         Objects.requireNonNull(newFileName, "fileName is NULL");
         if (!newFileName.equalsIgnoreCase(this.fileName)) {
             // new file name is assigned
             this.writeColumnHeader = true; // will write header column names
         }
-        if (closeWhenAppend) {
-            // clean previously stored id's for the case when different tables should have different excluded column names
-            excludeColumnIndex.clear();
-        }
         this.fileName = newFileName;
     }
 
-    private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend) throws SQLException {
+    private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend, Map<String, String> defaultValues) throws SQLException {
         try {
             Map<String, Object> lastRow = new HashMap<>();
             int rows = 0;
@@ -179,100 +182,103 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 for (int i = 0; i < columnCount; i++) {
                     java.util.Date date = null;
                     Object o;
-                    switch (columnsMetaData[i].getSqlTypeInt()) {
-                        case Types.BLOB:
-                            o = rs.getBlob(i + 1);
-                            if (o == null) {
-                                o = nullString;
-                            }
-                            break;
-                        case Types.BIGINT:
-                        case Types.BIT:
-                        case Types.BOOLEAN:
-                        case Types.DECIMAL:
-                        case Types.DOUBLE:
-                        case Types.FLOAT:
-                        case Types.INTEGER:
-                        case Types.SMALLINT:
-                        case Types.TINYINT:
-                            o = rs.getString(i + 1);
-                            if (o == null) {
-                                o = nullString;
-                            }
-                            break;
-                        case Types.DATE:
-                            date = rs.getDate(i + 1);
-                        case Types.TIME:
-                            if (date == null) date = rs.getTime(i + 1);
-                        case Types.TIMESTAMP:
-                            if (date == null) date = rs.getTimestamp(i + 1);
-                            if (date == null) {
-                                o = nullString;
-                            } else {
-                                o = "TO_DATE('" + dateFormat.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
-                            }
-                            break;
-                        case Types.ARRAY:
-                            Array array = rs.getArray(i + 1);
-                            if (array != null && array.getArray() instanceof Object[] && ((Object[])array.getArray()).length > 0) {
-                                Object[] objectArray = (Object[]) array.getArray();
-                                StringBuilder outputValue = new StringBuilder();
-                                for (int j = 0; j < objectArray.length; j++) {
-                                    Object o1 = objectArray[j];
-                                    if (j == 0) {
-                                        outputValue.append("(");
-                                    }
-                                    String objectValue;
-                                    if (o1 instanceof byte[]) {
-                                        objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
-                                    } else if (o1 instanceof String){
-                                        objectValue = "\'" + o1.toString() + "\'";
-                                    } else if (o1 instanceof Long) {
-                                        objectValue = o1.toString();
-                                    } else {
-                                        throw new RuntimeException("Unsupported array type: " + o1.getClass());
-                                    }
-                                    outputValue.append(objectValue).append(",");
-                                    if (j == objectArray.length - 1) {
-                                        // there is a bug in H2 parser, so let's make one extra comma at the end
-                                        // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
-                                        outputValue.append(")");
-                                    }
+                    String defaultValue = defaultValues.get(columnsMetaData[i].getName().toLowerCase());
+                if (defaultValue != null) {
+                    o = defaultValue;
+                    lastRow.put(rs.getMetaData().getColumnName(i + 1), o);
+                } else {
+                    lastRow.put(rs.getMetaData().getColumnName(i + 1), rs.getObject(i + 1));
+                        switch (columnsMetaData[i].getSqlTypeInt()) {
+                            case Types.BLOB:
+                                o = rs.getBlob(i + 1);
+                                if (o == null) {
+                                    o = nullString;
                                 }
-                                o = outputValue.toString();
                                 break;
-                            } else {
-                                o = array != null ? EMPTY_ARRAY : nullString;
-                            }
-                            break;
-                        case Types.NVARCHAR:
-                        case Types.VARBINARY:
-                        case Types.BINARY:
-                            o = rs.getBytes(i + 1);
-                            if (o != null) {
-                                o = Base64.getEncoder().encodeToString(((byte[])o));
-                            } else {
-                                o = nullString;
-                            }
-                            break;
-                        case Types.VARCHAR:
-                        default:
-                            o = rs.getString(i + 1);
-                            if (o != null) {
-                                o = "'" + ((String)o).replaceAll("'", "''") + "'";
-                            } else {
-                                o = nullString;
-                            }
-                            break;
+                            case Types.BIGINT:
+                            case Types.BIT:
+                            case Types.BOOLEAN:
+                            case Types.DECIMAL:
+                            case Types.DOUBLE:
+                            case Types.FLOAT:
+                            case Types.INTEGER:
+                            case Types.SMALLINT:
+                            case Types.TINYINT:
+                                o = rs.getString(i + 1);
+                                if (o == null) {
+                                    o = nullString;
+                                }
+                                break;
+                            case Types.DATE:
+                                date = rs.getDate(i + 1);
+                            case Types.TIME:
+                                if (date == null) date = rs.getTime(i + 1);
+                            case Types.TIMESTAMP:
+                                if (date == null) date = rs.getTimestamp(i + 1);
+                                if (date == null) {
+                                    o = nullString;
+                                } else {
+                                    o = "TO_DATE('" + dateFormat.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
+                                }
+                                break;
+                            case Types.ARRAY:
+                                Array array = rs.getArray(i + 1);
+                                if (array != null && array.getArray() instanceof Object[] && ((Object[]) array.getArray()).length > 0) {
+                                    Object[] objectArray = (Object[]) array.getArray();
+                                    StringBuilder outputValue = new StringBuilder();
+                                    for (int j = 0; j < objectArray.length; j++) {
+                                        Object o1 = objectArray[j];
+                                        if (j == 0) {
+                                            outputValue.append("(");
+                                        }
+                                        String objectValue;
+                                        if (o1 instanceof byte[]) {
+                                            objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
+                                        } else if (o1 instanceof String) {
+                                            objectValue = "\'" + o1.toString() + "\'";
+                                        } else if (o1 instanceof Long || o1 instanceof Integer) {
+                                            objectValue = o1.toString();
+                                        } else {
+                                            throw new RuntimeException("Unsupported array type: " + o1.getClass());
+                                        }
+                                        outputValue.append(objectValue).append(",");
+                                        if (j == objectArray.length - 1) {
+                                            // there is a bug in H2 parser, so let's make one extra comma at the end
+                                            // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
+                                            outputValue.append(")");
+                                        }
+                                    }
+                                    o = outputValue.toString();
+                                    break;
+                                } else {
+                                    o = array != null ? EMPTY_ARRAY : nullString;
+                                }
+                                break;
+                            case Types.NVARCHAR:
+                            case Types.VARBINARY:
+                            case Types.BINARY:
+                                o = rs.getBytes(i + 1);
+                                if (o != null) {
+                                    o = Base64.getEncoder().encodeToString(((byte[]) o));
+                                } else {
+                                    o = nullString;
+                                }
+                                break;
+                            case Types.VARCHAR:
+                            default:
+                                o = rs.getString(i + 1);
+                                if (o != null) {
+                                    o = "'" + ((String) o).replaceAll("'", "''") + "'";
+                                } else {
+                                    o = nullString;
+                                }
+                                break;
+                        }
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
                 log.trace("Row = {}", Arrays.toString(rowColumnNames));
                 writeRow(rowColumnNames);
-                for (int i = 0; i < rowColumnNames.length; i++) {
-                    Object value = rs.getObject(i + 1);
-                    lastRow.put(rs.getMetaData().getColumnName(i + 1), value);
-                }
                 rows++;
 
                 //                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
@@ -321,7 +327,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 if (excludeColumn.contains(s)) {
                     // skip processing specified columns
                     isSkippedColumn = true;
-                    excludeColumnIndex.add(i); // if HEADER is not written, we CAN'T store skipped column index !!
                     continue;
                 }
                 if (fieldDelimiter != 0) {
@@ -365,7 +370,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         outputBuffer.append(fieldSeparatorWrite);
                     }
                 }
-                if (excludeColumnIndex.contains(i)) {
+                if (excludeColumn.contains(columnsMetaData[i].getName())) {
                     // skip column value processing
                     isSkippedColumn = true; // do not put not needed comma
                     continue;
@@ -437,7 +442,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         CsvFileUtils.closeSilently(output);
         output = null;
         columnsMetaData = null;
-        excludeColumnIndex.clear();
     }
 
 }

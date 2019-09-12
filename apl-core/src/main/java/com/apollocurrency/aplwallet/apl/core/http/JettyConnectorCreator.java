@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import javax.inject.Inject;
+import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -52,6 +53,8 @@ public class JettyConnectorCreator {
         connector.setIdleTimeout(idleTimeout);
         connector.setReuseAddress(true);
         apiServer.addConnector(connector);
+        String proto = connector.getDefaultProtocol();
+        LOG.debug("API protocol: {} configured", proto);
         return true;
     }
 
@@ -65,33 +68,27 @@ public class JettyConnectorCreator {
         https_config.setSecureScheme("https");
         https_config.setSecurePort(port);
         https_config.addCustomizer(new SecureRequestCustomizer());
-        SslContextFactory sslContextFactory = new SslContextFactory();
-        LOG.info("Using keystore: " + keyStorePath);
+        SslContextFactory sslContextFactory = new SslContextFactory.Server();
+        LOG.info("Using keystore: {} with alias: {} ", keyStorePath, keyStoreAlias);
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
-        sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
-                "SSL_DHE_DSS_WITH_DES_CBC_SHA", "SSL_RSA_EXPORT_WITH_RC4_40_MD5", "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
-                "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA");
-        //TODO: try tp use TLSv1.3 only
         sslContextFactory.addExcludeProtocols("SSLv3","TLSv1","TLSv1.1"); //TLS 1.2 or 1.3 only
 
         // we need to trust self-signed certificates in TLS but we do verify cerificate
         // of node using Apollo's own CA on peer-ro-peer connection establishment
         sslContextFactory.setTrustAll(true);
-        sslContextFactory.setTrustManagerFactoryAlgorithm("TrustAll");
-        //TODO: try to set other alias for certificate
         sslContextFactory.setCertAlias(keyStoreAlias);
-        //TODO: try to use BC
-        //sslContextFactory.setProvider("BC");
-        connector = new ServerConnector(apiServer, new SslConnectionFactory(sslContextFactory, "http/1.1"),
-                new HttpConnectionFactory(https_config));
+        //use Bouncy Castle provider
+        sslContextFactory.setProvider("BC");
+        SslConnectionFactory cf = new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString());
+        connector = new ServerConnector(apiServer, cf, new HttpConnectionFactory(https_config));
         connector.setPort(port);
         connector.setHost(host);
         connector.setIdleTimeout(idleTimeout);
         connector.setReuseAddress(true);
         apiServer.addConnector(connector);
-        LOG.debug("API SSL Protocols: " + Arrays.toString(sslContextFactory.getSelectedProtocols()));
-        LOG.debug("API SSL Ciphers: " + Arrays.toString(sslContextFactory.getSelectedCipherSuites()));
+        String proto = connector.getDefaultProtocol();
+        LOG.debug("API protocol: {} configured",proto);
         return res;
     }
 }

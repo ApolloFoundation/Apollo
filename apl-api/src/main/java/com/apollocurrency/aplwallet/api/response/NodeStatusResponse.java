@@ -6,7 +6,7 @@
 
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +29,7 @@ import java.util.List;
         content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = NodeStatusResponse.class)))
 public class NodeStatusResponse extends ResponseBase {
+    public String message="";
     public List<DurableTaskInfo> tasks = new ArrayList<>();
-    public NodeHWStatusInfo nodeInfo = new NodeHWStatusInfo();
+    public NodeStatusInfo nodeInfo = new NodeStatusInfo();
 }

@@ -12,6 +12,7 @@ import lombok.Setter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Ledger entry
@@ -52,7 +53,25 @@ public class LedgerEntry extends DerivedEntity {
      * @param   lastBlock               Last block in blockchain
      */
     public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, Block lastBlock) {
-        super(null, lastBlock.getHeight());
+        this(event, eventId ,accountId, holding, holdingId, change, balance, lastBlock.getId(), lastBlock.getTimestamp(), lastBlock.getHeight());
+    }
+
+    /**
+     * Create a ledger entry
+     *
+     * @param   event                   Event
+     * @param   eventId                 Event identifier
+     * @param   accountId               Account identifier
+     * @param   holding                 Holding or null
+     * @param   holdingId               Holding identifier or null
+     * @param   change                  Change in balance
+     * @param   balance                 New balance
+     * @param   lastBlockId             Last block Id in the blockchain
+     * @param   blockTimeStamp          Last block timestamp
+     * @param   height                  the blockchain height
+     */
+    public LedgerEntry(LedgerEvent event, long eventId, long accountId, LedgerHolding holding, Long holdingId, long change, long balance, long lastBlockId, int blockTimeStamp, int height) {
+        super(null, height);
         this.event = event;
         this.eventId = eventId;
         this.accountId = accountId;
@@ -60,8 +79,8 @@ public class LedgerEntry extends DerivedEntity {
         this.holdingId = holdingId;
         this.change = change;
         this.balance = balance;
-        this.blockId = lastBlock.getId();
-        this.timestamp = lastBlock.getTimestamp();
+        this.blockId = lastBlockId;
+        this.timestamp = blockTimeStamp;
     }
 
     /**
@@ -107,7 +126,7 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Return the hash code
      *
-     * @return                          Hash code
+     * @return  Hash code
      */
     @Override
     public int hashCode() {
@@ -117,12 +136,12 @@ public class LedgerEntry extends DerivedEntity {
     /**
      * Check if two ledger events are equal
      *
-     * @param   obj                     Ledger event to check
-     * @return                          TRUE if the ledger events are the same
+     * @param   obj Ledger event to check
+     * @return  TRUE if the ledger events are the same
      */
     @Override
     public boolean equals(Object obj) {
-        return obj != null && (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId && event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId && holding == ((LedgerEntry) obj).holding && (holdingId != null ? holdingId.equals(((LedgerEntry) obj).holdingId) : ((LedgerEntry) obj).holdingId == null);
+        return (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId && event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId && holding == ((LedgerEntry) obj).holding && (Objects.equals(holdingId, ((LedgerEntry) obj).holdingId));
     }
     
 }

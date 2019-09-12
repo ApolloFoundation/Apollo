@@ -38,7 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -89,12 +89,12 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     public static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
-    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
+    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();;
 
     /** Transaction processor */
-    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-
+    private static PeersService peers = CDI.current().select(PeersService.class).get();
     /** Active event users */
     public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
 
@@ -118,17 +118,17 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     /** Peer events - update API comments for EventRegister and EventWait if changed */
-    public static final List<Peers.Event> peerEvents = new ArrayList<>();
+    public static final List<PeersService.Event> peerEvents = new ArrayList<>();
     static {
-        peerEvents.add(Peers.Event.ADD_INBOUND);
-        peerEvents.add(Peers.Event.ADDED_ACTIVE_PEER);
-        peerEvents.add(Peers.Event.BLACKLIST);
-        peerEvents.add(Peers.Event.CHANGED_ACTIVE_PEER);
-        peerEvents.add(Peers.Event.DEACTIVATE);
-        peerEvents.add(Peers.Event.NEW_PEER);
-        peerEvents.add(Peers.Event.REMOVE);
-        peerEvents.add(Peers.Event.REMOVE_INBOUND);
-        peerEvents.add(Peers.Event.UNBLACKLIST);
+        peerEvents.add(PeersService.Event.ADD_INBOUND);
+        peerEvents.add(PeersService.Event.ADDED_ACTIVE_PEER);
+        peerEvents.add(PeersService.Event.BLACKLIST);
+        peerEvents.add(PeersService.Event.CHANGED_ACTIVE_PEER);
+        peerEvents.add(PeersService.Event.DEACTIVATE);
+        peerEvents.add(PeersService.Event.NEW_PEER);
+        peerEvents.add(PeersService.Event.REMOVE);
+        peerEvents.add(PeersService.Event.REMOVE_INBOUND);
+        peerEvents.add(PeersService.Event.UNBLACKLIST);
     }
 
     /** Block events - update API comments for EventRegister and EventWait if changed */
@@ -649,7 +649,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
          */
         public AplEventListener(EventRegistration eventRegistration) throws EventListenerException {
             Enum<? extends Enum> event = eventRegistration.getEvent();
-            if (event instanceof Peers.Event) {
+            if (event instanceof PeersService.Event) {
                 eventHandler = new PeerEventHandler(eventRegistration);
             } else if (event instanceof BlockEventType) {
                 eventHandler = new BlockEventHandler(eventRegistration);
@@ -845,7 +845,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                Peers.addListener(this, (Peers.Event)event);
+                peers.addListener(this, (PeersService.Event)event);
             }
 
             /**
@@ -853,7 +853,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                Peers.removeListener(this, (Peers.Event)event);
+                peers.removeListener(this, (PeersService.Event)event);
             }
 
             /**

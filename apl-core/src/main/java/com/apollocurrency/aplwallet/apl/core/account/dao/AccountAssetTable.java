@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -18,6 +17,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  *
@@ -64,15 +66,6 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             pstmt.executeUpdate();
         }       
     }
-    
-    public void save(AccountAsset accountAsset) {
-        AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
-        if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
-            insert(accountAsset);
-        } else {
-            delete(accountAsset);
-        }
-    }
 
     @Override
     public void checkAvailable(int height) {
@@ -105,28 +98,20 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         return getCount(new DbClause.LongClause("account_id", accountId), height);
     }
 
-    public DbIterator<AccountAsset> getAccountAssets(long accountId, int from, int to) {
-        return getManyBy(new DbClause.LongClause("account_id", accountId), from, to);
+    public List<AccountAsset> getAccountAssets(long accountId, int from, int to) {
+        return toList(getManyBy(new DbClause.LongClause("account_id", accountId), from, to));
     }
 
-    public DbIterator<AccountAsset> getAccountAssets(long accountId, int height, int from, int to) {
-        return getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to);
+    public List<AccountAsset> getAccountAssets(long accountId, int height, int from, int to) {
+        return toList(getManyBy(new DbClause.LongClause("account_id", accountId), height, from, to));
     }
 
-    public AccountAsset getAccountAsset(long accountId, long assetId) {
-        return get(AccountAssetTable.newKey(accountId, assetId));
+    public List<AccountAsset> getAssetAccounts(long assetId, int from, int to) {
+        return toList(getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id "));
     }
 
-    public AccountAsset getAccountAsset(long accountId, long assetId, int height) {
-        return get(AccountAssetTable.newKey(accountId, assetId), height);
-    }
-
-    public DbIterator<AccountAsset> getAssetAccounts(long assetId, int from, int to) {
-        return getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id ");
-    }
-
-    public DbIterator<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
-        return getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id ");
+    public List<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
+        return toList(getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id "));
     }
 
 }

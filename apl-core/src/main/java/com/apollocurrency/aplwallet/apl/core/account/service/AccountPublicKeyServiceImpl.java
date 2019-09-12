@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -30,8 +31,9 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    //TODO: make cache nonstatic and injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
-    private static ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    //TODO: make cache injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
+    private ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    private boolean cacheEnabled = false;
 
     private PropertiesHolder propertiesHolder;
     private Blockchain blockchain;
@@ -50,6 +52,32 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     void init(){
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
             publicKeyCache = new ConcurrentHashMap<>();
+            cacheEnabled = true;
+        }
+    }
+
+    @Override
+    public boolean isCacheEnabled() {
+        return cacheEnabled;
+    }
+    @Override
+    public Map<DbKey, byte[]> getPublicKeyCache() {
+        return publicKeyCache;
+    }
+
+    private byte[] putInCache(DbKey key, byte[] value){
+        if (isCacheEnabled()){
+            return publicKeyCache.put(key, value);
+        }else {
+            return null;
+        }
+    }
+
+    private byte[] getFromCache(DbKey key){
+        if (isCacheEnabled()){
+            return publicKeyCache.get(key);
+        }else{
+            return null;
         }
     }
 
@@ -59,25 +87,15 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public Map<DbKey, byte[]> getPublicKeyCache() {
-        return publicKeyCache;
-    }
-
-    @Override
     public byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyTable.newKey(id);
-        byte[] key = null;
-        if (publicKeyCache != null) {
-            key = publicKeyCache.get(dbKey);
-        }
+        byte[] key = getFromCache(dbKey);
         if (key == null) {
             PublicKey publicKey = getPublicKey(dbKey);
             if (publicKey == null || (key = publicKey.getPublicKey()) == null) {
                 return null;
             }
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, key);
-            }
+            putInCache(dbKey, key);
         }
         return key;
     }
@@ -184,22 +202,15 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
                 publicKeyTable.insert(publicKey);
             }
         }
-        if (publicKeyCache != null) {
-            publicKeyCache.put(account.getDbKey(), key);
-        }
+        putInCache(account.getDbKey(), key);
         account.setPublicKey(publicKey);
     }
 
     @Override
     public PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
-        PublicKey publicKey;
-        if (isGenesis) {
-                publicKey = genesisPublicKeyTable.newEntity(dbKey);
-                genesisPublicKeyTable.insert(publicKey);
-        } else {
-                publicKey = publicKeyTable.newEntity(dbKey);
-                publicKeyTable.insert(publicKey);
-        }
+        EntityDbTable<PublicKey> table = isGenesis ? genesisPublicKeyTable: publicKeyTable;
+        PublicKey publicKey = table.newEntity(dbKey);
+        table.insert(publicKey);
         return publicKey;
     }
 }

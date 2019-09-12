@@ -84,7 +84,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Sending messages to Genesis not allowed.");
             }
         }
@@ -243,7 +243,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Invalid alias sell price: " + priceATM);
             }
             if (priceATM == 0) {
-                if (Genesis.CREATOR_ID == transaction.getRecipientId()) {
+                if (GenesisImporter.CREATOR_ID == transaction.getRecipientId()) {
                     throw new AplException.NotValidException("Transferring aliases to Genesis account not allowed");
                 } else if (transaction.getRecipientId() == 0) {
                     throw new AplException.NotValidException("Missing alias transfer recipient");
@@ -255,7 +255,7 @@ public abstract class Messaging extends TransactionType {
             } else if (alias.getAccountId() != transaction.getSenderId()) {
                 throw new AplException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Selling alias to Genesis not allowed");
             }
         }
@@ -828,7 +828,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Setting Genesis account properties not allowed");
             }
         }
@@ -891,7 +891,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Deleting Genesis account properties not allowed");
             }
         }

@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface AccountInfoService {
 
-    void save(AccountInfo accountInfo);
+    void update(AccountInfo accountInfo);
 
     AccountInfo getAccountInfo(Account account);
 

@@ -16,7 +16,7 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "data/genesisAccounts-testnet.json",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "blockchainProperties": [
       {
         "height": 0,
@@ -52,10 +52,6 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 500000
         }        
       },
       {
@@ -64,11 +60,7 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000,
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 500000
-        }
+        "maxBalance": 30000000000
       },
       {
         "height": 624999,
@@ -85,7 +77,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 750000
+          "frequency": 655000
         }
       }
     ]

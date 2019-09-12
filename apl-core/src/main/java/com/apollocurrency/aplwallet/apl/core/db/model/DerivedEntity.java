@@ -6,11 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.db.model;
 
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-
+@ToString
 public abstract class DerivedEntity implements Comparable {
     private DbKey dbKey;
     private static final long DEFAULT_DB_ID = 0L;

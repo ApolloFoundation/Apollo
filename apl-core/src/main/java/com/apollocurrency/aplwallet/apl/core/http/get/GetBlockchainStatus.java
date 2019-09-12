@@ -33,14 +33,11 @@ import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 @Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
 
     public GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});
@@ -52,15 +49,20 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("application", Constants.APPLICATION);
         response.put("version", Constants.VERSION.toString());
         response.put("time", timeService.getEpochTime());
-        Block lastBlock = lookupBlockchain().getLastBlock();
-        if (lastBlock != null) { // TODO: YL I hope that is temporary decision to prevent NPE
+        if (lookupBlockchain().isInitialized()) {
+            Block lastBlock = lookupBlockchain().getLastBlock();
             response.put("lastBlock", lastBlock.getStringId());
             response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
             response.put("numberOfBlocks", lastBlock.getHeight() + 1);
+            Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
+            response.put("shardInitialBlock", shardInitialBlock.getId());
+            response.put("lastShardHeight", shardInitialBlock.getHeight());
         } else {
             response.put("lastBlock", "-1");
             response.put("cumulativeDifficulty", "-1");
             response.put("numberOfBlocks", "-1");
+            response.put("shardInitialBlock", "-1");
+            response.put("lastShardHeight", "-1");
         }
         BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         Peer lastBlockchainFeeder = blockchainProcessor.getLastBlockchainFeeder();
@@ -88,7 +90,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("accountPrefix", blockchainConfig.getAccountPrefix());
         response.put("projectName", blockchainConfig.getProjectName());
         JSONArray servicesArray = new JSONArray();
-        Peers.getServices().forEach(service -> servicesArray.add(service.name()));
+        lookupPeersService().getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);
         if (APIProxy.isActivated()) {
             String servingPeer = APIProxy.getInstance().getMainPeerAnnouncedAddress();
@@ -99,7 +101,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         }
         response.put("isLightClient", propertiesHolder.isLightClient());
         response.put("maxAPIRecords", API.maxRecords);
-        response.put("blockchainState", Peers.getMyBlockchainState());
+        response.put("blockchainState", lookupPeersService().getMyBlockchainState());
         return response;
     }
 

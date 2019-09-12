@@ -60,6 +60,19 @@ import java.util.StringJoiner;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
@@ -67,7 +80,7 @@ public final class ParameterParser {
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    protected static TimeService timeService = CDI.current().select(TimeService.class).get();
 
     private static AccountService accountService = CDI.current().select(AccountService.class).get();
     private static AccountPublicKeyService accountPublicKeyService = CDI.current().select(AccountPublicKeyService.class).get();

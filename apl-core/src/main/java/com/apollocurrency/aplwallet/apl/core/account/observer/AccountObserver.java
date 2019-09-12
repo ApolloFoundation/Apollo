@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
@@ -57,16 +58,16 @@ public class AccountObserver {
     }
 
     public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        if (accountPublicKeyService.getPublicKeyCache() != null) {
+        if (accountPublicKeyService.isCacheEnabled()) {//TODO: make cache injectable
             accountPublicKeyService.getPublicKeyCache().clear();
         }
     }
 
     public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
         log.trace("Catch event (BLOCK_POPPED) {}", block);
-        if (accountPublicKeyService.getPublicKeyCache() != null) {
+        if (accountPublicKeyService.isCacheEnabled()) {
             accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
-            block.getTransactions().forEach(transaction -> {
+            block.getOrLoadTransactions().forEach(transaction -> {
                 accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));
                 if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
                     accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getRecipientId()));
@@ -116,7 +117,7 @@ public class AccountObserver {
                     }
                 }
             }
-            accountService.save(lessor);
+            accountService.update(lessor);
         }
     }
 
@@ -130,4 +131,21 @@ public class AccountObserver {
         accountLedgerService.clearEntries();
     }
 
+    public void onLogLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_ENTRY) LedgerEntry entry ){
+        log.trace("Catch event (LOG_ENTRY) {}", entry);
+        if (accountLedgerService.mustLogEntry(entry.getAccountId(), false)) {
+            accountLedgerService.logEntry(entry);
+        }else{
+            log.trace("The account {} mustn't be tracked", entry.getAccountId());
+        }
+    }
+
+    public void onLogUnconfirmedLedgerEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY) LedgerEntry entry ){
+        log.trace("Catch event (LOG_UNCONFIRMED_ENTRY) {}", entry);
+        if (accountLedgerService.mustLogEntry(entry.getAccountId(), true)) {
+            accountLedgerService.logEntry(entry);
+        }else{
+            log.trace("The account {} mustn't be tracked", entry.getAccountId());
+        }
+    }
 }

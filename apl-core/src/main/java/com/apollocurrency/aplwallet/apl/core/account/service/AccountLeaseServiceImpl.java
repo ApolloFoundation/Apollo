@@ -11,15 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -62,11 +61,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
 
     @Override
     public List<AccountLease> getLeaseChangingAccounts(int height) {
-        List<AccountLease> result = new ArrayList<>();
-        try(DbIterator<AccountLease> leases = accountLeaseTable.getLeaseChangingAccounts(height)) {
-            leases.forEachRemaining(result::add);
-        }
-        return result;
+        return toList(accountLeaseTable.getLeaseChangingAccounts(height));
     }
 
     @Override

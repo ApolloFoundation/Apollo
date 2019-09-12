@@ -18,6 +18,8 @@ public interface AccountPublicKeyService {
 
     int getCount();
 
+    boolean isCacheEnabled();
+
     Map<DbKey, byte[]> getPublicKeyCache();
 
     byte[] getPublicKey(long id);

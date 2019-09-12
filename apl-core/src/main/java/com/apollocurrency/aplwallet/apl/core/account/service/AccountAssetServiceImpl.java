@@ -12,14 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
@@ -35,16 +35,18 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     private AccountService accountService;
     private Event<Account> accountEvent;
     private Event<AccountAsset> accountAssetEvent;
-    private AccountLedgerService accountLedgerService;
+    private Event<LedgerEntry> logLedgerEvent;
+    private AssetDividendService assetDividendService;
 
     @Inject
-    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, AccountLedgerService accountLedgerService) {
+    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, Event<LedgerEntry> logLedgerEvent, AssetDividendService assetDividendService) {
         this.blockchain = blockchain;
         this.accountAssetTable = accountAssetTable;
         this.accountService = accountService;
         this.accountEvent = accountEvent;
         this.accountAssetEvent = accountAssetEvent;
-        this.accountLedgerService = accountLedgerService;
+        this.logLedgerEvent = logLedgerEvent;
+        this.assetDividendService = assetDividendService;
     }
 
     @Override
@@ -54,20 +56,12 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
-        List<AccountAsset> accountAssets = new ArrayList<>();
-        try (DbIterator<AccountAsset> iterator = accountAssetTable.getAssetAccounts(assetId, height, from, to)) {
-            iterator.forEachRemaining(accountAssets::add);
-        }
-        return accountAssets;
+        return accountAssetTable.getAssetAccounts(assetId, height, from, to);
     }
 
     @Override
     public List<AccountAsset> getAssetAccounts(Account account, int from, int to) {
-        List<AccountAsset> result = new ArrayList<>();
-        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(account.getId(), from, to)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return accountAssetTable.getAccountAssets(account.getId(), from, to);
     }
 
     @Override
@@ -77,11 +71,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssetAccounts(long accountId, int height, int from, int to) {
-        List<AccountAsset> result = new ArrayList<>();
-        try(DbIterator<AccountAsset> iterator = accountAssetTable.getAccountAssets(accountId, height, from, to)) {
-            iterator.forEachRemaining(result::add);
-        }
-        return result;
+        return accountAssetTable.getAccountAssets(accountId, height, from, to);
     }
 
     @Override
@@ -155,15 +145,14 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setQuantityATU(assetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
-        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
-            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityATU, assetBalance, blockchain.getLastBlock()));
-        }
+        LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
+                quantityATU, assetBalance, blockchain.getLastBlock());
+        logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 
     @Override
@@ -179,7 +168,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
         //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -188,10 +177,18 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (event == null) {
             return;
         }
-        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
-            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
-                    LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock()));
+        LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
+                quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock());
+        logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
+    }
+
+    @Override
+    public void update(AccountAsset accountAsset) {
+        AccountService.checkBalance(accountAsset.getAccountId(), accountAsset.getQuantityATU(), accountAsset.getUnconfirmedQuantityATU());
+        if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
+            accountAssetTable.insert(accountAsset);
+        } else {
+            accountAssetTable.delete(accountAsset);
         }
     }
 
@@ -212,7 +209,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
-        accountAssetTable.save(accountAsset);
+        update(accountAsset);
         //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
@@ -222,17 +219,13 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
+        LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
+                quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock());
+        logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
 
-        if (accountLedgerService.mustLogEntry(account.getId(), true)) {
-            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
-                    LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                    quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock()));
-        }
-        if (accountLedgerService.mustLogEntry(account.getId(), false)) {
-            accountLedgerService.logEntry(new LedgerEntry(event, eventId, account.getId(),
-                    LedgerHolding.ASSET_BALANCE, assetId,
-                    quantityATU, assetBalance, blockchain.getLastBlock()));
-        }
+        entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
+                quantityATU, assetBalance, blockchain.getLastBlock());
+        logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 
     @Override
@@ -250,6 +243,6 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             }
         }
         accountService.addToBalanceATM(account, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDividend);
-        AssetDividend.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
+        assetDividendService.addAssetDividend(transactionId, attachment, totalDividend, numAccounts);
     }
 }

@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -36,7 +36,7 @@ public abstract class Payment extends TransactionType {
     @Override
     public final void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (recipientAccount == null) {
-            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccount(Genesis.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
+            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(lookupAccountService().getAccount(GenesisImporter.CREATOR_ID), getLedgerEvent(), transaction.getId(), transaction.getAmountATM());
         }
     }
 

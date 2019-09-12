@@ -119,7 +119,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
      * Should be removed asap
      */
     @Deprecated
-    public final T newEntity(DbKey dbKey) {
+    public T newEntity(DbKey dbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean cache = dataSource.isInTransaction();
         if (cache) {
@@ -135,11 +135,11 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         return t;
     }
 
-    public final T get(DbKey dbKey) {
+    public T get(DbKey dbKey) {
         return get(dbKey, true);
     }
 
-    public final T get(DbKey dbKey, boolean cache) {
+    public T get(DbKey dbKey, boolean cache) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (cache && dataSource.isInTransaction()) {
             T t = (T) dataSource.getCache(table).get(dbKey);
@@ -157,7 +157,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    public final T get(DbKey dbKey, int height) {
+    public T get(DbKey dbKey, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return get(dbKey);
         }
@@ -179,7 +179,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    public final T getBy(DbClause dbClause) {
+    public T getBy(DbClause dbClause) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table
@@ -191,7 +191,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    public final T getBy(DbClause dbClause, int height) {
+    public T getBy(DbClause dbClause, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return getBy(dbClause);
         }

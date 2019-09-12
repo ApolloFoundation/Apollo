@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
@@ -35,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -156,7 +158,19 @@ public class DataSourceWrapper implements DataSource {
      * Constructor creates internal DataSource.
      * @param dbVersion database version related information
      */
-    public Jdbi init(DbVersion dbVersion) {
+    public Jdbi initWithJdbi(DbVersion dbVersion) {
+        initDatasource(dbVersion);
+        Jdbi jdbi = initJdbi();
+        setInitialzed();
+        return jdbi;
+    }
+
+    private void setInitialzed() {
+        initialized = true;
+        shutdown = false;
+    }
+
+    private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -185,7 +199,9 @@ public class DataSourceWrapper implements DataSource {
         }
         log.debug("Before starting Db schema init {}...", dbVersion);
         dbVersion.init(this);
+    }
 
+    private Jdbi initJdbi() {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
@@ -196,19 +212,23 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OfferStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
+        jdbi.registerArgument(new ShardStateFactory());
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
-            Integer result = handle.createQuery("select X from dual;")
-                    .mapTo(Integer.class).findOnly();
+            Optional<Integer> result = handle.createQuery("select X from dual;")
+                    .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {
             log.error("Error on opening database connection", e);
             throw e;
         }
-        initialized = true;
-        shutdown = false;
         return jdbi;
+    }
+
+    public void init(DbVersion dbVersion) {
+        initDatasource(dbVersion);
+        setInitialzed();
     }
 
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
@@ -231,6 +251,7 @@ public class DataSourceWrapper implements DataSource {
     }
 
     public void shutdown() {
+        long start = System.currentTimeMillis();
         if (!initialized) {
             return;
         }
@@ -240,10 +261,10 @@ public class DataSourceWrapper implements DataSource {
             stmt.execute("SHUTDOWN COMPACT");
             shutdown = true;
             initialized = false;
+            con.close();
             dataSource.close();
 //            dataSource.dispose();
-            log.trace("Database shutdown completed");
-
+            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
@@ -256,7 +277,9 @@ public class DataSourceWrapper implements DataSource {
     public void analyzeTables() {
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
+            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
             stmt.execute("ANALYZE");
+            log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

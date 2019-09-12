@@ -20,8 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
@@ -52,18 +54,24 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
-import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.MultipartConfigElement;
-import java.io.File;
-import java.math.BigInteger;
-import java.net.*;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import org.jboss.weld.environment.servlet.Listener;
 
 
 @Singleton
@@ -234,7 +242,7 @@ public final class API {
                 gzipHandler.setExcludedPaths("/apl", "/apl-proxy");
             }
             gzipHandler.setIncludedMethods("GET", "POST");
-            gzipHandler.setMinGzipSize(Peers.MIN_COMPRESS_SIZE);
+            gzipHandler.setMinGzipSize(PeersService.MIN_COMPRESS_SIZE);
             gzipHandler.addExcludedPaths("/blocks");
             apiHandler.setGzipHandler(gzipHandler);
 

@@ -7,13 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.account.service;
 import com.apollocurrency.aplwallet.apl.core.account.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
-import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -38,7 +36,7 @@ public interface AccountService {
 
     Account addOrGetAccount(long id, boolean isGenesis);
 
-    void save(Account account);
+    void update(Account account);
 
     List<Block> getAccountBlocks(long accountId, int timestamp, int from, int to);
 
@@ -59,7 +57,7 @@ public interface AccountService {
     List<Account> getLessors(Account account, int height);
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
-        if (accountId == Genesis.CREATOR_ID) {
+        if (accountId == GenesisImporter.CREATOR_ID) {
             return;
         }
         if (confirmed < 0) {
@@ -91,7 +89,7 @@ public interface AccountService {
 
     long getTotalNumberOfAccounts();
 
-    DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts);
+    List<Account> getTopHolders(int numberOfTopAccounts);
 
     long getTotalSupply();
 

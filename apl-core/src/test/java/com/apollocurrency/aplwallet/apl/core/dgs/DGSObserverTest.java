@@ -8,15 +8,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.*;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.*;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -37,9 +44,11 @@ import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -71,13 +80,12 @@ public class DGSObserverTest {
             DGSFeedbackTable.class,
             DGSGoodsTable.class,
             DGSTagTable.class,
-            AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
             DGSObserver.class,
             DerivedDbTablesRegistryImpl.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            AccountServiceImpl.class, AccountTable.class,
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            AccountServiceImpl.class, EntityProducer.class, AccountTable.class,
             AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class,
             BlockchainConfig.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -86,10 +94,11 @@ public class DGSObserverTest {
             .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
 //            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .build();
@@ -101,9 +110,7 @@ public class DGSObserverTest {
     @Inject
     Event<Block> event;
 
-
     DGSTestData dtd;
-
 
     @BeforeEach
     public void setUp() {
@@ -118,6 +125,7 @@ public class DGSObserverTest {
         doReturn(dtd.PURCHASE_2.getDeadline() + 60).when(lastBlock).getTimestamp();
         doReturn(1L).when(lastBlock).getPreviousBlockId();
         doReturn(prevBlock).when(blockchain).getBlock(1L);
+        doReturn(lastBlock).when(blockchain).getLastBlock();
         doReturn(1_000_000).when(lastBlock).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(lastBlock);
@@ -146,6 +154,7 @@ public class DGSObserverTest {
         DGSPurchase purchase = service.getPurchase(dtd.PURCHASE_2.getId());
         assertEquals(dtd.PURCHASE_2, purchase);
     }
+
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
         return new BlockEventBinding() {
             @Override
@@ -154,6 +163,7 @@ public class DGSObserverTest {
             }
         };
     }
+
     private void verifyAccountBalance(long accountId, Long unconfirmedBalance, Long balance) {
         Account account = accountService.getAccount(accountId);
         if (balance != null) {

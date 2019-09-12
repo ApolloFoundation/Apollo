@@ -24,9 +24,7 @@ import java.util.Objects;
  */
 @Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-
         private Blockchain blockchain;
 
         public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {

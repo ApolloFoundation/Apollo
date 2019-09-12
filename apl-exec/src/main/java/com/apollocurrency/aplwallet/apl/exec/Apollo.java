@@ -3,18 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
-import javax.enterprise.inject.spi.CDI;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
@@ -34,11 +22,12 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
-import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.Updater;
@@ -65,6 +54,18 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -96,22 +97,28 @@ public class Apollo {
     private static AplContainer container;
 
     private PropertiesHolder propertiesHolder;
+    private TaskDispatchManager taskDispatchManager;
     private static AplCoreRuntime aplCoreRuntime;
     
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
-        String packageName = "com.apollocurrency.aplwallet.apl";
-        if (logLevel > VALID_LOG_LEVELS.length - 1 || logLevel<0) {
+        // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
+        String packageName = "com.apollocurrency.aplwallet";
+        if(logLevel<0){
+            return;
+        }
+        if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
-        System.out.println(packageName + " current logger level: " + logger.getLevel()
-                + " New level: " + VALID_LOG_LEVELS[logLevel]);
+            ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
+            System.out.println(packageName + " current logger level: " + logger.getLevel()
+                    + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
-        logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+            logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
+        // otherwise we want to load usual logback.xml settings
     }
 
     public static boolean saveStartParams(String[] argv, String pidPath, ConfigDirProvider configDirProvider) {
@@ -225,12 +232,14 @@ public class Apollo {
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
         Properties props = propertiesLoader.load();
-        if(args.noShardImport){
-            props.setProperty("apl.noshardimport", "true");
+//over-write config options from command line if set
+        if(args.noShardImport!=null){
+            props.setProperty("apl.noshardimport", ""+args.noShardImport);
         }
-        if(args.noShardCreate){
-            props.setProperty("apl.noshardcreate", "true");
-        }        
+        if(args.noShardCreate!=null){
+            props.setProperty("apl.noshardcreate", ""+args.noShardCreate);
+        }
+
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
@@ -238,7 +247,9 @@ public class Apollo {
         //init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
-        setLogLevel(args.debug);
+        if(args.debug!=CmdLineArgs.DEFAULT_DEBUG_LEVEL){
+           setLogLevel(args.debug);
+        }
 
 //check webUI
         System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
@@ -262,8 +273,9 @@ public class Apollo {
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
                 .recursiveScanPackages(AplCore.class)
                 .recursiveScanPackages(PropertiesHolder.class)
+                .recursiveScanPackages(TaskDispatchManager.class)
                 .recursiveScanPackages(Updater.class)
-                .recursiveScanPackages(ServerInfoController.class)
+                .recursiveScanPackages(NodeInfoController.class)
                 .recursiveScanPackages(ServerInfoService.class)
                 .recursiveScanPackages(AccountService.class)
                 .recursiveScanPackages(BaseDTO.class)
@@ -287,16 +299,17 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
+        app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain());
+        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain(), app.propertiesHolder);
         dirProvider = CDI.current().select(DirProvider.class).get();
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder);
+        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder, app.taskDispatchManager);
         Convert2.init(blockchainConfig);
 
         try {

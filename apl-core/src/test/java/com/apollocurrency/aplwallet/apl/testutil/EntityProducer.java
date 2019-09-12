@@ -13,16 +13,22 @@ import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
+import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import java.util.Set;
 import java.util.UUID;
 
 public class EntityProducer {
 
-
+    @Produces @Named("CREATOR_ID")
+    public long getCreatorId(){ //only for tests, instead of using the GenesisImporter component.
+        return AccountTestData.CREATOR_ID;
+    }
     public static Peer createPeer(final String host, final String announcedAddress, boolean active, final long supportServices){
         final PeerState state = active ? PeerState.CONNECTED: PeerState.NON_CONNECTED;
 
@@ -143,7 +149,7 @@ public class EntityProducer {
             }
 
             @Override
-            public void deactivate() {
+            public void deactivate(String reason) {
 
             }
 
@@ -174,16 +180,6 @@ public class EntityProducer {
 
             @Override
             public boolean isInbound() {
-                return false;
-            }
-
-            @Override
-            public boolean isInboundWebSocket() {
-                return false;
-            }
-
-            @Override
-            public boolean isOutboundWebSocket() {
                 return false;
             }
 
@@ -223,8 +219,8 @@ public class EntityProducer {
             }
 
             @Override
-            public void handshake(UUID targetChainId) {
-               
+            public boolean handshake(UUID targetChainId) {
+               return true;
             }
 
             @Override
@@ -235,6 +231,26 @@ public class EntityProducer {
             @Override
             public PeerTrustLevel getTrustLevel() {
                 return PeerTrustLevel.NOT_TRUSTED;
+            }
+
+            @Override
+            public boolean isOutbound() {
+                return false;
+            }
+
+            @Override
+            public long getServices() {
+                return 0L;
+            }
+
+            @Override
+            public boolean isInboundSocket() {
+                return false;
+            }
+
+            @Override
+            public boolean isOutboundSocket() {
+                return false;
             }
 
         };

@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.35.5");
+    public static final Version VERSION = new Version("1.36.6");
 
 
     public static final String APPLICATION = "Apollo";
@@ -33,7 +33,9 @@ public final class Constants {
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
 
     public static final long ONE_APL = 100000000;
-
+    
+    public static final int ONE_DAY_SECS=24*3600;
+    
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
@@ -128,7 +130,11 @@ public final class Constants {
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     public static final int DEFAULT_PEER_PORT = 47874;
-
+    public static final int PEER_RECONNECT_ATTMEPT_DELAY=60; //now 1 min, was 600 or 10 min 
+    /**blacklist on 1/10 of this number and forget peer if it is can not be connected such number of times*/
+    public static final int PEER_RECONNECT_ATTMEPTS_MAX=80;
+    public static final int PEER_UPDATE_INTERVAL=1800; //now 30 min, was 3600, one hour
+    
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

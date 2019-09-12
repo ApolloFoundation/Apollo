@@ -23,8 +23,8 @@ import java.util.UUID;
  */
 public class ShardDataSourceCreateHelper {
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
-    public static final int MAX_CACHE_SIZE = 16384; // 16mb
-    public static final int MAX_CONNECTIONS = 30;
+    public static final int MAX_CACHE_SIZE = 16 * 1024; // 16mb
+    public static final int MAX_CONNECTIONS = 60;
     public static final int MAX_MEMORY_ROWS = 10_000;
 
     private final DatabaseManager databaseManager;
@@ -66,6 +66,7 @@ public class ShardDataSourceCreateHelper {
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
         checkGenerateShardName();
         log.debug("Create new SHARD '{}'", shardName);
+//        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
         DbProperties shardDbProperties = null;
         try {
             shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
@@ -102,4 +103,15 @@ public class ShardDataSourceCreateHelper {
         shardName = new ShardNameHelper().getShardNameByShardId(shardId, chainId);
         return shardName;
     }
+
+    private static void logStackTrace(String initString, StackTraceElement[] stackTrace) {
+        StringBuilder sb = new StringBuilder(512);
+        sb.append(initString).append('\n');
+        for (int i=1; i<stackTrace.length; i++) {
+            String line = stackTrace[i].toString();
+            sb.append("\t\t").append(line).append('\n');
+        }
+        log.debug(sb.toString());
+    }
+
 }

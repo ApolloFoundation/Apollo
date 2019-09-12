@@ -4,43 +4,69 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeNetworkingInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import lombok.Setter;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import lombok.Setter;
 
 /**
  *
  * @author alukin@gmail.com
  */
-@Singleton
+@ApplicationScoped
 public class BackendControlService {
     
-    @Setter
-    private AplAppStatus appStatus;
+    @Inject @Setter
+    AplAppStatus appStatus;
     
-    @Setter
-    private PropertiesHolder ph;
+    @Inject @Setter    
+    AdminPasswordVerifier apv;
 
-    @Inject
-    public BackendControlService(AplAppStatus appStatus, PropertiesHolder ph) {
-        this.appStatus = appStatus;
-        this.ph = ph;
-    }
+    @Inject @Setter
+    Blockchain blockchain;
 
-    public NodeHWStatusInfo getHWStatus(){
-        NodeHWStatusInfo res = new NodeHWStatusInfo();
+    @Inject @Setter
+    private Converter<Peer, PeerDTO> peerConverter;
+
+    @Inject @Setter
+    private Converter<PeerInfo, PeerDTO> peerInfoConverter;
+
+    @Inject @Setter
+    private NetworkService networkService;
+
+    @Inject @Setter
+    private BlockDao blockDao;
+
+    @Inject @Setter
+    private DatabaseManager databaseManager;
+
+    public NodeStatusInfo getNodeStatus(){
+        NodeStatusInfo res = new NodeStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
         res.threadsRunning=java.lang.Thread.activeCount();
         res.cpuCount = Runtime.getRuntime().availableProcessors();
@@ -82,5 +108,32 @@ public class BackendControlService {
        }
        return res;
     }
+    
+   //TODO: use AdminPasswordVerifier component 
+    public boolean isAdminPasswordOK(HttpServletRequest request){
+        boolean res = apv.checkPassword(request);
+        return res;
+    }
 
+    public NodeHealthInfo getNodeHealth(){
+        NodeHealthInfo info = new NodeHealthInfo();
+        info.dbOK = chekDataBaseOK();
+        info.blockchainHeight = blockchain.getHeight();
+        info.usedDbConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        return info;
+    }
+
+    public NodeNetworkingInfo getNetworkingInfo() {
+        NodeNetworkingInfo info = new NodeNetworkingInfo();
+        info.inboundPeers = networkService.getInboundPeers().size();
+        info.outboundPeers = networkService.getOutboundPeers().size();
+        info.myPeerInfo = peerInfoConverter.convert(networkService.getMyPeerInfo());
+        return info;
+    }
+
+    private boolean chekDataBaseOK(){
+        Block b = blockDao.findLastBlock();
+        boolean res = b!=null;
+        return res;
+    }
 }

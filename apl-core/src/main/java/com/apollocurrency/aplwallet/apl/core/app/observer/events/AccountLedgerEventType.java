@@ -10,5 +10,6 @@ package com.apollocurrency.aplwallet.apl.core.app.observer.events;
 public enum AccountLedgerEventType {
     ADD_ENTRY,
     COMMIT_ENTRIES,
-    CLEAR_ENTRIES
+    CLEAR_ENTRIES,
+    LOG_ENTRY, LOG_UNCONFIRMED_ENTRY
 }

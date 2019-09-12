@@ -6,14 +6,27 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import lombok.Setter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Objects;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  *
@@ -43,14 +56,19 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         return accountDbKeyFactory.newKey(a);
     }
 
+    @Setter //for tests only
+    private long creatorId;
+
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
 
     @Inject
-    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+    //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
+    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/) {
         super("account", accountDbKeyFactory, false);
-        this.blockchain = blockchain;
-        this.blockchainConfig = blockchainConfig;
+        this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL.");
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
+        this.creatorId = GenesisImporter.CREATOR_ID;
     }
 
     @Override
@@ -68,7 +86,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             pstmt.setLong(++i, account.getForgedBalanceATM());
             DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
             pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, account.getHeight());
             pstmt.executeUpdate();
         }
     }
@@ -91,33 +109,43 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
         }
     }
- 
-    public static long getTotalSupply(Connection con) throws SQLException {
-        try (
-                PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
+
+    public long getTotalSupply() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
+            PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
         ) {
             int i = 0;
-            pstmt.setLong(++i, Genesis.CREATOR_ID);
+            pstmt.setLong(++i, creatorId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getLong("total_supply");
                 } else {
-                    throw new RuntimeException("Cannot retrieve total_amount: no data");
+                    throw new RuntimeException("Cannot retrieve total_supply: no data");
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public  DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) throws SQLException {
+    public List<Account> getTopHolders(int numberOfTopAccounts) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM account WHERE balance > 0 AND latest = true " +
-                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1));
+                            " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1))
+        ){
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
-            return getManyBy(con, pstmt, false);
+            return toList(getManyBy(con, pstmt, false));
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
-    public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
-        try (
+    public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
                 PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
                                 " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
@@ -130,20 +158,25 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                     throw new RuntimeException("Cannot retrieve total_amount: no data");
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }  
 
-    public static long getTotalNumberOfAccounts(Connection con) throws SQLException {
-        try (
-                Statement stmt =con.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
-        ) {
+    public long getTotalNumberOfAccounts() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try(Connection con = dataSource.getConnection();
+            Statement stmt =con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS number_of_accounts FROM account WHERE balance > 0 AND latest = true ")
+        ){
             if (rs.next()) {
                 return rs.getLong("number_of_accounts");
             } else {
                 throw new RuntimeException("Cannot retrieve number of accounts: no data");
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
-   
+
 }

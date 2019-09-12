@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
@@ -14,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -43,6 +45,8 @@ public class ShardObserver {
     private final ShardDao shardDao;
     private final Event<Boolean> trimEvent;
     private volatile boolean isSharding;
+    private PeerHttpServer peerHttpServer;
+    private final Blockchain blockchain;
     private final PropertiesHolder propertiesHolder;
     public final static long LOWER_SHARDING_MEMORY_LIMIT=1536*1024*1024; //1.5GB
     
@@ -51,6 +55,7 @@ public class ShardObserver {
                          ShardMigrationExecutor shardMigrationExecutor,
                          ShardDao shardDao, ShardRecoveryDao recoveryDao,
                          PropertiesHolder propertiesHolder,
+                         Blockchain blockchain,
                          Event<Boolean> trimEvent) {
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchain processor is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -59,6 +64,8 @@ public class ShardObserver {
         this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         this.trimEvent = Objects.requireNonNull(trimEvent, "TrimEvent should not be null");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "TrimEvent should not be null");
+        this.peerHttpServer=peerHttpServer;
+        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
 
@@ -73,8 +80,11 @@ public class ShardObserver {
                 future.get();
             }
         }
-        catch (InterruptedException | ExecutionException e) {
-            log.error(e.toString(), e);
+        catch (InterruptedException ex){
+            log.debug("Interrupted");
+            Thread.currentThread().interrupt();
+        }catch(ExecutionException e){
+            log.error("Execution failed", e);
         }
     }
 
@@ -102,14 +112,15 @@ public class ShardObserver {
                             isSharding = true;
                             updateTrimConfig(false);
                             // quick create records for new Shard and Recovery process for later use
-                            shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
+                            shardRecoveryDao.saveShardRecovery(
+                                    ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
                             long nextShardId = shardDao.getNextShardId();
                             Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
                             shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
 
                             completableFuture = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, blockchainHeight))
                                     .thenApply((result) -> {
-                                        blockchainProcessor.updateInitialBlockId();
+                                        blockchain.setShardInitialBlock(blockchain.findFirstBlock());
                                         return result;
                                     })
                                     .handle((result, ex) -> {
@@ -157,7 +168,7 @@ public class ShardObserver {
         }
         return res;
     }
-    
+
     public boolean performSharding(int minRollbackHeight, long shardId, int blockchainHeight) {
         boolean doSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate",false);
         if(!doSharding){

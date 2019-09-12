@@ -28,14 +28,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -46,7 +51,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
@@ -59,8 +63,12 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
@@ -75,6 +83,10 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -102,6 +114,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 
@@ -117,6 +130,8 @@ class ShardMigrationExecutorTest {
     static PropertiesHolder propertiesHolder = initPropertyHolder();
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
+    private TransactionProcessor transactionProcessor = mock(TransactionProcessorImpl.class);
+    private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
 
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
@@ -137,23 +152,29 @@ class ShardMigrationExecutorTest {
             ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
             ExcludedTransactionDbIdExtractor.class,
             DGSGoodsTable.class,
-            GeneratorIdsExtractor.class,
+            PrevBlockInfoExtractor.class,
             PhasingPollTable.class,
             FullTextConfigImpl.class,
             DerivedTablesRegistry.class,
-            ShardEngineImpl.class, CsvExporterImpl.class, ShardDaoJdbcImpl.class, ZipImpl.class, AplAppStatus.class,
-            EpochTime.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
+            ShardEngineImpl.class, CsvExporterImpl.class, ZipImpl.class, AplAppStatus.class,
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
             AplAppStatus.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))
+            .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
+            .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(Mockito.mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+            .addBeans(MockBean.of(transactionProcessor, TransactionProcessorImpl.class))
+            .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
+            .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
             .build();
     @Inject
     private ShardEngine shardEngine;
@@ -266,15 +287,16 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
             byte[] shardHash = "0123456780".getBytes(); // just an example
             createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-                    new ShardAddConstraintsSchemaVersion(), shardHash, new Long[]{1L, 2L});
+                    new ShardAddConstraintsSchemaVersion(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[] {3, 4}).prevBlockTimestamps(new Integer[] {5, 6}).build());
             state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
             assertEquals(SHARD_SCHEMA_FULL, state);
-
 
             Shard shard = shardDao.getShardById(shardId);
             assertNotNull(shard);
             assertArrayEquals(shardHash, shard.getShardHash());
             assertArrayEquals(new long[] {1, 2}, shard.getGeneratorIds());
+            assertArrayEquals(new int[] {3, 4}, shard.getBlockTimeouts());
+            assertArrayEquals(new int[] {5, 6}, shard.getBlockTimestamps());
 
 
 //6-7.      // update secondary block + transaction indexes
@@ -293,14 +315,14 @@ class ShardMigrationExecutorTest {
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-        List<String> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME);
+        List<TableInfo> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
 
         CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);
             assertEquals(CSV_EXPORT_FINISHED, state);
 
 //10-11.    // archive CSV into zip
-            ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(4L, shardEngine);
+            ZipArchiveCommand zipArchiveCommand = new ZipArchiveCommand(4L, tables, shardEngine);
             state = shardMigrationExecutor.executeOperation(zipArchiveCommand);
             assertEquals(ZIP_ARCHIVE_FINISHED, state);
 
@@ -335,7 +357,7 @@ class ShardMigrationExecutorTest {
         executeFrom(8000, 4L, DATA_REMOVED_FROM_MAIN);
         Shard lastShard = shardDao.getLastShard();
         assertNotNull(lastShard);
-        assertEquals(ShardConstants.SHARD_PERCENTAGE_FULL, lastShard.getShardState());
+        assertEquals(ShardState.FULL, lastShard.getShardState());
     }
 
     private void executeFrom(int height, long shardId, MigrateState state) {

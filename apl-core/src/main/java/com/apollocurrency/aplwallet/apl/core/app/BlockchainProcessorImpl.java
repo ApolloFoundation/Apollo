@@ -20,23 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.*;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
-import com.apollocurrency.aplwallet.apl.core.transaction.*;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
@@ -44,10 +61,19 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.util.*;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -62,28 +88,52 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Singleton
 public class BlockchainProcessorImpl implements BlockchainProcessor {
 
+    private static final String BACKGROUND_SERVICE_NAME = "BlockchainService";
+
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private DexService dexService;
+
+    private PeersService peers;
+    private final DexService dexService;
     private BlockchainConfigUpdater blockchainConfigUpdater;
-    //private AccountLedgerService accountLedgerService;
 
     private FullTextSearchService fullTextSearchProvider;
 
+    private TaskDispatchManager taskDispatchManager;
     private Blockchain blockchain;
     private TransactionProcessor transactionProcessor;
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private DatabaseManager databaseManager;
+    private TimeService timeService = CDI.current().select(TimeService.class).get();
+    private final DatabaseManager databaseManager;
 
-    private final ExecutorService networkService = Executors.newCachedThreadPool(new ThreadFactoryImpl("BlockchainProcessor:networkService"));
+    private final ExecutorService networkService = Executors.newCachedThreadPool(new NamedThreadFactory("BlockchainProcessor:networkService"));
 
 
     private final int defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
@@ -107,6 +157,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardDownloader shardDownloader;
+    private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
 
@@ -114,7 +165,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
-    private volatile long initialBlock;
 
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
@@ -133,8 +183,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
+    private PeersService lookupPeers() {
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
+        return peers;
+    }
 
-    private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
+    //private final Runnable getMoreBlocksThread = new GetMoreBlocksThread();
 
 
     /**
@@ -149,12 +203,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 // Locate an archive peer
                 //
-                List<Peer> peers = Peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+                List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                         !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
-                while (!peers.isEmpty()) {
-                    Peer chkPeer = peers.get(ThreadLocalRandom.current().nextInt(peers.size()));
+                while (!peersList.isEmpty()) {
+                    Peer chkPeer = peersList.get(ThreadLocalRandom.current().nextInt(peersList.size()));
                     if (chkPeer.getState() != PeerState.CONNECTED) {
-                        Peers.connectPeer(chkPeer);
+                        lookupPeers().connectPeer(chkPeer);
                     }
                     if (chkPeer.getState() == PeerState.CONNECTED) {
                         peer = chkPeer;
@@ -199,7 +253,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     request.put("requestType", "getTransactions");
                     request.put("transactionIds", requestList);
                     request.put("chainId", blockchainConfig.getChain().getChainId());
-                    JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    JSONObject response;
+                    try {
+                        response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    } catch (PeerNotConnectedException ex) {
+                        response = null;
+                    }
                     if (response == null) {
                         return;
                     }
@@ -240,7 +299,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
-                                   ShardImporter importer) {
+                                   ShardImporter importer, PrunableMessageService prunableMessageService,
+                                   TaskDispatchManager taskDispatchManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.ledgerEvent = ledgerEvent;
@@ -257,37 +317,57 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.aplAppStatus = aplAppStatus;
         this.shardDownloader = shardDownloader;
         this.shardImporter = importer;
+        this.prunableMessageService = prunableMessageService;
+        this.taskDispatchManager = taskDispatchManager;
 
-        ThreadPool.runBeforeStart("BlockchainInit", () -> {
+        configureBackgroundTasks();
 
-            continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
-            trimService.init(blockchain.getHeight()); // try to perform all not performed trims
-            if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
-                scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
-            } else {
-                boolean rescan;
-                boolean validate;
-                int height;
-                try (Connection con = lookupDataSource().getConnection();
-                     Statement stmt = con.createStatement();
-                     ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
-                    rs.next();
-                    rescan = rs.getBoolean("rescan");
-                    validate = rs.getBoolean("validate");
-                    height = rs.getInt("height");
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
-                }
-                if (rescan) {
-                    scan(height, validate);
-                }
-            }
-        }, false);
+    }
+
+    private void configureBackgroundTasks() {
+
+        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+
+        Task blockChainInitTask = Task.builder()
+                .name("BlockchainInit")
+                .task(() -> {
+                    continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
+                    trimService.init(blockchain.getHeight()); // try to perform all not performed trims
+                    if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
+                        scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
+                    } else {
+                        boolean rescan;
+                        boolean validate;
+                        int height;
+                        try (Connection con = lookupDataSource().getConnection();
+                             Statement stmt = con.createStatement();
+                             ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
+                            rs.next();
+                            rescan = rs.getBoolean("rescan");
+                            validate = rs.getBoolean("validate");
+                            height = rs.getInt("height");
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e.toString(), e);
+                        }
+                        if (rescan) {
+                            scan(height, validate);
+                        }
+                    }
+                }).build();
+
+        dispatcher.schedule(blockChainInitTask, TaskOrder.INIT);
+
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
-            ThreadPool.scheduleThread("GetMoreBlocks", getMoreBlocksThread, 250, TimeUnit.MILLISECONDS);
-        }
+            Task moreBlocksTask = Task.builder()
+                    .name("GetMoreBlocks")
+                    .delay(250)
+                    .initialDelay(250)
+                    .task(new GetMoreBlocksThread())
+                    .build();
 
+            dispatcher.schedule(moreBlocksTask, TaskOrder.TASK);
+        }
     }
 
     private FullTextSearchService lookupFullTextSearchProvider() {
@@ -332,29 +412,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public long getInitialBlock() {
-        return initialBlock;
-    }
-
-    @Override
-    public void updateInitialSnapshotBlock() {
-        globalSync.updateLock();
-        try {
-            Block snapshotBlock = blockchain.findLastBlock(); // that block will be latest and first/single ONLY in db
-            log.debug("snapshotBlock imported = {}", snapshotBlock);
-            blockchain.setLastBlock(snapshotBlock);
-            initialBlock = snapshotBlock.getId();
-        } finally {
-            globalSync.updateUnlock();
-        }
-    }
-
-    @Override
-    public void updateInitialBlockId() {
-        initialBlock = blockchain.getShardInitialBlock().getId();
-    }
-
-    @Override
     public void processPeerBlock(JSONObject request) throws AplException {
         globalSync.updateLock();
         try {
@@ -390,13 +447,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 block.getId(),
                                 block.getHeight(),
                                 Convert2.rsAccount(block.getGeneratorId()));
-                        lookupTransactionProcessor().processLater(lastBlock.getTransactions());
+                        lookupTransactionProcessor().processLater(lastBlock.getOrLoadTransactions());
                         log.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
                     }
                     catch (BlockNotAcceptedException e) {
                         log.debug("Replacement block failed to be accepted, pushing back our last block");
                         pushBlock(lastBlock);
-                        lookupTransactionProcessor().processLater(block.getTransactions());
+                        lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                     }
                 }
             }// else ignore the block
@@ -471,7 +528,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             transactionList.forEach(prunableTransaction -> {
                 long id = prunableTransaction.getId();
                 if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                        PrunableMessage.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
+                        prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
                     synchronized (prunableTransactions) {
                         prunableTransactions.add(id);
                     }
@@ -507,9 +564,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!isPruned) {
             return transaction;
         }
-        List<Peer> peers = Peers.getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+        List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                 !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
-        if (peers.isEmpty()) {
+        if (peersList.isEmpty()) {
             log.debug("Cannot find any archive peers");
             return null;
         }
@@ -520,15 +577,20 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         json.put("transactionIds", requestList);
         json.put("chainId", blockchainConfig.getChain().getChainId());
         JSONStreamAware request = JSON.prepareRequest(json);
-        for (Peer peer : peers) {
+        for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
-                Peers.connectPeer(peer);
+                lookupPeers().connectPeer(peer);
             }
             if (peer.getState() != PeerState.CONNECTED) {
                 continue;
             }
             log.debug("Connected to archive peer " + peer.getHost());
-            JSONObject response = peer.send(request, blockchainConfig.getChain().getChainId());
+            JSONObject response;
+            try {
+                response = peer.send(request, blockchainConfig.getChain().getChainId());
+            } catch (PeerNotConnectedException ex) {
+                response = null;
+            }
             if (response == null) {
                 continue;
             }
@@ -585,7 +647,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     public void shutdown() {
         try {
-            ThreadPool.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
+            Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
             getMoreBlocks = false;
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -603,14 +665,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void continuedDownloadOrTryImportGenesisShard() {
-        Block lastBlock = lookupBlockhain().findLastBlock();
+        Block lastBlock = lookupBlockhain().getLastBlock(); // blockchain should be initialized independently
         if (lastBlock != null) {
             // continue blockchain automatically
             log.info("Genesis block already in database");
-            lookupBlockhain().setLastBlock(lastBlock);
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
-            initialBlock = blockchain.getShardInitialBlock().getId();
             log.info("Last block height: " + lastBlock.getHeight());
             setGetMoreBlocks(true); // turn ON blockchain downloading
             scheduleOneScan();
@@ -622,8 +682,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
                     "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
-            // try make delay before Peers are up and running
-            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for Peers initialization
+            // try make delay before PeersService are up and running
+            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
             disableScheduleOneScan();
@@ -659,7 +719,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 */
     }
 
-    private void scheduleOneScan() {
+    public void scheduleOneScan() {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         String scanProperty = optionDAO.get("require-scan");
         if (scanProperty == null) {
@@ -703,7 +763,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
                 block.setPrevious(previousLastBlock);
-                //log.trace("Fire event BEFORE_BLOCK_ACCEPT {}", block);
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
                 addBlock(block);
@@ -721,7 +780,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 dataSource.commit(); // finally close transaction
             }
-            //log.trace("Fire event AFTER_BLOCK_ACCEPT {}", block);
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
         } finally {
             globalSync.writeUnlock();
@@ -730,9 +788,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getTimestamp() >= curTime - 600) {
             log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                     Convert2.rsAccount(block.getGeneratorId()));
-            Peers.sendToSomePeers(block);
+            lookupPeers().sendToSomePeers(block);
         }
-        //log.trace("Fire event BLOCK_PUSHED {}", block);
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
     }
 
@@ -782,7 +839,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long calculatedTotalFee = 0;
         MessageDigest digest = Crypto.sha256();
         boolean hasPrunedTransactions = false;
-        for (Transaction transaction : block.getTransactions()) {
+        for (Transaction transaction : block.getOrLoadTransactions()) {
             if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT) {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
                         + ", current time is " + curTime, block);
@@ -850,19 +907,18 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
             isProcessingBlock = true;
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
-            //log.trace("Fire event BEFORE_BLOCK_APPLY {}", block);
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
             invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
-            for (Transaction transaction : block.getTransactions()) {
+            for (Transaction transaction : block.getOrLoadTransactions()) {
                 try {
                     transactionApplier.apply(transaction);
                     if (transaction.getTimestamp() > fromTimestamp) {
@@ -883,7 +939,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
-            block.getTransactions().forEach(transaction -> {
+            block.getOrLoadTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
                         possiblyApprovedTransactions.add(phasedTransaction);
@@ -926,11 +982,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
 
             dexService.closeOverdueOrders(block.getTimestamp());
-            //log.trace("Fire event AFTER_BLOCK_APPLY {}", block);
+
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
-            if (block.getTransactions().size() > 0) {
-                lookupTransactionProcessor().notifyListeners(block.getTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+            if (block.getOrLoadTransactions().size() > 0) {
+                lookupTransactionProcessor().notifyListeners(block.getOrLoadTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             //lookupAccountLedgerService().commitEntries();
             log.trace("Fire event COMMIT_ENTRIES");
@@ -1000,9 +1056,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         catch (RuntimeException e) {
             log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
             dataSource.rollback(false);
-            Block lastBlock = blockchain.findLastBlock();
-            lookupBlockhain().setLastBlock(lastBlock);
-            popOffToInTransaction(lastBlock,dataSource);
+            if (blockchain != null) { //prevent NPE on shutdown
+                Block lastBlock = blockchain.findLastBlock();
+                blockchain.setLastBlock(lastBlock);
+                popOffToInTransaction(lastBlock, dataSource);
+            }
             throw e;
         }
         return poppedOffBlocks;
@@ -1016,7 +1074,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Block previousBlock = blockchain.deleteBlocksFrom(block.getId());
         ((BlockImpl)previousBlock).loadTransactions();
         lookupBlockhain().setLastBlock(previousBlock);
-        //log.trace("Fire event BLOCK_POPPED {}", block);
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
         return previousBlock;
     }
@@ -1161,7 +1218,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         try {
             pushBlock(block);
-            //log.trace("Fire event BLOCK_GENERATED {}", block);
             blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
             log.debug("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
                     + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float)block.getTotalFeeATM())/Constants.ONE_APL);
@@ -1282,7 +1338,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
-                //log.trace("Fire event RESCAN_BEGIN {}", currentBlock);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();
                 if (height == shardInitialHeight) {
@@ -1338,7 +1393,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             throw new AplException.NotValidException("Block JSON cannot be parsed back to the same block");
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
-                                        for (Transaction transaction : currentBlock.getTransactions()) {
+                                        for (Transaction transaction : currentBlock.getOrLoadTransactions()) {
                                             byte[] transactionBytes = ((TransactionImpl)transaction).bytes();
                                             if (!Arrays.equals(transactionBytes, TransactionImpl.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
@@ -1351,13 +1406,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             }
                                         }
                                     }
-                                    //log.trace("Fire event BEFORE_BLOCK_ACCEPT {}", currentBlock);
                                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(currentBlock);
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     dataSource.clearCache();
                                     dataSource.commit(false);
-                                    //log.trace("Fire event AFTER_BLOCK_ACCEPT {}", currentBlock);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
                                 if (++blockCounter % 1000 == 0) {
@@ -1376,10 +1429,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 break outer;
                             }
                             if (validate) {
-                                //log.trace("Fire event AFTER_BLOCK_ACCEPT, ScanValidate {}", currentBlock);
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED), new AnnotationLiteral<ScanValidate>() {}).fire(currentBlock);
                             } else {
-                                //log.trace("Fire event BLOCK_SCANNED {}", currentBlock);
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
                             }
                             hasMore = true;
@@ -1399,7 +1450,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
                 pstmtDone.executeUpdate();
                 dataSource.commit(false);
-                //log.trace("Fire event RESCAN_END {}", currentBlock);
                 blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(currentBlock);
                 log.info("Scan done at height " + blockchain.getHeight());
                 if (height == shardInitialHeight && validate) {
@@ -1423,10 +1473,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
 
+    @Override
     public void suspendBlockchainDownloading() {
         getMoreBlocks = false;
     }
 
+    @Override
     public void resumeBlockchainDownloading() {
         getMoreBlocks = true;
     }
@@ -1490,19 +1542,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = lookupBlockhain().getHeight() > Constants.LAST_CHECKSUM_BLOCK - 720 ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = Peers.getPublicPeers(PeerState.CONNECTED, true);
+                connectedPublicPeers = lookupPeers().getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                             connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;
-                final Peer peer = Peers.getWeightedPeer(connectedPublicPeers);
+                final Peer peer = lookupPeers().getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
+                    log.debug("Can not find weighted peer");
                     return;
                 }
                 JSONObject response = peer.send(getCumulativeDifficultyRequest, blockchainConfig.getChain().getChainId());
                 if (response == null) {
+                    log.debug("Null response wile getCumulativeDifficultyRequest from peer {}",peer.getHostWithPort());
                     return;
                 }
                 BigInteger curCumulativeDifficulty = lookupBlockhain().getLastBlock().getCumulativeDifficulty();
@@ -1530,7 +1584,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 
-                long commonMilestoneBlockId = initialBlock;
+                long commonMilestoneBlockId = blockchain.getShardInitialBlock().getId();
                 
                 if (lookupBlockhain().getHeight() > 0) {
                     commonMilestoneBlockId = getCommonMilestoneBlockId(peer);
@@ -1541,7 +1595,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
-                    if (commonMilestoneBlockId == initialBlock) {
+                    if (commonMilestoneBlockId == blockchain.getShardInitialBlock().getId()) {
                         log.info("Cannot load blocks after genesis block {} from peer {}, perhaps using different Genesis block",
                                 commonMilestoneBlockId, peer.getAnnouncedAddress());
                     }
@@ -1650,7 +1704,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
                 }
                 
-                JSONObject response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
+                JSONObject response;
+                try {
+                    response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
+                } catch (PeerNotConnectedException ex) {
+                    response=null;
+                }
                 if (response == null) {
                     return 0;
                 }
@@ -1659,7 +1718,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return 0;
                 }
                 if (milestoneBlockIds.isEmpty()) {
-                    return initialBlock;
+                    return blockchain.getShardInitialBlock().getId();
                 }
                 // prevent overloading with blockIds
                 if (milestoneBlockIds.size() > 20) {
@@ -1695,8 +1754,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 request.put("blockId", Long.toUnsignedString(matchId));
                 request.put("limit", limit);
                 request.put("chainId", blockchainConfig.getChain().getChainId());
-                JSONObject response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                JSONObject response;
+                try {
+                    response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                } catch (PeerNotConnectedException ex) {
+                   response=null;
+                }
                 if (response == null) {
+                    log.debug("null reaponse from peer {} while getNeBlockIdst",peer.getHostWithPort());
                     return Collections.emptyList();
                 }
                 JSONArray nextBlockIds = (JSONArray) response.get("nextBlockIds");
@@ -1755,11 +1820,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // Break the download into multiple segments.  The first block in each segment
             // is the common block for that segment.
             //
-            List<GetNextBlocks> getList = new ArrayList<>();
+            List<GetNextBlocksTask> getList = new ArrayList<>();
             int segSize = 36;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
-                getList.add(new GetNextBlocks(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
+                getList.add(new GetNextBlocksTask(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
             }
             int nextPeerIndex = ThreadLocalRandom.current().nextInt(connectedPublicPeers.size());
             long maxResponseTime = 0;
@@ -1778,7 +1843,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // from another peer.  We will stop the download and process any pending
                 // blocks if we are unable to download a segment from the feeder peer.
                 //
-                for (GetNextBlocks nextBlocks : getList) {
+                for (GetNextBlocksTask nextBlocks : getList) {
                     Peer peer;
                     if (nextBlocks.getRequestCount() > 1) {
                         break download;
@@ -1802,9 +1867,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // Get the results.  A peer is on a different fork if a returned
                 // block is not in the block identifier list.
                 //
-                Iterator<GetNextBlocks> it = getList.iterator();
+                Iterator<GetNextBlocksTask> it = getList.iterator();
                 while (it.hasNext()) {
-                    GetNextBlocks nextBlocks = it.next();
+                    GetNextBlocksTask nextBlocks = it.next();
                     List<BlockImpl> blockList;
                     try {
                         blockList = nextBlocks.getFuture().get();
@@ -1812,7 +1877,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
 //                        nextBlocks.getPeer().deactivate();
                         continue;
                     }
@@ -1837,9 +1902,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 
             }
-            if (slowestPeer != null && connectedPublicPeers.size() >= Peers.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
+            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > 360) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
-                slowestPeer.deactivate();
+                slowestPeer.deactivate("This peer is slowest");
             }
             //
             // Add the new blocks to the blockchain.  We will stop if we encounter
@@ -1906,7 +1971,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
                 pushedForkBlocks = 0;
                 for (Block block : peerPoppedOffBlocks) {
-                    lookupTransactionProcessor().processLater(block.getTransactions());
+                    lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
             
@@ -1924,7 +1989,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } else {
                 log.debug("Switched to peer's fork, peer addr: {}",peer.getHost());
                 for (Block block : myPoppedOffBlocks) {
-                    lookupTransactionProcessor().processLater(block.getTransactions());
+                    lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
             
