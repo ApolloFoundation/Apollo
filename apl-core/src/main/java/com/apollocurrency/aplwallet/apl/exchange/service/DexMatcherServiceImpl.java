@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOfferDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +40,10 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
 
     @Inject
-    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService, DexValidationServiceImpl dexValidationServiceImpl) {
+    DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService, IDexValidator dexValidator) {
         this.dexMatchingService =  Objects.requireNonNull( dexMatchingService,"dexService is null");
         this.timeService =  Objects.requireNonNull(timeService,"epochTime is null");
-        this.dexValidator = Objects.requireNonNull( dexValidationServiceImpl,"dexService is null");
+        this.dexValidator = Objects.requireNonNull( dexValidator,"dexValidator is null");
     }
     
     /**
