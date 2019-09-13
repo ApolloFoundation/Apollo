@@ -747,10 +747,9 @@ public class PeersService {
                         try {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
-                                successful += 1;
- 
+                                successful += 1; 
                             }else{
-                                LOG.debug("Send ot peer error");
+                                LOG.debug("Send to peer error");
                             }
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
