@@ -261,7 +261,7 @@ public class DexService {
 
         //Check if deposit exist.
         String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-        if (dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+        if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
             log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
             return "";
         }
@@ -437,12 +437,6 @@ public class DexService {
                 Transaction respApproveTx = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
 //              order will be closed automatically
-//                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
-//                templatTransactionRequest.setAttachment(closeOfferAttachment);
-
-//                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-//                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
-
             }
         } catch (Exception ex) {
             throw new AplException.ExecutiveProcessException(ex.getMessage());
