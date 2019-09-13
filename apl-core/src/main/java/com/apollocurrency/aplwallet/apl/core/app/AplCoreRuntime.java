@@ -86,15 +86,24 @@ public class AplCoreRuntime {
         ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
         long[] ids = tmx.findDeadlockedThreads();
         if (ids != null) {
+            // threads that are in deadlock waiting to acquire object monitors or ownable synchronizers
             sb.append("DeadLocked threads found:\n");
-            ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
-            sb.append("Following Threads are deadlocked:\n");
-            for (ThreadInfo info : infos) {
-                sb.append(info.toString()).append("\n");
-            }
-        }else{
+            printDeadLockedThreadInfo(sb, tmx, ids);
+        } else if (tmx.findMonitorDeadlockedThreads() != null) {
+            //threads that are blocked waiting to enter a synchronization block or waiting to reenter a synchronization block
+            sb.append("Monitor DeadLocked threads found:\n");
+            printDeadLockedThreadInfo(sb, tmx, tmx.findMonitorDeadlockedThreads());
+        } else {
             sb.append("\nNo dead-locked threads found.\n");
         }        
+    }
+
+    private void printDeadLockedThreadInfo(StringBuilder sb, ThreadMXBean tmx, long[] ids) {
+        ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
+        sb.append("Following Threads are deadlocked:\n");
+        for (ThreadInfo info : infos) {
+            sb.append(info.toString()).append("\n");
+        }
     }
 
     private String getNodeHealth(){
