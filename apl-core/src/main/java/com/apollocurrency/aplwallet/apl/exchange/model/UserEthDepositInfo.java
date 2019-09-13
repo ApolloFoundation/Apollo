@@ -5,8 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
 @AllArgsConstructor
