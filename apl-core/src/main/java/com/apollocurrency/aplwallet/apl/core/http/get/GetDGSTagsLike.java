@@ -20,34 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSTagsLike extends AbstractAPIRequestHandler {
 
-    private static class GetDGSTagsLikeHolder {
-        private static final GetDGSTagsLike INSTANCE = new GetDGSTagsLike();
-    }
-
-    public static GetDGSTagsLike getInstance() {
-        return GetDGSTagsLikeHolder.INSTANCE;
-    }
-
-    private GetDGSTagsLike() {
+    public GetDGSTagsLike() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "tagPrefix", "inStockOnly", "firstIndex", "lastIndex");
     }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -65,7 +62,7 @@ public final class GetDGSTagsLike extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
-        try (DbIterator<DigitalGoodsStore.Tag> tags = DigitalGoodsStore.Tag.getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
+        try (DbIterator<DGSTag> tags = service.getTagsLike(prefix, inStockOnly, firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.tag(tags.next()));
             }

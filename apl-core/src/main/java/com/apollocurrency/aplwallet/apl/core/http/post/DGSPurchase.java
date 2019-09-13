@@ -20,44 +20,40 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
-import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONStreamAware;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_PRICE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE_QUANTITY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DELIVERY_DEADLINE_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.http.APITag;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
+@Vetoed
 public final class DGSPurchase extends CreateTransaction {
 
-    private static class DGSPurchaseHolder {
-        private static final DGSPurchase INSTANCE = new DGSPurchase();
-    }
-
-    public static DGSPurchase getInstance() {
-        return DGSPurchaseHolder.INSTANCE;
-    }
-
-    private DGSPurchase() {
+    public DGSPurchase() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
     }
-
+    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
+        DGSGoods goods = ParameterParser.getGoods(service, req);
         if (goods.isDelisted()) {
             return UNKNOWN_GOODS;
         }

@@ -4,77 +4,61 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import javax.sql.DataSource;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplDbVersion;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
+
 
 public class DbManipulator {
-    protected final Path tempDbFile;
-    protected final DataSourceWrapper dataSourceWrapper;
+    private static final String DEFAULT_SCHEMA_SCRIPT_PATH = "db/schema.sql";
+    private static final String DEFAULT_DATA_SCRIPT_PATH = "db/data.sql";
+    private static final Logger logger = getLogger(DbManipulator.class);
+    protected DatabaseManager databaseManager;
 
     private DbPopulator populator;
 
-    public DbManipulator(Path dbFile, String user, String password) throws IOException {
-        tempDbFile = dbFile;
-        dataSourceWrapper =
-                new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
-                        .dbPassword(password)
-                        .dbUsername(user)
-                        .maxConnections(10)
-                        .loginTimeout(10)
-                        .maxMemoryRows(100000)
-                        .defaultLockTimeout(10 * 1000));
-        populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
+
+    public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder, String dataScriptPath, String schemaScriptPath) {
+        Objects.requireNonNull(dbProperties, "dbProperties is NULL");
+        PropertiesHolder propertiesHolderParam = propertiesHolder == null ? new PropertiesHolder() : propertiesHolder;
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolderParam);
+
+        dataScriptPath = StringUtils.isBlank(dataScriptPath) ? DEFAULT_DATA_SCRIPT_PATH : dataScriptPath;
+        schemaScriptPath = StringUtils.isBlank(schemaScriptPath) ? DEFAULT_SCHEMA_SCRIPT_PATH : schemaScriptPath;
+        // sometimes it can be helpful to skip test data load
+        if (propertiesHolder != null && !propertiesHolder.getBooleanProperty("apl.testData")) {
+            // test data is not loaded
+            logger.warn("-->> test data is not loaded from : {}", dataScriptPath);
+            dataScriptPath = null;
+        }
+        this.populator = new DbPopulator(databaseManager.getDataSource(), schemaScriptPath, dataScriptPath);
     }
 
-
-    public DbManipulator()  {
-        tempDbFile = createTempFile();
-        dataSourceWrapper = new DataSourceWrapper(new DbProperties()
-                        .dbUrl(String.format("jdbc:h2:%s", tempDbFile.toAbsolutePath().toString()))
-                        .dbPassword("sa")
-                        .dbUsername("sa")
-                        .maxConnections(10)
-                        .loginTimeout(10)
-                        .maxMemoryRows(100000)
-                        .defaultLockTimeout(10 * 1000));
-        populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
-    }
-
-    private Path createTempFile() {
-        try {
-            return Files.createTempFile("testdb", "h2");
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public DbManipulator(DbProperties dbProperties) {
+        this(dbProperties, null, null, null);
     }
 
     public void init() {
-        AplDbVersion dbVersion = new AplDbVersion();
-        dataSourceWrapper.init(dbVersion);
         populator.initDb();
     }
 
     public void shutdown() throws IOException {
-        dataSourceWrapper.shutdown();
-        Files.deleteIfExists(Paths.get(tempDbFile.toAbsolutePath().toString() + ".h2.db"));
+        databaseManager.shutdown();
     }
 
     public void populate() {
         populator.populateDb();
     }
 
-    public DataSource getDataSource() {
-        return dataSourceWrapper;
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 }

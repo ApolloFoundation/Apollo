@@ -24,6 +24,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_FORGI
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -32,24 +33,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-
+@Vetoed
 public final class GetForging extends AbstractAPIRequestHandler {
 
-    private static class GetForgingHolder {
-        private static final GetForging INSTANCE = new GetForging();
-    }
-
-    public static GetForging getInstance() {
-        return GetForgingHolder.INSTANCE;
-    }
-
-    private GetForging() {
+    public GetForging() {
         super(new APITag[] {APITag.FORGING}, "secretPhrase", "adminPassword", "publicKey");
     }
 
@@ -57,7 +51,14 @@ public final class GetForging extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
         long id = ParameterParser.getAccountId(req, vaultAccountName(), false);
         byte[] publicKey = ParameterParser.getPublicKey(req, null, id, false);
-        int elapsedTime = timeService.getEpochTime() - lookupBlockchain().getLastBlock().getTimestamp();
+        Block lastBlock = lookupBlockchain().getLastBlock();
+        if (lastBlock == null) {
+            JSONObject response = new JSONObject();
+            JSONArray generators = new JSONArray();
+            response.put("generators", generators);
+            return response; // empty
+        }
+        int elapsedTime = timeService.getEpochTime() - lastBlock.getTimestamp();
         if (publicKey != null) {
             Account account = Account.getAccount(publicKey);
             if (account == null) {
@@ -69,7 +70,7 @@ public final class GetForging extends AbstractAPIRequestHandler {
             }
             return JSONData.generator(generator, elapsedTime);
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             JSONObject response = new JSONObject();
             JSONArray generators = new JSONArray();
             Generator.getSortedForgers().forEach(generator -> generators.add(JSONData.generator(generator, elapsedTime)));

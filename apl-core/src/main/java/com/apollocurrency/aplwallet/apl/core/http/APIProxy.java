@@ -22,7 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import org.slf4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -32,30 +42,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-
+@Vetoed
 public class APIProxy {
     private static final Logger LOG = getLogger(APIProxy.class);
+    private static final String BACKGROUND_SERVICE_NAME = "APIProxyService";
 
     public static final Set<String> NOT_FORWARDED_REQUESTS;
-
+    
+    @Vetoed
     private static class APIProxyHolder {
         private static final APIProxy INSTANCE = new APIProxy();
     }
+    
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
+    private static TimeService timeService = CDI.current().select(TimeService.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+    private static PeersService peers = CDI.current().select(PeersService.class).get(); 
 
     public static APIProxy getInstance() {
         return APIProxyHolder.INSTANCE;
@@ -101,9 +108,9 @@ public class APIProxy {
         List<String> currentPeersHosts = getInstance().peersHosts;
         if (currentPeersHosts != null) {
             for (String host : currentPeersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null) {
-                    Peers.connectPeer(peer);
+                    peers.connectPeer(peer);
                 }
             }
         }
@@ -111,7 +118,12 @@ public class APIProxy {
 
     static {
         if (!propertiesHolder.isOffline() && enableAPIProxy) {
-            ThreadPool.scheduleThread("APIProxyPeersUpdate", peersUpdateThread, 60);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("APIProxyPeersUpdate")
+                            .delay(60000)
+                            .task(peersUpdateThread)
+                            .build(), TaskOrder.TASK);
         }
     }
 
@@ -123,20 +135,20 @@ public class APIProxy {
 
     Peer getServingPeer(String requestType) {
         if (forcedPeerHost != null) {
-            return Peers.getPeer(forcedPeerHost);
+            return peers.getPeer(forcedPeerHost);
         }
 
         APIEnum requestAPI = APIEnum.fromName(requestType);
         if (!peersHosts.isEmpty()) {
             for (String host : peersHosts) {
-                Peer peer = Peers.getPeer(host);
+                Peer peer = peers.getPeer(host);
                 if (peer != null && peer.isApiConnectable() && !peer.getDisabledAPIs().contains(requestAPI)) {
                     return peer;
                 }
             }
         }
 
-        List<Peer> connectablePeers = Peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
+        List<Peer> connectablePeers = peers.getPeers(p -> p.isApiConnectable() && !blacklistedPeers.containsKey(p.getHost()));
         if (connectablePeers.isEmpty()) {
             return null;
         }

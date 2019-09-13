@@ -32,18 +32,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetLastTrades extends AbstractAPIRequestHandler {
 
-    private static class GetLastTradesHolder {
-        private static final GetLastTrades INSTANCE = new GetLastTrades();
-    }
-
-    public static GetLastTrades getInstance() {
-        return GetLastTradesHolder.INSTANCE;
-    }
-
-    private GetLastTrades() {
+    public GetLastTrades() {
         super(new APITag[] {APITag.AE}, "assets", "assets", "assets"); // limit to 3 for testing
     }
 

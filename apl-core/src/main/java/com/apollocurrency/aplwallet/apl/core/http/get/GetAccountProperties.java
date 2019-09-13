@@ -31,23 +31,16 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public final class GetAccountProperties extends AbstractAPIRequestHandler {
 
-    private static class GetAccountPropertiesHolder {
-        private static final GetAccountProperties INSTANCE = new GetAccountProperties();
-    }
-
-    public static GetAccountProperties getInstance() {
-        return GetAccountPropertiesHolder.INSTANCE;
-    }
-
-    private GetAccountProperties() {
+    public GetAccountProperties() {
         super(new APITag[] {APITag.ACCOUNTS}, "recipient", "property", "setter", "firstIndex", "lastIndex");
     }
 

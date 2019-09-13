@@ -6,6 +6,12 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,18 +22,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 public class DefaultDirectoryMigratorTest {
     private Path firstDirFile1;
     private Path firstDirFile2;
     private Path firstDir;
     private Path secondFile;
     private Path secondDir;
+    private Path secondFirstDir;
     private Path thirdFile;
     private Path thirdDir;
     private Path thirdNestedDir;
@@ -40,37 +41,29 @@ public class DefaultDirectoryMigratorTest {
     private byte[] secondFilePayload = "TestPayload-2".getBytes();
     private byte[] thirdFilePayload = "TestPayload-3".getBytes();
     private byte[] targetFilePayload = "TargetPayload".getBytes();
-
+    @RegisterExtension
+    TemporaryFolderExtension tmpFolder = new TemporaryFolderExtension();
     @BeforeEach
     public void init() throws IOException {
-
-        firstDir = Files.createTempDirectory("d-1_");
-        firstDirFile1 = Files.createTempFile(firstDir, "f-1_", "");
+        firstDir = tmpFolder.newFolder("d-1_").toPath();
+        firstDirFile1 = Files.createFile(firstDir.resolve("f-1"));
         Files.write(firstDirFile1, firstFilePayload);
-        secondDir = Files.createTempDirectory("d-1_");
-        secondFile = Files.createTempFile(secondDir, "f-2_", "");
+        secondDir = tmpFolder.newFolder("d-2").toPath();
+        secondFirstDir = Files.createDirectory(secondDir.resolve("d-2-1"));
+        secondFile = Files.createFile(secondDir.resolve("f-2"));
         Files.write(secondFile, secondFilePayload);
-        thirdDir = Files.createTempDirectory("d-3_");
-        thirdNestedDir = Files.createTempDirectory(thirdDir, "d-3_1_");
-        thirdFile = Files.createTempFile(thirdNestedDir, "f-3_", "");
+        thirdDir = tmpFolder.newFolder("d-3").toPath();
+        thirdNestedDir = Files.createDirectory(thirdDir.resolve("d-3_1"));
+        thirdFile = Files.createFile(thirdNestedDir.resolve("f-3"));
         Files.write(thirdFile, thirdFilePayload);
-        emptyDir = Files.createTempDirectory("empty");
-        targetDir = Files.createTempDirectory("target");
-        targetFile = Files.createTempFile(targetDir, "target", "");
+        emptyDir = tmpFolder.newFolder("empty").toPath();
+        targetDir = tmpFolder.newFolder("target").toPath();
+        targetFile = Files.createFile(targetDir.resolve("target-file"));
         Files.write(targetFile, targetFilePayload);
         firstDirFile2 = Files.createFile(firstDir.resolve(targetFile.getFileName()));
         Files.write(firstDirFile2, firstFilePayload);
         noneExistentDir1 = emptyDir.resolve("nonexistentDir1");
         noneExistentDir2 = targetDir.resolve("nonexistentDir2");
-    }
-
-    @AfterEach
-    public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(firstDir.toFile());
-        FileUtils.deleteDirectory(secondDir.toFile());
-        FileUtils.deleteDirectory(thirdDir.toFile());
-        FileUtils.deleteDirectory(targetDir.toFile());
-        FileUtils.deleteDirectory(emptyDir.toFile());
     }
     @Test
     public void testMigrateFilesToDirectory() throws IOException {
@@ -113,8 +106,9 @@ public class DefaultDirectoryMigratorTest {
         Path firstDirFile1TargetPath = targetDir.resolve(firstDirFile1.getFileName());
         Path firstDirFile2TargetPath = targetDir.resolve(firstDirFile2.getFileName());
         Path secondDirFileTargetPath = targetDir.resolve(secondFile.getFileName());
+        Path secondFirstDirTargetPath = targetDir.resolve(secondFirstDir.getFileName());
         Set<Path> expectedMigratedFilePaths = new HashSet<>(Arrays.asList(
-                firstDirFile1TargetPath, firstDirFile2TargetPath, secondDirFileTargetPath));
+                firstDirFile1TargetPath, firstDirFile2TargetPath, secondDirFileTargetPath, secondFirstDirTargetPath));
 
         List<Path> migratedDirs = defaultDirectoryMigrator.migrate(dirsToMigrate, targetDir);
 
@@ -215,5 +209,20 @@ public class DefaultDirectoryMigratorTest {
         Assertions.assertFalse(Files.exists(noneExistentDir1));
         Assertions.assertFalse(Files.isDirectory(noneExistentDir1));
     }
+
+    @Test
+    public void testMigrateToInnerDirectory() throws IOException {
+        List<Path> dirsToMigrate = Arrays.asList(firstDir, secondDir);
+
+        DefaultDirectoryMigrator defaultDirectoryMigrator = new DefaultDirectoryMigrator();
+
+        List<Path> migrated = defaultDirectoryMigrator.migrate(dirsToMigrate, secondFirstDir);
+
+        Assertions.assertEquals(2, migrated.size());
+        List<Path> files = Files.list(secondFirstDir).collect(Collectors.toList());
+        Assertions.assertEquals(4, files.size());
+    }
+
+
     
 }

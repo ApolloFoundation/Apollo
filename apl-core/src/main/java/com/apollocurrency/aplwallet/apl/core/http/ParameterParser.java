@@ -26,6 +26,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
@@ -35,6 +36,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WHITELIST;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
@@ -49,16 +51,55 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_C
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Search;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,49 +108,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Alias;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.SecretBytesDetails;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.Search;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
 
 public final class ParameterParser {
     private static final Logger LOG = getLogger(ParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected static ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+    protected static TimeService timeService = CDI.current().select(TimeService.class).get();
+
+    private static final int DEFAULT_LAST_INDEX = 250;
 
     public static byte getByte(HttpServletRequest req, String name, byte min, byte max, boolean isMandatory, byte defaultValue) throws ParameterException {
         String paramValue = Convert.emptyToNull(req.getParameter(name));
@@ -245,7 +258,10 @@ public final class ParameterParser {
     }
 
     public static long getAccountId(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
-        String paramValue = Convert.emptyToNull(req.getParameter(name));
+        return getAccountId(Convert.emptyToNull(req.getParameter(name)), name, isMandatory);
+    }
+
+    public static long getAccountId(String paramValue, String name, boolean isMandatory) throws ParameterException {
         if (paramValue == null) {
             if (isMandatory) {
                 throw new ParameterException(missing(name));
@@ -383,8 +399,8 @@ public final class ParameterParser {
         return getLong(req, "amountATMPerATU", 1L, blockchainConfig.getCurrentConfig().getMaxBalanceATM(), true);
     }
 
-    public static DigitalGoodsStore.Goods getGoods(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Goods goods = DigitalGoodsStore.Goods.getGoods(getUnsignedLong(req, "goods", true));
+    public static DGSGoods getGoods(DGSService dgsService, HttpServletRequest req) throws ParameterException {
+        DGSGoods goods = dgsService.getGoods(getUnsignedLong(req, "goods", true));
         if (goods == null) {
             throw new ParameterException(UNKNOWN_GOODS);
         }
@@ -473,8 +489,7 @@ public final class ParameterParser {
         }
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
-            SecretBytesDetails secretBytes = Helper2FA.findSecretBytes(senderId, passphrase, isMandatory);
-            return secretBytes == null ? null : secretBytes.getSecretBytes();
+            return Helper2FA.findAplSecretBytes(senderId, passphrase);
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
@@ -483,8 +498,8 @@ public final class ParameterParser {
         return null;
     }
 
-    public static DigitalGoodsStore.Purchase getPurchase(HttpServletRequest req) throws ParameterException {
-        DigitalGoodsStore.Purchase purchase = DigitalGoodsStore.Purchase.getPurchase(getUnsignedLong(req, "purchase", true));
+    public static DGSPurchase getPurchase(DGSService service, HttpServletRequest req) throws ParameterException {
+        DGSPurchase purchase = service.getPurchase(getUnsignedLong(req, "purchase", true));
         if (purchase == null) {
             throw new ParameterException(INCORRECT_PURCHASE);
         }
@@ -492,11 +507,17 @@ public final class ParameterParser {
     }
 
     public static String getSecretPhrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
-        String secretPhrase = Convert.emptyToNull(req.getParameter("secretPhrase"));
+        return getSecretPhrase(req, null, isMandatory);
+    }
+    public static String getSecretPhrase(HttpServletRequest req, String secretPhraseParamName, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isBlank(secretPhraseParamName)) {
+            secretPhraseParamName = "secretPhrase";
+        }
+        String secretPhrase = Convert.emptyToNull(req.getParameter(secretPhraseParamName));
         if (secretPhrase == null && isMandatory) {
             throw new ParameterException(MISSING_SECRET_PHRASE);
         }
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
        
     }
 
@@ -521,7 +542,7 @@ public final class ParameterParser {
         String secretPhraseParam = prefix == null ? "secretPhrase" : (prefix + "SecretPhrase");
         String publicKeyParam = prefix == null ? "publicKey" : (prefix + "PublicKey");
         String passphraseParam = prefix == null ? "passphrase" : (prefix + "Passphrase");
-        String secretPhrase = getSecretPhrase(req, false);
+        String secretPhrase = getSecretPhrase(req, secretPhraseParam, false);
         if (secretPhrase == null) {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
@@ -532,10 +553,9 @@ public final class ParameterParser {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-                        SecretBytesDetails secretBytesDetails = Helper2FA.findSecretBytes(accountId, passphrase, isMandatory);
-                        if (secretBytesDetails != null && secretBytesDetails.getSecretBytes() != null) {
-                            return Crypto.getPublicKey(Crypto.getKeySeed(secretBytesDetails.getSecretBytes()));
-                        }
+                        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
+
+                        return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
 
@@ -567,6 +587,9 @@ public final class ParameterParser {
         String accountParam = accountName == null ? "sender" : accountName;
         long accountId = ParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
+        if (publicKey == null) {
+            throw new ParameterException(UNKNOWN_PUBLIC_KEY);
+        }
         Account account = Account.getAccount(publicKey);
         if (account == null) {
             throw new ParameterException(UNKNOWN_ACCOUNT);
@@ -602,12 +625,18 @@ public final class ParameterParser {
 
     public static String getPassphrase(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, "passphrase", isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
+    }
+    public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
+        if (StringUtils.isBlank(passphrase) && isMandatory) {
+            throw new ParameterException(JSONResponses.missing(passphrase));
+        }
+        return elGamal.elGamalDecrypt(passphrase);
     }
 
     public static String getPassphrase(HttpServletRequest req,String parameterName, boolean isMandatory) throws ParameterException {
         String secretPhrase = getStringParameter(req, parameterName, isMandatory);
-        return API.elGamalDecrypt(secretPhrase);
+        return elGamal.elGamalDecrypt(secretPhrase);
     }
 
     public static byte[] getKeySeed(HttpServletRequest req, String parameterName, boolean isMandatory) throws ParameterException {
@@ -662,14 +691,14 @@ public final class ParameterParser {
     }
 
     public static int getLastIndex(HttpServletRequest req) {
-        int lastIndex = Integer.MAX_VALUE;
+        int lastIndex = DEFAULT_LAST_INDEX;
         try {
             lastIndex = Integer.parseInt(req.getParameter("lastIndex"));
             if (lastIndex < 0) {
-                lastIndex = Integer.MAX_VALUE;
+                lastIndex = DEFAULT_LAST_INDEX;
             }
         } catch (NumberFormatException ignored) {}
-        if (!API.checkPassword(req)) {
+        if (!apw.checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
         }
@@ -747,7 +776,7 @@ public final class ParameterParser {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
                 return Transaction.newTransactionBuilder(json);
-            } catch (AplException.ValidationException | RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionJSON");
@@ -758,7 +787,7 @@ public final class ParameterParser {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject)JSONValue.parseWithException(prunableAttachmentJSON);
                 return Transaction.newTransactionBuilder(bytes, prunableAttachments);
-            } catch (AplException.ValidationException|RuntimeException | ParseException e) {
+            } catch (AplException.ValidationException |RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
                 JSONData.putException(response, e, "Incorrect transactionBytes");
@@ -875,7 +904,7 @@ public final class ParameterParser {
         }
     }
 
-    public static TaggedDataUpload getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
+    public static TaggedDataUploadAttachment getTaggedData(HttpServletRequest req) throws ParameterException, AplException.NotValidException {
         String name = Convert.emptyToNull(req.getParameter("name"));
         String description = Convert.nullToEmpty(req.getParameter("description"));
         String tags = Convert.nullToEmpty(req.getParameter("tags"));
@@ -954,7 +983,7 @@ public final class ParameterParser {
         if (filename.length() > Constants.MAX_TAGGED_DATA_FILENAME_LENGTH) {
             throw new ParameterException(INCORRECT_TAGGED_DATA_FILENAME);
         }
-        return new TaggedDataUpload(name, description, tags, type, channel, isText, filename, data);
+        return new TaggedDataUploadAttachment(name, description, tags, type, channel, isText, filename, data);
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
@@ -971,7 +1000,7 @@ public final class ParameterParser {
             publicKey = Crypto.getPublicKey(keySeed);
         }
         long accountId = Account.getId(publicKey);
-        byte[] sharedKey = Crypto.getSharedKey(API.getServerPrivateKey(), publicKey);
+        byte[] sharedKey = Crypto.getSharedKey(elGamal.getServerPrivateKey(), publicKey);
         return new PrivateTransactionsAPIData(encrypt, publicKey, sharedKey, accountId);
     }
 
@@ -993,6 +1022,71 @@ public final class ParameterParser {
         }
         return new TwoFactorAuthParameters(accountId, passphrase, secretPhrase);
 
+    }
+
+    public static PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
+        int phasingTimeLockDuration = -1;
+        int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+                -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
+
+        if(req.getParameter("phasingFinishTime") != null){
+            phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
+                    -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
+        }
+
+        if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
+            throw new ParameterException(
+                    JSONResponses.incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
+        }
+
+        int phasingFinishTime = -1;
+        if(phasingTimeLockDuration == -1) {
+            phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+                    blockchain.getHeight() + 1,
+                    blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
+                    true);
+        } else {
+            phasingFinishTime = timeService.getEpochTime() + phasingTimeLockDuration;
+        }
+
+        PhasingParams phasingParams = parsePhasingParams(req, "phasing");
+
+        byte[][] linkedFullHashes = null;
+        String[] linkedFullHashesValues = req.getParameterValues("phasingLinkedFullHash");
+        if (linkedFullHashesValues != null && linkedFullHashesValues.length > 0) {
+            linkedFullHashes = new byte[linkedFullHashesValues.length][];
+            for (int i = 0; i < linkedFullHashes.length; i++) {
+                linkedFullHashes[i] = Convert.parseHexString(linkedFullHashesValues[i]);
+                if (Convert.emptyToNull(linkedFullHashes[i]) == null || linkedFullHashes[i].length != 32) {
+                    throw new ParameterException(INCORRECT_LINKED_FULL_HASH);
+                }
+            }
+        }
+
+        byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
+        byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
+
+        return new PhasingAppendixV2(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
+    }
+
+    public static PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
+        byte votingModel = ParameterParser.getByte(req, parameterPrefix + "VotingModel", (byte)-1, (byte)5, true);
+        long quorum = ParameterParser.getLong(req, parameterPrefix + "Quorum", 0, Long.MAX_VALUE, false);
+        long minBalance = ParameterParser.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
+        byte minBalanceModel = ParameterParser.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
+        long holdingId = ParameterParser.getUnsignedLong(req, parameterPrefix + "Holding", false);
+        long[] whitelist = null;
+        String[] whitelistValues = req.getParameterValues(parameterPrefix + "Whitelisted");
+        if (whitelistValues != null && whitelistValues.length > 0) {
+            whitelist = new long[whitelistValues.length];
+            for (int i = 0; i < whitelistValues.length; i++) {
+                whitelist[i] = Convert.parseAccountId(whitelistValues[i]);
+                if (whitelist[i] == 0) {
+                    throw new ParameterException(INCORRECT_WHITELIST);
+                }
+            }
+        }
+        return new PhasingParams(votingModel, holdingId, quorum, minBalance, minBalanceModel, whitelist);
     }
 
     public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req) throws ParameterException {

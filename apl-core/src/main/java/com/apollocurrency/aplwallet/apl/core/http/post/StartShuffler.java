@@ -20,31 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
+import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+
+@Vetoed
 public final class StartShuffler extends AbstractAPIRequestHandler {
 
-    private static class StartShufflerHolder {
-        private static final StartShuffler INSTANCE = new StartShuffler();
-    }
-
-    public static StartShuffler getInstance() {
-        return StartShufflerHolder.INSTANCE;
-    }
-
-    private StartShuffler() {
+    public StartShuffler() {
         super(new APITag[]{APITag.SHUFFLING}, "secretPhrase", "shufflingFullHash", "recipientSecretPhrase", "recipientPublicKey", "recipientAccount",
                 "recipientPassphrase");
     }
@@ -54,7 +48,7 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
         byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
         long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
         long recipientId = ParameterParser.getAccountId(req, "recipientAccount", false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req,accountId, true);
+        byte[] secretBytes = ParameterParser.getSecretBytes(req, accountId, true);
 
         byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, true);
         try {

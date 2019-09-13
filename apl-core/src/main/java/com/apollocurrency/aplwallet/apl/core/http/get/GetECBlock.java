@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -28,19 +28,13 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetECBlock extends AbstractAPIRequestHandler {
 
-    private static class GetECBlockHolder {
-        private static final GetECBlock INSTANCE = new GetECBlock();
-    }
-
-    public static GetECBlock getInstance() {
-        return GetECBlockHolder.INSTANCE;
-    }
-
-    private GetECBlock() {
+    public GetECBlock() {
         super(new APITag[] {APITag.BLOCKS}, "timestamp");
     }
 
@@ -50,9 +44,9 @@ public final class GetECBlock extends AbstractAPIRequestHandler {
         if (timestamp == 0) {
             timestamp = timeService.getEpochTime();
         }
-        Block ecBlock = lookupBlockchain().getECBlock(timestamp);
+        EcBlockData ecBlock = lookupBlockchain().getECBlock(timestamp);
         JSONObject response = new JSONObject();
-        response.put("ecBlockId", ecBlock.getStringId());
+        response.put("ecBlockId", Long.toUnsignedString(ecBlock.getId()));
         response.put("ecBlockHeight", ecBlock.getHeight());
         response.put("timestamp", timestamp);
         return response;

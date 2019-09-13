@@ -20,38 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Encryptable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -64,17 +32,41 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Encryptable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    
-    @Inject
+
+//    @Inject
     private static BlockchainImpl blockchain;
 
-    static final class BuilderImpl implements Builder {
+    public static final class BuilderImpl implements Builder {
 
         private short deadline;
         private byte[] senderPublicKey;
@@ -98,36 +90,35 @@ public class TransactionImpl implements Transaction {
         private int height = Integer.MAX_VALUE;
         private long id;
         private long senderId;
-        private int timestamp = Integer.MAX_VALUE;
+        private int timestamp;
         private int blockTimestamp = -1;
         private byte[] fullHash;
         private boolean ecBlockSet = false;
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
+        private long dbId = 0;
 
-        public BuilderImpl() { // for weld
-        }
-
-        BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
-                    AbstractAttachment attachment) {
+        public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
+                           AbstractAttachment attachment, int timestamp) {
             this.version = version;
             this.deadline = deadline;
             this.senderPublicKey = senderPublicKey;
             this.amountATM = amountATM;
             this.feeATM = feeATM;
             this.attachment = attachment;
-            this.type = attachment.getTransactionType();
+            this.type = attachment != null ? attachment.getTransactionType() : null;
+            if (timestamp < 0) {
+                throw new IllegalArgumentException("Timestamp cannot be less than 0");
+            }
+            this.timestamp = timestamp;
         }
 
         @Override
         public TransactionImpl build(byte[] keySeed) throws AplException.NotValidException {
-            if (timestamp == Integer.MAX_VALUE) {
-                timestamp = timeService.getEpochTime();
-            }
             if (!ecBlockSet) {
                 lookupAndInjectBlockchain();
-                Block ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
+                EcBlockData ecBlock = lookupAndInjectBlockchain().getECBlock(timestamp);
                 this.ecBlockHeight = ecBlock.getHeight();
                 this.ecBlockId = ecBlock.getId();
             }
@@ -157,7 +148,7 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        BuilderImpl referencedTransactionFullHash(byte[] referencedTransactionFullHash) {
+        public BuilderImpl referencedTransactionFullHash(byte[] referencedTransactionFullHash) {
             this.referencedTransactionFullHash = referencedTransactionFullHash;
             return this;
         }
@@ -223,48 +214,54 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
+        public BuilderImpl dbId(long dbId) {
+            this.dbId = dbId;
+            return this;
+        }
+
+        @Override
         public BuilderImpl ecBlockId(long blockId) {
             this.ecBlockId = blockId;
             this.ecBlockSet = true;
             return this;
         }
 
-        BuilderImpl id(long id) {
+        public BuilderImpl id(long id) {
             this.id = id;
             return this;
         }
 
-        BuilderImpl signature(byte[] signature) {
+        public BuilderImpl signature(byte[] signature) {
             this.signature = signature;
             return this;
         }
 
-        BuilderImpl blockId(long blockId) {
+        public BuilderImpl blockId(long blockId) {
             this.blockId = blockId;
             return this;
         }
 
-        BuilderImpl height(int height) {
+        public BuilderImpl height(int height) {
             this.height = height;
             return this;
         }
 
-        BuilderImpl senderId(long senderId) {
+        public BuilderImpl senderId(long senderId) {
             this.senderId = senderId;
             return this;
         }
 
-        BuilderImpl fullHash(byte[] fullHash) {
+        public BuilderImpl fullHash(byte[] fullHash) {
             this.fullHash = fullHash;
             return this;
         }
 
-        BuilderImpl blockTimestamp(int blockTimestamp) {
+        public BuilderImpl blockTimestamp(int blockTimestamp) {
             this.blockTimestamp = blockTimestamp;
             return this;
         }
 
-        BuilderImpl index(short index) {
+        public BuilderImpl index(short index) {
             this.index = index;
             return this;
         }
@@ -275,14 +272,14 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] senderPublicKey;
     private final long recipientId;
     private final long amountATM;
-    private final long feeATM;
+    private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private final byte[] referencedTransactionFullHash;
     private final TransactionType type;
     private final int ecBlockHeight;
     private final long ecBlockId;
     private final byte version;
     private final int timestamp;
-    private final byte[] signature;
+    private volatile byte[] signature;
     private final AbstractAttachment attachment;
     private final MessageAppendix message;
     private final EncryptedMessageAppendix encryptedMessage;
@@ -304,8 +301,8 @@ public class TransactionImpl implements Transaction {
     private volatile String stringId;
     private volatile long senderId;
     private volatile byte[] fullHash;
-    private volatile DbKey dbKey;
     private volatile byte[] bytes = null;
+    private volatile long dbId;
 
     private TransactionImpl(BuilderImpl builder, byte[] keySeed) throws AplException.NotValidException {
 
@@ -326,7 +323,12 @@ public class TransactionImpl implements Transaction {
         this.fullHash = builder.fullHash;
 		this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
-
+        this.dbId = builder.dbId;
+        // set fee later
+        //        if (builder.feeATM <= 0) {
+//            throw new IllegalArgumentException("Fee should be positive");
+//        }
+        this.feeATM = builder.feeATM;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
             list.add(this.attachment);
@@ -361,13 +363,6 @@ public class TransactionImpl implements Transaction {
             appendagesSize += appendage.getSize();
         }
         this.appendagesSize = appendagesSize;
-        if (builder.feeATM <= 0 || (propertiesHolder.correctInvalidFees() && builder.signature == null)) {
-            int effectiveHeight = (height < Integer.MAX_VALUE ? height : lookupAndInjectBlockchain().getHeight());
-            long minFee = getMinimumFeeATM(effectiveHeight);
-            feeATM = Math.max(minFee, builder.feeATM);
-        } else {
-            feeATM = builder.feeATM;
-        }
 
         if (builder.signature != null && keySeed != null) {
             throw new AplException.NotValidException("Transaction is already signed");
@@ -382,6 +377,16 @@ public class TransactionImpl implements Transaction {
         } else {
             signature = null;
         }
+
+    }
+
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+
+        if (getSenderPublicKey() != null && ! Arrays.equals(senderPublicKey, Crypto.getPublicKey(keySeed))) {
+            throw new AplException.NotValidException("Secret phrase doesn't match transaction sender public key");
+        }
+        signature = Crypto.sign(bytes(), keySeed);
+        bytes = null;
 
     }
 
@@ -406,6 +411,12 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public boolean shouldSavePublicKey() {
+        return true;
+        //        return Account.getPublicKey(senderId) == null;
+    }
+
+    @Override
     public long getRecipientId() {
         return recipientId;
     }
@@ -422,6 +433,15 @@ public class TransactionImpl implements Transaction {
 
     long[] getBackFees() {
         return type.getBackFees(this);
+    }
+
+    @Override
+    public long getDbId() {
+        return dbId;
+    }
+
+    public void setDbId(long dbId) {
+        this.dbId = dbId;
     }
 
     @Override
@@ -474,7 +494,7 @@ public class TransactionImpl implements Transaction {
     public void setBlock(Block block) {
         this.block = block;
         this.blockId = block.getId();
-        this.height = block.getHeight();
+        this.height  = block.getHeight();
         this.blockTimestamp = block.getTimestamp();
     }
 
@@ -595,11 +615,9 @@ public class TransactionImpl implements Transaction {
         return senderId;
     }
 
-    public DbKey getDbKey() {
-        if (dbKey == null) {
-            dbKey = transactionProcessor.getUnconfirmedTransactionDbKeyFactory().newKey(getId());
-        }
-        return dbKey;
+    @Override
+    public String toString() {
+        return String.valueOf(getId());
     }
 
     @Override
@@ -669,7 +687,7 @@ public class TransactionImpl implements Transaction {
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
+                buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
                 buffer.putLong(amountATM);
                 buffer.putLong(feeATM);
                 if (referencedTransactionFullHash != null) {
@@ -726,8 +744,7 @@ public class TransactionImpl implements Transaction {
             }
             TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey, amountATM, feeATM,
-                    deadline, transactionType.parseAttachment(buffer))
-                    .timestamp(timestamp)
+                    deadline, transactionType.parseAttachment(buffer), timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
                     .ecBlockHeight(ecBlockHeight)
@@ -753,7 +770,7 @@ public class TransactionImpl implements Transaction {
             }
             position <<= 1;
             if ((flags & position) != 0) {
-                builder.appendix(new PhasingAppendix(buffer));
+                builder.appendix(PhasingAppendixFactory.build(buffer));
             }
             position <<= 1;
             if ((flags & position) != 0) {
@@ -767,7 +784,7 @@ public class TransactionImpl implements Transaction {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
             throw e;
         }
@@ -780,13 +797,13 @@ public class TransactionImpl implements Transaction {
             if (shufflingProcessing != null) {
                 builder.appendix(shufflingProcessing);
             }
-            TaggedDataUpload taggedDataUpload = TaggedDataUpload.parse(prunableAttachments);
-            if (taggedDataUpload != null) {
-                builder.appendix(taggedDataUpload);
+            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
+            if (taggedDataUploadAttachment != null) {
+                builder.appendix(taggedDataUploadAttachment);
             }
-            TaggedDataExtend taggedDataExtend = TaggedDataExtend.parse(prunableAttachments);
-            if (taggedDataExtend != null) {
-                builder.appendix(taggedDataExtend);
+            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
+            if (taggedDataExtendAttachment != null) {
+                builder.appendix(taggedDataExtendAttachment);
             }
             PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
             if (prunablePlainMessage != null) {
@@ -798,6 +815,11 @@ public class TransactionImpl implements Transaction {
             }
         }
         return builder;
+    }
+
+    @Override
+    public void setFeeATM(long feeATM) {
+        this.feeATM = feeATM;
     }
 
     public byte[] getUnsignedBytes() {
@@ -886,8 +908,7 @@ public class TransactionImpl implements Transaction {
             }
             TransactionImpl.BuilderImpl builder = new BuilderImpl(version, senderPublicKey,
                     amountATM, feeATM, deadline,
-                    transactionType.parseAttachment(attachmentData))
-                    .timestamp(timestamp)
+                    transactionType.parseAttachment(attachmentData), timestamp)
                     .referencedTransactionFullHash(referencedTransactionFullHash)
                     .signature(signature)
                     .ecBlockHeight(ecBlockHeight)
@@ -901,12 +922,12 @@ public class TransactionImpl implements Transaction {
                 builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
                 builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
                 builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                builder.appendix(PhasingAppendix.parse(attachmentData));
+                builder.appendix(PhasingAppendixFactory.parse(attachmentData));
                 builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
                 builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
             }
             return builder;
-        } catch (AplException.NotValidException|RuntimeException e) {
+        } catch (RuntimeException e) {
             LOG.debug("Failed to parse transaction: " + transactionData.toJSONString());
             throw e;
         }
@@ -1004,113 +1025,6 @@ public class TransactionImpl implements Transaction {
         return flags;
     }
 
-    @Override
-    public void validate() throws AplException.ValidationException {
-        long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
-        if (timestamp == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM <= 0)
-                || feeATM > maxBalanceAtm
-                || amountATM < 0
-                || amountATM > maxBalanceAtm
-                || type == null) {
-            throw new AplException.NotValidException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + timestamp
-                    + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM);
-        }
-
-        if (referencedTransactionFullHash != null && referencedTransactionFullHash.length != 32) {
-            throw new AplException.NotValidException("Invalid referenced transaction full hash " + Convert.toHexString(referencedTransactionFullHash));
-        }
-
-        if (attachment == null || type != attachment.getTransactionType()) {
-            throw new AplException.NotValidException("Invalid attachment " + attachment + " for transaction of type " + type);
-        }
-
-        if (! type.canHaveRecipient()) {
-            if (recipientId != 0 || getAmountATM() != 0) {
-                throw new AplException.NotValidException("Transactions of this type must have recipient == 0, amount == 0");
-            }
-        }
-
-        if (type.mustHaveRecipient()) {
-            if (recipientId == 0) {
-                throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
-            }
-        }
-
-        boolean validatingAtFinish = phasing != null && getSignature() != null && PhasingPoll.getPoll(getId()) != null;
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this);
-            if (! appendage.verifyVersion()) {
-                throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-            }
-            if (validatingAtFinish) {
-                appendage.validateAtFinish(this, lookupAndInjectBlockchain().getHeight());
-            } else {
-                appendage.validate(this, lookupAndInjectBlockchain().getHeight());
-            }
-        }
-
-        if (getFullSize() > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
-            throw new AplException.NotValidException("Transaction size " + getFullSize() + " exceeds maximum payload size");
-        }
-        int blockchainHeight = lookupAndInjectBlockchain().getHeight();
-        if (!validatingAtFinish) {
-            long minimumFeeATM = getMinimumFeeATM(blockchainHeight);
-            if (feeATM < minimumFeeATM) {
-                throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                        ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
-                        blockchainHeight));
-            }
-            if (ecBlockId != 0) {
-                if (blockchainHeight < ecBlockHeight) {
-                    throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
-                            + " exceeds blockchain height " + blockchainHeight);
-                }
-                if (CDI.current().select(BlockDaoImpl.class).get().findBlockIdAtHeight(ecBlockHeight) != ecBlockId) {
-                    throw new AplException.NotCurrentlyValidException("ecBlockHeight " + ecBlockHeight
-                            + " does not match ecBlockId " + Long.toUnsignedString(ecBlockId)
-                            + ", transaction was generated on a fork");
-                }
-            }
-            AccountRestrictions.checkTransaction(this);
-        }
-    }
-
-    // returns false iff double spending
-    boolean applyUnconfirmed() {
-        Account senderAccount = Account.getAccount(getSenderId());
-        return senderAccount != null && type.applyUnconfirmed(this, senderAccount);
-    }
-
-    void apply() {
-        Account senderAccount = Account.getAccount(getSenderId());
-        senderAccount.apply(getSenderPublicKey());
-        Account recipientAccount = null;
-        if (recipientId != 0) {
-            recipientAccount = Account.getAccount(recipientId);
-            if (recipientAccount == null) {
-                recipientAccount = Account.addOrGetAccount(recipientId);
-            }
-        }
-        if (referencedTransactionFullHash != null) {
-            senderAccount.addToUnconfirmedBalanceATM(getType().getLedgerEvent(), getId(),
-                    0, blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
-        if (attachmentIsPhased()) {
-            senderAccount.addToBalanceATM(getType().getLedgerEvent(), getId(), 0, -feeATM);
-        }
-        for (AbstractAppendix appendage : appendages) {
-            if (!appendage.isPhased(this)) {
-                appendage.loadPrunable(this);
-                appendage.apply(this, senderAccount, recipientAccount);
-            }
-        }
-    }
-
-    void undoUnconfirmed() {
-        Account senderAccount = Account.getAccount(getSenderId());
-        type.undoUnconfirmed(this, senderAccount);
-    }
-
     public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
@@ -1135,22 +1049,6 @@ public class TransactionImpl implements Transaction {
 
     boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
         return type.isUnconfirmedDuplicate(this, duplicates);
-    }
-
-    private long getMinimumFeeATM(int blockchainHeight) {
-        long totalFee = 0;
-        for (AbstractAppendix appendage : appendages) {
-            appendage.loadPrunable(this);
-            if (blockchainHeight < appendage.getBaselineFeeHeight()) {
-                return 0; // No need to validate fees before baseline block
-            }
-            Fee fee = blockchainHeight >= appendage.getNextFeeHeight() ? appendage.getNextFee(this) : appendage.getBaselineFee(this);
-            totalFee = Math.addExact(totalFee, fee.getFee(this, appendage));
-        }
-        if (referencedTransactionFullHash != null) {
-            totalFee = Math.addExact(totalFee, Constants.ONE_APL);
-        }
-        return totalFee;
     }
 
 }

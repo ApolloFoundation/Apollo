@@ -20,35 +20,31 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSTagCount extends AbstractAPIRequestHandler {
 
-    private static class GetDGSTagCountHolder {
-        private static final GetDGSTagCount INSTANCE = new GetDGSTagCount();
-    }
-
-    public static GetDGSTagCount getInstance() {
-        return GetDGSTagCountHolder.INSTANCE;
-    }
-
-    private GetDGSTagCount() {
+    public GetDGSTagCount() {
         super(new APITag[] {APITag.DGS}, "inStockOnly");
     }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         final boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
 
         JSONObject response = new JSONObject();
-        response.put("numberOfTags", inStockOnly ? DigitalGoodsStore.Tag.getCountInStock() : DigitalGoodsStore.Tag.getCount());
+        response.put("numberOfTags", inStockOnly ? service.getCountInStock() : service.getTagsCount());
         return response;
     }
 

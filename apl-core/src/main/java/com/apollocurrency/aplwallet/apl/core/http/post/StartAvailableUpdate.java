@@ -10,20 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class StartAvailableUpdate extends AbstractAPIRequestHandler {
 
-    private static class StartAvailableUpdateHolder {
-        private static final StartAvailableUpdate INSTANCE = new StartAvailableUpdate();
-    }
-
-    public static StartAvailableUpdate getInstance() {
-        return StartAvailableUpdateHolder.INSTANCE;
-    }
-
-    private StartAvailableUpdate() {
+    public StartAvailableUpdate() {
         super(new APITag[] {APITag.UPDATE});
     }
 

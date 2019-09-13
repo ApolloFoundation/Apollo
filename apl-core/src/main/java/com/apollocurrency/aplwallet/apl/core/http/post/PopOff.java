@@ -24,26 +24,18 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class PopOff extends AbstractAPIRequestHandler {
 
-    private static class PopOffHolder {
-        private static final PopOff INSTANCE = new PopOff();
-    }
-
-    public static PopOff getInstance() {
-        return PopOffHolder.INSTANCE;
-    }
-
-    private PopOff() {
+    public PopOff() {
         super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
     }
 
@@ -73,12 +65,13 @@ public final class PopOff extends AbstractAPIRequestHandler {
         } finally {
             blockchainProcessor.setGetMoreBlocks(true);
         }
-        JSONArray blocksJSON = new JSONArray();
-        blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
+        //usually we do not need those blocks in output
+        //JSONArray blocksJSON = new JSONArray();
+        //blocks.forEach(block -> blocksJSON.add(JSONData.block(block, true, false)));
         JSONObject response = new JSONObject();
-        response.put("blocks", blocksJSON);
+        //response.put("blocks", blocksJSON);
         if (keepTransactions) {
-            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getTransactions()));
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getOrLoadTransactions()));
         }
         return response;
     }

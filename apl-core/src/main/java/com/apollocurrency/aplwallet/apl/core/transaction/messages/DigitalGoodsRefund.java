@@ -36,18 +36,18 @@ public final class DigitalGoodsRefund extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 8 + 8;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putLong(purchaseId);
         buffer.putLong(refundATM);
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("purchase", Long.toUnsignedString(purchaseId));
         attachment.put("refundATM", refundATM);
     }

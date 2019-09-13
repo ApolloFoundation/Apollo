@@ -18,24 +18,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public class GetPrivateAccountLedgerEntry extends AbstractAPIRequestHandler {
-
-    /** GetPrivateAccountLedgerEntry instance */
-    private static class GetPrivateAccountLedgerEntryHolder {
-        private static final GetPrivateAccountLedgerEntry INSTANCE = new GetPrivateAccountLedgerEntry();
-    }
-
-    public static GetPrivateAccountLedgerEntry getInstance() {
-        return GetPrivateAccountLedgerEntryHolder.INSTANCE;
-    }
 
     /**
      * Create the GetPrivateAccountLedgerEntry instance
      */
-    private GetPrivateAccountLedgerEntry() {
+    public GetPrivateAccountLedgerEntry() {
         super(new APITag[] {APITag.ACCOUNTS}, "ledgerId", "includeTransaction", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
 
@@ -72,7 +65,7 @@ public class GetPrivateAccountLedgerEntry extends AbstractAPIRequestHandler {
         JSONData.ledgerEntry(response, ledgerEntry, includeTransaction, includeHoldingInfo);
         if (data.isEncrypt()) {
             response = JSONData.encryptedLedgerEntry(response, data.getSharedKey());
-            response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+            response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         }
         return response;
     }

@@ -7,16 +7,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 
 public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
     private static final Logger log = getLogger(DbPreparedStatementWrapper.class);
-    @Inject
-    private static Blockchain blockchain; // = CDI.current().select(BlockchainImpl.class).get();
+    
+    @Inject // it does not work, need to investigate why
+    private static Blockchain blockchain;
 
     private long stmtThreshold;
-
+    //TODO: Make injection work and delete this
+    private void checkCDI(){
+        if(blockchain==null){
+            blockchain  = CDI.current().select(BlockchainImpl.class).get();
+        }
+    }
     public DbPreparedStatementWrapper(PreparedStatement stmt, String sql, long stmtThreshold) {
         super(stmt, sql);
         this.stmtThreshold = stmtThreshold;
@@ -27,9 +35,11 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         boolean b = super.execute();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) {
+            checkCDI();
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
+        }
         return b;
     }
 
@@ -38,9 +48,11 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         ResultSet r = super.executeQuery();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) {
+            checkCDI();
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
+        }
         return r;
     }
 
@@ -49,9 +61,11 @@ public class DbPreparedStatementWrapper extends FilteredPreparedStatement {
         long start = System.currentTimeMillis();
         int c = super.executeUpdate();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > stmtThreshold)
+        if (elapsed > stmtThreshold && blockchain != null) {
+            checkCDI();
             logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
                     (double)elapsed/1000.0, blockchain.getHeight(), getSQL()));
+        }
         return c;
     }
 

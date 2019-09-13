@@ -20,22 +20,15 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
 
-    private static class GetPrivateTransactionHolder {
-        private static final GetPrivateTransaction INSTANCE = new GetPrivateTransaction();
-    }
-
-    public static GetPrivateTransaction getInstance() {
-        return GetPrivateTransactionHolder.INSTANCE;
-    }
-
-    private GetPrivateTransaction() {
+    public GetPrivateTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transaction", "fullHash", "secretPhrase", "publicKey");
     }
 
@@ -89,7 +82,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                 response = JSONData.transaction(transaction, false, false);
             }
         }
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

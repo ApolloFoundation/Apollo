@@ -43,12 +43,12 @@ public final class MessagingAccountProperty extends AbstractAttachment {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 1 + Convert.toBytes(property).length + 1 + Convert.toBytes(value).length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         byte[] property = Convert.toBytes(this.property);
         byte[] value = Convert.toBytes(this.value);
         buffer.put((byte) property.length);
@@ -58,7 +58,7 @@ public final class MessagingAccountProperty extends AbstractAttachment {
     }
 
     @Override
-    void putMyJSON(JSONObject attachment) {
+    public void putMyJSON(JSONObject attachment) {
         attachment.put("property", property);
         attachment.put("value", value);
     }

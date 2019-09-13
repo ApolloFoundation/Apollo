@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.27.0</version>
+    <version>1.36.6</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -13,44 +13,68 @@
         <name>Apollo Foundation</name>
         <url>https://www.apollocurrency.com/</url>
     </organization>
-
+    <repositories>
+        <!-- arti.firstbridge.work does not chache in apl repo so we have to add Maven Central here -->
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <layout>default</layout>
+            <url>http://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
+        <repository>
+            <id>apl</id>
+            <name>arti.firstbridge.work-releases</name>
+            <url>https://arti.firstbridge.work/artifactory/apl</url>
+        </repository>
+        <repository>
+            <id>apl-releases</id>
+            <name>arti.firstbridge.work-releases</name>
+            <url>https://arti.firstbridge.work/artifactory/apl-release</url>
+        </repository>
+    </repositories>
     <modules>
         <module>apl-api</module>
         <module>apl-crypto</module>
         <module>apl-utils</module>
         <module>apl-core</module>
         <module>apl-updater</module>
-<!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->        
+        <module>apl-conf</module>
+        <!-- this is file set for APITestServlet and should be romoved after full transition to Swagger -->
         <module>apl-html</module>
-<!--
-     Tt is a whole mess at the moment. commented out. Please!!! Integration test
-     SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
-     ant it MUST use REST model only!
--->
-<!--        <module>apl-tests</module> -->
+        <!--
+             Tt is a whole mess at the moment. commented out. Please!!! Integration test
+             SHOULD NOT USE classes from core in any case. It is INTEGARATION tests
+             ant it MUST use REST API only!
+        -->
+        <!--        <module>apl-tests</module> -->
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
-        <module>api-integration-tests</module>
     </modules>
 
     <properties>
         <artifact.basedir>${project.basedir}</artifact.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>11</java.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-        <web-wallet.version>2.4.0</web-wallet.version>
+        <web-wallet.version>2.5.17</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
         <!--Crypto-->
-        <fbcrypto.version>1.2.4</fbcrypto.version>
-        <bcprov.version>1.60</bcprov.version>
+
+        <fbcrypto.version>1.2.7</fbcrypto.version>
+        <bcprov.version>1.61</bcprov.version>
+
 
         <!--QR-code-->
         <zxing.version>3.3.0</zxing.version>
@@ -60,11 +84,12 @@
         <apache-commons-io.version>1.4</apache-commons-io.version>
         <apache-commons-codec.version>1.9</apache-commons-codec.version>
         <apache-commons-net.version>3.6</apache-commons-net.version>
+        <apache-commons-math3.version>3.6.1</apache-commons-math3.version>
 
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.9.6</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -76,41 +101,36 @@
         <logback.version>1.2.3</logback.version>
         <log4jdbc.version>1.2</log4jdbc.version>
 
-        <!--tests-->
+        <!--Tests-->
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
-        <junit.version>4.12</junit.version>
         <mockito.version>2.22.0</mockito.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
         <!-- TODO: cleanup -->
-        <jetty.version>9.4.12.v20180830</jetty.version>
+        <jetty.version>9.4.20.v20190813</jetty.version>
         <bitlet.version>0.1.4</bitlet.version>
-        <weld.version>3.0.5.Final</weld.version>
-        <weld-junit5.version>1.3.1.Final</weld-junit5.version>
+        <weld.version>3.1.2.Final</weld.version>
+        <weld-junit5.version>2.0.0.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.6.2.Final</resteasy.version>
-        <swagger.version>2.0.6</swagger.version>
-        <junit5-bom.version>5.3.2</junit5-bom.version>
+        <resteasy.version>3.8.1.Final</resteasy.version>
+        <swagger.version>2.0.8</swagger.version>
+        <junit5-bom.version>5.4.1</junit5-bom.version>
         <hikari.version>3.3.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
-        <jdbi3-core.version>3.5.1</jdbi3-core.version>
-        <jdbi3-sqlobject.version>3.5.1</jdbi3-sqlobject.version>
-        <lombok.version>1.18.4</lombok.version>
-        <surefire-plugin.version>2.22.1</surefire-plugin.version>
-        <compile-plugin.version>3.8.0</compile-plugin.version>
+        <jdbi3-core.version>3.9.1</jdbi3-core.version>
+        <jdbi3-sqlobject.version>3.9.1</jdbi3-sqlobject.version>
+        <lombok.version>1.18.8</lombok.version>
+        <surefire-plugin.version>2.22.2</surefire-plugin.version>
+        <compile-plugin.version>3.8.1</compile-plugin.version>
 
     </properties>
 
-<!-- We have following profiles: prod, dev, debug
-     1. prod: profile for production network with appropriate resources
-     2. dev:  profile for development, contains resources for man testnet
-         Default profile:  debug
-         Resources for profiles:
-             dev:  resources-dev
-             prod: resources-prod
-             debug: the same as dev but without zip assembly
--->
+    <!-- We have following profiles: prod, dev, debug
+         1. prod: profile for release with build of all zips and sha-256 sums
+         2. dev:  profile for development, no extra build artefacts, faster builds for developers
+    -->
+
     <profiles>
         <!-- The Configuration of the development profile -->
         <profile>
@@ -121,43 +141,14 @@
                 </property>
             </activation>
             <properties>
-                <zipExecutionPhase>package</zipExecutionPhase>
-            </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
-        </profile>
-        <!-- The Configuration of the debug profile -->
-        <profile>
-            <id>debug</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
                 <zipExecutionPhase>none</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-dev</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
         <!-- The Configuration of the production profile -->
         <profile>
             <id>prod</id>
             <activation>
+                <activeByDefault>true</activeByDefault>
                 <property>
                     <name>production</name>
                 </property>
@@ -165,16 +156,6 @@
             <properties>
                 <zipExecutionPhase>package</zipExecutionPhase>
             </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/resources-prod</directory>
-                    </resource>
-                </resources>
-            </build>
         </profile>
     </profiles>
 
@@ -191,6 +172,18 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>${bcprov.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <type>jar</type>
+                <version>${bcprov.version}</version>
+            </dependency>
+            
             <!--Logging-->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -213,6 +206,12 @@
                 <groupId>com.googlecode.json-simple</groupId>
                 <artifactId>json-simple</artifactId>
                 <version>${json-simple.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- json-simple should be gone after new REST completion -->
             <dependency>
@@ -279,6 +278,10 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>websocket-api</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>            <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
                 <artifactId>websocket-client</artifactId>
                 <version>${jetty.version}</version>
@@ -365,13 +368,13 @@
                 <artifactId>jta</artifactId>
                 <version>1.1</version>
             </dependency>
-<!--
-            <dependency>
-                <groupId>com.atomikos</groupId>
-                <artifactId>transactions-jta</artifactId>
-                <version>4.0.6</version>
-            </dependency>
--->
+            <!--
+                        <dependency>
+                            <groupId>com.atomikos</groupId>
+                            <artifactId>transactions-jta</artifactId>
+                            <version>4.0.6</version>
+                        </dependency>
+            -->
 
             <!--2fa api-->
             <dependency>
@@ -407,29 +410,6 @@
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-core</artifactId>
                 <version>${tika.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tika</groupId>
-                <artifactId>tika-parsers</artifactId>
-                <version>${tika.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.cxf</groupId>
-                        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>jcl-over-slf4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcprov-jdk15on</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.bouncycastle</groupId>
-                        <artifactId>bcmail-jdk15on</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.bitlet</groupId>
@@ -484,6 +464,11 @@
                 <artifactId>commons-codec</artifactId>
                 <version>${apache-commons-codec.version}</version>
             </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${apache-commons-math3.version}</version>
+        </dependency>
             <!--JDBI libs-->
             <dependency>
                 <groupId>com.zaxxer</groupId>
@@ -519,12 +504,6 @@
 
             <!--TEST frameworks-->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit5-bom.version}</version>
@@ -538,22 +517,14 @@
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
+                <artifactId>mockito-inline</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
                 <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito.version}</version>
             </dependency>
-            <!--tests-->
-            <dependency>
-                <groupId>net.javacrumbs.json-unit</groupId>
-                <artifactId>json-unit-core</artifactId>
-                <version>${json-unit.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>net.javacrumbs.json-unit</groupId>
-                <artifactId>json-unit-fluent</artifactId>
-                <version>${json-unit.version}</version>
-                <scope>test</scope>
-            </dependency>
-
             <!-- Desktop JAVAFX libraries -->
             <dependency>
                 <groupId>org.openjfx</groupId>
@@ -699,6 +670,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
             </dependency>
+                                
         </dependencies>
     </dependencyManagement>
 
@@ -713,14 +685,14 @@
                         <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                     <dependencies>
-<!--
-                        JDK 11
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>6.2</version>
-                        </dependency>
--->
+                        <!--
+                                                JDK 11
+                                                <dependency>
+                                                    <groupId>org.ow2.asm</groupId>
+                                                    <artifactId>asm</artifactId>
+                                                    <version>6.2</version>
+                                                </dependency>
+                        -->
                         <dependency>
                             <groupId>org.apache.maven.wagon</groupId>
                             <artifactId>wagon-webdav-jackrabbit</artifactId>
@@ -763,6 +735,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>

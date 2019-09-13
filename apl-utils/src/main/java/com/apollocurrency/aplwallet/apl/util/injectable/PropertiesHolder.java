@@ -22,7 +22,9 @@ public class PropertiesHolder {
 
     private Properties properties;
 
-    public PropertiesHolder() {}
+    public PropertiesHolder() {
+     //   LOG.trace("Default constructor");
+    }
 
     public void init(Properties properties){
         this.properties = properties;
@@ -41,7 +43,7 @@ public class PropertiesHolder {
   //          LOG.debug(name + " = \"" + result + "\"");
             return result;
         } catch (NumberFormatException e) {
-            LOG.info(name + " not defined or not numeric, using default value " + defaultValue);
+            LOG.trace(name + " not defined or not numeric, using default value " + defaultValue);
             return defaultValue;
         }
     }
@@ -66,7 +68,7 @@ public class PropertiesHolder {
         if (value != null && ! "".equals(value)) {
            // LOG.debug(name + " = \"" + (doNotLog ? "{not logged}" : value) + "\"");
         } else {
-            LOG.info(name + " not defined");
+            LOG.trace(name + " not defined");
             value = defaultValue;
         }
         if (encoding == null || value == null) {
@@ -113,7 +115,7 @@ public class PropertiesHolder {
           //  LOG.debug(name + " = \"false\"");
             return false;
         }
-        LOG.info(name + " not defined, using default " + defaultValue);
+        LOG.trace(name + " not defined, using default " + defaultValue);
         return defaultValue;
     }
     

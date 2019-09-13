@@ -23,22 +23,16 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class RequeueUnconfirmedTransactions extends AbstractAPIRequestHandler {
 
-    private static class RequeueUnconfirmedTransactionsHolder {
-        private static final RequeueUnconfirmedTransactions INSTANCE = new RequeueUnconfirmedTransactions();
-    }
-
-    public static RequeueUnconfirmedTransactions getInstance() {
-        return RequeueUnconfirmedTransactionsHolder.INSTANCE;
-    }
-
-    private RequeueUnconfirmedTransactions() {
+    public RequeueUnconfirmedTransactions() {
         super(new APITag[] {APITag.DEBUG});
     }
 

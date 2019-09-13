@@ -20,36 +20,51 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
-abstract class AbstractPoll {
+public abstract class AbstractPoll extends DerivedEntity {
 
     final long id;
-    final VoteWeighting voteWeighting;
+    protected final VoteWeighting voteWeighting;
     final long accountId;
-    final int finishHeight;
+    protected final int finishHeight;
 
-    AbstractPoll(long id, long accountId, int finishHeight, VoteWeighting voteWeighting) {
+    public AbstractPoll(Long dbId, Integer height, long id, VoteWeighting voteWeighting, long accountId, int finishHeight) {
+        super(dbId, height);
         this.id = id;
-        this.accountId = accountId;
-        this.finishHeight = finishHeight;
         this.voteWeighting = voteWeighting;
-    }
-
-    AbstractPoll(long id, long accountId, int finishHeight) {
-        this.id = id;
         this.accountId = accountId;
         this.finishHeight = finishHeight;
-        this.voteWeighting = new VoteWeighting((byte)0, 0L, 100_000_000L, (byte) 0);
     }
 
-    AbstractPoll(ResultSet rs) throws SQLException {
+    public AbstractPoll(ResultSet rs) throws SQLException {
+        super(rs);
         this.id = rs.getLong("id");
         this.accountId = rs.getLong("account_id");
         this.finishHeight = rs.getInt("finish_height");
         this.voteWeighting = new VoteWeighting(rs.getByte("voting_model"), rs.getLong("holding_id"),
                 rs.getLong("min_balance"), rs.getByte("min_balance_model"));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AbstractPoll)) return false;
+        if (!super.equals(o)) return false;
+        AbstractPoll that = (AbstractPoll) o;
+        return id == that.id &&
+                accountId == that.accountId &&
+                finishHeight == that.finishHeight &&
+                Objects.equals(voteWeighting, that.voteWeighting);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), id, voteWeighting, accountId, finishHeight);
     }
 
     public final long getId() {
@@ -67,6 +82,5 @@ abstract class AbstractPoll {
     public final VoteWeighting getVoteWeighting() {
         return voteWeighting;
     }
-
 }
 

@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apldesktop;
 
 //import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -88,9 +89,9 @@ public class JavaScriptBridge {
             return JSON.toJSONString(response);
         }
     }*/
-
+//TODO: why?
     public String getAdminPassword() {
-        return API.adminPassword;
+        return AdminPasswordVerifier.adminPassword;
     }
 
     @SuppressWarnings("unused")

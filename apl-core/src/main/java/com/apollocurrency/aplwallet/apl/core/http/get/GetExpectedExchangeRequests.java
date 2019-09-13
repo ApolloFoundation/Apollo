@@ -20,34 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExpectedExchangeRequests extends AbstractAPIRequestHandler {
 
-    private static class GetExpectedExchangeRequestsHolder {
-        private static final GetExpectedExchangeRequests INSTANCE = new GetExpectedExchangeRequests();
-    }
-
-    public static GetExpectedExchangeRequests getInstance() {
-        return GetExpectedExchangeRequestsHolder.INSTANCE;
-    }
-
-    private GetExpectedExchangeRequests() {
+    public GetExpectedExchangeRequests() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.MS}, "account", "currency", "includeCurrencyInfo");
     }
 
@@ -69,7 +62,7 @@ public final class GetExpectedExchangeRequests extends AbstractAPIRequestHandler
             return currencyId == 0 || attachment.getCurrencyId() == currencyId;
         };
 
-        List<? extends Transaction> transactions = lookupBlockchain().getExpectedTransactions(filter);
+        List<? extends Transaction> transactions = lookupBlockchainProcessor().getExpectedTransactions(filter);
 
         JSONArray exchangeRequests = new JSONArray();
         transactions.forEach(transaction -> exchangeRequests.add(JSONData.expectedExchangeRequest(transaction, includeCurrencyInfo)));

@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -55,17 +56,10 @@ import org.json.simple.JSONStreamAware;
  * Holding type codes are listed in getConstants.
  * In addition, the holding identifier must be specified when the holding type is ASSET or CURRENCY.
  */
+@Vetoed
 public class GetFundingMonitor extends AbstractAPIRequestHandler {
 
-    private static class GetFundingMonitorHolder {
-        private static final GetFundingMonitor INSTANCE = new GetFundingMonitor();
-    }
-
-    public static GetFundingMonitor getInstance() {
-        return GetFundingMonitorHolder.INSTANCE;
-    }
-
-    private GetFundingMonitor() {
+    public GetFundingMonitor() {
         super(new APITag[] {APITag.ACCOUNTS}, "holdingType", "holding", "property", "secretPhrase",
                 "includeMonitoredAccounts", "account", "adminPassword", "account", "passphrase");
     }
@@ -83,7 +77,7 @@ public class GetFundingMonitor extends AbstractAPIRequestHandler {
         long account = ParameterParser.getAccountId(req, false);
         boolean includeMonitoredAccounts = "true".equalsIgnoreCase(req.getParameter("includeMonitoredAccounts"));
         if (keySeed == null) {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
         }
         List<FundingMonitor> monitors;
         if (keySeed != null || account != 0) {

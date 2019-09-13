@@ -29,23 +29,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetBuyOffers extends AbstractAPIRequestHandler {
 
-    private static class GetBuyOffersHolder {
-        private static final GetBuyOffers INSTANCE = new GetBuyOffers();
-    }
-
-    public static GetBuyOffers getInstance() {
-        return GetBuyOffersHolder.INSTANCE;
-    }
-
-    private GetBuyOffers() {
+    public GetBuyOffers() {
         super(new APITag[] {APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
     }
 

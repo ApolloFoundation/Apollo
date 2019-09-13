@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ACCOUNT_LEDGER_PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>
@@ -231,21 +232,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ACCOUNT_L
  *   </tbody>
  * </table>
  */
+@Vetoed
 public class GetAccountLedger extends AbstractAPIRequestHandler {
-
-    /** GetAccountLedger instance */
-    private static class GetAccountLedgerHolder {
-        private static final GetAccountLedger INSTANCE = new GetAccountLedger();
-    }
-
-    public static GetAccountLedger getInstance() {
-        return GetAccountLedgerHolder.INSTANCE;
-    }
 
     /**
      * Create the GetAccountLedger instance
      */
-    private GetAccountLedger() {
+   public GetAccountLedger() {
         super(new APITag[] {APITag.ACCOUNTS}, "account", "firstIndex", "lastIndex",
                 "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo");
     }

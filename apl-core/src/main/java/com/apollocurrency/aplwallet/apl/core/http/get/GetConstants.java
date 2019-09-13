@@ -22,49 +22,42 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import java.util.Collections;
+import java.util.Map;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
+@Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
-
-    private static class GetConstantsHolder {
-        private static final GetConstants INSTANCE = new GetConstants();
-    }
-
-    public static GetConstants getInstance() {
-        return GetConstantsHolder.INSTANCE;
-    }
 
     private static final class Holder {
 
@@ -73,16 +66,24 @@ public final class GetConstants extends AbstractAPIRequestHandler {
         static {
             try {
                 JSONObject response = new JSONObject();
-                BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
-                response.put("genesisBlockId", Long.toUnsignedString(blockchainProcessor.getGenesisBlockId()));
-                response.put("genesisAccountId", Long.toUnsignedString(Genesis.CREATOR_ID));
-                response.put("epochBeginning", Genesis.EPOCH_BEGINNING);
+                Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+                PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+                if (blockchain.isInitialized()) {
+                    response.put("genesisBlockId", Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
+                }
+                response.put("genesisAccountId", Long.toUnsignedString(GenesisImporter.CREATOR_ID));
+                response.put("epochBeginning", GenesisImporter.EPOCH_BEGINNING);
                 response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
                 BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 response.put("coinSymbol", blockchainConfig.getCoinSymbol());
                 response.put("accountPrefix", blockchainConfig.getAccountPrefix());
                 response.put("projectName", blockchainConfig.getProjectName());
+
+                response.put("maxImportSecretFileLength", propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize"));
+                response.put("gasLimitEth", Constants.GAS_LIMIT_ETHER_TX);
+                response.put("gasLimitERC20", Constants.GAS_LIMIT_FOR_ERC20);
+
                 JSONObject transactionJSON = new JSONObject();
                 JSONObject transactionSubTypesJSON = new JSONObject();
                 outer:
@@ -145,7 +146,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("hashAlgorithms", hashFunctions);
 
                 JSONObject phasingHashFunctions = new JSONObject();
-                for (HashFunction hashFunction : PhasingPoll.acceptedHashFunctions) {
+                for (HashFunction hashFunction : PhasingPollService.HASH_FUNCTIONS) {
                     phasingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
                 response.put("phasingHashAlgorithms", phasingHashFunctions);
@@ -159,7 +160,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("mintingHashAlgorithms", mintingHashFunctions);
 
                 JSONObject peerStates = new JSONObject();
-                for (Peer.State peerState : Peer.State.values()) {
+                for (PeerState peerState : PeerState.values()) {
                     peerStates.put(peerState.toString(), peerState.ordinal());
                 }
                 response.put("peerStates", peerStates);
@@ -224,14 +225,13 @@ public final class GetConstants extends AbstractAPIRequestHandler {
         }
     }
 
-    private GetConstants() {
+    public GetConstants() {
         super(new APITag[] {APITag.INFO});
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         return Holder.CONSTANTS;
-
     }
 
     @Override

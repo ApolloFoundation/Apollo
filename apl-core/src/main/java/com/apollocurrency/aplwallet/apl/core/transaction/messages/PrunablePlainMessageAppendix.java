@@ -6,33 +6,32 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix.hasAppendix;
 
-import javax.enterprise.inject.spi.CDI;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import javax.enterprise.inject.spi.CDI;
 
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
-
+    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private static PrunableMessageService messageService = CDI.current().select(PrunableMessageService.class).get();
     private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
-        public int getSize(TransactionImpl transaction, Appendix appendix) {
+        public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();
         }
     };
@@ -101,22 +100,22 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 32;
     }
 
     @Override
-    int getMyFullSize() {
+    public int getMyFullSize() {
         return getMessage() == null ? 0 : getMessage().length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.put(getHash());
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         if (prunableMessage != null) {
             json.put("message", Convert.toString(prunableMessage.getMessage(), prunableMessage.messageIsText()));
             json.put("messageIsText", prunableMessage.messageIsText());
@@ -144,7 +143,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
-            PrunableMessage.add((TransactionImpl)transaction, this);
+            messageService.add(transaction, this);
         }
     }
 
@@ -176,7 +175,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     @Override
     public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
         if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transaction.getId());
+            PrunableMessage prunableMessage = messageService.get(transaction.getId());
             if (prunableMessage != null && prunableMessage.getMessage() != null) {
                 this.prunableMessage = prunableMessage;
             }
@@ -195,6 +194,6 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        PrunableMessage.add((TransactionImpl)transaction, this, blockTimestamp, height);
+        messageService.add(transaction, this, blockTimestamp, height);
     }
 }

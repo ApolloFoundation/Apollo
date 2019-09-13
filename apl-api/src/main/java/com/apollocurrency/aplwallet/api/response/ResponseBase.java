@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
- * Base class for all reponses
- * @author al
+ * Base class for all responses
+ * @author alukin@gmail.com
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -31,12 +31,11 @@ public class ResponseBase {
     public String protocol = PROTOCOL_VERSION;
     
     /**
-     * Error code on new model. 0 means success, no error.
+     * Error code on new API. 0 means success, no error.
      */
     public Integer newErrorCode;
     /**
-     * Time in miliseconds that took from incoming request to
-     * responce
+     * Time in milliseconds that took from incoming request to response
      */
     public Long requestProcessingTime;
     /**
@@ -45,10 +44,16 @@ public class ResponseBase {
      */
     public String errorDescription;
     /**
-     * Old error code. Should be gone in new model
+     * Old error code. Should be gone in new API
      */
     public Long errorCode;
-    public String error;
 
-    public String description;
+    public ResponseBase(Integer newErrorCode, String errorDescription, Long errorCode) {
+        this.newErrorCode = newErrorCode;
+        this.errorDescription = errorDescription;
+        this.errorCode = errorCode;
+    }
+
+    public ResponseBase() {
+    }
 }

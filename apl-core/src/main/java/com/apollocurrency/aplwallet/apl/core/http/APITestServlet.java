@@ -41,7 +41,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.spi.CDI;
 
 public class APITestServlet extends HttpServlet {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
+    private static final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
     private static final String HEADER1 =
             "<!DOCTYPE html>\n" +
             "<html>\n" +
@@ -125,15 +125,17 @@ public class APITestServlet extends HttpServlet {
             "</script>\n" +
             "</body>\n" +
             "</html>\n";
-
-    private static final List<String> allRequestTypes = new ArrayList<>(APIServlet.apiRequestHandlers.keySet());
+    
+    private static final APIServlet api = CDI.current().select(APIServlet.class).get();
+    
+    private static final List<String> allRequestTypes = new ArrayList<>(api.apiRequestHandlers.keySet());
     static {
         Collections.sort(allRequestTypes);
     }
 
     private static final SortedMap<String, SortedSet<String>> requestTags = new TreeMap<>();
     static {
-        for (Map.Entry<String, AbstractAPIRequestHandler> entry : APIServlet.apiRequestHandlers.entrySet()) {
+        for (Map.Entry<String, AbstractAPIRequestHandler> entry : api.apiRequestHandlers.entrySet()) {
             String requestType = entry.getKey();
             Set<APITag> apiTags = entry.getValue().getAPITags();
             for (APITag apiTag : apiTags) {
@@ -205,7 +207,7 @@ public class APITestServlet extends HttpServlet {
                 String requestTag = Convert.nullToEmpty(req.getParameter("requestTag"));
                 Set<String> taggedTypes = requestTags.get(requestTag);
                 for (String type : (taggedTypes != null ? taggedTypes : allRequestTypes)) {
-                    requestHandler = APIServlet.apiRequestHandlers.get(type);
+                    requestHandler = api.apiRequestHandlers.get(type);
                     writer.print(form(req, type, false, requestHandler));
                     bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
                 }

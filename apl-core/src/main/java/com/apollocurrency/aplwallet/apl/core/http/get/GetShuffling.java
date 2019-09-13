@@ -25,21 +25,15 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetShuffling extends AbstractAPIRequestHandler {
 
-    private static class GetShufflingHolder {
-        private static final GetShuffling INSTANCE = new GetShuffling();
-    }
-
-    public static GetShuffling getInstance() {
-        return GetShufflingHolder.INSTANCE;
-    }
-
-    private GetShuffling() {
+    public GetShuffling() {
         super(new APITag[] {APITag.SHUFFLING}, "shuffling", "includeHoldingInfo");
     }
 

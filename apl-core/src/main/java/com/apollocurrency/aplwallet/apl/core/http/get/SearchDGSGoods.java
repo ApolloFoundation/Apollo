@@ -20,38 +20,37 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import javax.enterprise.inject.Vetoed;
+
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class SearchDGSGoods extends AbstractAPIRequestHandler {
 
-    private static class SearchDGSGoodsHolder {
-        private static final SearchDGSGoods INSTANCE = new SearchDGSGoods();
-    }
-
-    public static SearchDGSGoods getInstance() {
-        return SearchDGSGoodsHolder.INSTANCE;
-    }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     protected boolean logRequestTime() {
         return true;
     }
 
-    private SearchDGSGoods() {
+    public SearchDGSGoods() {
         super(new APITag[] {APITag.DGS, APITag.SEARCH}, "query", "tag", "seller", "firstIndex", "lastIndex", "inStockOnly", "hideDelisted", "includeCounts");
     }
 
@@ -69,19 +68,19 @@ public final class SearchDGSGoods extends AbstractAPIRequestHandler {
         JSONArray goodsJSON = new JSONArray();
         response.put("goods", goodsJSON);
 
-        Filter<DigitalGoodsStore.Goods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
+        Filter<DGSGoods> filter = hideDelisted ? goods -> ! goods.isDelisted() : goods -> true;
 
-        FilteringIterator<DigitalGoodsStore.Goods> iterator = null;
+        FilteringIterator<DGSGoods> iterator = null;
         try {
-            DbIterator<DigitalGoodsStore.Goods> goods;
+            DbIterator<DGSGoods> goods;
             if (sellerId == 0) {
-                goods = DigitalGoodsStore.Goods.searchGoods(query, inStockOnly, 0, -1);
+                goods = service.searchGoods(query, inStockOnly, 0, -1);
             } else {
-                goods = DigitalGoodsStore.Goods.searchSellerGoods(query, sellerId, inStockOnly, 0, -1);
+                goods = service.searchSellerGoods(query, sellerId, inStockOnly, 0, -1);
             }
             iterator = new FilteringIterator<>(goods, filter, firstIndex, lastIndex);
             while (iterator.hasNext()) {
-                DigitalGoodsStore.Goods good = iterator.next();
+                DGSGoods good = iterator.next();
                 goodsJSON.add(JSONData.goods(good, includeCounts));
             }
         } finally {

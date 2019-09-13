@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import org.h2.api.Trigger;
@@ -18,6 +18,9 @@ import java.util.Iterator;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
 
+/**
+ * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
+ */
 public class FullTextTrigger implements Trigger, TransactionCallback {
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
     /**
@@ -25,8 +28,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
      */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
-    private static DatabaseManager databaseManager;
-
+    private DatabaseManager databaseManager;
     /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
@@ -35,13 +37,8 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     private TableData tableData;
 
 
-    private TableData readTableData(String schema, String tableName) throws SQLException {
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        try (Connection con = databaseManager.getDataSource().getConnection()) {
-            return DbUtils.getTableData(con, tableName, schema);
-        }
+    private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
+         return DbUtils.getTableData(connection, tableName, schema);
     }
 
     /**
@@ -58,8 +55,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
-        this.tableData = readTableData(schema, table);
-        this.ftl = CDI.current().select(FullTextSearchEngine.class).get();
+        this.tableData = readTableData(conn, schema, table);
     }
 
     /**
@@ -91,13 +87,10 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         //
         // Commit the change immediately if we are not in a transaction
         //
-        if (databaseManager == null) {
-            databaseManager = CDI.current().select(DatabaseManager.class).get();
-        }
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        TransactionalDataSource dataSource = lookupDatabaseManager().getDataSource();
         if (!dataSource.isInTransaction()) {
             try {
-                ftl.commitRow(oldRow, newRow, tableData);
+                lookupFullTextSearchEngine().commitRow(oldRow, newRow, tableData);
                 ftl.commitIndex();
             } catch (SQLException exc) {
                 LOG.error("Unable to update the Lucene index", exc);
@@ -115,6 +108,20 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         // Register our transaction callback
         //
         dataSource.registerCallback(this);
+    }
+
+    private DatabaseManager lookupDatabaseManager() {
+        if (databaseManager == null) {
+            databaseManager = CDI.current().select(DatabaseManager.class).get();
+        }
+        return databaseManager;
+    }
+
+    private FullTextSearchEngine  lookupFullTextSearchEngine() {
+        if (ftl == null) {
+            ftl = CDI.current().select(FullTextSearchEngine.class).get();
+        }
+        return ftl;
     }
 
     /**
@@ -135,7 +142,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
                 while (updateIt.hasNext()) {
                     TableUpdate update = updateIt.next();
                     if (update.getThread() == thread) {
-                        ftl.commitRow(update.getOldRow(), update.getNewRow(), tableData);
+                        lookupFullTextSearchEngine().commitRow(update.getOldRow(), update.getNewRow(), tableData);
                         updateIt.remove();
                         commit = true;
                     }
@@ -145,7 +152,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
             // Commit the index updates
             //
             if (commit) {
-                ftl.commitIndex();
+                lookupFullTextSearchEngine().commitIndex();
             }
         } catch (SQLException exc) {
             LOG.error("Unable to update the Lucene index", exc);

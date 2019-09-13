@@ -22,20 +22,17 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -47,6 +44,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
 
 public class UnconfirmedTransaction implements Transaction {
 
@@ -101,7 +99,7 @@ public class UnconfirmedTransaction implements Transaction {
         }
     }
 
-    TransactionImpl getTransaction() {
+    public TransactionImpl getTransaction() {
         return transaction;
     }
 
@@ -124,12 +122,28 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public void setFeeATM(long feeATM) {
+        if (transaction.getSignature() != null) {
+            throw new UnsupportedOperationException("Unable to set fee for already signed transaction");
+        } else {
+            transaction.setFeeATM(feeATM);
+        }
+
+    }
+
+    @Override
+    public void sign(byte[] keySeed) throws AplException.NotValidException {
+        throw new UnsupportedOperationException("Transaction should be already signed");
+    }
+
+    @Override
     public long getId() {
         return transaction.getId();
     }
 
-    DbKey getDbKey() {
-        return transaction.getDbKey();
+    @Override
+    public long getDbId() {
+        throw new UnsupportedOperationException("Transaction is unconfirmed! Db id is not exist");
     }
 
     @Override
@@ -145,6 +159,11 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public byte[] getSenderPublicKey() {
         return transaction.getSenderPublicKey();
+    }
+
+    @Override
+    public boolean shouldSavePublicKey() {
+        return transaction.shouldSavePublicKey();
     }
 
     @Override
@@ -247,11 +266,6 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public boolean verifySignature() {
         return transaction.verifySignature();
-    }
-
-    @Override
-    public void validate() throws AplException.ValidationException {
-        transaction.validate();
     }
 
     @Override

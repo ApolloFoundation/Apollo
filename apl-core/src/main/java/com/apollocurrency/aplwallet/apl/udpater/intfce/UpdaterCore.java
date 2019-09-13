@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
 public interface UpdaterCore {
 
+    void init(String updateAttachmentFile, boolean debug);
+
     void init();
 
     boolean startAvailableUpdate();

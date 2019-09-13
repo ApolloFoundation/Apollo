@@ -30,10 +30,6 @@ import org.json.simple.JSONStreamAware;
 
 public interface Peer extends Comparable<Peer> {
 
-    enum State {
-        NON_CONNECTED, CONNECTED, DISCONNECTED
-    }
-
     enum Service {
         HALLMARK(1),                    // Hallmarked node
         PRUNABLE(2),                    // Stores expired prunable messages
@@ -51,13 +47,7 @@ public interface Peer extends Comparable<Peer> {
             return code;
         }
     }
-
-    enum BlockchainState {
-        UP_TO_DATE,
-        DOWNLOADING,
-        LIGHT_CLIENT,
-        FORK
-    }
+    
 
     boolean providesService(Service service);
 
@@ -66,10 +56,12 @@ public interface Peer extends Comparable<Peer> {
     String getHost();
 
     int getPort();
-
+    
+    String getHostWithPort();
+    
     String getAnnouncedAddress();
 
-    State getState();
+    PeerState getState();
 
     Version getVersion();
 
@@ -103,7 +95,7 @@ public interface Peer extends Comparable<Peer> {
 
     void unBlacklist();
 
-    void deactivate();
+    void deactivate(String reason);
 
     void remove();
 
@@ -117,10 +109,12 @@ public interface Peer extends Comparable<Peer> {
 
     boolean isInbound();
 
-    boolean isInboundWebSocket();
+    boolean isOutbound();
 
-    boolean isOutboundWebSocket();
+    boolean isInboundSocket();
 
+    boolean isOutboundSocket();
+    
     boolean isOpenAPI();
 
     boolean isApiConnectable();
@@ -131,8 +125,13 @@ public interface Peer extends Comparable<Peer> {
 
     String getBlacklistingCause();
 
-    JSONObject send(JSONStreamAware request, UUID chainId);
-
-    JSONObject send(JSONStreamAware request, UUID chainId, int maxResponseSize, boolean firstConnect);
-
+    JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
+   
+    public boolean handshake(UUID targetChainId);
+    
+    public boolean isTrusted();
+    
+    public PeerTrustLevel getTrustLevel();
+    
+    public long getServices();
 }

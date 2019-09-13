@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import javax.enterprise.inject.spi.CDI;
 
@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.Listener;
@@ -71,12 +71,12 @@ public final class CurrencyTransfer {
     private static final EntityDbTable<CurrencyTransfer> currencyTransferTable = new EntityDbTable<CurrencyTransfer>("currency_transfer", currencyTransferDbKeyFactory) {
 
         @Override
-        protected CurrencyTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public CurrencyTransfer load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new CurrencyTransfer(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, CurrencyTransfer transfer) throws SQLException {
+        public void save(Connection con, CurrencyTransfer transfer) throws SQLException {
             transfer.save(con);
         }
 

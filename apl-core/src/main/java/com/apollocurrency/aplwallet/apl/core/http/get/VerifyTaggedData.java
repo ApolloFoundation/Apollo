@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUpload;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -36,18 +36,12 @@ import java.util.Arrays;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.HASHES_MISMATCH;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TRANSACTION;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class VerifyTaggedData extends AbstractAPIRequestHandler {
 
-    private static class VerifyTaggedDataHolder {
-        private static final VerifyTaggedData INSTANCE = new VerifyTaggedData();
-    }
-
-    public static VerifyTaggedData getInstance() {
-        return VerifyTaggedDataHolder.INSTANCE;
-    }
-
-    private VerifyTaggedData() {
+    public VerifyTaggedData() {
         super("file", new APITag[]{APITag.DATA}, "transaction",
                 "name", "description", "tags", "type", "channel", "isText", "filename", "data");
     }
@@ -61,14 +55,14 @@ public final class VerifyTaggedData extends AbstractAPIRequestHandler {
             return UNKNOWN_TRANSACTION;
         }
 
-        TaggedDataUpload taggedData = ParameterParser.getTaggedData(req);
+        TaggedDataUploadAttachment taggedData = ParameterParser.getTaggedData(req);
         Attachment attachment = transaction.getAttachment();
 
-        if (!(attachment instanceof TaggedDataUpload)) {
+        if (!(attachment instanceof TaggedDataUploadAttachment)) {
             return INCORRECT_TRANSACTION;
         }
 
-        TaggedDataUpload myTaggedData = (TaggedDataUpload) attachment;
+        TaggedDataUploadAttachment myTaggedData = (TaggedDataUploadAttachment) attachment;
         if (!Arrays.equals(myTaggedData.getHash(), taggedData.getHash())) {
             return HASHES_MISMATCH;
         }

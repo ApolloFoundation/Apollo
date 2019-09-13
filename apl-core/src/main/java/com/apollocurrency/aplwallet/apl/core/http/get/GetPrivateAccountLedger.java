@@ -24,27 +24,18 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
-
-    /**
-     * GetPrivateAccountLedger instance
-     */
-    private static class GetPrivateAccountLedgerHolder {
-        private static final GetPrivateAccountLedger INSTANCE = new GetPrivateAccountLedger();
-    }
-
-    public static GetPrivateAccountLedger getInstance() {
-        return GetPrivateAccountLedgerHolder.INSTANCE;
-    }
 
     /**
      * Create the GetPrivateAccountLedger instance
      */
-    private GetPrivateAccountLedger() {
+    public GetPrivateAccountLedger() {
         super(new APITag[] {APITag.ACCOUNTS},  "firstIndex", "lastIndex",
                 "eventType", "event", "holdingType", "holding", "includeTransactions", "includeHoldingInfo", "secretPhrase", "publicKey");
     }
@@ -116,7 +107,7 @@ public class GetPrivateAccountLedger extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         response.put("entries", responseEntries);
-        response.put("serverPublicKey", Convert.toHexString(API.getServerPublicKey()));
+        response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));
         return response;
     }
 

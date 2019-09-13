@@ -20,32 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSGoodsPurchases extends AbstractAPIRequestHandler {
 
-    private static class GetDGSGoodsPurchasesHolder {
-        private static final GetDGSGoodsPurchases INSTANCE = new GetDGSGoodsPurchases();
-    }
-
-    public static GetDGSGoodsPurchases getInstance() {
-        return GetDGSGoodsPurchasesHolder.INSTANCE;
-    }
-
-    private GetDGSGoodsPurchases() {
+    public GetDGSGoodsPurchases() {
         super(new APITag[] {APITag.DGS}, "goods", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
     }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -62,10 +59,10 @@ public final class GetDGSGoodsPurchases extends AbstractAPIRequestHandler {
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        try (DbIterator<DigitalGoodsStore.Purchase> iterator = DigitalGoodsStore.Purchase.getGoodsPurchases(goodsId,
+        try (DbIterator<DGSPurchase> iterator = service.getGoodsPurchases(goodsId,
                 buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex)) {
             while(iterator.hasNext()) {
-                purchasesJSON.add(JSONData.purchase(iterator.next()));
+                purchasesJSON.add(JSONData.purchase(service, iterator.next()));
             }
         }
         return response;

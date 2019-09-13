@@ -27,23 +27,20 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
+
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Slf4j
+@Vetoed
 public final class GetBlocks extends AbstractAPIRequestHandler {
 
-    private static class GetBlocksHolder {
-        private static final GetBlocks INSTANCE = new GetBlocks();
-    }
-
-    public static GetBlocks getInstance() {
-        return GetBlocksHolder.INSTANCE;
-    }
-
-    private GetBlocks() {
+    public GetBlocks() {
         super(new APITag[] {APITag.BLOCKS}, "firstIndex", "lastIndex", "timestamp", "includeTransactions", "includeExecutedPhased");
     }
 
@@ -57,16 +54,20 @@ public final class GetBlocks extends AbstractAPIRequestHandler {
         boolean includeExecutedPhased = "true".equalsIgnoreCase(req.getParameter("includeExecutedPhased"));
 
         JSONArray blocks = new JSONArray();
-        try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Block block = iterator.next();
-                if (block.getTimestamp() < timestamp) {
-                    break;
+        Block lastBlock = lookupBlockchain().getLastBlock();
+        if (lastBlock != null) {
+            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex)) {
+                while (iterator.hasNext()) {
+                    Block block = iterator.next();
+                    if (block.getTimestamp() < timestamp) {
+                        break;
+                    }
+                    blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));
                 }
-                blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));
             }
+        } else {
+            log.warn("Still no any blocks in db...");
         }
-
         JSONObject response = new JSONObject();
         response.put("blocks", blocks);
 

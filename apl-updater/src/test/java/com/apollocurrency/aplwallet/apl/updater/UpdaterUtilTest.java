@@ -4,11 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,8 +31,9 @@ import java.util.stream.Stream;
 //import org.powermock.api.mockito.PowerMockito;
 
 //TODO: Rewrite using mockito
-@Ignore
+@Disabled
 public class UpdaterUtilTest {
+    private static final Logger log = getLogger(UpdaterUtilTest.class);
 
     private final static String CERTIFICATE_MOCK_PREFIX = "CERTIFICATE_MOCK_";
 
@@ -56,21 +62,21 @@ public class UpdaterUtilTest {
         createCertificateMocksForFiles(certificateFactoryMock, files);
 
         // Call tested method
-        Set<UpdaterUtil.CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
+        Set<CertificatePair> result = UpdaterUtil.buildCertificatePairs(directory, "1_", "2_", ".crt");
 
-        Assert.assertNotNull(result);
-        for(UpdaterUtil.CertificatePair pair : result) {
-            System.out.println("pair: [" + pair.getFirstCertificate().toString() + ", " + pair.getSecondCertificate().toString() + "]");
+        assertNotNull(result);
+        for(CertificatePair pair : result) {
+            log.debug("pair: [{}, {}]", pair.getFirstCertificate().toString(), pair.getSecondCertificate().toString());
         }
 
-        Assert.assertEquals(result.size(), 6);
+        assertEquals(result.size(), 6);
 
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_1.crt"));
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_2.crt"));
-        Assert.assertTrue(containsPair(result, "2_1.crt", "1_3.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_1.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_2.crt"));
-        Assert.assertTrue(containsPair(result, "2_2.crt", "1_3.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_1.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_2.crt"));
+        assertTrue(containsPair(result, "2_1.crt", "1_3.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_1.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_2.crt"));
+        assertTrue(containsPair(result, "2_2.crt", "1_3.crt"));
 
     }
 
@@ -95,13 +101,13 @@ public class UpdaterUtilTest {
         // Call tested method
         Set<Certificate> result = UpdaterUtil.readCertificates(createPathStream(files).collect(Collectors.toSet()));
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(result.size(), files.length);
+        assertNotNull(result);
+        assertEquals(result.size(), files.length);
 
         HashSet<String> filenames = new HashSet<>(Arrays.asList(files));
         // Assert that for each filename a correspondent certificate was created
         for(Certificate certificate : result) {
-            Assert.assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
+            assertTrue(filenames.contains(certificate.toString().replace(CERTIFICATE_MOCK_PREFIX, "")));
         }
 
     }
@@ -142,8 +148,8 @@ public class UpdaterUtilTest {
      * @param second
      * @return
      */
-    private static boolean containsPair(Set<UpdaterUtil.CertificatePair> pairs, String first, String second) {
-        for(UpdaterUtil.CertificatePair pair : pairs) {
+    private static boolean containsPair(Set<CertificatePair> pairs, String first, String second) {
+        for(CertificatePair pair : pairs) {
             if( pair.getFirstCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + first) &&
                 pair.getSecondCertificate().toString().equals(CERTIFICATE_MOCK_PREFIX + second)) {
                 return true;

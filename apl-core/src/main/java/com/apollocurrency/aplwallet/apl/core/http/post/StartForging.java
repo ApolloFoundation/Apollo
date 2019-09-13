@@ -27,21 +27,14 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class StartForging extends AbstractAPIRequestHandler {
 
-    private static class StartForgingHolder {
-        private static final StartForging INSTANCE = new StartForging();
-    }
-
-    public static StartForging getInstance() {
-        return StartForgingHolder.INSTANCE;
-    }
-
-    private StartForging() {
+    public StartForging() {
         super(new APITag[] {APITag.FORGING}, "secretPhrase");
     }
 

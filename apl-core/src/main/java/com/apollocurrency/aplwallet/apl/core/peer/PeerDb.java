@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
 import java.sql.Connection;
@@ -101,7 +101,16 @@ public class PeerDb {
         }
         return peers;
     }
-
+    public static void deletePeer(Entry peer){        
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()){
+            PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
+            pstmt.setString(1, peer.getAddress());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
     static void deletePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -117,6 +126,7 @@ public class PeerDb {
 
     static void updatePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();   
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
@@ -126,13 +136,16 @@ public class PeerDb {
                 pstmt.setInt(3, peer.getLastUpdated());
                 pstmt.executeUpdate();
             }
+            dataSource.commit();
         } catch (SQLException e) {
+            dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     static void updatePeer(PeerImpl peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        dataSource.begin();        
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
                         + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
@@ -140,7 +153,9 @@ public class PeerDb {
             pstmt.setLong(2, peer.getServices());
             pstmt.setInt(3, peer.getLastUpdated());
             pstmt.executeUpdate();
+            dataSource.commit();
         } catch (SQLException e) {
+            dataSource.rollback();
             throw new RuntimeException(e.toString(), e);
         }
     }

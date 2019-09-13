@@ -28,6 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import javax.enterprise.inject.spi.CDI;
 
@@ -36,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -57,37 +58,27 @@ public final class Asset {
 
     };
 
-    private static final VersionedEntityDbTable<Asset> assetTable = new VersionedEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
+    private static final VersionedDeletableEntityDbTable<Asset> assetTable = new VersionedDeletableEntityDbTable<Asset>("asset", assetDbKeyFactory, "name,description") {
 
         @Override
-        protected Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Asset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Asset(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Asset asset) throws SQLException {
+        public void save(Connection con, Asset asset) throws SQLException {
             asset.save(con);
-        }
-
-        @Override
-        public void trim(int height) {
-            super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
         }
 
         @Override
         public void checkAvailable(int height) {
             if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
+            if (height < blockchainProcessor.getMinRollbackHeight()) {
                 throw new IllegalArgumentException("Historical data as of height " + height +" not available.");
             }
             if (height > blockchain.getHeight()) {
                 throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
             }
-        }
-
-        @Override
-        protected String defaultSort() {
-            return super.defaultSort();
         }
     };
 

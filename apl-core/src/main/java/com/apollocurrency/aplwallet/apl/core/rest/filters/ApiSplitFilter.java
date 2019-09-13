@@ -42,17 +42,17 @@ public class ApiSplitFilter implements Filter{
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest rq = (HttpServletRequest) request;
 
-        logRequest(rq);
+        //logRequest(rq);
         HttpServletResponse resp = (HttpServletResponse) response;
         // Set response values now in case we create an asynchronous context
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
         resp.setHeader("Pragma", "no-cache");
         resp.setDateHeader("Expires", 0);
         //to fix CORS
-//        resp.setHeader("Access-Control-Allow-Origin", "*");
-//        resp.setHeader("Access-Control-Allow-Credentials", "true");
-//        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-//        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
+        resp.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
         String rqType = request.getParameter("requestType");
         logger.trace("========= RequestType IS EMPTY!==========");

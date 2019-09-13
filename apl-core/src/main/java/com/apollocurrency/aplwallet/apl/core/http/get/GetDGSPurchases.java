@@ -20,34 +20,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSPurchases extends AbstractAPIRequestHandler {
 
-    private static class GetDGSPurchasesHolder {
-        private static final GetDGSPurchases INSTANCE = new GetDGSPurchases();
-    }
-
-    public static GetDGSPurchases getInstance() {
-        return GetDGSPurchasesHolder.INSTANCE;
-    }
-
-    private GetDGSPurchases() {
+    public GetDGSPurchases() {
         super(new APITag[] {APITag.DGS}, "seller", "buyer", "firstIndex", "lastIndex", "withPublicFeedbacksOnly", "completed");
     }
-
+    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
@@ -63,19 +59,19 @@ public final class GetDGSPurchases extends AbstractAPIRequestHandler {
         JSONArray purchasesJSON = new JSONArray();
         response.put("purchases", purchasesJSON);
 
-        DbIterator<DigitalGoodsStore.Purchase> purchases;
+        DbIterator<DGSPurchase> purchases;
         if (sellerId == 0 && buyerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = service.getPurchases(withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId != 0 && buyerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = service.getSellerPurchases(sellerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else if (sellerId == 0) {
-            purchases = DigitalGoodsStore.Purchase.getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = service.getBuyerPurchases(buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         } else {
-            purchases = DigitalGoodsStore.Purchase.getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
+            purchases = service.getSellerBuyerPurchases(sellerId, buyerId, withPublicFeedbacksOnly, completed, firstIndex, lastIndex);
         }
         try {
             while (purchases.hasNext()) {
-                purchasesJSON.add(JSONData.purchase(purchases.next()));
+                purchasesJSON.add(JSONData.purchase(service, purchases.next()));
             }
         } finally {
             DbUtils.close(purchases);

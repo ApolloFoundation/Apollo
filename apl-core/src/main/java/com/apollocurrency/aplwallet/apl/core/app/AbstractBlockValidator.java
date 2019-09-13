@@ -5,11 +5,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
 import java.util.Objects;
@@ -17,14 +17,14 @@ import javax.inject.Inject;
 
 public abstract class AbstractBlockValidator implements BlockValidator {
     private static final Logger LOG = getLogger(AbstractBlockValidator.class);
-    private BlockDao blockDao;
+    private Blockchain blockchain;
     protected BlockchainConfig blockchainConfig;
     
     @Inject
-    public AbstractBlockValidator(BlockDao blockDao, BlockchainConfig blockchainConfig) {
-        Objects.requireNonNull(blockDao, "BlockDao is null");
+    public AbstractBlockValidator(Blockchain blockchain, BlockchainConfig blockchainConfig) {
+        Objects.requireNonNull(blockchain, "Blockchain is null");
         Objects.requireNonNull(blockchainConfig, "Blockchain config is null");
-        this.blockDao = blockDao;
+        this.blockchain = blockchain;
         this.blockchainConfig = blockchainConfig;
     }
 
@@ -45,7 +45,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         }
         verifySignature(block);
         validatePreviousHash(block, previousLastBlock);
-        if (block.getId() == 0L || blockDao.hasBlock(block.getId(), previousLastBlock.getHeight())) {
+        if (block.getId() == 0L || blockchain.hasBlock(block.getId(), previousLastBlock.getHeight())) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Duplicate block or invalid id", block);
         }
         if (!block.verifyGenerationSignature()) {
@@ -54,8 +54,8 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             throw new BlockchainProcessor.BlockNotAcceptedException("Generation signature verification failed, effective balance " + generatorBalance, block);
         }
 
-        if (block.getTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getTransactions().size(), block);
+        if (block.getOrLoadTransactions().size() > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+            throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block transaction count " + block.getOrLoadTransactions().size(), block);
         }
         if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException("Invalid block payload length " + block.getPayloadLength(), block);

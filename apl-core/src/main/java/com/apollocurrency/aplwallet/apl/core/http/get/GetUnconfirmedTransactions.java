@@ -36,18 +36,12 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetUnconfirmedTransactionsHolder {
-        private static final GetUnconfirmedTransactions INSTANCE = new GetUnconfirmedTransactions();
-    }
-
-    public static GetUnconfirmedTransactions getInstance() {
-        return GetUnconfirmedTransactionsHolder.INSTANCE;
-    }
-
-    private GetUnconfirmedTransactions() {
+    public GetUnconfirmedTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account", "account", "account", "firstIndex", "lastIndex");
     }
 

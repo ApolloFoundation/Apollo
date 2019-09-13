@@ -15,7 +15,7 @@ public final class LinkKey implements DbKey {
     private final long idA;
     private final long idB;
 
-    LinkKey(long idA, long idB) {
+    public LinkKey(long idA, long idB) {
         this.idA = idA;
         this.idB = idB;
     }

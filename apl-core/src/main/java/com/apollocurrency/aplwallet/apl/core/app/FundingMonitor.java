@@ -20,33 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,7 +34,33 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 
 /**
  * Monitor account balances based on account properties
@@ -65,7 +70,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * remain pending if the number of blocks since the previous transfer transaction is less than the monitor
  * interval.
  */
-public final class FundingMonitor {
+public class FundingMonitor {
     private static final Logger LOG = getLogger(FundingMonitor.class);
 
 
@@ -81,7 +86,9 @@ public final class FundingMonitor {
     private static PropertiesHolder propertiesLoader;
     private static BlockchainConfig blockchainConfig;
     private static Blockchain blockchain;
+    private static FeeCalculator feeCalculator = new FeeCalculator();
     private static TransactionProcessor transactionProcessor;
+    private static GlobalSync globalSync; // prevent fail on node shutdown
     /** Maximum number of monitors */
     private static int MAX_MONITORS;// propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
 
@@ -265,7 +272,7 @@ public final class FundingMonitor {
                                     long amount, long threshold, int interval, byte[] keySeed) {
         propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
         blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        blockchain = CDI.current().select(BlockchainImpl.class).get();
+        blockchain = CDI.current().select(Blockchain.class).get();
         transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         /** Maximum number of monitors */
         MAX_MONITORS = propertiesLoader.getIntProperty("apl.maxNumberOfMonitors");
@@ -282,7 +289,10 @@ public final class FundingMonitor {
         //
         FundingMonitor monitor = new FundingMonitor(holdingType, holdingId, property,
                 amount, threshold, interval, accountId, keySeed);
-        blockchain.readLock();
+        if (globalSync == null) { // prevent fail on node shutdown
+            globalSync = CDI.current().select(GlobalSync.class).get();
+        }
+        globalSync.readLock();
         try {
             //
             // Locate monitored accounts based on the account property and the setter identifier
@@ -327,7 +337,7 @@ public final class FundingMonitor {
                         holdingType.name(), monitor.accountName, monitor.property, Long.toUnsignedString(monitor.holdingId)));
             }
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return true;
     }
@@ -525,8 +535,6 @@ public final class FundingMonitor {
             Account.addCurrencyListener(new CurrencyEventHandler(), Account.Event.CURRENCY_BALANCE);
             Account.addPropertyListener(new SetPropertyEventHandler(), Account.Event.SET_PROPERTY);
             Account.addPropertyListener(new DeletePropertyEventHandler(), Account.Event.DELETE_PROPERTY);
-            BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-            blockchainProcessor.addListener(new BlockEventHandler(), BlockchainProcessor.Event.BLOCK_PUSHED);
             //
             // All done
             //
@@ -543,9 +551,13 @@ public final class FundingMonitor {
      * Stop monitor processing
      */
     public static void shutdown() {
-        if (started && !stopped) {
-            stopped = true;
-            processSemaphore.release();
+        try {
+            if (started && !stopped) {
+                stopped = true;
+                processSemaphore.release();
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
     }
 
@@ -661,10 +673,13 @@ public final class FundingMonitor {
         FundingMonitor monitor = monitoredAccount.monitor;
         if (targetAccount.getBalanceATM() < monitoredAccount.threshold) {
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.keySeed);
+                    monitoredAccount.amount, 0, (short)1440, Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
+
+            builder.recipientId(monitoredAccount.accountId);
+            Transaction transaction = builder.build(null);
+            long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
+            transaction.setFeeATM(minimumFeeATM);
+            transaction.sign(monitor.keySeed);
             if (Math.addExact(monitoredAccount.amount, transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -698,10 +713,11 @@ public final class FundingMonitor {
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.threshold) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.keySeed);
+                    0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
+            builder.recipientId(monitoredAccount.accountId);
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -735,10 +751,11 @@ public final class FundingMonitor {
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.threshold) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.holdingId, monitoredAccount.amount);
             Transaction.Builder builder = Transaction.newTransactionBuilder(monitor.publicKey,
-                    0, 0, (short)1440, attachment);
-            builder.recipientId(monitoredAccount.accountId)
-                   .timestamp(blockchain.getLastBlockTimestamp());
-            Transaction transaction = builder.build(monitor.keySeed);
+                    0, 0, (short)1440, attachment, blockchain.getLastBlockTimestamp());
+            builder.recipientId(monitoredAccount.accountId);
+            Transaction transaction = builder.build(null);
+            transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
+            transaction.sign(monitor.keySeed);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 LOG.warn(String.format("Funding account %s has insufficient funds; funding transaction discarded",
                         monitor.accountName));
@@ -1072,13 +1089,13 @@ public final class FundingMonitor {
      * We will process pending funding events when a block is pushed to the blockchain.  This ensures that all
      * block transactions have been processed before we process funding events.
      */
-    private static final class BlockEventHandler implements Listener<Block> {
+    @Singleton
+    public static class BlockEventHandler {
 
         /**
          * Block event notification
          */
-        @Override
-        public void notify(Block block) {
+        public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
             if (!stopped && !pendingEvents.isEmpty()) {
                 processSemaphore.release();
             }

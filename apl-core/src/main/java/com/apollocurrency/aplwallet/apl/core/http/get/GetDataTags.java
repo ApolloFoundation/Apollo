@@ -20,35 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDataTags extends AbstractAPIRequestHandler {
 
-    private static class GetDataTagsHolder {
-        private static final GetDataTags INSTANCE = new GetDataTags();
-    }
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
-    public static GetDataTags getInstance() {
-        return GetDataTagsHolder.INSTANCE;
-    }
-
-    private GetDataTags() {
+    public GetDataTags() {
         super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex");
     }
 
     @Override
-    public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
+    public JSONStreamAware processRequest(HttpServletRequest req) {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
 
@@ -56,7 +53,7 @@ public final class GetDataTags extends AbstractAPIRequestHandler {
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
 
-        try (DbIterator<TaggedData.Tag> tags = TaggedData.Tag.getAllTags(firstIndex, lastIndex)) {
+        try (DbIterator<DataTag> tags = taggedDataService.getAllTags(firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.dataTag(tags.next()));
             }

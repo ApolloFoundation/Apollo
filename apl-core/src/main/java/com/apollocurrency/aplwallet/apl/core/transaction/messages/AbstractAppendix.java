@@ -2,7 +2,6 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import java.nio.ByteBuffer;
@@ -21,11 +20,11 @@ public abstract class AbstractAppendix implements Appendix {
     private final byte version;
 
     AbstractAppendix(JSONObject attachmentData) {
-        version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
+        this.version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
     AbstractAppendix(ByteBuffer buffer) {
-        version = buffer.get();
+        this.version = buffer.get();
     }
 
     AbstractAppendix(int version) {
@@ -33,7 +32,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     AbstractAppendix() {
-        this.version = 1;
+        this.version = getVersion() > 0 ? getVersion() : 1;
     }
 
     public abstract String getAppendixName();
@@ -48,9 +47,9 @@ public abstract class AbstractAppendix implements Appendix {
         return getMyFullSize() + (version > 0 ? 1 : 0);
     }
 
-    abstract int getMySize();
+    public abstract int getMySize();
 
-    int getMyFullSize() {
+    public int getMyFullSize() {
         return getMySize();
     }
 
@@ -62,20 +61,20 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
-    abstract void putMyBytes(ByteBuffer buffer);
+    public abstract void putMyBytes(ByteBuffer buffer);
 
     @Override
     public final JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
-        json.put("version." + getAppendixName(), version);
+        json.put("version." + getAppendixName(), getVersion());
         putMyJSON(json);
         return json;
     }
 
-    abstract void putMyJSON(JSONObject json);
+    public abstract void putMyJSON(JSONObject json);
 
     @Override
-    public final byte getVersion() {
+    public byte getVersion() {
         return version;
     }
 

@@ -36,18 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.security.MessageDigest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SIGNATURE_HASH;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class CalculateFullHash extends AbstractAPIRequestHandler {
 
-    private static class CalculateFullHashHolder {
-        private static final CalculateFullHash INSTANCE = new CalculateFullHash();
-    }
-
-    public static CalculateFullHash getInstance() {
-        return CalculateFullHashHolder.INSTANCE;
-    }
-
-    private CalculateFullHash() {
+    public CalculateFullHash() {
         super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionBytes", "unsignedTransactionJSON", "signatureHash");
     }
 

@@ -4,18 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.Rule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,12 +17,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 public abstract class AbstractMigrationExecutorTest {
     private final String deleteProp;
     private final String migrationProp;
     private final String path;
     private final String pathProp;
-
+    private TemporaryFolderExtension folder;
     public AbstractMigrationExecutorTest(String deleteProp, String migrationProp, String path, String pathProp ) {
         this.deleteProp = deleteProp;
         this.migrationProp = migrationProp;
@@ -45,13 +45,12 @@ public abstract class AbstractMigrationExecutorTest {
     private static PropertiesHolder propertiesHolder  = new PropertiesHolder();
     private static Properties properties = new Properties();
     private DatabaseManager databaseManager;
-    @Rule
-    private TemporaryFolder folder = new TemporaryFolder();
+
 
     @BeforeEach
     public void setUp() throws IOException {
-        folder.create();
-        databaseManager = new DatabaseManager(DbTestData.DB_MEM_PROPS, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
+        folder = getTempFolder();
     }
 
     @AfterEach
@@ -61,6 +60,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
 
+    public abstract TemporaryFolderExtension getTempFolder();
     @Test
     public void testMigrationDirectories() {
         initProperties(true);
@@ -85,7 +85,6 @@ public abstract class AbstractMigrationExecutorTest {
     public void testPerformMigration() throws IOException {
 
         initProperties(true);
-
         File srcFolder = folder.newFolder();
         Files.createFile(srcFolder.toPath().resolve("1"));
         Files.createFile(srcFolder.toPath().resolve("2"));
@@ -98,10 +97,57 @@ public abstract class AbstractMigrationExecutorTest {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
         Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
+        List<Path> paths = Files.list(folder.getRoot().toPath()).filter(Files::exists).collect(Collectors.toList());
+        Assertions.assertEquals(1, paths.size());
+        Assertions.assertEquals(destDir.toPath(), paths.get(0));
+    }
+
+    @Test
+    public void testPerformMigrationToSelfWithDeletion() throws IOException {
+
+        initProperties(true);
+
+        File srcFolder = folder.newFolder();
+        Files.createFile(srcFolder.toPath().resolve("1"));
+        Files.createFile(srcFolder.toPath().resolve("2"));
+
+        File destDir = srcFolder;
+        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
+                propertiesHolder));
+        Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+        executor.performMigration(destDir.toPath());
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
+        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
         List<Path> paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
         Assertions.assertEquals(1, paths.size());
         Assertions.assertEquals(destDir.toPath(), paths.get(0));
     }
+
+    @Test
+    public void testPerformMigrationToInnerFolderWithDeletion() throws IOException {
+
+        initProperties(true);
+
+        File srcFolder = folder.newFolder();
+        Files.createFile(srcFolder.toPath().resolve("1"));
+        Files.createFile(srcFolder.toPath().resolve("2"));
+        File destDir = srcFolder.toPath().resolve("dest").toFile();
+        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
+                propertiesHolder));
+        Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+        executor.performMigration(destDir.toPath());
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
+        Assertions.assertEquals(2, Files.list(destDir.toPath()).count());
+        List<Path> paths = Files.list(srcFolder.toPath()).collect(Collectors.toList());
+        Assertions.assertEquals(paths.size(), 1);
+        paths = Files.list(folder.getRoot().toPath()).collect(Collectors.toList());
+        Assertions.assertEquals(paths.size(), 1);
+        Assertions.assertEquals(paths.get(0), srcFolder.toPath());
+    }
+
+
     @Test
     public void testPerformMigrationWithoutDeletion() throws IOException {
         initProperties(false);

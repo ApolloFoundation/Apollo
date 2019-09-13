@@ -1,68 +1,46 @@
 package com.apollocurrency.aplwallet.apl.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.FilenameFilter;
 
-/**
- *
- * @author alukin@gmail.com
- */
-public class Zip {
+public interface Zip {
 
-    private static final Logger log = LoggerFactory.getLogger(Zip.class);
+    /**
+     * Extract zip file into directory
+     * @param zipFile zip file
+     * @param outputFolder output directory
+     * @return true if success
+     */
+    boolean extract(String zipFile, String outputFolder);
 
-    public static boolean extract(String zipFile, String outputFolder) {
-        boolean res = true;
-        byte[] buffer = new byte[8192];
+    /**
+     * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.
+     *
+     * @param zipFile path to zip file
+     * @param inputFolder folder to zip
+     * @param filesTimeFromEpoch NULL (default will be assigned) or time in ms from Epoch for all file times
+     * @param filenameFilter NULL (CSV will be by default) or file filter instance
+     * @param recursive with subdirs
+     * @return byte array filled by CRC/hash if success or null, when exception occurred or files for compress were not found
+     */
+    byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 
-        try {
 
-            //create output directory is not exists
-            File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
+    /**
+     * Calculate zip hash crc for zip file specified by path
+     * @param zipFile absolute path to zip file
+     * @return byte array of size 32, which represent zip sha256 crc hash
+     */
+    byte[] calculateHash(String zipFile);
 
-            //get the zip file content
-            ZipInputStream zis  = new ZipInputStream(new FileInputStream(zipFile));
-            //get the zipped file list entry
-            ZipEntry ze = zis.getNextEntry();
-
-            while (ze != null) {
-
-                String fileName = ze.getName();
-                File newFile = new File(outputFolder + File.separator + fileName);
-
-                //create all non exists folders
-                //else you will hit FileNotFoundException for compressed folder
-                new File(newFile.getParent()).mkdirs();
-                
-                if (ze.isDirectory()) {
-                    newFile.mkdirs();
-                } else {
-                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, len);
-                        }
-                    }
-                }
-                ze = zis.getNextEntry();
-            }
-
-            zis.closeEntry();
-            zis.close();
-
-        } catch (IOException ex) {
-            log.error("Error extractiong zip file: {}", zipFile, ex);
-            res = false;
-        }
-        return res;
-    }
+    /**
+     * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.
+     *
+     * @param zipFile path to zip file
+     * @param inputFolder folder to zip
+     * @param filesTimeFromEpoch NULL (default will be assigned) or time in ms from Epoch for all file times
+     * @param filenameFilter NULL (CSV will be by default) or file filter instance
+     * @param recursive with subfirs
+     * @return true, when archive was successfully created and false if there are no CSV file inside specified folder or exception occurred during compression
+     */
+     boolean compress(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 }

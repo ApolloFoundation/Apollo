@@ -20,33 +20,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Filter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface Blockchain {
 
-    void readLock();
-
-    void readUnlock();
-
-    void updateLock();
-
-    void updateUnlock();
-
-    void writeLock();
-
-    void writeUnlock();
-
     Block getLastBlock();
+
+    /**
+     * Update internal state of blockchain
+     * Should be called, when database was created from scratch
+     */
+    void update();
 
     void setLastBlock(Block block);
 
@@ -62,11 +56,11 @@ public interface Blockchain {
 
     boolean hasBlock(long blockId);
 
-    DbIterator<? extends Block> getAllBlocks();
+    boolean hasBlockInShards(long blockId);
 
     DbIterator<Block> getBlocks(int from, int to);
 
-    DbIterator<Block> getBlocks(long accountId, int timestamp);
+    Block findFirstBlock();
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
@@ -78,27 +72,30 @@ public interface Blockchain {
 
     void commit(Block block);
 
+    Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
+
     int getBlockCount(long accountId);
 
-    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+
+    Block getShardInitialBlock();
+
+    void setShardInitialBlock(Block block);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
-    List<Block> getBlocksAfter(long blockId, int limit);
+    List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
     long getBlockIdAtHeight(int height);
 
-    Block getECBlock(int timestamp);
+    EcBlockData getECBlock(int timestamp);
 
     void deleteBlocksFromHeight(int height);
 
     Block deleteBlocksFrom(long blockId);
 
     void deleteAll();
-
-    Map<Long, Transaction> getTransactionCache();
 
     Transaction getTransaction(long transactionId);
 
@@ -116,7 +113,18 @@ public interface Blockchain {
 
     boolean hasTransactionByFullHash(String fullHash);
 
+    boolean hasTransactionByFullHash(byte[] fullHash);
+
     boolean hasTransactionByFullHash(byte[] fullHash, int height);
+
+    /**
+     * <p>Get transaction height by using fullHash restricted it by heightLimit parameter.</p>
+     * <p>This method will return height of transaction in blockchain, even if transaction currently not exist or not available</p>
+     * @param fullHash fullHash of transaction to retrieved
+     * @param heightLimit upper bound which should not be crossed by returned transaction height
+     * @return height of transaction or null when collision for hash occurred, transaction height greater than heightLimit or transaction with such hash not found
+     */
+    Integer getTransactionHeight(byte[] fullHash, int heightLimit);
 
     byte[] getFullHash(long transactionId);
 
@@ -124,14 +132,17 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    DbIterator<Transaction> getAllTransactions();
+    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-                                                      boolean includeExpiredPrunable);
-
-    DbIterator<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
+    List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+
+    List<Transaction> getBlockTransactions(long blockId);
+
+    boolean isInitialized();
+
+    boolean hasBlock(long blockId, int height);
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
@@ -139,12 +150,10 @@ public interface Blockchain {
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 
-    List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
-
     DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
-    DbIterator<Transaction> getReferencingTransactions(long transactionId, int from, int to);
+    Set<Long> getBlockGenerators(int limit);
 
-    Set<Long> getBlockGenerators(int startHeight);
+    List<TransactionDbInfo> getTransactionsBeforeHeight(int height);
 
 }

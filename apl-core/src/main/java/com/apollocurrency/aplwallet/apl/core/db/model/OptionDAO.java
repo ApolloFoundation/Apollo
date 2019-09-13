@@ -4,29 +4,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.model;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
-//TODO: Refactor to CDI
-
+@Slf4j
+@Singleton
 public class OptionDAO {
-    private static final Logger LOG = getLogger(OptionDAO.class);
     private DatabaseManager databaseManager;
 
+/*
     public OptionDAO() {
         databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
+*/
 
+    @Inject
     public OptionDAO(DatabaseManager databaseManager) {
         Objects.requireNonNull(databaseManager, "Database Manager cannot be null");
         this.databaseManager = databaseManager;
@@ -44,14 +45,14 @@ public class OptionDAO {
             }
         }
         catch (SQLException e) {
-            LOG.error(e.getMessage());
+            log.error(e.getMessage());
         }
         return null;
     }
 
     public boolean set(String optionName, String optionValue) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (get(optionName) == null) {
+        if (!exist(optionName)) {
             try (Connection con = dataSource.getConnection()) {
                 PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
                 stmt.setString(1, optionName);
@@ -59,7 +60,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                log.error("OptionDAO insert error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         } else {
             try (Connection con = dataSource.getConnection()) {
@@ -69,7 +70,7 @@ public class OptionDAO {
                 stmt.execute();
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                log.error("OptionDAO update error, {}={}, {}", optionName, optionValue, e.getMessage());
             }
         }
         return true;
@@ -85,8 +86,37 @@ public class OptionDAO {
                 return deletedRows == 1;
             }
             catch (SQLException e) {
-                LOG.error(e.getMessage());
+                log.error(e.getMessage());
             }
+        }
+        return false;
+    }
+
+    public void deleteAll() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        Objects.requireNonNull(dataSource, "dataSource is NULL");
+            try (Connection con = dataSource.getConnection()) {
+                PreparedStatement stmt = con.prepareStatement("DELETE FROM option");
+                int deletedRows = stmt.executeUpdate();
+            }
+            catch (SQLException e) {
+                log.error(e.getMessage());
+            }
+    }
+
+    public boolean exist(String optionKey) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement stmt = con.prepareStatement("SELECT count(*) FROM option WHERE name = ?");
+            stmt.setString(1, optionKey);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1) > 0;
+                }
+            }
+        }
+        catch (SQLException e) {
+            log.error(e.getMessage());
         }
         return false;
     }

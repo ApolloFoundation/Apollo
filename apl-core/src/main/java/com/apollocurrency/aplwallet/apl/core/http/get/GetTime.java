@@ -22,22 +22,16 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetTime extends AbstractAPIRequestHandler {
 
-    private static class GetTimeHolder {
-        private static final GetTime INSTANCE = new GetTime();
-    }
-
-    public static GetTime getInstance() {
-        return GetTimeHolder.INSTANCE;
-    }
-
-    private GetTime() {
+    public GetTime() {
         super(new APITag[] {APITag.INFO});
     }
 

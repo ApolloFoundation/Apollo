@@ -33,18 +33,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetExchangesByExchangeRequest extends AbstractAPIRequestHandler {
 
-    private static class GetExchangesByExchangeRequestHolder {
-        private static final GetExchangesByExchangeRequest INSTANCE = new GetExchangesByExchangeRequest();
-    }
-
-    public static GetExchangesByExchangeRequest getInstance() {
-        return GetExchangesByExchangeRequestHolder.INSTANCE;
-    }
-
-    private GetExchangesByExchangeRequest() {
+    public GetExchangesByExchangeRequest() {
         super(new APITag[] {APITag.MS}, "transaction", "includeCurrencyInfo");
     }
 

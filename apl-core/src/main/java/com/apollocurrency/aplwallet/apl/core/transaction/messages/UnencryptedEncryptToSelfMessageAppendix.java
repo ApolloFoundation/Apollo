@@ -32,7 +32,7 @@ public class UnencryptedEncryptToSelfMessageAppendix extends EncryptToSelfMessag
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         if (getEncryptedData() != null) {
             return super.getMySize();
         }
@@ -40,7 +40,7 @@ public class UnencryptedEncryptToSelfMessageAppendix extends EncryptToSelfMessag
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         if (getEncryptedData() == null) {
             throw new AplException.NotYetEncryptedException("Message not yet encrypted");
         }
@@ -48,7 +48,7 @@ public class UnencryptedEncryptToSelfMessageAppendix extends EncryptToSelfMessag
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         if (getEncryptedData() == null) {
             JSONObject encryptedMessageJSON = new JSONObject();
             encryptedMessageJSON.put("messageToEncrypt", isText() ? Convert.toString(messageToEncrypt) : Convert.toHexString(messageToEncrypt));

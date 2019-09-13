@@ -23,34 +23,30 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@Vetoed
 public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
-        private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
-
-    private static class DownloadPrunableMessageHolder {
-        private static final DownloadPrunableMessage INSTANCE = new DownloadPrunableMessage();
-    }
-
-    public static DownloadPrunableMessage getInstance() {
-        return DownloadPrunableMessageHolder.INSTANCE;
-    }
-
-    private DownloadPrunableMessage() {
+    private static final Logger LOG = getLogger(DownloadPrunableMessage.class);
+    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
+    public DownloadPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "save", "account", "passphrase");
     }
 
@@ -58,12 +54,12 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
         long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
-        PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+        PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageService.get(transactionId);
         }
         long accountId = ParameterParser.getAccountId(request, false);
         byte[] keySeed = ParameterParser.getKeySeed(request, accountId, false);
@@ -75,9 +71,9 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
         if (prunableMessage != null) {
             try {
                 if (keySeed != null) {
-                    data = prunableMessage.decryptUsingKeySeed(keySeed);
+                    data = prunableMessageService.decryptUsingKeySeed(prunableMessage, keySeed);
                 } else if (sharedKey.length > 0) {
-                    data = prunableMessage.decryptUsingSharedKey(sharedKey);
+                    data = prunableMessageService.decryptUsingSharedKey(prunableMessage, sharedKey);
                 } else {
                     data = prunableMessage.getMessage();
                 }

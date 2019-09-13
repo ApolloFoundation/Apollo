@@ -3,21 +3,21 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.app.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -34,18 +34,23 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteC
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.json.simple.JSONObject;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public abstract class Messaging extends TransactionType {
-    
+    private static final Logger log = getLogger(Messaging.class);
+
+    private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private Messaging() {
     }
 
@@ -98,7 +103,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Sending messages to Genesis not allowed.");
             }
         }
@@ -122,7 +127,7 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
         private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
                 return attachment.getAliasName().length() + attachment.getAliasURI().length();
             }
@@ -257,7 +262,7 @@ public abstract class Messaging extends TransactionType {
                 throw new AplException.NotValidException("Invalid alias sell price: " + priceATM);
             }
             if (priceATM == 0) {
-                if (Genesis.CREATOR_ID == transaction.getRecipientId()) {
+                if (GenesisImporter.CREATOR_ID == transaction.getRecipientId()) {
                     throw new AplException.NotValidException("Transferring aliases to Genesis account not allowed");
                 } else if (transaction.getRecipientId() == 0) {
                     throw new AplException.NotValidException("Missing alias transfer recipient");
@@ -269,7 +274,7 @@ public abstract class Messaging extends TransactionType {
             } else if (alias.getAccountId() != transaction.getSenderId()) {
                 throw new AplException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Selling alias to Genesis not allowed");
             }
         }
@@ -429,14 +434,14 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType POLL_CREATION = new Messaging() {
         private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
                 return numOptions <= 19 ? 0 : numOptions - 19;
             }
         };
         private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingPollCreation attachment = (MessagingPollCreation) appendage;
                 int size = attachment.getPollName().length() + attachment.getPollDescription().length();
                 for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
@@ -669,7 +674,7 @@ public abstract class Messaging extends TransactionType {
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
                 }
-                PhasingPoll poll = PhasingPoll.getPoll(phasedTransactionId);
+                PhasingPoll poll = phasingPollService.getPoll(phasedTransactionId);
                 if (poll == null) {
                     throw new AplException.NotCurrentlyValidException("Invalid phased transaction " + Long.toUnsignedString(phasedTransactionId) + ", or phasing is finished");
                 }
@@ -690,7 +695,7 @@ public abstract class Messaging extends TransactionType {
                     if (algorithm != 0 && algorithm != poll.getAlgorithm()) {
                         throw new AplException.NotValidException("Phased transaction " + Long.toUnsignedString(phasedTransactionId) + " is using a different hashedSecretAlgorithm");
                     }
-                    if (hashedSecret == null && !poll.verifySecret(revealedSecret)) {
+                    if (hashedSecret == null && !phasingPollService.verifySecret(poll, revealedSecret)) {
                         throw new AplException.NotValidException("Revealed secret does not match phased transaction hashed secret");
                     }
                     hashedSecret = poll.getHashedSecret();
@@ -701,9 +706,14 @@ public abstract class Messaging extends TransactionType {
                 if (!Arrays.equals(poll.getFullHash(), hash)) {
                     throw new AplException.NotCurrentlyValidException("Phased transaction hash does not match hash in voting transaction");
                 }
-                if (poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1) {
+                if (poll.getFinishTime() == -1 && poll.getFinishHeight() <= attachment.getFinishValidationHeight(transaction) + 1) {
                     throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at height %d which is not after approval transaction height %d", poll.getFinishHeight(), attachment.getFinishValidationHeight(transaction) + 1));
                 }
+
+                if (poll.getFinishHeight() == -1 && poll.getFinishTime() <= transaction.getTimestamp()) {
+                    throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at timestamp %d which is not after approval transaction timestamp %d", poll.getFinishTime(), transaction.getTimestamp()));
+                }
+
             }
         }
 
@@ -712,7 +722,7 @@ public abstract class Messaging extends TransactionType {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
             List<byte[]> hashes = attachment.getTransactionFullHashes();
             for (byte[] hash : hashes) {
-                PhasingVote.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+                phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
             }
         }
 
@@ -724,7 +734,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_INFO = new Messaging() {
         private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
                 return attachment.getName().length() + attachment.getDescription().length();
             }
@@ -792,7 +802,7 @@ public abstract class Messaging extends TransactionType {
     public static final Messaging ACCOUNT_PROPERTY = new Messaging() {
         private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
             @Override
-            public int getSize(TransactionImpl transaction, Appendix appendage) {
+            public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
                 return attachment.getValue().length();
             }
@@ -837,7 +847,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Setting Genesis account properties not allowed");
             }
         }
@@ -900,7 +910,7 @@ public abstract class Messaging extends TransactionType {
             if (transaction.getAmountATM() != 0) {
                 throw new AplException.NotValidException("Account property transaction cannot be used to send " + blockchainConfig.getCoinSymbol());
             }
-            if (transaction.getRecipientId() == Genesis.CREATOR_ID) {
+            if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
                 throw new AplException.NotValidException("Deleting Genesis account properties not allowed");
             }
         }

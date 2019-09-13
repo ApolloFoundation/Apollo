@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
@@ -29,7 +28,7 @@ public class MessageAppendix extends AbstractAppendix {
 
     private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
         @Override
-        public int getSize(TransactionImpl transaction, Appendix appendage) {
+        public int getSize(Transaction transaction, Appendix appendage) {
             return ((MessageAppendix)appendage).getMessage().length;
         }
     };
@@ -84,18 +83,18 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 4 + message.length;
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(isText ? (message.length | Integer.MIN_VALUE) : message.length);
         buffer.put(message);
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         json.put("message", Convert.toString(message, isText));
         json.put("messageIsText", isText);
     }

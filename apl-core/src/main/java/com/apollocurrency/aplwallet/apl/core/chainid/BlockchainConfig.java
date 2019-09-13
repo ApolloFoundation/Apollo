@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 @Singleton
 public class BlockchainConfig {
     private static final Logger LOG = getLogger(BlockchainConfig.class);
+    static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
@@ -38,10 +39,10 @@ public class BlockchainConfig {
 
     public BlockchainConfig() {}
 
-    void updateChain(Chain chain, int maxPrunableLifetime) {
+    public void updateChain(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
 
         Objects.requireNonNull(chain, "Chain cannot be null");
-        setFields(chain, maxPrunableLifetime);
+        setFields(chain, minPrunableLifetime, maxPrunableLifetime);
         Map<Integer, BlockchainProperties> blockchainProperties = chain.getBlockchainProperties();
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
@@ -50,12 +51,12 @@ public class BlockchainConfig {
         LOG.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
 
-    private void setFields(Chain chain, int maxPrunableLifetime) {
+    private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
         this.chain = chain;
-        // These fields could be static constants but some fields should be scaled by blockTime
+        // These fields could be static constants but some of them should be scaled by blockTime
         // Block time scaling should be implemented in future
         this.leasingDelay = 1440;
-        this.minPrunableLifetime = 14 * 1440 * 60; // two weeks in seconds
+        this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
         this.shufflingProcessingDeadline = (short) 100;
         this.lastKnownBlock = 0;
         this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
@@ -63,7 +64,7 @@ public class BlockchainConfig {
         this.guaranteedBalanceConfirmations = 1440;
 
         this.enablePruning = maxPrunableLifetime >= 0;
-        this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, minPrunableLifetime) : Integer.MAX_VALUE;
+        this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
     }
 
     public BlockchainConfig(Chain chain, PropertiesHolder holder) {
@@ -72,11 +73,12 @@ public class BlockchainConfig {
 
     void updateChain(Chain chain, PropertiesHolder holder) {
         int maxPrunableLifetime = holder.getIntProperty("apl.maxPrunableLifetime");
-        updateChain(chain, maxPrunableLifetime);
+        int minPrunableLifetime = holder.getIntProperty("apl.minPrunableLifetime");
+        updateChain(chain, minPrunableLifetime, maxPrunableLifetime);
     }
 
     void updateChain(Chain chain) {
-        updateChain(chain, 0);
+        updateChain(chain, 0, 0);
     }
 
     public String getProjectName() {
@@ -135,7 +137,11 @@ public class BlockchainConfig {
         return chain;
     }
 
-    void setCurrentConfig(HeightConfig currentConfig) {
+    /**
+     * For UNIT TEST only!
+     * @param currentConfig
+     */
+    public void setCurrentConfig(HeightConfig currentConfig) {
         this.currentConfig = currentConfig;
     }
 }

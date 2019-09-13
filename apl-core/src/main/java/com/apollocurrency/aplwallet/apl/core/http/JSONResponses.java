@@ -59,6 +59,7 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_ACCOUNT = incorrect("account");
     public static final JSONStreamAware INCORRECT_TIMESTAMP = incorrect("timestamp");
     public static final JSONStreamAware UNKNOWN_ACCOUNT = unknown("account");
+    public static final JSONStreamAware UNKNOWN_PUBLIC_KEY = unknown("public key");
     public static final JSONStreamAware UNKNOWN_ALIAS = unknown("alias");
     public static final JSONStreamAware UNKNOWN_ASSET = unknown("asset");
     public static final JSONStreamAware INCORRECT_ASSET = incorrect("asset");
@@ -230,6 +231,14 @@ public final class JSONResponses {
         response.put("errorCode", 1);
         response.put("errorDescription", "Incorrect request");
         ERROR_INCORRECT_REQUEST = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH;
+    static {
+        JSONObject response  = new JSONObject();
+        response.put("errorCode", 1);
+        response.put("errorDescription", " Amount or rate is too high.");
+        ERROR_AMOUNT_OR_RATE_IS_TOO_HIGH = JSON.prepare(response);
     }
 
     public static final JSONStreamAware NOT_FORGING;
@@ -508,7 +517,7 @@ public final class JSONResponses {
         return JSON.prepare(response);
     }
 
-    static JSONStreamAware unknownAccount(long id) {
+    public static JSONStreamAware unknownAccount(long id) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
         response.put("errorDescription", "Unknown account");

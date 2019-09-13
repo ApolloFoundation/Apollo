@@ -55,16 +55,12 @@
         <fileSet>
             <directory>${project.build.directory}/classes/conf/</directory>
             <outputDirectory>doc</outputDirectory>
-            <includes>
-                <include>apl-blockchain.properties</include>
-                <include>chains.json</include>
-            </includes>
         </fileSet>
 
     </fileSets> 
      <files> <!-- we need main jar to stay in top dir because we have classpath in it pointiung to lib dir -->
         <file>
-            <source> ${project.build.directory}/apl-exec-${project.version}.jar</source>
+            <source>${project.build.directory}/apl-exec-${project.version}.jar</source>
             <outputDirectory>/</outputDirectory>
         </file>
      </files>     

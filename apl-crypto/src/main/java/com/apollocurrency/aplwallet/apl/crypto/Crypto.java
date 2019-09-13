@@ -20,10 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.dataformat.FBElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
-import io.firstbridge.cryptolib.exception.CryptoNotValidException;
 import io.firstbridge.cryptolib.impl.AsymJCEElGamalImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -37,32 +45,38 @@ import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 public final class Crypto {
         private static final Logger LOG = getLogger(Crypto.class);
 
     private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
-    private static final ThreadLocal<SecureRandom> secureRandom = new ThreadLocal<SecureRandom>() {
-        @Override
-        protected SecureRandom initialValue() {
-            try {
-                SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
-                secureRandom.nextBoolean();
-                return secureRandom;
-            } catch (NoSuchAlgorithmException e) {
-                LOG.error("No secure random provider available");
-                throw new RuntimeException(e.getMessage(), e);
-            }
+    private static final ThreadLocal<SecureRandom> secureRandom = ThreadLocal.withInitial(() -> {
+        try {
+            SecureRandom secureRandom = useStrongSecureRandom ? SecureRandom.getInstanceStrong() : new SecureRandom();
+            secureRandom.nextBoolean();
+            return secureRandom;
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error("No secure random provider available");
+            throw new RuntimeException(e.getMessage(), e);
         }
-    };
+    });
+    
+    
+    private static String normalizeByLen( String in, int length)
+    {
+        String rx = "";
+        int xlen = in.length();
+        if (length == xlen) return in;
+        if ( length > xlen ) {
+            for (int i = 0; i < length - xlen; i++) {
+                rx += "0";
+            }
+            rx += in;
+            return rx;
+        } else { // length < xlen // cut the vector            
+            return in.substring( xlen-length, length+1 );
+        }
+    }
 
     private Crypto() {} //never
 
@@ -383,7 +397,7 @@ public final class Crypto {
             BigInteger restored = BigInteger.ZERO;
                
             restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
-            String keyStr = restored.toString(16);
+            String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
             
             byte[] IVC = null;
             byte[] key = null;
@@ -399,13 +413,14 @@ public final class Crypto {
         }
         catch (Exception e)
         {
-            LOG.debug(e.getMessage());
+            LOG.trace(e.getMessage());
             
             return cryptogramm;
         }
-        
+
         
         
     }
 
 }
+

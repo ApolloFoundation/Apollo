@@ -20,38 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPriceChange;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
+import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPriceChange;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-
+@Vetoed
 public final class DGSPriceChange extends CreateTransaction {
 
-    private static class DGSPriceChangeHolder {
-        private static final DGSPriceChange INSTANCE = new DGSPriceChange();
-    }
-
-    public static DGSPriceChange getInstance() {
-        return DGSPriceChangeHolder.INSTANCE;
-    }
-
-    private DGSPriceChange() {
+    public DGSPriceChange() {
         super(new APITag[] {APITag.DGS, APITag.CREATE_TRANSACTION},
                 "goods", "priceATM");
     }
-
+    private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Account account = ParameterParser.getSenderAccount(req);
-        DigitalGoodsStore.Goods goods = ParameterParser.getGoods(req);
+        DGSGoods goods = ParameterParser.getGoods(service, req);
         long priceATM = ParameterParser.getPriceATM(req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;

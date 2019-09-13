@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.h2.tools.Shell;
@@ -37,7 +37,8 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 
 public final class DbShellServlet extends HttpServlet {
-
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    
     private static final String JAVASCRIPT_SECTION = "    <script type=\"text/javascript\">\n" +
             "        function submitForm(form, adminPassword) {\n" +
             "            var url = '/dbshell';\n" +
@@ -80,7 +81,7 @@ public final class DbShellServlet extends HttpServlet {
 
     private static final String FORM =
             "<form action=\"/dbshell\" method=\"POST\" onsubmit=\"return submitForm(this" +
-                    (API.disableAdminPassword ? "" : ", '{adminPassword}'") + ");\">" +
+                    (apw.disableAdminPassword ? "" : ", '{adminPassword}'") + ");\">" +
                     "<table class=\"table\" style=\"width:90%;\">" +
                     "<tr><td><pre class=\"result\" style=\"float:top;width:90%;\">" +
                     "This is a database shell. Enter SQL to be evaluated, or \"help\" for help:" +
@@ -122,10 +123,10 @@ public final class DbShellServlet extends HttpServlet {
         }
 
         String body;
-        if (API.disableAdminPassword) {
+        if (apw.disableAdminPassword) {
             body = FORM;
         } else {
-            if (API.adminPassword.isEmpty()) {
+            if (apw.adminPassword.isEmpty()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 body = PASSWORD_FORM;
@@ -150,12 +151,12 @@ public final class DbShellServlet extends HttpServlet {
         }
 
         String body = null;
-        if (!API.disableAdminPassword) {
-            if (API.adminPassword.isEmpty()) {
+        if (!apw.disableAdminPassword) {
+            if (apw.adminPassword.isEmpty()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 try {
-                    API.verifyPassword(req);
+                    apw.verifyPassword(req);
                     if ("true".equals(req.getParameter("showShell"))) {
                         body = FORM.replace("{adminPassword}", URLEncoder.encode(req.getParameter("adminPassword"), "UTF-8") );
                     }

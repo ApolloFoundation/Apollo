@@ -4,29 +4,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONStreamAware;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import com.apollocurrency.aplwallet.apl.core.app.Time;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONStreamAware;
-
+@Vetoed
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;
@@ -35,8 +38,17 @@ public abstract class AbstractAPIRequestHandler {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
-    protected static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
+    protected static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
+    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
+    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private PeersService peers;
+
+    protected PeersService lookupPeersService(){
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
+        return peers;
+    }
 
     protected Blockchain lookupBlockchain() {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -67,7 +79,7 @@ public abstract class AbstractAPIRequestHandler {
     public AbstractAPIRequestHandler(String fileParameter, APITag[] apiTags, String... origParameters) {
         List<String> parameters = new ArrayList<>();
         Collections.addAll(parameters, origParameters);
-        if ((requirePassword() || parameters.contains("lastIndex")) && ! API.disableAdminPassword) {
+        if ((requirePassword() || parameters.contains("lastIndex")) && ! apw.disableAdminPassword) {
             parameters.add("adminPassword");
         }
         if (allowRequiredBlockParameters()) {
@@ -82,7 +94,7 @@ public abstract class AbstractAPIRequestHandler {
         if (is2FAProtected()) {
             parameters.add("code2FA");
         }
-        parameters.add("elgamal");
+       
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;
@@ -110,9 +122,9 @@ public abstract class AbstractAPIRequestHandler {
         return false;
     }
 
-    protected boolean startDbTransaction() {
-        return false;
-    }
+//    protected boolean startDbTransaction() {
+//        return false;
+//    }
 
     protected boolean requirePassword() {
         return false;

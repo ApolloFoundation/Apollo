@@ -22,29 +22,26 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+
+@Vetoed
 public final class GetPrunableMessage extends AbstractAPIRequestHandler {
+    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
-    private static class GetPrunableMessageHolder {
-        private static final GetPrunableMessage INSTANCE = new GetPrunableMessage();
-    }
-
-    public static GetPrunableMessage getInstance() {
-        return GetPrunableMessageHolder.INSTANCE;
-    }
-
-    private GetPrunableMessage() {
+    public GetPrunableMessage() {
         super(new APITag[] {APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
     }
 
@@ -58,15 +55,15 @@ public final class GetPrunableMessage extends AbstractAPIRequestHandler {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
-        PrunableMessage prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+        PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
             if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
-            prunableMessage = PrunableMessage.getPrunableMessage(transactionId);
+            prunableMessage = prunableMessageService.get(transactionId);
         }
         if (prunableMessage != null) {
-            return JSONData.prunableMessage(prunableMessage, keySeed, sharedKey);
+            return JSONData.prunableMessage(prunableMessageService, prunableMessage, keySeed, sharedKey);
         }
         return JSON.emptyJSON;
     }

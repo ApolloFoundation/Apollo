@@ -21,17 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import javax.enterprise.inject.spi.CDI;
-
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.EntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,13 +28,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+
 public final class Trade {
 
     public enum Event {
         TRADE
     }
 
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {
@@ -68,12 +68,12 @@ public final class Trade {
     private static final EntityDbTable<Trade> tradeTable = new EntityDbTable<Trade>("trade", tradeDbKeyFactory) {
 
         @Override
-        protected Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        public Trade load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Trade(rs, dbKey);
         }
 
         @Override
-        protected void save(Connection con, Trade trade) throws SQLException {
+        public void save(Connection con, Trade trade) throws SQLException {
             trade.save(con);
         }
 
@@ -199,7 +199,7 @@ public final class Trade {
     private final boolean isBuy;
 
     private Trade(long assetId, Order.Ask askOrder, Order.Bid bidOrder) {
-        Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+        Blockchain blockchain = CDI.current().select(Blockchain.class).get();
         Block block = blockchain.getLastBlock();
         this.blockId = block.getId();
         this.height = block.getHeight();

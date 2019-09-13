@@ -20,34 +20,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRIVATE_TRANSACTIONS_ACCESS_DENIED;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.*;
-
+@Vetoed
 public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
 
-    private static class GetBlockchainTransactionsHolder {
-        private static final GetBlockchainTransactions INSTANCE = new GetBlockchainTransactions();
-    }
-
-    public static GetBlockchainTransactions getInstance() {
-        return GetBlockchainTransactionsHolder.INSTANCE;
-    }
-
-    private GetBlockchainTransactions() {
+    public GetBlockchainTransactions() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
                 "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
                 "includeExpiredPrunable", "includePhasingResult", "executedOnly");
@@ -87,14 +81,10 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         int lastIndex = ParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
+        List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
                 type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-                includeExpiredPrunable, executedOnly, false)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                    transactions.add(JSONData.transaction(transaction, includePhasingResult, false));
-            }
-        }
+                includeExpiredPrunable, executedOnly, false);
+            transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);

@@ -32,21 +32,14 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class GenerateToken extends AbstractAPIRequestHandler {
 
-    private static class GenerateTokenHolder {
-        private static final GenerateToken INSTANCE = new GenerateToken();
-    }
-
-    public static GenerateToken getInstance() {
-        return GenerateTokenHolder.INSTANCE;
-    }
-
-    private GenerateToken() {
+    public GenerateToken() {
         super(new APITag[] {APITag.TOKENS}, "website", "secretPhrase", "account", "passphrase");
     }
 

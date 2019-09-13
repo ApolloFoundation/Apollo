@@ -20,15 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,16 +45,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.slf4j.Logger;
 
 /**
  * Maintain a ledger of changes to selected accounts
@@ -79,12 +79,13 @@ public class AccountLedger {
 
    public static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
    public static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
     /** Number of blocks to keep when trimming */
     public static final int trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
 
     /** Blockchain */
-    private static final Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    private static final Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     /** Blockchain processor */
     private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
@@ -352,7 +353,7 @@ public class AccountLedger {
         // Get the ledger entries
         //
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        blockchain.readLock();
+        globalSync.readLock();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sb.toString())) {
             int i = 0;
@@ -386,7 +387,7 @@ public class AccountLedger {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         } finally {
-            blockchain.readUnlock();
+            globalSync.readUnlock();
         }
         return entryList;
     }

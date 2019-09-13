@@ -34,22 +34,15 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-
+@Vetoed
 public final class GetShufflers extends AbstractAPIRequestHandler {
 
-    private static class GetShufflersHolder {
-        private static final GetShufflers INSTANCE = new GetShufflers();
-    }
-
-    public static GetShufflers getInstance() {
-        return GetShufflersHolder.INSTANCE;
-    }
-
-    private GetShufflers() {
+    public GetShufflers() {
         super(new APITag[] {APITag.SHUFFLING}, "account", "shufflingFullHash", "secretPhrase", "adminPassword", "includeParticipantState",
                 "passphrase");
     }
@@ -74,7 +67,7 @@ public final class GetShufflers extends AbstractAPIRequestHandler {
                 shufflers = shuffler == null ? Collections.emptyList() : Collections.singletonList(shuffler);
             }
         } else {
-            API.verifyPassword(req);
+            apw.verifyPassword(req);
             if (accountId != 0 && shufflingFullHash.length == 0) {
                 shufflers = Shuffler.getAccountShufflers(accountId);
             } else if (accountId == 0 && shufflingFullHash.length > 0) {

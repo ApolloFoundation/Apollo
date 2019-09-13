@@ -22,12 +22,29 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -40,36 +57,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * EventListener listens for peer, block, transaction and account ledger events as
- * specified by the EventRegister model.  Events are held until
- * an EventWait model request is received.  All pending events
+ * specified by the EventRegister API.  Events are held until
+ * an EventWait API request is received.  All pending events
  * are then returned to the application.
  *
- * Event registrations are discarded if an EventWait model request
+ * Event registrations are discarded if an EventWait API request
  * has not been received within apl.apiEventTimeout seconds.
  *
  * The maximum number of event users is specified by apl.apiMaxEventUsers.
@@ -87,12 +88,12 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     public static final int eventTimeout = Math.max(propertiesLoader.getIntProperty("apl.apiEventTimeout"), 15);
 
     /** Blockchain processor */
-    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();;
+    static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();;
 
     /** Transaction processor */
-    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
+    static final TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
     private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
-
+    private static PeersService peers = CDI.current().select(PeersService.class).get();
     /** Active event users */
     public static final Map<String, EventListener> eventListeners = new ConcurrentHashMap<>();
 
@@ -115,29 +116,29 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
     /** Thread pool for asynchronous completions */
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    /** Peer events - update model comments for EventRegister and EventWait if changed */
-    public static final List<Peers.Event> peerEvents = new ArrayList<>();
+    /** Peer events - update API comments for EventRegister and EventWait if changed */
+    public static final List<PeersService.Event> peerEvents = new ArrayList<>();
     static {
-        peerEvents.add(Peers.Event.ADD_INBOUND);
-        peerEvents.add(Peers.Event.ADDED_ACTIVE_PEER);
-        peerEvents.add(Peers.Event.BLACKLIST);
-        peerEvents.add(Peers.Event.CHANGED_ACTIVE_PEER);
-        peerEvents.add(Peers.Event.DEACTIVATE);
-        peerEvents.add(Peers.Event.NEW_PEER);
-        peerEvents.add(Peers.Event.REMOVE);
-        peerEvents.add(Peers.Event.REMOVE_INBOUND);
-        peerEvents.add(Peers.Event.UNBLACKLIST);
+        peerEvents.add(PeersService.Event.ADD_INBOUND);
+        peerEvents.add(PeersService.Event.ADDED_ACTIVE_PEER);
+        peerEvents.add(PeersService.Event.BLACKLIST);
+        peerEvents.add(PeersService.Event.CHANGED_ACTIVE_PEER);
+        peerEvents.add(PeersService.Event.DEACTIVATE);
+        peerEvents.add(PeersService.Event.NEW_PEER);
+        peerEvents.add(PeersService.Event.REMOVE);
+        peerEvents.add(PeersService.Event.REMOVE_INBOUND);
+        peerEvents.add(PeersService.Event.UNBLACKLIST);
     }
 
-    /** Block events - update model comments for EventRegister and EventWait if changed */
-    public static final List<BlockchainProcessor.Event> blockEvents = new ArrayList<>();
+    /** Block events - update API comments for EventRegister and EventWait if changed */
+    public static final List<BlockEventType> blockEvents = new ArrayList<>();
     static {
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_GENERATED);
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_POPPED);
-        blockEvents.add(BlockchainProcessor.Event.BLOCK_PUSHED);
+        blockEvents.add(BlockEventType.BLOCK_GENERATED);
+        blockEvents.add(BlockEventType.BLOCK_POPPED);
+        blockEvents.add(BlockEventType.BLOCK_PUSHED);
     }
 
-    /** Transaction events - update model comments for EventRegister and EventWait if changed */
+    /** Transaction events - update API comments for EventRegister and EventWait if changed */
     public static final List<TransactionProcessor.Event> txEvents = new ArrayList<>();
     static {
         txEvents.add(TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
@@ -147,7 +148,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         txEvents.add(TransactionProcessor.Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
     }
 
-    /** Account ledger events - update model comments for EventRegister and EventWait if changed */
+    /** Account ledger events - update API comments for EventRegister and EventWait if changed */
     public static final List<AccountLedger.Event> ledgerEvents = new ArrayList<>();
     static {
         ledgerEvents.add(AccountLedger.Event.ADD_ENTRY);
@@ -204,7 +205,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
         if (deactivated)
             throw new EventListenerException("Event listener deactivated");
         if (eventListeners.size() >= maxEventUsers && eventListeners.get(address) == null)
-            throw new EventListenerException(String.format("Too many model event users: Maximum %d", maxEventUsers));
+            throw new EventListenerException(String.format("Too many API event users: Maximum %d", maxEventUsers));
         //
         // Start listening for events
         //
@@ -403,7 +404,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
                 try (Writer writer = resp.getWriter()) {
                     response.writeJSONString(writer);
                 } catch (IOException exc) {
-                    LOG.debug(String.format("Unable to return model response to %s: %s",
+                    LOG.debug(String.format("Unable to return API response to %s: %s",
                                                          address, exc.toString()));
                 }
                 context.complete();
@@ -478,7 +479,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
             try (Writer writer = context.getResponse().getWriter()) {
                 response.writeJSONString(writer);
             } catch (IOException exc) {
-                LOG.debug(String.format("Unable to return model response to %s: %s",
+                LOG.debug(String.format("Unable to return API response to %s: %s",
                                                      address, exc.toString()));
             }
             context.complete();
@@ -647,9 +648,9 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
          */
         public AplEventListener(EventRegistration eventRegistration) throws EventListenerException {
             Enum<? extends Enum> event = eventRegistration.getEvent();
-            if (event instanceof Peers.Event) {
+            if (event instanceof PeersService.Event) {
                 eventHandler = new PeerEventHandler(eventRegistration);
-            } else if (event instanceof BlockchainProcessor.Event) {
+            } else if (event instanceof BlockEventType) {
                 eventHandler = new BlockEventHandler(eventRegistration);
             } else if (event instanceof TransactionProcessor.Event) {
                 eventHandler = new TransactionEventHandler(eventRegistration);
@@ -843,7 +844,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                Peers.addListener(this, (Peers.Event)event);
+                peers.addListener(this, (PeersService.Event)event);
             }
 
             /**
@@ -851,7 +852,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                Peers.removeListener(this, (Peers.Event)event);
+                peers.removeListener(this, (PeersService.Event)event);
             }
 
             /**
@@ -894,7 +895,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void addListener() {
-                blockchainProcessor.addListener(this, (BlockchainProcessor.Event)event);
+//                blockchainProcessor.addListener(this, (BlockEventType)event);
             }
 
             /**
@@ -902,7 +903,7 @@ public class EventListener implements Runnable, AsyncListener, TransactionCallba
              */
             @Override
             public void removeListener() {
-                blockchainProcessor.removeListener(this, (BlockchainProcessor.Event)event);
+//                blockchainProcessor.removeListener(this,(BlockEventType)event);
             }
 
             /**

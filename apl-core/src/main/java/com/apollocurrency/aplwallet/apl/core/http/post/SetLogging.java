@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import javax.servlet.http.HttpServletRequest;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>The SetLogging model will set the ARS log level for all log messages.
@@ -67,17 +67,10 @@ import org.slf4j.LoggerFactory;
  * <li>HTTP-OK    - Log HTTP 200 responses.</li>
  * </ul>
  */
+
+@Vetoed
 public class SetLogging extends AbstractAPIRequestHandler {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SetLogging.class);
-
-    /** SetLogging instance */
-    private static class SetLoggingHolder {
-        private static final SetLogging INSTANCE = new SetLogging();
-    }
-
-    public static SetLogging getInstance() {
-        return SetLoggingHolder.INSTANCE;
-    }
 
     /** Logging updated */
     private static final JSONStreamAware LOGGING_UPDATED;
@@ -99,7 +92,7 @@ public class SetLogging extends AbstractAPIRequestHandler {
     /**
      * Create the SetLogging instance
      */
-    private SetLogging() {
+    public SetLogging() {
         super(new APITag[] {APITag.DEBUG}, "logLevel", "communicationEvent", "communicationEvent", "communicationEvent");
     }
 
@@ -142,8 +135,7 @@ public class SetLogging extends AbstractAPIRequestHandler {
         //
         if (response == null) {
             String[] events = req.getParameterValues("communicationEvent");
-            if (!Peers.setCommunicationLoggingMask(events))
-                response = INCORRECT_EVENT;
+            response = INCORRECT_EVENT;
         }
         //
         // Return the response

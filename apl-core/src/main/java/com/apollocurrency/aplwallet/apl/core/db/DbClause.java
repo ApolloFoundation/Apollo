@@ -47,16 +47,16 @@ public abstract class DbClause {
         this.clause = clause;
     }
 
-    final String getClause() {
+    public final String getClause() {
         return clause;
     }
 
-    protected abstract int set(PreparedStatement pstmt, int index) throws SQLException;
+    public abstract int set(PreparedStatement pstmt, int index) throws SQLException;
 
     public DbClause and(final DbClause other) {
         return new DbClause(this.clause + " AND " + other.clause) {
             @Override
-            protected int set(PreparedStatement pstmt, int index) throws SQLException {
+            public int set(PreparedStatement pstmt, int index) throws SQLException {
                 index = DbClause.this.set(pstmt, index);
                 index = other.set(pstmt, index);
                 return index;
@@ -73,7 +73,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             return index;
         }
 
@@ -86,7 +86,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             return index;
         }
 
@@ -99,7 +99,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             return index;
         }
 
@@ -115,7 +115,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setString(index, value);
             return index + 1;
         }
@@ -132,7 +132,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setString(index, prefix);
             return index + 1;
         }
@@ -153,7 +153,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setLong(index, value);
             return index + 1;
         }
@@ -174,7 +174,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setInt(index, value);
             return index + 1;
         }
@@ -196,11 +196,32 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setByte(index, value);
             return index + 1;
         }
 
+    }
+
+    public static final class BytesClause extends DbClause {
+
+        private final byte[] value;
+
+        public BytesClause(String columnName, byte[] value) {
+            super(" " + columnName + " = ? ");
+            this.value = value;
+        }
+
+        public BytesClause(String columnName, Op operator, byte[] value) {
+            super(" " + columnName + operator.operator() + "? ");
+            this.value = value;
+        }
+
+        @Override
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
+            pstmt.setBytes(index, value);
+            return index + 1;
+        }
     }
 
     public static final class BooleanClause extends DbClause {
@@ -213,12 +234,13 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setBoolean(index, value);
             return index + 1;
         }
 
     }
+
     public static final class TimestampClause extends DbClause {
 
         private final Timestamp value;
@@ -234,7 +256,7 @@ public abstract class DbClause {
         }
 
         @Override
-        protected int set(PreparedStatement pstmt, int index) throws SQLException {
+        public int set(PreparedStatement pstmt, int index) throws SQLException {
             pstmt.setTimestamp(index, value);
             return index + 1;
         }

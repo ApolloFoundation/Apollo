@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 
+import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -35,25 +36,19 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_RESULTS_NOT_AVAILABLE;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public class GetPollResult extends AbstractAPIRequestHandler {
 
-    private static class GetPollResultHolder {
-        private static final GetPollResult INSTANCE = new GetPollResult();
-    }
-
-    public static GetPollResult getInstance() {
-        return GetPollResultHolder.INSTANCE;
-    }
-
-    private GetPollResult() {
+    public GetPollResult() {
         super(new APITag[]{APITag.VS}, "poll", "votingModel", "holding", "minBalance", "minBalanceModel");
     }
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Poll poll = ParameterParser.getPoll(req);
-        List<Poll.OptionResult> pollResults;
+        List<PollOptionResult> pollResults;
         VoteWeighting voteWeighting;
         if (Convert.emptyToNull(req.getParameter("votingModel")) == null) {
             pollResults = poll.getResults();

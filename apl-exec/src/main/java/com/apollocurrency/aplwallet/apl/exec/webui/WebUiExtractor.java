@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 
 /**
@@ -111,13 +112,14 @@ public class WebUiExtractor implements Callable<Boolean>{
     
     public boolean install() throws FileNotFoundException, IOException {
         boolean res=true;
+        Zip zip = new ZipImpl();
         if(!checkInstalled()){
             File dest = findDest();
             if(dest.exists()){
               removeDir(dest.getAbsolutePath());
             }
-            res=Zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());
-            res=res&Zip.extract(findTestUiZip().getAbsolutePath(), dest.getAbsolutePath());
+            res=zip.extract(findWebUiZip().getAbsolutePath(), dest.getAbsolutePath());
+            res=res&zip.extract(findTestUiZip().getAbsolutePath(), dest.getAbsolutePath());
         }
         return res;
     }

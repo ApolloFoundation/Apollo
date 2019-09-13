@@ -25,27 +25,25 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetChannelTaggedData extends AbstractAPIRequestHandler {
 
-    private static class GetChannelTaggedDataHolder {
-        private static final GetChannelTaggedData INSTANCE = new GetChannelTaggedData();
-    }
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
-    public static GetChannelTaggedData getInstance() {
-        return GetChannelTaggedDataHolder.INSTANCE;
-    }
-
-    private GetChannelTaggedData() {
+    public GetChannelTaggedData() {
         super(new APITag[] {APITag.DATA}, "channel", "account", "firstIndex", "lastIndex", "includeData");
     }
 
@@ -63,7 +61,7 @@ public final class GetChannelTaggedData extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("data", jsonArray);
-        try (DbIterator<TaggedData> data = TaggedData.getData(channel, accountId, firstIndex, lastIndex)) {
+        try (DbIterator<TaggedData> data = taggedDataService.getData(channel, accountId, firstIndex, lastIndex)) {
             while (data.hasNext()) {
                 jsonArray.add(JSONData.taggedData(data.next(), includeData));
             }

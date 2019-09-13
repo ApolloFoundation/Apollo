@@ -4,36 +4,44 @@
 
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MinorUpdate;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 
 public class UpdateData {
-    private Transaction transaction;
+    private UpdateAttachment attachment;
+    private Long transactionId;
     private String decryptedUrl;
 
-    public UpdateData(Transaction transaction, String decryptedUrl) {
-        this.transaction = transaction;
+    public UpdateData(UpdateAttachment attachment, Long transactionId, String decryptedUrl) {
+        this.attachment = attachment;
+        this.transactionId = transactionId;
         this.decryptedUrl = decryptedUrl;
     }
 
-    @Override
-    public String toString() {
-        return "UpdateDataHolder{" +
-                "transaction=" + transaction.getJSONObject().toJSONString() +
-                ", decryptedUrl='" + decryptedUrl + '\'' +
-                '}';
+    public boolean isAutomaticUpdate() { // update is automatic for Important and Critical update types
+        return !(attachment instanceof MinorUpdate);
+    }
+    public UpdateAttachment getAttachment() {
+        return attachment;
     }
 
-    public Transaction getTransaction() {
-        return transaction;
+    public void setAttachment(UpdateAttachment attachment) {
+        this.attachment = attachment;
+    }
+
+    public Long getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
     }
 
     public String getDecryptedUrl() {
         return decryptedUrl;
     }
 
-    public boolean isAutomaticUpdate() {
-        return transaction.getType() != Update.MINOR;
+    public void setDecryptedUrl(String decryptedUrl) {
+        this.decryptedUrl = decryptedUrl;
     }
 }

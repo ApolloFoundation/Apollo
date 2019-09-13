@@ -42,7 +42,7 @@ public class ImportantUpdater extends AbstractUpdater {
         int attemptsCounter = 0;
         while (currentState != UpdateInfo.UpdateState.FINISHED && attemptsCounter++ != maxUpdateAttempts) {
             int updateHeight = updaterMediator.getBlockchainHeight() + random.nextInt(maxBlocksDelay - minBlocksDelay) + minBlocksDelay;
-            updateInfo.setEstimatedHeight(updateHeight);
+//            updateInfo.setEstimatedHeight(updateHeight);
             waitHeight(updateHeight);
             currentState = super.processUpdate();
             }

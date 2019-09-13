@@ -4,30 +4,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStore;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.apache.commons.lang3.tuple.Pair;
-import org.json.simple.JSONObject;
+import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
-public class ImportKey extends AbstractAPIRequestHandler {
-    private static class ImportKeyHolder {
-        private static final ImportKey INSTANCE = new ImportKey();
-    }
+import javax.servlet.http.HttpServletRequest;
 
-    public static ImportKey getInstance() {
-        return ImportKeyHolder.INSTANCE;
-    }
-    private ImportKey() {
+/**
+ * Use com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController#importKeyStore
+ */
+@Deprecated
+@Vetoed
+public class ImportKey extends AbstractAPIRequestHandler {
+    public ImportKey() {
         super(new APITag[] {APITag.ACCOUNT_CONTROL}, "secretBytes", "passphrase");
     }
 
@@ -36,12 +33,12 @@ public class ImportKey extends AbstractAPIRequestHandler {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(request, false));
         byte[] secretBytes = ParameterParser.getBytes(request, "secretBytes", true);
 
-        Pair<VaultKeyStore.Status, String> statusPassphrasePair = Helper2FA.importSecretBytes(passphrase, secretBytes);
-        JSONObject response = new JSONObject();
-        response.put("status", statusPassphrasePair.getLeft());
-        response.put("passphrase", statusPassphrasePair.getRight());
-        JSONData.putAccount(response, "account", Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes))));
-        return response;
+        try {
+            WalletKeysInfo walletKeysInfo = Helper2FA.importSecretBytes(passphrase, secretBytes);
+            return walletKeysInfo.toJSON();
+        } catch (ParameterException e){
+            return JSONResponses.vaultWalletError(0l, "import", e.getMessage());
+        }
     }
 
     @Override

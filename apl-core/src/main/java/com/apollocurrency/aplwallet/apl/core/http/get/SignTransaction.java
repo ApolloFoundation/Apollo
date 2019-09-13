@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -27,26 +28,23 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
+
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public final class SignTransaction extends AbstractAPIRequestHandler {
 
-    private static class SignTransactionHolder {
-        private static final SignTransaction INSTANCE = new SignTransaction();
-    }
-
-    public static SignTransaction getInstance() {
-        return SignTransactionHolder.INSTANCE;
-    }
-
-    private SignTransaction() {
+    public SignTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
                 "validate", "sender", "passphrase");
     }
+    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
@@ -65,7 +63,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
             Transaction transaction = builder.build(keySeed);
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
-                transaction.validate();
+                validator.validate(transaction);
                 response.put("verify", transaction.verifySignature());
             }
             response.put("transactionJSON", signedTransactionJSON);
@@ -74,7 +72,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
             response.put("transaction", transaction.getStringId());
             response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
             JSONData.putPrunableAttachment(response, transaction);
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Incorrect unsigned transaction json or bytes");
         }
         return response;

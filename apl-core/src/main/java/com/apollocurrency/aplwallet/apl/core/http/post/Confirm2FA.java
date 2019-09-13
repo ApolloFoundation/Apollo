@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import javax.servlet.http.HttpServletRequest;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -15,20 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+@Vetoed
 public class Confirm2FA extends AbstractAPIRequestHandler {
-    private Confirm2FA() {
+    public Confirm2FA() {
         super(new APITag[] {APITag.ACCOUNTS, APITag.TWO_FACTOR_AUTH}, "secretPhrase");
-    }
-
-    private static class Confirm2FAHolder {
-        private static final Confirm2FA INSTANCE = new Confirm2FA();
-    }
-
-    public static Confirm2FA getInstance() {
-        return Confirm2FA.Confirm2FAHolder.INSTANCE;
     }
 
     @Override

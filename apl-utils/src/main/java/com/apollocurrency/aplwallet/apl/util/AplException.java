@@ -20,9 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import org.json.simple.JSONStreamAware;
+
 import java.io.IOException;
 
 public abstract class AplException extends Exception {
+
+    private JSONStreamAware jsonResponce;
+
+    public JSONStreamAware getJsonResponce() {
+        return jsonResponce;
+    }
 
     protected AplException() {
         super();
@@ -30,6 +38,11 @@ public abstract class AplException extends Exception {
 
     protected AplException(String message) {
         super(message);
+    }
+
+    protected AplException(JSONStreamAware json) {
+        super(JSON.toString(json));
+        this.jsonResponce = json;
     }
 
     protected AplException(String message, Throwable cause) {
@@ -44,6 +57,10 @@ public abstract class AplException extends Exception {
 
         private ValidationException(String message) {
             super(message);
+        }
+
+        private ValidationException(JSONStreamAware json) {
+            super(json);
         }
 
         private ValidationException(String message, Throwable cause) {
@@ -88,6 +105,10 @@ public abstract class AplException extends Exception {
 
         public NotValidException(String message) {
             super(message);
+        }
+
+        public NotValidException(JSONStreamAware json) {
+            super(json);
         }
 
         public NotValidException(String message, Throwable cause) {
@@ -179,6 +200,34 @@ public abstract class AplException extends Exception {
         }
 
         public PrivateLedgerEntryAccessDenied(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static final class ExecutiveProcessException extends Exception {
+        public ExecutiveProcessException() {
+            super();
+        }
+
+        public ExecutiveProcessException(String message) {
+            super(message);
+        }
+
+        public ExecutiveProcessException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static final class ThirdServiceIsNotAvailable extends RuntimeException {
+        public ThirdServiceIsNotAvailable() {
+            super();
+        }
+
+        public ThirdServiceIsNotAvailable(String message) {
+            super(message);
+        }
+
+        public ThirdServiceIsNotAvailable(String message, Throwable cause) {
             super(message, cause);
         }
     }

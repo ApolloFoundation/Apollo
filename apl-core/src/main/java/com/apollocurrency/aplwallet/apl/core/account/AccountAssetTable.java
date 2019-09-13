@@ -10,7 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.VersionedEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,7 +23,7 @@ import javax.enterprise.inject.spi.CDI;
  *
  * @author al
  */
-public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
+public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
     
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
@@ -36,9 +37,9 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
         }
     } 
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
-    private  static final AccountAssetTable accountAssetTable = new AccountAssetTable();   
-    private static final BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-    
+    private static final AccountAssetTable accountAssetTable = new AccountAssetTable();
+
+
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
@@ -51,12 +52,12 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
     }
 
     @Override
-    protected AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+    public AccountAsset load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountAsset(rs, dbKey);
     }
 
     @Override
-    protected void save(Connection con, AccountAsset accountAsset) throws SQLException {
+    public void save(Connection con, AccountAsset accountAsset) throws SQLException {
          try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.accountId);
@@ -76,15 +77,11 @@ public class AccountAssetTable extends VersionedEntityDbTable<AccountAsset> {
             accountAssetTable.delete(accountAsset);
         }
     }
-    
-    @Override
-    public void trim(int height) {
-        super.trim(Math.max(0, height - Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK));
-    }
+
 
     @Override
     public void checkAvailable(int height) {
-        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockchainProcessor.getMinRollbackHeight()) {
+        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < CDI.current().select(BlockchainProcessor.class).get().getMinRollbackHeight()) {
             throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
         }
         if (height > Account.blockchain.getHeight()) {

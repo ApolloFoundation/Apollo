@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -51,19 +52,12 @@ import org.json.simple.JSONStreamAware;
  * In case the client submits transactionBytes for a transaction containing prunable appendages, the client also needs
  * to submit the prunableAttachmentJSON parameter which includes the attachment JSON for the prunable appendages.<br>
  * <p>
- * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl.Appendix.Prunable} interface.
+ * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
  */
+@Vetoed
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
-    private static class BroadcastTransactionHolder {
-        private static final BroadcastTransaction INSTANCE = new BroadcastTransaction();
-    }
-
-    public static BroadcastTransaction getInstance() {
-        return BroadcastTransactionHolder.INSTANCE;
-    }
-
-    private BroadcastTransaction() {
+    public BroadcastTransaction() {
         super(new APITag[] {APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
 
@@ -81,7 +75,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
             lookupTransactionProcessor().broadcast(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.ValidationException|RuntimeException e) {
+        } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

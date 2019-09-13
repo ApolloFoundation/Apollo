@@ -20,29 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.DigitalGoodsStore;
+import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDGSGoodsCount extends AbstractAPIRequestHandler {
 
-    private static class GetDGSGoodsCountHolder {
-        private static final GetDGSGoodsCount INSTANCE = new GetDGSGoodsCount();
-    }
-
-    public static GetDGSGoodsCount getInstance() {
-        return GetDGSGoodsCountHolder.INSTANCE;
-    }
-
-    private GetDGSGoodsCount() {
+    public GetDGSGoodsCount() {
         super(new APITag[] {APITag.DGS}, "seller", "inStockOnly");
     }
+    private DGSService service = CDI.current().select(DGSService.class).get();
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
@@ -51,8 +47,8 @@ public final class GetDGSGoodsCount extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         response.put("numberOfGoods", sellerId != 0
-                ? DigitalGoodsStore.Goods.getSellerGoodsCount(sellerId, inStockOnly)
-                : inStockOnly ? DigitalGoodsStore.Goods.getCountInStock() : DigitalGoodsStore.Goods.getCount());
+                ? service.getSellerGoodsCount(sellerId, inStockOnly)
+                : inStockOnly ? service.getGoodsCountInStock() : service.getGoodsCount());
         return response;
     }
 

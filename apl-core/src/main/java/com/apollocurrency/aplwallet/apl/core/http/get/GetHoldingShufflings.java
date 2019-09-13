@@ -35,18 +35,12 @@ import org.json.simple.JSONStreamAware;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import javax.enterprise.inject.Vetoed;
 
+@Vetoed
 public final class GetHoldingShufflings extends AbstractAPIRequestHandler {
 
-    private static class GetHoldingShufflingsHolder {
-        private static final GetHoldingShufflings INSTANCE = new GetHoldingShufflings();
-    }
-
-    public static GetHoldingShufflings getInstance() {
-        return GetHoldingShufflingsHolder.INSTANCE;
-    }
-
-    private GetHoldingShufflings() {
+    public GetHoldingShufflings() {
         super(new APITag[] {APITag.SHUFFLING}, "holding", "stage", "includeFinished", "firstIndex", "lastIndex");
     }
 

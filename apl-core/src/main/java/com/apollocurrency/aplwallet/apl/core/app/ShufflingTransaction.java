@@ -20,41 +20,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
+import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
-import javax.enterprise.inject.spi.CDI;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.json.simple.JSONObject;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import org.json.simple.JSONObject;
-
 public abstract class ShufflingTransaction extends TransactionType {
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile EpochTime timeService = CDI.current().select(EpochTime.class).get();
 
     private static final byte SUBTYPE_SHUFFLING_CREATION = 0;
     private static final byte SUBTYPE_SHUFFLING_REGISTRATION = 1;
@@ -445,6 +438,7 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         public boolean isPruned(long transactionId) {
             Transaction transaction = blockchain.getTransaction(transactionId);
+
             ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment)transaction.getAttachment();
             return ShufflingParticipant.getData(attachment.getShufflingId(), transaction.getSenderId()) == null;
         }
@@ -708,13 +702,13 @@ public abstract class ShufflingTransaction extends TransactionType {
             if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
                 throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
             }
-            Transaction dataProcessingTransaction = blockchain.findTransactionByFullHash(participant.getDataTransactionFullHash(),
-                    blockchain.getHeight());
-            if (dataProcessingTransaction == null) {
+
+            if (!blockchain.hasTransactionByFullHash(participant.getDataTransactionFullHash(),
+                    blockchain.getHeight())) {
                 throw new AplException.NotCurrentlyValidException("Invalid data transaction full hash");
             }
-            ShufflingProcessingAttachment shufflingProcessing = (ShufflingProcessingAttachment) dataProcessingTransaction.getAttachment();
-            if (!Arrays.equals(shufflingProcessing.getHash(), attachment.getHash())) {
+            byte[] dataHash = participant.getDataHash();
+            if (dataHash == null || !Arrays.equals(dataHash, attachment.getHash())) {
                 throw new AplException.NotValidException("Blame data hash doesn't match processing data hash");
             }
             byte[][] keySeeds = attachment.getKeySeeds();
@@ -755,11 +749,6 @@ public abstract class ShufflingTransaction extends TransactionType {
         @Override
         public boolean isPhasable() {
             return false;
-        }
-
-        @Override
-        public boolean isPruned(long transactionId) {
-            return super.isPruned(transactionId);
         }
     };
 

@@ -4,13 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
 
 import java.io.InputStream;
 import java.util.Properties;
+import javax.enterprise.inject.Vetoed;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+@Vetoed
 public class UpdaterConstants {
     private static final Logger LOG = getLogger(UpdaterConstants.class);
     private static final Properties updaterProperties;
@@ -18,7 +20,8 @@ public class UpdaterConstants {
     static {
         updaterProperties = new Properties();
         //TODO: check it, there's no "conf" directory anymore
-        try (InputStream is = UpdaterConstants.class.getClassLoader().getResourceAsStream("conf/updater.properties")) {
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        try (InputStream is = classloader.getResourceAsStream("conf/updater.properties")) {
             updaterProperties.load(is);
         }
         catch (Throwable e) {
@@ -49,7 +52,7 @@ public class UpdaterConstants {
    public static final String CERTIFICATE_SUFFIX = ".crt";
    public static final String INTERMEDIATE_CERTIFICATE_NAME = "intermediate" + CERTIFICATE_SUFFIX;
    public static final String CA_CERTIFICATE_NAME = "rootCA" + CERTIFICATE_SUFFIX;
-   public static final String CA_CERTIFICATE_URL = "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/conf/certs/" + CA_CERTIFICATE_NAME;
+   public static final String CA_CERTIFICATE_URL = "https://raw.githubusercontent.com/ApolloFoundation/Apollo/master/apl-conf/src/main/resources/conf/certs/" + CA_CERTIFICATE_NAME;
 
    //'Important update' constants
     public static final int MIN_BLOCKS_DELAY = getIntPropertyOrDefault("updater.importantUpdate.minBlocksWaiting", 10);

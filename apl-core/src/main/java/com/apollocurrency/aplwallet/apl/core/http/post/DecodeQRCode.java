@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import javax.enterprise.inject.Vetoed;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -65,19 +66,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * <li>qrCodeData - A UTF-8 string decoded from the QR code.</li>
  * </ul>
  */
-
+@Vetoed
 public final class DecodeQRCode extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(DecodeQRCode.class);
 
-    private static class DecodeQRCodeHolder {
-        private static final DecodeQRCode INSTANCE = new DecodeQRCode();
-    }
-
-    public static DecodeQRCode getInstance() {
-        return DecodeQRCodeHolder.INSTANCE;
-    }
-
-    private DecodeQRCode() {
+    public DecodeQRCode() {
         super(new APITag[] {APITag.UTILS}, "qrCodeBase64");
     }
     

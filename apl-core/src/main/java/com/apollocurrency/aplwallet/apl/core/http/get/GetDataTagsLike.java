@@ -25,27 +25,25 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetDataTagsLike extends AbstractAPIRequestHandler {
 
-    private static class GetDataTagsLikeHolder {
-        private static final GetDataTagsLike INSTANCE = new GetDataTagsLike();
-    }
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
-    public static GetDataTagsLike getInstance() {
-        return GetDataTagsLikeHolder.INSTANCE;
-    }
-
-    private GetDataTagsLike() {
+    public GetDataTagsLike() {
         super(new APITag[] {APITag.DATA, APITag.SEARCH}, "tagPrefix", "firstIndex", "lastIndex");
     }
 
@@ -64,7 +62,7 @@ public final class GetDataTagsLike extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         JSONArray tagsJSON = new JSONArray();
         response.put("tags", tagsJSON);
-        try (DbIterator<TaggedData.Tag> tags = TaggedData.Tag.getTagsLike(prefix, firstIndex, lastIndex)) {
+        try (DbIterator<DataTag> tags = taggedDataService.getTagsLike(prefix, firstIndex, lastIndex)) {
             while (tags.hasNext()) {
                 tagsJSON.add(JSONData.dataTag(tags.next()));
             }

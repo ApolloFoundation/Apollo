@@ -20,16 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import java.math.BigInteger;
+
 public final class Constants {
-    public static final Version VERSION = new Version("1.27.0");
+
+    public static final Version VERSION = new Version("1.36.6");
+
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
-
+    public static final int DEFAULT_TRIM_FREQUENCY = 1000;
 
     public static final long ONE_APL = 100000000;
-
+    
+    public static final int ONE_DAY_SECS=24*3600;
+    
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
@@ -42,6 +48,11 @@ public final class Constants {
     public static final byte MAX_PHASING_LINKED_TRANSACTIONS = 10;
     public static final int MAX_PHASING_DURATION = 14 * 1440;
     public static final int MAX_PHASING_REVEALED_SECRET_LENGTH = 100;
+
+    // 2 days.
+    public static final int MAX_PHASING_TIME_DURATION_SEC = 2 * 24 * 60 * 60;
+    // 24 hours
+    public static final int MAX_ORDER_DURATION_SEC = 24 * 60 * 60;
 
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;
@@ -77,7 +88,7 @@ public final class Constants {
     public static final byte MAX_VOTE_VALUE = 92;
     public static final byte NO_VOTE_VALUE = Byte.MIN_VALUE;
 
-    public static final int MAX_DGS_LISTING_QUANTITY = 1000000000;
+    public static final int MAX_DGS_LISTING_QUANTITY = 1_000_000_000;
     public static final int MAX_DGS_LISTING_NAME_LENGTH = 100;
     public static final int MAX_DGS_LISTING_DESCRIPTION_LENGTH = 1000;
     public static final int MAX_DGS_LISTING_TAGS_LENGTH = 100;
@@ -119,10 +130,26 @@ public final class Constants {
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     public static final int DEFAULT_PEER_PORT = 47874;
-
+    public static final int PEER_RECONNECT_ATTMEPT_DELAY=60; //now 1 min, was 600 or 10 min 
+    /**blacklist on 1/10 of this number and forget peer if it is can not be connected such number of times*/
+    public static final int PEER_RECONNECT_ATTMEPTS_MAX=80;
+    public static final int PEER_UPDATE_INTERVAL=1800; //now 30 min, was 3600, one hour
+    
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    
+
+    //Eth/Pax
+    public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
+    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
+    public static final Integer MAX_ADDRESS_LENGTH = 110;
+
+    public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+    //DEX
+
+    //24 h
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
+
     private Constants() {} // never
 
 }

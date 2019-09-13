@@ -24,26 +24,24 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.TaggedData;
+import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
+@Vetoed
 public final class GetAllTaggedData extends AbstractAPIRequestHandler {
 
-    private static class GetAllTaggedDataHolder {
-        private static final GetAllTaggedData INSTANCE = new GetAllTaggedData();
-    }
+    private TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
 
-    public static GetAllTaggedData getInstance() {
-        return GetAllTaggedDataHolder.INSTANCE;
-    }
-
-    private GetAllTaggedData() {
+    public GetAllTaggedData() {
         super(new APITag[] {APITag.DATA}, "firstIndex", "lastIndex", "includeData");
     }
 
@@ -57,7 +55,7 @@ public final class GetAllTaggedData extends AbstractAPIRequestHandler {
         JSONArray jsonArray = new JSONArray();
         response.put("data", jsonArray);
 
-        try (DbIterator<TaggedData> data = TaggedData.getAll(firstIndex, lastIndex)) {
+        try (DbIterator<TaggedData> data = taggedDataService.getAll(firstIndex, lastIndex)) {
             while (data.hasNext()) {
                 jsonArray.add(JSONData.taggedData(data.next(), includeData));
             }

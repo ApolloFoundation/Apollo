@@ -4,20 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 
 public class Chat {
-    private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
+    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
         if (databaseManager == null) {

@@ -23,32 +23,23 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-
+@Vetoed
 public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get(); 
-    private static class GetBlockchainStatusHolder {
-        private static final GetBlockchainStatus INSTANCE = new GetBlockchainStatus();
-    }
 
-    public static GetBlockchainStatus getInstance() {
-        return GetBlockchainStatusHolder.INSTANCE;
-    }
-
-    private GetBlockchainStatus() {
+    public GetBlockchainStatus() {
         super(new APITag[] {APITag.BLOCKS, APITag.INFO});
     }
 
@@ -58,10 +49,21 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("application", Constants.APPLICATION);
         response.put("version", Constants.VERSION.toString());
         response.put("time", timeService.getEpochTime());
-        Block lastBlock = lookupBlockchain().getLastBlock();
-        response.put("lastBlock", lastBlock.getStringId());
-        response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
-        response.put("numberOfBlocks", lastBlock.getHeight() + 1);
+        if (lookupBlockchain().isInitialized()) {
+            Block lastBlock = lookupBlockchain().getLastBlock();
+            response.put("lastBlock", lastBlock.getStringId());
+            response.put("cumulativeDifficulty", lastBlock.getCumulativeDifficulty().toString());
+            response.put("numberOfBlocks", lastBlock.getHeight() + 1);
+            Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
+            response.put("shardInitialBlock", shardInitialBlock.getId());
+            response.put("lastShardHeight", shardInitialBlock.getHeight());
+        } else {
+            response.put("lastBlock", "-1");
+            response.put("cumulativeDifficulty", "-1");
+            response.put("numberOfBlocks", "-1");
+            response.put("shardInitialBlock", "-1");
+            response.put("lastShardHeight", "-1");
+        }
         BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         Peer lastBlockchainFeeder = blockchainProcessor.getLastBlockchainFeeder();
         response.put("lastBlockchainFeeder", lastBlockchainFeeder == null ? null : lastBlockchainFeeder.getAnnouncedAddress());
@@ -88,7 +90,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         response.put("accountPrefix", blockchainConfig.getAccountPrefix());
         response.put("projectName", blockchainConfig.getProjectName());
         JSONArray servicesArray = new JSONArray();
-        Peers.getServices().forEach(service -> servicesArray.add(service.name()));
+        lookupPeersService().getServices().forEach(service -> servicesArray.add(service.name()));
         response.put("services", servicesArray);
         if (APIProxy.isActivated()) {
             String servingPeer = APIProxy.getInstance().getMainPeerAnnouncedAddress();
@@ -99,7 +101,7 @@ public final class GetBlockchainStatus extends AbstractAPIRequestHandler {
         }
         response.put("isLightClient", propertiesHolder.isLightClient());
         response.put("maxAPIRecords", API.maxRecords);
-        response.put("blockchainState", Peers.getMyBlockchainState());
+        response.put("blockchainState", lookupPeersService().getMyBlockchainState());
         return response;
     }
 

@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
@@ -22,7 +21,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
         @Override
-        public int getSize(TransactionImpl transaction, Appendix appendage) {
+        public int getSize(Transaction transaction, Appendix appendage) {
             return ((AbstractEncryptedMessageAppendix)appendage).getEncryptedDataLength() - 16;
         }
     };
@@ -64,19 +63,19 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    int getMySize() {
+    public int getMySize() {
         return 4 + encryptedData.getSize();
     }
 
     @Override
-    void putMyBytes(ByteBuffer buffer) {
+    public void putMyBytes(ByteBuffer buffer) {
         buffer.putInt(isText ? (encryptedData.getData().length | Integer.MIN_VALUE) : encryptedData.getData().length);
         buffer.put(encryptedData.getData());
         buffer.put(encryptedData.getNonce());
     }
 
     @Override
-    void putMyJSON(JSONObject json) {
+    public void putMyJSON(JSONObject json) {
         json.put("data", Convert.toHexString(encryptedData.getData()));
         json.put("nonce", Convert.toHexString(encryptedData.getNonce()));
         json.put("isText", isText);

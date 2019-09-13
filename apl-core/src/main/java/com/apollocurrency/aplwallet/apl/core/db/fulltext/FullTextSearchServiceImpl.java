@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,22 +14,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Set;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
+@Singleton
 public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
     private FullTextSearchEngine ftl;
-    private List<String> indexTables;
+    private Set<String> indexTables;
     private String schemaName;
     private DatabaseManager databaseManager;
 
     @Inject
-    public FullTextSearchServiceImpl(FullTextSearchEngine ftl,
-                                     @Named("fullTextTables") List<String> indexTables,
-                                     @Named("tablesSchema") String schemaName) {
+    public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine ftl,
+                                     @Named(value = "fullTextTables") Set<String> indexTables,
+                                     @Named(value = "tablesSchema") String schemaName) {
+        this.databaseManager = databaseManager;
         this.ftl = ftl;
         this.indexTables = indexTables;
         this.schemaName = schemaName;
@@ -68,7 +72,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // Index the table
         //
         try {
-                reindex(conn, tableName, schemaName);
+                reindex(conn, upperTable, schemaName);
                 LOG.info("Lucene search index created for table " + tableName);
             } catch (SQLException exc) {
                 LOG.error("Unable to create Lucene search index for table " + tableName);
@@ -121,9 +125,6 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     public void init() {
         try {
             ftl.init();
-            if (databaseManager  == null) {
-                databaseManager = CDI.current().select(DatabaseManager.class).get();
-            }
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
@@ -238,8 +239,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         return ftl.search(schema, table, queryText, limit, offset);
     }
 
+    @Override
     public void shutdown() {
-        ftl.shutdown();
+        try {
+            ftl.shutdown();
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
     }
 
     public void reindex(Connection conn, String tableName, String schemaName) throws SQLException {
@@ -281,7 +287,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     public void reindexAll(Connection conn) throws SQLException {
         reindexAll(conn, indexTables, schemaName);
     }
-    private void reindexAll(Connection conn, List<String> tables, String schema) throws SQLException {
+    private void reindexAll(Connection conn, Set<String> tables, String schema) throws SQLException {
         LOG.info("Rebuilding the Lucene search index");
         try {
             //
