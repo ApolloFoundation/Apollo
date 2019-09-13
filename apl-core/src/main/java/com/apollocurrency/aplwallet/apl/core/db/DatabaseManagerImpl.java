@@ -206,7 +206,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
         shardDb.init(dbVersion);
         connectedShardDataSourceMap.put(shardId, shardDb);
-        log.debug("new SHARD datasource'{}' is CREATED in {} ms", shardDataSourceCreateHelper.getShardName(), System.currentTimeMillis() - start);
+        log.debug("new SHARD datasource'{}' is ADDED in {} ms", shardDataSourceCreateHelper.getShardName(), System.currentTimeMillis() - start);
         return shardDb;
     }
 
