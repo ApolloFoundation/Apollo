@@ -335,6 +335,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public /*synchronized*/ TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
+        waitAvailability();
         Set<Long> fullShards = findAllFullShardId();
         if (fullShards.contains(shardId)) {
             return getOrCreateShardDataSourceById(shardId, new ShardAddConstraintsSchemaVersion());
