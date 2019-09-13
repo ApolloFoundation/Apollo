@@ -54,11 +54,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
@@ -157,6 +159,14 @@ public final class Account {
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            clearCache();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
+            clearCache();
+        }
+
+        private void clearCache() {
             if (publicKeyCache != null) {
                 publicKeyCache.clear();
             }
@@ -814,6 +824,16 @@ public final class Account {
 
     public void apply(byte[] key) {
         apply(key, false);
+    }
+
+    public static void addGenesisPublicKey(byte[] key) {
+        long accountId = Convert.getId(key);
+        PublicKey t = new PublicKey(accountId, key, 0);
+        t.setDbKey(new LongKey(accountId));
+        genesisPublicKeyTable.insert(t);
+        if (publicKeyCache != null) {
+            publicKeyCache.put(t.getDbKey(), key);
+        }
     }
 
     public void apply(byte[] key, boolean isGenesis) {

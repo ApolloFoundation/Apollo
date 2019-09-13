@@ -92,10 +92,10 @@ public class TrimService {
     }
 
     public void trimDerivedTables(int height, boolean async) {
+        TransactionalDataSource dataSource = dbManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
         lock.lock();
         try {
-            TransactionalDataSource dataSource = dbManager.getDataSource();
-            boolean inTransaction = dataSource.isInTransaction();
             try {
                 if (!inTransaction) {
                     dataSource.begin();
@@ -103,7 +103,7 @@ public class TrimService {
                 long startTime = System.currentTimeMillis();
                 doTrimDerivedTablesOnBlockchainHeight(height, async);
                 dataSource.commit(!inTransaction);
-                log.debug("Total trim time: {} ms on '{}', InTr?=('{}')",
+                log.debug("Total trim time: {} ms on height '{}', InTr?=('{}')",
                         (System.currentTimeMillis() - startTime), height, inTransaction);
             } catch (Exception e) {
                 log.info(e.toString(), e);
@@ -126,7 +126,7 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
-                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight);
+                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
                     log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
                     trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
@@ -148,12 +148,13 @@ public class TrimService {
     }
 
     @Transactional
-    public int doTrimDerivedTablesOnHeight(int height) {
+    public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
         long start = System.currentTimeMillis();
-        int epochTime = timeService.getEpochTime();
-        int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         lock.lock();
         try {
+            if (oneLock) {
+                globalSync.readLock();
+            }
             TransactionalDataSource dataSource = dbManager.getDataSource();
             boolean inTransaction = dataSource.isInTransaction();
             log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",
@@ -162,25 +163,41 @@ public class TrimService {
                 dataSource.begin();
             }
             long onlyTrimTime = 0;
-            for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
-                globalSync.readLock();
-                try {
-                    long startTime = System.currentTimeMillis();
-                    table.prune(pruningTime);
-                    table.trim(height);
-                    dataSource.commit(false);
-                    onlyTrimTime += (System.currentTimeMillis() - startTime);
+            int epochTime = timeService.getEpochTime();
+            int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
+            try {
+                for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
+                    if (!oneLock) {
+                        globalSync.readLock();
+                    }
+                    try {
+                        long startTime = System.currentTimeMillis();
+                        table.prune(pruningTime);
+                        table.trim(height);
+                        dataSource.commit(false);
+                        onlyTrimTime += (System.currentTimeMillis() - startTime);
+                    } finally {
+                        if (!oneLock) {
+                            globalSync.readUnlock();
+                        }
+                    }
                 }
-                finally {
+            } finally {
+                if (oneLock) {
                     globalSync.readUnlock();
                 }
             }
             log.debug("Trim time onlyTrim/full: {} / {} ms, pruning='{}' on height='{}'",
                     onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
+            return pruningTime;
+
         } finally {
             lock.unlock();
         }
-        return pruningTime;
+//        return pruningTime;
     }
 
+    public boolean isTrimming() {
+        return lock.isLocked();
+    }
 }

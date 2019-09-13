@@ -48,7 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
@@ -131,7 +131,6 @@ class CsvWriterReaderDerivedTablesTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
@@ -151,6 +150,7 @@ class CsvWriterReaderDerivedTablesTest {
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
@@ -227,34 +227,34 @@ class CsvWriterReaderDerivedTablesTest {
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
-                MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
-                minDbValue = minMaxDbId.getMinDbId();
-                maxDbValue = minMaxDbId.getMaxDbId();
-                assertTrue(minMaxDbId.getMaxDbId() >= 0);
-                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
+                MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
+                minDbValue = minMaxValue.getMin();
+                maxDbValue = minMaxValue.getMax();
+                assertTrue(minMaxValue.getMax() >= 0);
+                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
 
                 // process non empty tables
-                if (minMaxDbId.getCount() > 0) {
+                if (minMaxValue.getCount() > 0) {
                     do { // do exporting into csv with pagination
                         CsvExportData csvExportData = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
+                                item.getRangeByDbId(con, pstmt, minMaxValue, batchLimit));
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
+                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID"));
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
 
                     log.debug("Table = {}, exported rows = {}", item.toString(), totalCount);
-                    assertEquals(minMaxDbId.getCount(), totalCount);
+                    assertEquals(minMaxValue.getCount(), totalCount);
 
                     int deletedCount = dropDataByName(minDbValue, maxDbValue, item.toString()); // drop exported data only
-                    assertEquals(minMaxDbId.getCount(), deletedCount);
+                    assertEquals(minMaxValue.getCount(), deletedCount);
 
                     int imported = importCsv(item.toString(), batchLimit, dirProvider.getDataExportDir());
                     log.debug("Table = {}, imported rows = {}", item.toString(), imported);
-                    assertEquals(minMaxDbId.getCount(), imported, "incorrect value for '" + item.toString() + "'");
+                    assertEquals(minMaxValue.getCount(), imported, "incorrect value for '" + item.toString() + "'");
 
                 }
             } catch (Exception e) {
