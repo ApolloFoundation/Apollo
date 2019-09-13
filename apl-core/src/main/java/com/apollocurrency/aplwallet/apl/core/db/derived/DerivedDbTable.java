@@ -171,13 +171,13 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
      */
     @Override
     public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
-                                    MinMaxDbId minMaxDbId, int limit) throws SQLException {
+                                    MinMaxValue minMaxValue, int limit) throws SQLException {
         Objects.requireNonNull(con, "connnection is NULL");
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
-        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
+        Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {
-            pstmt.setLong(1, minMaxDbId.getMinDbId());
-            pstmt.setLong(2, minMaxDbId.getMaxDbId());
+            pstmt.setLong(1, minMaxValue.getMin());
+            pstmt.setLong(2, minMaxValue.getMax());
             pstmt.setLong(3, limit);
             return pstmt.executeQuery();
         } catch (SQLException e) {
@@ -189,37 +189,41 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
      * {@inheritDoc}
      */
     @Override
-    public MinMaxDbId getMinMaxDbId(int height){
-        // select MIN and MAX dbId values in one query
-        String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_DB_ID, " +
-                "IFNULL(max(DB_ID), 0) as max_DB_ID, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ?",  table);
+    public MinMaxValue getMinMaxValue(int height){
+        return getMinMaxValue(height, "db_id");
+    }
 
+    @Override
+    public void prune(int time) {}
+
+    protected MinMaxValue getMinMaxValue(int height, String column) {
+        Objects.requireNonNull(column, "column is NULL");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {
+             PreparedStatement pstmt = con.prepareStatement(String.format("SELECT IFNULL(min(%s), 0) as min_id, IFNULL(max(%s), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ?", column, column, table))) {
             pstmt.setInt(1, height);
-            return getMinMaxDbId(pstmt);
+            MinMaxValue minMaxValue = getMinMaxValue(pstmt);
+            minMaxValue.setColumn(column);
+            return minMaxValue;
         }
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public void prune(int time) {}
-
-    protected MinMaxDbId getMinMaxDbId(PreparedStatement pstmt) throws SQLException {
-        MinMaxDbId result = null;
+    protected MinMaxValue getMinMaxValue(PreparedStatement pstmt) throws SQLException {
+        MinMaxValue result = null;
         try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                long dbIdMin = rs.getLong("min_db_id");
-                long dbIdMax = rs.getLong("max_db_id");
+                long min = rs.getLong("min_id");
+                long max = rs.getLong("max_id");
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 // pagination is exclusive for upper + lower bounds
-                result = new MinMaxDbId(
-                        dbIdMin - 1, // plus/minus one in Max/Min value
-                        dbIdMax + 1,
+                result = new MinMaxValue(
+                        min - 1, // plus/minus one in Max/Min value
+                        max + 1,
+                        null,
                         rowCount,
                         height
                 );

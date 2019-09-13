@@ -246,9 +246,11 @@ public class GenesisImporter {
 
     public List<Map.Entry<String, Long>> loadGenesisAccounts() {
         String path = blockchainConfig.getChain().getGenesisLocation();
-        log.debug("Genesis accounts path = " + path);
+        log.debug("Genesis accounts json resource path = " + path);
         try (InputStreamReader is = new InputStreamReader(
-                Objects.requireNonNull(GenesisImporter.class.getClassLoader().getResourceAsStream(path)))) {
+                Objects.requireNonNull(
+                        GenesisImporter.class.getClassLoader().getResourceAsStream(path),
+                        "Genesis accounts json was NOT found as resource by path = " + path))) {
             JsonNode root = mapper.readTree(is);
             JsonNode balancesArray = root.get("balances");
             Map<String, Long> map = mapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});

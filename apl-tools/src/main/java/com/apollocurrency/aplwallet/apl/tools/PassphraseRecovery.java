@@ -122,7 +122,7 @@ public final class PassphraseRecovery {
 
     static Map<Long, byte[]> getPublicKeys() {
         DbProperties dbProperties = CDI.current().select(DbProperties.class).get(); // it should be present and initialized
-        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder, new JdbiHandleFactory());
         Map<Long, byte[]> publicKeys = new HashMap<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM public_key WHERE latest=TRUE");

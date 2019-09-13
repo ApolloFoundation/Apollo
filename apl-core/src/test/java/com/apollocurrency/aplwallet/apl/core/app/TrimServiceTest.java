@@ -218,10 +218,10 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
 
-        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeight(2000));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeight(2000, true));
 
-        verify(globalSync, times(2)).readLock();
-        verify(globalSync, times(2)).readUnlock();
+        verify(globalSync, times(1)).readLock();
+        verify(globalSync, times(1)).readUnlock();
         verify(dataSource, times(2)).commit(false);
 
         verify(derivedTable, times(2)).trim(2000);

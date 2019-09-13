@@ -24,10 +24,6 @@ import javax.inject.Singleton;
  *
  * @author Serhiy Lymar
  */
-
-
-
-
 @Singleton
 public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
@@ -48,7 +44,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     @Override
     public void initialize() {
-        log.debug("DexMatcherService : initialization routine");        
+        log.debug("DexMatcherService : initialization DONE");
     }
 
     /**
@@ -57,13 +53,13 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     @Override
     public void deinitialize() {
-        log.debug("DexMatcherService : deinitialization routine");        
+        log.debug("DexMatcherService : stopping DONE");
     }
     
     
     /**
      * currency-specific validation (Ethereum)
-     * @param DexOffer  offer to validate
+     * @param offer  offer to validate
      */ 
     private boolean validateOfferETH(DexOffer offer) {
         // TODO: add validation routine
@@ -72,7 +68,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
     /**
      * currency-specific validation (Apollo)
-     * @param DexOffer  offer to validate
+     * @param offer  offer to validate
      */ 
     private boolean validateOfferAPL(DexOffer offer) {
         // TODO: add validation routine
@@ -81,7 +77,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     /**
      * currency-specific validation (Pax)
-     * @param DexOffer  offer to validate
+     * @param offer  offer to validate
      */ 
     private boolean validateOfferPAX(DexOffer offer) {
         // TODO: add validation routine
@@ -91,7 +87,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     /**
      * Common validation routine for offer  
-     * @param DexOffer  offer - offer to validate
+     * @param offer  offer - offer to validate
      */ 
     private boolean validateOffer( DexOffer offer) {
         
@@ -111,8 +107,8 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
     /**
      * Core event for matcher - when offer is created, it is called back     
-     * @param DexOffer  myOffer - some data of offer, that is being created
-     * @param DexOffer  hisOffer - the most suitable offer the Deal
+     * @param myOffer  myOffer - some data of offer, that is being created
+     * @param hisOffer  hisOffer - the most suitable offer the Deal
      */ 
     
     private void onOfferMatch ( DexOffer myOffer, DexOffer hisOffer) {
@@ -123,7 +119,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
     /**
      * Core event for matcher - when offer is created, it is called back     
-     * @param offerType  Type of the offer. (BUY/SELL) 0/1
+     * @param createdOffer  Type of the offer. (BUY/SELL) 0/1
      */
     public void onCreateOffer(DexOffer createdOffer){
         DexOffer pairOffer = findCounterOffer(createdOffer);

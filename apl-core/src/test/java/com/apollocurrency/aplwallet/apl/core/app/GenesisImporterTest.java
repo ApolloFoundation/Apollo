@@ -84,20 +84,17 @@ class GenesisImporterTest {
 
     @WeldSetup
     public WeldInitiator weld  = WeldInitiator.from(
-            EntityProducer.class, AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-            ShardRecoveryDaoJdbcImpl.class, GenesisPublicKeyTable.class,
+            AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+            ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, GenesisPublicKeyTable.class,
             BlockIndexDao.class, TransactionDaoImpl.class, BlockchainImpl.class,
-            JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class,
-
-            GlobalSyncImpl.class, PublicKeyTable.class,
-            AccountGuaranteedBalanceTable.class, AccountServiceImpl.class, AccountPublicKeyServiceImpl.class
-    )
+            BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
             .addBeans(MockBean.of(configDirProvider, ConfigDirProvider.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(blockchainConfigUpdater, BlockchainConfigUpdater.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
@@ -157,8 +154,8 @@ class GenesisImporterTest {
                 Convert.toHexString( genesisImporter.getCreatorPublicKey() ));
         assertEquals("9056ecb5bf764f7513195bc6655756b83e55dcb2c4c2fdb20d5e5aa5348617ed",
                 Convert.toHexString( genesisImporter.getComputedDigest() ));
-        assertEquals(1739068987193023818L, GenesisImporter.CREATOR_ID);
-        assertEquals(1515931200000L, GenesisImporter.EPOCH_BEGINNING);
+        assertEquals(1739068987193023818L, genesisImporter.CREATOR_ID);
+        assertEquals(1515931200000L, genesisImporter.EPOCH_BEGINNING);
     }
 
     @Test
@@ -195,8 +192,8 @@ class GenesisImporterTest {
         assertNotNull(block);
         assertEquals(230730, genesisImporter.getPublicKeys().size()); // pub keys read from json
         assertEquals(84832, genesisImporter.getBalances().size()); // balances read from json
-        assertEquals(1739068987193023818L, GenesisImporter.CREATOR_ID);
-        assertEquals(1515931200000L, GenesisImporter.EPOCH_BEGINNING);
+        assertEquals(1739068987193023818L, genesisImporter.CREATOR_ID);
+        assertEquals(1515931200000L, genesisImporter.EPOCH_BEGINNING);
     }
 
     @Test
@@ -214,7 +211,7 @@ class GenesisImporterTest {
         assertEquals(10, count);
         count = genesisPublicKeyTable.getCount();
         assertEquals(19, count);
-        Account genesisAccount = accountService.getAccount(GenesisImporter.CREATOR_ID);
+        Account genesisAccount = accountService.getAccount(enesisImporter.CREATOR_ID);
         assertEquals(-43678392484062L , genesisAccount.getBalanceATM());
         DerivedTableData derivedTableData = accountGuaranteedBalanceTable.getAllByDbId(0L, 20, 20L);
         assertNotNull(derivedTableData);
