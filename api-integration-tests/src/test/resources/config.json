@@ -1,6 +1,6 @@
 {
   "host":"localhost",
-  "port":"6876",
+  "port":"7876",
   "adminPassword":"1",
   "standartWallet":
      {
@@ -11,9 +11,9 @@
 
   "vaultWallet":
      {
-      "user":"APL-6EZW-D59H-AL4B-BVZXN",
-      "pass":"artless crown thee income smirches inspires skewer drinking cult shrunken tipsily homing",
-      "publicKey":"47a3410ac20ccda6b0da69bc2ca53ef9e2e8685cf7eb5cc718f7c1b55e741407",
+      "user":"APL-MK35-9X23-YQ5E-8QBKH",
+      "pass":"1",
+      "publicKey":"226361039b9906728c21b3a43b9b2cbc746b0cf06d97bbca6b6054805edf131c",
       "secretKey":"02f1f501296c4ee900aa8e1618468bb1a838e67138483d7477cf5ce309d2a4b3"
      }
 }

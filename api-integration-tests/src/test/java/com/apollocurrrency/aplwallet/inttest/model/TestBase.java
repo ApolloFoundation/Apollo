@@ -708,7 +708,7 @@ public class TestBase {
     @AfterAll
     static void afterAll() {
         try {
-            deleteKey(getTestConfiguration().getVaultWallet());
+        //    deleteKey(getTestConfiguration().getVaultWallet());
         } catch (Exception e) { }
 
     }
