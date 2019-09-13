@@ -5,7 +5,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 public class ResourceFileLoader {
     private static final Logger log = getLogger(ResourceFileLoader.class);
@@ -23,10 +27,12 @@ public class ResourceFileLoader {
     public Path getResourcePath(){
         ClassLoader classLoader = getClass().getClassLoader();
         // "logback-test.xml" should be present in resource folder, otherwise it fails
-        File file = new File(classLoader.getResource("logback-test.xml").getFile()); // usually we have it there
-//        File file = new File("/media/userXX/Apollo/apl-core/target/classes/public_key.csv"); // kind of direct path
-        log.trace(file.getAbsolutePath());
-        return file.getParentFile().toPath();
+        try {
+            URI uri = Objects.requireNonNull(classLoader.getResource("logback-test.xml")).toURI();// usually we have it there
+            return Paths.get(uri).getParent().toAbsolutePath();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
