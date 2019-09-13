@@ -53,20 +53,20 @@ class DexContractAttachmentTest {
 
     @Test
     void testSerializeToByteBuffer() throws AplException.NotValidException {
-        testSerializeToByteBuffer(121);
+        testSerializeToByteBuffer(125);
     }
 
     @Test
     void testSerializeToByteBufferWithoutSecret() throws AplException.NotValidException {
         attachment.setSecretHash(null);
         attachment.setEncryptedSecret(null);
-        testSerializeToByteBuffer(25);
+        testSerializeToByteBuffer(29);
     }
 
     @Test
     void testSerializeToByteBufferWithoutCounterTransferTx() throws AplException.NotValidException {
         attachment.setCounterTransferTxId(null);
-       testSerializeToByteBuffer(120);
+       testSerializeToByteBuffer(124);
     }
 
     private void testSerializeToByteBuffer(int size) throws AplException.NotValidException {
