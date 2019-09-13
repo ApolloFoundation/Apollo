@@ -89,4 +89,17 @@ class FileUtilsTest {
         assertTrue(Files.exists(directory));
         assertEquals(3, Files.list(directory).count());
     }
+
+    @Test
+    void testDeletebyFilter() throws IOException {
+        Path directory = temporaryFolderExtension.newFolder().toPath();
+        Files.createFile(directory.resolve("file1.txt"));
+        Files.createFile(directory.resolve("file2.txt"));
+        Path existingFile = directory.resolve("file3.tt");
+        Files.createFile(existingFile);
+        FileUtils.deleteFilesByFilter(directory, (p)-> p.toString().endsWith(".txt"));
+        long filesCount = Files.list(directory).count();
+        assertEquals(1, filesCount);
+        assertTrue(Files.exists(existingFile));
+    }
 }

@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
@@ -51,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -103,6 +105,8 @@ public class BlockchainImpl implements Blockchain {
     public void update() {
         this.lastBlock.set(findLastBlock());
         this.shardInitialBlock.set(findFirstBlock());
+        ((ShardManagement) this.databaseManager).initFullShards(
+                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
     }
 
     @Override
