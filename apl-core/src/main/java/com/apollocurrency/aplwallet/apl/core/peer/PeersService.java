@@ -722,7 +722,7 @@ public class PeersService {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
-            int counterOfPeersToSend = peers.size()<sendToPeersLimit?peers.size():sendToPeersLimit;
+            int counterOfPeersToSend = peers.size() < sendToPeersLimit ? peers.size() : sendToPeersLimit;
 
            // peers.addAll(connectablePeers.values());
             LOG.debug("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
