@@ -746,7 +746,7 @@ public class PeersService {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
                                 successful += 1;
-                                LOG.debug("Send ot peer success.");
+ 
                             }else{
                                 LOG.debug("Send ot peer error");
                             }
@@ -760,6 +760,7 @@ public class PeersService {
                     expectedResponses.clear();
                 }
                 if (successful >= counterOfPeersToSend) {
+                    LOG.debug("SendToSomePeers() success.");
                     return;
                 }
             }
