@@ -2,10 +2,10 @@ package com.apollocurrency.aplwallet.apl.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.nio.file.Path;
-
-import org.slf4j.Logger;
 
 public class ResourceFileLoader {
     private static final Logger log = getLogger(ResourceFileLoader.class);
@@ -26,7 +26,7 @@ public class ResourceFileLoader {
         File file = new File(classLoader.getResource("logback-test.xml").getFile()); // usually we have it there
 //        File file = new File("/media/userXX/Apollo/apl-core/target/classes/public_key.csv"); // kind of direct path
         log.trace(file.getAbsolutePath());
-        return new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator))).toPath();
+        return file.getParentFile().toPath();
     }
 
 }
