@@ -34,7 +34,7 @@ class ZipTest {
     private static final Logger log = getLogger(ZipTest.class);
     private static final String APL_BLOCKCHAIN_ARCH_1_ZIP_HASH = "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2";
     @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(ZipImpl.class)
