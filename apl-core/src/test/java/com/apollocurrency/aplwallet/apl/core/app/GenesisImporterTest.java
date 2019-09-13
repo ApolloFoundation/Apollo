@@ -140,11 +140,11 @@ class GenesisImporterTest {
         Block block = genesisImporter.newGenesisBlock();
         assertNotNull(block);
         assertEquals(1739068987193023818L, block.getGeneratorId());
-        assertEquals(4997592126877716673L, block.getId());
+        assertEquals(6402422677020800333L, block.getId());
         assertEquals(0, block.getHeight());
         assertEquals("1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b",
                 Convert.toHexString( genesisImporter.getCreatorPublicKey() ));
-        assertEquals("9056ecb5bf764f7513195bc6655756b83e55dcb2c4c2fdb20d5e5aa5348617ed",
+        assertEquals("969d27ce15fa38e74d237382b235c28f91a5cfb4a9b6ff3b7a56eb37afb6e91a",
                 Convert.toHexString( genesisImporter.getComputedDigest() ));
         assertEquals(1739068987193023818L, genesisImporter.CREATOR_ID);
         assertEquals(1515931200000L, genesisImporter.EPOCH_BEGINNING);
