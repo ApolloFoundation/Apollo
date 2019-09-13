@@ -730,8 +730,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
-
         int curTime = timeService.getEpochTime();
+        log.trace("push new block, prev_id = '{}', cutTime={}", block.getPreviousBlockId(), curTime);
         globalSync.writeLock();
         try {
             Block previousLastBlock = null;
@@ -759,6 +759,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
                 block.setPrevious(previousLastBlock);
+                log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
                 lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
                 addBlock(block);
@@ -767,6 +768,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
                 blockchain.commit(block);
                 dataSource.commit(false);
+                log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
             } catch (Exception e) {
                 dataSource.rollback(false); // do not close current transaction
                 log.error("PushBlock, error:", e);
@@ -776,6 +778,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 dataSource.commit(); // finally close transaction
             }
+            log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.AFTER_BLOCK_ACCEPT.name());
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
         } finally {
             globalSync.writeUnlock();
@@ -786,6 +789,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Convert2.rsAccount(block.getGeneratorId()));
             lookupPeers().sendToSomePeers(block);
         }
+        log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
     }
 
@@ -899,9 +903,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private void accept(Block block, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
-        long processStart = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         try {
-            log.trace("Accepting block: {} height: {} systime: {}",block.getId(),block.getHeight(),processStart);
+            log.trace("Accepting block: {} height: {}", block.getId(), block.getHeight());
             isProcessingBlock = true;
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
@@ -978,7 +982,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             });
 
             dexService.closeOverdueOrders(block.getTimestamp());
-
+            log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.AFTER_BLOCK_APPLY.name());
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
             if (block.getOrLoadTransactions().size() > 0) {
@@ -988,7 +992,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
-            log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-processStart );
+            log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-start );
         }
     }
 
@@ -1503,6 +1507,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     int chainHeight = lookupBlockhain().getHeight();
                     downloadPeer();
+                    log.trace("Is finished BCH download ? ({}), h1={}, h2={}, isDownloading={}",
+                            lookupBlockhain().getHeight() == chainHeight, chainHeight,
+                            lookupBlockhain().getHeight(), isDownloading);
                     if (lookupBlockhain().getHeight() == chainHeight) {
                         if (isDownloading) {
                             log.info("Finished blockchain download");
@@ -1665,7 +1672,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 } finally {
                     globalSync.updateUnlock();
-                    isDownloading = false;
+//                    isDownloading = false;
                 }
                 
             } catch (AplException.StopException e) {
