@@ -33,6 +33,16 @@ public final class Constants {
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
 
     public static final long ONE_APL = 100000000;
+    public static final long APL_COMMISSION = 10;
+    public static final long ETH_GAS_MULTIPLIER = 5; 
+    
+    public static final int OFFER_VALIDATE_OK = 1; 
+    public static final int OFFER_VALIDATE_ERROR_APL_FREEZE = -1; 
+    public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2; 
+    public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3; 
+    public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
+    public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
     
     public static final int ONE_DAY_SECS=24*3600;
     

@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAtt
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -22,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
@@ -31,6 +33,9 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
 @Slf4j
 @Singleton
@@ -40,12 +45,14 @@ public class DexOrderProcessor {
     private DexService dexService;
     private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
+    IDexValidator dexValidator;
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
+        this.dexValidator = dexValidationServiceImpl;
     }
 
 
@@ -153,7 +160,74 @@ public class DexOrderProcessor {
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
-        return true;
+        log.debug("isContractStep1Valid entry point");
+        long counterOrderID = exchangeContract.getCounterOrderId();                
+        long orderID = exchangeContract.getOrderId();
+        
+        log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
+        
+        DexOrder mainOrder = dexService.getOrder(orderID);// getOfferByTransactionId(orderID);
+        
+        if (mainOrder == null) {
+            log.debug("main offer search error: ");
+            return false;
+        } else {
+            log.debug("mainOffer search: ok, going further");
+        }
+        
+                      
+        DexOrder counterOrder = dexService.getOrder(counterOrderID);
+
+        if (counterOrder == null) {
+            log.debug("counterOffer search error: ");
+            return false;
+        } else {
+            log.debug("counterOffer search: ok, going further");
+        }
+
+        
+        // DUMPING main offer 
+        
+        log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(), 
+                mainOrder.getToAddress(), mainOrder.getFromAddress(), mainOrder.getPairCurrency(), mainOrder.getPairRate());
+
+        log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOrder.getType(), counterOrder.getAccountId(), 
+                counterOrder.getToAddress(), counterOrder.getFromAddress(), counterOrder.getPairCurrency(), counterOrder.getPairRate());
+        
+        DexCurrencies curr = counterOrder.getPairCurrency();
+        
+        int rx=0;
+        
+        switch (curr) {
+
+            case ETH: { 
+                // return validateOfferETH(myOffer,hisOffer);
+                if (mainOrder.getType() == OrderType.SELL)  {
+                    rx =  dexValidator.validateOfferSellAplEth(mainOrder, counterOrder); 
+                }
+                else { 
+                    rx=  dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);
+                }                
+                break;
+            }
+            
+            case PAX: {
+                if (mainOrder.getType() == OrderType.SELL) { 
+                    rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder); 
+                } else { 
+                    rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);
+                }
+                break;
+            }
+            
+            default: // return OFFER_VALIDATE_ERROR_IN_PARAMETER;
+                rx = OFFER_VALIDATE_ERROR_IN_PARAMETER;
+                break;
+        }        
+        
+        log.debug("validation result: {}",rx);
+        
+        return rx == OFFER_VALIDATE_OK;
     }
 
 
