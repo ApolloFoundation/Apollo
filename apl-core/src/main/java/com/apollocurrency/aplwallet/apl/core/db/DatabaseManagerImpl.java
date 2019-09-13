@@ -13,11 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
@@ -35,7 +32,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Produces;
@@ -186,7 +182,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
+    public TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
         long start = System.currentTimeMillis();
         waitAvailability();
@@ -330,7 +326,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
         } else {
-            return createAndAddShard(shardId, dbVersion);
+            return createOrUpdateShard(shardId, dbVersion);
         }
     }
 

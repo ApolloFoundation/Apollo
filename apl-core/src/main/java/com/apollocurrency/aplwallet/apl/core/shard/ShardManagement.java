@@ -85,7 +85,7 @@ public interface ShardManagement {
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
 
 
     /**

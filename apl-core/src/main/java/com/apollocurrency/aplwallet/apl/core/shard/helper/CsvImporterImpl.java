@@ -229,7 +229,7 @@ public class CsvImporterImpl implements CsvImporter {
 
                 log.trace("sql = {}", sqlInsert.toString());
                 importedCount += preparedInsertStatement.executeUpdate();
-                if (rowDataConsumer != null/* && dataSource.isInTransaction()*/) {
+                if (rowDataConsumer != null) {
                     rowDataConsumer.accept(row);
                 }
                 if (rsCounter % batchLimit == 0) {

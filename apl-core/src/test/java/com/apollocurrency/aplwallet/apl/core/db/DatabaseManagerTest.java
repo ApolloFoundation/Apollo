@@ -36,12 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -88,7 +83,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -108,7 +103,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -120,10 +115,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement)databaseManager).createAndAddShard(1L, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement)databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -286,7 +281,7 @@ class DatabaseManagerTest {
         for (int i = 0; i < 20; i++) {
             futures.get(i).get();
         }
-        verify(spyDbManager).createAndAddShard(1L, new ShardInitTableSchemaVersion());
+        verify(spyDbManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
 
     }
 
