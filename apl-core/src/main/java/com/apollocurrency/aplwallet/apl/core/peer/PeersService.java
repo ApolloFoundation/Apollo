@@ -720,6 +720,8 @@ public class PeersService {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
+            int counterOfPeersToSend = peers.size()<sendToPeersLimit?peers.size():sendToPeersLimit;
+
            // peers.addAll(connectablePeers.values());
             LOG.debug("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
@@ -738,7 +740,7 @@ public class PeersService {
                     );
                     expectedResponses.add(futureResponse);
                 }
-                if (expectedResponses.size() >= sendToPeersLimit - successful) {
+                if (expectedResponses.size() >= counterOfPeersToSend - successful) {
                     for (Future<JSONObject> future : expectedResponses) {
                         try {
                             JSONObject response = future.get();
@@ -757,7 +759,7 @@ public class PeersService {
                     }
                     expectedResponses.clear();
                 }
-                if (successful >= sendToPeersLimit) {
+                if (successful >= counterOfPeersToSend) {
                     return;
                 }
             }
