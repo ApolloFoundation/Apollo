@@ -63,7 +63,8 @@ class ZipTest {
         FilenameFilter CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
         byte[] zipCrc = zipComponent.compressAndHash(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
                 null, CSV_FILE_FILTER, false);
-        assertTrue(zipCrc != null && zipCrc.length > 0, "CSV files were NOT compressed into ZIP!!");
+        assertNotNull(zipCrc, "Zip hash should not be null");
+        assertTrue(zipCrc.length > 0, "Invalid length of zip hash");
 
         String[] zipExtension = new String[]{"zip"};
         // check ZIP is created
