@@ -299,7 +299,16 @@ public class DexOrderProcessor {
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
-        return true;
+        
+        log.debug("Validation for step 2 entry point:");
+        DexOrder contractOrder1 = dexService.getOrder(exchangeContract.getOrderId());
+        DexOrder contractOrder2 = dexService.getOrder(exchangeContract.getCounterOrderId());
+        log.debug("Validation step 2: Order1: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder1.getType(),
+                contractOrder1.getToAddress(), contractOrder1.getFromAddress(), contractOrder1.getPairCurrency());
+        log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
+                contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
+        
+        return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(exchangeContract, contractOrder2) && (exchangeContract.getTransferTxId() != null);
     }
 
     /**
@@ -388,9 +397,9 @@ public class DexOrderProcessor {
 
     private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOrder dexOrder) {
         //TODO add additional validation.
-        log.debug("Validation 3 Reached here");
-        
-        return dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
+        log.debug("Validation 3 entry point");
+                
+        return isContractStep1Valid(exchangeContract) && dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
     }
 
 
