@@ -686,6 +686,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         JSONObject request = block.getJSONObject();
         request.put("requestType", "processBlock");
+        LOG.debug("Pushing block: {} at height: {}",block.getId(), block.getHeight());
         sendToSomePeers(request);
     }
 
@@ -717,8 +718,10 @@ public class PeersService {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
-            peers.addAll(connectablePeers.values());
-            LOG.trace("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
+            int counterOfPeersToSend = peers.size() < sendToPeersLimit ? peers.size() : sendToPeersLimit;
+
+           // peers.addAll(connectablePeers.values());
+            LOG.debug("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
                 if (enableHallmarkProtection && peer.getWeight() < pushThreshold) {
@@ -735,12 +738,14 @@ public class PeersService {
                     );
                     expectedResponses.add(futureResponse);
                 }
-                if (expectedResponses.size() >= sendToPeersLimit - successful) {
+                if (expectedResponses.size() >= counterOfPeersToSend - successful) {
                     for (Future<JSONObject> future : expectedResponses) {
                         try {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
-                                successful += 1;
+                                successful += 1; 
+                            }else{
+                                LOG.debug("Send to peer error");
                             }
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
@@ -751,7 +756,8 @@ public class PeersService {
                     }
                     expectedResponses.clear();
                 }
-                if (successful >= sendToPeersLimit) {
+                if (successful >= counterOfPeersToSend) {
+                    LOG.debug("SendToSomePeers() success.");
                     return;
                 }
             }
