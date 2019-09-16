@@ -15,10 +15,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -162,4 +165,24 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
         return secureStorage;
     }
+
+    @Override
+    public boolean flushAccountKeys(Long accountID) {
+        
+        Set<Entry<Long, String>> setOfEntries = store.entrySet();
+        Iterator<Entry<Long, String>> iterator = setOfEntries.iterator();       
+        boolean flushed = false; 
+        while (iterator.hasNext()) { 
+            Entry<Long, String> entry = iterator.next();
+            Long key = entry.getKey();
+            String value = entry.getValue();
+            LOG.debug("key: {}, value: {}", key, value);
+            if (key.compareTo(accountID)==0) {
+               LOG.debug("flushing key-value");
+               iterator.remove();   
+               flushed = true; 
+            }
+        }
+       return true;
+    }        
 }

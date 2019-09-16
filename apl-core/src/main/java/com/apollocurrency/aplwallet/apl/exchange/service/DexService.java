@@ -567,4 +567,9 @@ public class DexService {
 
         saveDexTradeEntry(dexTradeEntry);
     }
+    
+    boolean flushSecureStorage(Long accountID) {                
+        return secureStorageService.flushAccountKeys(accountID);        
+    }
+    
 }

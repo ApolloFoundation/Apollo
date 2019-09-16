@@ -41,4 +41,7 @@ public interface SecureStorageService {
      * Create private key for application.
      */
     String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
+    
+    boolean flushAccountKeys(Long accountID);
+    
 }
