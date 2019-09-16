@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -47,7 +47,7 @@ public final class GetScheduledTransactions extends AbstractAPIRequestHandler {
 
         long accountId = ParameterParser.getAccountId(req, false);
         JSONArray jsonArray = new JSONArray();
-        List<Transaction> transactions = TransactionScheduler.getScheduledTransactions(accountId);
+        List<Transaction> transactions = TransactionSchedulerService.getScheduledTransactions(accountId);
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }

@@ -4,6 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -37,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
@@ -60,23 +69,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -291,25 +290,21 @@ public class PhasingPollServiceTest {
     @Test
     void testFinishPollNotApproved() throws SQLException {
         blockchain.setLastBlock(btd.BLOCK_9);
-        inTransaction(con -> service.finish(ptd.POLL_3, 1, 1L));
+        inTransaction(con -> service.finish(ptd.POLL_3, 1));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.BLOCK_9.getHeight(), ptd.POLL_3.getId(), 1, false);
 
         assertEquals(expected, result);
-        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum(), 1L));
+        inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
-        PhasingApprovalResult approvedResultTx = service.getApprovedTx(ptd.POLL_3.getId());
         PhasingPollResult expected = new PhasingPollResult(ptd.RESULT_3.getDbId() + 1, btd.LAST_BLOCK.getHeight(), ptd.POLL_3.getId(), ptd.POLL_3.getQuorum(), true);
 
         assertEquals(expected, result);
-        assertEquals(new PhasingApprovalResult(1, ptd.POLL_3.getId(), 1L), approvedResultTx);
     }
 
     @Test
