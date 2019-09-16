@@ -567,4 +567,30 @@ public class DexService {
 
         saveDexTradeEntry(dexTradeEntry);
     }
+
+
+    public void reopenIncomeOrders(Long orderId) {
+        List<ExchangeContract> contractsForReopen = getDexContracts(DexContractDBRequest.builder()
+                .counterOfferId(orderId)
+                .build());
+
+        closeContracts(contractsForReopen);
+    }
+
+    public void closeContracts(List<ExchangeContract> contractsForReopen) {
+        for (ExchangeContract contract : contractsForReopen) {
+            //Reopen order.
+            DexOrder order = getOrder(contract.getOrderId());
+            if (order.getStatus().isPending()) {
+                //Close contract.
+                contract.setContractStatus(ExchangeContractStatus.STEP_4);
+                saveDexContract(contract);
+                log.debug("Contract was closed. ContractId: {}", contract.getId());
+
+                order.setStatus(OrderStatus.OPEN);
+                saveOrder(order);
+                log.debug("Order was closed. OrderId: {}", order.getId());
+            }
+        }
+    }
 }

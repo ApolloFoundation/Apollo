@@ -18,11 +18,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
-
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
@@ -195,8 +194,8 @@ public class DexOrderProcessor {
                 counterOrder.getToAddress(), counterOrder.getFromAddress(), counterOrder.getPairCurrency(), counterOrder.getPairRate());
         
         DexCurrencies curr = counterOrder.getPairCurrency();
-        
-        int rx=0;
+
+        int rx;
         
         switch (curr) {
 
