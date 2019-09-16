@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import java.util.*;
-
 import com.apollocurrency.aplwallet.apl.core.http.get.CalculateFullHash;
 import com.apollocurrency.aplwallet.apl.core.http.get.CanDeleteCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.get.DecodeHallmark;
@@ -297,7 +295,13 @@ import com.apollocurrency.aplwallet.apl.core.http.post.TransferAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransferCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.TrimDerivedTables;
 import com.apollocurrency.aplwallet.apl.core.http.post.UploadTaggedData;
-import org.apache.http.annotation.Obsolete;
+
+import java.util.Base64;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
