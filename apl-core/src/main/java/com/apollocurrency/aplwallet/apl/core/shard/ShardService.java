@@ -281,9 +281,13 @@ public class ShardService {
 
     @Transactional
     public void saveShardRecoveryAndShard(long nextShardId, int lastTrimBlockHeight, int blockchainHeight) {
-        Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
-        shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
+        Shard newShard = new Shard(nextShardId, lastTrimBlockHeight); // shard starts on specified 'Trim height'
+        // shard recovery is stored on specified 'Trim height'
+        ShardRecovery recovery = ShardRecovery.builder().state(MigrateState.INIT.toString()).height(lastTrimBlockHeight).build();
+        shardRecoveryDao.saveShardRecovery(recovery);
         shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
+        log.debug("Saved initial:\n{}\n{}\nfor trimHeight='{}' at current bch height='{}'",
+                newShard, recovery, lastTrimBlockHeight, blockchainHeight);
     }
 
     private boolean shouldPerformSharding() {
