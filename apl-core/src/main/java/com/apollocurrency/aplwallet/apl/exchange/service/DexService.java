@@ -568,8 +568,8 @@ public class DexService {
         saveDexTradeEntry(dexTradeEntry);
     }
     
-    boolean flushSecureStorage(Long accountID) {                
-        return secureStorageService.flushAccountKeys(accountID);        
+    public boolean flushSecureStorage(Long accountID, String passPhrase) {                
+        return secureStorageService.flushAccountKeys( accountID, passPhrase);        
     }
     
 }

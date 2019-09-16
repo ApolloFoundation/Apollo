@@ -589,5 +589,50 @@ public class DexController {
             return Response.ok().build();
         }
     }
+    
+    
+    
+    @GET
+    @Path("/flush")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Flush temporary keys", description = "cleanup after the exchange routine")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response flush(      @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
+                                @Parameter(description = "Passphrase") @QueryParam("accountId") String passphrase,
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("flush: accountIdStr: {}, passphrase: {} ",  accountIdStr, passphrase);
+
+        OrderType type = null;
+        OrderStatus orderStatus = null;
+        DexCurrencies pairCur = null;
+        Integer currentTime = null;
+        Long accountId = null;
+
+        //Validate
+        try {
+
+            if(!StringUtils.isBlank(accountIdStr)){
+                accountId = Long.parseUnsignedLong(accountIdStr);
+            }
+            
+            String xpassphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            if(xpassphrase == null) {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
+            }
+            
+            service.flushSecureStorage(accountId, passphrase);
+            
+        } catch (Exception ex){
+            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+        }
+
+
+
+        return Response.ok().build();
+    }
+
 
 }
