@@ -147,6 +147,8 @@ public class ShardEngineImpl implements ShardEngine {
             ps.executeUpdate();
             if (!Files.exists(backupPath)) {
                 state = FAILED;
+                log.error("BACKUP main db has FAILED, SQL={}, shard = {}, backup was not found in path = {}",
+                        sql, shardDataSourceCreateHelper.getShardId(), backupPath);
                 durableTaskUpdateByState(state, null, null);
             }
             log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
@@ -209,10 +211,10 @@ public class ShardEngineImpl implements ShardEngine {
                     shard.setShardState(ShardState.IN_PROGRESS);
                     shardDao.updateShard(shard);
                 }
-                durableTaskUpdateByState(state, 13.0, "Shard is completed");
+                durableTaskUpdateByState(state, 13.0, "Shard schema is completed");
             } else {
                 state = SHARD_SCHEMA_CREATED;
-                durableTaskUpdateByState(state, 3.0, "Shard is created");
+                durableTaskUpdateByState(state, 3.0, "Shard schema is created");
             }
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
@@ -756,6 +758,7 @@ public class ShardEngineImpl implements ShardEngine {
                 log.info("Sharding process COMPLETED successfully !");
                 break;
             default:
+                checkOrInitAppStatus(); // sometimes app status task is not created by 'task id', so try to find or create it
                 aplAppStatus.durableTaskUpdate(durableStatusTaskId, percentComplete, message);
         }
     }
