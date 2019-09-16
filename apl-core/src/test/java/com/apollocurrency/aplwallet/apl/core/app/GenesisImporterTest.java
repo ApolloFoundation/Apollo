@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.data.BalancesPublicKeysTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -84,7 +83,9 @@ class GenesisImporterTest {
 
     @WeldSetup
     public WeldInitiator weld  = WeldInitiator.from(
-            AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+            AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTable.class,
+            AccountServiceImpl.class, AccountPublicKeyServiceImpl.class,
+            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
             ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, GenesisPublicKeyTable.class,
             BlockIndexDao.class, TransactionDaoImpl.class, BlockchainImpl.class,
             BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
@@ -99,15 +100,14 @@ class GenesisImporterTest {
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
             .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
+            .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
             .build();
 
     private GenesisImporter genesisImporter;
     @Inject
-    PropertiesHolder propertiesHolder;
-    @Inject
-    Blockchain blockchain;
-    @Inject
     PublicKeyTable publicKeyTable;
+    @Inject
+    GenesisPublicKeyTable genesisPublicKeyTable;
     @Inject
     AccountService accountService;
     @Inject
@@ -115,7 +115,6 @@ class GenesisImporterTest {
     @Inject
     AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
-    private GenesisPublicKeyTable genesisPublicKeyTable;
     private BalancesPublicKeysTestData testData;
 
     private Path createPath(String fileName) {
@@ -133,7 +132,6 @@ class GenesisImporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
-        genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         testData = new BalancesPublicKeysTestData();
     }
 
@@ -211,7 +209,7 @@ class GenesisImporterTest {
         assertEquals(10, count);
         count = genesisPublicKeyTable.getCount();
         assertEquals(19, count);
-        Account genesisAccount = accountService.getAccount(enesisImporter.CREATOR_ID);
+        Account genesisAccount = accountService.getAccount(genesisImporter.CREATOR_ID);
         assertEquals(-43678392484062L , genesisAccount.getBalanceATM());
         DerivedTableData derivedTableData = accountGuaranteedBalanceTable.getAllByDbId(0L, 20, 20L);
         assertNotNull(derivedTableData);

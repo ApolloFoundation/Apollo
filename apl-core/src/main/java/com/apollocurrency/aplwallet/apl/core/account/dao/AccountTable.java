@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import lombok.Setter;
 
@@ -177,6 +178,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public MinMaxValue getMinMaxValue(int height) {
+        return super.getMinMaxValue(height, "id");
     }
 
 }
