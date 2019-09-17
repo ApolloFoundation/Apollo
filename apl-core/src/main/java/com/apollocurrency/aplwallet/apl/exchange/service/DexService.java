@@ -526,6 +526,10 @@ public class DexService {
         if (dexOrder.getType() == OrderType.BUY) {
             int currentHeight = blockchain.getHeight();
             int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
+            log.debug("OrderProcessor: currentHeight {}", currentHeight);
+            log.debug("OrderProcessor: Required Height {}", requiredTxHeight);
+            log.debug("TXId = {}", contract.getTransferTxId());
+            log.debug("TXId Parsed = {}", Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
             return blockchain.hasTransaction(Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
         } else if (dexOrder.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
             return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
@@ -533,6 +537,26 @@ public class DexService {
             throw new IllegalArgumentException("Unable to calculate number of confirmations for paired currency - " + dexOrder.getPairCurrency());
         }
     }
+    
+    public boolean hasConfirmations(DexOrder dexOrder){
+        log.debug("DexService: HasConfirmations reached");
+        if (dexOrder.getType() == OrderType.BUY) {
+         log.debug("desService: HasConfirmations reached");   
+            int currentHeight = blockchain.getHeight();
+            int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
+            Long orderId = dexOrder.getId();
+            return blockchain.hasTransaction(orderId, requiredTxHeight);
+        } 
+        else if (dexOrder.getPairCurrency().isEthOrPax()){
+            log.debug("Just a sell Sell Order, add eth confirmations check here...");
+            return true;
+        }
+        
+        log.debug("hasConfirmations2: just returning true here...");
+        return true;
+    }
+    
+    
 
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);

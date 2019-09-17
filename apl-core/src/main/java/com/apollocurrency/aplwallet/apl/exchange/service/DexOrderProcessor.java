@@ -303,12 +303,16 @@ public class DexOrderProcessor {
         log.debug("Validation for step 2 entry point:");
         DexOrder contractOrder1 = dexService.getOrder(exchangeContract.getOrderId());
         DexOrder contractOrder2 = dexService.getOrder(exchangeContract.getCounterOrderId());
+        log.debug("Order1 txID", contractOrder1.getId());
+        log.debug("Order2 txID", contractOrder2.getId());
         log.debug("Validation step 2: Order1: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder1.getType(),
                 contractOrder1.getToAddress(), contractOrder1.getFromAddress(), contractOrder1.getPairCurrency());
         log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
                 contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
-        
-        return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(exchangeContract, contractOrder2) && (exchangeContract.getTransferTxId() != null);
+
+        log.debug("Validation step 2: has confirmations, order1 {}", dexService.hasConfirmations(contractOrder1));
+        log.debug("Validation step 2: has confirmations, order2 {}", dexService.hasConfirmations(contractOrder2));
+        return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
     }
 
     /**
@@ -399,7 +403,7 @@ public class DexOrderProcessor {
         //TODO add additional validation.
         log.debug("Validation 3 entry point");
                 
-        return isContractStep1Valid(exchangeContract) && dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
+        return /*isContractStep1Valid(exchangeContract) &&*/ dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
     }
 
 
