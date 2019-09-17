@@ -26,7 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -74,6 +76,8 @@ public class DexOrderProcessor {
      * @param accountId
      */
     private void processContractsForUserStep1(Long accountId) {
+        Set<Long> processedOrders = new HashSet<>();
+
         List<ExchangeContract> contracts = dexService.getDexContracts(DexContractDBRequest.builder()
                 .recipient(accountId)
                 .status(STEP_1.ordinal())
@@ -81,6 +85,11 @@ public class DexOrderProcessor {
 
         for (ExchangeContract contract : contracts) {
             try {
+                // Process only first order for one user order. (Per processing)
+                if (processedOrders.contains(contract.getCounterOrderId())) {
+                    continue;
+                }
+
                 DexOrder order = dexService.getOrder(contract.getOrderId());
                 DexOrder counterOrder = dexService.getOrder(contract.getCounterOrderId());
 
@@ -90,7 +99,7 @@ public class DexOrderProcessor {
                 }
 
                 if (!counterOrder.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-                    log.debug("Order is in the status: {}, not valid now.", counterOrder.getStatus());//TODO do something.
+                    log.debug("Order is in the status: {}, not valid now.", counterOrder.getStatus());
                     continue;
                 }
 
@@ -130,6 +139,7 @@ public class DexOrderProcessor {
                 }
                 broadcastWhenConfirmed(transactionInfo.getTransaction(), transaction);
 
+                processedOrders.add(counterOrder.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
                 log.error(e.getMessage(), e);
                 continue;

@@ -303,7 +303,7 @@ public class DexService {
             while (tx.hasNext()) {
                 UnconfirmedTransaction unconfirmedTransaction = tx.next();
                 if (TransactionType.TYPE_DEX == unconfirmedTransaction.getTransaction().getType().getType() &&
-                        TransactionType.SUBTYPE_DEX_OFFER_CANCEL == unconfirmedTransaction.getTransaction().getType().getSubtype()) {
+                        TransactionType.SUBTYPE_DEX_ORDER_CANCEL == unconfirmedTransaction.getTransaction().getType().getSubtype()) {
                     DexOrderCancelAttachment dexOrderCancelAttachment = (DexOrderCancelAttachment) unconfirmedTransaction.getTransaction().getAttachment();
 
                     if (dexOrderCancelAttachment.getOrderId() == orderId &&

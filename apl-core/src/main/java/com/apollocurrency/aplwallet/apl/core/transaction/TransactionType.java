@@ -36,18 +36,14 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 
 public abstract class TransactionType {
-    private static final Logger LOG = getLogger(TransactionType.class);
 
     public static final byte TYPE_PAYMENT = 0;
     public static final byte TYPE_MESSAGING = 1;
@@ -104,11 +100,11 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
 
-    public static final byte SUBTYPE_DEX_OFFER = 0;
-    public static final byte SUBTYPE_DEX_OFFER_CANCEL = 1;
+    public static final byte SUBTYPE_DEX_ORDER = 0;
+    public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
     public static final byte SUBTYPE_DEX_CONTRACT = 2;
     public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
-    public static final byte SUBTYPE_DEX_CLOSE_OFFER = 4;
+    public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -232,15 +228,15 @@ public abstract class TransactionType {
                 }
             case TYPE_DEX:
                 switch (subtype) {
-                    case SUBTYPE_DEX_OFFER :
+                    case SUBTYPE_DEX_ORDER:
                         return DEX.DEX_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_OFFER_CANCEL :
+                    case SUBTYPE_DEX_ORDER_CANCEL:
                         return DEX.DEX_CANCEL_ORDER_TRANSACTION;
                     case SUBTYPE_DEX_CONTRACT :
                         return DEX.DEX_CONTRACT_TRANSACTION;
                     case SUBTYPE_DEX_TRANSFER_MONEY :
                         return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
-                    case SUBTYPE_DEX_CLOSE_OFFER:
+                    case SUBTYPE_DEX_CLOSE_ORDER:
                         return DEX.DEX_CLOSE_ORDER;
                     default:
                         return null;

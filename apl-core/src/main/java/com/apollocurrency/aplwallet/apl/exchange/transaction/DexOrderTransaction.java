@@ -39,7 +39,7 @@ public class DexOrderTransaction extends DEX {
 
     @Override
     public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_OFFER;
+        return TransactionType.SUBTYPE_DEX_ORDER;
     }
 
     @Override

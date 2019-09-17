@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -17,9 +15,11 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 
 
 public class DexCloseOrderTransaction extends DEX {
@@ -28,7 +28,7 @@ public class DexCloseOrderTransaction extends DEX {
 
     @Override
     public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_CLOSE_OFFER;
+        return TransactionType.SUBTYPE_DEX_CLOSE_ORDER;
     }
 
     @Override

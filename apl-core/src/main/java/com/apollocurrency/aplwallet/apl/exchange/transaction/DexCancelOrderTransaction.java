@@ -17,13 +17,13 @@ import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class DexCancelOfferTransaction extends DEX {
+public class DexCancelOrderTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
 
     @Override
     public byte getSubtype() {
-        return TransactionType.SUBTYPE_DEX_OFFER_CANCEL;
+        return TransactionType.SUBTYPE_DEX_ORDER_CANCEL;
     }
 
     @Override
