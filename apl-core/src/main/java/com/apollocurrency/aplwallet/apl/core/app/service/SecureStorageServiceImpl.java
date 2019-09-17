@@ -175,10 +175,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
         while (iterator.hasNext()) { 
             Entry<Long, String> entry = iterator.next();
             Long key = entry.getKey();
-            String value = entry.getValue();
-            LOG.debug("dumping, key: {}, value: {}", key, value);
-            if (key.compareTo(accountID)==0 && value.equals(passPhrase)) {
-               LOG.debug("flushing key-value");
+            String value = entry.getValue();            
+            if (key.compareTo(accountID)==0 && value.equals(passPhrase)) {               
                iterator.remove();   
                flushed = true; 
             }
