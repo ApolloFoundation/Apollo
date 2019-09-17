@@ -613,12 +613,16 @@ public class DexController {
                 log.error("null passphrase is unacceptable");
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
-            service.flushSecureStorage(accountId, xpassphrase);
+            if ( service.flushSecureStorage(accountId, xpassphrase) ) {
+               return Response.ok().build(); 
+            } else {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
+            }
+                
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
-
-        return Response.ok().build();
+        
     }
 
 
