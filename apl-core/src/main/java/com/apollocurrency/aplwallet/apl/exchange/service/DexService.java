@@ -269,7 +269,7 @@ public class DexService {
 
         //Check if deposit exist.
         String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-        if (dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+        if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
             log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
             return "";
         }
@@ -445,12 +445,6 @@ public class DexService {
                 Transaction respApproveTx = dexOrderTransactionCreator.createTransaction(templatTransactionRequest);
                 log.debug("Transaction:" + txId + " was approved. TxId: " + respApproveTx.getId() + " (Apl)");
 //              order will be closed automatically
-//                DexCloseOfferAttachment closeOfferAttachment = new DexCloseOfferAttachment(userOffer.getTransactionId());
-//                templatTransactionRequest.setAttachment(closeOfferAttachment);
-
-//                Transaction respCloseOffer = dexOfferTransactionCreator.createTransaction(templatTransactionRequest);
-//                log.debug("Order:" + userOffer.getTransactionId() + " was closed. TxId:" + respCloseOffer.getId() + " (Apl)");
-
             }
         } catch (Exception ex) {
             throw new AplException.ExecutiveProcessException(ex.getMessage());
@@ -580,6 +574,32 @@ public class DexService {
                 .build();
 
         saveDexTradeEntry(dexTradeEntry);
+    }
+
+
+    public void reopenIncomeOrders(Long orderId) {
+        List<ExchangeContract> contractsForReopen = getDexContracts(DexContractDBRequest.builder()
+                .counterOfferId(orderId)
+                .build());
+
+        closeContracts(contractsForReopen);
+    }
+
+    public void closeContracts(List<ExchangeContract> contractsForReopen) {
+        for (ExchangeContract contract : contractsForReopen) {
+            //Reopen order.
+            DexOrder order = getOrder(contract.getOrderId());
+            if (order.getStatus().isPending()) {
+                //Close contract.
+                contract.setContractStatus(ExchangeContractStatus.STEP_4);
+                saveDexContract(contract);
+                log.debug("Contract was closed. ContractId: {}", contract.getId());
+
+                order.setStatus(OrderStatus.OPEN);
+                saveOrder(order);
+                log.debug("Order was closed. OrderId: {}", order.getId());
+            }
+        }
     }
 
 

@@ -13,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 
 public class DexCancelOfferTransaction extends DEX {
 
@@ -78,6 +78,8 @@ public class DexCancelOfferTransaction extends DEX {
             }
 
             dexService.cancelOffer(order);
+
+            dexService.reopenIncomeOrders(order.getId());
         } catch (AplException.ExecutiveProcessException e) {
             throw new RuntimeException(e);
         }
