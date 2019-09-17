@@ -31,6 +31,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import javax.enterprise.inject.Vetoed;
@@ -41,13 +42,13 @@ public final class GetScheduledTransactions extends AbstractAPIRequestHandler {
     public GetScheduledTransactions() {
         super(new APITag[] {APITag.TRANSACTIONS, APITag.ACCOUNTS}, "account");
     }
-
+    private TransactionSchedulerService schedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
         long accountId = ParameterParser.getAccountId(req, false);
         JSONArray jsonArray = new JSONArray();
-        List<Transaction> transactions = TransactionSchedulerService.getScheduledTransactions(accountId);
+        List<Transaction> transactions = schedulerService.getScheduledTransactions(accountId);
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }

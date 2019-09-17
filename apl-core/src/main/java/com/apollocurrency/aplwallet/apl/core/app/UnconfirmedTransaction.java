@@ -122,6 +122,11 @@ public class UnconfirmedTransaction implements Transaction {
     }
 
     @Override
+    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+        return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
+    }
+
+    @Override
     public void setFeeATM(long feeATM) {
         if (transaction.getSignature() != null) {
             throw new UnsupportedOperationException("Unable to set fee for already signed transaction");
