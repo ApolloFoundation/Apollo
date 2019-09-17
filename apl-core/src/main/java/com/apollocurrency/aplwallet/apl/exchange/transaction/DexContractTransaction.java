@@ -131,7 +131,7 @@ public class DexContractTransaction extends DEX {
             contract.setContractStatus(ExchangeContractStatus.STEP_2);
             contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
 
-            //TODO change another orders to the status Open.
+            //Change another orders to the status Open.
             reopenNotMatchedOrders(contract);
 
             dexService.saveDexContract(contract);
