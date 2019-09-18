@@ -69,7 +69,8 @@ public class ShardObserver {
             if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
-                log.debug("No attempt to create new shard at height '{}'", blockchainHeight);
+                log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={})",
+                        blockchainHeight, lastTrimBlockHeight);
             }
         } else {
             log.debug("Sharding is disabled on node : {} && {}", shardingEnabled, isShardingOff);

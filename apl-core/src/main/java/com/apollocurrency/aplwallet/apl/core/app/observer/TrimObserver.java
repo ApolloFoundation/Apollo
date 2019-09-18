@@ -10,14 +10,20 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +42,41 @@ public class TrimObserver {
     private final Object lock = new Object();
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private BlockchainConfig blockchainConfig;
+    private PropertiesHolder propertiesHolder;
+    private Random random;
+    private boolean isShardingOff;
+    private ShardDao shardDao;
+    private final int maxRollback;
+
+    @Inject
+    public TrimObserver(TrimService trimService, BlockchainConfig blockchainConfig,
+                        PropertiesHolder propertiesHolder, ShardDao shardDao, Random random) {
+        this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
+        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
+        this.isShardingOff = this.propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+        this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
+        if (random == null) {
+            this.random = new Random();
+        } else {
+            this.random = random;
+        }
+        this.maxRollback = this.propertiesHolder.getIntProperty("apl.maxRollback", 720);
+    }
 
     @PostConstruct
     void init() {
+        if (this.blockchainConfig.getCurrentConfig() != null
+                && this.blockchainConfig.getCurrentConfig().getShardingFrequency() > 0 && this.trimFrequency > 0
+                && this.blockchainConfig.getCurrentConfig().getShardingFrequency() < this.trimFrequency) {
+            String error = String.format(
+                    "SHARDING FREQUENCY ERROR: configured 'shard frequency value'=%d is LOWER then 'DEFAULT_TRIM_FREQUENCY'=%d",
+                    this.blockchainConfig.getCurrentConfig().getShardingFrequency(), this.trimFrequency);
+            log.error(error);
+            throw new RuntimeException(error);
+        }
         executorService.scheduleWithFixedDelay(this::processTrimEvent, 0, 2, TimeUnit.SECONDS);
     }
 
@@ -60,8 +98,10 @@ public class TrimObserver {
                 }
             }
             if (trimHeight != null) {
-                log.debug("Perform trim on blockchain height {}", trimHeight);
+                log.debug("Perform trim on blockchain height={}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
+            } else {
+                log.trace("NO performed trim on height={}", trimHeight);
             }
         }
     }
@@ -71,13 +111,6 @@ public class TrimObserver {
             return new ArrayList<>(trimHeights);
         }
     }
-
-    @Inject
-    public TrimObserver(TrimService trimService) {
-        this.trimService = trimService;
-        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
-    }
-
 
     public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
         log.info("Set trim to {} ", trimConfig.isEnableTrim());
@@ -99,11 +132,38 @@ public class TrimObserver {
         }
     }
 
-    public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
+    public int onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+        int scheduleTrimHeight = -1;
         if (block.getHeight() % trimFrequency == 0) {
+
+            HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+            boolean shardingEnabled = currentConfig.isShardingEnabled();
+            log.debug("Is sharding DISabled ? : '{}' || '{}' on height={}",
+                    !shardingEnabled, isShardingOff, block.getHeight());
+            int randomTrimHeightIncrease;
+            if (!shardingEnabled || isShardingOff) {
+                // non sharded node, schedule next trim event processing randomized and added to current height
+                randomTrimHeightIncrease = random.nextInt(trimFrequency);
+                log.trace("'Not sharded', trim height random increase = {}", randomTrimHeightIncrease);
+            } else {
+                // sharded node should predict next shard height
+                int nextShardHeight = shardDao.getLatestShardHeight() + currentConfig.getShardingFrequency() + maxRollback;
+                randomTrimHeightIncrease = random.nextInt(trimFrequency);
+                if (block.getHeight() + randomTrimHeightIncrease > nextShardHeight) {
+                    // assign difference to have last trim to be equals 'Next Shard Height'
+                    randomTrimHeightIncrease = nextShardHeight - block.getHeight();
+                }
+                // 'Sharded', trim height random increase = -1000, nextShardHeight=3000, height=4000
+                log.debug("'Sharded', trim height random increase = {}, height={}, nextShardHeight={}, maxRollback={} {}",
+                        randomTrimHeightIncrease, block.getHeight(), nextShardHeight, maxRollback,
+                        randomTrimHeightIncrease < 0 ? "WOW!" : "");
+            }
             synchronized (lock) {
-                trimHeights.add(block.getHeight());
+                scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease;
+                log.debug("Schedule next trim for height = {} at {}", scheduleTrimHeight, block.getHeight());
+                trimHeights.add(scheduleTrimHeight);
             }
         }
+        return scheduleTrimHeight;
     }
 }

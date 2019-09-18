@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -21,27 +22,45 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Random;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 
+@Slf4j
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
+//@Execution(ExecutionMode.CONCURRENT)
 class TrimObserverTest {
     TrimService trimService = mock(TrimService.class);
+    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    HeightConfig config = Mockito.mock(HeightConfig.class);
+    ShardDao shardDao = Mockito.mock(ShardDao.class);
+    Random random = new Random(); /*Mockito.mock(Random.class)*/;
+
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(TrimObserver.class)
-            .addBeans(MockBean.of(trimService, TrimService.class)
-            ).build();
+    WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
+            .addBeans(MockBean.of(trimService, TrimService.class))
+            .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+            .addBeans(MockBean.of(shardDao, ShardDao.class))
+            .addBeans(MockBean.of(random, Random.class))
+            .build();
     @Inject
     Event<Block> blockEvent;
     @Inject
@@ -49,11 +68,20 @@ class TrimObserverTest {
     @Inject
     TrimObserver observer;
 
+    @BeforeEach
+    void setUp() {
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(false).when(config).isShardingEnabled();
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+    }
+
     @Test
     void testOnTrimConfigUpdated() {
         assertTrue(observer.isTrimDerivedTables());
-        fireBlockAccepted(5000);
-        fireBlockAccepted(6000);
+        fireBlockPushed(5000);
+        fireBlockPushed(6000);
+        assertEquals(2, observer.getTrimHeights().size());
+
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(false, true));
 
         assertFalse(observer.isTrimDerivedTables());
@@ -96,30 +124,73 @@ class TrimObserverTest {
     }
 
     @Test
-    void testOnBlockAccepted() {
-        fireBlockAccepted(4999);
-        fireBlockAccepted(5000);
-        fireBlockAccepted(6000);
-        fireBlockAccepted(6001);
-        waitTrim(List.of(5000, 6000));
+    void testOnBlockPushed() {
+        fireBlockPushed(4999); // skippped
+        fireBlockPushed(5000); // accepted
+        fireBlockPushed(6000); // accepted
+        fireBlockPushed(6001); // skipped
+        List<Integer> generatedTrimHeights = observer.getTrimHeights();
+        assertEquals(2, generatedTrimHeights.size());
+        waitTrim(generatedTrimHeights);
     }
 
     @Test
-    void testOnBlockAcceptedWithDisabledTrim() throws InterruptedException {
-        fireBlockAccepted(4998);
-        fireBlockAccepted(4999);
-        fireBlockAccepted(5000);
-        fireBlockAccepted(6000);
+    void testOnBlockPushedWithDisabledTrim() throws InterruptedException {
+        simulateFireBlockPushed(4998);
+        simulateFireBlockPushed(4999);
+        int randomHeight1 = simulateFireBlockPushed(5000);
+        int randomHeight2 = simulateFireBlockPushed(6000);
+        assertEquals(2, observer.getTrimHeights().size());
         doAnswer(invocation -> {
             trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(false, false));
             return null;
-        }).when(trimService).trimDerivedTables(5000, true);
-        waitTrim(List.of(5000));
+        }).when(trimService).trimDerivedTables(randomHeight1, true);
+        waitTrim(List.of(randomHeight1));
         assertFalse(observer.isTrimDerivedTables());
         Thread.sleep(4000);
         verifyNoMoreInteractions(trimService);
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(true, false));
-        waitTrim(List.of(6000));
+        waitTrim(List.of(randomHeight2));
+    }
+
+    @Test
+    void testOnBlockPushedShardingIsDisabledByProp() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        fireBlockPushed(5000); // accepted
+        fireBlockPushed(6000); // accepted
+        List<Integer> generatedTrimHeights = observer.getTrimHeights();
+        assertEquals(2, generatedTrimHeights.size());
+    }
+
+    @Test
+    void testOnBlockPushedShardingIsDisabledByConfig() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        fireBlockPushed(5000); // accepted
+        fireBlockPushed(6000); // accepted
+        List<Integer> generatedTrimHeights = observer.getTrimHeights();
+        assertEquals(2, generatedTrimHeights.size());
+    }
+
+    @Test
+    void testOnBlockPushedShardingIsDisabledByBothPropConfig() {
+        doReturn(false).when(config).isShardingEnabled();
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        fireBlockPushed(5000); // accepted
+        fireBlockPushed(6000); // accepted
+        List<Integer> generatedTrimHeights = observer.getTrimHeights();
+        assertEquals(2, generatedTrimHeights.size());
+    }
+
+    @Test
+    void testIncorrectConfigParams() {
+        doReturn(false).when(config).isShardingEnabled();
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(999).when(config).getShardingFrequency();
+
+        observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, shardDao, random);
+        assertThrows(RuntimeException.class, () -> observer.init());
     }
 
     private void waitTrim(List<Integer> heights) {
@@ -135,11 +206,12 @@ class TrimObserverTest {
         }
     }
 
-    void fireBlockAccepted(int height) {
+    void fireBlockPushed(int height) {
         Block block = mock(Block.class);
         doReturn(height).when(block).getHeight();
-        blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
+        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block);
     }
+
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
         return new BlockEventBinding() {
             @Override
@@ -148,4 +220,92 @@ class TrimObserverTest {
             }
         };
     }
+
+    private int simulateFireBlockPushed(int height) {
+        Block block = mock(Block.class);
+        doReturn(height).when(block).getHeight();
+        return observer.onBlockPushed(block);
+    }
+
+    @Test
+    void testNextShardHeightNormalZeroShards() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback");
+
+        doReturn(0).when(shardDao).getLatestShardHeight();
+        doReturn(5000).when(config).getShardingFrequency();
+        this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, shardDao, null);
+
+        int nextTrimHeight1 = simulateFireBlockPushed(1000);
+        log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
+        assertTrue(nextTrimHeight1 > 1000 && nextTrimHeight1 < 2000);
+    }
+
+    @Test
+    void testNextShardHeightLower() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+//        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback");
+
+        doReturn(1110).when(shardDao).getLatestShardHeight();
+        doReturn(5000).when(config).getShardingFrequency();
+        int nextTrimHeight1 = simulateFireBlockPushed(1000);
+        log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
+        assertTrue(nextTrimHeight1 >= 1000 && nextTrimHeight1 < 2000);
+    }
+
+    @Test
+    void testNextShardHeightBelow() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+
+        doReturn(5000).when(shardDao).getLatestShardHeight();
+        doReturn(5000).when(config).getShardingFrequency();
+        random = Mockito.mock(Random.class);
+        doReturn(12).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, shardDao, random);
+
+        int nextTrimHeight1 = simulateFireBlockPushed(6000);
+        log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
+        assertTrue(nextTrimHeight1 == 6012);
+    }
+
+    @Test
+    void testNextShardHeightHigher() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(5000).when(shardDao).getLatestShardHeight();
+        doReturn(5000).when(config).getShardingFrequency();
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+
+        random = Mockito.mock(Random.class);
+        doReturn(1200).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, shardDao, random);
+
+        int nextTrimHeight1 = simulateFireBlockPushed(11000);
+        log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
+        assertEquals(12000, nextTrimHeight1);
+    }
+
+    @Test
+    void testNextShardHeightEqual() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(5000).when(shardDao).getLatestShardHeight();
+        doReturn(5000).when(config).getShardingFrequency();
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+
+        random = Mockito.mock(Random.class);
+        doReturn(1000).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, shardDao, random);
+
+        int nextTrimHeight1 = simulateFireBlockPushed(11000);
+        log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
+        assertEquals(12000, nextTrimHeight1);
+    }
+
+
+
 }

@@ -128,10 +128,10 @@ public class TrimService {
                 dbManager.getDataSource().commit(false);
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
-                    log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
+                    log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
                     trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 } else {
-                    log.debug("Fire doTrimDerived sync event height '{}'", blockchainHeight);
+                    log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
                     trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 }
                 trimEntry.setDone(true);
