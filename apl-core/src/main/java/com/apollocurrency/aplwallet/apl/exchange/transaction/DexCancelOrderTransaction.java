@@ -51,7 +51,7 @@ public class DexCancelOrderTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + orderTransactionId);
         }
 
-        if (!Long.valueOf(order.getAccountId()).equals(transaction.getSenderId())) {
+        if (!order.getAccountId().equals(transaction.getSenderId())) {
             throw new AplException.NotValidException("Can cancel only your orders.");
         }
 
