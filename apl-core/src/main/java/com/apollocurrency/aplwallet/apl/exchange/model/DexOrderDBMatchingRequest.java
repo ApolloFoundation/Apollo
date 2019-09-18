@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
@@ -14,12 +13,12 @@ import java.math.BigDecimal;
  * @author Serhiy Lymar
  */
 
-@Getter @Setter
-public class DexOfferDBMatchingRequest {
+@Data
+public class DexOrderDBMatchingRequest {
 
-    public DexOfferDBMatchingRequest(OrderType type, Integer currentTime, Integer offerCur, BigDecimal offerAmount,
-                                     Integer pairCur, BigDecimal pairRate, String order) {
-        this.type = this.type = type != null ? type.ordinal() : null;
+    public DexOrderDBMatchingRequest(OrderType type, Integer currentTime, Integer offerCur, BigDecimal offerAmount,
+                                     Integer pairCur, BigDecimal pairRate, String orderBy) {
+        this.type = type != null ? type.ordinal() : null;
         this.currentTime = currentTime;
         this.offerCur = offerCur;                     
         this.offerAmount = offerAmount;
