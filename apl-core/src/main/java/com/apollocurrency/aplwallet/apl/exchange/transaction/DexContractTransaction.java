@@ -87,7 +87,7 @@ public class DexContractTransaction extends DEX {
             throw new AplException.NotValidException("Don't find contract.");
         }
 
-        if (attachment.getContractStatus() == contract.getContractStatus()) {
+        if (contract != null && attachment.getContractStatus() == contract.getContractStatus()) {
             log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
             throw new AplException.NotValidException("Illegal contract state. Perhaps this contract has processed already.");
         }
