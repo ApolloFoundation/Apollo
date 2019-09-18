@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 
@@ -123,13 +124,13 @@ public class ShardServiceIntegrationTest {
         DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFileProperties(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
         Chain mockChain = mock(Chain.class);
         doReturn(mockChain).when(blockchainConfig).getChain();
-        doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(mockChain).getChainId();
+        doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService,dbEvent);
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db"));
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db"));
-        Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db"));
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db")); // to be deleted
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db")); // to be replaced
+        Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db")); // to be saved
         Path backupDir = dbDir.resolve("backup");
         Files.createDirectory(backupDir);
         Path dbPath = backupDir.resolve(Constants.APPLICATION_DIR_NAME);
@@ -140,18 +141,17 @@ public class ShardServiceIntegrationTest {
         doReturn(dbDir).when(dirProvider).getDbDir();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         TransactionalDataSource shardDatasource = databaseManager.getOrCreateShardDataSourceById(1L);
-        shardDatasource.begin();
         databaseManager.getDataSource().begin();
-        Path zipPath = dbDir.resolve("BACKUP-BEFORE-apl-blockchain-shard-1-chain-a2e9b946-290b-48b6-9985-dc2e5a5860a1.zip");
+        Path zipPath = dbDir.resolve("BACKUP-BEFORE-apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
         zip.compress(zipPath.toAbsolutePath().toString(), dbPath.getParent().toAbsolutePath().toString(), 0L, null, false);
 
         boolean reset = shardService.reset(1);
 
         assertTrue(reset);
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
-        assertThrows(RuntimeException.class, () -> shardDatasource.commit()); //shard datasource was closed
-        long files = Files.list(dbDir).count();
-        assertEquals(6, files);
+        assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
+        List<Path> files = Files.list(dbDir).collect(Collectors.toList());
+        assertEquals(5, files.size());
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + ".h2.db"));

@@ -139,7 +139,9 @@ public class ShardService {
                     FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                         Path fileName = p.getFileName();
                         int shardIndex = fileName.toString().indexOf("-shard-");
-                        if (fileName.toString().endsWith("h2.db") && shardIndex != -1) {
+                        if ( (fileName.toString().endsWith("h2.db") || fileName.toString().endsWith("trace.db")
+                                || fileName.toString().endsWith("lock.db"))
+                                && shardIndex != -1) {
                             String idString = fileName.toString().substring(shardIndex + 7);
                             String id = idString.substring(0, idString.indexOf("-"));
                             long fileShardId = Long.parseLong(id);
