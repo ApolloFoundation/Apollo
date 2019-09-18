@@ -87,6 +87,10 @@ public class DexContractTransaction extends DEX {
             throw new AplException.NotValidException("Don't find contract.");
         }
 
+        if (attachment.getContractStatus() == contract.getContractStatus()) {
+            log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
+            throw new AplException.NotValidException("Illegal contract state. Perhaps this contract has processed already.");
+        }
 
     }
 
@@ -141,9 +145,6 @@ public class DexContractTransaction extends DEX {
             contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
 
             dexService.saveDexContract(contract);
-        } else {
-            log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
-            throw new RuntimeException("Illegal contract state. Perhaps this contract has processed already.");
         }
 
     }
