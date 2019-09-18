@@ -126,7 +126,9 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
-                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
+//reduce trim time by aguiring lock onece                
+                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
+//                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
                     log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
                     trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
@@ -175,7 +177,9 @@ public class TrimService {
                         table.prune(pruningTime);
                         table.trim(height);
                         dataSource.commit(false);
-                        onlyTrimTime += (System.currentTimeMillis() - startTime);
+                        long duration = System.currentTimeMillis() - startTime;
+                        log.debug("Trim of {} took {} ms",table.getName(), duration);
+                        onlyTrimTime += duration;
                     } finally {
                         if (!oneLock) {
                             globalSync.readUnlock();
