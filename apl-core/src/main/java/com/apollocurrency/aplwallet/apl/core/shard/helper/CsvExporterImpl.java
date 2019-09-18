@@ -118,7 +118,8 @@ public class CsvExporterImpl implements CsvExporter {
              PreparedStatement countPstmt = con.prepareStatement("SELECT count(*) FROM shard WHERE shard_height <= ?");
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("SHARD_STATE"))
         ) {
-            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count            // select Min, Max DbId + rows count
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+            // select Min, Max DbId + rows count
             countPstmt.setInt(1, targetHeight);
             ResultSet countRs = countPstmt.executeQuery();
             countRs.next();
