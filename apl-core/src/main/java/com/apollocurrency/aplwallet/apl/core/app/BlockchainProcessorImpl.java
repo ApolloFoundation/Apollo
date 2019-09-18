@@ -792,7 +792,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
-        log.debug("Push block at height {} took {} ms (lock aquiring: {} )", block.getHeight(), System.currentTimeMillis()-startTime, lockAquireTime);
+        log.debug("Push block at height {} took {} ms (including lock aquiring: {} ms)", block.getHeight(), System.currentTimeMillis()-startTime, lockAquireTime);
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
