@@ -4,7 +4,6 @@ import com.apollocurrency.aplwallet.apl.core.app.*;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
@@ -12,28 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.*;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DexTransferMoneyTransaction;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.math.BigDecimal;
-import java.sql.Time;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @EnableWeld
@@ -69,7 +57,7 @@ class DexServiceIntegrationTest {
 
     @Test
     void testTriggerPhasingTxReleaseEvent() {
-        doReturn(List.of(new PhasingVote(null, 500, 1, 100, 20))).when(phasingPollService).getVotes(1);
+        doReturn(List.of(new PhasingVote(null, 500, 1, 100, 20), new PhasingVote(null, 499, 1, 200, 30))).when(phasingPollService).getVotes(1);
         Transaction phasedTx = mock(Transaction.class);
         doReturn(1L).when(phasedTx).getId();
         doReturn(DEX.DEX_TRANSFER_MONEY_TRANSACTION).when(phasedTx).getType();

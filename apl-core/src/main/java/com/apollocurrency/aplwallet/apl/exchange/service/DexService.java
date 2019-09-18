@@ -606,8 +606,8 @@ public class DexService {
     public void onPhasedTxReleased(@Observes @TxEvent(TxEventType.RELEASE_PHASED_TRANSACTION) Transaction transaction) {
         if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
             List<PhasingVote> votes = phasingPollService.getVotes(transaction.getId());
-            log.debug("Found {} votes, pick last", votes.size());
-            phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(votes.size() - 1).getVoteId()));
+            log.debug("Found {} votes, pick latest", votes.size());
+            phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
         }
     }
 }
