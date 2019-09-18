@@ -812,7 +812,7 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
             case 310:
                 apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
-                        " height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        " height INT NOT NULL)");
             case 311:
                 apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
                         "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
@@ -825,9 +825,7 @@ public class AplDbVersion extends DbVersion {
             case 314:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS deadline_to_reply INT NOT NULL");
             case 315:
-                apply("ALTER TABLE phasing_approval_tx ADD COLUMN IF NOT EXISTS latest BOOLEAN NOT NULL DEFAULT TRUE");
-            case 316:
-                return 316;
+                return 315;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
