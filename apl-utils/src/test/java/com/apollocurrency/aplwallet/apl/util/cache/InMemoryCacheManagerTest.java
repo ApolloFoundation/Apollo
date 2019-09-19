@@ -5,12 +5,14 @@
 package com.apollocurrency.aplwallet.apl.util.cache;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
@@ -35,7 +37,7 @@ class InMemoryCacheManagerTest {
     @Test
     void testWrongConfiguration_whenElementSizeNegative() {
         doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
-        doReturn(List.of(new SimpleCacheConfigurator("SIMPLE_CACHE_NAME_16", 0, 50))).
+        doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 0, 50))).
                 when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
     }
@@ -43,7 +45,7 @@ class InMemoryCacheManagerTest {
     @Test
     void testWrongConfiguration_whenCachePriorityIsZero() {
         doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
-        doReturn(List.of(new SimpleCacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 0))).
+        doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 0))).
                 when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
     }
@@ -75,10 +77,38 @@ class InMemoryCacheManagerTest {
     }
 
     @Test
+    void testCacheManipulationsWithCacheLoader() throws ExecutionException {
+        String cacheName = "SIMPLE_CACHE_NAME";
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
+        CacheConfiguration<String, byte[]> cacheCfg = new CacheConfigurator<>(
+                cacheName,
+                1024,
+                10,
+                new CacheLoader<>() {
+                    @Override
+                    public byte[] load(String key) throws Exception {
+                        return key.getBytes();
+                    }
+                });
+        doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
+        manager = new InMemoryCacheManager(configurator);
+
+        Cache<String, byte[]> cache = manager.createCache(cacheName);
+        assertEquals(0L, cache.size());
+        LoadingCache<String, byte[]> loadingCache = (LoadingCache<String, byte[]>) cache;
+        String key1 = "firstKey";
+        String key2 = "secondKey";
+        assertArrayEquals(key1.getBytes(), loadingCache.get(key1));
+        assertEquals(1L, cache.size());
+        assertArrayEquals(key2.getBytes(), loadingCache.get(key2));
+        assertEquals(2L, loadingCache.size());
+    }
+
+    @Test
     void testCacheEvictions() {
         String cacheName = "SIMPLE_CACHE_NAME";
         doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
-        CacheConfiguration cacheCfg = new SimpleCacheConfigurator(cacheName, 1024*1024, 1);
+        CacheConfiguration cacheCfg = new CacheConfigurator(cacheName, 1024*1024, 1);
         doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
 
@@ -97,23 +127,11 @@ class InMemoryCacheManagerTest {
 
     private void setupManager() {
         doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
-        doReturn(List.of(new SimpleCacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 50),
-                new SimpleCacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
-                new SimpleCacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50)
+        doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 50),
+                new CacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
+                new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50)
         )).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
-    }
-
-    class SimpleCacheConfigurator extends CacheConfigurator {
-
-        public SimpleCacheConfigurator(String name, long elementSize, int priority) {
-            super(name, elementSize, priority);
-        }
-
-        @Override
-        public CacheBuilder cacheBuilder() {
-            return CacheBuilder.newBuilder();
-        }
     }
 
 }
