@@ -246,6 +246,7 @@ public class DexOrderProcessor {
      * @param accountId
      */
     private void processContractsForUserStep2(Long accountId) {
+        Set<Long> processedOrders = new HashSet<>();
         List<ExchangeContract> contracts = dexService.getDexContracts(DexContractDBRequest.builder()
                 .sender(accountId)
                 .status(STEP_2.ordinal())
@@ -265,7 +266,7 @@ public class DexOrderProcessor {
                     continue;
                 }
 
-                if (!isContractStep2Valid(contract)) {
+                if (processedOrders.contains(order.getId()) || !isContractStep2Valid(contract)) {
                     //TODO do something
                     continue;
                 }
@@ -300,6 +301,7 @@ public class DexOrderProcessor {
                 broadcastWhenConfirmed(transferTransactionInfo.getTransaction(), transaction);
                 log.debug("DexOfferProcessor Step-2. User created contract (Step-3). accountId: {} , txId: {}.", accountId, transaction.getId());
 
+                processedOrders.add(order.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
                 log.error(e.getMessage(), e);
             }
