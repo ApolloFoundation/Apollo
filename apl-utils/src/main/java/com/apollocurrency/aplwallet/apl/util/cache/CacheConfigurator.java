@@ -9,6 +9,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
@@ -24,12 +25,14 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     }
 
     public CacheConfigurator(String name, long elementSize, int cachePriority, CacheLoader<K, V> cacheLoader) {
+        Objects.requireNonNull(name, "Cache name is NULL.");
         this.name = name;
         this.elementSize = elementSize;
         this.cachePriority = cachePriority;
         this.cacheBuilder = CacheBuilder.newBuilder();
         this.optionalCacheLoader = Optional.ofNullable(cacheLoader);
     }
+
     @Override
     public String getCacheName() {
         return name;
