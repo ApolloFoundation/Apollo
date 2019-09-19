@@ -14,6 +14,6 @@ public class ShardDsCacheConfigurator extends CacheConfigurator {
 
     public ShardDsCacheConfigurator(int percentCapacity) {
         super(SHARD_DS_CACHE_NAME, 8, percentCapacity);
-        cacheBuilder().expireAfterAccess(15, TimeUnit.MINUTES);
+        cacheBuilder().expireAfterAccess(60, TimeUnit.MINUTES);
     }
 }
