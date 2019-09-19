@@ -310,8 +310,6 @@ public class DexOrderProcessor {
         log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
                 contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
 
-        log.debug("Validation step 2: has confirmations, order1 {}", dexService.hasConfirmations(contractOrder1));
-        log.debug("Validation step 2: has confirmations, order2 {}", dexService.hasConfirmations(contractOrder2));
         return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
     }
 
