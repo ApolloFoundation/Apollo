@@ -59,18 +59,16 @@ public class InMemoryCacheManager {
         cfg.getConfiguredCaches().stream().forEach(cacheConfiguration -> {
             Preconditions.checkArgument( StringUtils.isNotEmpty(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
             Preconditions.checkArgument(cacheConfiguration.getExpectedElementSize()>0, "Element size must not be negative or zero.");
-            Preconditions.checkArgument(cacheConfiguration.getCacheCapacity()>0,"Cache capacity percentage must be greater than zero.");
+            Preconditions.checkArgument(cacheConfiguration.getCachePriority()>0,"Cache priority must be greater than zero.");
         });
-
-        int sum = cfg.getConfiguredCaches().stream().mapToInt(CacheConfiguration::getCacheCapacity).sum();
-        Preconditions.checkArgument(sum<=100, "Summary cache capacity percentage exceeds 100.");
     }
 
     @SuppressWarnings("unchecked")
     private void allocateAllCaches(InMemoryCacheConfigurator configurator){
         inMemoryCaches = new ConcurrentHashMap<>();
+        final int sumPriority = configurator.getConfiguredCaches().stream().mapToInt(CacheConfiguration::getCachePriority).sum();
         configurator.getConfiguredCaches().forEach(config -> {
-            CacheBuilder builder = configureCache(config, configurator.getAvailableMemory());
+            CacheBuilder builder = configureCache(config, configurator.getAvailableMemory(), sumPriority);
             log.debug("Configured builder={}", builder);
             Cache cache;
             Optional<CacheLoader> loader = config.getCacheLoader();
@@ -84,10 +82,10 @@ public class InMemoryCacheManager {
         });
     }
 
-    private CacheBuilder configureCache(CacheConfiguration config, long availableMemory){
+    private CacheBuilder configureCache(CacheConfiguration config, long availableMemory, int sumPriority){
         //       key#hashCode + value#reference
         int extra = 4         +      8;
-        int size = Math.max( (int) (availableMemory * config.getCacheCapacity() / 100 / (config.getExpectedElementSize() + extra)), 1) + 1;
+        int size = Math.max( (int) (availableMemory / sumPriority * config.getCachePriority() / (config.getExpectedElementSize() + extra)), 1) + 1;
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
         return config.cacheBuilder().maximumSize(size);
