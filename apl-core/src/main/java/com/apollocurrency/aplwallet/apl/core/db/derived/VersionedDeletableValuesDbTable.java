@@ -90,9 +90,7 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerived
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-            dataSource.getCache(table).remove(dbKey);
-        }
+        } 
     }
     
 }

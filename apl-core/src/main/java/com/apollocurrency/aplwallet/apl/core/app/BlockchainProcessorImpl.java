@@ -1048,7 +1048,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 table.rollback(commonBlock.getHeight());
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
-            dataSource.clearCache();
             dataSource.commit(false); // should happen definately, otherwise
         }
         catch (RuntimeException e) {
@@ -1333,7 +1332,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
-                dataSource.clearCache();
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
@@ -1408,7 +1406,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(currentBlock);
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                                    dataSource.clearCache();
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }

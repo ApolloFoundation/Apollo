@@ -53,16 +53,16 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     /**
      * Shard data sources cache loader
      */
-    private CacheLoader<Long, TransactionalDataSource> loader = new CacheLoader<>() {
-        public TransactionalDataSource load(Long shardId) throws CacheLoader.InvalidCacheLoadException {
-            log.debug("Put DS shardId = '{}' into cache...", shardId);
-            TransactionalDataSource dataSource = createAndAddShard(shardId);
-            if(dataSource == null){
-                throw new CacheLoader.InvalidCacheLoadException("Value can't be null");
-            }
-            return dataSource;
-        }
-    };
+//    private CacheLoader<Long, TransactionalDataSource> loader = new CacheLoader<>() {
+//        public TransactionalDataSource load(Long shardId) throws CacheLoader.InvalidCacheLoadException {
+//            log.debug("Put DS shardId = '{}' into cache...", shardId);
+//            TransactionalDataSource dataSource = createAndAddShard(shardId);
+//            if(dataSource == null){
+//                throw new CacheLoader.InvalidCacheLoadException("Value can't be null");
+//            }
+//            return dataSource;
+//        }
+//    };
 
     /**
      * Listener to close + remove evicted shard data source

@@ -166,7 +166,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     @Override
                     public void truncate() {
                         super.truncate();
-                        clearCache();
                     }
 
                     @Override
@@ -902,7 +901,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         if (foundAllData) {
                             processed.add(myTransaction);
                         }
-                        dataSource.clearCache();
                         dataSource.commit(false);
                     }
                 }

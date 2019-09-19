@@ -11,17 +11,14 @@ import java.util.Set;
 public class DbConnectionWrapper extends FilteredConnection {
 
     private ThreadLocal<DbConnectionWrapper> localConnection;
-    private ThreadLocal<Map<String, Map<DbKey,Object>>> transactionCaches;
     private ThreadLocal<Set<TransactionCallback>> transactionCallback;
 
     long txStart = 0;
 
     public DbConnectionWrapper(Connection con, FilteredFactoryImpl factory, ThreadLocal<DbConnectionWrapper> localConnection,
-                               ThreadLocal<Map<String, Map<DbKey,Object>>> transactionCaches,
                                ThreadLocal<Set<TransactionCallback>> transactionCallback) {
         super(con, factory);
         this.localConnection = localConnection;
-        this.transactionCaches = transactionCaches;
         this.transactionCallback = transactionCallback;
     }
 
@@ -76,7 +73,6 @@ public class DbConnectionWrapper extends FilteredConnection {
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             } finally {
-                transactionCaches.get().clear();
                 Set<TransactionCallback> callbacks = transactionCallback.get();
                 if (callbacks != null) {
                     callbacks.forEach(TransactionCallback::rollback);
