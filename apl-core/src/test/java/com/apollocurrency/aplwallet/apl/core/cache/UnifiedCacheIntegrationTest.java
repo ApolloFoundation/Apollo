@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @EnableWeld
-public class CentralizedCacheIntegrationTest {
+public class UnifiedCacheIntegrationTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(AplCacheConfig.class, InMemoryCacheManager.class).build();
