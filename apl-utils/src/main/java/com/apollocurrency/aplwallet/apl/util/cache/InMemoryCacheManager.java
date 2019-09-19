@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.util.cache;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -17,13 +18,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Singleton
 public class InMemoryCacheManager {
 
-    private static final long MIN_MEMORY_SIZE_FOR_CACHES = 64*1024*1024;//in bytes
+    private static final long MIN_MEMORY_SIZE_FOR_CACHES = 16*1024*1024;//in bytes
 
     private ConcurrentHashMap<String, Cache> inMemoryCaches;
 
@@ -38,7 +40,7 @@ public class InMemoryCacheManager {
     public <K, V> Cache<K, V> createCache(InjectionPoint injectionPoint){
         Annotated annotated = injectionPoint.getAnnotated();
         CacheType cacheTypeAnnotation = annotated.getAnnotation(CacheType.class);
-        return createCache(cacheTypeAnnotation.name());
+        return createCache(cacheTypeAnnotation.value());
     }
 
     @SuppressWarnings("unchecked")
@@ -64,22 +66,31 @@ public class InMemoryCacheManager {
         Preconditions.checkArgument(sum<=100, "Summary cache capacity percentage exceeds 100.");
     }
 
+    @SuppressWarnings("unchecked")
     private void allocateAllCaches(InMemoryCacheConfigurator configurator){
         inMemoryCaches = new ConcurrentHashMap<>();
         configurator.getConfiguredCaches().forEach(config -> {
             CacheBuilder builder = configureCache(config, configurator.getAvailableMemory());
             log.debug("Configured builder={}", builder);
-            Cache cache = builder.build();
+            Cache cache;
+            Optional<CacheLoader> loader = config.getCacheLoader();
+            if (loader.isPresent()){
+                cache = builder.build(loader.get());
+            }else{
+                cache = builder.build();
+            }
             inMemoryCaches.put(config.getCacheName(), cache);
             log.debug("Allocated cache={}", config);
         });
     }
 
     private CacheBuilder configureCache(CacheConfiguration config, long availableMemory){
-        int size = Math.max( (int) (availableMemory * config.getCacheCapacity() / 100 / config.getExpectedElementSize()), 1) +1;
+        //       key#hashCode + value#reference
+        int extra = 4         +      8;
+        int size = Math.max( (int) (availableMemory * config.getCacheCapacity() / 100 / (config.getExpectedElementSize() + extra)), 1) + 1;
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
-        return config.builder().maximumSize(size);
+        return config.cacheBuilder().maximumSize(size);
     }
 
 }
