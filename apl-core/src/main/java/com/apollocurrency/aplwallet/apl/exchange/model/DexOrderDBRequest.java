@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DexOrderDBRequest {
-
+    private long dbId;
     private Integer type;
     private Long accountId;
     private Integer currentTime;

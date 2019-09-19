@@ -93,7 +93,8 @@ public class DexCancelOrderTransaction extends DEX {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true)
+                || isDuplicate(DEX.DEX_CANCEL_ORDER_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
     }
 
     @Override

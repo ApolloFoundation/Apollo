@@ -44,7 +44,7 @@ class DexCloseOrderTransactionTest {
 
     DexCloseOrderAttachment attachment = new DexCloseOrderAttachment(10);
     ExchangeContract contract = new ExchangeContract(1L, 10L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_2, new byte[32], null, null, new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
-    DexOrder order = new DexOrder(0L, 200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 250L, DexCurrencies.ETH, BigDecimal.ONE, 500);
+    DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 250L, DexCurrencies.ETH, BigDecimal.ONE, 500);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()

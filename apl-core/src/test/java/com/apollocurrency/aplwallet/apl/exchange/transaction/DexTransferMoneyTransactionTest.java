@@ -128,7 +128,7 @@ class DexTransferMoneyTransactionTest {
         doReturn(100L).when(tx).getId();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        DexOrder offer = new DexOrder(1L, 300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        DexOrder offer = new DexOrder(300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
         doReturn(offer).when(dexService).getOrder(200L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
