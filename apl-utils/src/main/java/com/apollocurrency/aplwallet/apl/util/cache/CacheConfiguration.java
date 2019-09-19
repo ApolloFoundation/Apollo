@@ -15,13 +15,18 @@ public interface CacheConfiguration<K, V> {
 
     long getExpectedElementSize();
 
-    int getCacheCapacity();
+    int getCachePriority();
 
     int getMaxSize();
 
+    /**
+     * Set the maximum size of cache, don't use manually, used in {@link InMemoryCacheManager} only.
+     * @param maxSize the maximum size of cache
+     */
     void setMaxSize(int maxSize);
+
+    CacheBuilder cacheBuilder();
 
     Optional<CacheLoader<K, V>> getCacheLoader();
 
-    CacheBuilder builder();
 }

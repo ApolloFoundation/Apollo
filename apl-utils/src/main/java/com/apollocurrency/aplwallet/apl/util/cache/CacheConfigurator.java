@@ -11,18 +11,25 @@ import com.google.common.cache.CacheLoader;
 
 import java.util.Optional;
 
-public abstract class AbstractCacheConfigurator<K, V> implements CacheConfiguration<K, V> {
+public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     private String name;
     private long elementSize;
-    private int percentCapacity;
+    private int cachePriority;
     private int maxSize = -1;
+    private CacheBuilder cacheBuilder;
+    private Optional<CacheLoader<K, V>> optionalCacheLoader;
 
-    public AbstractCacheConfigurator(String name, long elementSize, int percentCapacity) {
-        this.name = name;
-        this.elementSize = elementSize;
-        this.percentCapacity = percentCapacity;
+    public CacheConfigurator(String name, long elementSize, int cachePriority) {
+        this(name, elementSize, cachePriority, null);
     }
 
+    public CacheConfigurator(String name, long elementSize, int cachePriority, CacheLoader<K, V> cacheLoader) {
+        this.name = name;
+        this.elementSize = elementSize;
+        this.cachePriority = cachePriority;
+        this.cacheBuilder = CacheBuilder.newBuilder();
+        this.optionalCacheLoader = Optional.ofNullable(cacheLoader);
+    }
     @Override
     public String getCacheName() {
         return name;
@@ -34,8 +41,8 @@ public abstract class AbstractCacheConfigurator<K, V> implements CacheConfigurat
     }
 
     @Override
-    public int getCacheCapacity() {
-        return percentCapacity;
+    public int getCachePriority() {
+        return cachePriority;
     }
 
     @Override
@@ -51,11 +58,13 @@ public abstract class AbstractCacheConfigurator<K, V> implements CacheConfigurat
     }
 
     @Override
-    public abstract CacheBuilder builder();
+    public CacheBuilder cacheBuilder(){
+        return cacheBuilder;
+    }
 
     @Override
     public Optional<CacheLoader<K, V>> getCacheLoader(){
-        return Optional.empty();
+        return optionalCacheLoader;
     }
 
     @Override
@@ -63,9 +72,9 @@ public abstract class AbstractCacheConfigurator<K, V> implements CacheConfigurat
         return MoreObjects.toStringHelper(this)
                 .add("name", name)
                 .add("elementSize", elementSize)
-                .add("percentCapacity", percentCapacity)
+                .add("cachePriority", cachePriority)
                 .add("maxSize", maxSize)
-                .add("builder", builder().toString())
+                .add("cacheBuilder", cacheBuilder().toString())
                 .toString();
     }
 }
