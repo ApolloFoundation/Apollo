@@ -32,6 +32,7 @@ delete from PUBLIC.ACCOUNT_CONTROL_PHASING;
 delete from shuffling_data;
 delete from prunable_message;
 delete from phasing_approval_tx;
+delete from dex_offer;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -365,4 +366,13 @@ INSERT INTO phasing_approval_tx
 (120         , 10                , 110           ,    525   ,           ),
 (130         , 10                , 130           ,    525   ,           ),
 (140         , 15                , 140           ,    550   ,           ),
+;
+
+INSERT INTO dex_offer
+(db_id     , id              , type , account_id , offer_currency , offer_amount , pair_currency ,pair_rate ,finish_time , status , height , from_address                                ,to_address                                     , latest ) VALUES
+(1000      , 1               , 0    , 100        , 0,               500000      , 1              ,1000000    ,6000        , 5      , 100    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1010      , 2               , 1    , 100        , 0,               200000      , 2              ,160000000  ,6500        , 3      , 110    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1020      , 3               , 0    , 200        , 0,               100000      , 2              ,150000000  ,7000        , 0      , 121    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
+(1030      , 4               , 1    , 100        , 0,               400000      , 1              ,1000000    ,8000        , 4      , 121    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
 ;

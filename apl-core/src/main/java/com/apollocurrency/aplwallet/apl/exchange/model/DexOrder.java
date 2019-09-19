@@ -5,10 +5,10 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,12 +17,10 @@ import java.math.BigDecimal;
 
 
 @Data
-@Builder
-@AllArgsConstructor
 @EqualsAndHashCode
-public class DexOrder {
+@Builder
+public class DexOrder extends VersionedDerivedEntity {
 
-    private Long dbId;
     private Long id;
     private Long accountId;
     private String fromAddress;
@@ -38,9 +36,42 @@ public class DexOrder {
     private Integer finishTime;
 
     public DexOrder() {
+        super(null, null);
+    }
+
+    // for tests
+    public DexOrder(Long db_id, Long id, OrderType type, Long accountId, DexCurrencies orderCurrency, Long orderAmount, DexCurrencies pairCurrency, BigDecimal pairRate, Integer finishTime, OrderStatus status, Integer height, String fromAddress, String toAddress) {
+        super(db_id, height);
+        this.id = id;
+        this.accountId = accountId;
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.type = type;
+        this.status = status;
+        this.orderCurrency = orderCurrency;
+        this.orderAmount = orderAmount;
+        this.pairCurrency = pairCurrency;
+        this.pairRate = pairRate;
+        this.finishTime = finishTime;
+    }
+
+    public DexOrder(Long id, Long accountId, String fromAddress, String toAddress, OrderType type, OrderStatus status, DexCurrencies orderCurrency, Long orderAmount, DexCurrencies pairCurrency, BigDecimal pairRate, Integer finishTime) {
+        super(null, null);
+        this.id = id;
+        this.accountId = accountId;
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.type = type;
+        this.status = status;
+        this.orderCurrency = orderCurrency;
+        this.orderAmount = orderAmount;
+        this.pairCurrency = pairCurrency;
+        this.pairRate = pairRate;
+        this.finishTime = finishTime;
     }
 
     public DexOrder(Transaction transaction, DexOrderAttachment dexOrderAttachment) {
+        super(null, transaction.getHeight());
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.type = OrderType.getType(dexOrderAttachment.getType());

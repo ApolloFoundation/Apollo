@@ -25,21 +25,17 @@ import java.util.Objects;
 @Singleton
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
-    private static final LongKeyFactory<DexOrder> KEY_FACTORY = new LongKeyFactory<>("id") {
-        @Override
-        public DbKey newKey(DexOrder offer) {
-            return new LongKey(offer.getId());
-        }
-    };
 
 
     private static final String TABLE_NAME = "dex_offer";
     private final Blockchain blockchain;
     private DexOrderMapper dexOrderMapper;
+    private DexOrderKeyFactory keyFactory;
 
     @Inject
-    public DexOrderTable(Blockchain blockchain, DexOrderMapper dexOrderMapper) {
-        super(TABLE_NAME, KEY_FACTORY, true, null,false);
+    public DexOrderTable(Blockchain blockchain, DexOrderMapper dexOrderMapper, DexOrderKeyFactory keyFactory) {
+        super(TABLE_NAME, keyFactory, true, null,false);
+        this.keyFactory = keyFactory;
         this.dexOrderMapper = dexOrderMapper;
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
@@ -50,7 +46,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     }
 
     public DexOrder getByTxId(Long transactionId) {
-        return get(KEY_FACTORY.newKey(transactionId));
+        return get(keyFactory.newKey(transactionId));
     }
 
     @Override

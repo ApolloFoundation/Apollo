@@ -155,7 +155,7 @@ public class DexContractTransaction extends DEX {
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
-        return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getOrderId()), duplicates, true);
+        return isDuplicate(DEX.DEX_CONTRACT_TRANSACTION, Long.toUnsignedString(attachment.getCounterOrderId()), duplicates, true);
     }
 
     @Override

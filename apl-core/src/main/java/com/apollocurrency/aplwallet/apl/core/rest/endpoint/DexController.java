@@ -392,10 +392,6 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "Can cancel only Open orders."))).build();
             }
 
-            if(service.isThereAnotherCancelUnconfirmedTx(transactionId, null)){
-                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("orderId", "There is another cancel transaction for this order in the unconfirmed tx pool already."))).build();
-            }
-
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
             if(passphrase == null) {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
@@ -404,22 +400,13 @@ public class DexController {
             CustomRequestWrapper requestWrapper = new CustomRequestWrapper(req);
             requestWrapper.addParameter("deadline", DEFAULT_DEADLINE_MIN.toString());
             DexOrderCancelAttachment dexOrderCancelAttachment = new DexOrderCancelAttachment(transactionId);
-            String freezeTx=null;
 
             try {
-                if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                    freezeTx = service.refundEthPaxFrozenMoney(passphrase, order);
-                }
 
                 JSONStreamAware response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOrderCancelAttachment);
-                if(freezeTx != null){
-                    ((JSONObject)response).put("frozenTx", freezeTx);
-                }
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-            } catch (AplException.ExecutiveProcessException e) {
-                return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
             }
         } catch (ParameterException ex){
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();

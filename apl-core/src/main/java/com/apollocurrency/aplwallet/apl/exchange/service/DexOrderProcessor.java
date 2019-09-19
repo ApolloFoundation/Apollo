@@ -1,9 +1,12 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -11,26 +14,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
@@ -41,11 +35,13 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 @Slf4j
 @Singleton
 public class DexOrderProcessor {
+    private static final int ORDERS_SELECT_SIZE = 30;
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
     private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
+    private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     IDexValidator dexValidator;
 
     @Inject
@@ -61,6 +57,7 @@ public class DexOrderProcessor {
         List<Long> accounts = secureStorageService.getAccounts();
 
         for (Long account : accounts) {
+            processCancelOrders(account);
             processContractsForUserStep1(account);
             processContractsForUserStep2(account);
 
@@ -142,7 +139,6 @@ public class DexOrderProcessor {
                 processedOrders.add(counterOrder.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
                 log.error(e.getMessage(), e);
-                continue;
             }
 
         }
@@ -154,13 +150,12 @@ public class DexOrderProcessor {
                 while (!dexService.txExists(unconfirmedTx.getId())) {
                     try {
                         TimeUnit.MILLISECONDS.sleep(250);
+                    } catch (InterruptedException ignored) {
                     }
-                    catch (InterruptedException ignored) {}
                 }
                 try {
                     dexService.broadcast(txToBroadcast);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     log.error(e.toString(), e);
                 }
             });
@@ -170,21 +165,21 @@ public class DexOrderProcessor {
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
         log.debug("isContractStep1Valid entry point");
-        long counterOrderID = exchangeContract.getCounterOrderId();                
+        long counterOrderID = exchangeContract.getCounterOrderId();
         long orderID = exchangeContract.getOrderId();
-        
+
         log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
-        
+
         DexOrder mainOrder = dexService.getOrder(orderID);// getOfferByTransactionId(orderID);
-        
+
         if (mainOrder == null) {
             log.debug("main offer search error: ");
             return false;
         } else {
             log.debug("mainOffer search: ok, going further");
         }
-        
-                      
+
+
         DexOrder counterOrder = dexService.getOrder(counterOrderID);
 
         if (counterOrder == null) {
@@ -194,48 +189,47 @@ public class DexOrderProcessor {
             log.debug("counterOffer search: ok, going further");
         }
 
-        
+
         // DUMPING main offer 
-        
-        log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(), 
+
+        log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(),
                 mainOrder.getToAddress(), mainOrder.getFromAddress(), mainOrder.getPairCurrency(), mainOrder.getPairRate());
 
-        log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOrder.getType(), counterOrder.getAccountId(), 
+        log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOrder.getType(), counterOrder.getAccountId(),
                 counterOrder.getToAddress(), counterOrder.getFromAddress(), counterOrder.getPairCurrency(), counterOrder.getPairRate());
-        
+
         DexCurrencies curr = counterOrder.getPairCurrency();
 
         int rx;
-        
+
         switch (curr) {
 
-            case ETH: { 
+            case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
-                if (mainOrder.getType() == OrderType.SELL)  {
-                    rx =  dexValidator.validateOfferSellAplEth(mainOrder, counterOrder); 
+                if (mainOrder.getType() == OrderType.SELL) {
+                    rx = dexValidator.validateOfferSellAplEth(mainOrder, counterOrder);
+                } else {
+                    rx = dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);
                 }
-                else { 
-                    rx=  dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);
-                }                
                 break;
             }
-            
+
             case PAX: {
-                if (mainOrder.getType() == OrderType.SELL) { 
-                    rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder); 
-                } else { 
+                if (mainOrder.getType() == OrderType.SELL) {
+                    rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder);
+                } else {
                     rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);
                 }
                 break;
             }
-            
+
             default: // return OFFER_VALIDATE_ERROR_IN_PARAMETER;
                 rx = OFFER_VALIDATE_ERROR_IN_PARAMETER;
                 break;
-        }        
-        
-        log.debug("validation result: {}",rx);
-        
+        }
+
+        log.debug("validation result: {}", rx);
+
         return rx == OFFER_VALIDATE_OK;
     }
 
@@ -425,4 +419,53 @@ public class DexOrderProcessor {
         return transferMoneyReq;
     }
 
+    void processCancelOrders(Long accountId) {
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+        OrderHeightId orderHeightId;
+        synchronized (accountCancelOrderMap) {
+            orderHeightId = accountCancelOrderMap.get(accountId);
+        }
+        long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
+        int orderHeight = 0;
+        while (true) {
+            List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
+                    .accountId(accountId)
+                    .dbId(fromDbId)
+                    .status(OrderStatus.CANCEL)
+                    .type(OrderType.BUY.ordinal())
+                    .limit(ORDERS_SELECT_SIZE)
+                    .build());
+            for (DexOrder order : orders) {
+                fromDbId = order.getDbId();
+                orderHeight = order.getHeight();
+                try {
+                    dexService.refundEthPaxFrozenMoney(passphrase, order);
+                } catch (AplException.ExecutiveProcessException e) {
+                    log.info("Unable to refund {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                }
+            }
+            if (orders.size() < ORDERS_SELECT_SIZE) {
+                break;
+            }
+        }
+        if (orderHeight != 0) {
+            synchronized (accountCancelOrderMap) {
+                accountCancelOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
+            }
+        }
+    }
+
+    public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        CompletableFuture.runAsync(() -> {
+            synchronized (accountCancelOrderMap) {
+                Set<Long> rolledBackAccountIds = accountCancelOrderMap.entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().getHeight() >= block.getHeight())
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
+                rolledBackAccountIds.forEach(accountCancelOrderMap::remove);
+            }
+        });
+
+    }
 }
