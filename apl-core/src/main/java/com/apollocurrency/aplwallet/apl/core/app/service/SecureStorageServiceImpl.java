@@ -168,16 +168,15 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean flushAccountKeys(Long accountID, String passPhrase) {
-        LOG.debug("flushAccountKeys entry point");
-        boolean flushed = false;
+        LOG.debug("flushAccountKeys entry point");        
         if (store.containsKey(accountID)) {            
             String extractedPass = store.get(accountID);
             if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
                 LOG.debug("flushed key for account: {}",accountID);
                 store.remove(accountID);
-                flushed = true;
+                return true;
             }
         }
-        return flushed;        
+        return false;        
     }        
 }
