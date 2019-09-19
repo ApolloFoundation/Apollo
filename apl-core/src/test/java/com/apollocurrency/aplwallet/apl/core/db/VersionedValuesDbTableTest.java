@@ -163,16 +163,13 @@ public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntit
             List<T> values = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
 
             assertEquals(toInsert, values);
-            assertInCache(toInsert);
             toInsert.forEach(t-> t.setHeight(t.getHeight() + 1));
             table.insert(toInsert);
             //check cache in transaction
-            assertInCache(toInsert);
 
         });
         toInsert.forEach(t -> t.setHeight(t.getHeight() - 1));
         //check db
-        assertNotInCache(toInsert);
         List<T> retrievedData = table.get(table.getDbKeyFactory().newKey(toInsert.get(0)));
         long lastDbId = sortByHeightDesc(getAll()).get(0).getDbId();
         for (T t : toInsert) {
