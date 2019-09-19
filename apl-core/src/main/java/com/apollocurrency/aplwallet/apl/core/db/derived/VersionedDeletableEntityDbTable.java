@@ -78,5 +78,10 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        finally {
+            if (!keepInCache) {
+                dataSource.getCache(table).remove(dbKey);
+            }
+        }
     }
 }

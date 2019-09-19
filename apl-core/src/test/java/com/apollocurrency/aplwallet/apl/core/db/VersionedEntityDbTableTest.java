@@ -61,10 +61,14 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
         t.setHeight(t.getHeight() + 1);
         DbUtils.inTransaction(extension, (con)-> {
             table.insert(t);
+            assertInCache(t);
             assertEquals(t, table.get(table.getDbKeyFactory().newKey(t)));
             List<T> all = CollectionUtil.toList(table.getAll(0, Integer.MAX_VALUE));
             assertEquals(allLatest.stream().sorted(getDefaultComparator()).collect(Collectors.toList()), all);
+            assertListInCache(allLatest);
         });
+        assertListNotInCache(allLatest);
+        assertNotInCache(t);
     }
 
     @Test
@@ -75,12 +79,16 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
         t.setDbKey(allLatest.get(0).getDbKey());
         DbUtils.inTransaction(extension, (con)-> {
             table.insert(t);
+            assertInCache(t);
             assertEquals(t, table.get(table.getDbKeyFactory().newKey(t)));
             List<T> all = CollectionUtil.toList(table.getAll(0, Integer.MAX_VALUE));
             allLatest.set(0, t);
             List<T> expected = allLatest.stream().sorted(getDefaultComparator()).collect(Collectors.toList());
             assertEquals(expected, all);
+            assertListInCache(allLatest);
         });
+        assertListNotInCache(allLatest);
+        assertNotInCache(t);
     }
 
     @Test
@@ -151,6 +159,23 @@ public abstract class VersionedEntityDbTableTest<T extends VersionedDerivedEntit
             }
 
         });
+    }
+
+    @Test
+    public void testDeleteAndKeepInCache() {
+        T valueToDelete = getAllLatest().get(1);
+        DbUtils.inTransaction(extension, (con)-> {
+            table.get(table.getDbKeyFactory().newKey(valueToDelete));
+            valueToDelete.setHeight(valueToDelete.getHeight() + 1);
+            boolean deleted = table.delete(valueToDelete, true, valueToDelete.getHeight());
+            assertTrue(deleted, "Value should be deleted");
+            T deletedValue = table.get(table.getDbKeyFactory().newKey(valueToDelete));
+            valueToDelete.setHeight(valueToDelete.getHeight() - 1);
+            assertInCache(valueToDelete);
+            assertEquals(valueToDelete, deletedValue);
+        });
+        T deletedValue = table.get(table.getDbKeyFactory().newKey(valueToDelete));
+        assertNull(deletedValue, "Deleted value should not be returned by get call after cache clear");
     }
 
 }
