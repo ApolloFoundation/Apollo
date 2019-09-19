@@ -915,7 +915,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
-            blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fireAsync(block);
+            blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
