@@ -31,6 +31,7 @@ delete from purchase_public_feedback;
 delete from PUBLIC.ACCOUNT_CONTROL_PHASING;
 delete from shuffling_data;
 delete from prunable_message;
+delete from phasing_approval_tx;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -357,4 +358,11 @@ INSERT INTO prunable_message
 (1080           ,90                  ,-5872452783836294400   ,4882266200596627944    ,X'f3ab4384a18c2911'                                     ,X'8de2b1bb43fc8f8ed866f551edae2f688494da7601b914fbc69f2c9c406f537845eab9a324a151d432d82a0e9d989467b1ff559a947fe8a5d0c9fe7bf0e6d0a44504273ff6b92b419abf752401b785157eb320f78e6ac13f75036a799ea47a4c'                                    ,false            , false             , false         ,232            ,  230                   , 25   ),
 (1090           ,100                 ,4882266200596627944    ,-5872452783836294400   ,null                                                    ,X'a1e59a83f92fe32e2e8bd4d840adca3af792e65499ae3d87068c793daf7f7d238c9c0820c951a9280d78e492eb27fb5961a974d98f63756728cb7a22d658dabbc0c6bf192eea4f41d950cff9f51c12f03f2f853cd9ead88f3c88ebbdb1ae0423dad64b3d2c0801fc1780b41c84fc330e'    ,false            , false             , true          ,247            ,  242                   , 28   ),
 (1100           ,110                 ,-6004096130734886685   ,-5872452783836294400   ,X'48656c6c6f20436875636b'                               ,null                                                                                                                                                                                                                                   ,true             , false             , false         ,259            ,  254                   , 30   ),
+;
+INSERT INTO phasing_approval_tx
+(db_id       , phasing_tx,        approved_tx,        height,           ) VALUES
+(110         , 5                 , 120           ,    510   ,           ),
+(120         , 10                , 110           ,    525   ,           ),
+(130         , 10                , 130           ,    525   ,           ),
+(140         , 15                , 140           ,    550   ,           ),
 ;

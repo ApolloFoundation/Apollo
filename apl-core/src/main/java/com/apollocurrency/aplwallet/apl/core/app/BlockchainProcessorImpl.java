@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -144,6 +145,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
+    private final javax.enterprise.event.Event<List<Transaction>> txEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -299,7 +301,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager) {
+                                   TaskDispatchManager taskDispatchManager, javax.enterprise.event.Event<List<Transaction>> txEvent) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -317,6 +319,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.shardImporter = importer;
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
+        this.txEvent = txEvent;
 
         configureBackgroundTasks();
 
@@ -913,8 +916,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
-            validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
-            invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
+            validPhasedTransactions.forEach(phasingPollService::countVotesAndRelease);
+            invalidPhasedTransactions.forEach(phasingPollService::reject);
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 try {
@@ -975,7 +978,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (phasingPollService.getResult(approvedTx.getId()) == null) {
                     try {
                         transactionValidator.validate(approvedTx);
-                        approvedTx.getPhasing().tryCountVotes(approvedTx, duplicates, approvedAndConfirmation.getApproval());
+
+                        phasingPollService.tryCountVotes(approvedTx, duplicates);
                     } catch (AplException.ValidationException e) {
                         log.debug("At height " + block.getHeight() + " phased transaction " + approvedTx.getStringId()
                                 + " no longer passes validation: " + e.getMessage() + ", cannot finish early");
@@ -989,7 +993,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
             if (block.getOrLoadTransactions().size() > 0) {
-                lookupTransactionProcessor().notifyListeners(block.getOrLoadTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
+                txEvent.select(TxEventType.literal(TxEventType.ADDED_CONFIRMED_TRANSACTIONS)).fire(block.getOrLoadTransactions());
             }
             AccountLedger.commitEntries();
         } finally {
@@ -1198,9 +1202,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long totalFeeATM = 0;
         int payloadLength = 0;
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
-            TransactionImpl transaction = unconfirmedTransaction.getTransaction();
+            Transaction transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
-            digest.update(transaction.bytes());
+            digest.update(transaction.getBytes());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();

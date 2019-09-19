@@ -87,6 +87,10 @@ public class DexContractTransaction extends DEX {
             throw new AplException.NotValidException("Don't find contract.");
         }
 
+        if (contract != null && attachment.getContractStatus() == contract.getContractStatus()) {
+            log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
+            throw new AplException.NotValidException("Illegal contract state. Perhaps this contract has processed already.");
+        }
 
     }
 
@@ -131,7 +135,7 @@ public class DexContractTransaction extends DEX {
             contract.setContractStatus(ExchangeContractStatus.STEP_2);
             contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
 
-            //TODO change another orders to the status Open.
+            //Change another orders to the status Open.
             reopenNotMatchedOrders(contract);
 
             dexService.saveDexContract(contract);
@@ -141,9 +145,6 @@ public class DexContractTransaction extends DEX {
             contract.setDeadlineToReply(transaction.getBlock().getTimestamp() + attachment.getTimeToReply());
 
             dexService.saveDexContract(contract);
-        } else {
-            log.error("Illegal contract state. id: {}, contract status: {}, attachment status: {}", contract.getId(), contract.getContractStatus(), attachment.getContractStatus());
-            throw new RuntimeException("Illegal contract state. Perhaps this contract has processed already.");
         }
 
     }
@@ -184,20 +185,6 @@ public class DexContractTransaction extends DEX {
                 .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
                 .collect(Collectors.toList());
 
-        for (ExchangeContract exchangeContract : contractsForReopen) {
-            //Reopen order.
-            DexOrder order = dexService.getOrder(exchangeContract.getOrderId());
-            if (order.getStatus().isPending()) {
-                //Close contract.
-                exchangeContract.setContractStatus(ExchangeContractStatus.STEP_4);
-                dexService.saveDexContract(contract);
-                log.debug("Contract was closed. ContractId: {}", contract.getId());
-
-                order.setStatus(OrderStatus.OPEN);
-                dexService.saveOrder(order);
-                log.debug("Order was closed. OrderId: {}", order.getId());
-            }
-        }
-
+        dexService.closeContracts(contractsForReopen);
     }
 }

@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -19,9 +21,11 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -56,6 +60,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
+import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -66,14 +71,15 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -85,6 +91,7 @@ public class DexService {
     private DexOrderDao dexOrderDao;
     private DexOrderTable dexOrderTable;
     private DexContractTable dexContractTable;
+    private PhasingApprovedResultTable phasingApprovedResultTable;
     private DexContractDao dexContractDao;
     private TransactionProcessor transactionProcessor;
     private SecureStorageService secureStorageService;
@@ -101,7 +108,7 @@ public class DexService {
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
-                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao) {
+                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -116,6 +123,7 @@ public class DexService {
         this.blockchain = blockchain;
         this.phasingPollService = phasingPollService;
         this.dexMatcherService = dexMatcherService;
+        this.phasingApprovedResultTable = phasingApprovedResultTable;
     }
 
 
@@ -303,7 +311,7 @@ public class DexService {
             while (tx.hasNext()) {
                 UnconfirmedTransaction unconfirmedTransaction = tx.next();
                 if (TransactionType.TYPE_DEX == unconfirmedTransaction.getTransaction().getType().getType() &&
-                        TransactionType.SUBTYPE_DEX_OFFER_CANCEL == unconfirmedTransaction.getTransaction().getType().getSubtype()) {
+                        TransactionType.SUBTYPE_DEX_ORDER_CANCEL == unconfirmedTransaction.getTransaction().getType().getSubtype()) {
                     DexOrderCancelAttachment dexOrderCancelAttachment = (DexOrderCancelAttachment) unconfirmedTransaction.getTransaction().getAttachment();
 
                     if (dexOrderCancelAttachment.getOrderId() == orderId &&
@@ -491,7 +499,7 @@ public class DexService {
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
         } else {
             PhasingPollResult phasingResult = phasingPollService.getResult(Long.parseUnsignedLong(transferTxId));
-            return phasingResult != null && phasingPollService.getApprovedTx(phasingResult.getId()) != null;
+            return phasingResult != null && phasingApprovedResultTable.get(phasingResult.getId()) != null;
         }
     }
 
@@ -508,7 +516,7 @@ public class DexService {
                 return null;
             }
 
-            PhasingApprovalResult phasingApprovalResult = phasingPollService.getApprovedTx(phasingPoll.getId());
+            PhasingApprovalResult phasingApprovalResult = phasingApprovedResultTable.get(phasingPoll.getId());
             if (phasingApprovalResult == null) {
                 return null;
             }
@@ -572,4 +580,40 @@ public class DexService {
         return secureStorageService.flushAccountKeys( accountID, passPhrase);        
     }
     
+
+
+    public void reopenIncomeOrders(Long orderId) {
+        List<ExchangeContract> contractsForReopen = getDexContracts(DexContractDBRequest.builder()
+                .counterOfferId(orderId)
+                .build());
+
+        closeContracts(contractsForReopen);
+    }
+
+    public void closeContracts(List<ExchangeContract> contractsForReopen) {
+        for (ExchangeContract contract : contractsForReopen) {
+            //Reopen order.
+            DexOrder order = getOrder(contract.getOrderId());
+            if (order.getStatus().isPending()) {
+                //Close contract.
+                contract.setContractStatus(ExchangeContractStatus.STEP_4);
+                saveDexContract(contract);
+                log.debug("Contract was closed. ContractId: {}", contract.getId());
+
+                order.setStatus(OrderStatus.OPEN);
+                saveOrder(order);
+                log.debug("Order was closed. OrderId: {}", order.getId());
+            }
+        }
+    }
+
+
+    public void onPhasedTxReleased(@Observes @TxEvent(TxEventType.RELEASE_PHASED_TRANSACTION) Transaction transaction) {
+        if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
+            List<PhasingVote> votes = phasingPollService.getVotes(transaction.getId());
+            log.debug("Found {} votes, pick latest", votes.size());
+            phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
+        }
+    }
+
 }

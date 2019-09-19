@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 
 public class MinorUpdater extends AbstractUpdater {
 
-    public MinorUpdater(UpdateData updateData, UpdaterService updaterService, UpdaterMediator updaterMediator) {
-        super(updateData, updaterService, updaterMediator);
+    public MinorUpdater(UpdateData updateData, UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
+        super(updateData, updaterService, updaterMediator, updateInfo);
     }
 
     @Override

@@ -76,7 +76,12 @@ public class DexSmartContractService {
         }
 
         if(currency.isPax()){
-            ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, weiValue);
+            String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, weiValue);
+
+            if (approvedTx == null) {
+                log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
+                throw new AplException.ExecutiveProcessException("Approved tx wasn't send for PAX. OrderIs: " + offerId);
+            }
         }
 
         return deposit(ethWalletKey.getCredentials(), offerId, weiValue, gasPrice, currency.isEth() ? null : paxContractAddress);
@@ -100,7 +105,7 @@ public class DexSmartContractService {
             gasPrice = getEthGasPrice();
         }
 
-        return withdraw(ethWalletKey.getCredentials(), orderId, gasPrice, currency.isEth() ? null : paxContractAddress);
+        return withdraw(ethWalletKey.getCredentials(), orderId, gasPrice);
     }
 
 
@@ -240,15 +245,13 @@ public class DexSmartContractService {
         return transactionReceipt != null ? transactionReceipt.getTransactionHash() : null;
     }
 
-    private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice, String token){
+    private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice) {
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
         TransactionReceipt transactionReceipt = null;
         try {
-            if(token==null) {
-                log.debug("dexContract withdraw, order: {}", orderId);
-                transactionReceipt = dexContract.withdraw(orderId).sendAsync().get();
-            }
+            log.debug("dexContract withdraw, order: {}", orderId);
+            transactionReceipt = dexContract.withdraw(orderId).sendAsync().get();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
