@@ -126,7 +126,7 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
-//reduce trim time by aguiring lock onece                
+//reduce trim time by aguiring lock once                
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
 //                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {

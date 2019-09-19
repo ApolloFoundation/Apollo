@@ -792,7 +792,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
-        log.debug("Push block at height {} took {} ms (including lock aquiring: {} ms)", block.getHeight(), System.currentTimeMillis()-startTime, lockAquireTime);
+        log.trace("Push block at height {} took {} ms (including lock aquiring: {} ms)", block.getHeight(), System.currentTimeMillis()-startTime, lockAquireTime);
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -914,7 +914,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
-            blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fireAsync(block);
+            blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
             validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
