@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
-import java.util.Arrays;
 import java.util.List;
 
 @Singleton
@@ -28,12 +27,6 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
     public void setUp(){
         log.debug("Runtime: maMemory={} totalMemory={}", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory());
         log.debug("Available for cache={}", getAvailableMemory());
-        int sum = Arrays.stream(cacheConfigurations).mapToInt(CacheConfiguration::getCacheCapacity).sum();
-        if (sum>100){
-            RuntimeException exception = new IllegalArgumentException("Summary capacity exceeds 100 percent.");
-            log.error(exception.getMessage());
-            throw exception;
-        }
     }
 
     @Override
