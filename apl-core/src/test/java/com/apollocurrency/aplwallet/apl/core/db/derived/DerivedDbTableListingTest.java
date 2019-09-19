@@ -158,7 +158,7 @@ class DerivedDbTableListingTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null, null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         AccountAssetTable.getInstance().init();

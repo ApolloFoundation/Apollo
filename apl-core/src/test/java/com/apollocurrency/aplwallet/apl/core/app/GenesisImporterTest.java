@@ -127,7 +127,7 @@ class GenesisImporterTest {
         publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         Account.init(extension.getDatabaseManager(), propertiesHolder, null,
-                null, blockchain, null, publicKeyTable, accountTable, null);
+                null, blockchain, null, publicKeyTable, accountTable, null, null);
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
         testData = new BalancesPublicKeysTestData();

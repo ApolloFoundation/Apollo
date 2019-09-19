@@ -244,7 +244,7 @@ class CsvExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null, null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!
