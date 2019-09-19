@@ -3,7 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
+import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderKeyFactory;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
@@ -11,16 +14,20 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+import javax.inject.Singleton;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+@Singleton
+public class DexOrderMapper extends VersionedDerivedEntityMapper<DexOrder> {
 
-public class DexOrderMapper implements RowMapper<DexOrder> {
+    public DexOrderMapper() {
+        super(new DexOrderKeyFactory());
+    }
 
     @Override
-    public DexOrder map(ResultSet rs, StatementContext ctx) throws SQLException {
+    public DexOrder doMap(ResultSet rs, StatementContext ctx) throws SQLException {
         DexOrder dexOrder = new DexOrder();
 
-        dexOrder.setDbId(rs.getLong("db_id"));
         dexOrder.setId(rs.getLong("id"));
         dexOrder.setAccountId(rs.getLong("account_id"));
         dexOrder.setType(OrderType.getType(rs.getInt("type")));
@@ -36,5 +43,4 @@ public class DexOrderMapper implements RowMapper<DexOrder> {
 
         return dexOrder;
     }
-
 }

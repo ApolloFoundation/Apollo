@@ -27,6 +27,7 @@ public interface DexOrderDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             "WHERE latest = true " +
+            "AND (offer.db_id > :dbId) " +
             "AND (:accountId is NULL or offer.account_id = :accountId) " +
             "AND (:currentTime is NULL OR offer.finish_time > :currentTime) " +
             "AND (:type is NULL OR offer.type = :type) " +
