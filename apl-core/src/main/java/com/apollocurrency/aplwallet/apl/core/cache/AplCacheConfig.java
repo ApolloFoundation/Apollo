@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.cache;
 
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfiguration;
-import com.apollocurrency.aplwallet.apl.util.cache.CacheConfigurator;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,11 +17,11 @@ import java.util.List;
 @Slf4j
 public class AplCacheConfig implements InMemoryCacheConfigurator {
 
-    private static final int ADDRESSABLE_FOR_CACHE = 60; //60 percent of Available memory;
+    private static final int ADDRESSABLE_FOR_CACHE = 30; //30 percent of Available memory;
 
     private CacheConfiguration[] cacheConfigurations = {
-            new PrimaryDbKeyCacheConfig(50),
-            new PublicKeyCacheConfig(50)
+            new PublicKeyCacheConfig(80),
+            new ShardDsCacheConfigurator(20)
     };
 
     @PostConstruct

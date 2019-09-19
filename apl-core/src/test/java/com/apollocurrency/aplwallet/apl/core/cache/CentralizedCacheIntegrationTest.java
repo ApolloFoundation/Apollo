@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 import static com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -46,12 +46,13 @@ public class CentralizedCacheIntegrationTest {
     }
 
     @Test
-    void testSimpleGuavaCache() {
-        publicKeyCache.put("first", "1".getBytes());
+    void testGuavaCacheInjection() {
+        String key = "first";
+        publicKeyCache.put(key, key.getBytes());
 
-        byte[] value = publicKeyCache.getIfPresent("first");
+        byte[] value = publicKeyCache.getIfPresent(key);
         assertNotNull(value);
-        assertEquals("1", new String(value));
+        assertArrayEquals(key.getBytes(), value);
         value = publicKeyCache.getIfPresent("second");
         assertNull(value);
     }
