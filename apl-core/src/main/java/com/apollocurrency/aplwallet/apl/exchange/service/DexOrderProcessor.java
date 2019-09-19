@@ -456,16 +456,23 @@ public class DexOrderProcessor {
     }
 
     public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        rollbackCachedOrderDbIds(block.getHeight());
+    }
+
+    private void rollbackCachedOrderDbIds(int height) {
         CompletableFuture.runAsync(() -> {
             synchronized (accountCancelOrderMap) {
                 Set<Long> rolledBackAccountIds = accountCancelOrderMap.entrySet()
                         .stream()
-                        .filter(e -> e.getValue().getHeight() >= block.getHeight())
+                        .filter(e -> e.getValue().getHeight() >= height)
                         .map(Map.Entry::getKey)
                         .collect(Collectors.toSet());
                 rolledBackAccountIds.forEach(accountCancelOrderMap::remove);
             }
         });
+    }
 
+    public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+        rollbackCachedOrderDbIds(block.getHeight());
     }
 }
