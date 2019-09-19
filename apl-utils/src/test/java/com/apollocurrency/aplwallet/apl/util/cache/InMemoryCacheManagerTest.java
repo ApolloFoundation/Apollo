@@ -27,8 +27,8 @@ class InMemoryCacheManagerTest {
     }
 
     @Test
-    void testWrongConfiguration_whenAvailableMemoryLessThan64Mb() {
-        doReturn(60*1024*1024L).when(configurator).getAvailableMemory();
+    void testWrongConfiguration_whenAvailableMemoryLessThan16Mb() {
+        doReturn(15*1024*1024L).when(configurator).getAvailableMemory();
         assertThrows(IllegalStateException.class, () -> new InMemoryCacheManager(configurator));
     }
 
@@ -85,13 +85,16 @@ class InMemoryCacheManagerTest {
         manager = new InMemoryCacheManager(configurator);
 
         Cache<Integer, byte[]> cache = manager.createCache(cacheName);
-        assertEquals(65, cacheCfg.getMaxSize());
+        assertEquals(64, cacheCfg.getMaxSize());
         int i=0;
         for(; i<cacheCfg.getMaxSize()*2;i++){
           cache.put(i, Long.toUnsignedString(i*1000L).getBytes());
         }
-        assertEquals(130, i);
-        assertEquals(65, cache.size());
+        assertEquals(64*2, i);
+        assertEquals(64, cache.size());
+        i--;
+        assertNotNull(cache.getIfPresent(i));
+        assertArrayEquals(Long.toUnsignedString(i*1000L).getBytes(), cache.getIfPresent(i));
     }
 
     private void setupManager() {
@@ -103,14 +106,14 @@ class InMemoryCacheManagerTest {
         manager = new InMemoryCacheManager(configurator);
     }
 
-    class SimpleCacheConfigurator extends AbstractCacheConfigurator {
+    class SimpleCacheConfigurator extends CacheConfigurator {
 
         public SimpleCacheConfigurator(String name, long elementSize, int percentCapacity) {
             super(name, elementSize, percentCapacity);
         }
 
         @Override
-        public CacheBuilder builder() {
+        public CacheBuilder cacheBuilder() {
             return CacheBuilder.newBuilder();
         }
     }

@@ -21,7 +21,8 @@ public interface CacheConfiguration<K, V> {
 
     void setMaxSize(int maxSize);
 
+    CacheBuilder cacheBuilder();
+
     Optional<CacheLoader<K, V>> getCacheLoader();
 
-    CacheBuilder builder();
 }
