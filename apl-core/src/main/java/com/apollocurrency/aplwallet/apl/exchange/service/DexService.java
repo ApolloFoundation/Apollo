@@ -575,6 +575,11 @@ public class DexService {
 
         saveDexTradeEntry(dexTradeEntry);
     }
+    
+    public boolean flushSecureStorage(Long accountID, String passPhrase) {                
+        return secureStorageService.flushAccountKeys( accountID, passPhrase);        
+    }
+    
 
 
     public void reopenIncomeOrders(Long orderId) {
@@ -610,4 +615,5 @@ public class DexService {
             phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
         }
     }
+
 }

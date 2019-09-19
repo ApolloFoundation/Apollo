@@ -589,5 +589,41 @@ public class DexController {
             return Response.ok().build();
         }
     }
+    
+    
+    
+    @GET
+    @Path("/flush")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Flush temporary keys", description = "cleanup after the exchange routine")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response flush(      @Parameter(description = "User account id.") @QueryParam("accountid") String accountIdStr,                               
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("flush: accountIdStr: {}", accountIdStr);
+        Long accountId = null;
+        try {
+            if(!StringUtils.isBlank(accountIdStr)){
+                accountId = Long.parseUnsignedLong(accountIdStr);
+            }
+            String xpassphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
+            if(xpassphrase == null) {
+                log.error("null passphrase is unacceptable");
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
+            }
+            if ( service.flushSecureStorage(accountId, xpassphrase) ) {
+               return Response.ok().build(); 
+            } else {
+                return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
+            }
+                
+        } catch (Exception ex){
+            return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
+        }
+        
+    }
+
 
 }

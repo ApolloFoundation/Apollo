@@ -41,4 +41,14 @@ public interface SecureStorageService {
      * Create private key for application.
      */
     String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
+   
+    
+    /**
+     * Flushing keys after decentralized exchange routine
+     * @param accountID   id of the corresponding account
+     * @param passPhrase  passphrase of the particular wallet
+     * @return flag whether the corresponding pair was found
+     */
+    boolean flushAccountKeys(Long accountID, String passPhrase);
+    
 }
