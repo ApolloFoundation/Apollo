@@ -2,12 +2,11 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -15,6 +14,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -23,6 +24,7 @@ import java.util.Objects;
  */
 @Deprecated
 @Singleton
+@Slf4j
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
 
@@ -47,6 +49,27 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     public DexOrder getByTxId(Long transactionId) {
         return get(keyFactory.newKey(transactionId));
+    }
+
+    public List<DexOrder> getOverdueOrders(int currentTime) {
+        List<DexOrder> dexOrders = new ArrayList<>();
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con
+                     .prepareStatement("SELECT * FROM dex_offer AS offer where latest = true " +
+                             "AND offer.status = 0 AND offer.finish_time < ?")
+        ) {
+            int i = 0;
+            pstmt.setLong(++i, currentTime);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    dexOrders.add(dexOrderMapper.map(rs, null));
+                }
+            }
+        } catch (SQLException ex) {
+            log.error(ex.getMessage(), ex);
+        }
+
+        return dexOrders;
     }
 
     @Override

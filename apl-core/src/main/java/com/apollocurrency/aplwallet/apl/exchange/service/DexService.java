@@ -71,15 +71,15 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -202,10 +202,11 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) {
-        List<DexOrder> orders = dexOrderDao.getOverdueOrders(time);
+        List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
 
         for (DexOrder order : orders) {
             try {
+                log.debug("Order expired, orderId: {}", order.getId());
                 order.setStatus(OrderStatus.EXPIRED);
                 dexOrderTable.insert(order);
 
