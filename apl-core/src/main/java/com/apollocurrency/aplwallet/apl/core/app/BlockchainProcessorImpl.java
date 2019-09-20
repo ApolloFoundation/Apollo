@@ -1573,7 +1573,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     //we can get sometimes string and sometimes long from different peers, and yes it's strange
                     Long bhl =0L;
                     Object bh = response.get("blockchainHeight");
-                    if(bh instanceof String){
+                    if(bh==null){
+                      bhl=0L;
+                    }else if(bh instanceof String){
                        bhl = Long.parseLong((String)bh);
                     }else{
                        bhl = (Long)bh;
@@ -1615,9 +1617,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.info("Blockchain download in progress");
                     isDownloading = true;
                 }
-
-                globalSync.updateLock();
-                try {
+//TODO: check do we need lock here
+//                globalSync.updateLock();
+//                try {
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
                     }
@@ -1672,10 +1674,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     } else {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
-                } finally {
-                    globalSync.updateUnlock();
-//                    isDownloading = false;
-                }
+//                } finally {
+//                    globalSync.updateUnlock();
+////                    isDownloading = false;
+//                }
                 
             } catch (AplException.StopException e) {
                 log.info("Blockchain download stopped: " + e.getMessage());
@@ -1911,8 +1913,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // a missing block (this will happen if an invalid block is encountered
             // when downloading the blocks)
             //
-            globalSync.writeLock();
-            try {
+//TODO: check do we need this lock
+//            globalSync.writeLock();
+//            try {
                 List<Block> forkBlocks = new ArrayList<>();
                 for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < 720; index++) {
                     PeerBlock peerBlock = blockMap.get(chainBlockIds.get(index));
@@ -1938,9 +1941,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
-            } finally {
-                globalSync.writeUnlock();
-            }
+//            } finally {
+//                globalSync.writeUnlock();
+//            }
             
         }
 
