@@ -35,8 +35,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -107,7 +105,7 @@ public final class Account {
     private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
     private static AccountPropertyTable accountPropertyTable;
 
-    private static Cache<DbKey, byte[]> publicKeyCache = null;
+    private static Cache<DbKey, PublicKey> publicKeyCache = null;
            
     
     private static final Listeners<Account, Event> listeners = new Listeners<>();
@@ -134,7 +132,7 @@ public final class Account {
                             PublicKeyTable pkTable,
                             AccountTable accTable,
                             AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-                            Cache<DbKey, byte[]> cache
+                            Cache<DbKey, PublicKey> cache
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -381,21 +379,21 @@ public final class Account {
     }
 
     public static byte[] getPublicKey(long id) {
+        PublicKey publicKey=null;
         DbKey dbKey = PublicKeyTable.newKey(id);
-        byte[] key = null;
         if (publicKeyCache != null) {
-            key = publicKeyCache.getIfPresent(dbKey);
+            publicKey = publicKeyCache.getIfPresent(dbKey);
         }
-        if (key == null) {
-            PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.publicKey) == null) {
+        if (publicKey == null) {
+            publicKey = getPublicKey(dbKey);
+            if (publicKey == null || publicKey.publicKey == null) {
                 return null;
             }
             if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, key);
+                publicKeyCache.put(dbKey, publicKey);
             }
         }
-        return key;
+        return publicKey.publicKey;
     }
 
     public static Account addOrGetAccount(long id) {
@@ -426,9 +424,18 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        PublicKey publicKey = null;
+        if (publicKeyCache != null) {
+            publicKey = publicKeyCache.getIfPresent(dbKey);
+        }
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey);
+            publicKey = publicKeyTable.get(dbKey);
+            if (publicKey == null) {
+                publicKey = genesisPublicKeyTable.get(dbKey);
+            }
+            if (publicKey != null && publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
         }
         return publicKey;
     }
@@ -834,7 +841,7 @@ public final class Account {
         t.setDbKey(new LongKey(accountId));
         genesisPublicKeyTable.insert(t);
         if (publicKeyCache != null) {
-            publicKeyCache.put(t.getDbKey(), key);
+            publicKeyCache.put(t.getDbKey(), t);
         }
     }
 
@@ -859,7 +866,7 @@ public final class Account {
             }
         }
         if (publicKeyCache != null) {
-            publicKeyCache.put(dbKey, key);
+            publicKeyCache.put(dbKey, publicKey);
         }
         this.publicKey = publicKey;
     }

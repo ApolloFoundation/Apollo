@@ -11,7 +11,7 @@ public class PublicKeyCacheConfig extends CacheConfigurator {
     public static final String PUBLIC_KEY_CACHE_NAME = "PUBLIC_KEY_CACHE";
 
     public PublicKeyCacheConfig(int percentCapacity) {
-        super(PUBLIC_KEY_CACHE_NAME, 32, percentCapacity);
+        super(PUBLIC_KEY_CACHE_NAME, 88, percentCapacity); //64bit arch
         cacheBuilder().initialCapacity(16);
     }
 }

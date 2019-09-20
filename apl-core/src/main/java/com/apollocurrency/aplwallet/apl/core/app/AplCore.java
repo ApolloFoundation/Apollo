@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
@@ -246,7 +247,7 @@ public final class AplCore {
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
                 //Account initialization
-                Cache<DbKey, byte[]> publicKeyCache = null;
+                Cache<DbKey,PublicKey> publicKeyCache = null;
                 if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
                     publicKeyCache = cacheManager.createCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                 }
