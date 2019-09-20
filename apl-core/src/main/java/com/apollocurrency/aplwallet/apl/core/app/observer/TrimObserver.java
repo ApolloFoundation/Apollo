@@ -46,18 +46,16 @@ public class TrimObserver {
     private PropertiesHolder propertiesHolder;
     private Random random;
     private boolean isShardingOff;
-    private ShardDao shardDao;
     private final int maxRollback;
 
     @Inject
     public TrimObserver(TrimService trimService, BlockchainConfig blockchainConfig,
-                        PropertiesHolder propertiesHolder, ShardDao shardDao, Random random) {
+                        PropertiesHolder propertiesHolder, Random random) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.isShardingOff = this.propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
-        this.shardDao = Objects.requireNonNull(shardDao, "shardDao is NULL");
         if (random == null) {
             this.random = new Random();
         } else {
@@ -135,35 +133,62 @@ public class TrimObserver {
     public int onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int scheduleTrimHeight = -1;
         if (block.getHeight() % trimFrequency == 0) {
-
+            // we need to know that current config was just changed by 'APPLY_BLOCK' event on earlier processing stage
+            boolean isConfigJustUpdated = blockchainConfig.isJustUpdated();
             HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
             boolean shardingEnabled = currentConfig.isShardingEnabled();
             log.debug("Is sharding DISabled ? : '{}' || '{}' on height={}",
                     !shardingEnabled, isShardingOff, block.getHeight());
-            int randomTrimHeightIncrease;
+            int randomTrimHeightIncrease; // we will scheduled trim height by random value or by zero
             if (!shardingEnabled || isShardingOff) {
-                // non sharded node, schedule next trim event processing randomized and added to current height
+                // non sharded node, schedule next trim event processing randomized and added to current height all the time
                 randomTrimHeightIncrease = random.nextInt(trimFrequency);
                 log.trace("'Not sharded', trim height random increase = {}", randomTrimHeightIncrease);
             } else {
-                // sharded node should predict next shard height
-                int nextShardHeight = shardDao.getLatestShardHeight() + currentConfig.getShardingFrequency() + maxRollback;
-                randomTrimHeightIncrease = random.nextInt(trimFrequency);
-                if (block.getHeight() + randomTrimHeightIncrease > nextShardHeight) {
-                    // assign difference to have last trim to be equals 'Next Shard Height'
-                    randomTrimHeightIncrease = nextShardHeight - block.getHeight();
+                // sharded node should 'predict' next shard height and DO NOT randomize in such case
+                int trimHeight = (block.getHeight() - maxRollback);
+                int shardingFrequency;
+                if (!isConfigJustUpdated) {
+                    // config didn't change from previous trim scheduling
+                    shardingFrequency = currentConfig.getShardingFrequency();
+                } else {
+                    // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
+                    shardingFrequency = blockchainConfig.getPreviousConfig().isPresent() ?
+                            blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
+                                : currentConfig.getShardingFrequency(); // fall back
                 }
-                // 'Sharded', trim height random increase = -1000, nextShardHeight=3000, height=4000
-                log.debug("'Sharded', trim height random increase = {}, height={}, nextShardHeight={}, maxRollback={} {}",
-                        randomTrimHeightIncrease, block.getHeight(), nextShardHeight, maxRollback,
-                        randomTrimHeightIncrease < 0 ? "WOW!" : "");
+                // the boolean - if shard is possible by trim height
+                boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
+                // the boolean - if shard is possible by current blockchain height
+                boolean isShardingOnBlockHeight = block.getHeight() % shardingFrequency == 0;
+                // generate pseudo random for 'trim height divergence'
+                randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+                if (isShardingOnBlockHeight || isShardingOnTrimHeight) {
+                    // prevent trim randomization on 'potentially dangerous heights'
+                    randomTrimHeightIncrease = 0;
+                }
+                log.debug("randomTrimHeightIncrease={}, trimHeight = {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={} {}",
+                        randomTrimHeightIncrease, trimHeight, shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight,
+                        randomTrimHeightIncrease < 0 ? "WOW!" : ""); // little 'wow mark' for visual checking
             }
             synchronized (lock) {
-                scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease;
+                scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease; // next trim height with possible divergence
                 log.debug("Schedule next trim for height = {} at {}", scheduleTrimHeight, block.getHeight());
                 trimHeights.add(scheduleTrimHeight);
             }
+        } else {
+            log.trace("Skip Trim schedule on block height='{}' NOT div % by trimFreq={}", block.getHeight(), trimFrequency);
         }
         return scheduleTrimHeight;
     }
+
+    private int generatePositiveIntBiggerThenZero(int trimFrequency) {
+        int temp = random.nextInt(trimFrequency);
+        while (temp <= 0) {
+            // skip ZERO value
+            temp = random.nextInt(trimFrequency);
+        }
+        return temp;
+    }
+
 }
