@@ -690,7 +690,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         JSONObject request = block.getJSONObject();
         request.put("requestType", "processBlock");
-        LOG.trace("Pushing block: {} at height: {}",block.getId(), block.getHeight());
+        LOG.debug("Pushing block: {} at height: {}",block.getId(), block.getHeight());
         sendToSomePeers(request);
     }
 
@@ -747,7 +747,7 @@ public class PeersService {
                         try {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
-                                successful += 1; 
+                                successful += 1;
                             }else{
                                 LOG.debug("Send to peer error");
                             }
