@@ -126,6 +126,9 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
+//reduce trim time by aguiring lock once causes test fails with strange results (3 but expected 6)
+//TODO: check it
+//                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
                     log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
@@ -175,7 +178,9 @@ public class TrimService {
                         table.prune(pruningTime);
                         table.trim(height);
                         dataSource.commit(false);
-                        onlyTrimTime += (System.currentTimeMillis() - startTime);
+                        long duration = System.currentTimeMillis() - startTime;
+                        log.debug("Trim of {} took {} ms",table.getName(), duration);
+                        onlyTrimTime += duration;
                     } finally {
                         if (!oneLock) {
                             globalSync.readUnlock();
