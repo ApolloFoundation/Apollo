@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Singleton;
 
 /**
@@ -35,7 +36,9 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
+    private HeightConfig previousConfig; // keep previous config for easy access
     private Chain chain;
+    private boolean isJustUpdated = false;
 
     public BlockchainConfig() {}
 
@@ -130,6 +133,7 @@ public class BlockchainConfig {
     }
 
     public HeightConfig getCurrentConfig() {
+        this.isJustUpdated = false; // reset flag as soon as new config read
         return currentConfig;
     }
 
@@ -142,6 +146,20 @@ public class BlockchainConfig {
      * @param currentConfig
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
+        this.previousConfig = this.currentConfig;
         this.currentConfig = currentConfig;
+        this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
+    }
+
+    public Optional<HeightConfig> getPreviousConfig() {
+        return Optional.of(previousConfig);
+    }
+
+    /**
+     * Flag to catch changing
+     * @return
+     */
+    public boolean isJustUpdated() {
+        return isJustUpdated;
     }
 }
