@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -338,6 +339,25 @@ class TrimObserverTest {
         nextTrimHeight = simulateFireBlockPushed(16000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
         assertEquals(16555, nextTrimHeight);
+    }
+
+    @Test
+    void testEmulatedRandomGenerator() {
+        doReturn(true).when(config).isShardingEnabled();
+        doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+        random = Mockito.mock(Random.class);
+        this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, random);
+
+        doReturn(false).when(blockchainConfig).isJustUpdated();
+        doReturn(50000).when(config).getShardingFrequency();
+        // here we check logic for RND generation
+        doReturn(0).doReturn(123).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random increase
+
+        int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
+        log.debug("nextTrimHeight = {}", nextTrimHeight);
+        assertEquals(14123, nextTrimHeight);
+        verify(random, times(2)).nextInt(Constants.DEFAULT_TRIM_FREQUENCY);
     }
 
 }
