@@ -126,9 +126,10 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
-//reduce trim time by aguiring lock once                
-                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
-//                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
+//reduce trim time by aguiring lock once causes test fails with strange results (3 but expected 6)
+//TODO: check it
+//                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
+                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
                     log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
                     trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
