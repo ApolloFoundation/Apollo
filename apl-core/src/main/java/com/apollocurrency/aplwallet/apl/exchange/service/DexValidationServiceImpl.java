@@ -78,12 +78,20 @@ public class DexValidationServiceImpl implements IDexValidator {
         return  ethereumWalletService.getBalanceWei(user, currencyType);
     }
     
-    BigInteger getEthBalanceWei(String user, DexCurrencies currencyType) {
+    BigInteger getEthOrPaxBalanceWei(String user, DexCurrencies currencyType) {
         return ethereumWalletService.getBalanceWei(user, currencyType );
     }
     
-    boolean isEthDepositValid(DexOrder myOffer, DexOrder counterOffer) {        
-        BigInteger amountOnHisWallet = getEthBalanceWei(counterOffer.getFromAddress(), counterOffer.getPairCurrency());
+    
+    BigInteger getOnlyEthBalanceWei(String user) {
+        return ethereumWalletService.getOnlyEthBalanceWei(user);
+    }
+    
+    
+    
+    
+    boolean isEthOrPaxDepositValid(DexOrder myOffer, DexOrder counterOffer) {        
+        BigInteger amountOnHisWallet = getEthOrPaxBalanceWei(counterOffer.getFromAddress(), counterOffer.getPairCurrency());
         BigDecimal haveToPay = EthUtil.atmToEth(counterOffer.getOrderAmount()).multiply(counterOffer.getPairRate());
         return amountOnHisWallet.compareTo(EthUtil.etherToWei(haveToPay)) < 0;        
     }
@@ -120,9 +128,9 @@ public class DexValidationServiceImpl implements IDexValidator {
             return false;
         }
         
-        BigInteger hisEthBalanceWei = getEthBalanceWei(hisAddress, hisOrder.getPairCurrency());
-        // BigDecimal averageGasPriceEth = EthUtil.gweiToEth(averageGasPriceGw);
-                        //EthUtil.etherToWei(averageGasPriceEth);
+        // whether it is ETH or PAX = we don't care. ETH balance matters
+        BigInteger hisEthBalanceWei = getOnlyEthBalanceWei(hisAddress);
+
         BigInteger averageGasPriceWei = EthUtil.gweiToWei(averageGasPriceGw);
         log.debug("averageGasPriceGw: {}, averageGasPriceWei: {}, hisEthBalanceWei: {} ", averageGasPriceGw, averageGasPriceWei, hisEthBalanceWei );
        
