@@ -247,7 +247,7 @@ public class DexController {
                     return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
                 }
             } else if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                BigInteger amount = ethereumWalletService.getBalanceWei(order.getFromAddress(), order.getPairCurrency());
+                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), order.getPairCurrency());
                 BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
 
                 if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){

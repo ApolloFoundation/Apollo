@@ -88,12 +88,24 @@ public class EthereumWalletService {
         return ethWalletBalanceInfo;
     }
 
+    
+     /**
+     * Get Eth balance for ETH wallets
+     * @param address Eth address
+     * @return ETH account balance in Wei
+     */
+    public BigInteger getOnlyEthBalanceWei(String address){
+        return getEthBalanceWei(address);
+    }
+   
+    
+    
     /**
      * Get Eth / PAX token balance.
      * @param address Eth address
      * @return account balance in Wei
      */
-    public BigInteger getBalanceWei(String address, DexCurrencies dexCurrencies){
+    public BigInteger getEthOrPaxBalanceWei(String address, DexCurrencies dexCurrencies){
         if(!dexCurrencies.isEthOrPax()){
             throw new UnsupportedOperationException("This currency is not supported");
         }
