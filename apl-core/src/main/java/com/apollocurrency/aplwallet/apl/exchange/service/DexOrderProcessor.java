@@ -8,18 +8,21 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -54,15 +57,17 @@ public class DexOrderProcessor {
     private DexService dexService;
     private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
+    private MandatoryTransactionDao mandatoryTransactionDao;
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     IDexValidator dexValidator;
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, MandatoryTransactionDao mandatoryTransactionDao) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
         this.dexValidator = dexValidationServiceImpl;
+        this.mandatoryTransactionDao = mandatoryTransactionDao;
     }
 
 
@@ -76,6 +81,7 @@ public class DexOrderProcessor {
 
             processIncomeContractsForUserStep3(account);
             processOutcomeContractsForUserStep3(account);
+            processMandatoryTransactions();
         }
 
     }
@@ -85,6 +91,7 @@ public class DexOrderProcessor {
      *
      * @param accountId
      */
+    @Transactional
     private void processContractsForUserStep1(Long accountId) {
         Set<Long> processedOrders = new HashSet<>();
 
@@ -124,30 +131,35 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
-                TransferTransactionInfo transactionInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, STEP_2);
+                TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, STEP_2);
 
-                log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, transactionInfo);
+                log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, transferTxInfo);
 
-                if (transactionInfo.getTxId() == null) {
+                if (transferTxInfo.getTxId() == null) {
                     throw new AplException.ExecutiveProcessException("Transfer money wasn't finish success. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract);
                 contractAttachment.setContractStatus(ExchangeContractStatus.STEP_2);
-                contractAttachment.setCounterTransferTxId(transactionInfo.getTxId());
+                contractAttachment.setCounterTransferTxId(transferTxInfo.getTxId());
                 contractAttachment.setSecretHash(secretHash);
                 contractAttachment.setEncryptedSecret(encryptedSecretX);
                 contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 //TODO move it to some util
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
-
-                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
-
-                if (transaction == null) {
+                createTransactionRequest.setBroadcast(false);
+                Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+                if (contractTx == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
-                broadcastWhenConfirmed(transactionInfo.getTransaction(), transaction);
+
+                MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTxInfo.getTransaction(), contractTx.getFullHash(), null);
+                MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, null, null);
+
+                mandatoryTransactionDao.insert(contractMandatoryTx);
+                mandatoryTransactionDao.insert(transferMandatoryTx);
+                broadcastWhenConfirmed(transferTxInfo.getTransaction(), contractTx);
 
                 processedOrders.add(counterOrder.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
@@ -157,22 +169,31 @@ public class DexOrderProcessor {
         }
     }
 
-    private void broadcastWhenConfirmed(Transaction txToBroadcast, Transaction unconfirmedTx) {
-        if (txToBroadcast != null) {
-            CompletableFuture.runAsync(() -> {
-                while (!dexService.txExists(unconfirmedTx.getId())) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(250);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-                try {
-                    dexService.broadcast(txToBroadcast);
-                } catch (Exception e) {
-                    log.error(e.toString(), e);
-                }
-            });
+    @Transactional
+    void saveAndBroadcastContractWithTransfer(Transaction transferTx, Transaction contractTx) {
+        MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, null, null);
+        mandatoryTransactionDao.insert(contractMandatoryTx);
+        if (transferTx != null) {
+            MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTx, contractTx.getFullHash(), null);
+            mandatoryTransactionDao.insert(transferMandatoryTx);
+            broadcastWhenConfirmed(transferTx, contractTx);
         }
+    }
+
+    private void broadcastWhenConfirmed(Transaction txToBroadcast, Transaction unconfirmedTx) {
+        CompletableFuture.runAsync(() -> {
+            while (!dexService.txExists(unconfirmedTx.getId())) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(250);
+                } catch (InterruptedException ignored) {
+                }
+            }
+            try {
+                dexService.broadcast(txToBroadcast);
+            } catch (Exception e) {
+                log.error(e.toString(), e);
+            }
+        });
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
@@ -299,14 +320,15 @@ public class DexOrderProcessor {
                 contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+                createTransactionRequest.setBroadcast(false);
 
-                Transaction transaction = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
 
-                if (transaction == null) {
+                if (contractTx == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
                 }
-                broadcastWhenConfirmed(transferTransactionInfo.getTransaction(), transaction);
-                log.debug("DexOfferProcessor Step-2. User created contract (Step-3). accountId: {} , txId: {}.", accountId, transaction.getId());
+                saveAndBroadcastContractWithTransfer(transferTransactionInfo.getTransaction(), contractTx);
+                log.debug("DexOfferProcessor Step-2. User created contract (Step-3). accountId: {} , txId: {}.", accountId, contractTx.getId());
 
                 processedOrders.add(order.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
@@ -317,7 +339,7 @@ public class DexOrderProcessor {
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
-        
+
         log.debug("Validation for step 2 entry point:");
         DexOrder contractOrder1 = dexService.getOrder(exchangeContract.getOrderId());
         DexOrder contractOrder2 = dexService.getOrder(exchangeContract.getCounterOrderId());
@@ -364,7 +386,6 @@ public class DexOrderProcessor {
                 log.error(ex.getMessage(), ex);
             }
         }
-
     }
 
 
@@ -418,7 +439,7 @@ public class DexOrderProcessor {
     private boolean isContractStep3Valid(ExchangeContract exchangeContract, DexOrder dexOrder) {
         //TODO add additional validation.
         log.debug("Validation 3 entry point");
-                
+
         return /*isContractStep1Valid(exchangeContract) &&*/ dexOrder.getStatus().isWaitingForApproval() && exchangeContract.getTransferTxId() != null && dexService.hasConfirmations(exchangeContract, dexOrder);
     }
 
@@ -502,5 +523,49 @@ public class DexOrderProcessor {
 
     public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
         rollbackCachedOrderDbIds(block.getHeight());
+    }
+
+    void processMandatoryTransactions() {
+        long dbId = 0;
+        while (true) {
+            List<MandatoryTransaction> all = mandatoryTransactionDao.getAll(dbId, ORDERS_SELECT_SIZE);
+            for (MandatoryTransaction currentTx : all) {
+                dbId = currentTx.getDbEntryId();
+                boolean expired = dexService.isExpired(currentTx);
+                boolean confirmed = dexService.txExists(currentTx.getId());
+                if (!expired) {
+                    if (!confirmed) {
+                        byte[] requiredTxHash = currentTx.getRequiredTxHash();
+                        MandatoryTransaction prevRequiredTx = null;
+                        boolean brodcast = true; // brodcast current tx
+                        while (requiredTxHash != null) {
+                            long id = Convert.fullHashToId(requiredTxHash);
+                            MandatoryTransaction requiredTx = mandatoryTransactionDao.get(id);
+                            boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
+                            if (hasConfirmations) {
+                                if (prevRequiredTx != null) {
+                                    dexService.broadcast(prevRequiredTx.getTransaction());
+                                    brodcast = false;
+                                }
+                                break;
+                            } else if (requiredTx.getRequiredTxHash() == null) {
+                                dexService.broadcast(requiredTx);
+                                break;
+                            }
+                            prevRequiredTx = requiredTx;
+                            requiredTxHash = requiredTx.getRequiredTxHash();
+                        }
+                        if (brodcast) {
+                            dexService.broadcast(currentTx.getTransaction());
+                        }
+                    }
+                } else {
+                    mandatoryTransactionDao.delete(currentTx.getId());
+                }
+            }
+            if (all.size() < ORDERS_SELECT_SIZE) {
+                break;
+            }
+        }
     }
 }

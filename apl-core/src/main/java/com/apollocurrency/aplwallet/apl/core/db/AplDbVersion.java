@@ -825,7 +825,10 @@ public class AplDbVersion extends DbVersion {
             case 314:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS deadline_to_reply INT NOT NULL");
             case 315:
-                return 315;
+                apply("CREATE TABLE IF NOT EXISTS mandatory_transaction " +
+                        "(db_id IDENTITY, id BIGINT NOT NULL, transaction_bytes VARBINARY NOT NULL, required_tx_hash BINARY(32))");
+            case 316:
+                return 316;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
