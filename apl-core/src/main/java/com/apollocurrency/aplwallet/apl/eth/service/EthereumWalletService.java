@@ -90,7 +90,7 @@ public class EthereumWalletService {
 
     
      /**
-     * Get Eth balance for both PAX-ETH wallets
+     * Get Eth balance for ETH wallets
      * @param address Eth address
      * @return ETH account balance in Wei
      */
