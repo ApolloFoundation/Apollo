@@ -75,11 +75,11 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
     
     BigInteger getUserEthDeposit(String user, DexCurrencies currencyType) {
-        return  ethereumWalletService.getBalanceWei(user, currencyType);
+        return  ethereumWalletService.getEthOrPaxBalanceWei(user, currencyType);
     }
     
     BigInteger getEthOrPaxBalanceWei(String user, DexCurrencies currencyType) {
-        return ethereumWalletService.getBalanceWei(user, currencyType );
+        return ethereumWalletService.getEthOrPaxBalanceWei(user, currencyType );
     }
     
     
