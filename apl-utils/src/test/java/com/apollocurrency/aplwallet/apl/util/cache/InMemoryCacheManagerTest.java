@@ -130,11 +130,11 @@ class InMemoryCacheManagerTest {
     void testMemCalculator(){
         int size = new InMemoryCacheManager.MemoryUsageCalculator(64)
                 .startObject()//+16
-                .addBoolean() //+1
-                .addByte()//+1
+                .addBooleanPrimitive() //+1
+                .addBytePrimitive()//+1
                 .addChar()//+2
-                .addInt() //+4 + padding=2
-                .addLong() //+8
+                .addInt() //+4
+                .addLongPrimitive() //+8
                 .addReference()// +8
                 .addAggregation(LONG_SIZE) //8 + 16 + 8
                 .addArrayExtra(32) //8 + 24 + 32
@@ -142,7 +142,7 @@ class InMemoryCacheManagerTest {
                 .addReference(
                         new InMemoryCacheManager.MemoryUsageCalculator(64)
                         .startObject()
-                        .addLong()
+                        .addLongPrimitive()
                         .calc()
                 )// 8 + 16 + 8
                 .calc();//248

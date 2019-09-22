@@ -225,7 +225,7 @@ public class InMemoryCacheManager {
          * Add memory requirements of primitive type: boolean
          * @return this calculator
          */
-        public MemoryUsageCalculator addBoolean() {
+        public MemoryUsageCalculator addBooleanPrimitive() {
             mainPart += 1;
             return this;
         }
@@ -234,7 +234,7 @@ public class InMemoryCacheManager {
          * Add memory requirements of primitive type: byte
          * @return this calculator
          */
-        public MemoryUsageCalculator addByte() {
+        public MemoryUsageCalculator addBytePrimitive() {
             mainPart += 1;
             return this;
         }
@@ -261,7 +261,7 @@ public class InMemoryCacheManager {
          * Add memory requirements of primitive type: long
          * @return this calculator
          */
-        public MemoryUsageCalculator addLong() {
+        public MemoryUsageCalculator addLongPrimitive() {
             mainPart += LONG_SIZE;
             return this;
         }
