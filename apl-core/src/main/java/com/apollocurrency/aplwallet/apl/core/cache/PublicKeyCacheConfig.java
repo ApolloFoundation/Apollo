@@ -10,8 +10,8 @@ public class PublicKeyCacheConfig extends CacheConfigurator {
 
     public static final String PUBLIC_KEY_CACHE_NAME = "PUBLIC_KEY_CACHE";
 
-    public PublicKeyCacheConfig(int percentCapacity) {
-        super(PUBLIC_KEY_CACHE_NAME, 88, percentCapacity); //64bit arch
+    public PublicKeyCacheConfig(int priority) {
+        super(PUBLIC_KEY_CACHE_NAME, 88, priority); //64bit arch
         cacheBuilder().initialCapacity(16);
     }
 }

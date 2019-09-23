@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -64,20 +65,20 @@ public class BlockchainImpl implements Blockchain {
      * Specify offset from current height to retrieve block generators [currentHeight - offset; currentHeight] for further tracking generator hitTime
      */
     private static final int MAX_BLOCK_GENERATOR_OFFSET = 10_000;
-    private BlockDao blockDao;
-    private TransactionDao transactionDao;
-    private BlockchainConfig blockchainConfig;
-    private TimeService timeService;
-    private PropertiesHolder propertiesHolder;
-    private TransactionIndexDao transactionIndexDao;
-    private BlockIndexDao blockIndexDao;
-    private DatabaseManager databaseManager;
-    private ShardDao shardDao;
-    private ShardRecoveryDao shardRecoveryDao;
+    private final BlockDao blockDao;
+    private final TransactionDao transactionDao;
+    private final BlockchainConfig blockchainConfig;
+    private final TimeService timeService;
+    private final PropertiesHolder propertiesHolder;
+    private final TransactionIndexDao transactionIndexDao;
+    private final BlockIndexService blockIndexService;
+    private final DatabaseManager databaseManager;
+    private final ShardDao shardDao;
+    private final ShardRecoveryDao shardRecoveryDao;
 
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
-                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao,
+                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
                           DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
@@ -85,7 +86,7 @@ public class BlockchainImpl implements Blockchain {
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
         this.transactionIndexDao = transactionIndexDao;
-        this.blockIndexDao = blockIndexDao;
+        this.blockIndexService = blockIndexService;
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
@@ -237,9 +238,9 @@ public class BlockchainImpl implements Blockchain {
 //                return result;
 //            }
 //        }
-        Integer height = blockIndexDao.getHeight(blockId);
+        Integer height = blockIndexService.getHeight(blockId);
         if (height != null) {
-            result.addAll(blockIndexDao.getBlockIdsAfter(height, limit));
+            result.addAll(blockIndexService.getBlockIdsAfter(height, limit));
         }
         if (result.size() < limit) {
             long lastBlockId = blockId;
@@ -260,7 +261,7 @@ public class BlockchainImpl implements Blockchain {
 
 
     private Integer getBlockHeight(long blockId) {
-        Integer height = blockIndexDao.getHeight(blockId);
+        Integer height = blockIndexService.getHeight(blockId);
         if (height == null) {
             Block block = blockDao.findBlock(blockId, databaseManager.getDataSource());
             if (block != null) {
@@ -323,7 +324,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        BlockIndex blockIndex = blockIndexDao.getByBlockHeight(height);
+        BlockIndex blockIndex = blockIndexService.getByBlockHeight(height);
         if (blockIndex != null) {
             return blockIndex.getBlockId();
         }
@@ -389,7 +390,7 @@ public class BlockchainImpl implements Blockchain {
         shardRecoveryDao.hardDeleteAllShardRecovery();
         shardDao.hardDeleteAllShards();
         transactionIndexDao.hardDeleteAllTransactionIndex();
-        blockIndexDao.hardDeleteAllBlockIndex();
+        blockIndexService.hardDeleteAllBlockIndex();
         log.debug("finished deleteAll()");
     }
 
@@ -619,7 +620,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public boolean hasBlockInShards(long blockId) {
-        return hasBlock(blockId) || blockIndexDao.getByBlockId(blockId) != null;
+        return hasBlock(blockId) || blockIndexService.getByBlockId(blockId) != null;
     }
 
     @Transactional(readOnly = true)
@@ -660,7 +661,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
-        Long shardId = blockIndexDao.getShardIdByBlockId(blockId);
+        Long shardId = blockIndexService.getShardIdByBlockId(blockId);
         return getShardDataSourceOrDefault(shardId);
     }
 
@@ -677,7 +678,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
-        Long shardId = blockIndexDao.getShardIdByBlockHeight(blockHeight);
+        Long shardId = blockIndexService.getShardIdByBlockHeight(blockHeight);
         return getShardDataSourceOrDefault(shardId);
     }
 
