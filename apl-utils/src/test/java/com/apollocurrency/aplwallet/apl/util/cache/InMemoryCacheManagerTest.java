@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager.MemoryUsageCalculator.LONG_SIZE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -53,10 +54,10 @@ class InMemoryCacheManagerTest {
     @Test
     void createCache() {
         setupManager();
-        Cache<String, byte[]> cache1024 = manager.createCache("SIMPLE_CACHE_NAME_1024");
+        Cache<String, byte[]> cache1024 = manager.acquireCache("SIMPLE_CACHE_NAME_1024");
         assertNotNull(cache1024);
 
-        cache1024 = manager.createCache("SIMPLE_CACHE_NAME_2048");
+        cache1024 = manager.acquireCache("SIMPLE_CACHE_NAME_2048");
         assertNull(cache1024);
     }
 
@@ -65,7 +66,7 @@ class InMemoryCacheManagerTest {
         setupManager();
         byte[] bytes1 = "1234567890".getBytes();
         byte[] bytes2 = "ABCDEF1234567890".getBytes();
-        Cache<String, byte[]> cache1024 = manager.createCache("SIMPLE_CACHE_NAME_1024");
+        Cache<String, byte[]> cache1024 = manager.acquireCache("SIMPLE_CACHE_NAME_1024");
         assertNotNull(cache1024);
         byte[] rez = cache1024.getIfPresent("key1");
         assertNull(rez);
@@ -93,7 +94,7 @@ class InMemoryCacheManagerTest {
         doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
 
-        Cache<String, byte[]> cache = manager.createCache(cacheName);
+        Cache<String, byte[]> cache = manager.acquireCache(cacheName);
         assertEquals(0L, cache.size());
         LoadingCache<String, byte[]> loadingCache = (LoadingCache<String, byte[]>) cache;
         String key1 = "firstKey";
@@ -112,7 +113,7 @@ class InMemoryCacheManagerTest {
         doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
 
-        Cache<Integer, byte[]> cache = manager.createCache(cacheName);
+        Cache<Integer, byte[]> cache = manager.acquireCache(cacheName);
         assertEquals(64, cacheCfg.getMaxSize());
         int i=0;
         for(; i<cacheCfg.getMaxSize()*2;i++){
@@ -123,6 +124,29 @@ class InMemoryCacheManagerTest {
         i--;
         assertNotNull(cache.getIfPresent(i));
         assertArrayEquals(Long.toUnsignedString(i*1000L).getBytes(), cache.getIfPresent(i));
+    }
+
+    @Test
+    void testMemCalculator(){
+        int size = new InMemoryCacheManager.MemoryUsageCalculator(64)
+                .startObject()//+16
+                .addBooleanPrimitive() //+1
+                .addBytePrimitive()//+1
+                .addChar()//+2
+                .addInt() //+4
+                .addLongPrimitive() //+8
+                .addReference()// +8
+                .addAggregation(LONG_SIZE) //8 + 16 + 8
+                .addArrayExtra(32) //8 + 24 + 32
+                .addString(5)//8 + 56 + 2*5 + 6
+                .addReference(
+                        new InMemoryCacheManager.MemoryUsageCalculator(64)
+                        .startObject()
+                        .addLongPrimitive()
+                        .calc()
+                )// 8 + 16 + 8
+                .calc();//248
+        assertEquals(248, size);
     }
 
     private void setupManager() {
