@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -54,15 +56,22 @@ public class DexOrderProcessor {
     private DexService dexService;
     private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
-    private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private IDexValidator dexValidator;
+    private DexSmartContractService dexSmartContractService;
+    private EthereumWalletService ethereumWalletService;
+
+    private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
+    private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
+
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
         this.dexValidator = dexValidationServiceImpl;
+        this.dexSmartContractService = dexSmartContractService;
+        this.ethereumWalletService = ethereumWalletService;
     }
 
 
@@ -71,6 +80,10 @@ public class DexOrderProcessor {
 
         for (Long account : accounts) {
             processCancelOrders(account);
+            processExpiredOrders(account);
+            refundLostDeposits(account);
+
+
             processContractsForUserStep1(account);
             processContractsForUserStep2(account);
 
@@ -469,7 +482,7 @@ public class DexOrderProcessor {
                 try {
                     dexService.refundEthPaxFrozenMoney(passphrase, order);
                 } catch (AplException.ExecutiveProcessException e) {
-                    log.info("Unable to refund {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                    log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
                 }
             }
             if (orders.size() < ORDERS_SELECT_SIZE) {
@@ -481,6 +494,69 @@ public class DexOrderProcessor {
                 accountCancelOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
             }
         }
+    }
+
+    void processExpiredOrders(Long accountId) {
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+        OrderHeightId orderHeightId;
+        synchronized (accountExpiredOrderMap) {
+            orderHeightId = accountExpiredOrderMap.get(accountId);
+        }
+        long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
+        int orderHeight = 0;
+        while (true) {
+            List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
+                    .accountId(accountId)
+                    .dbId(fromDbId)
+                    .status(OrderStatus.EXPIRED)
+                    .type(OrderType.BUY.ordinal())
+                    .limit(ORDERS_SELECT_SIZE)
+                    .build());
+            for (DexOrder order : orders) {
+                fromDbId = order.getDbId();
+                orderHeight = order.getHeight();
+                try {
+                    dexService.refundEthPaxFrozenMoney(passphrase, order);
+                } catch (AplException.ExecutiveProcessException e) {
+                    log.info("Unable to refund expired order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                }
+            }
+            if (orders.size() < ORDERS_SELECT_SIZE) {
+                break;
+            }
+        }
+        if (orderHeight != 0) {
+            synchronized (accountExpiredOrderMap) {
+                accountExpiredOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
+            }
+        }
+    }
+
+    public void refundLostDeposits(Long accountId) {
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+
+        List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+
+        for (String address : addresses) {
+            try {
+                List<UserEthDepositInfo> deposits = dexService.getUserFilledDeposits(address);
+
+                for (UserEthDepositInfo deposit : deposits) {
+                    Long timeDiff = Math.min(ethereumWalletService.getLastBlock().getTimestamp().longValue(), deposit.getCreationTime());
+
+                    if (timeDiff > Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY) {
+                        try {
+                            dexService.refundEthPaxFrozenMoney(passphrase, deposit.getOrderId(), address);
+                        } catch (AplException.ExecutiveProcessException e) {
+                            log.info("Unable to refund lost order {} for {}, reason: {}", deposit.getOrderId(), address, e.getMessage());
+                        }
+                    }
+                }
+            } catch (AplException.ExecutiveProcessException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
     }
 
     public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {

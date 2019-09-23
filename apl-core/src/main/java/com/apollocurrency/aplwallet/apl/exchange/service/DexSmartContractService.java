@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -90,15 +91,10 @@ public class DexSmartContractService {
 
         /**
          *  Withdraw money(eth or pax) from the contract.
-         * @param currency Eth or Pax
          * @return String transaction hash.
          */
-    public String withdraw(String passphrase, long accountId, String fromAddress,  BigInteger orderId, Long gas, DexCurrencies currency) throws AplException.ExecutiveProcessException {
+        public String withdraw(String passphrase, long accountId, String fromAddress, BigInteger orderId, Long gas) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
-
-        if(!currency.isEthOrPax()){
-            throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
-        }
 
         Long gasPrice = gas;
         if(gasPrice == null){
@@ -186,6 +182,14 @@ public class DexSmartContractService {
         return false;
     }
 
+    public List<String> getEthUserAddresses(String passphrase, Long accountId) {
+        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+
+        return walletKeysInfo.getEthWalletKeys().stream()
+                .map(k -> k.getCredentials().getAddress())
+                .collect(Collectors.toList());
+    }
+
     private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
@@ -223,27 +227,6 @@ public class DexSmartContractService {
         return transactionReceipt != null ? transactionReceipt.getTransactionHash() : null;
     }
 
-    /**
-     *  Deposit some eth/erc20.
-     * @param orderId  is Long but then will use as unsign value.
-     * @param token
-     * @return link on tx.
-     */
-    private String depositAndInitiate(Credentials credentials, BigInteger orderId, BigInteger weiValue, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice,  String token){
-        ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
-        TransactionReceipt transactionReceipt = null;
-        try {
-            if(token==null) {
-                transactionReceipt = dexContract.depositAndInitiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp), weiValue).sendAsync().get();
-            } else {
-                transactionReceipt = dexContract.depositAndInitiate(orderId, weiValue, token, secretHash, recipient, BigInteger.valueOf(refundTimestamp)).sendAsync().get();
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-        }
-        return transactionReceipt != null ? transactionReceipt.getTransactionHash() : null;
-    }
 
     private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice) {
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
