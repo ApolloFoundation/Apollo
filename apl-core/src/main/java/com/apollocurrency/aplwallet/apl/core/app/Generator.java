@@ -135,6 +135,9 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                         for (Generator generator : sortedForgers) {
+                            if(suspendForging){
+                                break;
+                            }
                             if (generator.getHitTime() > generationLimit || generator.forge(lastBlock, generationLimit)) {
                                 return;
                             }
