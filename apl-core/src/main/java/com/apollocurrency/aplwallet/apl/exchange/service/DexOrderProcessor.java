@@ -55,7 +55,7 @@ public class DexOrderProcessor {
     private TransactionProcessor processor;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
-    IDexValidator dexValidator;
+    private IDexValidator dexValidator;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl) {
