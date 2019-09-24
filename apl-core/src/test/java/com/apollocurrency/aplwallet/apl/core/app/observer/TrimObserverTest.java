@@ -72,12 +72,14 @@ class TrimObserverTest {
     @BeforeEach
     void setUp() {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(false).when(config).isShardingEnabled();
+        doReturn(true).when(config).isShardingEnabled();
         doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
     }
 
     @Test
     void testOnTrimConfigUpdated() {
+        doReturn(5000).when(config).getShardingFrequency();
+
         assertTrue(observer.isTrimDerivedTables());
         fireBlockPushed(5000);
         fireBlockPushed(6000);
@@ -126,6 +128,8 @@ class TrimObserverTest {
 
     @Test
     void testOnBlockPushed() {
+        doReturn(5000).when(config).getShardingFrequency();
+
         fireBlockPushed(4999); // skippped
         fireBlockPushed(5000); // accepted
         fireBlockPushed(6000); // accepted
@@ -137,6 +141,8 @@ class TrimObserverTest {
 
     @Test
     void testOnBlockPushedWithDisabledTrim() throws InterruptedException {
+        doReturn(5000).when(config).getShardingFrequency();
+
         simulateFireBlockPushed(4998);
         simulateFireBlockPushed(4999);
         int randomHeight1 = simulateFireBlockPushed(5000);
@@ -190,7 +196,7 @@ class TrimObserverTest {
 
     @Test
     void testIncorrectConfigParams() {
-        doReturn(false).when(config).isShardingEnabled();
+        doReturn(true).when(config).isShardingEnabled();
         doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
         doReturn(999).when(config).getShardingFrequency();
 
@@ -243,7 +249,7 @@ class TrimObserverTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 > 1000 && nextTrimHeight1 < 2000);
+        assertTrue(nextTrimHeight1 < 1000);
     }
 
     @Test
@@ -254,7 +260,7 @@ class TrimObserverTest {
         doReturn(5000).when(config).getShardingFrequency();
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 >= 1000 && nextTrimHeight1 < 2000);
+        assertTrue(nextTrimHeight1 < 1000);
     }
 
     @Test
@@ -265,12 +271,12 @@ class TrimObserverTest {
 
         doReturn(5000).when(config).getShardingFrequency();
         random = Mockito.mock(Random.class);
-        doReturn(12).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        doReturn(12).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
         this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, random);
 
         int nextTrimHeight1 = simulateFireBlockPushed(6000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 == 6012);
+        assertTrue(nextTrimHeight1 == 5987);
     }
 
     @Test
@@ -281,12 +287,12 @@ class TrimObserverTest {
         doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
 
         random = Mockito.mock(Random.class);
-        doReturn(456).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        doReturn(456).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
         this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, random);
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(11456, nextTrimHeight1);
+        assertEquals(10543, nextTrimHeight1);
     }
 
     @Test
@@ -297,12 +303,12 @@ class TrimObserverTest {
         doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
 
         random = Mockito.mock(Random.class);
-        doReturn(1000).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random
+        doReturn(999).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
         this.observer = new TrimObserver(trimService, blockchainConfig, propertiesHolder, random);
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(12000, nextTrimHeight1);
+        assertEquals(10000, nextTrimHeight1);
     }
 
     @Test
@@ -317,11 +323,11 @@ class TrimObserverTest {
         // push block before shard height changes to next config section
         doReturn(false).when(blockchainConfig).isJustUpdated();
         doReturn(50000).when(config).getShardingFrequency();
-        doReturn(628).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random increase
+        doReturn(628).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(14628, nextTrimHeight);
+        assertEquals(13371, nextTrimHeight);
 
         // e.g. config has changed at that point
         doReturn(3000).when(config).getShardingFrequency(); // emulate changed config
@@ -335,10 +341,10 @@ class TrimObserverTest {
         log.debug("nextTrimHeight = {}", nextTrimHeight);
         assertEquals(15000, nextTrimHeight);
 
-        doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random increase
+        doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
         nextTrimHeight = simulateFireBlockPushed(16000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(16555, nextTrimHeight);
+        assertEquals(15444, nextTrimHeight);
     }
 
     @Test
@@ -352,12 +358,12 @@ class TrimObserverTest {
         doReturn(false).when(blockchainConfig).isJustUpdated();
         doReturn(50000).when(config).getShardingFrequency();
         // here we check logic for RND generation
-        doReturn(0).doReturn(123).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY); // emulate random increase
+        doReturn(300).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(14123, nextTrimHeight);
-        verify(random, times(2)).nextInt(Constants.DEFAULT_TRIM_FREQUENCY);
+        assertEquals(13699, nextTrimHeight);
+        verify(random, times(1)).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1);
     }
 
 }

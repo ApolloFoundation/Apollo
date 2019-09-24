@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
@@ -66,7 +65,7 @@ public class TrimObserver {
 
     @PostConstruct
     void init() {
-        if (this.blockchainConfig.getCurrentConfig() != null
+        if (this.blockchainConfig.getCurrentConfig() != null && this.blockchainConfig.getCurrentConfig().isShardingEnabled()
                 && this.blockchainConfig.getCurrentConfig().getShardingFrequency() > 0 && this.trimFrequency > 0
                 && this.blockchainConfig.getCurrentConfig().getShardingFrequency() < this.trimFrequency) {
             String error = String.format(
@@ -167,12 +166,12 @@ public class TrimObserver {
                     // prevent trim randomization on 'potentially dangerous heights'
                     randomTrimHeightIncrease = 0;
                 }
-                log.debug("randomTrimHeightIncrease={}, trimHeight = {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={} {}",
-                        randomTrimHeightIncrease, trimHeight, shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight,
-                        randomTrimHeightIncrease < 0 ? "WOW!" : ""); // little 'wow mark' for visual checking
+                log.debug("randomTrimHeightIncrease={}, trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={} {}",
+                        randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight,
+                        randomTrimHeightIncrease < 0 ? "WOW!" : ""); // little 'wow mark' for visual check
             }
             synchronized (lock) {
-                scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease; // next trim height with possible divergence
+                scheduleTrimHeight = block.getHeight() - randomTrimHeightIncrease; // decrease next trim height with possible divergence
                 log.debug("Schedule next trim for height = {} at {}", scheduleTrimHeight, block.getHeight());
                 trimHeights.add(scheduleTrimHeight);
             }
@@ -183,12 +182,7 @@ public class TrimObserver {
     }
 
     private int generatePositiveIntBiggerThenZero(int trimFrequency) {
-        int temp = random.nextInt(trimFrequency);
-        while (temp <= 0) {
-            // skip ZERO value
-            temp = random.nextInt(trimFrequency);
-        }
-        return temp;
+        return random.nextInt(trimFrequency - 1) + 1;
     }
 
 }
