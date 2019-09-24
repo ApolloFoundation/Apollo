@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -66,7 +67,7 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     PhasingPollResultTable table;

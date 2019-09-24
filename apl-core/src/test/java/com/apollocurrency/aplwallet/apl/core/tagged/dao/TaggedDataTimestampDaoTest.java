@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -64,7 +65,7 @@ class TaggedDataTimestampDaoTest {
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
             .build();
 
