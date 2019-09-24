@@ -16,11 +16,11 @@ import java.util.List;
 @Slf4j
 public class AplCacheConfig implements InMemoryCacheConfigurator {
 
-    private static final int ADDRESSABLE_FOR_CACHE = 30; //30 percent of Available memory;
+    private static final int ADDRESSABLE_MEM_PERCENT_FOR_CACHE = 30; //30 percent of Available memory;
 
     private CacheConfiguration[] cacheConfigurations = {
-            new PublicKeyCacheConfig(80),
-            new ShardDsCacheConfigurator(20)
+            new PublicKeyCacheConfig(60),
+            new BlockIndexCacheConfig(60)
     };
 
     @PostConstruct
@@ -33,7 +33,7 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
     public long getAvailableMemory() {
         long mem = Math.min(Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory())/100;
 
-        mem = mem*ADDRESSABLE_FOR_CACHE;
+        mem = mem*ADDRESSABLE_MEM_PERCENT_FOR_CACHE;
 
         return mem;
     }
