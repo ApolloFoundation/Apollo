@@ -18,7 +18,7 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     private int cachePriority;
     private int maxSize = -1;
     private CacheBuilder cacheBuilder;
-    private Optional<CacheLoader<K, V>> optionalCacheLoader;
+    private CacheLoader<K, V> cacheLoader;
 
     public CacheConfigurator(String name, long elementSize, int cachePriority) {
         this(name, elementSize, cachePriority, null);
@@ -30,7 +30,7 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
         this.elementSize = elementSize;
         this.cachePriority = cachePriority;
         this.cacheBuilder = CacheBuilder.newBuilder();
-        this.optionalCacheLoader = Optional.ofNullable(cacheLoader);
+        this.cacheLoader = cacheLoader;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
 
     @Override
     public Optional<CacheLoader<K, V>> getCacheLoader(){
-        return optionalCacheLoader;
+        return Optional.ofNullable(cacheLoader);
     }
 
     @Override

@@ -35,8 +35,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
@@ -71,6 +69,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.cache.Cache;
 import org.slf4j.Logger;
 
 /**
@@ -106,7 +105,7 @@ public final class Account {
     private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
     private static AccountPropertyTable accountPropertyTable;
 
-    private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    private static Cache<DbKey, PublicKey> publicKeyCache = null;
            
     
     private static final Listeners<Account, Event> listeners = new Listeners<>();
@@ -132,7 +131,8 @@ public final class Account {
                             GlobalSync globalSync,
                             PublicKeyTable pkTable,
                             AccountTable accTable,
-                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable
+                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+                            Cache<DbKey, PublicKey> cache
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -149,9 +149,9 @@ public final class Account {
         accountPropertyTable = AccountPropertyTable.getInstance();
         genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
 
-        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
-            publicKeyCache = new ConcurrentHashMap<>();
-        }
+        //if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+            publicKeyCache = cache;
+        //}
     }
 
 
@@ -168,22 +168,22 @@ public final class Account {
 
         private void clearCache() {
             if (publicKeyCache != null) {
-                publicKeyCache.clear();
+                publicKeyCache.cleanUp();
             }
         }
 
         public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
             if (publicKeyCache != null) {
-                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
+                publicKeyCache.invalidate(AccountTable.newKey(block.getGeneratorId()));
                 block.getOrLoadTransactions().forEach(transaction -> {
-                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
+                    publicKeyCache.invalidate(AccountTable.newKey(transaction.getSenderId()));
                     if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
+                        publicKeyCache.invalidate(AccountTable.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
                         ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                         for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
+                            publicKeyCache.invalidate(AccountTable.newKey(Account.getId(publicKey)));
                         }
                     }
                 });
@@ -380,20 +380,11 @@ public final class Account {
 
     public static byte[] getPublicKey(long id) {
         DbKey dbKey = PublicKeyTable.newKey(id);
-        byte[] key = null;
-        if (publicKeyCache != null) {
-            key = publicKeyCache.get(dbKey);
+        PublicKey publicKey = getPublicKey(dbKey);
+        if (publicKey == null || publicKey.publicKey == null) {
+            return null;
         }
-        if (key == null) {
-            PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.publicKey) == null) {
-                return null;
-            }
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, key);
-            }
-        }
-        return key;
+        return publicKey.publicKey;
     }
 
     public static Account addOrGetAccount(long id) {
@@ -424,9 +415,18 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        PublicKey publicKey = null;
+        if (publicKeyCache != null) {
+            publicKey = publicKeyCache.getIfPresent(dbKey);
+        }
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey);
+            publicKey = publicKeyTable.get(dbKey);
+            if (publicKey == null) {
+                publicKey = genesisPublicKeyTable.get(dbKey);
+            }
+            if (publicKey != null && publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
         }
         return publicKey;
     }
@@ -832,7 +832,7 @@ public final class Account {
         t.setDbKey(new LongKey(accountId));
         genesisPublicKeyTable.insert(t);
         if (publicKeyCache != null) {
-            publicKeyCache.put(t.getDbKey(), key);
+            publicKeyCache.put(t.getDbKey(), t);
         }
     }
 
@@ -857,7 +857,7 @@ public final class Account {
             }
         }
         if (publicKeyCache != null) {
-            publicKeyCache.put(dbKey, key);
+            publicKeyCache.put(dbKey, publicKey);
         }
         this.publicKey = publicKey;
     }
