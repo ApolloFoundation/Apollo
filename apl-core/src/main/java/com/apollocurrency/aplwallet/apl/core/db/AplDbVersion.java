@@ -794,38 +794,42 @@ public class AplDbVersion extends DbVersion {
                         "counter_offer_id BIGINT NOT NULL, secret_hash CHAR(64) NULL DEFAULT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE," +
                         " deadline_to_reply INT NOT NULL)");
             case 302:
-                apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL DEFAULT NULL");
-            case 303:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS status TINYINT NOT NULL ");
-            case 304:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS sender BIGINT NOT NULL");
-            case 305:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS recipient BIGINT NOT NULL");
-            case 306:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS encrypted_secret BINARY(64) NULL DEFAULT NULL");
-            case 307:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS transfer_tx_id VARCHAR(120) NULL DEFAULT NULL");
-            case 308:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS counter_transfer_tx_id VARCHAR(120) NULL DEFAULT NULL");
-
-            case 309:
-                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
-            case 310:
-                apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
-                        " height INT NOT NULL)");
-            case 311:
                 apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
                         "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
                         "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
                         "HEIGHT INT not null )" );
+            case 303:
+                apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");                                
+            case 304:                    
+                apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL DEFAULT NULL");
+            case 305:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS status TINYINT NOT NULL ");
+            case 306:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS sender BIGINT NOT NULL");
+            case 307:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS recipient BIGINT NOT NULL");
+            case 308:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS encrypted_secret BINARY(64) NULL DEFAULT NULL");
+            case 309:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS transfer_tx_id VARCHAR(120) NULL DEFAULT NULL");
+            case 310:
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS counter_transfer_tx_id VARCHAR(120) NULL DEFAULT NULL");
+            case 311:
+                apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
+                        " height INT NOT NULL)");
             case 312:
-                apply("ALTER TABLE dex_offer ALTER COLUMN transaction_id RENAME TO id");
+                apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
+                        "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
+                        "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
+                        "HEIGHT INT not null )" );
             case 313:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS id BIGINT DEFAULT NOT NULL");
+                apply("ALTER TABLE dex_offer ALTER COLUMN transaction_id RENAME TO id");
             case 314:
-                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS deadline_to_reply INT NOT NULL");
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS id BIGINT DEFAULT NOT NULL");
             case 315:
-                return 315;
+                apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS deadline_to_reply INT NOT NULL");
+            case 316:
+                return 316;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
