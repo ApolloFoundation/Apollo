@@ -234,6 +234,8 @@ public class DexService {
             try {
                 closeOverdueContract(order, time);
                 closeOverdueContract(counterOrder, time);
+                contract.setContractStatus(ExchangeContractStatus.STEP_4);
+                dexContractTable.insert(contract);
             } catch (AplException.ExecutiveProcessException ex) {
                 LOG.error(ex.getMessage(), ex);
             }
