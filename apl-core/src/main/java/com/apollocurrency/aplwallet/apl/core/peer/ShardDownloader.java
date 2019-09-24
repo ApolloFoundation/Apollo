@@ -56,13 +56,14 @@ public class ShardDownloader {
     private final DownloadableFilesManager downloadableFilesManager;
     Map<Long,List<HasHashSum>> goodPeersMap=new HashMap<>();
     Map<Long,List<HasHashSum>> badPeersMap=new HashMap<>();
-
-    private final Instance<FileDownloader> fileDownloaders;
+//hope I do not need this hack
+//    private final Instance<FileDownloader> fileDownloaders;
+    private final FileDownloader fileDownloader;    
     private final PropertiesHolder propertiesHolder;
     private final PeersService peers;
     
     @Inject
-    public ShardDownloader(Instance<FileDownloader> fileDownloaders,
+    public ShardDownloader(FileDownloader fileDownloader,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
@@ -76,7 +77,7 @@ public class ShardDownloader {
         this.shardInfoByPeers = Collections.synchronizedMap(new HashMap<>());
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
-        this.fileDownloaders=fileDownloaders;
+        this.fileDownloader=fileDownloader;
         this.propertiesHolder=propertiesHolder;
         this.peers=peers;
     }
@@ -118,7 +119,7 @@ public class ShardDownloader {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
         int counterTotal = 0;        
-        FileDownloader fileDownloader = fileDownloaders.get();        
+    //   FileDownloader fileDownloader = fileDownloaders.get();        
         Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
@@ -265,7 +266,7 @@ public class ShardDownloader {
             return result;
         }
         log.debug("Start preparation to downloading...");
-        FileDownloader fileDownloader = fileDownloaders.get();
+//        FileDownloader fileDownloader = fileDownloaders.get();
         String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
         log.debug("fileID = '{}'", fileID);
         fileDownloader.setFileId(fileID);
