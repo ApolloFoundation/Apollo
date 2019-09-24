@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
@@ -127,6 +128,7 @@ class CsvImporterTest {
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
             .build();
 
     @Inject

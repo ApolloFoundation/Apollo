@@ -172,6 +172,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(transactionProcessor, TransactionProcessorImpl.class))
             .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
             .build();
     @Inject
     private ShardEngine shardEngine;

@@ -9,6 +9,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 @Qualifier
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.TYPE, ElementType.PARAMETER})
 public @interface CacheProducer {
 }

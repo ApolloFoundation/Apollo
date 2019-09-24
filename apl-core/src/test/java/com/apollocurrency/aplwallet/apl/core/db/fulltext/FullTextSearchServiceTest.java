@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -61,6 +62,7 @@ class FullTextSearchServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
             .build();
 
     @Inject

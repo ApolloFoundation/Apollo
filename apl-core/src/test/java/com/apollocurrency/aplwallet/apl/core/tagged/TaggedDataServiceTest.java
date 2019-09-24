@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
@@ -90,6 +91,7 @@ class TaggedDataServiceTest {
             .addBeans(MockBean.of(time, NtpTime.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
             .build();
 
     @Inject

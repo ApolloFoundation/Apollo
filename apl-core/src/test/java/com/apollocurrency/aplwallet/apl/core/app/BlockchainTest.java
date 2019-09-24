@@ -1,5 +1,56 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
+import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.apache.commons.io.FileUtils;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mockito.Mockito;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_HEIGHT;
@@ -27,55 +78,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
-import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
-import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import javax.inject.Inject;
-
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD) //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
@@ -89,7 +91,9 @@ class BlockchainTest {
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
+    public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
+            TransactionIndexDao.class, DaoConfig.class,
+            BlockIndexService.class, NullCacheProducerForTests.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
             .addBeans(MockBean.of(timeService, TimeService.class))
