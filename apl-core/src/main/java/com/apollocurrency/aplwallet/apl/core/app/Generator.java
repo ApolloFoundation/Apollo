@@ -452,16 +452,20 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static void suspendForging() {
-        globalSync.updateLock();
-        suspendForging = true;
-        globalSync.updateUnlock();
-        LOG.info("Block generation was suspended");
+        if(!suspendForging){
+            globalSync.updateLock();
+            suspendForging = true;
+            globalSync.updateUnlock();
+            LOG.info("Block generation was suspended");
+        }
     }
     public static void resumeForging() {
-        globalSync.updateLock();        
-        suspendForging = false;
-        globalSync.updateUnlock();
-        LOG.debug("Forging was resumed");
+        if(suspendForging){
+          globalSync.updateLock();        
+          suspendForging = false;
+          globalSync.updateUnlock();
+          LOG.debug("Forging was resumed");
+        }
     }
 
 }
