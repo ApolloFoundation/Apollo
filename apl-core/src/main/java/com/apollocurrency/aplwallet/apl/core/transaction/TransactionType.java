@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -108,7 +107,7 @@ public abstract class TransactionType {
 
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
+    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     public static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
 
     public static TransactionType findTransactionType(byte type, byte subtype) {

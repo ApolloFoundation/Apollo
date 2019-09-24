@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.post.TransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
@@ -47,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -55,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
@@ -95,6 +98,7 @@ public class DexService {
     private DexContractDao dexContractDao;
     private TransactionProcessor transactionProcessor;
     private SecureStorageService secureStorageService;
+    private MandatoryTransactionDao mandatoryTransactionDao;
 
     private DexTradeDao dexTradeDao;
 
@@ -108,7 +112,7 @@ public class DexService {
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
-                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable) {
+                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -124,6 +128,7 @@ public class DexService {
         this.phasingPollService = phasingPollService;
         this.dexMatcherService = dexMatcherService;
         this.phasingApprovedResultTable = phasingApprovedResultTable;
+        this.mandatoryTransactionDao = mandatoryTransactionDao;
     }
 
 
@@ -229,6 +234,8 @@ public class DexService {
             try {
                 closeOverdueContract(order, time);
                 closeOverdueContract(counterOrder, time);
+                contract.setContractStatus(ExchangeContractStatus.STEP_4);
+                dexContractTable.insert(contract);
             } catch (AplException.ExecutiveProcessException ex) {
                 LOG.error(ex.getMessage(), ex);
             }
@@ -475,18 +482,25 @@ public class DexService {
                 throw new ParameterException(JSONResponses.DEX_SELF_ORDER_MATCHING_DENIED);
             }
             // 1. Create order.
+
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order));
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false);
             Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
             order.setId(offerTx.getId());
 
             // 2. Create contract.
             DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
-            response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment);
+            TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
+            response = transactionResponse.getJson();
+            Transaction contractTx = transactionResponse.getTx();
+            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
+            MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
+            transactionProcessor.broadcast(offerMandatoryTx);
+            transactionProcessor.broadcast(contractMandatoryTx);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order));
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
             Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
             order.setId(offerTx.getId());
         }
@@ -543,13 +557,7 @@ public class DexService {
 
     public boolean hasConfirmations(ExchangeContract contract, DexOrder dexOrder) {
         if (dexOrder.getType() == OrderType.BUY) {
-            int currentHeight = blockchain.getHeight();
-            int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
-            log.debug("OrderProcessor: currentHeight {}", currentHeight);
-            log.debug("OrderProcessor: Required Height {}", requiredTxHeight);
-            log.debug("TXId = {}", contract.getTransferTxId());
-            log.debug("TXId Parsed = {}", Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
-            return blockchain.hasTransaction(Convert.parseUnsignedLong(contract.getTransferTxId()), requiredTxHeight);
+            return hasAplConfirmations(Convert.parseUnsignedLong(contract.getTransferTxId()), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
         } else if (dexOrder.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
             return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
         } else {
@@ -560,11 +568,8 @@ public class DexService {
     public boolean hasConfirmations(DexOrder dexOrder){
         log.debug("DexService: HasConfirmations reached");
         if (dexOrder.getType() == OrderType.BUY) {
-         log.debug("desService: HasConfirmations reached");   
-            int currentHeight = blockchain.getHeight();
-            int requiredTxHeight = currentHeight - Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS;
-            Long orderId = dexOrder.getId();
-            return blockchain.hasTransaction(orderId, requiredTxHeight);
+         log.debug("desService: HasConfirmations reached");
+            return hasAplConfirmations(dexOrder.getId(), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
         } 
         else if (dexOrder.getPairCurrency().isEthOrPax()){
             log.debug("Just a sell Sell Order, add eth confirmations check here...");
@@ -574,7 +579,13 @@ public class DexService {
         log.debug("hasConfirmations2: just returning true here...");
         return true;
     }
-    
+
+    public boolean hasAplConfirmations(long txId, int confirmations) {
+        int currentHeight = blockchain.getHeight();
+        int requiredTxHeight = currentHeight - confirmations;
+        return blockchain.hasTransaction(txId, requiredTxHeight);
+    }
+
     
 
     public DexOrder closeOrder(long orderId) {
@@ -649,6 +660,10 @@ public class DexService {
             log.debug("Found {} votes, pick latest", votes.size());
             phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
         }
+    }
+
+    public boolean isExpired(Transaction tx) {
+        return timeService.getEpochTime() > tx.getExpiration();
     }
 
 

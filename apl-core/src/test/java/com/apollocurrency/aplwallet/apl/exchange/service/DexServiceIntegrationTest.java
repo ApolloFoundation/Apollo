@@ -36,6 +36,7 @@ class DexServiceIntegrationTest {
             DexSmartContractService.class,
             SecureStorageService.class,
             DexContractTable.class,
+            MandatoryTransactionDao.class,
             DexOrderTransactionCreator.class,
             TimeService.class,
             DexContractDao.class,
