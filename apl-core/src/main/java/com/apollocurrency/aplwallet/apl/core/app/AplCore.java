@@ -285,8 +285,7 @@ public final class AplCore {
 
                 try {
                     secureRandomInitThread.join(10000);
-                }
-                catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {}
                 testSecureRandom();
 
                 long currentTime = System.currentTimeMillis();
@@ -300,7 +299,7 @@ public final class AplCore {
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
-                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore inited successfully");
+                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore initialized successfully");
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {
