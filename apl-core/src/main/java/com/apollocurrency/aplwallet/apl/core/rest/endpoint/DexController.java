@@ -176,11 +176,7 @@ public class DexController {
         if (orderAmount <= 0) {
             return Response.ok(JSON.toString(incorrect("orderAmount", "Should be more than zero."))).build();
         }
-        try {
-            Math.multiplyExact(pairRate, orderAmount);
-        } catch (ArithmeticException ex){
-            return Response.ok(JSON.toString(incorrect("pairRate or orderAmount", "Are too big."))).build();
-        }
+      
         if (amountOfTime <= 0 || amountOfTime > MAX_ORDER_DURATION_SEC) {
             return Response.ok(
                     JSON.toString(incorrect("amountOfTime",  String.format("value %d not in range [%d-%d]", amountOfTime, 0, MAX_ORDER_DURATION_SEC)))
