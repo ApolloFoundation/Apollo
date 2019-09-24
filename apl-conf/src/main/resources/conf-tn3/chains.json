@@ -39,7 +39,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 500000
+          "frequency": 2000
         },
         "featuresHeightRequirement":{
           "phasingApprovalTx": 1
