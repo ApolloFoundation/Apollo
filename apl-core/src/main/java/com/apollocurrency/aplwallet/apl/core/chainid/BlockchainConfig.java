@@ -36,9 +36,9 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private HeightConfig previousConfig; // keep previous config for easy access
+    private volatile HeightConfig previousConfig; // keep previous config for easy access
     private Chain chain;
-    private boolean isJustUpdated = false;
+    private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {}
 
@@ -133,7 +133,6 @@ public class BlockchainConfig {
     }
 
     public HeightConfig getCurrentConfig() {
-        this.isJustUpdated = false; // reset flag as soon as new config read
         return currentConfig;
     }
 
@@ -161,5 +160,9 @@ public class BlockchainConfig {
      */
     public boolean isJustUpdated() {
         return isJustUpdated;
+    }
+
+    public void resetJustUpdated() {
+        this.isJustUpdated = false; // reset flag
     }
 }
