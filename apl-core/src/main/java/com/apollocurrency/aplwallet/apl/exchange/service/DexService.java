@@ -278,14 +278,14 @@ public class DexService {
         return txHash;
     }
 
-    public String refundEthPaxFrozenMoney(String passphrase, Long orderId, String address) throws AplException.ExecutiveProcessException {
+    public String refundEthPaxFrozenMoney(String passphrase, Long accountId, Long orderId, String address) throws AplException.ExecutiveProcessException {
         //Check if deposit exist.
         if (!dexSmartContractService.isDepositForOrderExist(address, orderId)) {
             log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", orderId);
             return "";
         }
 
-        String txHash = dexSmartContractService.withdraw(passphrase, orderId, address, new BigInteger(Long.toUnsignedString(orderId)), null);
+        String txHash = dexSmartContractService.withdraw(passphrase, accountId, address, new BigInteger(Long.toUnsignedString(orderId)), null);
 
         if (txHash == null) {
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");

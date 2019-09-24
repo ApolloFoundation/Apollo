@@ -79,9 +79,10 @@ public class DexOrderProcessor {
         List<Long> accounts = secureStorageService.getAccounts();
 
         for (Long account : accounts) {
+            //TODO run this 3 functions not every time. (improve performance)
             processCancelOrders(account);
             processExpiredOrders(account);
-            refundLostDeposits(account);
+            refundDepositsForLostOrders(account);
 
 
             processContractsForUserStep1(account);
@@ -532,7 +533,7 @@ public class DexOrderProcessor {
         }
     }
 
-    public void refundLostDeposits(Long accountId) {
+    public void refundDepositsForLostOrders(Long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
         List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
@@ -542,13 +543,16 @@ public class DexOrderProcessor {
                 List<UserEthDepositInfo> deposits = dexService.getUserFilledDeposits(address);
 
                 for (UserEthDepositInfo deposit : deposits) {
-                    Long timeDiff = Math.min(ethereumWalletService.getLastBlock().getTimestamp().longValue(), deposit.getCreationTime());
+                    DexOrder order = dexService.getOrder(deposit.getOrderId());
+                    if (order == null) {
+                        Long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();
 
-                    if (timeDiff > Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY) {
-                        try {
-                            dexService.refundEthPaxFrozenMoney(passphrase, deposit.getOrderId(), address);
-                        } catch (AplException.ExecutiveProcessException e) {
-                            log.info("Unable to refund lost order {} for {}, reason: {}", deposit.getOrderId(), address, e.getMessage());
+                        if (timeDiff > Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY) {
+                            try {
+                                dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
+                            } catch (AplException.ExecutiveProcessException e) {
+                                log.info("Unable to refund lost order {} for {}, reason: {}", deposit.getOrderId(), address, e.getMessage());
+                            }
                         }
                     }
                 }
