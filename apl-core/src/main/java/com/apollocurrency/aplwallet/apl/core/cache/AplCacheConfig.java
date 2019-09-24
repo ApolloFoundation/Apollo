@@ -20,8 +20,7 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
 
     private CacheConfiguration[] cacheConfigurations = {
             new PublicKeyCacheConfig(60),
-            new BlockIndexCacheConfig(60),
-            new ShardDsCacheConfigurator(20)
+            new BlockIndexCacheConfig(60)
     };
 
     @PostConstruct

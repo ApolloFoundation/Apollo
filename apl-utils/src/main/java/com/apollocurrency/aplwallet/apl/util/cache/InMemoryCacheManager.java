@@ -8,9 +8,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.weld.environment.util.Collections;
 
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.Annotated;
@@ -18,6 +20,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,6 +93,19 @@ public class InMemoryCacheManager {
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
         return config.cacheBuilder().maximumSize(size);
+    }
+
+    public List<String> getAllocatedCacheNames(){
+        return Collections.asList(inMemoryCaches.keys());
+    }
+
+    public CacheStats getStats(String cacheName){
+        CacheStats stats = null;
+        Cache cache = inMemoryCaches.get(cacheName);
+        if (cache != null){
+            stats = cache.stats();
+        }
+        return stats;
     }
 
     /**

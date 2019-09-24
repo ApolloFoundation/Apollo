@@ -379,19 +379,10 @@ public final class Account {
     }
 
     public static byte[] getPublicKey(long id) {
-        PublicKey publicKey=null;
         DbKey dbKey = PublicKeyTable.newKey(id);
-        if (publicKeyCache != null) {
-            publicKey = publicKeyCache.getIfPresent(dbKey);
-        }
-        if (publicKey == null) {
-            publicKey = getPublicKey(dbKey);
-            if (publicKey == null || publicKey.publicKey == null) {
-                return null;
-            }
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, publicKey);
-            }
+        PublicKey publicKey = getPublicKey(dbKey);
+        if (publicKey == null || publicKey.publicKey == null) {
+            return null;
         }
         return publicKey.publicKey;
     }

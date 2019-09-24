@@ -173,6 +173,7 @@ class ShardEngineTest {
             .addBeans(MockBean.of(zip, Zip.class))
             .addBeans(dataExportDir)
             .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
             .build();
 
