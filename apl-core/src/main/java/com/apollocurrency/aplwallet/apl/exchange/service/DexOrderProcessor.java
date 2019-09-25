@@ -591,12 +591,8 @@ public class DexOrderProcessor {
     private void rollbackCachedOrderDbIds(int height) {
         CompletableFuture.runAsync(() -> {
             synchronized (accountCancelOrderMap) {
-                Set<Long> rolledBackAccountIds = accountCancelOrderMap.entrySet()
-                        .stream()
-                        .filter(e -> e.getValue().getHeight() >= height)
-                        .map(Map.Entry::getKey)
-                        .collect(Collectors.toSet());
-                rolledBackAccountIds.forEach(accountCancelOrderMap::remove);
+                rollbackToHeight(height, accountCancelOrderMap);
+                rollbackToHeight(height, accountExpiredOrderMap);
             }
         });
     }
@@ -647,5 +643,15 @@ public class DexOrderProcessor {
                 break;
             }
         }
+    }
+
+    private void rollbackToHeight(int height, Map<Long, OrderHeightId> cash) {
+        Set<Long> rolledBackAccountIdsCancell = accountCancelOrderMap.entrySet()
+                .stream()
+                .filter(e -> e.getValue().getHeight() >= height)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+        rolledBackAccountIdsCancell.forEach(cash::remove);
     }
 }
