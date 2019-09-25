@@ -62,12 +62,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -215,7 +215,7 @@ public class DexService {
                 order.setStatus(OrderStatus.EXPIRED);
                 dexOrderTable.insert(order);
 
-                refundFrozenMoneyForOffer(order);
+                refundFrozenAplForOrder(order);
             } catch (AplException.ExecutiveProcessException ex) {
                 LOG.error(ex.getMessage(), ex);
                 //TODO take a look ones again do we need throw exception here.
@@ -247,20 +247,15 @@ public class DexService {
             order.setStatus(OrderStatus.OPEN);
         } else {
             order.setStatus(OrderStatus.EXPIRED);
-            refundFrozenMoneyForOffer(order);
+            refundFrozenAplForOrder(order);
         }
 
         dexOrderTable.insert(order);
     }
 
-    public void refundFrozenMoneyForOffer(DexOrder order) throws AplException.ExecutiveProcessException {
+    public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             refundAPLFrozenMoney(order);
-        } else if (DexCurrencyValidator.haveFreezeOrRefundEthOrPax(order)) {
-            String passphrase = secureStorageService.getUserPassPhrase(order.getAccountId());
-            if (StringUtils.isNotBlank(passphrase)) {
-                refundEthPaxFrozenMoney(passphrase, order);
-            }
         }
     }
 
@@ -282,7 +277,22 @@ public class DexService {
             return "";
         }
 
-        String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null, order.getPairCurrency());
+        String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null);
+
+        if (txHash == null) {
+            throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
+        }
+        return txHash;
+    }
+
+    public String refundEthPaxFrozenMoney(String passphrase, Long accountId, Long orderId, String address) throws AplException.ExecutiveProcessException {
+        //Check if deposit exist.
+        if (!dexSmartContractService.isDepositForOrderExist(address, orderId)) {
+            log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", orderId);
+            return "";
+        }
+
+        String txHash = dexSmartContractService.withdraw(passphrase, accountId, address, new BigInteger(Long.toUnsignedString(orderId)), null);
 
         if (txHash == null) {
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
@@ -575,7 +585,7 @@ public class DexService {
         int requiredTxHeight = currentHeight - confirmations;
         return blockchain.hasTransaction(txId, requiredTxHeight);
     }
-    
+
     
 
     public DexOrder closeOrder(long orderId) {
@@ -654,6 +664,15 @@ public class DexService {
 
     public boolean isExpired(Transaction tx) {
         return timeService.getEpochTime() > tx.getExpiration();
+    }
+
+
+    public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserFilledDeposits(user);
+    }
+
+    public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserFilledOrders(user);
     }
 
 }

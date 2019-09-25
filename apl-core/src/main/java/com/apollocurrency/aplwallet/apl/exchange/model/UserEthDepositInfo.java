@@ -13,4 +13,6 @@ public class UserEthDepositInfo {
     private Long orderId;
 
     private BigDecimal amount;
+
+    private Long creationTime;
 }
