@@ -31,6 +31,8 @@ public final class Constants {
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
+    public static final long LONG_TIME_TWO_SECONDS = 2000L;
+    public static final long LONG_TIME_FIVE_SECONDS = 5000L;
     public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
     
     public static final long ONE_APL = 100000000;

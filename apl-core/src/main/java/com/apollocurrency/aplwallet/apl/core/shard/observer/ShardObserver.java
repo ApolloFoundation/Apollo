@@ -66,7 +66,8 @@ public class ShardObserver {
                 shardingFrequency = currentConfig.getShardingFrequency();
             } else {
                 // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
-                shardingFrequency = blockchainConfig.getPreviousConfig().isPresent() ?
+                shardingFrequency = blockchainConfig.getPreviousConfig().isPresent()
+                        && blockchainConfig.getPreviousConfig().get().isShardingEnabled() ?
                         blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
                         : currentConfig.getShardingFrequency(); // fall back
             }
