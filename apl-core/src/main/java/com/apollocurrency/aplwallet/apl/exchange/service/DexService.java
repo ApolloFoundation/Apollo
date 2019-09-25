@@ -486,8 +486,8 @@ public class DexService {
             Transaction contractTx = transactionResponse.getTx();
             MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
             MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
-            transactionProcessor.broadcast(offerMandatoryTx);
-            transactionProcessor.broadcast(contractMandatoryTx);
+            transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
+            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
