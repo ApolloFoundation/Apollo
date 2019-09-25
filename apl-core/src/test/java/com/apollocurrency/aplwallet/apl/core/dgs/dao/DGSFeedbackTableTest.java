@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -57,7 +58,7 @@ public class DGSFeedbackTableTest extends VersionedValuesDbTableTest<DGSFeedback
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
-            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     DGSFeedbackTable table;
