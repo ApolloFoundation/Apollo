@@ -6,8 +6,10 @@ import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
+import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
@@ -163,13 +165,14 @@ public class DexSmartContractService {
     }
 
 
-    public boolean isDepositForOrderExist(String user, Long orderId) throws AplException.ExecutiveProcessException {
-        for (UserEthDepositInfo userFilledDeposit : getUserFilledDeposits(user)) {
-            if (userFilledDeposit.getOrderId().equals(orderId)) {
-                return true;
-            }
+    public boolean isDepositForOrderExist(String userAddress, Long orderId) {
+        DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
+
+        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn()) {
+            return false;
         }
-        return false;
+
+        return true;
     }
 
     public boolean isUserTransferMoney(String user, Long orderId) throws AplException.ExecutiveProcessException {
@@ -257,12 +260,11 @@ public class DexSmartContractService {
         return transactionReceipt != null ? transactionReceipt.getTransactionHash() : null;
     }
 
-    private BigInteger getDepositedOrderDetails(String address, BigInteger orderId){
+    public DepositedOrderDetails getDepositedOrderDetails(String address, Long orderId) {
         TransactionManager transactionManager = new ClientTransactionManager(web3j, address);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, transactionManager, null);
         try {
-            dexContract.getDepositedOrderDetails(orderId, address).sendAsync().get();
-            //TODO Process it
+            return DepositedOrderDetailsMapper.map(dexContract.getDepositedOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
