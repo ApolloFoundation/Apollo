@@ -216,10 +216,10 @@ public class DexService {
                 dexOrderTable.insert(order);
 
                 refundFrozenAplForOrder(order);
+
+                reopenIncomeOrders(order.getId());
             } catch (AplException.ExecutiveProcessException ex) {
                 LOG.error(ex.getMessage(), ex);
-                //TODO take a look ones again do we need throw exception here.
-//                throw new RuntimeException(ex);
             }
         }
     }
@@ -248,6 +248,7 @@ public class DexService {
         } else {
             order.setStatus(OrderStatus.EXPIRED);
             refundFrozenAplForOrder(order);
+            reopenIncomeOrders(order.getId());
         }
 
         dexOrderTable.insert(order);
