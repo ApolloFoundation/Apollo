@@ -196,7 +196,7 @@ public class TrimObserver {
                     }
                 } else {
                     log.debug("SKIP trim schedule trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
-                            /*randomTrimHeightIncrease, */trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated,
+                            trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated,
                             isShardingOnTrimHeight, isShardingOnBlockHeight);
                     return randomTrimHeightIncrease;
                 }
