@@ -124,6 +124,7 @@
         <surefire-plugin.version>2.22.2</surefire-plugin.version>
         <compile-plugin.version>3.8.1</compile-plugin.version>
         <guava.version>28.0-jre</guava.version>
+        <janino.version>3.1.0</janino.version>
 
     </properties>
 
@@ -652,7 +653,7 @@
             <dependency>
                 <groupId>org.codehaus.janino</groupId>
                 <artifactId>janino</artifactId>
-                <version>3.0.6</version>
+                <version>${janino.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

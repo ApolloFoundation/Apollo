@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
+    <property resource="test-env.properties" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -17,28 +18,41 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="com.apollocurrency.aplwallet" level="info" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
     <logger name="com.apollocurrency.aplwallet.apl.core.db.fulltext" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.db" level="error" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardService" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardEngineImpl" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardImporter" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    <logger name="com.zaxxer.hikari.pool.HikariPool" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
+    <if condition='property("apl-test.env").equals("quiet")'>
+        <then>
+            <logger name="com.apollocurrency.aplwallet" level="error" additivity="false">
+                <appender-ref ref="STDOUT" />
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.db" level="error" additivity="false">
+                <appender-ref ref="STDOUT" />
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardService" level="off" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardEngineImpl" level="off" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardImporter" level="off" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.app.TrimService" level="off" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl" level="off"
+                    additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.zaxxer.hikari.pool.HikariPool" level="off" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+        </then>
+        <else>
+            <logger name="com.apollocurrency.aplwallet" level="debug" additivity="false">
+                <appender-ref ref="STDOUT" />
+            </logger>
+        </else>
+    </if>
 </configuration>
