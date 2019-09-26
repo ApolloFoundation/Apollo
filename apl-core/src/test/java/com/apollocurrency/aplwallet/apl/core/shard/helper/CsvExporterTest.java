@@ -81,6 +81,9 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -254,6 +257,12 @@ class CsvExporterTest {
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
+        DexTradeTable tradeTable = new DexTradeTable();
+        registry.registerDerivedTable(tradeTable);
         dataExportPath = createPath("csvExportDir");
         csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
     }
