@@ -51,7 +51,7 @@ public class DexEthService {
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
 
-                if (ethGasInfo != null && ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+                if (ethGasInfo != null) {
                     return ethGasInfo;
                 }
             } catch (Exception e) {
@@ -60,7 +60,7 @@ public class DexEthService {
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
 
-                if (ethGasInfo != null && ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+                if (ethGasInfo != null) {
                     return ethGasInfo;
                 }
             } catch (Exception e) {
