@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -69,13 +68,10 @@ public class DexOrderTransaction extends DEX {
             throw new AplException.NotValidException("Expected status 0 (OPEN) or 1 (PENDING) got, " + attachment.getStatus());
         }
 
-        DexCurrencies offerCurrency;
-        DexCurrencies pairCurrency;
-        OrderType orderType;
         try {
-            offerCurrency = DexCurrencies.getType(attachment.getOrderCurrency());
-            pairCurrency = DexCurrencies.getType(attachment.getPairCurrency());
-            orderType = OrderType.getType(attachment.getType());
+            DexCurrencies.getType(attachment.getOrderCurrency());
+            DexCurrencies.getType(attachment.getPairCurrency());
+            OrderType.getType(attachment.getType());
         } catch (Exception ex) {
             throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOrderCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
         }
@@ -97,20 +93,6 @@ public class DexOrderTransaction extends DEX {
         int currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
             throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
-        }
-
-
-        if (DexCurrencyValidator.haveFreezeOrRefundApl(orderType, offerCurrency, pairCurrency)) {
-            long amountATM = attachment.getOrderAmount();
-            Account sender = Account.getAccount(transaction.getSenderId());
-
-            if (sender == null) {
-                throw new AplException.NotValidException("Unknown account:" + transaction.getSenderId());
-            }
-
-            if (sender.getUnconfirmedBalanceATM() < amountATM) {
-                throw new AplException.NotValidException("Not enough money.");
-            }
         }
     }
 

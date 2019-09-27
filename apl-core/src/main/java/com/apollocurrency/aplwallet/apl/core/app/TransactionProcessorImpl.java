@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static java.util.Comparator.comparingInt;
-import static java.util.Comparator.comparingLong;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -57,6 +53,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -76,9 +75,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class TransactionProcessorImpl implements TransactionProcessor {
@@ -483,7 +483,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
             if (getUnconfirmedTransaction(dbKey) != null) {
                 if (enableTransactionRebroadcasting) {
-                    broadcastedTransactions.add((TransactionImpl) transaction);
+                    broadcastedTransactions.add(transaction);
                     LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
                 } else {
                     LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will not broadcast again");
@@ -491,11 +491,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             validator.validate(transaction);
-            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, ntpTime.getTime());
+            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
-                broadcastedTransactions.add((TransactionImpl) transaction);
+                broadcastedTransactions.add(transaction);
                 LOG.debug("Will broadcast new transaction later " + transaction.getStringId());
             } else {
                 processTransaction(unconfirmedTransaction);
@@ -504,7 +504,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 peers.sendToSomePeers(acceptedTransactions);
                 txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
                 if (enableTransactionRebroadcasting) {
-                    broadcastedTransactions.add((TransactionImpl) transaction);
+                    broadcastedTransactions.add(transaction);
                 }
             }
         } finally {
