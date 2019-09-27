@@ -21,6 +21,7 @@ import java.sql.SQLException;
 
 /**
  * Use DexContractDao for not transactional operations. ( f.e. search)
+ * DEX Contract in derived table hierarchy is used for exporting/importing shard data.
  */
 @Singleton
 public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {

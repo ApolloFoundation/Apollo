@@ -51,7 +51,7 @@ class DexTransferMoneyTransactionTest {
     ExchangeContract contract = new ExchangeContract(
             1L, 64L, 200L, 300L, 1000L, 2000L,
             ExchangeContractStatus.STEP_3, new byte[32], null, null,
-            new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY, 1);
+            new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY, 1, false);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()

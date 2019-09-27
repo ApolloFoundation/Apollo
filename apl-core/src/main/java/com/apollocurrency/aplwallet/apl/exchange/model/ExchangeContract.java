@@ -32,6 +32,7 @@ public class ExchangeContract extends VersionedDerivedEntity {
      */
     private byte[] encryptedSecret;
     private Integer deadlineToReply;
+    private boolean latest;
 
     public ExchangeContract(Long transactionId, Long senderId, Long recipientId, Integer deadlineToReply, DexContractAttachment dexContractAttachment) {
         super(null, null);
@@ -49,7 +50,8 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.deadlineToReply = deadlineToReply;
     }
 
-    public ExchangeContract(Long dbId, Long transactionId, Long senderId, Long recipientId, Integer deadlineToReply, DexContractAttachment dexContractAttachment, int height) {
+    public ExchangeContract(Long dbId, Long transactionId, Long senderId, Long recipientId, Integer deadlineToReply,
+                            DexContractAttachment dexContractAttachment, int height, boolean latest) {
         super(dbId, height);
         this.id = transactionId;
         this.orderId = dexContractAttachment.getOrderId();
@@ -63,13 +65,14 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.counterTransferTxId = dexContractAttachment.getCounterTransferTxId();
         this.contractStatus = dexContractAttachment.getContractStatus();
         this.deadlineToReply = deadlineToReply;
+        this.latest = latest;
     }
 
     @Builder(builderMethodName = "builder")
     public ExchangeContract(Long dbId, Long id, Long orderId, Long counterOrderId, Long sender,
                             Long recipient, ExchangeContractStatus contractStatus, byte[] secretHash,
                             String transferTxId, String counterTransferTxId, byte[] encryptedSecret, Integer deadlineToReply,
-                            Integer height) {
+                            Integer height, boolean latest) {
         super(dbId, height);
         this.id = id;
         this.orderId = orderId;
@@ -82,5 +85,6 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.counterTransferTxId = counterTransferTxId;
         this.encryptedSecret = encryptedSecret;
         this.deadlineToReply = deadlineToReply;
+        this.latest = latest;
     }
 }

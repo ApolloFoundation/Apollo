@@ -83,7 +83,6 @@ import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -261,8 +260,6 @@ class CsvExporterTest {
         registry.registerDerivedTable(dexContractTable);
         DexOrderTable dexOrderTable = new DexOrderTable();
         registry.registerDerivedTable(dexOrderTable);
-        DexTradeTable tradeTable = new DexTradeTable();
-        registry.registerDerivedTable(tradeTable);
         dataExportPath = createPath("csvExportDir");
         csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
     }
@@ -475,6 +472,7 @@ class CsvExporterTest {
         assertEquals(0, exportedFiles);
         assertFalse(Files.exists(shardExportedFile));
     }
+
     @Test
     void testExportShardTableIgnoringLastHashesWhenOnlyOneShardExists() throws IOException, URISyntaxException {
         long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(2, 1);
@@ -491,6 +489,21 @@ class CsvExporterTest {
         assertEquals(expectedRows, lines);
     }
 
+    @Test
+    void testExportDexTradeTable() throws Exception {
+        long exportedRows = csvExporter.exportDexTradeTable(300, 1);
+        assertEquals(8, exportedRows);
+
+        Path dexTradeExportedFile = dataExportPath.resolve("dex_trade.csv");
+        long exportedFiles = Files.list(dataExportPath).count();
+        assertEquals(1, exportedFiles);
+        assertTrue(Files.exists(dexTradeExportedFile));
+
+        List<String> lines = Files.readAllLines(dexTradeExportedFile);
+        assertEquals(9, lines.size());
+        List<String> expectedRows = Files.readAllLines(dexTradeExportedFile);
+        assertEquals(expectedRows, lines);
+    }
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
         int readRowsFromFile = 0;

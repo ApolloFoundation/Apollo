@@ -4,6 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DEX_TRADE_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -92,11 +98,17 @@ public class CsvExporterImpl implements CsvExporter {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit) {
         return exportDerivedTable(derivedTableInterface, targetHeight, batchLimit, DEFAULT_EXCLUDED_COLUMNS);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportPrunableDerivedTable(PrunableDbTable table, int targetHeight, int currentTime, int batchLimit) {
         return exportDerivedTableByDbIdPagination(table.getName(), table.getMinMaxDbId(targetHeight, currentTime), batchLimit, DEFAULT_EXCLUDED_COLUMNS);
@@ -113,8 +125,10 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM shard WHERE shard_id > ? AND shard_height <= ? ORDER BY shard_id LIMIT ?");
-             PreparedStatement countPstmt = con.prepareStatement("SELECT count(*) FROM shard WHERE shard_height <= ?");
+                     "SELECT * FROM " +
+                             SHARD_TABLE_NAME + " WHERE shard_id > ? AND shard_height <= ? ORDER BY shard_id LIMIT ?");
+             PreparedStatement countPstmt = con.prepareStatement(
+                     "SELECT count(*) FROM " + SHARD_TABLE_NAME + " WHERE shard_height <= ?");
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("SHARD_STATE"))
         ) {
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count            // select Min, Max DbId + rows count
@@ -122,7 +136,7 @@ public class CsvExporterImpl implements CsvExporter {
             ResultSet countRs = countPstmt.executeQuery();
             countRs.next();
             int count = countRs.getInt(1);
-            log.debug("Table = {},count - {} at height = {}", ShardConstants.SHARD_TABLE_NAME, count, targetHeight);
+            log.debug("Table = {},count - {} at height = {}", SHARD_TABLE_NAME, count, targetHeight);
 
             // process non empty tables only
             if (count > 0) {
@@ -131,31 +145,35 @@ public class CsvExporterImpl implements CsvExporter {
                     pstmt.setLong(1, from);
                     pstmt.setInt(2, targetHeight);
                     pstmt.setInt(3, batchLimit);
-                    CsvExportData csvExportData = csvWriter.append(ShardConstants.SHARD_TABLE_NAME, pstmt.executeQuery());
+                    CsvExportData csvExportData = csvWriter.append(SHARD_TABLE_NAME, pstmt.executeQuery());
                     processedCount = csvExportData.getProcessCount();
                     if (processedCount > 0) {
                         from = (Long) csvExportData.getLastRow().get("SHARD_ID");
                     }
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", ShardConstants.SHARD_TABLE_NAME, totalCount);
+                log.trace("Table = {}, exported rows = {}", SHARD_TABLE_NAME, totalCount);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", ShardConstants.SHARD_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", SHARD_TABLE_NAME);
             }
         }
         catch (Exception e) {
-            throw new RuntimeException("Exporting table exception " + ShardConstants.SHARD_TABLE_NAME, e);
+            throw new RuntimeException("Exporting table exception " + SHARD_TABLE_NAME, e);
         }
         return totalCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportShardTableIgnoringLastZipHashes(int targetHeight, int batchLimit) {
         int totalCount = 0;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard WHERE shard_height <= ? ORDER BY shard_id DESC LIMIT 1")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM "
+                     + SHARD_TABLE_NAME + " WHERE shard_height <= ? ORDER BY shard_id DESC LIMIT 1")) {
             pstmt.setInt(1, targetHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -163,21 +181,24 @@ public class CsvExporterImpl implements CsvExporter {
                     totalCount += exportShardTable(height - 1, batchLimit);
                     try (CsvWriter csvWriter = new CsvWriterImpl(dataExportPath, Set.of("SHARD_STATE"))) {
                         csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
-                        csvWriter.append(ShardConstants.SHARD_TABLE_NAME, pstmt.executeQuery(), Map.of("zip_hash_crc", "null", "prunable_zip_hash", "null"));
+                        csvWriter.append(SHARD_TABLE_NAME, pstmt.executeQuery(), Map.of("zip_hash_crc", "null", "prunable_zip_hash", "null"));
                         totalCount += 1;
                     }
                 } else {
-                    log.debug("Skipped exporting Table = {}", ShardConstants.SHARD_TABLE_NAME);
+                    log.debug("Skipped exporting Table = {}", SHARD_TABLE_NAME);
                 }
-                log.trace("Table = {}, exported rows = {}", ShardConstants.SHARD_TABLE_NAME, totalCount);
+                log.trace("Table = {}, exported rows = {}", SHARD_TABLE_NAME, totalCount);
             }
         }
         catch (Exception e) {
-            throw new RuntimeException("Exporting table exception " + ShardConstants.SHARD_TABLE_NAME, e);
+            throw new RuntimeException("Exporting table exception " + SHARD_TABLE_NAME, e);
         }
         return totalCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportBlockIndex(int targetHeight, int batchLimit) {
         int blockProcessedCount;
@@ -186,8 +207,8 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement blockPstm = con.prepareStatement(
-                     "select * from block_index where block_height >= ? and block_height < ? order by block_height limit ?");
-             PreparedStatement blockCountPstm = con.prepareStatement("select count(*) from block_index");
+                     "select * from " + BLOCK_INDEX_TABLE_NAME + " where block_height >= ? and block_height < ? order by block_height limit ?");
+             PreparedStatement blockCountPstm = con.prepareStatement("select count(*) from " + BLOCK_INDEX_TABLE_NAME);
              CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, null)
         ) {
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
@@ -204,7 +225,7 @@ public class CsvExporterImpl implements CsvExporter {
                     blockPstm.setInt(1, fromHeight);
                     blockPstm.setInt(2, targetHeight);
                     blockPstm.setInt(3, batchLimit);
-                    CsvExportData csvExportData = blockCsvWriter.append(ShardConstants.BLOCK_INDEX_TABLE_NAME,
+                    CsvExportData csvExportData = blockCsvWriter.append(BLOCK_INDEX_TABLE_NAME,
                             blockPstm.executeQuery());
                     blockProcessedCount = csvExportData.getProcessCount();
                     if (blockProcessedCount > 0) {
@@ -213,18 +234,21 @@ public class CsvExporterImpl implements CsvExporter {
                     }
                     blockTotalCount += blockProcessedCount;
                 } while (blockProcessedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", ShardConstants.BLOCK_INDEX_TABLE_NAME, blockTotalCount);
+                log.trace("Table = {}, exported rows = {}", BLOCK_INDEX_TABLE_NAME, blockTotalCount);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", ShardConstants.BLOCK_INDEX_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", BLOCK_INDEX_TABLE_NAME);
             }
         } catch (Exception e) {
             log.error("Error", e);
-            throw new RuntimeException("Exporting exception " + ShardConstants.BLOCK_INDEX_TABLE_NAME, e);
+            throw new RuntimeException("Exporting exception " + BLOCK_INDEX_TABLE_NAME, e);
         }
         return blockTotalCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportTransactionIndex(int targetHeight, int batchLimit) {
         int txTotalCount = 0;
@@ -232,7 +256,8 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement txPstm = con.prepareStatement(
-                     "select * from transaction_shard_index where (height = ? and transaction_index > ? or height > ?) and height < ? order by height, transaction_index limit ?");
+                     "select * from " + TRANSACTION_INDEX_TABLE_NAME
+                             + " where (height = ? and transaction_index > ? or height > ?) and height < ? order by height, transaction_index limit ?");
              PreparedStatement txCountPstm = con.prepareStatement("select count(*) from transaction_shard_index");
              CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, null)
         ) {
@@ -252,7 +277,7 @@ public class CsvExporterImpl implements CsvExporter {
                     txPstm.setInt(3, fromHeight);
                     txPstm.setInt(4, targetHeight);
                     txPstm.setInt(5, batchLimit);
-                    CsvExportData transactionExportData = txCsvWriter.append(ShardConstants.TRANSACTION_INDEX_TABLE_NAME, txPstm.executeQuery());
+                    CsvExportData transactionExportData = txCsvWriter.append(TRANSACTION_INDEX_TABLE_NAME, txPstm.executeQuery());
                     txProcessCount = transactionExportData.getProcessCount();
 
                     txTotalCount += txProcessCount;
@@ -262,17 +287,20 @@ public class CsvExporterImpl implements CsvExporter {
                     }
 
                 } while (txProcessCount > 0);
-                log.trace("Exported rows = {} from {}", txTotalCount, ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
+                log.trace("Exported rows = {} from {}", txTotalCount, TRANSACTION_INDEX_TABLE_NAME);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", ShardConstants.TRANSACTION_INDEX_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", TRANSACTION_INDEX_TABLE_NAME);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Exporting table exception " + ShardConstants.TRANSACTION_INDEX_TABLE_NAME, e);
+            throw new RuntimeException("Exporting table exception " + TRANSACTION_INDEX_TABLE_NAME, e);
         }
         return txTotalCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportTransactions(Collection<Long> dbIds) {
         int processCount;
@@ -282,7 +310,7 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement txPstm = con.prepareStatement(
-                     "select * from transaction where db_id = ?");
+                     "select * from " + TRANSACTION_TABLE_NAME + " where db_id = ?");
              CsvWriter txWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
         ) {
             txWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
@@ -291,30 +319,34 @@ public class CsvExporterImpl implements CsvExporter {
             if (sortedDbIds.size() > 0) {
                 for (Long dbId : sortedDbIds) {
                     txPstm.setLong(1, dbId);
-                    CsvExportData csvExportData = txWriter.append(ShardConstants.TRANSACTION_TABLE_NAME,
+                    CsvExportData csvExportData = txWriter.append(TRANSACTION_TABLE_NAME,
                             txPstm.executeQuery());
                     processCount = csvExportData.getProcessCount();
                     totalCount += processCount;
                 }
-                log.trace("Table = {}, exported rows = {}", ShardConstants.TRANSACTION_TABLE_NAME, totalCount);
+                log.trace("Table = {}, exported rows = {}", TRANSACTION_TABLE_NAME, totalCount);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", ShardConstants.TRANSACTION_TABLE_NAME);
+                log.debug("Skipped exporting Table = {}", TRANSACTION_TABLE_NAME);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Exporting table exception " + ShardConstants.TRANSACTION_TABLE_NAME, e);
+            throw new RuntimeException("Exporting table exception " + TRANSACTION_TABLE_NAME, e);
         }
         return totalCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long exportBlock(int height) throws IllegalStateException {
         int processCount;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement txPstm = con.prepareStatement("select * from transaction where height = ? order by transaction_index");
+             PreparedStatement txPstm = con.prepareStatement("select * from "
+                     + TRANSACTION_TABLE_NAME + " where height = ? order by transaction_index");
              PreparedStatement blockPstm = con.prepareStatement(
-                     "select * from block where height = ?");
+                     "select * from " + BLOCK_TABLE_NAME + " where height = ?");
              CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"));
              CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
         ) {
@@ -322,18 +354,67 @@ public class CsvExporterImpl implements CsvExporter {
             blockPstm.setInt(1, height);
             txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
-            CsvExportData blockExportData = blockCsvWriter.append(ShardConstants.BLOCK_TABLE_NAME, blockPstm.executeQuery());
+            CsvExportData blockExportData = blockCsvWriter.append(BLOCK_TABLE_NAME, blockPstm.executeQuery());
             if (blockExportData.getProcessCount() != 1) {
-                Files.deleteIfExists(dataExportPath.resolve(ShardConstants.BLOCK_TABLE_NAME + ".csv"));
+                Files.deleteIfExists(dataExportPath.resolve(BLOCK_TABLE_NAME + ".csv"));
                 throw new IllegalStateException("Expected one exported block, got " + blockExportData.getProcessCount());
             }
-            CsvExportData txExportData = txCsvWriter.append(ShardConstants.TRANSACTION_TABLE_NAME, txPstm.executeQuery());
+            CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, txPstm.executeQuery());
             processCount = txExportData.getProcessCount() + blockExportData.getProcessCount(); // tx + block
         }
         catch (SQLException | IOException e) {
-            throw new RuntimeException("Exporting table exception " + ShardConstants.BLOCK_TABLE_NAME, e);
+            throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
         }
         return processCount;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long exportDexTradeTable(int targetHeight, int batchLimit) {
+        int processedCount;
+        int totalCount = 0;
+        // prepare connection + statement + writer
+        TransactionalDataSource dataSource = this.databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT * FROM " + DEX_TRADE_TABLE_NAME + " WHERE db_id > ? AND height <= ? ORDER BY db_id LIMIT ?");
+             PreparedStatement countPstmt = con.prepareStatement("SELECT count(*) FROM " + DEX_TRADE_TABLE_NAME + " WHERE height <= ?");
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
+        ) {
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+            countPstmt.setInt(1, targetHeight);
+            ResultSet countRs = countPstmt.executeQuery();
+            countRs.next();
+            int count = countRs.getInt(1);
+            log.debug("Table = {},count - {} at height = {}", DEX_TRADE_TABLE_NAME, count, targetHeight);
+
+            // process non empty tables only
+            if (count > 0) {
+                long from = 0;
+                do { // do exporting into csv with pagination
+                    pstmt.setLong(1, from);
+                    pstmt.setInt(2, targetHeight);
+                    pstmt.setInt(3, batchLimit);
+                    CsvExportData csvExportData = csvWriter.append(DEX_TRADE_TABLE_NAME, pstmt.executeQuery());
+                    processedCount = csvExportData.getProcessCount();
+                    if (processedCount > 0) {
+                        from = (Long) csvExportData.getLastRow().get("DB_ID");
+                    }
+                    totalCount += processedCount;
+                } while (processedCount > 0); //keep processing while not found more rows
+                log.trace("Table = {}, exported rows = {}", DEX_TRADE_TABLE_NAME, totalCount);
+            } else {
+                // skipped empty table
+                log.debug("Skipped exporting Table = {}", DEX_TRADE_TABLE_NAME);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Exporting table exception " + DEX_TRADE_TABLE_NAME, e);
+        }
+        return totalCount;
+
     }
 
     private long exportTable(String table, String condition, MinMaxDbId minMaxDbId, Set<String> excludedColumns, StatementConfigurator statementConfigurator) {

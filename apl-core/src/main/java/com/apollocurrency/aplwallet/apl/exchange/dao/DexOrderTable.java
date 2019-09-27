@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
  * Use DexOfferDao for not transactional operations. (f.e. search)
- * Table DAO is used for exporting data in CSV file for shard archive.
+ * DEX trade in derived table hierarchy is used for exporting/importing shard data.
  */
 @Singleton
 @Slf4j

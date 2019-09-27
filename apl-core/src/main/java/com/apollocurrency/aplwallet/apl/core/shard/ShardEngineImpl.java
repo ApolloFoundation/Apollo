@@ -448,6 +448,8 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.DEX_TRADE_TABLE_NAME:
+                            return csvExporter.exportDexTradeTable(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id", pruningTime);
                         default:
