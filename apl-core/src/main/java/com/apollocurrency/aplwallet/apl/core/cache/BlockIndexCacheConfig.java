@@ -16,8 +16,8 @@ public class BlockIndexCacheConfig extends CacheConfigurator {
 
     public BlockIndexCacheConfig(int priority) {
         super(BLOCK_INDEX_CACHE_NAME, InMemoryCacheManager.newCalc()
-                .addAggregation(LONG_SIZE)
-                .addAggregation(INT_SIZE)
+                .addLongPrimitive()
+                .addInt()
                 .calc(),
                 priority);
     }
