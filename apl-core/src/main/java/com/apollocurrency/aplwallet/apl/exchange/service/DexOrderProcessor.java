@@ -4,13 +4,13 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -57,7 +57,7 @@ public class DexOrderProcessor {
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
-    private TransactionProcessor processor;
+    private TransactionValidator validator;
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private MandatoryTransactionDao mandatoryTransactionDao;
     private IDexValidator dexValidator;
@@ -69,7 +69,7 @@ public class DexOrderProcessor {
 
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -77,6 +77,7 @@ public class DexOrderProcessor {
         this.mandatoryTransactionDao = mandatoryTransactionDao;
         this.dexSmartContractService = dexSmartContractService;
         this.ethereumWalletService = ethereumWalletService;
+        this.validator = validator;
     }
 
 
@@ -612,19 +613,19 @@ public class DexOrderProcessor {
                                 boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
                                 if (hasConfirmations) {
                                     if (prevRequiredTx != null) {
-                                        dexService.broadcast(prevRequiredTx.getTransaction());
+                                        validateAndBroadcast(prevRequiredTx.getTransaction());
                                         brodcast = false;
                                     }
                                     break;
                                 } else if (requiredTx.getRequiredTxHash() == null) {
-                                    dexService.broadcast(requiredTx);
+                                    validateAndBroadcast(requiredTx.getTransaction());
                                     break;
                                 }
                                 prevRequiredTx = requiredTx;
                                 requiredTxHash = requiredTx.getRequiredTxHash();
                             }
                             if (brodcast) {
-                                dexService.broadcast(currentTx.getTransaction());
+                                validateAndBroadcast(currentTx.getTransaction());
                             }
                         }
                     } else {
@@ -638,6 +639,11 @@ public class DexOrderProcessor {
                 break;
             }
         }
+    }
+
+    private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
+        validator.validate(tx);
+        dexService.broadcast(tx);
     }
 
     private void rollbackToHeight(int height, Map<Long, OrderHeightId> cash) {
