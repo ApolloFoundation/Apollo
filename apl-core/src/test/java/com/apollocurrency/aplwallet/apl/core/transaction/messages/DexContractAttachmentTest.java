@@ -33,7 +33,7 @@ class DexContractAttachmentTest {
             ).build();
     private String hash = "f0af17449a83681de22db7ce16672f16f37131bec0022371d4ace5d1854301e0";
     private String encryptedSecret = "ce6b20ee7f7797e102f68d15099e7d5b0e8d4c50f98a7865ea168717539ec3aace6b20ee7f7797e102f68d15099e7d5b0e8d4c50f98a7865ea168717539ec3aa";
-    private DexContractAttachment attachment = new DexContractAttachment(1L, 2L, Convert.parseHexString(hash), "3", "4", Convert.parseHexString(encryptedSecret), ExchangeContractStatus.STEP_1, Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
+    private DexContractAttachment attachment = new DexContractAttachment(1L, 2L, Convert.parseHexString(hash), "3", "4", Convert.parseHexString(encryptedSecret), ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
     @Test
     void testSerializeToJson() {
         JSONObject serialized = attachment.getJSONObject();

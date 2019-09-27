@@ -168,7 +168,9 @@ public final class Constants {
     public static Integer DEX_OFFER_PROCESSOR_DELAY = 1;
 
     //24 h
-    public static Integer DEX_CONTRACT_TIME_WAITING_TO_REPLY = 24 * 60 * 60;
+    public static Integer DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = 24 * 60 * 60;
+    //168h
+    public static Integer DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
 
     public static int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
     public static int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
