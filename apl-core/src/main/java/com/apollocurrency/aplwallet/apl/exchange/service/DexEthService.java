@@ -45,23 +45,28 @@ public class DexEthService {
     }
 
     private EthGasInfo initEthPriceInfo(){
-        EthGasInfo ethGasInfo = null;
+        EthGasInfo ethGasInfo;
         Integer counter = 0;
         while (counter < ATTEMPTS) {
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+
+                if (ethGasInfo != null && ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+                    return ethGasInfo;
+                }
             } catch (Exception e) {
                 log.error("(Gas Station) Attempt " + counter + ":" + e.getMessage(), e);
             }
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
+
+                if (ethGasInfo != null && ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+                    return ethGasInfo;
+                }
             } catch (Exception e) {
                 log.error("(Eth Chain) Attempt " + counter + ":" + e.getMessage(), e);
             }
 
-            if (ethGasInfo != null) {
-                return ethGasInfo;
-            }
             counter++;
         }
 
