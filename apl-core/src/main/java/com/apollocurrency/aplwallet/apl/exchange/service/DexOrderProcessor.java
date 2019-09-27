@@ -167,13 +167,7 @@ public class DexOrderProcessor {
                 if (contractTx == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
-
-                MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTxInfo.getTransaction(), contractTx.getFullHash(), null);
-                MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, null, null);
-
-                mandatoryTransactionDao.insert(contractMandatoryTx);
-                mandatoryTransactionDao.insert(transferMandatoryTx);
-                broadcastWhenConfirmed(transferTxInfo.getTransaction(), contractTx);
+                saveAndBroadcastContractWithTransfer(transferTxInfo.getTransaction(), contractTx);
 
                 processedOrders.add(counterOrder.getId());
             } catch (AplException.ExecutiveProcessException | AplException.ValidationException | ParameterException e) {
@@ -328,10 +322,7 @@ public class DexOrderProcessor {
                 }
 
 
-                DexContractAttachment contractAttachment = new DexContractAttachment(contract);
-                contractAttachment.setContractStatus(ExchangeContractStatus.STEP_3);
-                contractAttachment.setTransferTxId(transferTransactionInfo.getTxId());
-                contractAttachment.setTimeToReply(Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+                DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTransactionInfo.getTxId(), null, null, STEP_3, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
                 createTransactionRequest.setBroadcast(false);
@@ -606,37 +597,41 @@ public class DexOrderProcessor {
         while (true) {
             List<MandatoryTransaction> all = mandatoryTransactionDao.getAll(dbId, ORDERS_SELECT_SIZE);
             for (MandatoryTransaction currentTx : all) {
-                dbId = currentTx.getDbEntryId();
-                boolean expired = dexService.isExpired(currentTx);
-                boolean confirmed = dexService.txExists(currentTx.getId());
-                if (!expired) {
-                    if (!confirmed) {
-                        byte[] requiredTxHash = currentTx.getRequiredTxHash();
-                        MandatoryTransaction prevRequiredTx = null;
-                        boolean brodcast = true; // brodcast current tx
-                        while (requiredTxHash != null) {
-                            long id = Convert.fullHashToId(requiredTxHash);
-                            MandatoryTransaction requiredTx = mandatoryTransactionDao.get(id);
-                            boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
-                            if (hasConfirmations) {
-                                if (prevRequiredTx != null) {
-                                    dexService.broadcast(prevRequiredTx.getTransaction());
-                                    brodcast = false;
+                try {
+                    dbId = currentTx.getDbEntryId();
+                    boolean expired = dexService.isExpired(currentTx);
+                    boolean confirmed = dexService.txExists(currentTx.getId());
+                    if (!expired) {
+                        if (!confirmed) {
+                            byte[] requiredTxHash = currentTx.getRequiredTxHash();
+                            MandatoryTransaction prevRequiredTx = null;
+                            boolean brodcast = true; // brodcast current tx
+                            while (requiredTxHash != null) {
+                                long id = Convert.fullHashToId(requiredTxHash);
+                                MandatoryTransaction requiredTx = mandatoryTransactionDao.get(id);
+                                boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
+                                if (hasConfirmations) {
+                                    if (prevRequiredTx != null) {
+                                        dexService.broadcast(prevRequiredTx.getTransaction());
+                                        brodcast = false;
+                                    }
+                                    break;
+                                } else if (requiredTx.getRequiredTxHash() == null) {
+                                    dexService.broadcast(requiredTx);
+                                    break;
                                 }
-                                break;
-                            } else if (requiredTx.getRequiredTxHash() == null) {
-                                dexService.broadcast(requiredTx);
-                                break;
+                                prevRequiredTx = requiredTx;
+                                requiredTxHash = requiredTx.getRequiredTxHash();
                             }
-                            prevRequiredTx = requiredTx;
-                            requiredTxHash = requiredTx.getRequiredTxHash();
+                            if (brodcast) {
+                                dexService.broadcast(currentTx.getTransaction());
+                            }
                         }
-                        if (brodcast) {
-                            dexService.broadcast(currentTx.getTransaction());
-                        }
+                    } else {
+                        mandatoryTransactionDao.delete(currentTx.getId());
                     }
-                } else {
-                    mandatoryTransactionDao.delete(currentTx.getId());
+                } catch (Throwable e) {
+                    log.warn("Unable to brodcast mandatory tx {}, reason - {}", currentTx.getId(), e.getMessage());
                 }
             }
             if (all.size() < ORDERS_SELECT_SIZE) {
