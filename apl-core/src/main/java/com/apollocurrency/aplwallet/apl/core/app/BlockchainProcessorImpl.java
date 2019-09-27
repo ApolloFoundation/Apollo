@@ -1622,6 +1622,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //TODO: check do we need lock here
 //                globalSync.updateLock();
 //                try {
+                    Generator.suspendForging();
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
                     }
@@ -1676,6 +1677,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     } else {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
+                    Generator.resumeForging();
 //                } finally {
 //                    globalSync.updateUnlock();
 ////                    isDownloading = false;
