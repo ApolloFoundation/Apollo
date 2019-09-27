@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.inject.Singleton;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,8 +19,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 
 @Singleton
 public class EthGasStationInfoDao {
@@ -54,6 +54,11 @@ public class EthGasStationInfoDao {
         } finally {
             con.disconnect();
         }
+
+        if (ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+            return null;
+        }
+
         return ethGasInfo;
     }
 
@@ -85,6 +90,11 @@ public class EthGasStationInfoDao {
         } finally {
             con.disconnect();
         }
+
+        if (ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+            return null;
+        }
+
         return ethGasInfo;
     }
 
