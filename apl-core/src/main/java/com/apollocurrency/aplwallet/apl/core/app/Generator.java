@@ -73,6 +73,7 @@ public final class Generator implements Comparable<Generator> {
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
     private static final ConcurrentMap<Long, Generator> generators = new ConcurrentHashMap<>();
+    //TODO: OL remove or solve this
     private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;

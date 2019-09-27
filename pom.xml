@@ -89,7 +89,7 @@
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.10.0.pr2</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -113,8 +113,8 @@
         <weld.version>3.1.2.Final</weld.version>
         <weld-junit5.version>2.0.0.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>3.8.1.Final</resteasy.version>
-        <swagger.version>2.0.8</swagger.version>
+        <resteasy.version>4.3.0.Final</resteasy.version>
+        <swagger.version>2.0.9</swagger.version>
         <junit5-bom.version>5.4.1</junit5-bom.version>
         <hikari.version>3.3.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
@@ -123,6 +123,7 @@
         <lombok.version>1.18.8</lombok.version>
         <surefire-plugin.version>2.22.2</surefire-plugin.version>
         <compile-plugin.version>3.8.1</compile-plugin.version>
+        <guava.version>28.0-jre</guava.version>
 
     </properties>
 
@@ -194,6 +195,11 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.googlecode.log4jdbc</groupId>
@@ -312,15 +318,10 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-jackson-provider</artifactId>
-                <version>${resteasy.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-jackson2-provider</artifactId>
                 <version>${resteasy.version}</version>
             </dependency>
-            <dependency>
+            <!--<dependency>
                 <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-validator-provider-11</artifactId>
                 <version>${resteasy.version}</version>
@@ -330,22 +331,11 @@
                         <artifactId>hibernate-validator</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
+            </dependency>-->
             <dependency>
                 <groupId>org.jboss.resteasy</groupId>
                 <artifactId>resteasy-cdi</artifactId>
                 <version>${resteasy.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.resteasy</groupId>
-                <artifactId>resteasy-jaxrs</artifactId>
-                <version>${resteasy.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.jboss.spec.javax.annotation</groupId>
-                        <artifactId>jboss-annotations-api_1.2_spec</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>

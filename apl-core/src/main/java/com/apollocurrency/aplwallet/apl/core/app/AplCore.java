@@ -37,9 +37,11 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -67,9 +69,11 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.cache.Cache;
 import lombok.Setter;
 import org.slf4j.Logger;
 
@@ -99,6 +103,8 @@ public final class AplCore {
     private AplAppStatus aplAppStatus;
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
+    @Inject @Setter
+    private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
     PeersService peers;
@@ -183,7 +189,7 @@ public final class AplCore {
                     aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
                 }                
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  1.0, "API initialization");
-                        
+
                 //try to start API as early as possible
                 apiServer = CDI.current().select(API.class).get();
                 apiServer.start();
@@ -238,7 +244,12 @@ public final class AplCore {
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
-//                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable);
+                //Account initialization
+                Cache<DbKey,PublicKey> publicKeyCache = null;
+                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
+                    publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
+                }
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");

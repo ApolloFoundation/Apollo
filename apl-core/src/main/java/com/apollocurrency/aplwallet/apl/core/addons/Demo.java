@@ -34,25 +34,25 @@ import org.slf4j.Logger;
 import java.util.Map;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 
 @Vetoed
 public final class Demo implements AddOn {
     private static final Logger LOG = getLogger(Demo.class);
     private static AccountService accountService;
 
+    //Commented out because events are synchronous and this demop call is very slow
+
     @Override
     public void init() {
-        accountService = CDI.current().select(AccountServiceImpl.class).get();
+        //accountService = CDI.current().select(AccountServiceImpl.class).get();
     }
 
-    public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
-
-        LOG.info("Block " + block.getStringId()
-                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
-                + accountService.getEffectiveBalanceAPL(accountService.getAccount(block.getGeneratorId()), accountService.getBlockchainHeight(), true));
-    }
-
+//    public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
+//
+//        LOG.info("Block " + block.getStringId()
+//                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
+//                + accountService.getEffectiveBalanceAPL(accountService.getAccount(block.getGeneratorId()), accountService.getBlockchainHeight(), true));
+//    }
 
     @Override
     public void shutdown() {
