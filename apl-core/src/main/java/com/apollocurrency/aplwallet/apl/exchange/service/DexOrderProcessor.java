@@ -209,8 +209,8 @@ public class DexOrderProcessor {
         log.debug("isContractStep1Valid entry point");
         
         // everything should be vice-versa here since we return our orders back        
-        long counterOrderID = exchangeContract.getCounterOrderId();
-        long orderID = exchangeContract.getOrderId();
+        long counterOrderID = exchangeContract.getOrderId();
+        long orderID = exchangeContract.getCounterOrderId();
 
         log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
 
@@ -234,7 +234,7 @@ public class DexOrderProcessor {
         }
 
 
-        // DUMPING main offer 
+        // DUMPING main offer : pay attention: should be vice-versa in comparison to ZERO step.. 
 
         log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(),
                 mainOrder.getToAddress(), mainOrder.getFromAddress(), mainOrder.getPairCurrency(), mainOrder.getPairRate());
