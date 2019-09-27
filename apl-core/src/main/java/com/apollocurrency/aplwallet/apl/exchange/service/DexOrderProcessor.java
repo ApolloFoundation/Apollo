@@ -207,6 +207,8 @@ public class DexOrderProcessor {
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
         log.debug("isContractStep1Valid entry point");
+        
+        // everything should be vice-versa here since we return our orders back        
         long counterOrderID = exchangeContract.getCounterOrderId();
         long orderID = exchangeContract.getOrderId();
 
@@ -355,7 +357,8 @@ public class DexOrderProcessor {
         log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
                 contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
 
-        return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
+        // this validation seems to be redundant here.. commented it here so that not to get confused
+        return /*isContractStep1Valid(exchangeContract) &&*/ dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
     }
 
     /**
