@@ -128,21 +128,17 @@ public class DexOrderProcessor {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
                     continue;
                 }
-
-//                if (!counterOrder.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-//                    log.debug("Order is in the status: {}, not valid now.", counterOrder.getStatus());
-//                    continue;
-//                }
-                    
+                                
                 if (!counterOrder.getStatus().isOpen() ) {
-                    log.debug("Ex 1: Order is in the status: {}, not valid now.", counterOrder.getStatus());
-                    continue;
-                }
-                if (!isContractStep1Valid(contract)) {
-                    log.debug("Ex2: Order is in the status: {}, not valid now.", counterOrder.getStatus());
+                    log.debug("Exit point 1: Order is in the status: {}, not valid now.", counterOrder.getStatus());
                     continue;
                 }
                 
+                if (!isContractStep1Valid(contract)) {
+                    log.debug("Exit point 2: Order is in the status: {}, not valid now.", counterOrder.getStatus());
+                    continue;
+                }
+
                 //Generate secret X
                 byte[] secretX = new byte[32];
                 Crypto.getSecureRandom().nextBytes(secretX);
