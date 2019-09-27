@@ -59,7 +59,7 @@ class DexServiceTest {
     MandatoryTransactionDao mandatoryTransactionDao;
 
     DexOrder offer = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
-    ExchangeContract contract = new ExchangeContract(0L, 2L, 1L, 3L, 200L, 100L, ExchangeContractStatus.STEP_3, new byte[32], "123", "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935", new byte[32], Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
+    ExchangeContract contract = new ExchangeContract(0L, 2L, 1L, 3L, 200L, 100L, ExchangeContractStatus.STEP_3, new byte[32], "123", "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935", new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
     DexService dexService;
 

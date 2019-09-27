@@ -243,15 +243,19 @@ public class DexService {
     }
 
     public void closeOverdueContract(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
-        if (order.getFinishTime() > time) {
-            order.setStatus(OrderStatus.OPEN);
-        } else {
-            order.setStatus(OrderStatus.EXPIRED);
-            refundFrozenAplForOrder(order);
-            reopenIncomeOrders(order.getId());
-        }
+        if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
+            if (order.getFinishTime() > time) {
+                order.setStatus(OrderStatus.OPEN);
+            } else {
+                order.setStatus(OrderStatus.EXPIRED);
+                refundFrozenAplForOrder(order);
+                reopenIncomeOrders(order.getId());
+            }
 
-        dexOrderTable.insert(order);
+            dexOrderTable.insert(order);
+        } else {
+            log.debug("Skip closing order {} in status {}", order.getId(), order.getStatus());
+        }
     }
 
     public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
@@ -491,14 +495,17 @@ public class DexService {
             order.setId(offerTx.getId());
 
             // 2. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
+            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
             TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
             response = transactionResponse.getJson();
             Transaction contractTx = transactionResponse.getTx();
             MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
             MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
+            mandatoryTransactionDao.insert(offerMandatoryTx);
+            mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
-            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
+            // will be broadcasted by DexOrderProcessor when offer will be confirmed
+            //            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);

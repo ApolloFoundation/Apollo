@@ -158,7 +158,7 @@ public class DexOrderProcessor {
                 contractAttachment.setCounterTransferTxId(transferTxInfo.getTxId());
                 contractAttachment.setSecretHash(secretHash);
                 contractAttachment.setEncryptedSecret(encryptedSecretX);
-                contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
+                contractAttachment.setTimeToReply(Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 //TODO move it to some util
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
@@ -331,7 +331,7 @@ public class DexOrderProcessor {
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract);
                 contractAttachment.setContractStatus(ExchangeContractStatus.STEP_3);
                 contractAttachment.setTransferTxId(transferTransactionInfo.getTxId());
-                contractAttachment.setTimeToReply(Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY);
+                contractAttachment.setTimeToReply(Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
                 createTransactionRequest.setBroadcast(false);
@@ -568,7 +568,7 @@ public class DexOrderProcessor {
                     if (order == null) {
                         Long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();
 
-                        if (timeDiff > Constants.DEX_CONTRACT_TIME_WAITING_TO_REPLY) {
+                        if (timeDiff > Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) {
                             try {
                                 dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
                             } catch (AplException.ExecutiveProcessException e) {
