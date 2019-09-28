@@ -1620,8 +1620,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     isDownloading = true;
                 }
 //TODO: check do we need lock here
-//                globalSync.updateLock();
-//                try {
+// Maybe better to find another sync solution
+                globalSync.updateLock();
+                try {
                     Generator.suspendForging();
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
@@ -1678,11 +1679,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
                     Generator.resumeForging();
-//                } finally {
-//                    globalSync.updateUnlock();
-////                    isDownloading = false;
-//                }
-                
+                } finally {
+                    globalSync.updateUnlock();
+                    isDownloading = false;
+                }
             } catch (AplException.StopException e) {
                 log.info("Blockchain download stopped: " + e.getMessage());
                 throw new InterruptedException("Blockchain download stopped");
@@ -1918,9 +1918,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // a missing block (this will happen if an invalid block is encountered
             // when downloading the blocks)
             //
-//TODO: check do we need this lock            
-//            globalSync.writeLock();
-//            try {
+//TODO: check do we need this lock
+// Maybe better to find another sync solution
+            globalSync.writeLock();
+            try {
                 List<Block> forkBlocks = new ArrayList<>();
                 for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < Constants.MAX_AUTO_ROLLBACK; index++) {
                     PeerBlock peerBlock = blockMap.get(chainBlockIds.get(index));
@@ -1946,9 +1947,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }
-//            } finally {
-//                globalSync.writeUnlock();
-//            }
+            } finally {
+                globalSync.writeUnlock();
+            }
             
         }
 
