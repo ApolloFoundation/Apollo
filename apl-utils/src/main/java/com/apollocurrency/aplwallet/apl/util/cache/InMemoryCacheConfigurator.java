@@ -16,6 +16,7 @@ public interface InMemoryCacheConfigurator {
     /**
      * The list of cache configurations. The total capacity of all caches is less then value returned by the
      * <code>getAvailableMemory</code> method.
+     *
      * @return the list of cache configurations
      */
     List<CacheConfiguration> getConfiguredCaches();

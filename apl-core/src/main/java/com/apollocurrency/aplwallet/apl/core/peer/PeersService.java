@@ -688,7 +688,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         JSONObject request = block.getJSONObject();
         request.put("requestType", "processBlock");
-        LOG.debug("Pushing block: {} at height: {}",block.getId(), block.getHeight());
+        LOG.debug("Pushing block: {} at height: {}", block.getId(), block.getHeight());
         sendToSomePeers(request);
     }
 
@@ -722,7 +722,7 @@ public class PeersService {
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
             int counterOfPeersToSend = peers.size() < sendToPeersLimit ? peers.size() : sendToPeersLimit;
 
-           // peers.addAll(connectablePeers.values());
+            // peers.addAll(connectablePeers.values());
             LOG.debug("Prepare sending data to CONNECTED peer(s) = [{}]", peers.size());
             for (final Peer peer : peers) {
 
@@ -745,8 +745,8 @@ public class PeersService {
                         try {
                             JSONObject response = future.get();
                             if (response != null && response.get("error") == null) {
-                                successful += 1; 
-                            }else{
+                                successful += 1;
+                            } else {
                                 LOG.debug("Send to peer error");
                             }
                         } catch (InterruptedException e) {

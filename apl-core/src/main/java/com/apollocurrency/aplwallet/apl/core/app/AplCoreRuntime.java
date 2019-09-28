@@ -148,7 +148,6 @@ public class AplCoreRuntime {
     }
 
 
-
     public static void logSystemProperties() {
         String[] loggedProperties = new String[]{
             "java.version",

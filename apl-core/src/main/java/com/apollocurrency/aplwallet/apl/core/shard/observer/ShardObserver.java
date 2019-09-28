@@ -47,8 +47,7 @@ public class ShardObserver {
             if (future != null) {
                 future.get();
             }
-        }
-        catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             log.error(e.toString(), e);
         }
     }
@@ -61,7 +60,7 @@ public class ShardObserver {
         log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
         if (shardingEnabled && !isShardingOff) {
             log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                    + ", shardingFrequency = {}",
+                            + ", shardingFrequency = {}",
                     currentConfig.getShardingFrequency() != 0 ?
                             lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0 : "zeroDivision",
                     lastTrimBlockHeight, blockchainHeight,

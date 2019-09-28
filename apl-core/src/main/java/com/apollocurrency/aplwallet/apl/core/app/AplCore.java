@@ -112,7 +112,8 @@ public final class AplCore {
     private AplAppStatus aplAppStatus;
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
-    @Inject @Setter
+    @Inject
+    @Setter
     private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
@@ -260,11 +261,11 @@ public final class AplCore {
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
                 //Account initialization
-                Cache<DbKey,PublicKey> publicKeyCache = null;
-                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
+                Cache<DbKey, PublicKey> publicKeyCache = null;
+                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
                     publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                 }
-                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor, blockchainConfig, blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");

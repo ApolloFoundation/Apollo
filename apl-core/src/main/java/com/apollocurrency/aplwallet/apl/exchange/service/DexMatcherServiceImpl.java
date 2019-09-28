@@ -65,16 +65,16 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * currency-specific validation (Ethereum)
   * @param myOrder  myOffer - created offer to validate
   * @param hisOrder  hisOffer - matched offer
-    */
-    private int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {
-        return dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
+  */
+ private int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {
+     return dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
     }
 
     /**
      * currency-specific validation (Ethereum)
      * @param myOffer  myOffer - created offer to validate
      * @param DexOrder  hisOffer - matched offer
-    */
+     */
     private int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {
         return dexValidator.validateOfferSellAplEth(myOffer, hisOrder);
     }
@@ -83,7 +83,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * currency-specific validation (Pax)
      * @param myOffer  myOffer - created offer to validate
      * @param DexOrder  hisOffer - matched offer
-    */
+     */
     private int validateOfferBuyAplPax(DexOrder myOrder, DexOrder hisOrder) {
         return dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
     }
@@ -92,7 +92,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      * currency-specific validation (Pax)
      * @param myOffer - created offer to validate
      * @param hisOffer - matched offer
-    */
+     */
     private int validateOfferSellAplPax( DexOrder myOrder, DexOrder hisOrder) {
         return dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
     }

@@ -105,7 +105,7 @@ public final class PeerServlet extends WebSocketServlet {
         if (blockchainConfig == null) blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (downloadableFilesManager == null) downloadableFilesManager = CDI.current().select(DownloadableFilesManager.class).get();
         if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
-        if (propertiesHolder==null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+        if (propertiesHolder == null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         if (peersService == null) peersService = CDI.current().select(PeersService.class).get();
     }  
     
@@ -188,7 +188,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = peersService.findOrCreatePeer(pa,null,true);
+        PeerImpl peer = peersService.findOrCreatePeer(pa, null, true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -268,7 +268,7 @@ public final class PeerServlet extends WebSocketServlet {
             try {
                 JSON.writeJSONString(jsonResponse, writer);
             } catch (IOException ex) {
-                LOG.debug("Almost impossible error: Can not write to StringWriter",ex);
+                LOG.debug("Almost impossible error: Can not write to StringWriter", ex);
             }
             String response = writer.toString();
             transport.send(response, requestId);

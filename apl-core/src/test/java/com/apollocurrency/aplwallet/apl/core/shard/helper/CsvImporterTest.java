@@ -1,12 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
@@ -73,6 +66,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,7 +81,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -172,7 +172,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
             assertNotNull(csvImporter);
 
@@ -207,7 +207,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), databaseManager, null);
 
             String tableName = "account_control_phasing";
@@ -230,8 +230,7 @@ class CsvImporterTest {
                     long[] whitelist = phasingOnly.getPhasingParams().getWhitelist();
                     assertNotNull(whitelist);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             List<String> lineInCsv = null;
@@ -252,7 +251,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
 
             String tableName = "shuffling_data";
@@ -280,8 +279,7 @@ class CsvImporterTest {
                         }
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             List<String> lineInCsv = null;
@@ -302,7 +300,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
 
             String tableName = "goods";
@@ -329,8 +327,7 @@ class CsvImporterTest {
                         assertNotNull(tag);
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             List<String> lineInCsv = null;
@@ -351,7 +348,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
             assertNotNull(csvImporter);
 
@@ -387,7 +384,7 @@ class CsvImporterTest {
                 throw new RuntimeException(e.toString(), e);
             }
 
-            aplAppStatus.durableTaskFinished( taskId, false, "data import finished");
+            aplAppStatus.durableTaskFinished(taskId, false, "data import finished");
         });
     }
 
@@ -398,7 +395,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
 
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
             assertNotNull(csvImporter);
@@ -444,7 +441,7 @@ class CsvImporterTest {
         DatabaseManager databaseManager = extension.getDatabaseManager();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
-        DbUtils.inTransaction(dataSource, (conOuter)-> {
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
             csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
             AtomicInteger counter = new AtomicInteger(0);
             long result = 0;

@@ -187,7 +187,7 @@ public class Peer2PeerTransport {
         if(p!=null){
             p.deactivate("Websocket close event");
         }else{
-             ws.close();
+            ws.close();
         }
     }
 

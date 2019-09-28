@@ -737,9 +737,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
         int curTime = timeService.getEpochTime();
         log.trace("push new block, prev_id = '{}', cutTime={}", block.getPreviousBlockId(), curTime);
-        long startTime=System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         globalSync.writeLock();
-        long lockAquireTime=System.currentTimeMillis()-startTime;
+        long lockAquireTime = System.currentTimeMillis() - startTime;
         try {
             Block previousLastBlock = null;
             TransactionalDataSource dataSource = lookupDataSource();
@@ -798,7 +798,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
-                block.getHeight(), block.getTransactions().size(), System.currentTimeMillis()-startTime, lockAquireTime);
+                block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -1011,7 +1011,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
-            log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-start );
+            log.trace("Accepting block DONE: {} height: {} processing time ms: {}", block.getId(), block.getHeight(), System.currentTimeMillis() - start);
         }
     }
 
@@ -1591,9 +1591,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     //we can get sometimes string and sometimes long from different peers, and yes it's strange
                     Long bhl;
                     Object bh = response.get("blockchainHeight");
-                    if(bh==null){
-                      bhl=0L;
-                    }else if(bh instanceof String){
+                    if (bh == null) {
+                        bhl = 0L;
+                    } else if (bh instanceof String) {
                        bhl = Long.parseLong((String)bh);
                     }else{
                        bhl = (Long)bh;
@@ -1638,7 +1638,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //TODO: check do we need lock here
 //                globalSync.updateLock();
 //                try {
-                    Generator.suspendForging();
+                Generator.suspendForging();
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
                     }
@@ -1677,7 +1677,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         if (new BigInteger(otherPeerCumulativeDifficulty).compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                             continue;
                         }
-                        log.debug("Found a peer with better difficulty: {}",otherPeer.getHostWithPort());
+                        log.debug("Found a peer with better difficulty: {}", otherPeer.getHostWithPort());
                         downloadBlockchain(otherPeer, otherPeerCommonBlock, commonBlock.getHeight());
                     }
                     log.debug("Got " + confirmations + " confirmations");
@@ -1693,7 +1693,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     } else {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
-                    Generator.resumeForging();
+                Generator.resumeForging();
 //                } finally {
 //                    globalSync.updateUnlock();
 ////                    isDownloading = false;
@@ -1769,7 +1769,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             long matchId = startBlockId;
             List<Long> blockList = new ArrayList<>(Constants.MAX_AUTO_ROLLBACK);
             boolean matched = false;
-            int limit = countFromStart ? Constants.MAX_AUTO_ROLLBACK : Constants.MAX_AUTO_ROLLBACK*2;
+            int limit = countFromStart ? Constants.MAX_AUTO_ROLLBACK : Constants.MAX_AUTO_ROLLBACK * 2;
             while (true) {
                 JSONObject request = new JSONObject();
                 request.put("requestType", "getNextBlockIds");
@@ -1837,14 +1837,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
          * @throws  InterruptedException    Download interrupted
          */
         private void downloadBlockchain(final Peer feederPeer, final Block commonBlock, final int startHeight) throws InterruptedException {
-            log.debug("Downloading blockchain from: {} at height: {}",feederPeer.getHostWithPort(),startHeight);
+            log.debug("Downloading blockchain from: {} at height: {}", feederPeer.getHostWithPort(), startHeight);
             Map<Long, PeerBlock> blockMap = new HashMap<>();
             //
             // Break the download into multiple segments.  The first block in each segment
             // is the common block for that segment.
             //
             List<GetNextBlocksTask> getList = new ArrayList<>();
-            int segSize = Constants.MAX_AUTO_ROLLBACK/20;
+            int segSize = Constants.MAX_AUTO_ROLLBACK / 20;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
                 getList.add(new GetNextBlocksTask(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
@@ -1925,7 +1925,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 
             }
-            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK/2) {
+            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK / 2) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate("This peer is slowest");
             }
@@ -1938,7 +1938,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //            globalSync.writeLock();
 //            try {
                 List<Block> forkBlocks = new ArrayList<>();
-                for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < Constants.MAX_AUTO_ROLLBACK; index++) {
+            for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < Constants.MAX_AUTO_ROLLBACK; index++) {
                     PeerBlock peerBlock = blockMap.get(chainBlockIds.get(index));
                     if (peerBlock == null) {
                         break;
@@ -1958,7 +1958,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // Process a fork
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
-                if (!forkBlocks.isEmpty() && myForkSize < Constants.MAX_AUTO_ROLLBACK) {
+            if (!forkBlocks.isEmpty() && myForkSize < Constants.MAX_AUTO_ROLLBACK) {
                     log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }

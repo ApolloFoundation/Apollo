@@ -31,11 +31,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This endpoint gives info about backend status and allows some control. Should
@@ -155,21 +152,21 @@ public class NodeControlController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                                    schema = @Schema(implementation = CacheStatsResponse.class)))
+                                    schema = @Schema(implementation = CacheStatsResponse.class)))
             }
     )
     public Response getCacheStats(@QueryParam("name") @DefaultValue("All") String cache) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         List<CacheStatsDTO> result = new ArrayList<>();
         List<String> cacheNames;
-        if (cache.equalsIgnoreCase("all")){
+        if (cache.equalsIgnoreCase("all")) {
             cacheNames = cacheManager.getAllocatedCacheNames();
-        }else{
+        } else {
             cacheNames = List.of(cache);
         }
         cacheNames.forEach(cacheName -> {
             CacheStats stats = cacheManager.getStats(cacheName);
-            if ( stats != null) {
+            if (stats != null) {
                 CacheStatsDTO dto = statsConverter.convert(stats);
                 dto.setCacheName(cacheName);
                 result.add(dto);

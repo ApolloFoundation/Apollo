@@ -5,23 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -50,14 +33,32 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceTest {
     public static final int DEFAULT_TRIM_HEIGHT = 100_000;
@@ -65,20 +66,34 @@ public class ShardServiceTest {
     TemporaryFolderExtension folder = new TemporaryFolderExtension();
 
     ShardService shardService;
-    @Mock ShardDao shardDao;
-    @Mock BlockchainProcessor blockchainProcessor;
-    @Mock Blockchain blockchain;
-    @Mock DirProvider dirProvider;
-    @Mock Zip zip;
-    @Mock DatabaseManager databaseManager;
-    @Mock BlockchainConfig blockchainConfig;
-    @Mock ShardRecoveryDao shardRecoveryDao;
-    @Mock ShardMigrationExecutor shardMigrationExecutor;
-    @Mock AplAppStatus aplAppStatus;
-    @Mock PropertiesHolder propertiesHolder;
-    @Mock Event<TrimConfig> trimEvent;
-    @Mock Event<DbHotSwapConfig> dbEvent;
-    @Mock GlobalSync globalSync;
+    @Mock
+    ShardDao shardDao;
+    @Mock
+    BlockchainProcessor blockchainProcessor;
+    @Mock
+    Blockchain blockchain;
+    @Mock
+    DirProvider dirProvider;
+    @Mock
+    Zip zip;
+    @Mock
+    DatabaseManager databaseManager;
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    ShardRecoveryDao shardRecoveryDao;
+    @Mock
+    ShardMigrationExecutor shardMigrationExecutor;
+    @Mock
+    AplAppStatus aplAppStatus;
+    @Mock
+    PropertiesHolder propertiesHolder;
+    @Mock
+    Event<TrimConfig> trimEvent;
+    @Mock
+    Event<DbHotSwapConfig> dbEvent;
+    @Mock
+    GlobalSync globalSync;
     @Mock
     TrimService trimService;
 
@@ -89,7 +104,8 @@ public class ShardServiceTest {
 
     @Test
     void testShardWhenShardExecutorThrowAnyException() throws ExecutionException, InterruptedException {
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         doThrow(new RuntimeException()).when(shardMigrationExecutor).executeAllOperations();
         CompletableFuture<MigrateState> c = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
@@ -113,10 +129,10 @@ public class ShardServiceTest {
     }
 
 
-
     @Test
     void testSkipSharding() throws InterruptedException, ExecutionException {
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         AtomicBoolean shutdown = new AtomicBoolean(false);
         doAnswer((in) -> {
             while (!shutdown.get()) {
@@ -143,8 +159,9 @@ public class ShardServiceTest {
 
     @Test
     void testShardingWhenNoShardCreateSet() throws ExecutionException, InterruptedException {
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate",false);
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
+        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
 
         CompletableFuture<MigrateState> c = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
@@ -169,7 +186,8 @@ public class ShardServiceTest {
 
     @Test
     void testCreateShardWhenLastShardHeightLessThanCurrentHeight() throws ExecutionException, InterruptedException {
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         doReturn(new Shard(100, DEFAULT_TRIM_HEIGHT)).when(shardDao).getLastShard();
         CompletableFuture<MigrateState> shardFuture1 = shardService.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT + 1, Integer.MAX_VALUE);
         assertNotNull(shardFuture1);
@@ -215,7 +233,8 @@ public class ShardServiceTest {
         mockBackupExists();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         boolean reset = shardService.reset(1);
 
         assertTrue(reset);
@@ -225,7 +244,8 @@ public class ShardServiceTest {
     @Test
     void testResetWithCancellingShardingProcess() throws IOException, InterruptedException {
         mockBackupExists();
-        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         AtomicBoolean shardingStarted = new AtomicBoolean(false);
         doAnswer((d) -> {
@@ -252,7 +272,8 @@ public class ShardServiceTest {
         mockBackupExists();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
         doReturn(true).when(trimService).isTrimming();
         CompletableFuture<Void> trimFuture = CompletableFuture.supplyAsync(() -> {
             ThreadUtils.sleep(250);
@@ -361,6 +382,7 @@ public class ShardServiceTest {
         assertEquals(List.of(), allShards);
         verify(shardDao).getAllCompletedShards();
     }
+
     @Test
     void testAllCompletedOrArchivedShards() {
         List<Shard> expected = List.of(new Shard(1L, 20), new Shard(2L, 30));

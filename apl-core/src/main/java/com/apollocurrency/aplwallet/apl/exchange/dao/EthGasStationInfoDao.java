@@ -29,7 +29,7 @@ public class EthGasStationInfoDao {
         try {
 
             URL url = new URL(Constants.ETH_STATION_GAS_INFO_URL);
-            SSLContext sc=null;
+            SSLContext sc = null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
@@ -67,7 +67,7 @@ public class EthGasStationInfoDao {
         HttpsURLConnection con = null;
         try {
             URL url = new URL(Constants.ETH_CHAIN_GAS_INFO_URL);
-            SSLContext sc=null;
+            SSLContext sc = null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
