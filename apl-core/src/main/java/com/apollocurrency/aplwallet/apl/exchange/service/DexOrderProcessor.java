@@ -129,9 +129,14 @@ public class DexOrderProcessor {
                     log.debug("DexContract has been already created.(Step-1) ExchangeContractId:{}", contract.getId());
                     continue;
                 }
-
-                if (!counterOrder.getStatus().isOpen() || !isContractStep1Valid(contract)) {
-                    log.debug("Order is in the status: {}, not valid now.", counterOrder.getStatus());
+                                
+                if (!counterOrder.getStatus().isOpen() ) {
+                    log.debug("Exit point 1: Order is in the status: {}, not valid now.", counterOrder.getStatus());
+                    continue;
+                }
+                
+                if (!isContractStep1Valid(contract)) {
+                    log.debug("Exit point 2: Order is in the status: {}, not valid now.", counterOrder.getStatus());
                     continue;
                 }
 
@@ -208,8 +213,10 @@ public class DexOrderProcessor {
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
         //TODO add validation.
         log.debug("isContractStep1Valid entry point");
-        long counterOrderID = exchangeContract.getCounterOrderId();
-        long orderID = exchangeContract.getOrderId();
+        
+        // everything should be vice-versa here since we return our orders back        
+        long counterOrderID = exchangeContract.getOrderId();
+        long orderID = exchangeContract.getCounterOrderId();
 
         log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
 
@@ -233,7 +240,7 @@ public class DexOrderProcessor {
         }
 
 
-        // DUMPING main offer 
+        // DUMPING main offer : pay attention: should be vice-versa in comparison to ZERO step.. 
 
         log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(),
                 mainOrder.getToAddress(), mainOrder.getFromAddress(), mainOrder.getPairCurrency(), mainOrder.getPairRate());
@@ -356,7 +363,8 @@ public class DexOrderProcessor {
         log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
                 contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
 
-        return isContractStep1Valid(exchangeContract) && dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
+        // this validation seems to be redundant here.. commented it here so that not to get confused
+        return /*isContractStep1Valid(exchangeContract) &&*/ dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
     }
 
     /**
