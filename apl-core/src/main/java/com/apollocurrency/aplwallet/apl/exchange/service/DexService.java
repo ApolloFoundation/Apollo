@@ -161,19 +161,46 @@ public class DexService {
         dexContractTable.insert(exchangeContract);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ExchangeContract> getDexContracts(DexContractDBRequest dexContractDBRequest) {
         return dexContractDao.getAll(dexContractDBRequest);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
+    public List<ExchangeContract> getDexContractsByCounterOrderId(Long counterOrderId) {
+        return dexContractTable.getAllByCounterOrder(counterOrderId);
+    }
+
+    @Transactional
+    public ExchangeContract getDexContractByOrderId(Long orderId) {
+        return dexContractTable.getByOrder(orderId);
+    }
+
+    @Transactional
+    public ExchangeContract getDexContractByCounterOrderId(Long counterOrderId) {
+        return dexContractTable.getByCounterOrder(counterOrderId);
+    }
+
+    /**
+     * Use jdbc.
+     *
+     * @param dexContractDBRequest
+     * @return
+     */
+    @Deprecated
+    @Transactional
     public ExchangeContract getDexContract(DexContractDBRequest dexContractDBRequest) {
         return dexContractDao.get(dexContractDBRequest);
     }
 
+    @Transactional
+    public ExchangeContract getDexContractByOrderAndCounterOrder(Long orderId, Long counterOrderId) {
+        return dexContractTable.getByOrderAndCounterOrder(orderId, counterOrderId);
+    }
+
     @Transactional(readOnly = true)
     public ExchangeContract getDexContractById(long id) {
-        return dexContractDao.get(DexContractDBRequest.builder().id(id).build());
+        return dexContractTable.getById(id);
     }
 
     @Transactional(readOnly = true)
@@ -206,39 +233,32 @@ public class DexService {
     }
 
 
-    public void closeOverdueOrders(Integer time) {
+    public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
 
         for (DexOrder order : orders) {
-            try {
-                log.debug("Order expired, orderId: {}", order.getId());
-                order.setStatus(OrderStatus.EXPIRED);
-                dexOrderTable.insert(order);
+            log.debug("Order expired, orderId: {}", order.getId());
+            order.setStatus(OrderStatus.EXPIRED);
+            dexOrderTable.insert(order);
 
-                refundFrozenAplForOrder(order);
+            refundFrozenAplForOrder(order);
 
-                reopenIncomeOrders(order.getId());
-            } catch (AplException.ExecutiveProcessException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
+            reopenIncomeOrders(order.getId());
+
         }
     }
 
-    public void closeOverdueContracts(Integer time) {
-        List<ExchangeContract> contracts = dexContractDao.getOverdueContractsStep1and2(time);
+    public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {
+        List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time);
 
         for (ExchangeContract contract : contracts) {
             DexOrder order = getOrder(contract.getOrderId());
             DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
-            try {
-                closeOverdueContract(order, time);
-                closeOverdueContract(counterOrder, time);
-                contract.setContractStatus(ExchangeContractStatus.STEP_4);
-                dexContractTable.insert(contract);
-            } catch (AplException.ExecutiveProcessException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
+            closeOverdueContract(order, time);
+            closeOverdueContract(counterOrder, time);
+            contract.setContractStatus(ExchangeContractStatus.STEP_4);
+            dexContractTable.insert(contract);
         }
     }
 
@@ -246,13 +266,14 @@ public class DexService {
         if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
+                dexOrderTable.insert(order);
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
+                dexOrderTable.insert(order);
                 refundFrozenAplForOrder(order);
                 reopenIncomeOrders(order.getId());
             }
 
-            dexOrderTable.insert(order);
         } else {
             log.debug("Skip closing order {} in status {}", order.getId(), order.getStatus());
         }
@@ -606,10 +627,10 @@ public class DexService {
     public void finishExchange(long transactionId, long orderId) {
         DexOrder order = closeOrder(orderId);
 
-        ExchangeContract exchangeContract = getDexContract(DexContractDBRequest.builder().offerId(order.getId()).build());
+        ExchangeContract exchangeContract = getDexContractByOrderId(order.getId());
 
         if (exchangeContract == null) {
-            exchangeContract = getDexContract(DexContractDBRequest.builder().counterOfferId(order.getId()).build());
+            exchangeContract = getDexContractByCounterOrderId(order.getId());
         }
 
         Block lastBlock = blockchain.getLastBlock();
@@ -637,26 +658,22 @@ public class DexService {
 
 
     public void reopenIncomeOrders(Long orderId) {
-        List<ExchangeContract> contractsForReopen = getDexContracts(DexContractDBRequest.builder()
-                .counterOfferId(orderId)
-                .build());
-
-        closeContracts(contractsForReopen);
+        closeContracts(dexContractTable.getAllByCounterOrder(orderId));
     }
 
     public void closeContracts(List<ExchangeContract> contractsForReopen) {
         for (ExchangeContract contract : contractsForReopen) {
+
+            contract.setContractStatus(ExchangeContractStatus.STEP_4);
+            saveDexContract(contract);
+            log.debug("Contract was closed. ContractId: {}", contract.getId());
+
             //Reopen order.
             DexOrder order = getOrder(contract.getOrderId());
-            if (order.getStatus().isPending()) {
-                //Close contract.
-                contract.setContractStatus(ExchangeContractStatus.STEP_4);
-                saveDexContract(contract);
-                log.debug("Contract was closed. ContractId: {}", contract.getId());
-
+            if (!order.getStatus().isClosedOrExpiredOrCancel()) {
                 order.setStatus(OrderStatus.OPEN);
                 saveOrder(order);
-                log.debug("Order was closed. OrderId: {}", order.getId());
+                log.debug("Order was reopened. OrderId: {}", order.getId());
             }
         }
     }
