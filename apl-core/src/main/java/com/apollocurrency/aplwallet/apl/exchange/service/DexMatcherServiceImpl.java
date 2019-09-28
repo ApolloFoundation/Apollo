@@ -108,6 +108,8 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
      */ 
     private int validateOffer(DexOrder myOrder, DexOrder hisOrder) throws Exception {
         
+        log.debug("DexMatcherServiceImpl.validateOffer entry point:");
+        
         DexCurrencies curr = hisOrder.getPairCurrency();
         log.debug("my order: orderCurrency: {}, pairCurrency: {}", myOrder.getOrderCurrency(), myOrder.getPairCurrency() );
         log.debug("his order: orderCurrency: {}, pairCurrency: {}", hisOrder.getOrderCurrency(), hisOrder.getPairCurrency() );
