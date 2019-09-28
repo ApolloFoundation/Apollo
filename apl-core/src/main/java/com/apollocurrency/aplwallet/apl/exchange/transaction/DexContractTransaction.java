@@ -6,7 +6,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -61,10 +60,8 @@ public class DexContractTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("Order was not found. OrderId: " + attachment.getCounterOrderId());
         }
 
-        ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
-                .offerId(attachment.getOrderId())
-                .counterOfferId(attachment.getCounterOrderId())
-                .build());
+        ExchangeContract contract = dexService.getDexContractByOrderAndCounterOrder(attachment.getOrderId(), attachment.getCounterOrderId());
+
         if (attachment.getContractStatus().isStep1()) {
             if (contract != null) {
                 throw new AplException.NotValidException("Contract was created earlier");
@@ -173,11 +170,7 @@ public class DexContractTransaction extends DEX {
             dexService.saveOrder(counterOrder);
         }
 
-        ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
-                .offerId(attachment.getOrderId())
-                .counterOfferId(attachment.getCounterOrderId())
-                .build());
-
+        ExchangeContract contract = dexService.getDexContractByOrderAndCounterOrder(attachment.getOrderId(), attachment.getCounterOrderId());
 
         // contract == null it means, that it's a first step.
         if (contract == null) {
@@ -236,9 +229,7 @@ public class DexContractTransaction extends DEX {
 
 
     private void reopenNotMatchedOrders(ExchangeContract contract) {
-        List<ExchangeContract> allContracts = dexService.getDexContracts(DexContractDBRequest.builder()
-                .counterOfferId(contract.getCounterOrderId())
-                .build());
+        List<ExchangeContract> allContracts = dexService.getDexContractsByCounterOrderId(contract.getCounterOrderId());
 
         //Exclude current contract.
         List<ExchangeContract> contractsForReopen = allContracts.stream()

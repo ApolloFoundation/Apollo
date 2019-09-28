@@ -29,4 +29,8 @@ public enum OrderStatus {
     public boolean isWaitingForApproval(){
         return this == OrderStatus.WAITING_APPROVAL;
     }
+
+    public boolean isClosedOrExpiredOrCancel() {
+        return this == OrderStatus.CLOSED || this == OrderStatus.EXPIRED || this == OrderStatus.CANCEL;
+    }
 }

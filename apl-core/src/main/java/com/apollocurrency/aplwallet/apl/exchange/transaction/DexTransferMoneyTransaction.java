@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
@@ -17,9 +16,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public class DexTransferMoneyTransaction extends DEX {
@@ -51,7 +50,8 @@ public class DexTransferMoneyTransaction extends DEX {
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         // IMPORTANT! Validation should restrict sending this transaction without money freezing and out of the dex scope
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
-        ExchangeContract dexContract = dexService.getDexContract(DexContractDBRequest.builder().id(attachment.getContractId()).build());
+        ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
+
         if (dexContract == null) {
             throw new AplException.NotValidException("Contract does not exist: id - " + attachment.getContractId());
         }
@@ -97,7 +97,9 @@ public class DexTransferMoneyTransaction extends DEX {
         DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) tx.getAttachment();
         sender.addToBalanceATM(getLedgerEvent(), tx.getId(), -attachment.getOfferAmount()); // reduce only balanceATM, assume that unconfirmed balance was reduced earlier and was not recovered yet
         recipient.addToBalanceAndUnconfirmedBalanceATM(getLedgerEvent(), tx.getId(), attachment.getOfferAmount());
-        ExchangeContract dexContract = dexService.getDexContract(DexContractDBRequest.builder().id(attachment.getContractId()).build());
+
+        ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
+
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
         dexService.finishExchange(tx.getId(), orderToClose);
     }

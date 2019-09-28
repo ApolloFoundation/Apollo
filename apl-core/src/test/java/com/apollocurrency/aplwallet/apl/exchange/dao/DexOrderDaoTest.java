@@ -43,11 +43,4 @@ class DexOrderDaoTest {
         assertEquals(List.of(td.ORDER_SEA_3, td.ORDER_BEA_4), orders);
     }
 
-    @Test
-    void testGetExpiredOrders() {
-        List<DexOrder> overdueOrders = dexOrderDao.getOverdueOrders(11001);
-
-        assertEquals(List.of(td.ORDER_BPB_1, td.ORDER_BEA_4), overdueOrders);
-    }
-
 }

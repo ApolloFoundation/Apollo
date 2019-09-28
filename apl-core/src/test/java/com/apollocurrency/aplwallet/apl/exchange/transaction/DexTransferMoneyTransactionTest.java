@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -37,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -112,7 +112,7 @@ class DexTransferMoneyTransactionTest {
         doReturn(attachment).when(tx).getAttachment();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx)); // no contract
 
-        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+        doReturn(contract).when(dexService).getDexContractById(anyLong());
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(1000L).when(tx).getSenderId();
@@ -155,7 +155,7 @@ class DexTransferMoneyTransactionTest {
     void testApplyAttachment() {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+        doReturn(contract).when(dexService).getDexContractById(anyLong());
 
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
@@ -173,7 +173,7 @@ class DexTransferMoneyTransactionTest {
     void testApplyAttachmentForContractRecipient() {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        doReturn(contract).when(dexService).getDexContract(DexContractDBRequest.builder().id(64L).build());
+        doReturn(contract).when(dexService).getDexContractById(anyLong());
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
         doReturn(2000L).when(sender).getId();
