@@ -105,3 +105,10 @@ This command runs blockchain application with 2nd test net and debug level TRACE
 ## IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.
+
+
+## DEX
+
+#### Generate eth smart contract class.
+
+`$ web3j solidity generate --javaTypes -b dex.bin -a dex.abi -o $Path/Apollo/apl-core/src/main/java/com/apollocurrency/aplwallet/apl/eth/contracts/ -p com.apollocurrency.aplwallet.apl.eth.contracts`

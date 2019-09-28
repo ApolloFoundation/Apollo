@@ -20,10 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Observable;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -31,15 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 
-public interface TransactionProcessor extends Observable<List<? extends Transaction>,TransactionProcessor.Event> {
-
-    enum Event {
-        REMOVED_UNCONFIRMED_TRANSACTIONS,
-        ADDED_UNCONFIRMED_TRANSACTIONS,
-        ADDED_CONFIRMED_TRANSACTIONS,
-        RELEASE_PHASED_TRANSACTION,
-        REJECT_PHASED_TRANSACTION
-    }
+public interface TransactionProcessor {
 
     void init();
 
@@ -79,11 +69,4 @@ public interface TransactionProcessor extends Observable<List<? extends Transact
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 
-    @Override
-    boolean addListener(Listener<List<? extends Transaction>> listener, Event eventType);
-
-    @Override
-    boolean removeListener(Listener<List<? extends Transaction>> listener, Event eventType);
-
-    void notifyListeners(List<? extends Transaction> transactions, Event eventType);
 }

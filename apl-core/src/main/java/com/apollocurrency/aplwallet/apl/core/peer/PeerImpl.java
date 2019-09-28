@@ -21,22 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -53,16 +37,32 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import java.nio.channels.ClosedChannelException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.channels.ClosedChannelException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -105,12 +105,12 @@ public final class PeerImpl implements Peer {
     private volatile int  failedConnectAttempts = 0;
 
     PeerImpl(PeerAddress addrByFact,
-            PeerAddress announcedAddress,
-            BlockchainConfig blockchainConfig,
-            Blockchain blockchain,
-            TimeService timeService,
-            PeerServlet peerServlet,
-            PeersService peers
+             PeerAddress announcedAddress,
+             BlockchainConfig blockchainConfig,
+             Blockchain blockchain,
+             TimeService timeService,
+             PeerServlet peerServlet,
+             PeersService peers
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -130,8 +130,8 @@ public final class PeerImpl implements Peer {
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
-        this.peers=peers;
-        isLightClient=peers.isLightClient;
+        this.peers = peers;
+        isLightClient = peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
@@ -225,7 +225,7 @@ public final class PeerImpl implements Peer {
 
     public boolean setApplication(String application) {
         boolean res = true;
-        if (application == null 
+        if (application == null
                 || application.length() > PeersService.MAX_APPLICATION_LENGTH
                 || ! application.equalsIgnoreCase(Constants.APPLICATION)
            ) {
@@ -327,7 +327,7 @@ public final class PeerImpl implements Peer {
     }
     /**
      * Sets address of peer for outbound connections
- Shoul not be used directly but from PeersService service only
+     Shoul not be used directly but from PeersService service only
      * @param announcedAddress address with port  optionally
      */
     void setAnnouncedAddress(String announcedAddress) {
@@ -616,7 +616,7 @@ public final class PeerImpl implements Peer {
 
                 setPlatform(newPi.getPlatform());
                 setShareAddress(newPi.getShareAddress());
- 
+
                 if (!PeersService.ignorePeerAnnouncedAddress) {
                     if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
                             if (!verifyAnnouncedAddress(newPi.getAnnouncedAddress())) {

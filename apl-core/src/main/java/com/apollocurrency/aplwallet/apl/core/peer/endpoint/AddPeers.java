@@ -33,13 +33,13 @@ public final class AddPeers extends PeerRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
-        final JSONArray peersArray = (JSONArray)request.get("peers");
+        final JSONArray peersArray = (JSONArray) request.get("peers");
         if (peersArray != null && lookupPeersService().getMorePeers && !lookupPeersService().hasTooManyKnownPeers()) {
             final JSONArray services = (JSONArray)request.get("services");
             final boolean setServices = (services != null && services.size() == peersArray.size());
             lookupPeersService().peersExecutorService.submit(() -> {
-                for (int i=0; i<peersArray.size(); i++) {
-                    String announcedAddress = (String)peersArray.get(i);
+                for (int i = 0; i < peersArray.size(); i++) {
+                    String announcedAddress = (String) peersArray.get(i);
                     PeerImpl newPeer = lookupPeersService().findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
                         if (lookupPeersService().addPeer(newPeer) && setServices) {
