@@ -16,4 +16,6 @@ public interface UpdaterCore {
 
     UpdateInfo getUpdateInfo();
 
+    void shutdown();
+
 }

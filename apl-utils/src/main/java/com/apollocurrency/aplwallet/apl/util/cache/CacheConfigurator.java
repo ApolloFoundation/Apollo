@@ -54,19 +54,19 @@ public class CacheConfigurator<K, V> implements CacheConfiguration<K, V> {
     }
 
     @Override
-    public void setMaxSize(int maxSize) {
-        Preconditions.checkState(this.maxSize == -1,
+    public void setMaxSize(int maxSize){
+        Preconditions.checkState( this.maxSize == -1,
                 "maximum size was already set to %s", this.maxSize);
         this.maxSize = maxSize;
     }
 
     @Override
-    public CacheBuilder cacheBuilder() {
+    public CacheBuilder cacheBuilder(){
         return cacheBuilder;
     }
 
     @Override
-    public Optional<CacheLoader<K, V>> getCacheLoader() {
+    public Optional<CacheLoader<K, V>> getCacheLoader(){
         return Optional.ofNullable(cacheLoader);
     }
 

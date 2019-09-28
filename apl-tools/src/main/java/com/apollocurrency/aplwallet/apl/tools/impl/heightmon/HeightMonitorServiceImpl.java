@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerDiffStat;
@@ -23,9 +26,6 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,9 +40,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Singleton;
 
 @Singleton
 public class HeightMonitorServiceImpl implements HeightMonitorService {
@@ -224,7 +224,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         String status = "OK";
         int comparedCounter = comparedShards.size() - 1;
         int targetCounter = targetShards.size() - 1;
-        while (targetCounter >= 0 && comparedCounter >= 0) {
+        while (targetCounter >= 0 && comparedCounter >= 0){
             if (!targetShards.get(targetCounter).equals(comparedShards.get(comparedCounter))) {
                 status = "DIFF FROM " + targetShards.get(targetCounter).getShardId();
                 break;
@@ -268,7 +268,8 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
             String host = peers.get(i).getHost();
             try {
                 peerBlocks.put(host, getBlocksRequests.get(i).get());
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("Error getting blocks for " + host, e);
             }
         }
@@ -288,15 +289,14 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         return response.getContentAsString();
     }
 
-    private List<ShardDTO> getShards(String peerUrl) {
+    private  List<ShardDTO> getShards(String peerUrl) {
         List<ShardDTO> shards = new ArrayList<>();
         Request request = client.newRequest(peerUrl + "/rest/shards")
                 .method(HttpMethod.GET);
         ContentResponse response;
         try {
             response = request.send();
-            shards = objectMapper.readValue(response.getContentAsString(), new TypeReference<List<ShardDTO>>() {
-            });
+            shards = objectMapper.readValue(response.getContentAsString(), new TypeReference<List<ShardDTO>>(){});
         } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
             log.error("Unable to get or parse response from {} - {}", peerUrl, e.toString());
         } catch (Exception e) {

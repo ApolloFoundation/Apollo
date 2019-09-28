@@ -37,16 +37,16 @@ public enum  DexCurrencies {
     }
 
     public boolean isEthOrPax(){
-        return (this == DexCurrencies.ETH) || (this == DexCurrencies.PAX);
+        return this.equals(DexCurrencies.ETH)  || this.equals(DexCurrencies.PAX);
     }
 
     public boolean isApl(){
-        return this == DexCurrencies.APL;
+        return this.equals(DexCurrencies.APL);
     }
     public boolean isEth(){
-        return this == DexCurrencies.ETH;
+        return this.equals(DexCurrencies.ETH);
     }
     public boolean isPax(){
-        return this == DexCurrencies.PAX;
+        return this.equals(DexCurrencies.PAX);
     }
 }

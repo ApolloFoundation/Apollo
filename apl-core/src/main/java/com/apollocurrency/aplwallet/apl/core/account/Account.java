@@ -20,6 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -56,27 +72,11 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
 import org.slf4j.Logger;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
  * Used as global access point to all interactions with account and public keys
  * TODO Required massive refactoring
  */
-public class Account {
+public final class Account {
 
     private static final Logger LOG = getLogger(Account.class);
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
@@ -150,7 +150,7 @@ public class Account {
         genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
 
         //if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
-        publicKeyCache = cache;
+            publicKeyCache = cache;
         //}
     }
 

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractUpdater implements Updater {
     private static final Logger LOG = getLogger(AbstractUpdater.class);
     protected UpdateData updateData;
-    protected final UpdateInfo updateInfo;
+    protected UpdateInfo updateInfo;
     protected UpdaterMediator updaterMediator;
     protected UpdaterService updaterService;
     protected int blocksWait;
@@ -34,24 +34,32 @@ public abstract class AbstractUpdater implements Updater {
     protected PlatformDependentUpdaterFactory pduFactory;
 
     public AbstractUpdater(UpdateData updateData, UpdaterService updaterService,
-                           UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
-        this(updateData, updaterMediator, updaterService, 0, 0, updateInfo
-        );
+                           UpdaterMediator updaterMediator) {
+        this(updateData, updaterMediator, updaterService, 0, 0);
     }
 
-    public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait, UpdateInfo updateInfo) {
+    public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait) {
         this.updateData = updateData;
-        this.updateInfo = updateInfo;
-        synchronized (this.updateInfo) {
-            updateInfo.setUpdate(true);
-            updateInfo.setLevel(getLevel());
-            updateInfo.setVersion(updateData.getAttachment().getAppVersion());
-        }
+        this.updateInfo = new UpdateInfo(true,updateData.getTransactionId(),
+                 getLevel(),
+                ((UpdateAttachment) updateData.getAttachment()).getAppVersion());
         this.updaterMediator = updaterMediator;
         this.updaterService = updaterService;
         this.blocksWait = blocksWait;
         this.secondsWait = secondsWait;
         this.pduFactory = new PlatformDependentUpdaterFactoryImpl(updaterMediator);
+    }
+    public AbstractUpdater(UpdateData updateData, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait,
+                           PlatformDependentUpdaterFactory pduFactory) {
+        this.updateData = updateData;
+        this.updateInfo = new UpdateInfo(true,updateData.getTransactionId(), getLevel(),
+                ((UpdateAttachment) updateData.getAttachment()).getAppVersion(), UpdateInfo.UpdateState.NONE);
+        this.updaterMediator = updaterMediator;
+        this.updaterService = updaterService;
+        this.blocksWait = blocksWait;
+        this.secondsWait = secondsWait;
+        this.pduFactory = pduFactory;
+
     }
 
     @Override
@@ -62,7 +70,7 @@ public abstract class AbstractUpdater implements Updater {
         waitBlocks(blocksWait, secondsWait);
         updaterMediator.suspendBlockchain();
         if (tryUpdate()) {
-            LOG.info("{} was installed successfully", getLevel());
+            LOG.info("{} was installed successfully");
             updaterService.update(new UpdateTransaction(updateData.getTransactionId(), true));
             updateInfo.setUpdateState(UpdateInfo.UpdateState.FINISHED);
             return UpdateInfo.UpdateState.FINISHED;

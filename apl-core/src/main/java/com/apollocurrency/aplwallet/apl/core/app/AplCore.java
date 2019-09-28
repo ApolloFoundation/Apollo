@@ -21,6 +21,9 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -54,12 +57,11 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -69,23 +71,14 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
-import static org.slf4j.LoggerFactory.getLogger;
-
-@Slf4j
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
@@ -112,20 +105,13 @@ public final class AplCore {
     private AplAppStatus aplAppStatus;
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
-    @Inject
-    @Setter
+    @Inject @Setter
     private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
-    private DexOrderProcessor dexOrderProcessor;
-
-    @Inject
-    @Setter
     PeersService peers;
     private String initCoreTaskID;
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-
+    
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
     }
@@ -261,11 +247,11 @@ public final class AplCore {
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
                 //Account initialization
-                Cache<DbKey, PublicKey> publicKeyCache = null;
-                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+                Cache<DbKey,PublicKey> publicKeyCache = null;
+                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
                     publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                 }
-                Account.init(databaseManager, propertiesHolder, blockchainProcessor, blockchainConfig, blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
@@ -308,18 +294,6 @@ public final class AplCore {
 
                 //start all background tasks
                 taskDispatchManager.dispatch();
-
-                //TODO move to taskDispatchManager Andrii K
-                Runnable task = () -> {
-                    log.info("DexOrderProcessor: start");
-                    try {
-                        dexOrderProcessor.processContracts();
-                    } catch (Throwable e) {
-                        log.warn("DexOrderProcessor error", e);
-                    }
-                    log.info("DexOrderProcessor: finish");
-                };
-                executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
 
                 try {
                     secureRandomInitThread.join(10000);

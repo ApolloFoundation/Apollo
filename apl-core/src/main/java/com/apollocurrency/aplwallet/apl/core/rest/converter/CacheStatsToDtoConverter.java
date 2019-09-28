@@ -17,7 +17,7 @@ public class CacheStatsToDtoConverter implements Converter<CacheStats, CacheStat
                 cacheStats.loadSuccessCount(),
                 cacheStats.totalLoadTime(),
                 cacheStats.evictionCount()
-        );
+                );
 
         return dto;
     }

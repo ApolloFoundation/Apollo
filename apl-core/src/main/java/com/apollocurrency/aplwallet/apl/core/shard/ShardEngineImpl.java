@@ -4,6 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
+import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
@@ -41,8 +58,6 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,23 +72,8 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.COMPLETED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.CSV_EXPORT_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_COPY_TO_SHARD_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVED_FROM_MAIN;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.DATA_REMOVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.FAILED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SECONDARY_INDEX_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_CREATED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
-import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * {@inheritDoc}
@@ -189,7 +189,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
 
 
             if (isConstraintSchema) {
@@ -450,7 +450,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), pruningTime);
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
                     }

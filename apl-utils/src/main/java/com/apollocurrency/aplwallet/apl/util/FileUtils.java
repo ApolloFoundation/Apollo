@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -15,8 +16,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public class FileUtils {
@@ -114,7 +114,6 @@ public class FileUtils {
             log.error("Unable to delete dir {}", directory);
         }
     }
-
     public static void deleteFilesByFilter(Path directory, Predicate<Path> predicate) {
         if (!Files.isDirectory(directory) || !Files.exists(directory)) {
             return;

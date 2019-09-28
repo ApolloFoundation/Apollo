@@ -4,6 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -11,10 +15,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileUtilsTest {
     @RegisterExtension
@@ -97,7 +97,7 @@ class FileUtilsTest {
         Files.createFile(directory.resolve("file2.txt"));
         Path existingFile = directory.resolve("file3.tt");
         Files.createFile(existingFile);
-        FileUtils.deleteFilesByFilter(directory, (p) -> p.toString().endsWith(".txt"));
+        FileUtils.deleteFilesByFilter(directory, (p)-> p.toString().endsWith(".txt"));
         long filesCount = Files.list(directory).count();
         assertEquals(1, filesCount);
         assertTrue(Files.exists(existingFile));

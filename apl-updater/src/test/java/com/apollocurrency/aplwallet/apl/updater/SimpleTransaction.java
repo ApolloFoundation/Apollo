@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
 import java.util.List;
-import java.util.Map;
 
 public class SimpleTransaction implements Transaction {
     private long id;
@@ -58,11 +57,6 @@ public class SimpleTransaction implements Transaction {
 
     public SimpleTransaction(Transaction tr) {
         this(tr.getId(), tr.getType(), tr.getHeight());
-    }
-
-    @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
-        return false;
     }
 
     @Override

@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,8 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class BlockDaoImpl implements BlockDao {
@@ -49,12 +49,12 @@ public class BlockDaoImpl implements BlockDao {
 //    @CacheProducer
 //    @CacheType(PUBLIC_KEY_CACHE_NAME)
 //    private Cache<Long, BlockIndex> publicKeyCache;
-
+    
     private final DatabaseManager databaseManager;
 
     @Inject
     public BlockDaoImpl(DatabaseManager databaseManager) {
-        // this.blockCacheSize = blockCacheSize;
+       // this.blockCacheSize = blockCacheSize;
         this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
 

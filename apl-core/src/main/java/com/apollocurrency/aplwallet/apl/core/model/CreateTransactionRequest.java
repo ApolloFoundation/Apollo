@@ -18,7 +18,6 @@ public class CreateTransactionRequest {
     private String publicKeyValue;
     private String passphrase;
     private boolean broadcast;
-    private boolean validate = true;
 
 
     private boolean encryptedMessageIsPrunable;
@@ -36,7 +35,7 @@ public class CreateTransactionRequest {
     private PhasingAppendix phasing;
 
     private Account senderAccount;
-    private long recipientId;
+    private Long recipientId;
     private String recipientPublicKey;
 
     private long feeATM;

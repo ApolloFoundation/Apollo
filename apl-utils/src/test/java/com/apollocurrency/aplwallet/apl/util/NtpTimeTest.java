@@ -1,15 +1,17 @@
 package com.apollocurrency.aplwallet.apl.util;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import javax.inject.Inject;
+
+import java.text.SimpleDateFormat;
+
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.text.SimpleDateFormat;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @EnableWeld

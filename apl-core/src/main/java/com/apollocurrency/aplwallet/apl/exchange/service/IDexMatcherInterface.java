@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 
 /**
  *
@@ -14,12 +13,13 @@ public interface IDexMatcherInterface {
      /** 
      * Start transport interaction service
      */
-     void initialize();
+     
+    public void initialize();
    
     /** 
      * Stop transport interaction service
      */
-    void deinitialize();
-
-    DexOrder findCounterOffer(DexOrder createdOffer);
+     
+    public void deinitialize();
+    
 }

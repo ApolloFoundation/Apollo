@@ -24,16 +24,16 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
     };
 
     @PostConstruct
-    public void setUp() {
+    public void setUp(){
         log.debug("Runtime: maMemory={} totalMemory={}", Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory());
         log.debug("Available for cache={}", getAvailableMemory());
     }
 
     @Override
     public long getAvailableMemory() {
-        long mem = Math.min(Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory()) / 100;
+        long mem = Math.min(Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory())/100;
 
-        mem = mem * ADDRESSABLE_MEM_PERCENT_FOR_CACHE;
+        mem = mem*ADDRESSABLE_MEM_PERCENT_FOR_CACHE;
 
         return mem;
     }

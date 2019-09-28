@@ -15,36 +15,35 @@ import java.nio.ByteBuffer;
 @AllArgsConstructor
 public class DexControlOfFrozenMoneyAttachment extends AbstractAttachment {
 
-    private long contractId;
-    private long offerAmount; // measured in ATM
+    private long orderId;
+    private boolean hasFrozenMoney;
 
     public DexControlOfFrozenMoneyAttachment(ByteBuffer buffer) {
         super(buffer);
-        this.contractId = buffer.getLong();
-        this.offerAmount = buffer.getLong();
+        this.orderId = buffer.getLong();
+        this.hasFrozenMoney = buffer.get() == 1;
     }
 
     public DexControlOfFrozenMoneyAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.offerAmount = Convert.parseLong(attachmentData.get("offerAmount"));
-        this.contractId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("contractId")));
+        this.orderId = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("orderId")));
     }
 
     @Override
     public int getMySize() {
-        return 8 + 8;
+        return 8 + 1;
     }
 
     @Override
     public void putMyBytes(ByteBuffer buffer) {
-        buffer.putLong(this.contractId);
-        buffer.putLong(this.offerAmount);
+        buffer.putLong(this.orderId);
+        buffer.put(hasFrozenMoney ? (byte)1 : (byte)0);
     }
 
     @Override
     public void putMyJSON(JSONObject json) {
-        json.put("contractId", Long.toUnsignedString(contractId));
-        json.put("offerAmount", offerAmount);
+        json.put("orderId", this.getOrderId());
+        json.put("hasFrozenMoney", this.isHasFrozenMoney());
     }
 
     @Override

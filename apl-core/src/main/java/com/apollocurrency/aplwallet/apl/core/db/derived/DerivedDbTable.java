@@ -27,8 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +35,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.PostConstruct;
+import javax.enterprise.inject.spi.CDI;
 
 public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
@@ -182,13 +182,12 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
      * {@inheritDoc}
      */
     @Override
-    public MinMaxValue getMinMaxValue(int height) {
+    public MinMaxValue getMinMaxValue(int height){
         return getMinMaxValue(height, "db_id");
     }
 
     @Override
-    public void prune(int time) {
-    }
+    public void prune(int time) {}
 
     protected MinMaxValue getMinMaxValue(int height, String column) {
         Objects.requireNonNull(column, "column is NULL");
@@ -199,7 +198,8 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
             MinMaxValue minMaxValue = getMinMaxValue(pstmt);
             minMaxValue.setColumn(column);
             return minMaxValue;
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }

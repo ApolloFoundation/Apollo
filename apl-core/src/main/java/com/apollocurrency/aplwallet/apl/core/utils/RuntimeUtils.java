@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.management.ManagementFactory;
 import javax.enterprise.inject.Vetoed;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
 
 @Slf4j
 @Vetoed
@@ -20,7 +20,8 @@ public class RuntimeUtils {
         try {
             Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
             memoryTotal = (Long) attribute;
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
         boolean res;
         if (memoryTotal == 0) {
@@ -35,7 +36,5 @@ public class RuntimeUtils {
         }
         return res;
     }
-
-    private RuntimeUtils() {
-    }
+    private  RuntimeUtils() {}
 }

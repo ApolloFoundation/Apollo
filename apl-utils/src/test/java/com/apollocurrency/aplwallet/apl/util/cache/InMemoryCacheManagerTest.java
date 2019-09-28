@@ -15,11 +15,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager.MemoryUsageCalculator.LONG_SIZE;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -35,13 +31,13 @@ class InMemoryCacheManagerTest {
 
     @Test
     void testWrongConfiguration_whenAvailableMemoryLessThan16Mb() {
-        doReturn(15 * 1024 * 1024L).when(configurator).getAvailableMemory();
+        doReturn(15*1024*1024L).when(configurator).getAvailableMemory();
         assertThrows(IllegalStateException.class, () -> new InMemoryCacheManager(configurator));
     }
 
     @Test
     void testWrongConfiguration_whenElementSizeNegative() {
-        doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 0, 50))).
                 when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
@@ -49,7 +45,7 @@ class InMemoryCacheManagerTest {
 
     @Test
     void testWrongConfiguration_whenCachePriorityIsZero() {
-        doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 0))).
                 when(configurator).getConfiguredCaches();
         assertThrows(IllegalArgumentException.class, () -> new InMemoryCacheManager(configurator));
@@ -84,7 +80,7 @@ class InMemoryCacheManagerTest {
     @Test
     void testCacheManipulationsWithCacheLoader() throws ExecutionException {
         String cacheName = "SIMPLE_CACHE_NAME";
-        doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
         CacheConfiguration<String, byte[]> cacheCfg = new CacheConfigurator<>(
                 cacheName,
                 1024,
@@ -112,26 +108,26 @@ class InMemoryCacheManagerTest {
     @Test
     void testCacheEvictions() {
         String cacheName = "SIMPLE_CACHE_NAME";
-        doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
-        CacheConfiguration cacheCfg = new CacheConfigurator(cacheName, 1024 * 1024, 1);
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
+        CacheConfiguration cacheCfg = new CacheConfigurator(cacheName, 1024*1024, 1);
         doReturn(List.of(cacheCfg)).when(configurator).getConfiguredCaches();
         manager = new InMemoryCacheManager(configurator);
 
         Cache<Integer, byte[]> cache = manager.acquireCache(cacheName);
         assertEquals(64, cacheCfg.getMaxSize());
-        int i = 0;
-        for (; i < cacheCfg.getMaxSize() * 2; i++) {
-            cache.put(i, Long.toUnsignedString(i * 1000L).getBytes());
+        int i=0;
+        for(; i<cacheCfg.getMaxSize()*2;i++){
+          cache.put(i, Long.toUnsignedString(i*1000L).getBytes());
         }
-        assertEquals(64 * 2, i);
+        assertEquals(64*2, i);
         assertEquals(64, cache.size());
         i--;
         assertNotNull(cache.getIfPresent(i));
-        assertArrayEquals(Long.toUnsignedString(i * 1000L).getBytes(), cache.getIfPresent(i));
+        assertArrayEquals(Long.toUnsignedString(i*1000L).getBytes(), cache.getIfPresent(i));
     }
 
     @Test
-    void testMemCalculator() {
+    void testMemCalculator(){
         int size = new InMemoryCacheManager.MemoryUsageCalculator(64)
                 .startObject()//+16
                 .addBooleanPrimitive() //+1
@@ -145,16 +141,16 @@ class InMemoryCacheManagerTest {
                 .addString(5)//8 + 56 + 2*5 + 6
                 .addReference(
                         new InMemoryCacheManager.MemoryUsageCalculator(64)
-                                .startObject()
-                                .addLongPrimitive()
-                                .calc()
+                        .startObject()
+                        .addLongPrimitive()
+                        .calc()
                 )// 8 + 16 + 8
                 .calc();//248
         assertEquals(248, size);
     }
 
     private void setupManager() {
-        doReturn(64 * 1024 * 1024L).when(configurator).getAvailableMemory();
+        doReturn(64*1024*1024L).when(configurator).getAvailableMemory();
         doReturn(List.of(new CacheConfigurator("SIMPLE_CACHE_NAME_16", 16, 50),
                 new CacheConfigurator("SIMPLE_CACHE_NAME_128", 128, 30),
                 new CacheConfigurator("SIMPLE_CACHE_NAME_1024", 1024, 50)

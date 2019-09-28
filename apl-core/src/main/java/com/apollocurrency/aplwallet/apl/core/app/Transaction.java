@@ -58,8 +58,6 @@ public interface Transaction {
         return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
     }
 
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
-
     interface Builder {
 
         Builder recipientId(long recipientId);

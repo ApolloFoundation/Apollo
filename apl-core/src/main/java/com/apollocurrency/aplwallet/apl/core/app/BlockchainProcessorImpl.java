@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -38,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.model.ApprovedAndApprovalTxs;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -145,7 +143,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final Listeners<Block, Event> blockListeners = new Listeners<>();
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
-    private final javax.enterprise.event.Event<List<Transaction>> txEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -183,7 +180,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private TransactionalDataSource lookupDataSource() {
         return databaseManager.getDataSource();
     }
-
     private PeersService lookupPeers() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
@@ -301,7 +297,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+                                   TaskDispatchManager taskDispatchManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -319,7 +315,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.shardImporter = importer;
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
-        this.txEvent = txEvent;
 
         configureBackgroundTasks();
 
@@ -737,9 +732,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private void pushBlock(final Block block) throws BlockNotAcceptedException {
         int curTime = timeService.getEpochTime();
         log.trace("push new block, prev_id = '{}', cutTime={}", block.getPreviousBlockId(), curTime);
-        long startTime = System.currentTimeMillis();
+        long startTime=System.currentTimeMillis();
         globalSync.writeLock();
-        long lockAquireTime = System.currentTimeMillis() - startTime;
+        long lockAquireTime=System.currentTimeMillis()-startTime;
         try {
             Block previousLastBlock = null;
             TransactionalDataSource dataSource = lookupDataSource();
@@ -797,8 +792,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
-        log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
-                block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
+        log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)", 
+                block.getHeight(), block.getTransactions().size(), System.currentTimeMillis()-startTime, lockAquireTime);
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -923,8 +918,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
 
-            validPhasedTransactions.forEach(phasingPollService::countVotesAndRelease);
-            invalidPhasedTransactions.forEach(phasingPollService::reject);
+            validPhasedTransactions.forEach(transaction -> transaction.getPhasing().countVotesAndRelease(transaction));
+            invalidPhasedTransactions.forEach(transaction -> transaction.getPhasing().reject(transaction));
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 try {
@@ -946,21 +941,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     throw new BlockchainProcessor.TransactionNotAcceptedException(e, transaction);
                 }
             }
-            SortedSet<ApprovedAndApprovalTxs> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             block.getOrLoadTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if (phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()) {
-                        possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(phasedTransaction, transaction));
+                        possiblyApprovedTransactions.add(phasedTransaction);
                     }
                 });
                 if (transaction.getType() == Messaging.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting)transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
                         PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
-                        if (phasingPoll.allowEarlyFinish() &&
-                                (phasingPoll.getFinishHeight() > block.getHeight() || phasingPoll.getFinishTime() > block.getTimestamp())) {
-                            Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
-                            possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(approvedTx, transaction));
+                        if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
+                            possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
                         }
                     });
                 }
@@ -973,52 +966,43 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
                             PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish() && phasingPoll.getFinishHeight() > block.getHeight()) {
-                                Transaction approvedTx = lookupBlockhain().getTransaction(phasingPoll.getId());
-                                possiblyApprovedTransactions.add(new ApprovedAndApprovalTxs(approvedTx, phasedTransaction));
+                                possiblyApprovedTransactions.add(lookupBlockhain().getTransaction(phasingPoll.getId()));
                             }
                         });
                     }
                 }
             });
-            possiblyApprovedTransactions.forEach(approvedAndConfirmation -> {
-                Transaction approvedTx = approvedAndConfirmation.getApproved();
-                if (phasingPollService.getResult(approvedTx.getId()) == null) {
+            possiblyApprovedTransactions.forEach(transaction -> {
+                if (phasingPollService.getResult(transaction.getId()) == null) {
                     try {
-                        transactionValidator.validate(approvedTx);
-
-                        phasingPollService.tryCountVotes(approvedTx, duplicates);
+                        transactionValidator.validate(transaction);
+                        transaction.getPhasing().tryCountVotes(transaction, duplicates);
                     } catch (AplException.ValidationException e) {
-                        log.debug("At height " + block.getHeight() + " phased transaction " + approvedTx.getStringId()
+                        log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
                                 + " no longer passes validation: " + e.getMessage() + ", cannot finish early");
                     }
                 }
             });
 
-            try {
-                dexService.closeOverdueOrders(block.getTimestamp());
-                dexService.closeOverdueContracts(block.getTimestamp());
-            } catch (AplException.ExecutiveProcessException e) {
-                log.error(e.toString(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
-
+            dexService.closeOverdueOrders(block.getTimestamp());
+            log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.AFTER_BLOCK_APPLY.name());
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
 
             if (block.getOrLoadTransactions().size() > 0) {
-                txEvent.select(TxEventType.literal(TxEventType.ADDED_CONFIRMED_TRANSACTIONS)).fire(block.getOrLoadTransactions());
+                lookupTransactionProcessor().notifyListeners(block.getOrLoadTransactions(), TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
             }
             AccountLedger.commitEntries();
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
-            log.trace("Accepting block DONE: {} height: {} processing time ms: {}", block.getId(), block.getHeight(), System.currentTimeMillis() - start);
+            log.trace("Accepting block DONE: {} height: {} processing time ms: {}",block.getId(),block.getHeight(),System.currentTimeMillis()-start );
         }
     }
 
-    private static final Comparator<ApprovedAndApprovalTxs> finishingTransactionsComparator = Comparator
-            .<ApprovedAndApprovalTxs>comparingInt(o -> o.getApproved().getHeight())
-            .thenComparingInt(o -> o.getApproved().getIndex())
-            .thenComparingLong(o -> o.getApproved().getId());
+    private static final Comparator<Transaction> finishingTransactionsComparator = Comparator
+            .comparingInt(Transaction::getHeight)
+            .thenComparingInt(Transaction::getIndex)
+            .thenComparingLong(Transaction::getId);
 
     public List<Block> popOffTo(Block commonBlock) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -1214,9 +1198,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long totalFeeATM = 0;
         int payloadLength = 0;
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
-            Transaction transaction = unconfirmedTransaction.getTransaction();
+            TransactionImpl transaction = unconfirmedTransaction.getTransaction();
             blockTransactions.add(transaction);
-            digest.update(transaction.getBytes());
+            digest.update(transaction.bytes());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
             payloadLength += transaction.getFullSize();
@@ -1591,9 +1575,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     //we can get sometimes string and sometimes long from different peers, and yes it's strange
                     Long bhl;
                     Object bh = response.get("blockchainHeight");
-                    if (bh == null) {
-                        bhl = 0L;
-                    } else if (bh instanceof String) {
+                    if(bh==null){
+                      bhl=0L;   
+                    }else if(bh instanceof String){
                        bhl = Long.parseLong((String)bh);
                     }else{
                        bhl = (Long)bh;
@@ -1678,7 +1662,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         if (new BigInteger(otherPeerCumulativeDifficulty).compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                             continue;
                         }
-                        log.debug("Found a peer with better difficulty: {}", otherPeer.getHostWithPort());
+                        log.debug("Found a peer with better difficulty: {}",otherPeer.getHostWithPort());
                         downloadBlockchain(otherPeer, otherPeerCommonBlock, commonBlock.getHeight());
                     }
                     log.debug("Got " + confirmations + " confirmations");
@@ -1769,7 +1753,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             long matchId = startBlockId;
             List<Long> blockList = new ArrayList<>(Constants.MAX_AUTO_ROLLBACK);
             boolean matched = false;
-            int limit = countFromStart ? Constants.MAX_AUTO_ROLLBACK : Constants.MAX_AUTO_ROLLBACK * 2;
+            int limit = countFromStart ? Constants.MAX_AUTO_ROLLBACK : Constants.MAX_AUTO_ROLLBACK*2;
             while (true) {
                 JSONObject request = new JSONObject();
                 request.put("requestType", "getNextBlockIds");
@@ -1837,14 +1821,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
          * @throws  InterruptedException    Download interrupted
          */
         private void downloadBlockchain(final Peer feederPeer, final Block commonBlock, final int startHeight) throws InterruptedException {
-            log.debug("Downloading blockchain from: {} at height: {}", feederPeer.getHostWithPort(), startHeight);
+            log.debug("Downloading blockchain from: {} at height: {}",feederPeer.getHostWithPort(),startHeight);
             Map<Long, PeerBlock> blockMap = new HashMap<>();
             //
             // Break the download into multiple segments.  The first block in each segment
             // is the common block for that segment.
             //
             List<GetNextBlocksTask> getList = new ArrayList<>();
-            int segSize = Constants.MAX_AUTO_ROLLBACK / 20;
+            int segSize = Constants.MAX_AUTO_ROLLBACK/20;
             int stop = chainBlockIds.size() - 1;
             for (int start = 0; start < stop; start += segSize) {
                 getList.add(new GetNextBlocksTask(chainBlockIds, start, Math.min(start + segSize, stop), startHeight, blockchainConfig));
@@ -1900,7 +1884,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new RuntimeException(exc.getMessage(), exc);
                     }
                     if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we
+// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we                         
 //                        nextBlocks.getPeer().deactivate();
                         continue;
                     }
@@ -1925,7 +1909,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 
             }
-            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK / 2) {
+            if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK/2) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
                 slowestPeer.deactivate("This peer is slowest");
             }
@@ -1939,7 +1923,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             globalSync.writeLock();
             try {
                 List<Block> forkBlocks = new ArrayList<>();
-            for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < Constants.MAX_AUTO_ROLLBACK; index++) {
+                for (int index = 1; index < chainBlockIds.size() && lookupBlockhain().getHeight() - startHeight < Constants.MAX_AUTO_ROLLBACK; index++) {
                     PeerBlock peerBlock = blockMap.get(chainBlockIds.get(index));
                     if (peerBlock == null) {
                         break;
@@ -1959,7 +1943,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // Process a fork
                 //
                 int myForkSize = lookupBlockhain().getHeight() - startHeight;
-            if (!forkBlocks.isEmpty() && myForkSize < Constants.MAX_AUTO_ROLLBACK) {
+                if (!forkBlocks.isEmpty() && myForkSize < Constants.MAX_AUTO_ROLLBACK) {
                     log.debug("Will process a fork of {} blocks, mine is {}, feed peer addr: {}", forkBlocks.size(), myForkSize, feederPeer.getHost());
                     processFork(feederPeer, forkBlocks, commonBlock);
                 }

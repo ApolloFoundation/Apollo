@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import io.swagger.v3.oas.annotations.Operation;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -18,8 +20,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/shards")
 @Singleton
@@ -45,7 +45,6 @@ public class ShardController {
                 .map(shard -> shardConverter.convert(shard)).collect(Collectors.toList());
         return Response.ok(allCompletedShards).build();
     }
-
     @POST
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)

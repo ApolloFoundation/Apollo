@@ -33,9 +33,7 @@ public class UnifiedCacheIntegrationTest {
     Cache<String, byte[]> publicKeyCache;
 
 
-    @Inject
-    @CacheProducer
-    @CacheType("WRONG_CACHE_NAME")
+    @Inject @CacheProducer @CacheType("WRONG_CACHE_NAME")
     Cache<String, Long> wrongCache;
 
     @BeforeEach
@@ -44,7 +42,7 @@ public class UnifiedCacheIntegrationTest {
     }
 
     @Test
-    void testWrongCacheNameInjection() {
+    void testWrongCacheNameInjection(){
         assertNull(wrongCache);
         assertNotNull(publicKeyCache);
     }

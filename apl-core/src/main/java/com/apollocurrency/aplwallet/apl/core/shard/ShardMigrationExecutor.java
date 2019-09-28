@@ -199,14 +199,12 @@ public class ShardMigrationExecutor {
         log.debug("Add {}", shardOperation);
         dataMigrateOperations.add(shardOperation);
     }
-
-    private void stopNetOperations() {
+    private void stopNetOperations(){
         peers.suspend();
         Generator.suspendForging();
         blockchainProcessor.setGetMoreBlocks(false);
     }
-
-    private void resumeNetOperations() {
+    private void resumeNetOperations(){
         peers.resume();
         blockchainProcessor.setGetMoreBlocks(true);
         Generator.resumeForging();

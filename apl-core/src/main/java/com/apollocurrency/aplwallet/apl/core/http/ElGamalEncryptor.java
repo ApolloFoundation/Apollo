@@ -4,13 +4,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -23,30 +20,40 @@ public class ElGamalEncryptor {
     private byte[] privateKey;
     private byte[] publicKey;
     private FBElGamalKeyPair elGamalKeyPair;
-    private TaskDispatchManager taskDispatchManager;
-    @Inject
-    public ElGamalEncryptor(TaskDispatchManager dispatchManager) {
-        taskDispatchManager = dispatchManager;
+    //TODO: well, it is just "fuse", may be it should be removed
+    private volatile static boolean threadStarted = false;
+    
+    public ElGamalEncryptor() {
     }
     
     @PostConstruct
     public final void init() {
-        taskDispatchManager.newBackgroundDispatcher("KeyGenerator")
-                .schedule(Task.builder()
-                        .name("KeyGenerationTask")
-                        .delay(15 * 60 * 1000) // 15 min
-                        .task(this::generateKeys)
-                        .build(), TaskOrder.TASK);
+      if(!threadStarted){  
+        serverKeysGenerator.setDaemon(true);
+        serverKeysGenerator.start();
+        threadStarted = true;
+      }
     }
+//TODO: remove this as soon as Al Gamal is ready!    
+    private  Thread serverKeysGenerator = new Thread(() -> {
+        while (!Thread.currentThread().isInterrupted()) {
+            synchronized (API.class) {
+                byte[] keyBytes = new byte[32];
+                Crypto.getSecureRandom().nextBytes(keyBytes);
+                byte[] keySeed = Crypto.getKeySeed(keyBytes);
+                privateKey = Crypto.getPrivateKey(keySeed);
+                publicKey = Crypto.getPublicKey(keySeed);
 
-    private synchronized void generateKeys() {
-        byte[] keyBytes = new byte[32];
-        Crypto.getSecureRandom().nextBytes(keyBytes);
-        byte[] keySeed = Crypto.getKeySeed(keyBytes);
-        privateKey = Crypto.getPrivateKey(keySeed);
-        publicKey = Crypto.getPublicKey(keySeed);
-        elGamalKeyPair = Crypto.getElGamalKeyPair();
-    }
+                elGamalKeyPair = Crypto.getElGamalKeyPair();
+
+            }
+            try {
+                TimeUnit.MINUTES.sleep(15);
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
+    });
 
     public synchronized byte[] getServerPublicKey() {
         return publicKey;
@@ -60,7 +67,7 @@ public class ElGamalEncryptor {
         return elGamalKeyPair;
     }
 
-    public synchronized String elGamalDecrypt(String cryptogramm) {
+    public String elGamalDecrypt(String cryptogramm) {
         return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
     }
 

@@ -20,8 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -35,7 +38,10 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -44,18 +50,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -69,16 +71,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Comparator.comparingInt;
-import static java.util.Comparator.comparingLong;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TransactionProcessorImpl implements TransactionProcessor {
@@ -91,7 +91,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
-    private javax.enterprise.event.Event<List<Transaction>> txsEvent;
     private DatabaseManager databaseManager;
     private TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
     private PeersService peers = CDI.current().select(PeersService.class).get();
@@ -119,12 +118,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final TransactionValidator validator;
     private final TransactionApplier transactionApplier;
     @Inject
-    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+    public TransactionProcessorImpl(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory, TransactionValidator validator, TransactionApplier applier) {
         this.transactionKeyFactory = transactionKeyFactory;
         this.unconfirmedTransactionTable = createUnconfirmedTransactionTable(transactionKeyFactory);
         this.validator = validator;
         this.transactionApplier = applier;
-        this.txsEvent = Objects.requireNonNull(txEvent);
     }
 
     private EntityDbTable<UnconfirmedTransaction> createUnconfirmedTransactionTable(KeyFactory<UnconfirmedTransaction> keyFactory) {
@@ -179,8 +177,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 };
     }
 
-    private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
-//    private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
+    private final Set<TransactionImpl> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
 
     private final PriorityQueue<UnconfirmedTransaction> waitingTransactions = new PriorityQueue<>(
             (o1, o2) -> {
@@ -270,7 +268,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 List<Transaction> transactionList = new ArrayList<>();
                 int curTime = timeService.getEpochTime();
-                for (Transaction transaction : broadcastedTransactions) {
+                for (TransactionImpl transaction : broadcastedTransactions) {
                     if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                         broadcastedTransactions.remove(transaction);
                     } else if (transaction.getTimestamp() < curTime - 30) {
@@ -393,6 +391,20 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public boolean addListener(Listener<List<? extends Transaction>> listener, Event eventType) {
+        return transactionListeners.addListener(listener, eventType);
+    }
+
+    @Override
+    public boolean removeListener(Listener<List<? extends Transaction>> listener, Event eventType) {
+        return transactionListeners.removeListener(listener, eventType);
+    }
+
+    public void notifyListeners(List<? extends Transaction> transactions, Event eventType) {
+        transactionListeners.notify(transactions, eventType);
+    }
+
+    @Override
     public DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
         return unconfirmedTransactionTable.getAll(0, -1);
     }
@@ -483,7 +495,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
             if (getUnconfirmedTransaction(dbKey) != null) {
                 if (enableTransactionRebroadcasting) {
-                    broadcastedTransactions.add(transaction);
+                    broadcastedTransactions.add((TransactionImpl) transaction);
                     LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will re-broadcast");
                 } else {
                     LOG.info("Transaction " + transaction.getStringId() + " already in unconfirmed pool, will not broadcast again");
@@ -491,20 +503,20 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             validator.validate(transaction);
-            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, ntpTime.getTime());
+            UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction((TransactionImpl) transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
                 waitingTransactions.add(unconfirmedTransaction);
-                broadcastedTransactions.add(transaction);
+                broadcastedTransactions.add((TransactionImpl) transaction);
                 LOG.debug("Will broadcast new transaction later " + transaction.getStringId());
             } else {
                 processTransaction(unconfirmedTransaction);
                 LOG.debug("Accepted new transaction " + transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 peers.sendToSomePeers(acceptedTransactions);
-                txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
+                transactionListeners.notify(acceptedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
                 if (enableTransactionRebroadcasting) {
-                    broadcastedTransactions.add(transaction);
+                    broadcastedTransactions.add((TransactionImpl) transaction);
                 }
             }
         } finally {
@@ -543,7 +555,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             waitingTransactions.clear();
             broadcastedTransactions.clear();
             transactionCache.clear();
-            txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removed);
+            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
         } finally {
             globalSync.writeUnlock();
         }
@@ -579,7 +591,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             unconfirmedTransactionTable.truncate();
             unconfirmedDuplicates.clear();
             transactionCache.clear();
-            txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removed);
+            transactionListeners.notify(removed, Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
         } finally {
             globalSync.writeUnlock();
         }
@@ -625,7 +637,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 transactionApplier.undoUnconfirmed(transaction);
                 DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
                 transactionCache.remove(dbKey);
-                txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(Collections.singletonList(transaction));
+                transactionListeners.notify(Collections.singletonList(transaction), Event.REMOVED_UNCONFIRMED_TRANSACTIONS);
             }
         } catch (SQLException e) {
             LOG.error(e.toString(), e);
@@ -677,7 +689,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
                 }
                 if (addedUnconfirmedTransactions.size() > 0) {
-                    txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
+                    transactionListeners.notify(addedUnconfirmedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
                 }
             }
         } finally {
@@ -693,13 +705,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             return;
         }
         long arrivalTimestamp = ntpTime.getTime();
-        List<Transaction> receivedTransactions = new ArrayList<>();
-        List<Transaction> sendToPeersTransactions = new ArrayList<>();
-        List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
+        List<TransactionImpl> receivedTransactions = new ArrayList<>();
+        List<TransactionImpl> sendToPeersTransactions = new ArrayList<>();
+        List<TransactionImpl> addedUnconfirmedTransactions = new ArrayList<>();
         List<Exception> exceptions = new ArrayList<>();
         for (Object transactionData : transactionsData) {
             try {
-                Transaction transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
+                TransactionImpl transaction = TransactionImpl.parseTransaction((JSONObject) transactionData);
                 receivedTransactions.add(transaction);
                 DbKey dbKey = transactionKeyFactory.newKey(transaction.getId());
                 if (getUnconfirmedTransaction(dbKey) != null || blockchain.hasTransaction(transaction.getId())) {
@@ -726,7 +738,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             peers.sendToSomePeers(sendToPeersTransactions);
         }
         if (addedUnconfirmedTransactions.size() > 0) {
-            txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
+            transactionListeners.notify(addedUnconfirmedTransactions, Event.ADDED_UNCONFIRMED_TRANSACTIONS);
         }
         broadcastedTransactions.removeAll(receivedTransactions);
         if (!exceptions.isEmpty()) {
@@ -735,7 +747,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
-        Transaction transaction = unconfirmedTransaction.getTransaction();
+        TransactionImpl transaction = unconfirmedTransaction.getTransaction();
         int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
             throw new AplException.NotCurrentlyValidException("Invalid transaction timestamp");

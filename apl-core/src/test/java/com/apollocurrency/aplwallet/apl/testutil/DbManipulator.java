@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -14,8 +16,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Objects;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class DbManipulator {
