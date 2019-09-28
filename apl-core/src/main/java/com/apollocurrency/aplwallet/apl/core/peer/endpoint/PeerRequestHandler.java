@@ -62,8 +62,8 @@ public abstract class PeerRequestHandler {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    protected PeersService lookupPeersService(){
-        if(peers == null) peers = CDI.current().select(PeersService.class).get();
+    protected PeersService lookupPeersService() {
+        if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }
 

@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -21,12 +17,15 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 
 @EnableWeld
 public class ShardObserverIntegrationTest {
@@ -64,7 +63,8 @@ public class ShardObserverIntegrationTest {
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
-        trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(100, 100, 0));
+        trimEvent.select(new AnnotationLiteral<Sync>() {
+        }).fire(new TrimData(100, 100, 0));
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }

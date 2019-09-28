@@ -3,7 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.*;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NetworkController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeControlController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
@@ -11,16 +19,6 @@ import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeControlController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NetworkController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
-import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 /**
  * REST and Swagger configuration and fire-up

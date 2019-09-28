@@ -14,9 +14,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -64,6 +69,11 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     @Override
     public String getUserPassPhrase(Long accountId){
         return store.get(accountId);
+    }
+
+    @Override
+    public List<Long> getAccounts() {
+        return new ArrayList<>(store.keySet());
     }
 
     /**
@@ -155,4 +165,18 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
         return secureStorage;
     }
+
+    @Override
+    public boolean flushAccountKeys(Long accountID, String passPhrase) {
+        LOG.debug("flushAccountKeys entry point");        
+        if (store.containsKey(accountID)) {            
+            String extractedPass = store.get(accountID);
+            if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
+                LOG.debug("flushed key for account: {}",accountID);
+                store.remove(accountID);
+                return true;
+            }
+        }
+        return false;        
+    }        
 }
