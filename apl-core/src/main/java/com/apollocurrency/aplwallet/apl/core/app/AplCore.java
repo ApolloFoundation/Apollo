@@ -28,17 +28,16 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -58,18 +57,19 @@ import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardMigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
+import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.cache.Cache;
 import lombok.Setter;
 import org.slf4j.Logger;
 
@@ -95,7 +95,7 @@ public final class AplCore {
     private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
     private API apiServer;
-    private DexMatcherServiceImpl tcs;
+    private IDexMatcherInterface tcs;
 
     @Inject @Setter
     private PropertiesHolder propertiesHolder;
@@ -105,6 +105,8 @@ public final class AplCore {
     private AplAppStatus aplAppStatus;
     @Inject @Setter
     private TaskDispatchManager taskDispatchManager;
+    @Inject @Setter
+    private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
     PeersService peers;
@@ -189,7 +191,7 @@ public final class AplCore {
                     aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
                 }                
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  1.0, "API initialization");
-                        
+
                 //try to start API as early as possible
                 apiServer = CDI.current().select(API.class).get();
                 apiServer.start();
@@ -229,7 +231,7 @@ public final class AplCore {
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  52.5, "Exchange matcher initialization");
 
-                tcs = CDI.current().select(DexMatcherServiceImpl.class).get();
+                tcs = CDI.current().select(IDexMatcherInterface.class).get();
                 tcs.initialize();
 
 
@@ -244,7 +246,12 @@ public final class AplCore {
                 PublicKeyTable publicKeyTable = CDI.current().select(PublicKeyTable.class).get();
                 AccountTable accountTable = CDI.current().select(AccountTable.class).get();
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
-                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable);
+                //Account initialization
+                Cache<DbKey,PublicKey> publicKeyCache = null;
+                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
+                    publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
+                }
+                Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
@@ -330,43 +337,7 @@ public final class AplCore {
         }
 
     private void recoverSharding() {
-        ShardRecoveryDao shardRecoveryDao = CDI.current().select(ShardRecoveryDao.class).get();
-        ShardDao shardDao = CDI.current().select(ShardDao.class).get();
-        ShardRecovery recovery = shardRecoveryDao.getLatestShardRecovery();
-        boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
-        boolean shardingEnabled = blockchainConfig.getCurrentConfig().isShardingEnabled();
-        LOG.debug("Is Shard Recovery POSSIBLE ? RESULT = '{}' parts : ({} && {} && {} && {})",
-                ( (!isShardingOff && shardingEnabled) && recovery != null && recovery.getState() != MigrateState.COMPLETED),
-                !isShardingOff,
-                shardingEnabled,
-                recovery != null,
-                recovery != null ? recovery.getState() != MigrateState.COMPLETED : "false"
-        );
-        if ( (!isShardingOff && shardingEnabled)
-                && recovery != null
-                && recovery.getState() != MigrateState.COMPLETED) {
-            // here we are able to recover from stored record
-            aplAppStatus.durableTaskStart("sharding", "Blockchain db sharding process takes some time, pls be patient...", true);
-            ShardMigrationExecutor executor = CDI.current().select(ShardMigrationExecutor.class).get();
-            Shard lastShard = shardDao.getLastShard();
-            executor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
-            executor.executeAllOperations();
-            aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
-        } else {
-            // when sharding was disabled but recovery records was stored before
-            // let's remove records for sharding recovery + shard
-            if ( (isShardingOff && !shardingEnabled) && recovery != null && recovery.getState() == MigrateState.INIT) {
-                // remove previous recover record if it's in INIT state
-                int shardRecoveryDeleted = shardRecoveryDao.hardDeleteShardRecovery(recovery.getShardRecoveryId());
-                Shard shard = shardDao.getLastShard();
-                int shardDeleted = 0;
-                if (shard != null) {
-                    shardDeleted = shardDao.hardDeleteShard(shard.getShardId());
-                }
-                LOG.debug("Deleted records : shardRecoveryDeleted = {}, shardDeleted = {}",
-                        shardRecoveryDeleted, shardDeleted);
-            }
-        }
+        CDI.current().select(ShardService.class).get().recoverSharding();
     }
 
     void checkPorts() {

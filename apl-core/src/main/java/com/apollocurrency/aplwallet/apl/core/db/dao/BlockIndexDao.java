@@ -77,7 +77,7 @@ public interface BlockIndexDao {
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index where block_id =:blockId")
-    int hardBlockIndex(@BindBean BlockIndex blockIndex);
+    int hardDeleteBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index")

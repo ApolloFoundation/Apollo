@@ -18,6 +18,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
@@ -138,7 +139,7 @@ public class ShardEngineImpl implements ShardEngine {
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
         String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
         Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format("BACKUP-BEFORE-%s.zip", nextShardName);
+        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
         Path backupPath = dbDir.resolve(backupName);
         String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
         try (Connection con = sourceDataSource.getConnection();
@@ -188,7 +189,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createAndAddShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement)databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
 
 
             if (isConstraintSchema) {
@@ -449,7 +450,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), "id", pruningTime);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID","LATEST","HEIGHT"), pruningTime);
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
                     }
@@ -477,7 +478,7 @@ public class ShardEngineImpl implements ShardEngine {
             dataSource.begin();
         }
         try {
-            return trimService.doTrimDerivedTablesOnHeight(height);
+            return trimService.doTrimDerivedTablesOnHeight(height, true);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
@@ -507,14 +508,14 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDaoJdbc.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
-    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, String sort, int pruningTime) {
+    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, int pruningTime) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
         if (derivedTable != null) {
             if (!info.isPrunable()) {
-                if (excludedColumns == null && sort == null) {
+                if (excludedColumns == null) {
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
-                    return csvExporter.exportDerivedTableCustomSort(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns, sort);
+                    return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns);
                 }
             } else {
                 return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
@@ -526,7 +527,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo, int pruningTime) {
-        return exportDerivedTable(tableInfo, paramInfo, null, null, pruningTime);
+        return exportDerivedTable(tableInfo, paramInfo, null, pruningTime);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
@@ -684,6 +685,7 @@ public class ShardEngineImpl implements ShardEngine {
             return state = COMPLETED;
         }
         state = COMPLETED;
+        ((ShardManagement) databaseManager).addFullShard(paramInfo.getShardId());
         // complete sharding
         Shard shard = requireLastNotFinishedShard();
         shard.setShardState(ShardState.FULL);

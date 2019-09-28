@@ -24,14 +24,15 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.36.6");
+    public static final Version VERSION = new Version("1.36.7");
 
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
-
+    public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
+    
     public static final long ONE_APL = 100000000;
     
     public static final int ONE_DAY_SECS=24*3600;
@@ -147,6 +148,7 @@ public final class Constants {
 
     //DEX
 
+    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
     //24 h
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
 

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -198,6 +199,7 @@ public final class Shuffler {
     public static void stopAllShufflers() {
         globalSync.writeLock();
         try {
+            LOG.trace("Stopped all [{}] shufflers", shufflingsMap.size());
             shufflingsMap.clear();
         } finally {
             globalSync.writeUnlock();
@@ -311,6 +313,10 @@ public final class Shuffler {
         }
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            stopAllShufflers();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig config) {
             stopAllShufflers();
         }
     }

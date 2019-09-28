@@ -3,15 +3,12 @@
  */
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
-import javax.inject.Singleton;
 
 
 /**
  *
  * @author Serhiy Lymar
  */
-
-@Singleton
 public interface IDexMatcherInterface {
      /** 
      * Start transport interaction service

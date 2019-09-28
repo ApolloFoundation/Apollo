@@ -9,7 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
@@ -72,20 +72,21 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportDerivedTable(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns) {
-        return exportDerivedTableByDbIdPagination(derivedTableInterface.getName(), derivedTableInterface.getMinMaxDbId(targetHeight), batchLimit, excludedColumns);
+        return exportDerivedTableByUniqueLongColumnPagination(derivedTableInterface.getName(), derivedTableInterface.getMinMaxValue(targetHeight), batchLimit, excludedColumns);
     }
 
-    private long exportDerivedTableByDbIdPagination(String table, MinMaxDbId minMaxDbId, int batchLimit, Set<String> excludedColumns) {
-        return exportTable(table,"where db_id > ? and db_id < ? order by db_id limit ?", minMaxDbId, excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
-            pstmt.setLong(1,  minMaxId.getMinDbId());
-            pstmt.setLong(2,  minMaxId.getMaxDbId());
-            pstmt.setInt(3, batchLimit);
+    private long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
+        return exportTable(table,"where  " + minMaxValue.getColumn() + "> ? and " + minMaxValue.getColumn() +"< ? and height <= ? order by " + minMaxValue.getColumn() + " limit ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
+            pstmt.setLong(1,  minMaxColumnValue.getMin());
+            pstmt.setLong(2,  minMaxColumnValue.getMax());
+            pstmt.setInt(3,  minMaxColumnValue.getHeight());
+            pstmt.setInt(4, batchLimit);
         });
     }
 
     @Override
     public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
-        return exportTable(derivedTableInterface.getName(),"where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxDbId(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
+        return exportTable(derivedTableInterface.getName(),"where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
             pstmt.setInt(1,  targetHeight);
             pstmt.setInt(2,  batchLimit);
             pstmt.setInt(3, totalProcessed);
@@ -99,7 +100,7 @@ public class CsvExporterImpl implements CsvExporter {
 
     @Override
     public long exportPrunableDerivedTable(PrunableDbTable table, int targetHeight, int currentTime, int batchLimit) {
-        return exportDerivedTableByDbIdPagination(table.getName(), table.getMinMaxDbId(targetHeight, currentTime), batchLimit, DEFAULT_EXCLUDED_COLUMNS);
+        return exportDerivedTableByUniqueLongColumnPagination(table.getName(), table.getMinMaxValue(targetHeight, currentTime), batchLimit, DEFAULT_EXCLUDED_COLUMNS);
     }
 
     /**
@@ -336,10 +337,10 @@ public class CsvExporterImpl implements CsvExporter {
         return processCount;
     }
 
-    private long exportTable(String table, String condition, MinMaxDbId minMaxDbId, Set<String> excludedColumns, StatementConfigurator statementConfigurator) {
+    private long exportTable(String table, String condition, MinMaxValue minMaxValue, Set<String> excludedColumns, StatementConfigurator statementConfigurator) {
         Objects.requireNonNull(condition, "Condition sql should not be null");
         Objects.requireNonNull(table, "Table should not be null");
-        Objects.requireNonNull(minMaxDbId, "MinMaxDbId should not be null");
+        Objects.requireNonNull(minMaxValue, "MinMaxValue should not be null");
         // skip hard coded table
         if (excludeTables.contains(table.toLowerCase())) {
             // skip not needed table
@@ -358,16 +359,16 @@ public class CsvExporterImpl implements CsvExporter {
         ) {
 
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
-            log.debug("Table = {}, Min/Max = {}", table, minMaxDbId);
+            log.debug("Table = {}, Min/Max = {}", table, minMaxValue);
 
             // process non empty tables only
-            if (minMaxDbId.getCount() > 0) {
+            if (minMaxValue.getCount() > 0) {
                 do { // do exporting into csv with pagination
-                    statementConfigurator.configure(pstmt, minMaxDbId, totalCount);
+                    statementConfigurator.configure(pstmt, minMaxValue, totalCount);
                     CsvExportData csvExportData = csvWriter.append(table, pstmt.executeQuery());
                     processedCount = csvExportData.getProcessCount();
                     if (processedCount > 0) {
-                        minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
+                        minMaxValue.setMin((Long) csvExportData.getLastRow().get(minMaxValue.getColumn().toUpperCase()));
                     }
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
@@ -385,6 +386,6 @@ public class CsvExporterImpl implements CsvExporter {
         return totalCount;
     }
     private interface StatementConfigurator {
-        void configure(PreparedStatement pstmt, MinMaxDbId minMaxDbId, int totalProcessed) throws SQLException;
+        void configure(PreparedStatement pstmt, MinMaxValue minMaxValue, int totalProcessed) throws SQLException;
     }
 }

@@ -4,6 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,18 +29,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 public abstract class AbstractMigrationExecutorTest {
     private final String deleteProp;
@@ -49,7 +50,7 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder, new JdbiHandleFactory());
         folder = getTempFolder();
     }
 
