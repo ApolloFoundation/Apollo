@@ -142,8 +142,7 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-            BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
             PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
@@ -160,6 +159,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -172,6 +172,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(transactionProcessor, TransactionProcessorImpl.class))
             .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     private ShardEngine shardEngine;

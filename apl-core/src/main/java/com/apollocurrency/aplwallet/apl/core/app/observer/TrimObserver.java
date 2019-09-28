@@ -32,7 +32,7 @@ public class TrimObserver {
     private int trimFrequency;
     private final Object lock = new Object();
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     @PostConstruct
     void init() {
@@ -63,6 +63,12 @@ public class TrimObserver {
         }
     }
 
+    List<Integer> getTrimHeights() {
+        synchronized (lock) {
+            return new ArrayList<>(trimHeights);
+        }
+    }
+
     @Inject
     public TrimObserver(TrimService trimService) {
         this.trimService = trimService;
@@ -70,8 +76,14 @@ public class TrimObserver {
     }
 
 
-    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated Boolean trimDerivedTables) {
-        this.trimDerivedTables = trimDerivedTables;
+    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
+        log.info("Set trim to {} ", trimConfig.isEnableTrim());
+        this.trimDerivedTables = trimConfig.isEnableTrim();
+        if (trimConfig.isClearTrimQueue()) {
+            synchronized (lock) {
+                trimHeights.clear();
+            }
+        }
     }
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {

@@ -27,9 +27,9 @@ public class EthGasStationInfoDao {
         EthStationGasInfo ethGasInfo = null;
         HttpsURLConnection con = null;
         try {
-            
+
             URL url = new URL(Constants.ETH_STATION_GAS_INFO_URL);
-            SSLContext sc=null;                        
+            SSLContext sc=null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
@@ -38,7 +38,7 @@ public class EthGasStationInfoDao {
             } catch (KeyManagementException ex) {
                 Logger.getLogger(EthGasStationInfoDao.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             con = (HttpsURLConnection) url.openConnection();
             con.setSSLSocketFactory(sc.getSocketFactory());
 
@@ -67,7 +67,7 @@ public class EthGasStationInfoDao {
         HttpsURLConnection con = null;
         try {
             URL url = new URL(Constants.ETH_CHAIN_GAS_INFO_URL);
-            SSLContext sc=null;                        
+            SSLContext sc=null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
@@ -76,7 +76,7 @@ public class EthGasStationInfoDao {
             } catch (KeyManagementException ex) {
                 Logger.getLogger(EthGasStationInfoDao.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             con = (HttpsURLConnection) url.openConnection();
             con.setSSLSocketFactory(sc.getSocketFactory());
 

@@ -42,7 +42,7 @@ public class Peer2PeerTransport {
      */
     private final ConcurrentHashMap<Long, ResponseWaiter> requestMap = new ConcurrentHashMap<>();
     private final Random rnd;
-    private final PeerServlet peerServlet;
+    private final SoftReference<PeerServlet> peerServlet;
     private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
     private volatile long downloadedVolume;
     private volatile long uploadedVolume;
@@ -80,8 +80,8 @@ public class Peer2PeerTransport {
 
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
         this.peerReference = new SoftReference<>(peer);
-        this.peerServlet = peerServlet;
-        rnd = new Random(System.currentTimeMillis());  
+        this.peerServlet = new SoftReference<>(peerServlet);
+        rnd = new Random(System.currentTimeMillis());
         lastActivity=System.currentTimeMillis();
     }
 
@@ -119,7 +119,11 @@ public class Peer2PeerTransport {
             } else {
                 //most likely ge've got request from remote and should process it
                 //but it also can be error response without requestId
-                peerServlet.doPostWebSocket(this, rqId, message);
+                if (peerServlet.get() != null) {
+                    peerServlet.get().doPostWebSocket(this, rqId, message);
+                } else {
+                    log.info("No soft-ref to peerServlet.get()"); // in general we should never see that log
+                }
             }
         }
         lastActivity=System.currentTimeMillis();
@@ -183,15 +187,17 @@ public class Peer2PeerTransport {
         if(p!=null){
             p.deactivate("Websocket close event");
         }else{
-             ws.close();   
+             ws.close();
         }
     }
 
     private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
-        requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
-            toDelete.add(wsw);
-        });
+        if (!requestMap.isEmpty()) {
+            requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
+                toDelete.add(wsw);
+            });
+        }
         toDelete.forEach((key) -> {
             requestMap.remove(key);
         });

@@ -116,8 +116,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
 
         JSONObject response = new JSONObject();
-        Transaction transaction = createTransaction(createTransactionRequest);
-
+//do not eat exception here, it is used for error message displying in UI
+        transaction = createTransaction(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
         response.put("transactionJSON", transactionJSON);

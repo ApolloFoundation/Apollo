@@ -41,12 +41,13 @@ public final class Demo implements AddOn {
     @Override
     public void init() {
     }
+//Commented out because events are synchronous and this demop call is very slow        
 
-    public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
-        LOG.info("Block " + block.getStringId()
-                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
-                + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL());
-    }
+//    public void onBlockBeforeApply(@Observes @BlockEvent(BlockEventType.BEFORE_BLOCK_APPLY) Block block) {
+//        LOG.info("Block " + block.getStringId()
+//                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
+//                + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL());
+ //   }
 
 
     @Override

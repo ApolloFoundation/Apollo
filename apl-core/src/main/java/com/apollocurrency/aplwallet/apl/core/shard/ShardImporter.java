@@ -169,7 +169,7 @@ public class ShardImporter {
                         Object height = row.get("height");
                         if (parsedTags != null) {
                             Object[] tagArray = (Object[]) parsedTags;
-                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.valueOf((String) height));
+                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.parseInt((String) height));
                         }
                     });
                 } else {

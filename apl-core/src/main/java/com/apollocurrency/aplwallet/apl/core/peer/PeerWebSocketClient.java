@@ -77,7 +77,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
         }
     }
     
-    private synchronized void destroyClient() {
+    private void destroyClient() {
         if (client == null) {
             return;
         }

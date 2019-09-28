@@ -26,6 +26,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * Runtime environment for AplCores (singleton) TODO: make it injectable
  * singleton
@@ -60,8 +61,8 @@ public class AplCoreRuntime {
     public AplCoreRuntime() {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
-        this.peers = CDI.current().select(PeersService.class).get(); 
-        
+        this.peers = CDI.current().select(PeersService.class).get();
+
     }
 
     public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
@@ -85,15 +86,24 @@ public class AplCoreRuntime {
         ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
         long[] ids = tmx.findDeadlockedThreads();
         if (ids != null) {
+            // threads that are in deadlock waiting to acquire object monitors or ownable synchronizers
             sb.append("DeadLocked threads found:\n");
-            ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
-            sb.append("Following Threads are deadlocked:\n");
-            for (ThreadInfo info : infos) {
-                sb.append(info.toString()).append("\n");
-            }
+            printDeadLockedThreadInfo(sb, tmx, ids);
+        } else if (tmx.findMonitorDeadlockedThreads() != null) {
+            //threads that are blocked waiting to enter a synchronization block or waiting to reenter a synchronization block
+            sb.append("Monitor DeadLocked threads found:\n");
+            printDeadLockedThreadInfo(sb, tmx, tmx.findMonitorDeadlockedThreads());
         } else {
             sb.append("\nNo dead-locked threads found.\n");
-        }        
+        }
+    }
+
+    private void printDeadLockedThreadInfo(StringBuilder sb, ThreadMXBean tmx, long[] ids) {
+        ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
+        sb.append("Following Threads are deadlocked:\n");
+        for (ThreadInfo info : infos) {
+            sb.append(info.toString()).append("\n");
+        }
     }
 
     private String getNodeHealth(){
@@ -136,6 +146,8 @@ public class AplCoreRuntime {
         }
         runtimeMode.shutdown();
     }
+
+
 
     public static void logSystemProperties() {
         String[] loggedProperties = new String[]{

@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
+import org.h2.jdbc.JdbcSQLException;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -231,6 +232,10 @@ public class DataSourceWrapper implements DataSource {
         setInitialzed();
     }
 
+    public void update(DbVersion dbVersion) {
+        dbVersion.init(this);
+    }
+
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
         if (dbVersion instanceof AplDbVersion) {
             HikariDataSource dataSource = new HikariDataSource(config);
@@ -264,6 +269,8 @@ public class DataSourceWrapper implements DataSource {
             dataSource.close();
 //            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
+        } catch (JdbcSQLException e) {
+            log.info(e.toString());
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
@@ -310,4 +317,12 @@ public class DataSourceWrapper implements DataSource {
         return dbUrl;
     }
 
+    @Override
+    public String toString() {
+        return "DataSourceWrapper{" +
+                "dbUrl='" + dbUrl + '\'' +
+                ", initialized=" + initialized +
+                ", shutdown=" + shutdown +
+                '}';
+    }
 }

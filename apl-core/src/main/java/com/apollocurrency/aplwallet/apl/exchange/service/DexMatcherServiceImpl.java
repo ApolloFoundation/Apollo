@@ -27,10 +27,6 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
  *
  * @author Serhiy Lymar
  */
-
-
-
-
 @Singleton
 public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
@@ -38,7 +34,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     private DexMatchingService dexMatchingService;
     private TimeService timeService;
     private IDexValidator dexValidator;
-        
+
 
     @Inject
     DexMatcherServiceImpl( DexMatchingService dexMatchingService, TimeService timeService, IDexValidator dexValidator) {
@@ -53,7 +49,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     @Override
     public void initialize() {
-        log.debug("DexMatcherService : initialization routine");        
+        log.debug("DexMatcherService : initialization DONE");
     }
 
     /**
@@ -62,45 +58,45 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
     @Override
     public void deinitialize() {
-        log.debug("DexMatcherService : deinitialization routine");        
+        log.debug("DexMatcherService : stopping DONE");
     }
     
  /**
      * currency-specific validation (Ethereum)
-  * @param DexOrder  myOffer - created offer to validate
-  * @param DexOrder  hisOffer - matched offer
-    */ 
-    private int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {        
-        return dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);         
+  * @param myOrder  myOffer - created offer to validate
+  * @param hisOrder  hisOffer - matched offer
+    */
+    private int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {
+        return dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
     }
 
     /**
      * currency-specific validation (Ethereum)
-     * @param DexOrder  myOffer - created offer to validate
+     * @param myOffer  myOffer - created offer to validate
      * @param DexOrder  hisOffer - matched offer
-    */     
-    private int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {                
-        return dexValidator.validateOfferSellAplEth(myOffer, hisOrder);      
+    */
+    private int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {
+        return dexValidator.validateOfferSellAplEth(myOffer, hisOrder);
     }
 
     /**
      * currency-specific validation (Pax)
-     * @param DexOrder  myOffer - created offer to validate
+     * @param myOffer  myOffer - created offer to validate
      * @param DexOrder  hisOffer - matched offer
-    */ 
+    */
     private int validateOfferBuyAplPax(DexOrder myOrder, DexOrder hisOrder) {
-        return dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);       
+        return dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
     }
 
     /**
      * currency-specific validation (Pax)
-     * @param DexOrder  myOffer - created offer to validate
-     * @param DexOrder  hisOffer - matched offer
-    */ 
+     * @param myOffer - created offer to validate
+     * @param hisOffer - matched offer
+    */
     private int validateOfferSellAplPax( DexOrder myOrder, DexOrder hisOrder) {
-        return dexValidator.validateOfferSellAplPax(myOrder, hisOrder);         
-    }    
-        
+        return dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
+    }
+
     
     /**
      * Common validation routine for offer  
@@ -109,30 +105,30 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     private int validateOffer(DexOrder myOrder, DexOrder hisOrder) throws Exception {
         
         log.debug("DexMatcherServiceImpl.validateOffer entry point:");
-        
+
         DexCurrencies curr = hisOrder.getPairCurrency();
         log.debug("my order: orderCurrency: {}, pairCurrency: {}", myOrder.getOrderCurrency(), myOrder.getPairCurrency() );
         log.debug("his order: orderCurrency: {}, pairCurrency: {}", hisOrder.getOrderCurrency(), hisOrder.getPairCurrency() );
         
         switch (curr) {
 
-            case ETH: { 
+            case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
                 if (myOrder.getType() == OrderType.SELL) {
-                    return validateOfferSellAplEth(myOrder, hisOrder); 
+                    return validateOfferSellAplEth(myOrder, hisOrder);
                 } else {
                     return validateOfferBuyAplEth(myOrder, hisOrder);
-                }                
+                }
             }
-            
+
             case PAX: {
                 if (myOrder.getType() == OrderType.SELL) {
-                    return validateOfferSellAplPax(myOrder, hisOrder); 
+                    return validateOfferSellAplPax(myOrder, hisOrder);
                 } else {
                     return validateOfferBuyAplPax(myOrder, hisOrder);
-                }                                
+                }
             }
-            
+
             default: throw new Exception("Provided currency is not supported yet");
         }        
         
@@ -154,7 +150,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
     /**
      * Core event for matcher - when offer is created, it is called back     
-     * @param offerType  Type of the offer. (BUY/SELL) 0/1
+     * @param createdOffer  Type of the offer. (BUY/SELL) 0/1
      */
     public void onCreateOffer(DexOrder createdOffer) {
         DexOrder pairOffer = findCounterOffer(createdOffer);
@@ -169,9 +165,9 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
     
         // it should be done the opposite way
         OrderType counterOrderType = createdOrder.getType().isBuy() ? OrderType.SELL : OrderType.BUY;
-        // Be careful: for selling - it should be more expensive. Buying - for cheaper price.  
+        // Be careful: for selling - it should be more expensive. Buying - for cheaper price.
         String orderBy = createdOrder.getType().isSell() ? "DESC" : "ASC";
-        
+
         Integer currentTime = timeService.getEpochTime();
         BigDecimal offerAmount = new BigDecimal(createdOrder.getOrderAmount());
         Integer pairCurrency = DexCurrencies.getValue(createdOrder.getPairCurrency());

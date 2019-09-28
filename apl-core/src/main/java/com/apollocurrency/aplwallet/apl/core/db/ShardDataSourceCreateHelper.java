@@ -68,17 +68,13 @@ public class ShardDataSourceCreateHelper {
         log.debug("Create new SHARD '{}'", shardName);
 //        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
         DbProperties shardDbProperties = null;
-        try {
-            shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
-                    .dbFileName(shardName) // change file name
-                    .maxCacheSize(MAX_CACHE_SIZE)
-                    .maxConnections(MAX_CONNECTIONS)
-                    .maxMemoryRows(MAX_MEMORY_ROWS)
-                    .dbUrl(null)  // nullify dbUrl intentionally!;
-                    .dbIdentity(shardId); // put shard related info
-        } catch (CloneNotSupportedException e) {
-            log.error("DbProperties cloning error", e);
-        }
+        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
+                .dbFileName(shardName) // change file name
+                .maxCacheSize(MAX_CACHE_SIZE)
+                .maxConnections(MAX_CONNECTIONS)
+                .maxMemoryRows(MAX_MEMORY_ROWS)
+                .dbUrl(null)  // nullify dbUrl intentionally!;
+                .dbIdentity(shardId); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
         return this;
     }

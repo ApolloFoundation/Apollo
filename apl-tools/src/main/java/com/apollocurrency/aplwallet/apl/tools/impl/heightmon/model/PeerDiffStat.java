@@ -18,11 +18,14 @@ public class PeerDiffStat {
     private int height2;
     private Version version1;
     private Version version2;
+    private String shard1;
+    private String shard2;
+    private String shardStatus;
 
     public PeerDiffStat() {
     }
 
-    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int milestoneHeight, int height1, int height2, Version version1, Version version2) {
+    public PeerDiffStat(int diff1, int diff2, String peer1, String peer2, int milestoneHeight, int height1, int height2, Version version1, Version version2, String shard1, String shard2, String shardStatus) {
         this.diff1 = diff1;
         this.diff2 = diff2;
         this.peer1 = peer1;
@@ -32,6 +35,9 @@ public class PeerDiffStat {
         this.height2 = height2;
         this.version1 = version1;
         this.version2 = version2;
+        this.shard1 = shard1;
+        this.shard2 = shard2;
+        this.shardStatus = shardStatus;
     }
 
     public String getVersion1() {
@@ -106,6 +112,30 @@ public class PeerDiffStat {
         this.milestoneHeight = milestoneHeight;
     }
 
+    public String getShard1() {
+        return shard1;
+    }
+
+    public void setShard1(String shard1) {
+        this.shard1 = shard1;
+    }
+
+    public String getShard2() {
+        return shard2;
+    }
+
+    public void setShard2(String shard2) {
+        this.shard2 = shard2;
+    }
+
+    public String getShardStatus() {
+        return shardStatus;
+    }
+
+    public void setShardStatus(String shardStatus) {
+        this.shardStatus = shardStatus;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -119,11 +149,14 @@ public class PeerDiffStat {
                 Objects.equals(peer1, that.peer1) &&
                 Objects.equals(peer2, that.peer2) &&
                 Objects.equals(version1, that.version1) &&
-                Objects.equals(version2, that.version2);
+                Objects.equals(version2, that.version2) &&
+                Objects.equals(shard1, that.shard1) &&
+                Objects.equals(shard2, that.shard2) &&
+                Objects.equals(shardStatus, that.shardStatus);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(diff1, diff2, peer1, peer2, milestoneHeight, height1, height2, version1, version2);
+        return Objects.hash(diff1, diff2, peer1, peer2, milestoneHeight, height1, height2, version1, version2, shard1, shard2, shardStatus);
     }
 }

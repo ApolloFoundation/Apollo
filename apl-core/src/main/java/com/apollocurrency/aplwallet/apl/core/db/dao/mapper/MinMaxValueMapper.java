@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao.mapper;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -12,14 +12,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 
-public class MinMaxIdMapper implements RowMapper<MinMaxDbId> {
+public class MinMaxValueMapper implements RowMapper<MinMaxValue> {
 
     @Override
-    public MinMaxDbId map(ResultSet rs, StatementContext ctx) throws SQLException {
+    public MinMaxValue map(ResultSet rs, StatementContext ctx) throws SQLException {
 
-        return new MinMaxDbId(
+        return new MinMaxValue(
                 rs.getLong("MIN_ID") - 1, // pagination is exclusive for lower bound
                 rs.getLong("MAX_ID") + 1, // pagination is exclusive for upper bound
+                null,
                 rs.getLong("COUNT"),
                 rs.getInt("max_height")
         );

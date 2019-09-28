@@ -106,9 +106,6 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         Shard lastShard = shardDao.getShardAtHeight(height);
         if (lastShard == null) {
             Block genesisBlock = blockchain.getBlockAtHeight(0); // extract genesis block
-            if (genesisBlock == null) { // should not happen
-                throw new RuntimeException("Genesis block not found! Database is inconsistent");
-            }
             prevHash = genesisBlock.getGenerationSignature();
         } else {
             prevHash = lastShard.getShardHash();

@@ -31,19 +31,20 @@ public final class Constants {
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
+    public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
     public static final long ONE_APL = 100000000;
     public static final long APL_COMMISSION = 10;
-    public static final long ETH_GAS_MULTIPLIER = 5; 
-    
-    public static final int OFFER_VALIDATE_OK = 1; 
-    public static final int OFFER_VALIDATE_ERROR_APL_FREEZE = -1; 
-    public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2; 
-    public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3; 
+    public static final long ETH_GAS_MULTIPLIER = 5;
+
+    public static final int OFFER_VALIDATE_OK = 1;
+    public static final int OFFER_VALIDATE_ERROR_APL_FREEZE = -1;
+    public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2;
+    public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3;
     public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
     public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
     public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
-    
+
     public static final int ONE_DAY_SECS=24*3600;
     
     public static final int MIN_TRANSACTION_SIZE = 176;
@@ -160,6 +161,7 @@ public final class Constants {
 
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
+    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
     //24 h
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
     //24 h TODO CHANGe time
