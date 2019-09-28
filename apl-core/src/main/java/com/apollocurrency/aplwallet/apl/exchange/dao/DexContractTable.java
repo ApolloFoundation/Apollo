@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -9,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -78,14 +80,8 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getAllByCounterOrder(Long orderId) {
-        List<ExchangeContract> exchangeContracts = new ArrayList<>();
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause("counter_offer_id", orderId), 0, 100);
-
-        while (dbIterator.hasNext()) {
-            exchangeContracts.add(dbIterator.next());
-        }
-
-        return exchangeContracts;
+        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause("counter_offer_id", orderId), 0, -1);
+        return CollectionUtil.toList(dbIterator);
     }
 
     public ExchangeContract getByOrder(Long orderId) {
@@ -100,7 +96,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
         return getBy(new DbClause.LongClause("counter_offer_id", counterOrderId).and(new DbClause.LongClause("offer_id", orderId)));
     }
 
-    public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) {
+    public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
         List<ExchangeContract> dexOrders = new ArrayList<>();
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
@@ -115,7 +111,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
                 }
             }
         } catch (SQLException ex) {
-            log.error(ex.getMessage(), ex);
+            throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
         }
 
         return dexOrders;

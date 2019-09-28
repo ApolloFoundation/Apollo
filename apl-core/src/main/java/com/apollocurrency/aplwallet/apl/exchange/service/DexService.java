@@ -233,39 +233,32 @@ public class DexService {
     }
 
 
-    public void closeOverdueOrders(Integer time) {
+    public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
 
         for (DexOrder order : orders) {
-            try {
-                log.debug("Order expired, orderId: {}", order.getId());
-                order.setStatus(OrderStatus.EXPIRED);
-                dexOrderTable.insert(order);
+            log.debug("Order expired, orderId: {}", order.getId());
+            order.setStatus(OrderStatus.EXPIRED);
+            dexOrderTable.insert(order);
 
-                refundFrozenAplForOrder(order);
+            refundFrozenAplForOrder(order);
 
-                reopenIncomeOrders(order.getId());
-            } catch (AplException.ExecutiveProcessException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
+            reopenIncomeOrders(order.getId());
+
         }
     }
 
-    public void closeOverdueContracts(Integer time) {
+    public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {
         List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time);
 
         for (ExchangeContract contract : contracts) {
             DexOrder order = getOrder(contract.getOrderId());
             DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
-            try {
-                closeOverdueContract(order, time);
-                closeOverdueContract(counterOrder, time);
-                contract.setContractStatus(ExchangeContractStatus.STEP_4);
-                dexContractTable.insert(contract);
-            } catch (AplException.ExecutiveProcessException ex) {
-                LOG.error(ex.getMessage(), ex);
-            }
+            closeOverdueContract(order, time);
+            closeOverdueContract(counterOrder, time);
+            contract.setContractStatus(ExchangeContractStatus.STEP_4);
+            dexContractTable.insert(contract);
         }
     }
 
@@ -665,9 +658,7 @@ public class DexService {
 
 
     public void reopenIncomeOrders(Long orderId) {
-        List<ExchangeContract> contractsForReopen = dexContractTable.getAllByCounterOrder(orderId);
-
-        closeContracts(contractsForReopen);
+        closeContracts(dexContractTable.getAllByCounterOrder(orderId));
     }
 
     public void closeContracts(List<ExchangeContract> contractsForReopen) {
