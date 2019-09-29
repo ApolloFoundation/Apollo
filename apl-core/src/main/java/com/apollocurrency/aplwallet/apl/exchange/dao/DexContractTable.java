@@ -18,7 +18,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -97,7 +96,6 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
-        List<ExchangeContract> dexOrders = new ArrayList<>();
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
                      .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
@@ -105,16 +103,13 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
         ) {
             int i = 0;
             pstmt.setLong(++i, deadlineToReply);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    dexOrders.add(exchangeContractMapper.map(rs, null));
-                }
-            }
+
+            DbIterator<ExchangeContract> contracts = getManyBy(con, pstmt, true);
+
+            return CollectionUtil.toList(contracts);
         } catch (SQLException ex) {
             throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
         }
-
-        return dexOrders;
     }
 
 }
