@@ -18,21 +18,18 @@ import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.Setter;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import lombok.Setter;
 
 /**
  *
@@ -43,29 +40,36 @@ public class BackendControlService {
     
     @Inject @Setter
     AplAppStatus appStatus;
-    
-    @Inject @Setter    
+
+    @Inject
+    @Setter
     AdminPasswordVerifier apv;
-    
-    @Inject @Setter    
+
+    @Inject
+    @Setter
     Blockchain blockchain;
-    
-    @Inject @Setter
+
+    @Inject
+    @Setter
     private Converter<Peer, PeerDTO> peerConverter;
- 
-    @Inject @Setter
+
+    @Inject
+    @Setter
     private Converter<PeerInfo, PeerDTO> peerInfoConverter;
-    
-    @Inject @Setter
+
+    @Inject
+    @Setter
     private NetworkService networkService;
-    
-    @Inject @Setter
+
+    @Inject
+    @Setter
     private BlockDao blockDao;
-    
-    @Inject @Setter
+
+    @Inject
+    @Setter
     private DatabaseManager databaseManager;
-        
-    public NodeStatusInfo getNodeStatus(){
+
+    public NodeStatusInfo getNodeStatus() {
         NodeStatusInfo res = new NodeStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
         res.threadsRunning=java.lang.Thread.activeCount();
@@ -110,12 +114,12 @@ public class BackendControlService {
     }
     
    //TODO: use AdminPasswordVerifier component 
-    public boolean isAdminPasswordOK(HttpServletRequest request){
-        boolean res = apv.checkPassword(request);
-        return res;
-    }
-    
-    public NodeHealthInfo getNodeHealth(){
+   public boolean isAdminPasswordOK(HttpServletRequest request) {
+       boolean res = apv.checkPassword(request);
+       return res;
+   }
+
+    public NodeHealthInfo getNodeHealth() {
         NodeHealthInfo info = new NodeHealthInfo();
         info.dbOK = chekDataBaseOK();
         info.blockchainHeight = blockchain.getHeight();
@@ -130,10 +134,10 @@ public class BackendControlService {
         info.myPeerInfo = peerInfoConverter.convert(networkService.getMyPeerInfo());
         return info;
     }
-    
-    private boolean chekDataBaseOK(){
+
+    private boolean chekDataBaseOK() {
         Block b = blockDao.findLastBlock();
-        boolean res = b!=null;
+        boolean res = b != null;
         return res;
     }
 }

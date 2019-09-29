@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -104,6 +95,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -118,7 +110,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -435,7 +435,7 @@ class CsvExporterTest {
     void testExportIgnoredTable() {
         DerivedTableInterface genesisTable = mock(DerivedTableInterface.class);
         doReturn("genesis_public_KEY").when(genesisTable).getName();
-        doReturn(new MinMaxValue(1, 2, "db_id",2, 2)).when(genesisTable).getMinMaxValue(8000);
+        doReturn(new MinMaxValue(1, 2, "db_id", 2, 2)).when(genesisTable).getMinMaxValue(8000);
         long exported = csvExporter.exportDerivedTable(genesisTable, 8000, 2);
         assertEquals(-1, exported);
     }

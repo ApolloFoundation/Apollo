@@ -10,8 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOfferDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -51,8 +53,8 @@ public class DaoConfig {
     }
 
     @Produces
-    private DexOfferDao dexOfferDao() {
-        return createDaoInterfaceProxy(DexOfferDao.class);
+    private DexOrderDao dexOfferDao() {
+        return createDaoInterfaceProxy(DexOrderDao.class);
     }
     
     @Produces
@@ -60,6 +62,16 @@ public class DaoConfig {
         return createDaoInterfaceProxy(DexTradeDao.class);
     }
     
+
+    @Produces
+    private DexContractDao dexContractDao() {
+        return createDaoInterfaceProxy(DexContractDao.class);
+    }
+
+    @Produces
+    private MandatoryTransactionDao mandatoryTransactionDao() {
+        return createDaoInterfaceProxy(MandatoryTransactionDao.class);
+    }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
