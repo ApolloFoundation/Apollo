@@ -101,7 +101,7 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get();
     }
 
-//    @PostConstruct
+    @PostConstruct
     @Override
     public void update() {
         this.lastBlock.set(findLastBlock());
