@@ -101,16 +101,13 @@ public class BlockchainImpl implements Blockchain {
         return lastBlock.get();
     }
 
-    @PostConstruct
+//    @PostConstruct
     @Override
     public void update() {
         this.lastBlock.set(findLastBlock());
         this.shardInitialBlock.set(findFirstBlock());
-        List<Shard> sl = shardDao.getAllCompletedShards();
-        if(sl!=null && !sl.isEmpty()){
         ((ShardManagement) this.databaseManager).initFullShards(
-                sl.stream().map(Shard::getShardId).collect(Collectors.toList()));
-        }
+                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
     }
 
     @Override
