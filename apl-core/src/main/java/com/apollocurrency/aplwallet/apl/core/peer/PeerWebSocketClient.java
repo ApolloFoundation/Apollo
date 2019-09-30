@@ -46,16 +46,16 @@ public class PeerWebSocketClient extends PeerWebSocket{
             Session session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
-            log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Interrupted while connecting as client to: {}", which());
             Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
-            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Execution failed while connecting as client to: {}", which());
         } catch (TimeoutException ex) {
-            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Timeout exceeded while connecting as client to: {}", which());
         } catch (IOException ex) {
-            log.trace("I/O error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("I/O error while connecting as client to: {}", which());
         } catch (Exception ex) {
-            log.trace("Generic error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Generic error while connecting as client to: {}", which());
         }
 
         return connected;

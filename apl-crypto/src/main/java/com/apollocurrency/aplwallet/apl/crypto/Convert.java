@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -300,11 +301,7 @@ public final class Convert {
     }
 
     public static byte[] toBytes(String s) {
-        try {
-            return s.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return s.getBytes(StandardCharsets.UTF_8);
     }
 
     public static byte[] toBytes(String s, boolean isText) {
@@ -312,11 +309,7 @@ public final class Convert {
     }
 
     public static String toString(byte[] bytes) {
-        try {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     public static String toString(byte[] bytes, boolean isText) {

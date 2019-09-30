@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -20,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -215,7 +217,7 @@ public class Peer2PeerTransport {
             connection.setReadTimeout(PeersService.readTimeout);
             connection.setRequestProperty("Accept-Encoding", "gzip");
             connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8))) {
                 CountingOutputWriter cow = new CountingOutputWriter(writer);
                 cow.write(request);
                 updateUploadedVolume(cow.getCount());
@@ -230,7 +232,7 @@ public class Peer2PeerTransport {
                 if ("gzip".equals(connection.getHeaderField("Content-Encoding"))) {
                     responseStream = new GZIPInputStream(responseStream);
                 }
-                try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
+                try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
                     CountingInputReader cir = new CountingInputReader(reader, PeersService.MAX_RESPONSE_SIZE);
                     updateDownloadedVolume(cir.getCount());
                     StringWriter sw = new StringWriter(1000);
@@ -259,8 +261,10 @@ public class Peer2PeerTransport {
                 return sendOK;
             }
             sendOK = ws.send(wsRequest, requestId);
+        } catch (AplException.AplIOException ex) {
+            log.debug("Can't sent to {}, cause {}", getHostWithPort(), ex.getMessage());
         } catch (IOException ex) {
-            log.debug("Can not sent to {}. Exception: {}", getHostWithPort(), ex);
+            log.debug("Can't sent to "+getHostWithPort(), ex);
         }
         return sendOK;
     }

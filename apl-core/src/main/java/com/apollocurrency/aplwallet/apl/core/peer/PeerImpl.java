@@ -21,22 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -51,18 +35,40 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import java.nio.channels.ClosedChannelException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.channels.ClosedChannelException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
@@ -77,6 +83,7 @@ public final class PeerImpl implements Peer {
     private volatile int blacklistingTime;
     private volatile String blacklistingCause;
     private volatile PeerState state;
+    private final TimeLimiter limiter;
 
     private volatile int lastUpdated;
     private volatile int lastConnectAttempt;
@@ -134,6 +141,8 @@ public final class PeerImpl implements Peer {
         isLightClient=peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
+        limiter = SimpleTimeLimiter.create(Executors.newFixedThreadPool(10,
+                                    new NamedThreadFactory("P2P-Disconnecter", false)));
     }
     
     @Override
@@ -149,30 +158,27 @@ public final class PeerImpl implements Peer {
     
     @Override
     public PeerState getState() {
-        PeerState res;
-        Lock lock = stateLock.readLock();
-        lock.lock();
-        try{
-            res=state;
-        }finally{
-            lock.unlock();
-        }
-        return res;
+        return state;
     }
 
     private void setState(PeerState newState) {
         // if we are even not connected and some routine say to disconnect
-        // we should close all because possily we alread tried to connect and have
+        // we should close all because possible we already tried to connect and have
         // client thread running
         PeerState oldState=getState();
         Lock lock = stateLock.writeLock();
         lock.lock();
         try{
           if (newState != PeerState.CONNECTED) {
-            p2pTransport.disconnect();
+              limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
           }
           this.state = newState;
-        }finally{
+        } catch (InterruptedException e) {
+            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
+            Thread.currentThread().interrupt();
+        } catch (TimeoutException e) {
+            LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
+        } finally{
             lock.unlock();
         }
         if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
@@ -504,7 +510,7 @@ public final class PeerImpl implements Peer {
             String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
             if(resp==null){
-                LOG.trace("Null response from: ",getHostWithPort());
+                LOG.trace("Null response from: {}", getHostWithPort());
                 return response;
             }
             response = (JSONObject) JSONValue.parseWithException(resp);

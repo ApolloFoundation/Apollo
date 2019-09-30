@@ -464,7 +464,7 @@ public final class Generator implements Comparable<Generator> {
           globalSync.updateLock();        
           suspendForging = false;
           globalSync.updateUnlock();
-          LOG.debug("Forging was resumed");
+          LOG.info("Forging was resumed");
         }
     }
 
