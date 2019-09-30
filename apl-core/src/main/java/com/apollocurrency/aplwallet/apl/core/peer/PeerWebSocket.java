@@ -25,8 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -62,7 +60,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         lastActivityTime=System.currentTimeMillis();
         sendMonitor = new Monitor();
         limiter = SimpleTimeLimiter.create(Executors.newFixedThreadPool(10,
-                new NamedThreadFactory("PeerWS-Sender", false)));
+                new NamedThreadFactory("Limiter-PeerWS-Sender", false)));
     }
     
     String which(){

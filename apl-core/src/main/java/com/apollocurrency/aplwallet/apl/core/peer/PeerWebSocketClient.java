@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.google.common.util.concurrent.Monitor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -24,22 +25,26 @@ public class PeerWebSocketClient extends PeerWebSocket{
 
     private WebSocketClient client;
     private boolean connected = false;
+    private Monitor startMonitor;
     
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
-        client.setStopAtShutdown(true);        
+        client.setStopAtShutdown(true);
+        startMonitor = new Monitor();
     }
     
-    public synchronized boolean startClient(URI uri) {
+    public boolean startClient(URI uri) {
         if (uri == null) {
             return false;
         }
         if(connected){ //we want just one session, not more
             return true;
         }
+        //synchronizing here
+        startMonitor.enter();
         try {
             client.start();
             Future<Session> conn = client.connect(this, uri);
@@ -56,6 +61,8 @@ public class PeerWebSocketClient extends PeerWebSocket{
             log.trace("I/O error while connecting as client to: {}", which());
         } catch (Exception ex) {
             log.trace("Generic error while connecting as client to: {}", which());
+        }finally {
+            startMonitor.leave();
         }
 
         return connected;

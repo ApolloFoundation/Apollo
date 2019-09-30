@@ -142,7 +142,7 @@ public final class PeerImpl implements Peer {
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
         limiter = SimpleTimeLimiter.create(Executors.newFixedThreadPool(10,
-                                    new NamedThreadFactory("P2P-Disconnecter", false)));
+                                    new NamedThreadFactory("Limiter-P2P-Disconnecter", false)));
     }
     
     @Override
