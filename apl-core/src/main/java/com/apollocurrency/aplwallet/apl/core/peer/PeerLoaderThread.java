@@ -7,11 +7,11 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  *
@@ -28,7 +28,7 @@ class PeerLoaderThread implements Runnable {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;
-        this.peers=peers;
+        this.peers = peers;
     }
     private final Set<PeerDb.Entry> entries = new HashSet<>();
     private PeerDb peerDb;
@@ -67,7 +67,7 @@ class PeerLoaderThread implements Runnable {
         }
         entries.forEach((entry) -> {
             Future<String> unresolvedAddress = peers.peersExecutorService.submit(() -> {
-                PeerImpl peer = peers.findOrCreatePeer(null,entry.getAddress(), true);
+                PeerImpl peer = peers.findOrCreatePeer(null, entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());
                     peer.setServices(entry.getServices());

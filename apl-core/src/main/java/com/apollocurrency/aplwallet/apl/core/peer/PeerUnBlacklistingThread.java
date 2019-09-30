@@ -18,7 +18,7 @@ class PeerUnBlacklistingThread implements Runnable {
 
     public PeerUnBlacklistingThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
-        this.peers=peers;
+        this.peers = peers;
     }
 
     @Override

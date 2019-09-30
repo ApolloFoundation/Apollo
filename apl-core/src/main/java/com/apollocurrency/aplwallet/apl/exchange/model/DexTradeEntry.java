@@ -4,16 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Data class for interaction with trade table in the database
  * @author Serhiy Lymar
  */
 
-@Getter @Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
 public class DexTradeEntry {
 
     private long dbId;
@@ -27,5 +35,4 @@ public class DexTradeEntry {
     private BigDecimal pairRate;
     private Integer finishTime;
     private Integer height; 
-   
 }

@@ -21,6 +21,7 @@ public interface CacheConfiguration<K, V> {
 
     /**
      * Set the maximum size of cache, don't use manually, used in {@link InMemoryCacheManager} only.
+     *
      * @param maxSize the maximum size of cache
      */
     void setMaxSize(int maxSize);
