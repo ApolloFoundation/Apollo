@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -20,7 +21,8 @@ public class MandatoryTransactionMapper implements RowMapper<MandatoryTransactio
         } catch (AplException.NotValidException e) {
             throw new RuntimeException(e);
         }
-        byte[] requiredTxHash = rs.getBytes("required_tx_hash");
+//        byte[] requiredTxHash = rs.getBytes("required_tx_hash");
+        byte[] requiredTxHash = Convert.parseHexString( rs.getString("required_tx_hash"));
         long dbId = rs.getLong("db_id");
         return new MandatoryTransaction(tx, requiredTxHash, dbId);
     }

@@ -330,4 +330,21 @@ public class MandatoryTransaction implements Transaction {
     public Long getDbEntryId() {
         return dbId;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("MandatoryTransaction{");
+        sb.append("transaction=").append(transaction);
+        sb.append(", requiredTxHash=");
+        if (requiredTxHash == null) sb.append("null");
+        else {
+            sb.append('[');
+            for (int i = 0; i < requiredTxHash.length; ++i)
+                sb.append(i == 0 ? "" : ", ").append(requiredTxHash[i]);
+            sb.append(']');
+        }
+        sb.append(", dbId=").append(dbId);
+        sb.append('}');
+        return sb.toString();
+    }
 }

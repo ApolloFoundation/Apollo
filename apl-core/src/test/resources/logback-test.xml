@@ -9,7 +9,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.apollocurrency.aplwallet" level="DEBUG" additivity="false">
+    <logger name="com.apollocurrency.aplwallet" level="INFO" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
     <logger name="com.apollocurrency.aplwallet.apl.core.db.fulltext" level="WARN" additivity="false"/>
