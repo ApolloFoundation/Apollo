@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.files;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
@@ -11,6 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerFileInfo;

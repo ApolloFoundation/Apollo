@@ -3,8 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.peer.FileDownloader;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
 import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -33,4 +37,12 @@ public class ShardsDownloadService {
     public void startShardDownload(int idx){
         
     }
+    private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
+        return new ShardPresentEventBinding() {
+            @Override
+            public ShardPresentEventType value() {
+                return shardPresentEventType;
+            }
+        };
+    }    
 }
