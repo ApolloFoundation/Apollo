@@ -4,8 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerDiffStat;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerMonitoringResult;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeersConfig;
+import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.ShardDTO;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -25,23 +41,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.NetworkStats;
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerDiffStat;
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerInfo;
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeerMonitoringResult;
-import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.PeersConfig;
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.slf4j.Logger;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class HeightMonitorServiceImpl implements HeightMonitorService {
@@ -54,7 +55,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     private static final int IDLE_TIMEOUT = 5_000;
     private static final int BLOCKS_TO_RETRIEVE = 1000;
     private static final Version DEFAULT_VERSION = new Version("0.0.0");
-    private static final String URL_FORMAT = "%s://%s:%d/apl";
+    private static final String URL_FORMAT = "%s://%s:%d";
     private final AtomicReference<NetworkStats> lastStats = new AtomicReference<>();
 
     static {
@@ -160,10 +161,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         Map<String, PeerMonitoringResult> peerBlocks = getPeersMonitoringResults();
         NetworkStats networkStats = new NetworkStats();
         peerBlocks.forEach((peer, result)-> {
-            log.info(String.format("%-16.16s - %8d", peer, result.getHeight()));
+            List<String> shardList = result.getShards().stream().map(this::getShardHashFormatted).collect(Collectors.toList());
+            log.info(String.format("%-16.16s - %8d - %s", peer, result.getHeight(), String.join("->", shardList)));
             networkStats.getPeerHeight().put(peer, result.getHeight());
+            networkStats.getPeerShards().put(peer, shardList);
         });
-        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2"));
+        log.info(String.format("%5.5s %5.5s %-16.16s %-16.16s %9.9s %7.7s %7.7s %8.8s %8.8s %-13.13s %-13.13s %13.13s", "diff1", "diff2", "peer1", "peer2", "milestone", "height1", "height2", "version1", "version2", "shard1", "shard2", "shard-status"));
         int currentMaxBlocksDiff = -1;
         for (int i = 0; i < peers.size(); i++) {
             String host1 = peers.get(i).getHost();
@@ -182,9 +185,12 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                     int blocksDiff1 = getBlockDiff(lastMutualBlock, lastHeight);
                     int blocksDiff2 = getBlockDiff(lastMutualBlock, blocksToCompare.get(0).getHeight());
                     int milestoneHeight = getMilestoneHeight(lastMutualBlock);
+                    String shardsStatus = getShardsStatus(targetMonitoringResult, comparedMonitoringResult);
+                    String shard1 = getShardOrNothing(targetMonitoringResult);
+                    String shard2 = getShardOrNothing(comparedMonitoringResult);
                     currentMaxBlocksDiff = Math.max(blocksDiff1, currentMaxBlocksDiff);
-                    log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d %8.8s %8.8s", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion()));
-                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion()));
+                    log.info(String.format("%5d %5d %-16.16s %-16.16s %9d %7d %7d %8.8s %8.8s %-13.13s %-13.13s %13.13s", blocksDiff1, blocksDiff2, host1, host2, milestoneHeight, lastHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion(), shard1, shard2, shardsStatus));
+                    networkStats.getPeerDiffStats().add(new PeerDiffStat(blocksDiff1, blocksDiff2, host1, host2, lastHeight, milestoneHeight, blocksToCompare.get(0).getHeight(), targetMonitoringResult.getVersion(), comparedMonitoringResult.getVersion(), shard1, shard2, shardsStatus));
                 }
             }
         }
@@ -196,6 +202,37 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         }
         lastStats.set(networkStats);
         return networkStats;
+    }
+
+    private String getShardOrNothing(PeerMonitoringResult targetMonitoringResult) {
+        List<ShardDTO> shards = targetMonitoringResult.getShards();
+        if (shards.isEmpty()) {
+            return "---";
+        } else {
+            return getShardHashFormatted(shards.get(0));
+        }
+    }
+
+    private String getShardHashFormatted(ShardDTO shardDTO) {
+        String prunableZipHash = shardDTO.getPrunableZipHash();
+        return shardDTO.getCoreZipHash().substring(0, 6) + " " + (prunableZipHash != null ? prunableZipHash.substring(0, 6) : "");
+    }
+
+    private String getShardsStatus(PeerMonitoringResult targetMonitoringResult, PeerMonitoringResult comparedMonitoringResult) {
+        List<ShardDTO> targetShards = targetMonitoringResult.getShards();
+        List<ShardDTO> comparedShards = comparedMonitoringResult.getShards();
+        String status = "OK";
+        int comparedCounter = comparedShards.size() - 1;
+        int targetCounter = targetShards.size() - 1;
+        while (targetCounter >= 0 && comparedCounter >= 0) {
+            if (!targetShards.get(targetCounter).equals(comparedShards.get(comparedCounter))) {
+                status = "DIFF FROM " + targetShards.get(targetCounter).getShardId();
+                break;
+            }
+            targetCounter--;
+            comparedCounter--;
+        }
+        return status;
     }
 
     private int getMilestoneHeight(Block lastMutualBlock) {
@@ -223,15 +260,15 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
                 List<Block> blocksList = getBlocksList(peerUrl);
                 Version version = getPeerVersion(peerUrl);
                 int height = getPeerHeight(peerUrl);
-                return new PeerMonitoringResult(blocksList, version, height);
+                List<ShardDTO> shards = getShards(peerUrl);
+                return new PeerMonitoringResult(blocksList, version, height, shards);
             }, executor));
         }
         for (int i = 0; i < getBlocksRequests.size(); i++) {
             String host = peers.get(i).getHost();
             try {
                 peerBlocks.put(host, getBlocksRequests.get(i).get());
-            }
-            catch (InterruptedException | ExecutionException e) {
+            } catch (Exception e) {
                 log.error("Error getting blocks for " + host, e);
             }
         }
@@ -239,7 +276,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     }
 
     private String getBlocksJson(String peerUrl, int firstIndex) throws InterruptedException, ExecutionException, TimeoutException {
-        Request request = client.newRequest(peerUrl)
+        Request request = client.newRequest(peerUrl + "/apl")
                 .method(HttpMethod.GET)
                 .param("requestType", "getBlocks")
                 .param("firstIndex", String.valueOf(firstIndex))
@@ -251,9 +288,26 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
         return response.getContentAsString();
     }
 
+    private List<ShardDTO> getShards(String peerUrl) {
+        List<ShardDTO> shards = new ArrayList<>();
+        Request request = client.newRequest(peerUrl + "/rest/shards")
+                .method(HttpMethod.GET);
+        ContentResponse response;
+        try {
+            response = request.send();
+            shards = objectMapper.readValue(response.getContentAsString(), new TypeReference<List<ShardDTO>>() {
+            });
+        } catch (InterruptedException | TimeoutException | ExecutionException | IOException e) {
+            log.error("Unable to get or parse response from {} - {}", peerUrl, e.toString());
+        } catch (Exception e) {
+            log.error("Unknown exception:", e);
+        }
+        return shards;
+    }
+
     private int getPeerHeight(String peerUrl) {
         int height = -1;
-        Request request = client.newRequest(peerUrl)
+        Request request = client.newRequest(peerUrl + "/apl")
                 .method(HttpMethod.GET)
                 .param("requestType", "getBlock");
         ContentResponse response;
@@ -270,7 +324,7 @@ public class HeightMonitorServiceImpl implements HeightMonitorService {
     }
     private Version getPeerVersion(String peerUrl) {
         Version res = DEFAULT_VERSION;
-        Request request = client.newRequest(peerUrl)
+        Request request = client.newRequest(peerUrl + "/apl")
                 .method(HttpMethod.GET)
                 .param("requestType", "getState");
         ContentResponse response = null;

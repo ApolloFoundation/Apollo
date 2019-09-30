@@ -1,10 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -14,6 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -30,10 +30,12 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
+
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 class FullTextSearchServiceTest {
@@ -44,7 +46,6 @@ class FullTextSearchServiceTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class,
             GlobalSyncImpl.class,
             TaggedDataDao.class,
@@ -59,8 +60,10 @@ class FullTextSearchServiceTest {
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(time, NtpTime.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
 
     @Inject

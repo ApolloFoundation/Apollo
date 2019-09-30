@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -32,6 +30,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
@@ -42,6 +41,8 @@ import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,8 +52,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class EthereumWalletService {
@@ -218,6 +219,15 @@ public class EthereumWalletService {
         }
 
         return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, value,  ethGasInfo.getAverageSpeedPrice());
+    }
+
+
+    public EthBlock.Block getLastBlock() throws AplException.ExecutiveProcessException {
+        try {
+            return web3j.ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false).sendAsync().get().getBlock();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new AplException.ExecutiveProcessException("Third service is not available.");
+        }
     }
 
     /**

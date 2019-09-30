@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -50,6 +40,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -69,13 +61,23 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -89,7 +91,6 @@ public class PhasingPollServiceTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             PhasingPollServiceImpl.class,
             GlobalSyncImpl.class,
             PhasingPollResultTable.class,
@@ -107,9 +108,11 @@ public class PhasingPollServiceTest {
             GenesisPublicKeyTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -320,7 +323,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable, null);
+        Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable, null, null);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = service.countVotes(ptd.POLL_3);
 

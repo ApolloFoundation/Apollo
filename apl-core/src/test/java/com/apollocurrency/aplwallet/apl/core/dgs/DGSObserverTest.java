@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -17,8 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -58,6 +54,10 @@ import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 @EnableWeld
 public class DGSObserverTest {
     @RegisterExtension
@@ -66,7 +66,6 @@ public class DGSObserverTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             FullTextConfigImpl.class,
             DGSPublicFeedbackTable.class,
@@ -83,6 +82,7 @@ public class DGSObserverTest {
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
 //            .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
 //            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
@@ -112,7 +112,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEvent() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null, null);
         Block lastBlock = mock(Block.class);
         Block prevBlock = mock(Block.class);
         doReturn(dtd.PURCHASE_2.getDeadline()).when(prevBlock).getTimestamp();
@@ -138,7 +138,7 @@ public class DGSObserverTest {
 
     @Test
     void testFireEventOnBlockWithZeroHeight() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, null, accountTable, null, null);
         DbUtils.inTransaction(extension, (con)-> {
             event.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(mock(Block.class));
         });

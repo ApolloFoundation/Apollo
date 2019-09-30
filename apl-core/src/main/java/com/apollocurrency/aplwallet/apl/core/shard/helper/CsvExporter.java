@@ -77,7 +77,8 @@ public interface CsvExporter {
 
 
     /**
-     * Export derived table entries ordered by custom sort
+     * Export derived table entries ordered by custom sort. Custom sort may include few columns. Note, that it is a slow method for export, because it uses
+     * LIMIT + OFFSET pagination model, so that should be used when really necessary
      * Will exclude columns specified in excludeColumns parameter
      * @param derivedTableInterface table to export
      * @param targetHeight target blockchain height

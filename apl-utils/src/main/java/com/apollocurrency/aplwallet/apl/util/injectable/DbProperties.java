@@ -151,8 +151,12 @@ public final class DbProperties implements Cloneable {
         return this;
     }
 
-    public DbProperties deepCopy() throws CloneNotSupportedException {
-        return (DbProperties) super.clone();
+    public DbProperties deepCopy() {
+        try {
+            return (DbProperties) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

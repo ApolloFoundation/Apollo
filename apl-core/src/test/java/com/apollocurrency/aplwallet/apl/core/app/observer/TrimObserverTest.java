@@ -4,16 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
@@ -27,10 +19,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.util.List;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -43,19 +45,23 @@ class TrimObserverTest {
     @Inject
     Event<Block> blockEvent;
     @Inject
-    Event<Boolean> trimEvent;
+    Event<TrimConfig> trimEvent;
     @Inject
     TrimObserver observer;
 
     @Test
     void testOnTrimConfigUpdated() {
         assertTrue(observer.isTrimDerivedTables());
-
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(false);
+        fireBlockAccepted(5000);
+        fireBlockAccepted(6000);
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(false, true));
 
         assertFalse(observer.isTrimDerivedTables());
+        assertEquals(0, observer.getTrimHeights().size());
 
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(true);
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(true, false));
 
         assertTrue(observer.isTrimDerivedTables());
     }
@@ -74,7 +80,8 @@ class TrimObserverTest {
     void testOnBlockScannedSkipTrim() {
         Block block = mock(Block.class);
         doReturn(6000).when(block).getHeight();
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(false);
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(false, true));
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
@@ -107,14 +114,16 @@ class TrimObserverTest {
         fireBlockAccepted(5000);
         fireBlockAccepted(6000);
         doAnswer(invocation -> {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(false);
+            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+            }).fire(new TrimConfig(false, false));
             return null;
         }).when(trimService).trimDerivedTables(5000, true);
         waitTrim(List.of(5000));
         assertFalse(observer.isTrimDerivedTables());
         Thread.sleep(4000);
         verifyNoMoreInteractions(trimService);
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(true);
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(true, false));
         waitTrim(List.of(6000));
     }
 

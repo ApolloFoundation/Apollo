@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.inject.Singleton;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,8 +23,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 
 @Singleton
 public class EthGasStationInfoDao {
@@ -31,9 +31,9 @@ public class EthGasStationInfoDao {
         EthStationGasInfo ethGasInfo = null;
         HttpsURLConnection con = null;
         try {
-            
+
             URL url = new URL(Constants.ETH_STATION_GAS_INFO_URL);
-            SSLContext sc=null;                        
+            SSLContext sc = null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
@@ -42,7 +42,7 @@ public class EthGasStationInfoDao {
             } catch (KeyManagementException ex) {
                 Logger.getLogger(EthGasStationInfoDao.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             con = (HttpsURLConnection) url.openConnection();
             con.setSSLSocketFactory(sc.getSocketFactory());
 
@@ -58,6 +58,11 @@ public class EthGasStationInfoDao {
         } finally {
             con.disconnect();
         }
+
+        if (ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+            return null;
+        }
+
         return ethGasInfo;
     }
 
@@ -66,7 +71,7 @@ public class EthGasStationInfoDao {
         HttpsURLConnection con = null;
         try {
             URL url = new URL(Constants.ETH_CHAIN_GAS_INFO_URL);
-            SSLContext sc=null;                        
+            SSLContext sc = null;
             try {
                 sc = SSLContext.getInstance("TLSv1.2");
                 sc.init(null, null, new java.security.SecureRandom());
@@ -75,7 +80,7 @@ public class EthGasStationInfoDao {
             } catch (KeyManagementException ex) {
                 Logger.getLogger(EthGasStationInfoDao.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+
             con = (HttpsURLConnection) url.openConnection();
             con.setSSLSocketFactory(sc.getSocketFactory());
 
@@ -89,6 +94,11 @@ public class EthGasStationInfoDao {
         } finally {
             con.disconnect();
         }
+
+        if (ethGasInfo.getSafeLowSpeedPrice().equals(0L)) {
+            return null;
+        }
+
         return ethGasInfo;
     }
 

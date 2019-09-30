@@ -6,13 +6,10 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-
-import java.math.BigDecimal;
-import java.util.Random;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -21,9 +18,12 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -42,11 +42,11 @@ public class DexTradeDaoTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             DaoConfig.class,
-            JdbiHandleFactory.class, 
             DexTradeDao.class
             )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .build();
     
     

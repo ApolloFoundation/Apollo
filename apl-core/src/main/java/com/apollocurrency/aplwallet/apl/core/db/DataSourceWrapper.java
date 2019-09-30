@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
@@ -34,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
+import org.h2.jdbc.JdbcSQLException;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -41,6 +40,7 @@ import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
+import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -48,7 +48,8 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.sql.DataSource;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Represent basic implementation of DataSource
@@ -231,6 +232,10 @@ public class DataSourceWrapper implements DataSource {
         setInitialzed();
     }
 
+    public void update(DbVersion dbVersion) {
+        dbVersion.init(this);
+    }
+
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
         if (dbVersion instanceof AplDbVersion) {
             HikariDataSource dataSource = new HikariDataSource(config);
@@ -264,6 +269,8 @@ public class DataSourceWrapper implements DataSource {
             dataSource.close();
 //            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
+        } catch (JdbcSQLException e) {
+            log.info(e.toString());
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
@@ -310,4 +317,12 @@ public class DataSourceWrapper implements DataSource {
         return dbUrl;
     }
 
+    @Override
+    public String toString() {
+        return "DataSourceWrapper{" +
+                "dbUrl='" + dbUrl + '\'' +
+                ", initialized=" + initialized +
+                ", shutdown=" + shutdown +
+                '}';
+    }
 }

@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.mapper;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import org.apache.commons.collections4.CollectionUtils;
-import org.web3j.tuples.generated.Tuple2;
+import org.web3j.tuples.generated.Tuple3;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.List;
 public class UserEthDepositInfoMapper {
 
 
-    public static List<UserEthDepositInfo> map(Tuple2<List<BigInteger>, List<BigInteger>> data) {
+    public static List<UserEthDepositInfo> map(Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> data) {
         List<UserEthDepositInfo> userDeposits = new ArrayList<>();
 
         if (data == null || CollectionUtils.isEmpty(data.getValue1())) {
@@ -22,7 +22,9 @@ public class UserEthDepositInfoMapper {
         for (int i = 0; i < data.getValue1().size(); i++) {
             userDeposits.add(new UserEthDepositInfo(Long.parseUnsignedLong(
                     data.getValue1().get(i).toString()),
-                    EthUtil.weiToEther(data.getValue2().get(i)))
+                            EthUtil.weiToEther(data.getValue2().get(i)),
+                            data.getValue3().get(i).longValue()
+                    )
             );
         }
 

@@ -4,19 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEXES;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_0;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_1;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_2;
-import static com.apollocurrency.aplwallet.apl.data.IndexTestData.NOT_SAVED_BLOCK_INDEX;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -36,26 +24,32 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEXES;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_0;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_1;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.BLOCK_INDEX_2;
+import static com.apollocurrency.aplwallet.apl.data.IndexTestData.NOT_SAVED_BLOCK_INDEX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @EnableWeld
 public class BlockIndexDaoTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
 
-
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSync.class,
-            GlobalSyncImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            JdbiHandleFactory.class, BlockIndexDao.class,
+            PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
+            DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
             .build();
 
@@ -96,7 +90,7 @@ public class BlockIndexDaoTest {
     void testGetShardIdByHeight() {
         Long height = blockIndexDao.getShardIdByBlockHeight(BLOCK_INDEX_2.getBlockHeight());
         assertNotNull(height);
-        assertEquals(BLOCK_INDEX_2.getBlockHeight().longValue(), height.longValue());
+        assertEquals(BLOCK_INDEX_2.getBlockHeight(), height.intValue());
     }
 
     @Test
@@ -203,7 +197,7 @@ public class BlockIndexDaoTest {
 
     @Test
     void testDelete() {
-        int deleteCount = blockIndexDao.hardBlockIndex(BLOCK_INDEX_1);
+        int deleteCount = blockIndexDao.hardDeleteBlockIndex(BLOCK_INDEX_1);
         assertEquals(1, deleteCount);
         assertEquals(Arrays.asList(BLOCK_INDEX_2, BLOCK_INDEX_0), blockIndexDao.getAllBlockIndex());
     }

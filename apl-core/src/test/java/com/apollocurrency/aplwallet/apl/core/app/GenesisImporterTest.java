@@ -1,18 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
@@ -32,12 +19,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BalancesPublicKeysTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -56,6 +44,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 @EnableWeld
@@ -78,18 +82,20 @@ class GenesisImporterTest {
     public WeldInitiator weld  = WeldInitiator.from(
             AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
             ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, GenesisPublicKeyTable.class,
-            BlockIndexDao.class, TransactionDaoImpl.class, BlockchainImpl.class,
-            JdbiHandleFactory.class, BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
+            TransactionDaoImpl.class, BlockchainImpl.class,
+            BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class)
             .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
             .addBeans(MockBean.of(configDirProvider, ConfigDirProvider.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(blockchainConfigUpdater, BlockchainConfigUpdater.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
             .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
 
     private GenesisImporter genesisImporter;
@@ -123,7 +129,7 @@ class GenesisImporterTest {
         publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         Account.init(extension.getDatabaseManager(), propertiesHolder, null,
-                null, blockchain, null, publicKeyTable, accountTable, null);
+                null, blockchain, null, publicKeyTable, accountTable, null, null);
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
         testData = new BalancesPublicKeysTestData();

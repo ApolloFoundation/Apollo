@@ -45,6 +45,13 @@
     <logger name="org.eclipse.jetty" level="off" additivity="false"/>
     <logger name="javax.servlet.level" level="off" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
+    <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
+    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">
+        <appender-ref ref="shuffling-file"/>
+    </logger>
+    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffler" level="trace" additivity="false">
+        <appender-ref ref="shuffling-file"/>
+    </logger>
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">

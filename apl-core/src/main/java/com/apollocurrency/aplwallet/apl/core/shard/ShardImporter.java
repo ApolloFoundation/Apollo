@@ -19,15 +19,15 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -169,7 +169,7 @@ public class ShardImporter {
                         Object height = row.get("height");
                         if (parsedTags != null) {
                             Object[] tagArray = (Object[]) parsedTags;
-                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.valueOf((String) height));
+                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.parseInt((String) height));
                         }
                     });
                 } else {

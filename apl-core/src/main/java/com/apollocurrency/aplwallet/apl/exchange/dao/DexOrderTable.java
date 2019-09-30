@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
@@ -56,11 +58,10 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         ) {
             int i = 0;
             pstmt.setLong(++i, currentTime);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    dexOrders.add(dexOrderMapper.map(rs, null));
-                }
-            }
+
+            DbIterator<DexOrder> orders = getManyBy(con, pstmt, true);
+
+            return CollectionUtil.toList(orders);
         } catch (SQLException ex) {
             log.error(ex.getMessage(), ex);
         }

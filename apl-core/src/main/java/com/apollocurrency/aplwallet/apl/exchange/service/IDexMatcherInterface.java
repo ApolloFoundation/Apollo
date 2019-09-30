@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
  *
  * @author Serhiy Lymar
  */
-
 public interface IDexMatcherInterface {
      /** 
      * Start transport interaction service

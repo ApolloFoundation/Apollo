@@ -72,8 +72,7 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         try (InputStream is = classloader.getResourceAsStream(fn)) {
             T defaultConfig = read(is);
             config = merge(config, defaultConfig);
-        }
-        catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Can not load resource: " + fn);
             e.printStackTrace();
         }

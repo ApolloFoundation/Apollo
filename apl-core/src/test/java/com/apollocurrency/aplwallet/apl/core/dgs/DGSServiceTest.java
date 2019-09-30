@@ -4,22 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_1_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_2_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_1_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_2_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -31,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -74,9 +58,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_1_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_2_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_1_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_2_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class DGSServiceTest {
@@ -1157,7 +1157,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1173,7 +1173,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1187,7 +1187,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1201,7 +1201,7 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
@@ -1231,7 +1231,7 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null);
+        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
         doReturn(1_500_000).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {
