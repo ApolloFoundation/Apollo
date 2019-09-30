@@ -44,7 +44,7 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class PhasingVoteTableTest {
-   
+
     @RegisterExtension
     DbExtension extension = new DbExtension();
     @WeldSetup
