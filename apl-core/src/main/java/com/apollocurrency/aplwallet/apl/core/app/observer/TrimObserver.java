@@ -8,6 +8,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_FIVE_SEC
 import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_TWO_SECONDS;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -48,16 +49,19 @@ public class TrimObserver {
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private BlockchainConfig blockchainConfig;
     private PropertiesHolder propertiesHolder;
+    private Blockchain blockchain;
     private Random random;
     private boolean isShardingOff;
     private final int maxRollback;
 
     @Inject
     public TrimObserver(TrimService trimService, BlockchainConfig blockchainConfig,
-                        PropertiesHolder propertiesHolder, Random random) {
+                        PropertiesHolder propertiesHolder, Random random,
+                        Blockchain blockchain) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
+        this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.isShardingOff = this.propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
         if (random == null) {
@@ -70,7 +74,7 @@ public class TrimObserver {
 
     @PostConstruct
     void init() {
-        if (this.blockchainConfig.getCurrentConfig() != null && this.blockchainConfig.getCurrentConfig().isShardingEnabled()
+        if (this.blockchainConfig.getCurrentConfig().isShardingEnabled()
                 && this.blockchainConfig.getCurrentConfig().getShardingFrequency() > 0 && this.trimFrequency > 0
                 && this.blockchainConfig.getCurrentConfig().getShardingFrequency() < this.trimFrequency) {
             String error = String.format(
@@ -121,7 +125,7 @@ public class TrimObserver {
                     trimHeight = trimHeights.poll();
                 }
             }
-            if (trimHeight != null) {
+            if (trimHeight != null && trimHeight <= blockchain.getHeight()) {
                 log.debug("Perform trim on blockchain height={}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
             } else {
@@ -147,7 +151,7 @@ public class TrimObserver {
     }
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
-        //TODO: please replace 5000 with meaningfull constant name
+        //TODO: please replace 5000 with meaningful constant name
         if (block.getHeight() % 5000 == 0) {
             log.info("Scan: processed block " + block.getHeight());
         }
@@ -172,7 +176,7 @@ public class TrimObserver {
                 log.trace("'Not sharded', trim height random increase = {}", randomTrimHeightIncrease);
             } else {
                 // sharded node should 'predict' next shard height and DO NOT randomize in such case
-                int trimHeight = (block.getHeight() - maxRollback);
+                int trimHeight = Math.max(0, (block.getHeight() - maxRollback));
                 int shardingFrequency;
                 if (!isConfigJustUpdated) {
                     // config didn't change from previous trim scheduling
@@ -188,18 +192,25 @@ public class TrimObserver {
                 boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
                 // the boolean - if shard is possible by current blockchain height
                 boolean isShardingOnBlockHeight = block.getHeight() % shardingFrequency == 0;
+                // generate pseudo random for 'trim height divergence'
+                randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
                 if (isShardingOnBlockHeight || isShardingOnTrimHeight) {
-                    synchronized (lock) {
-                        scheduleTrimHeight = block.getHeight(); // next trim height
-                        log.debug("Schedule next trim for height value = {}", scheduleTrimHeight);
-                        trimHeights.add(scheduleTrimHeight);
-                    }
-                } else {
-                    log.debug("SKIP trim schedule trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
-                            trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated,
-                            isShardingOnTrimHeight, isShardingOnBlockHeight);
-                    return randomTrimHeightIncrease;
+                    // prevent trim randomization on 'potentially dangerous heights'
+                    randomTrimHeightIncrease = 0; // schedule that case in any conditions
+                } else if (trimService.isTrimming()) {
+                    // SAFE SKIP, DO NOT schedule next if we haven't finished previous trim
+                    log.debug("Schedule next trim SKIPPED={}, trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
+                            randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency,
+                            isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
+                    return scheduleTrimHeight;
                 }
+                log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
+                        randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
+            }
+            synchronized (lock) {
+                scheduleTrimHeight = block.getHeight() - randomTrimHeightIncrease; // decrease next trim height with possible divergence
+                log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
+                trimHeights.add(scheduleTrimHeight);
             }
         } else {
             log.trace("Skip Trim schedule on block height='{}' NOT div % by trimFreq={}", block.getHeight(), trimFrequency);
