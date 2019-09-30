@@ -15,14 +15,14 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Singleton
 public class DexEthService {
-    private static Integer attempts = 5;
+    private static Integer ATTEMPTS = 5;
     private static String ETH_GAS_INFO_KEY = "eth_gas_info";
 
     private EthGasStationInfoDao ethGasStationInfoDao;
 
     private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
             .maximumSize(10)
-            .expireAfterWrite(4, TimeUnit.MINUTES)
+            .expireAfterWrite(3, TimeUnit.MINUTES)
             .build(
                     new CacheLoader<>() {
                         public EthGasInfo load(String id) throws InvalidCacheLoadException {
@@ -45,18 +45,28 @@ public class DexEthService {
     }
 
     private EthGasInfo initEthPriceInfo(){
-        EthGasInfo ethGasInfo = null;
+        EthGasInfo ethGasInfo;
         Integer counter = 0;
-        while (counter < attempts) {
+        while (counter < ATTEMPTS) {
             try {
                 ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+
+                if (ethGasInfo != null) {
+                    return ethGasInfo;
+                }
             } catch (Exception e) {
-                log.error("Attempt " + counter +":" + e.getMessage(), e);
+                log.error("(Gas Station) Attempt " + counter + ":" + e.getMessage(), e);
+            }
+            try {
+                ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
+
+                if (ethGasInfo != null) {
+                    return ethGasInfo;
+                }
+            } catch (Exception e) {
+                log.error("(Eth Chain) Attempt " + counter + ":" + e.getMessage(), e);
             }
 
-            if (ethGasInfo != null) {
-                return ethGasInfo;
-            }
             counter++;
         }
 

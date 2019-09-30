@@ -17,12 +17,12 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 public class TrimService {
@@ -176,7 +176,7 @@ public class TrimService {
                         table.trim(height);
                         dataSource.commit(false);
                         long duration = System.currentTimeMillis() - startTime;
-                        log.debug("Trim of {} took {} ms",table.getName(), duration);
+                        log.debug("Trim of {} took {} ms", table.getName(), duration);
                         onlyTrimTime += duration;
                     } finally {
                         if (!oneLock) {

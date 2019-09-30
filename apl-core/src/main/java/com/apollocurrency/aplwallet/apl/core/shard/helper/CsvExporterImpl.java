@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
@@ -16,6 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,9 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
@@ -76,17 +76,17 @@ public class CsvExporterImpl implements CsvExporter {
     }
 
     private long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
-        return exportTable(table,"where  " + minMaxValue.getColumn() + "> ? and " + minMaxValue.getColumn() +"< ? and height <= ? order by " + minMaxValue.getColumn() + " limit ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
-            pstmt.setLong(1,  minMaxColumnValue.getMin());
-            pstmt.setLong(2,  minMaxColumnValue.getMax());
-            pstmt.setInt(3,  minMaxColumnValue.getHeight());
+        return exportTable(table, "where  " + minMaxValue.getColumn() + "> ? and " + minMaxValue.getColumn() + "< ? and height <= ? order by " + minMaxValue.getColumn() + " limit ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
+            pstmt.setLong(1, minMaxColumnValue.getMin());
+            pstmt.setLong(2, minMaxColumnValue.getMax());
+            pstmt.setInt(3, minMaxColumnValue.getHeight());
             pstmt.setInt(4, batchLimit);
         });
     }
 
     @Override
     public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
-        return exportTable(derivedTableInterface.getName(),"where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
+        return exportTable(derivedTableInterface.getName(), "where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
             pstmt.setInt(1,  targetHeight);
             pstmt.setInt(2,  batchLimit);
             pstmt.setInt(3, totalProcessed);

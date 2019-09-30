@@ -4,13 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -45,6 +38,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +47,13 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceIntegrationTest {
@@ -75,7 +75,8 @@ public class ShardServiceIntegrationTest {
     BlockchainConfig blockchainConfig;
     @Mock
     ShardRecoveryDao shardRecoveryDao;
-    @Mock ShardMigrationExecutor shardMigrationExecutor;
+    @Mock
+    ShardMigrationExecutor shardMigrationExecutor;
     @Mock
     AplAppStatus aplAppStatus;
     @Mock
@@ -126,8 +127,9 @@ public class ShardServiceIntegrationTest {
         doReturn(mockChain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
-        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService,dbEvent);
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
+        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain.h2.db")); // to be deleted
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain.h2.db")); // to be replaced
         Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain.h2.db")); // to be saved
@@ -163,8 +165,8 @@ public class ShardServiceIntegrationTest {
         verify(globalSync).writeLock();
         verify(globalSync).writeUnlock();
         verify(dbEvent).fire(new DbHotSwapConfig(1));
-        verify(firedEvent).fire(new TrimConfig(false,true));
-        verify(firedEvent).fire(new TrimConfig(true,false));
+        verify(firedEvent).fire(new TrimConfig(false, true));
+        verify(firedEvent).fire(new TrimConfig(true, false));
         verify(blockchainProcessor).suspendBlockchainDownloading();
         verify(blockchainProcessor).resumeBlockchainDownloading();
     }

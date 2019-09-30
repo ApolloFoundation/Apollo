@@ -27,15 +27,15 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -99,7 +99,8 @@ public class ShardService {
     }
 
     private void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(enableTrim, clearQueue));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(enableTrim, clearQueue));
 
     }
 
@@ -156,12 +157,10 @@ public class ShardService {
                     blockchain.update();
                     recoverSharding();
                     return true;
-                }
-                finally {
+                } finally {
                     globalSync.writeUnlock();
                 }
-            }
-            finally {
+            } finally {
                 blockchainProcessor.resumeBlockchainDownloading();
                 updateTrimConfig(true, false);
             }
@@ -199,8 +198,7 @@ public class ShardService {
                 shardMigrationExecutor.createAllCommands(lastShard.getShardHeight(), lastShard.getShardId(), recovery.getState());
                 shardMigrationExecutor.executeAllOperations();
                 aplAppStatus.durableTaskFinished("sharding", false, "Shard process finished");
-            }
-            finally {
+            } finally {
                 isSharding = false;
             }
             // when sharding was disabled but recovery records was stored before
@@ -233,8 +231,7 @@ public class ShardService {
                 shardMigrationExecutor.cleanCommands();
                 shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
-            }
-            catch (Exception t) {
+            } catch (Exception t) {
                 log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
             }
             if (resultState != MigrateState.FAILED) {

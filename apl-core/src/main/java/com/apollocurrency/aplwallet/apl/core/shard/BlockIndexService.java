@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
 
 import java.util.List;
 
-public interface BlockIndexService{
+public interface BlockIndexService {
     BlockIndex getByBlockId(long blockId);
 
     Long getShardIdByBlockId(long blockId);

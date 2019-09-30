@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
@@ -18,6 +16,9 @@ import com.google.common.cache.RemovalListener;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,9 +35,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Class is used for high level database and shard management.
@@ -271,7 +271,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         long start = System.currentTimeMillis();
         log.debug("Create new SHARD '{}'", temporaryDatabaseName);
         DbProperties shardDbProperties = baseDbProperties.deepCopy()
-                    .dbFileName(temporaryDatabaseName)
+                .dbFileName(temporaryDatabaseName)
                     .dbUrl(null) // nullify dbUrl intentionally!;
                     .dbIdentity(TEMP_DB_IDENTITY);
 

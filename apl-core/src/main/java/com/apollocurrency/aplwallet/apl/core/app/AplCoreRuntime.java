@@ -19,13 +19,13 @@ import com.zaxxer.hikari.HikariPoolMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 
 
 /**
@@ -159,7 +159,6 @@ public class AplCoreRuntime {
         }
         runtimeMode.shutdown();
     }
-
 
 
     public static void logSystemProperties() {

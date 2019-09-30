@@ -10,7 +10,8 @@ import lombok.Setter;
 /**
  * Block global secondary index entity.
  */
-@Getter @Setter
+@Getter
+@Setter
 @EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor

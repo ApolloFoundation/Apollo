@@ -4,21 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -45,6 +32,18 @@ import java.util.Random;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 @Slf4j
 @EnableWeld
@@ -91,12 +90,14 @@ class TrimObserverTest {
         fireBlockPushed(6000);
         assertEquals(2, observer.getTrimHeights().size());
 
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(false, true));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(false, true));
 
         assertFalse(observer.isTrimDerivedTables());
         assertEquals(0, observer.getTrimHeights().size());
 
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(true, false));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(true, false));
 
         assertTrue(observer.isTrimDerivedTables());
     }
@@ -115,7 +116,8 @@ class TrimObserverTest {
     void testOnBlockScannedSkipTrim() {
         Block block = mock(Block.class);
         doReturn(6000).when(block).getHeight();
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(false, true));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(false, true));
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
@@ -153,14 +155,16 @@ class TrimObserverTest {
         fireBlockPushed(6000);
         assertEquals(2, observer.getTrimHeights().size());
         doAnswer(invocation -> {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(false, false));
+            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+            }).fire(new TrimConfig(false, false));
             return null;
         }).when(trimService).trimDerivedTables(5000, true);
 //        waitTrim(List.of(5000)); // doesn't work, test hangs here
 //        assertFalse(observer.isTrimDerivedTables());
         Thread.sleep(4000);
         verify(trimService, times(1)).isTrimming();
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(true, false));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(true, false));
 //        waitTrim(List.of(5190));
     }
 

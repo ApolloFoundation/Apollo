@@ -3,10 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.enterprise.inject.Vetoed;
-import java.util.Objects;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
@@ -23,6 +19,10 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.Vetoed;
+import java.util.Objects;
+import java.util.UUID;
+
 /**
  * PeerClient represents requests of P2P subsystem
  * TODO: move P2P requests here
@@ -34,7 +34,7 @@ public class PeerClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
-    
+
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
@@ -54,7 +54,7 @@ public class PeerClient {
     public FileDownloadInfo getFileInfo(String entityId){
         log.debug("getFileInfo() entityId = {}", entityId);
         if(!checkConnection()){
-            log.debug("Peer: {} is not connected",peer.getAnnouncedAddress());
+            log.debug("Peer: {} is not connected", peer.getAnnouncedAddress());
             return null;
         }        
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
