@@ -1,18 +1,20 @@
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -31,10 +33,16 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.Mock;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @EnableWeld
 class PhasingVoteTableTest {
+    
+    @Mock
+    ShardDao shardDao;
+        
     @RegisterExtension
     DbExtension extension = new DbExtension();
     @WeldSetup
@@ -45,13 +53,14 @@ class PhasingVoteTableTest {
             PhasingVoteTable.class,
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
+            BlockIndexServiceImpl.class, NullCacheProducerForTests.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))                      
             .build();
     @Inject
     PhasingVoteTable table;
@@ -59,6 +68,7 @@ class PhasingVoteTableTest {
 
     @BeforeEach
     void setUp() {
+        doReturn(List.of()).when(shardDao).getAllCompletedShards();   
         ptd = new PhasingTestData();
     }
 
