@@ -84,7 +84,7 @@
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.10.0.pr2</jackson.version>
+        <jackson.version>2.10.0.pr3</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -108,7 +108,7 @@
         <weld.version>3.1.2.Final</weld.version>
         <weld-junit5.version>2.0.0.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>4.3.0.Final</resteasy.version>
+        <resteasy.version>4.3.1.Final</resteasy.version>
         <swagger.version>2.0.9</swagger.version>
         <junit5-bom.version>5.4.1</junit5-bom.version>
         <hikari.version>3.3.1</hikari.version>
