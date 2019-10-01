@@ -23,12 +23,19 @@
 
     <if condition='property("apl-test.env").equals("quiet")'>
         <then>
-            <logger name="com.apollocurrency.aplwallet" level="info" additivity="false">
+            <logger name="com.apollocurrency.aplwallet.apl" level="error" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+
+            <logger name="com.apollocurrency.aplwallet.apl.updater.downloader.DownloaderImpl" level="off">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.updater.AuthorityCheckerImpl" level="off">
                 <appender-ref ref="STDOUT"/>
             </logger>
         </then>
         <else>
-            <logger name="com.apollocurrency.aplwallet" level="debug" additivity="false">
+            <logger name="com.apollocurrency.aplwallet.apl" level="debug" additivity="false">
                 <appender-ref ref="STDOUT"/>
             </logger>
         </else>
