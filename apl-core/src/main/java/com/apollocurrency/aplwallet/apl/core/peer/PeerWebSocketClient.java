@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 public class PeerWebSocketClient extends PeerWebSocket{
 
     private WebSocketClient client;
-    private boolean connected = false;
+    private volatile boolean connected = false;
     private Monitor startMonitor;
     
     public PeerWebSocketClient(Peer2PeerTransport peer) {
@@ -73,14 +73,14 @@ public class PeerWebSocketClient extends PeerWebSocket{
         super.close();
         connected = false;
         if (client != null) {
-          for(WebSocketSession wss: client.getOpenSessions()){
-              wss.disconnect();
-              wss.close();
-              if(wss!=null){
-                wss.destroy();
-              }
-          }
-          destroyClient();
+            for(WebSocketSession wss: client.getOpenSessions()){
+                if(wss!=null){
+                    wss.disconnect();
+                    wss.close();
+                    wss.destroy();
+                }
+            }
+            destroyClient();
         }
     }
 

@@ -188,13 +188,14 @@ public final class PeerImpl implements Peer {
           if (newState != PeerState.CONNECTED) {
               limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
           }
-          this.state = newState;
         } catch (InterruptedException e) {
             LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
             Thread.currentThread().interrupt();
         } catch (TimeoutException e) {
             LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
         } finally{
+            //we have to change state anyway
+            this.state = newState;
             lock.unlock();
         }
         if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
@@ -202,7 +203,6 @@ public final class PeerImpl implements Peer {
         } else if (newState == PeerState.NON_CONNECTED) {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
-        //we have to change state anyway
     }
 
     @Override
