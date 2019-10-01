@@ -1,7 +1,7 @@
 /*
  * Copyright © 2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.files;
 
 
 import javax.inject.Inject;
