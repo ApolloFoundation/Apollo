@@ -18,8 +18,10 @@
         </encoder>
     </appender>
 
-    <logger name="com.apollocurrency.aplwallet.apl" level="debug"/>
-    <root level="INFO">
+    <logger name="com.apollocurrency.aplwallet.apl" level="info">
+        <appender-ref ref="console" />
+    </logger>
+    <root level="error">
         <appender-ref ref="console"/>
         <appender-ref ref="file"/>
     </root>
