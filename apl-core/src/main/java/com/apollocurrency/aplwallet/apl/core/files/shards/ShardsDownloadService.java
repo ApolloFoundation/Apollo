@@ -1,13 +1,13 @@
 /*
  * Copyright © 2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
-import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardDownloader;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;

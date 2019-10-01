@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;

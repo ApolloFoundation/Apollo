@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 /**
  * Probaility calculation info

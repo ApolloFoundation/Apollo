@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import java.math.BigInteger;
 import java.util.AbstractMap;
@@ -46,7 +46,7 @@ public class PeerValidityDecisionMaker {
      *
      * @param n number of peers to get
      * @return map of hypotetic probabilities for each discovered hash value
-     * @throws com.apollocurrency.aplwallet.apl.core.peer.statcheck.NotEnoughDataException
+     * @throws com.apollocurrency.aplwallet.apl.core.files.statcheck.NotEnoughDataException
      */
     public Map<String, ProbabInfo> calculateInitialProb(int n) throws NotEnoughDataException {
         List<HasHashSum> first = new ArrayList<>();

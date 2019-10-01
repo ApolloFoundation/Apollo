@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.ArrayList;

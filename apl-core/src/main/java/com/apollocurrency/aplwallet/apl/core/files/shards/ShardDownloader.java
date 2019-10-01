@@ -1,7 +1,7 @@
 /*
  * Copyright © 2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer;
+package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
@@ -11,11 +11,15 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.HasHashSum;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerShardInfo;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeerValidityDecisionMaker;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.PeersList;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerShardInfo;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
+import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
