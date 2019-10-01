@@ -27,7 +27,7 @@ public class FileUtils {
             return Files.deleteIfExists(file);
         }
         catch (IOException e) {
-            log.error("Unable to delete file " + file, e);
+            log.error("Unable to delete file {}, cause: {}", file, e.getMessage());
         }
         return false;
     }
