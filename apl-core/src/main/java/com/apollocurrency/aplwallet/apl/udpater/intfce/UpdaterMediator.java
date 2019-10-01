@@ -4,15 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.udpater.intfce;
 
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Version;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.List;
 
 public interface UpdaterMediator {
 
@@ -21,10 +19,6 @@ public interface UpdaterMediator {
     void suspendBlockchain();
 
     void resumeBlockchain();
-
-    void addUpdateListener(Listener<List<? extends Transaction>> listener);
-
-    void removeUpdateListener(Listener<List<? extends Transaction>> listener);
 
     boolean isUpdateTransaction(Transaction transaction);
 

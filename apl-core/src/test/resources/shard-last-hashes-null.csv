@@ -1,3 +1,3 @@
-SHARD_ID(-5|19|0),SHARD_HASH(-3|2147483647|0),SHARD_HEIGHT(4|10|0),ZIP_HASH_CRC(-3|2147483647|0),GENERATOR_IDS(2003|0|0),BLOCK_TIMEOUTS(2003|0|0),BLOCK_TIMESTAMPS(2003|0|0),PRUNABLE_ZIP_HASH(-3|2147483647|0)
-1,jdLLL81FPFOz/lN5CsHBBKajFYPnWXL/YrztkEehUXY=,2,null,(),(),(),null
-2,owFdOBVeo/2V/olS9Xl5Hkzn9eHiG0yk4MSQVT2U+30=,3,null,(782179228250,4821792282200,7821792282123976600,),(0,1,),(45673250,45673251,),null
+SHARD_ID(-5|19|0),SHARD_HASH(-3|2147483647|0)                 ,SHARD_HEIGHT(4|10|0),ZIP_HASH_CRC(-3|2147483647|0),GENERATOR_IDS(2003|0|0),BLOCK_TIMEOUTS(2003|0|0),BLOCK_TIMESTAMPS(2003|0|0),PRUNABLE_ZIP_HASH(-3|2147483647|0)
+1                ,jdLLL81FPFOz/lN5CsHBBKajFYPnWXL/YrztkEehUXY=,2                   ,null                         ,()                     ,()                      ,()                        ,null
+2                ,owFdOBVeo/2V/olS9Xl5Hkzn9eHiG0yk4MSQVT2U+30=,3                   ,null                         ,(782179228250          ,4821792282200           ,7821792282123976600       ,)                                 ,(0,1,),(45673250,45673251,),null

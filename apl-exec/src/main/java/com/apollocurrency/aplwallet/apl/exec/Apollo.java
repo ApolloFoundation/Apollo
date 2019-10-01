@@ -49,6 +49,7 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -59,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -199,6 +199,11 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+
+        System.setProperty("javax.net.ssl.trustStore", "cacerts");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+
 //cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files

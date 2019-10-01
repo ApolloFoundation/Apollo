@@ -18,6 +18,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DefaultValue;
@@ -28,13 +31,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This endpoint gives info about backend status and allows some control. Should
@@ -109,7 +107,7 @@ public class NodeControlController {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
     }
-    
+
     @Path("/health")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -130,8 +128,8 @@ public class NodeControlController {
             infoResponse.healthInfo = bcService.getNodeHealth();
             infoResponse.statusInfo = bcService.getNodeStatus();
             infoResponse.networkingInfo = bcService.getNetworkingInfo();
-            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK 
-                    || (infoResponse.networkingInfo.inboundPeers==0 && infoResponse.networkingInfo.outboundPeers==0);
+            infoResponse.healthInfo.needReboot = !infoResponse.healthInfo.dbOK
+                    || (infoResponse.networkingInfo.inboundPeers == 0 && infoResponse.networkingInfo.outboundPeers == 0);
             return Response.status(Response.Status.OK).entity(infoResponse).build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -154,21 +152,21 @@ public class NodeControlController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                                    schema = @Schema(implementation = CacheStatsResponse.class)))
+                                    schema = @Schema(implementation = CacheStatsResponse.class)))
             }
     )
     public Response getCacheStats(@QueryParam("name") @DefaultValue("All") String cache) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         List<CacheStatsDTO> result = new ArrayList<>();
         List<String> cacheNames;
-        if (cache.equalsIgnoreCase("all")){
+        if (cache.equalsIgnoreCase("all")) {
             cacheNames = cacheManager.getAllocatedCacheNames();
-        }else{
+        } else {
             cacheNames = List.of(cache);
         }
         cacheNames.forEach(cacheName -> {
             CacheStats stats = cacheManager.getStats(cacheName);
-            if ( stats != null) {
+            if (stats != null) {
                 CacheStatsDTO dto = statsConverter.convert(stats);
                 dto.setCacheName(cacheName);
                 result.add(dto);
