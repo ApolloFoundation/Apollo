@@ -43,8 +43,9 @@ class MandatoryTransactionDaoTest {
 
 
     @WeldSetup
-    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class, JdbiHandleFactory.class), List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
+    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class), List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
                 .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+                .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
                 .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .build();
 
@@ -99,6 +100,14 @@ class MandatoryTransactionDaoTest {
         List<MandatoryTransaction> all = dao.getAll(0, 3);
 
         assertEquals(List.of(cancelTx), all);
+    }
+
+    @Test
+    void testDeleteAll() {
+        int deleted = dao.deleteAll();
+
+        assertEquals(2, deleted);
+        assertEquals(0, dao.getAll(0, 100).size());
     }
 
 }

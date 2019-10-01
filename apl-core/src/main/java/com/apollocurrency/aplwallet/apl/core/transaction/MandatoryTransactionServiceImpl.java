@@ -107,6 +107,25 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
         txProcessor.broadcast(tx);
     }
 
+    @Transactional
+    @Override
+    public int clearAll() {
+        int deleted = dao.deleteAll();
+        log.debug("Deleted {} mandatory txs", deleted);
+        return deleted;
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteById(long id) {
+        return dao.delete(id) > 0;
+    }
+
+    @Override
+    public List<MandatoryTransaction> getAll(long from, int limit) {
+        return dao.getAll(from, limit);
+    }
+
     @Override
     @Transactional
     public void add(Transaction tx, byte[] requiredTxHash) {
