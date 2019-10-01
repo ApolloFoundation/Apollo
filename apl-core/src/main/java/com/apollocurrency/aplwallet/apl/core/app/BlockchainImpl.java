@@ -75,6 +75,9 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
 
+    private final AtomicReference<Block> lastBlock;
+    private final AtomicReference<Block> shardInitialBlock;
+    
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
@@ -89,11 +92,9 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        lastBlock = new AtomicReference<>();
+        shardInitialBlock = new AtomicReference<>();
     }
-
-    private final AtomicReference<Block> lastBlock = new AtomicReference<>();
-    private final AtomicReference<Block> shardInitialBlock = new AtomicReference<>();
-
 
     @Override
     public Block getLastBlock() {
