@@ -15,7 +15,7 @@ import lombok.ToString;
  * @author alukin@gmail.com
  */
 
-@Schema(name="NodeStatueInfo", description="Information about backend state")
+@Schema(name = "NodeStatueInfo", description = "Information about backend state")
 @Getter @Setter @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -26,7 +26,7 @@ public class NodeStatusInfo {
     public Double cpuLoad;
     @Schema(name="Active threads", description="Threads currently running in aplicaion")    
     public Integer threadsRunning;
-    @Schema(name="DB connections", description="DB connections currently running in aplicaion")    
+    @Schema(name = "DB connections", description = "DB connections currently running in aplicaion")
     public Integer dbConnections;
     @Schema(name="Total memory", description="Tottal memory in bytes")
     public Long memoryTotal;

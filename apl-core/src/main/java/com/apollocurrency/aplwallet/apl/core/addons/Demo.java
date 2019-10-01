@@ -21,18 +21,12 @@
 package com.apollocurrency.aplwallet.apl.core.addons;
 
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import org.slf4j.Logger;
 
-import java.util.Map;
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Vetoed;
+import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class Demo implements AddOn {
@@ -47,7 +41,7 @@ public final class Demo implements AddOn {
 //        LOG.info("Block " + block.getStringId()
 //                + " has been forged by account " + Convert2.rsAccount(block.getGeneratorId()) + " having effective balance of "
 //                + Account.getAccount(block.getGeneratorId()).getEffectiveBalanceAPL());
- //   }
+    //   }
 
 
     @Override

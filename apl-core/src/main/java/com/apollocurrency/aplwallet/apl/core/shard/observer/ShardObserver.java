@@ -14,12 +14,12 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Singleton
 public class ShardObserver {
@@ -47,8 +47,7 @@ public class ShardObserver {
             if (future != null) {
                 future.get();
             }
-        }
-        catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             log.error(e.toString(), e);
         }
     }
@@ -61,7 +60,7 @@ public class ShardObserver {
         log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
         if (shardingEnabled && !isShardingOff) {
             log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                    + ", shardingFrequency = {}",
+                            + ", shardingFrequency = {}",
                     currentConfig.getShardingFrequency() != 0 ?
                             lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0 : "zeroDivision",
                     lastTrimBlockHeight, blockchainHeight,

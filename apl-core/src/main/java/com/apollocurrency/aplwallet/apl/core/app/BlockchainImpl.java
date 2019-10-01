@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
@@ -42,6 +41,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -54,9 +56,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -76,6 +75,9 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
 
+    private final AtomicReference<Block> lastBlock;
+    private final AtomicReference<Block> shardInitialBlock;
+    
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
@@ -90,11 +92,9 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        lastBlock = new AtomicReference<>();
+        shardInitialBlock = new AtomicReference<>();
     }
-
-    private final AtomicReference<Block> lastBlock = new AtomicReference<>();
-    private final AtomicReference<Block> shardInitialBlock = new AtomicReference<>();
-
 
     @Override
     public Block getLastBlock() {

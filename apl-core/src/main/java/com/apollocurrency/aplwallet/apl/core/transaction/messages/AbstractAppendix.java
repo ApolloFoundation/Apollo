@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import java.nio.ByteBuffer;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -20,7 +20,7 @@ public abstract class AbstractAppendix implements Appendix {
     private final byte version;
 
     AbstractAppendix(JSONObject attachmentData) {
-        this.version = ((Long) attachmentData.get("version." + getAppendixName())).byteValue();
+        this.version = ((Number) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
     AbstractAppendix(ByteBuffer buffer) {

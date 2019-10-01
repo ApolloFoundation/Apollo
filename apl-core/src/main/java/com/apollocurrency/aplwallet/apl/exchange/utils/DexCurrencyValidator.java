@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.utils;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOffer;
-import com.apollocurrency.aplwallet.apl.exchange.model.OfferType;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
 /**
@@ -16,44 +16,48 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
  */
 public class DexCurrencyValidator {
 
-    public static boolean haveFreezeOrRefundApl(DexOffer offer){
-        return haveFreezeOrRefundApl(offer.getType(), offer.getOfferCurrency(), offer.getPairCurrency());
+    public static boolean haveFreezeOrRefundApl(DexOrder order) {
+        return haveFreezeOrRefundApl(order.getType(), order.getOrderCurrency(), order.getPairCurrency());
     }
 
 
-    public static boolean haveFreezeOrRefundApl(OfferType offerType, DexCurrencies offerCurrencies, DexCurrencies pairCurrencies){
-         if((offerType.isSell() && offerCurrencies.isApl())){
+    public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrencies offerCurrencies, DexCurrencies pairCurrencies) {
+        if ((orderType.isSell() && offerCurrencies.isApl())) {
             return true;
          }
 
          return false;
     }
 
-    public static boolean haveFreezeOrRefundEthOrPax(DexOffer offer){
+    public static boolean haveFreezeOrRefundEthOrPax(DexOrder order) {
         //For backward compatibility.
-        if(offer.getType().isSell() && offer.getOfferCurrency().isEthOrPax()){
+        if (order.getType().isSell() && order.getOrderCurrency().isEthOrPax()) {
             return true;
         }
 
-        if(offer.getType().isBuy() && offer.getPairCurrency().isEthOrPax()){
+        if (order.getType().isBuy() && order.getPairCurrency().isEthOrPax()) {
             return true;
         }
 
         return false;
     }
 
-    public static void checkHaveFreezeOrRefundEthOrPax(DexOffer offer) throws AplException.ExecutiveProcessException {
+    public static void checkHaveFreezeOrRefundEthOrPax(DexOrder offer) throws AplException.ExecutiveProcessException {
         if(!haveFreezeOrRefundEthOrPax(offer)){
-            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() +" | "+ offer.getOfferCurrency() + "-" + offer.getPairCurrency());
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
         }
     }
 
-    public static void checkHaveFreezeOrRefundApl(DexOffer offer) throws AplException.ExecutiveProcessException {
+    public static void checkHaveFreezeOrRefundApl(DexOrder offer) throws AplException.ExecutiveProcessException {
         if(!haveFreezeOrRefundApl(offer)){
-            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() +" | "+ offer.getOfferCurrency() + "-" + offer.getPairCurrency());
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
         }
     }
 
+
+    public static boolean isEthOrPaxAddress(String address) {
+        return address.contains("0x");
+    }
 
 
 

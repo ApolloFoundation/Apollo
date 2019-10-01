@@ -38,14 +38,14 @@ public abstract class AbstractAPIRequestHandler {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
-    protected static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private PeersService peers;
 
-    protected PeersService lookupPeersService(){
+    protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }
