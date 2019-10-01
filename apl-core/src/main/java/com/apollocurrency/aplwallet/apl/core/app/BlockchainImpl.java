@@ -659,6 +659,16 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionsBeforeHeight(height);
     }
 
+    @Override
+    public boolean hasConfirmations(long id, int confirmations) {
+        return hasTransaction(id, getHeight() - confirmations);
+    }
+
+    @Override
+    public boolean isExpired(Transaction tx) {
+        return timeService.getEpochTime() > tx.getExpiration();
+    }
+
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
         Long shardId = blockIndexService.getShardIdByBlockId(blockId);
         return getShardDataSourceOrDefault(shardId);
