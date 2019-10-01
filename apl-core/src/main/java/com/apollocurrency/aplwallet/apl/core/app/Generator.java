@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -43,7 +42,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -136,7 +136,7 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                         for (Generator generator : sortedForgers) {
-                            if(suspendForging){
+                            if (suspendForging) {
                                 break;
                             }
                             if (generator.getHitTime() > generationLimit || generator.forge(lastBlock, generationLimit)) {
@@ -452,7 +452,7 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static void suspendForging() {
-        if(!suspendForging){
+        if (!suspendForging) {
             globalSync.updateLock();
             suspendForging = true;
             globalSync.updateUnlock();
@@ -460,11 +460,11 @@ public final class Generator implements Comparable<Generator> {
         }
     }
     public static void resumeForging() {
-        if(suspendForging){
-          globalSync.updateLock();        
-          suspendForging = false;
-          globalSync.updateUnlock();
-          LOG.info("Forging was resumed");
+        if (suspendForging) {
+            globalSync.updateLock();
+            suspendForging = false;
+            globalSync.updateUnlock();
+            LOG.debug("Forging was resumed");
         }
     }
 

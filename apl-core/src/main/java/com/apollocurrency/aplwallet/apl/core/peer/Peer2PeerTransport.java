@@ -7,6 +7,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -27,8 +30,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  *
@@ -94,8 +95,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             downloadedVolume += volume;
         }
-       //TODO: do we need this here? 
-       // PeersService.notifyListeners(getPeer(), PeersService.Event.DOWNLOADED_VOLUME);
+        //TODO: do we need this here?
+        // PeersService.notifyListeners(getPeer(), PeersService.Event.DOWNLOADED_VOLUME);
     }
 
     public long getUploadedVolume() {
@@ -106,8 +107,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             uploadedVolume += volume;
         }
-       //TODO: do we need this here? 
-       // PeersService.notifyListeners(getPeer(), PeersService.Event.UPLOADED_VOLUME);
+        //TODO: do we need this here?
+        // PeersService.notifyListeners(getPeer(), PeersService.Event.UPLOADED_VOLUME);
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
@@ -188,7 +189,7 @@ public class Peer2PeerTransport {
         if(p!=null){
             p.deactivate("Websocket close event");
         }else{
-             ws.close();
+            ws.close();
         }
     }
 
