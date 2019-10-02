@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONObject;
 
@@ -339,8 +340,7 @@ public class MandatoryTransaction implements Transaction {
         if (requiredTxHash == null) sb.append("null");
         else {
             sb.append('[');
-            for (int i = 0; i < requiredTxHash.length; ++i)
-                sb.append(i == 0 ? "" : ", ").append(requiredTxHash[i]);
+                sb.append(Convert.toHexString(requiredTxHash));
             sb.append(']');
         }
         sb.append(", dbId=").append(dbId);
