@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +54,8 @@ public class Peer2PeerTransport {
     //this should be final because it is problematic to stop websocket client properly
     private PeerWebSocketClient outboundWebSocket;
     @Getter
+    private final TimeLimiter limiter;
+    @Getter
     private long lastActivity;
 
     //we use random numbers to minimize possible request/response mismatches
@@ -80,11 +83,12 @@ public class Peer2PeerTransport {
         return which;
     }
 
-    public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
+    public Peer2PeerTransport(Peer peer, PeerServlet peerServlet, TimeLimiter limiter) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = new SoftReference<>(peerServlet);
         rnd = new Random(System.currentTimeMillis());
         lastActivity=System.currentTimeMillis();
+        this.limiter = limiter;
     }
 
     public long getDownloadedVolume() {

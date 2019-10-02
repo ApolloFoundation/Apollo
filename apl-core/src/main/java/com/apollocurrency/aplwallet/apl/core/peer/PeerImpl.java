@@ -35,10 +35,8 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import org.json.simple.JSONObject;
@@ -60,7 +58,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -117,7 +114,8 @@ public final class PeerImpl implements Peer {
              Blockchain blockchain,
              TimeService timeService,
              PeerServlet peerServlet,
-             PeersService peers
+             PeersService peers,
+             TimeLimiter timeLimiter
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -139,10 +137,9 @@ public final class PeerImpl implements Peer {
         this.timeService=timeService;
         this.peers = peers;
         isLightClient = peers.isLightClient;
-        this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
+        this.limiter = timeLimiter;
+        this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
-        limiter = SimpleTimeLimiter.create(Executors.newCachedThreadPool(
-                                    new NamedThreadFactory("Limiter-P2P-Disconnecter", false)));
     }
     
     @Override

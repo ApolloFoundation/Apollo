@@ -5,9 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.google.common.util.concurrent.Monitor;
-import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
@@ -22,7 +20,6 @@ import java.lang.ref.SoftReference;
 import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
@@ -36,7 +33,7 @@ import java.util.zip.GZIPOutputStream;
 public class PeerWebSocket extends WebSocketAdapter {
 
     private final Monitor sendMonitor;
-    private final TimeLimiter limiter;
+    protected final TimeLimiter limiter;
 
     /** we use reference here to avoid memory leaks */
     private final SoftReference<Peer2PeerTransport> peerReference;
@@ -59,8 +56,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         peerReference = new SoftReference<>(peer);
         lastActivityTime=System.currentTimeMillis();
         sendMonitor = new Monitor();
-        limiter = SimpleTimeLimiter.create(Executors.newCachedThreadPool(
-                new NamedThreadFactory("Limiter-PeerWS-Sender", false)));
+        this.limiter = peer.getLimiter();
     }
     
     String which(){
