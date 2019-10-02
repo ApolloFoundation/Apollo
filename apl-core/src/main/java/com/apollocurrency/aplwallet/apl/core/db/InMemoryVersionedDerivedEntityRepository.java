@@ -13,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
+import lombok.Getter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -92,9 +94,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
                     changeableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
-                        Object columnChange = analyzeChanges(name, getPrevValue(columnChanges), historicalEntity);
-                        if (columnChange != null) {
-                            columnChanges.add(new Change(historicalEntity.getHeight(), columnChange));
+                        Object prevValue = getPrevValue(columnChanges);
+                        ChangedValue columnChange = analyzeChanges(name, prevValue, historicalEntity);
+                        if (columnChange.isChanged()) {
+                            columnChanges.add(new Change(historicalEntity.getHeight(), columnChange.getValue()));
                         }
                     });
                 }
@@ -113,17 +116,18 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
 
     /**
      * Analyze changes for column with specified {@code columnName} using {@code prevValue} on new {@code entity}.
-     * Should return null, if column value was not changed.
-     * Should return new value for column in specified entity when prevValue differs from current value.
+     * Should return false for {@link ChangedValue#changed}, if column value was not changed.
+     * Should return new value for column in specified entity when prevValue differs from current value: true for {@link ChangedValue#changed} and new value for {@link ChangedValue#value}
+     * Should not return null in any case
      * <p>
      *     Note, that alternatively, we could use reflection, but it will be significantly slower
      * </p>
      * @param columnName name of the column to analyze changes
      * @param prevValue previous value of this column (can be null)
      * @param entity new entity, which may contain change for specified column
-     * @return new value for column or null, when column value was not changed
+     * @return new value for column or empty {@link ChangedValue}, when column value was not changed
      */
-    protected abstract Object analyzeChanges(String columnName, Object prevValue, T entity);
+    protected abstract ChangedValue analyzeChanges(String columnName, Object prevValue, T entity);
 
     /**
      * Set value for column with such name for given entity
@@ -146,8 +150,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 entity.setDbId(++counter);
                 Map<String, List<Change>> changes = changeableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
                 changeableColumns.forEach(c -> {
-                    Object change = analyzeChanges(c, null, entity);
-                    changes.get(c).add(new Change(entity.getHeight(), change));
+                    ChangedValue changedValue = analyzeChanges(c, null, entity);
+                    if (changedValue.isChanged()) {
+                        changes.get(c).add(new Change(entity.getHeight(), changedValue.getValue()));
+                    }
                 });
                 List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
                 dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, entity.getDbId()));
@@ -158,12 +164,12 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     changeableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
                         Change lastChange = last(columnChanges);
-                        Object change = analyzeChanges(c, lastChange.getValue(), entity);
-                        if (change != null || lastChange.getValue() != null) { // change was performed
+                        ChangedValue changedValue = analyzeChanges(c, lastChange.getValue(), entity);
+                        if (changedValue.isChanged()) { // change was performed
                             if (lastChange.getHeight() == entity.getHeight()) {
-                                lastChange.setValue(change);
+                                lastChange.setValue(changedValue.getValue());
                             } else {
-                                columnChanges.add(new Change(entity.getHeight(), change));
+                                columnChanges.add(new Change(entity.getHeight(), changedValue.getValue()));
                             }
                         }
                     });
@@ -174,9 +180,9 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     changeableColumns.forEach(c -> {
                         List<Change> columnChanges = changes.get(c);
                         Object prevValue = getPrevValue(columnChanges);
-                        Object change = analyzeChanges(c, prevValue, entity);
-                        if (change != null || prevValue != null) { // new value exists or equal to null
-                            columnChanges.add(new Change(entity.getHeight(), change));
+                        ChangedValue changedValue = analyzeChanges(c, prevValue, entity);
+                        if (changedValue.isChanged()) { // new value exists or equal to null
+                            columnChanges.add(new Change(entity.getHeight(), changedValue.getValue()));
                         }
                     });
                     List<DbIdLatestValue> dbIdLatestValues = existingEntity.getDbIdLatestValues();
@@ -287,7 +293,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                             List<Change> changes = columnWithChanges.getValue();
                             boolean removed = changes.removeIf(c -> c.getHeight() > height);
                             if (removed) {
-                                setColumn(columnWithChanges.getKey(), last(changes).getValue(), entity.getEntity());
+                                setColumn(columnWithChanges.getKey(), getPrevValue(changes), entity.getEntity());
                             }
                         }
                         entity.getDbIdLatestValues().removeIf(l -> l.getHeight() > height);
@@ -319,6 +325,19 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                                 .sorted(comparator)
                         , from, to)
                         .collect(Collectors.toList()));
+    }
+    @Getter
+    @ToString
+    public static class ChangedValue {
+        private boolean changed;
+        private Object value;
+
+        public ChangedValue() {}
+
+        public ChangedValue(Object value) {
+            this.changed = true;
+            this.value = value;
+        }
     }
 }
 

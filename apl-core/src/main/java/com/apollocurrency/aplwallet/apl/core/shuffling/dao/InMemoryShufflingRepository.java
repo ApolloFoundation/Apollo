@@ -158,7 +158,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     }
 
     @Override
-    protected Object analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
+    protected ChangedValue analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
         switch (columnName) {
             case BLOCKS_REMAINING:
                 return ChangeUtils.getChange(entity.getBlocksRemaining(), prevValue);

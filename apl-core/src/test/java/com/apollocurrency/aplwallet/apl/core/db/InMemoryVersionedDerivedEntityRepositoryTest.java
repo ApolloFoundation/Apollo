@@ -35,19 +35,19 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         }
     }, List.of("remaining")) {
         @Override
-        public Object analyzeChanges(String columnName, Object prevValue, VersionedChangeableDerivedEntity entity) {
+        public ChangedValue analyzeChanges(String columnName, Object prevValue, VersionedChangeableDerivedEntity entity) {
             if (!columnName.equals("remaining")) {
                 throw new RuntimeException("Unknown column");
             }
             if (prevValue == null) {
-                return entity.getRemaining();
+                return new ChangedValue(entity.getRemaining());
             }
             int prevRemaining = ((int) prevValue);
             int currentRemaining = entity.getRemaining();
             if (prevRemaining != currentRemaining) {
-                return currentRemaining;
+                return new ChangedValue(currentRemaining);
             } else {
-                return null;
+                return new ChangedValue();
             }
         }
 
