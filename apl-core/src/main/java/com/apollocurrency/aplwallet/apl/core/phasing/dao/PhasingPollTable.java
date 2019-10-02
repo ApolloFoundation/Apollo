@@ -282,9 +282,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         Connection con = null;
         try {
             con = databaseManager.getDataSource().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1 or finish_time < ? and finish_time <> -1");
+            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1 or finish_time < (SELECT timestamp FROM block WHERE height = ?) and finish_time <> -1");
             pstmt.setInt(1, height);
-            pstmt.setInt(2, blockchain.getBlockAtHeight(height).getTimestamp());
+            pstmt.setInt(2, height);
             return getManyBy(con, pstmt, false);
         } catch (SQLException e) {
             DbUtils.close(con);

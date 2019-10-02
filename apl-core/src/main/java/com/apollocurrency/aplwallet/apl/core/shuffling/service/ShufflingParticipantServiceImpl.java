@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shuffling.service;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingDataTable;
 import com.apollocurrency.aplwallet.apl.core.shuffling.dao.ShufflingParticipantTable;
@@ -25,12 +25,12 @@ public class ShufflingParticipantServiceImpl implements ShufflingParticipantServ
 
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
-    private volatile EpochTime timeService;
+    private TimeService timeService;
     private ShufflingParticipantTable shufflingParticipantTable;
     private ShufflingDataTable shufflingDataTable;
 
     @Inject
-    public ShufflingParticipantServiceImpl(BlockchainConfig blockchainConfig, Blockchain blockchain, EpochTime timeService, ShufflingParticipantTable shufflingParticipantTable, ShufflingDataTable shufflingDataTable) {
+    public ShufflingParticipantServiceImpl(BlockchainConfig blockchainConfig, Blockchain blockchain, TimeService timeService, ShufflingParticipantTable shufflingParticipantTable, ShufflingDataTable shufflingDataTable) {
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
         this.timeService = timeService;

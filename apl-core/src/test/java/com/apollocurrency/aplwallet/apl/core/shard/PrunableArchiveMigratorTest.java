@@ -20,11 +20,11 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.dao.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -56,7 +56,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @EnableWeld
 class PrunableArchiveMigratorTest {
     @Mock ShardDao shardDao;
-    @Mock OptionDAO optionDAO;
+    @Mock
+    OptionDAO optionDAO;
     @Mock DirProvider dirProvider;
     @Mock BlockchainConfig blockchainConfig;
     Zip zip = spy(new ZipImpl());
