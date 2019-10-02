@@ -59,7 +59,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         peerReference = new SoftReference<>(peer);
         lastActivityTime=System.currentTimeMillis();
         sendMonitor = new Monitor();
-        limiter = SimpleTimeLimiter.create(Executors.newFixedThreadPool(10,
+        limiter = SimpleTimeLimiter.create(Executors.newCachedThreadPool(
                 new NamedThreadFactory("Limiter-PeerWS-Sender", false)));
     }
     
@@ -206,9 +206,9 @@ public class PeerWebSocket extends WebSocketAdapter {
             } catch (RuntimeException e){
                 throw new AplException.AplIOException("Can't send to "+s.getRemote(), e);
             } catch (InterruptedException e) {
-                log.trace("");
-                Thread.currentThread().interrupt();
-                sendOk = false;
+                log.trace("Can't send to "+s.getRemote()+", interrupted.");
+                //Thread.currentThread().interrupt();
+                throw new AplException.AplIOException(e.getMessage());
             } catch (TimeoutException e) {
                 throw new AplException.AplIOException("Can't send to "+s.getRemote()+", time limit is reached.");
             } finally {
@@ -239,9 +239,11 @@ public class PeerWebSocket extends WebSocketAdapter {
             }
         }
     }
+
     long getLastActivityTime() {
         return lastActivityTime;
     }
+
     public Peer2PeerTransport getTransport(){
         return peerReference.get();
     }

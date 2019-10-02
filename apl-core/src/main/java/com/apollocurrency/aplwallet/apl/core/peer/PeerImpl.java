@@ -21,22 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.BaseP2PResponse;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -157,7 +141,7 @@ public final class PeerImpl implements Peer {
         isLightClient = peers.isLightClient;
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
-        limiter = SimpleTimeLimiter.create(Executors.newFixedThreadPool(10,
+        limiter = SimpleTimeLimiter.create(Executors.newCachedThreadPool(
                                     new NamedThreadFactory("Limiter-P2P-Disconnecter", false)));
     }
     
