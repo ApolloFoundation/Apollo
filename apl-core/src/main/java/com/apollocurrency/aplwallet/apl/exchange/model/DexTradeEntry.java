@@ -22,7 +22,6 @@ import java.sql.SQLException;
 @EqualsAndHashCode(callSuper = true)
 public class DexTradeEntry extends VersionedDerivedEntity {
 
-//    private long dbId;
     private long transactionID;
     private long senderOfferID; 
     private long receiverOfferID;
@@ -32,7 +31,6 @@ public class DexTradeEntry extends VersionedDerivedEntity {
     private byte pairCurrency;
     private BigDecimal pairRate;
     private Integer finishTime;
-//    private Integer height;
 
     public DexTradeEntry(Long dbId, Integer height) {
         super(dbId, height);
@@ -43,7 +41,7 @@ public class DexTradeEntry extends VersionedDerivedEntity {
     }
 
     @Builder(builderMethodName = "builder")
-    public DexTradeEntry(Long dbId, Integer height, long dbId1, long transactionID, long senderOfferID,
+    public DexTradeEntry(Long dbId, Integer height, long transactionID, long senderOfferID,
                          long receiverOfferID, byte senderOfferType, byte senderOfferCurrency, long senderOfferAmount,
                          byte pairCurrency, BigDecimal pairRate, Integer finishTime) {
         super(dbId, height);

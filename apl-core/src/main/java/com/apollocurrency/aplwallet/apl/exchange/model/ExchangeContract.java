@@ -14,7 +14,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class ExchangeContract extends VersionedDerivedEntity {
 
-//    private Long dbId;
     private Long id;
     private Long orderId;
     private Long counterOrderId;
@@ -32,7 +31,6 @@ public class ExchangeContract extends VersionedDerivedEntity {
      */
     private byte[] encryptedSecret;
     private Integer deadlineToReply;
-    private boolean latest;
 
     public ExchangeContract(Long transactionId, Long senderId, Long recipientId, Integer deadlineToReply, DexContractAttachment dexContractAttachment) {
         super(null, null);
@@ -65,7 +63,7 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.counterTransferTxId = dexContractAttachment.getCounterTransferTxId();
         this.contractStatus = dexContractAttachment.getContractStatus();
         this.deadlineToReply = deadlineToReply;
-        this.latest = latest;
+        this.setLatest(latest);
     }
 
     @Builder(builderMethodName = "builder")
@@ -85,6 +83,6 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.counterTransferTxId = counterTransferTxId;
         this.encryptedSecret = encryptedSecret;
         this.deadlineToReply = deadlineToReply;
-        this.latest = latest;
+        this.setLatest(latest);
     }
 }
