@@ -153,11 +153,13 @@ public class DexService {
      */
     @Transactional
     public void saveOrder(DexOrder order) {
+        order.setHeight(this.blockchain.getHeight()); // new height value
         dexOrderTable.insert(order);
     }
 
     @Transactional
     public void saveDexContract(ExchangeContract exchangeContract) {
+        exchangeContract.setHeight(this.blockchain.getHeight()); // new height value
         dexContractTable.insert(exchangeContract);
     }
 
@@ -239,6 +241,7 @@ public class DexService {
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
+            order.setHeight(this.blockchain.getHeight()); // new height value
             dexOrderTable.insert(order);
 
             refundFrozenAplForOrder(order);
@@ -258,6 +261,7 @@ public class DexService {
             closeOverdueContract(order, time);
             closeOverdueContract(counterOrder, time);
             contract.setContractStatus(ExchangeContractStatus.STEP_4);
+            order.setHeight(this.blockchain.getHeight()); // new height value
             dexContractTable.insert(contract);
         }
     }
@@ -266,9 +270,11 @@ public class DexService {
         if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
+                order.setHeight(this.blockchain.getHeight()); // new height value
                 dexOrderTable.insert(order);
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
+                order.setHeight(this.blockchain.getHeight()); // new height value
                 dexOrderTable.insert(order);
                 refundFrozenAplForOrder(order);
                 reopenIncomeOrders(order.getId());
