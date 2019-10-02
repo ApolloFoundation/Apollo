@@ -18,7 +18,9 @@ public enum ApiErrors implements ErrorInfo {
     PEER_NOT_CONNECTED(5, 2006, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2007, "Peer is not providing open API."),
 
-    FAILED_TO_ADD(8, 2008, "Failed to add peer %s")
+    FAILED_TO_ADD(8, 2008, "Failed to add peer %s"),
+    NO_PASSWORD_IN_CONFIG(8, 2010, "Administrator's password is not configured. Please set apl.adminPassword"),
+    INCORRECT_PARAM(4, 2011, "Incorrect {0}. Details: {1}")
     ;
 
     private int oldErrorCode;
