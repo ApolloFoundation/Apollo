@@ -48,12 +48,12 @@ import javax.enterprise.inject.spi.CDI;
 
 public class UnconfirmedTransaction implements Transaction {
 
-    private final TransactionImpl transaction;
+    private final Transaction transaction;
     private final long arrivalTimestamp;
     private final long feePerByte;
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
-    UnconfirmedTransaction(TransactionImpl transaction, long arrivalTimestamp) {
+    UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
@@ -86,7 +86,7 @@ public class UnconfirmedTransaction implements Transaction {
             pstmt.setInt(++i, transaction.getHeight());
             pstmt.setLong(++i, feePerByte);
             pstmt.setInt(++i, transaction.getExpiration());
-            pstmt.setBytes(++i, transaction.bytes());
+            pstmt.setBytes(++i, transaction.getBytes());
             JSONObject prunableJSON = transaction.getPrunableAttachmentJSON();
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());
@@ -99,7 +99,7 @@ public class UnconfirmedTransaction implements Transaction {
         }
     }
 
-    public TransactionImpl getTransaction() {
+    public Transaction getTransaction() {
         return transaction;
     }
 
@@ -119,6 +119,11 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public int hashCode() {
         return transaction.hashCode();
+    }
+
+    @Override
+    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+        return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
     }
 
     @Override
@@ -271,10 +276,6 @@ public class UnconfirmedTransaction implements Transaction {
     @Override
     public byte[] getBytes() {
         return transaction.getBytes();
-    }
-
-    public byte[] bytes() {
-        return transaction.bytes();
     }
 
     @Override

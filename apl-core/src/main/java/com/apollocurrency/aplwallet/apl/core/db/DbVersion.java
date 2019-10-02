@@ -70,6 +70,7 @@ public abstract class DbVersion {
             }
             update(nextUpdate);
         } catch (SQLException e) {
+            log.error("Db init/update error", e);
             DbUtils.rollback(con);
             throw new RuntimeException(e.toString(), e);
         } finally {

@@ -12,7 +12,7 @@ public enum FileChunkState {
     /**
      * 0 - not present
      * 1 - present in peers;
-     * 1 - download in progress;
+     * 2 - download in progress;
      * 3 - saved;
      */
     NOT_PRESENT(0),

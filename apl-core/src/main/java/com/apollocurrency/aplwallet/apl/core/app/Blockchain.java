@@ -36,6 +36,12 @@ public interface Blockchain {
 
     Block getLastBlock();
 
+    /**
+     * Update internal state of blockchain
+     * Should be called, when database was created from scratch
+     */
+    void update();
+
     void setLastBlock(Block block);
 
     Block getLastBlock(int timestamp);
@@ -52,11 +58,9 @@ public interface Blockchain {
 
     boolean hasBlockInShards(long blockId);
 
-    //    DbIterator<? extends Block> getAllBlocks();
-
     DbIterator<Block> getBlocks(int from, int to);
 
-//    DbIterator<Block> getBlocks(long accountId, int timestamp);
+    Block findFirstBlock();
 
     DbIterator<Block> getBlocks(long accountId, int timestamp, int from, int to);
 
@@ -75,13 +79,11 @@ public interface Blockchain {
 
     Block getShardInitialBlock();
 
-//    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+    void setShardInitialBlock(Block block);
 
     List<Long> getBlockIdsAfter(long blockId, int limit);
 
     List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight);
-
-//    List<Block> getBlocksAfter(long blockId, int limit);
 
     List<Block> getBlocksAfter(long blockId, List<Long> blockList);
 
@@ -94,8 +96,6 @@ public interface Blockchain {
     Block deleteBlocksFrom(long blockId);
 
     void deleteAll();
-
-//    Map<Long, Transaction> getTransactionCache();
 
     Transaction getTransaction(long transactionId);
 
@@ -134,16 +134,13 @@ public interface Blockchain {
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-//    DbIterator<Transaction> getAllTransactions();
-
-//    DbIterator<Transaction> getTransactions(long accountId, byte type, byte subtype, int blockTimestamp,
-//                                                      boolean includeExpiredPrunable);
-
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                                       int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 
     List<Transaction> getBlockTransactions(long blockId);
+
+    boolean isInitialized();
 
     boolean hasBlock(long blockId, int height);
 

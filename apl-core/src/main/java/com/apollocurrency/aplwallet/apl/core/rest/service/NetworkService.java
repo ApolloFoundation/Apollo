@@ -6,6 +6,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 
@@ -72,4 +73,19 @@ public interface NetworkService {
      * @return the forced peer
      */
     Peer setForcedPeer(Peer peer);
+
+    /**
+     * Get list of peers we're connected to
+     *
+     * @return list of outbound  peers
+     */
+    public List<Peer> getOutboundPeers();
+
+    /**
+     * Get info amout my peer
+     *
+     * @return peer info of this peer
+     */
+
+    public PeerInfo getMyPeerInfo();
 }

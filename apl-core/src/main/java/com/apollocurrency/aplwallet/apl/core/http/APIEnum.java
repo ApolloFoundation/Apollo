@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import java.util.*;
-
 import com.apollocurrency.aplwallet.apl.core.http.get.CalculateFullHash;
 import com.apollocurrency.aplwallet.apl.core.http.get.CanDeleteCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.get.DecodeHallmark;
@@ -147,18 +145,14 @@ import com.apollocurrency.aplwallet.apl.core.http.get.GetFundingMonitor;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetGenesisBalances;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetHoldingShufflings;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetInboundPeers;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetLastExchanges;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetLastTrades;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetLinkedPhasedTransactions;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetLog;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetMintingTarget;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetMyInfo;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetNextBlockGeneratorsTemp;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetOffer;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetOrderTrades;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPeer;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetPeers;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingOnlyControl;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetPhasingPollVote;
@@ -214,10 +208,7 @@ import com.apollocurrency.aplwallet.apl.core.http.get.SearchTaggedData;
 import com.apollocurrency.aplwallet.apl.core.http.get.SignTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.get.VerifyPrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.http.get.VerifyTaggedData;
-import com.apollocurrency.aplwallet.apl.core.http.post.AddPeer;
 import com.apollocurrency.aplwallet.apl.core.http.post.ApproveTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.post.BlacklistAPIProxyPeer;
-import com.apollocurrency.aplwallet.apl.core.http.post.BlacklistPeer;
 import com.apollocurrency.aplwallet.apl.core.http.post.BroadcastTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.post.BuyAlias;
 import com.apollocurrency.aplwallet.apl.core.http.post.CancelAskOrder;
@@ -253,8 +244,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.DividendPayment;
 import com.apollocurrency.aplwallet.apl.core.http.post.DumpPeers;
 import com.apollocurrency.aplwallet.apl.core.http.post.Enable2FA;
 import com.apollocurrency.aplwallet.apl.core.http.post.EncodeQRCode;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventRegister;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.http.post.ExportKey;
 import com.apollocurrency.aplwallet.apl.core.http.post.ExtendTaggedData;
 import com.apollocurrency.aplwallet.apl.core.http.post.FullReset;
@@ -282,7 +271,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.SendMoney;
 import com.apollocurrency.aplwallet.apl.core.http.post.SendMoneyPrivate;
 import com.apollocurrency.aplwallet.apl.core.http.post.SendTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.post.SendUpdateTransaction;
-import com.apollocurrency.aplwallet.apl.core.http.post.SetAPIProxyPeer;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetAccountInfo;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetAccountProperty;
 import com.apollocurrency.aplwallet.apl.core.http.post.SetAlias;
@@ -305,7 +293,13 @@ import com.apollocurrency.aplwallet.apl.core.http.post.TransferAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransferCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.TrimDerivedTables;
 import com.apollocurrency.aplwallet.apl.core.http.post.UploadTaggedData;
-import org.apache.http.annotation.Obsolete;
+
+import java.util.Base64;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
@@ -338,8 +332,6 @@ public enum APIEnum {
     DECODE_Q_R_CODE("decodeQRCode", new DecodeQRCode()),
     ENCODE_Q_R_CODE("encodeQRCode", new  EncodeQRCode()),
     ENCRYPT_TO("encryptTo", new EncryptTo()),
-    EVENT_REGISTER("eventRegister", new EventRegister()),
-    EVENT_WAIT("eventWait", new EventWait()),
     GENERATE_TOKEN("generateToken", new GenerateToken()),
     GENERATE_FILE_TOKEN("generateFileToken", new GenerateFileToken()),
     GET_ACCOUNT("getAccount", new GetAccount()),
@@ -407,11 +399,7 @@ public enum APIEnum {
     GET_DGS_TAGS_LIKE("getDGSTagsLike", new GetDGSTagsLike()),
     GET_GUARANTEED_BALANCE("getGuaranteedBalance", new GetGuaranteedBalance()),
     GET_E_C_BLOCK("getECBlock", new GetECBlock()),
-    @Obsolete GET_INBOUND_PEERS("getInboundPeers", new GetInboundPeers()),
     GET_PLUGINS("getPlugins", new GetPlugins()),
-    @Obsolete GET_MY_INFO("getMyInfo", new GetMyInfo()),
-    @Obsolete GET_PEER("getPeer", new GetPeer()),
-    @Obsolete GET_PEERS("getPeers", new GetPeers()),
     GET_PHASING_POLL("getPhasingPoll", new GetPhasingPoll()),
     GET_PHASING_POLLS("getPhasingPolls", new GetPhasingPolls()),
     GET_PHASING_POLL_VOTES("getPhasingPollVotes", new GetPhasingPollVotes()),
@@ -435,6 +423,7 @@ public enum APIEnum {
     GET_EXPECTED_ASSET_TRANSFERS("getExpectedAssetTransfers", new GetExpectedAssetTransfers()),
     GET_EXPECTED_ASSET_DELETES("getExpectedAssetDeletes", new GetExpectedAssetDeletes()),
     GET_EL_GAMAL_PUBLIC_KEY("getElGamalPublicKey", new GetElGamalPublicKey()),
+    GET_FORGING_PUBLIC_KEY("getForgingPublicKey", new GetElGamalPublicKey()),
     GET_CURRENCY_TRANSFERS("getCurrencyTransfers", new GetCurrencyTransfers()),
     GET_EXPECTED_CURRENCY_TRANSFERS("getExpectedCurrencyTransfers", new GetExpectedCurrencyTransfers()),
     GET_TRANSACTION("getTransaction", new GetTransaction()),
@@ -541,8 +530,6 @@ public enum APIEnum {
     POP_OFF("popOff", new PopOff()),
     SCAN("scan", new Scan()),
     LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
-    @Obsolete ADD_PEER("addPeer", new AddPeer()),
-    @Obsolete BLACKLIST_PEER("blacklistPeer", new BlacklistPeer()),
     DUMP_PEERS("dumpPeers", new DumpPeers()),
     GET_LOG("getLog", new GetLog()),
     GET_STACK_TRACES("getStackTraces", new GetStackTraces()),
@@ -562,10 +549,8 @@ public enum APIEnum {
     GET_FUNDING_MONITOR("getFundingMonitor", new GetFundingMonitor()),
     DOWNLOAD_PRUNABLE_MESSAGE("downloadPrunableMessage", new DownloadPrunableMessage()),
     GET_SHARED_KEY("getSharedKey", new GetSharedKey()),
-    @Obsolete SET_API_PROXY_PEER("setAPIProxyPeer", new SetAPIProxyPeer()),
     SEND_TRANSACTION("sendTransaction", new SendTransaction()),
     GET_ASSET_DIVIDENDS("getAssetDividends", new GetAssetDividends()),
-    @Obsolete BLACKLIST_API_PROXY_PEER("blacklistAPIProxyPeer", new BlacklistAPIProxyPeer()),
     GET_NEXT_BLOCK_GENERATORS("getNextBlockGenerators", new GetNextBlockGeneratorsTemp()),
     GET_SCHEDULED_TRANSACTIONS("getScheduledTransactions", new GetScheduledTransactions()),
     SCHEDULE_CURRENCY_BUY("scheduleCurrencyBuy", new ScheduleCurrencyBuy()),
@@ -637,9 +622,13 @@ public enum APIEnum {
     }
 
     public static EnumSet<APIEnum> base64StringToEnumSet(String apiSetBase64) {
+        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
+        if(apiSetBase64==null){
+            return result;
+        }
         byte[] decoded = Base64.getDecoder().decode(apiSetBase64);
         BitSet bs = BitSet.valueOf(decoded);
-        EnumSet<APIEnum> result = EnumSet.noneOf(APIEnum.class);
+        
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
             result.add(APIEnum.values()[i]);
             if (i == Integer.MAX_VALUE) {

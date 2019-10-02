@@ -25,9 +25,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionScheduler;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -43,13 +42,14 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
+
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
 
 
 @Vetoed
@@ -57,7 +57,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
 
-
+    private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
 
     public ScheduleCurrencyBuy() {
@@ -132,7 +132,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                 }
                 if (apw.checkPassword(req)) {
                     LOG.debug("Scheduling transaction " + transaction.getStringId());
-                    TransactionScheduler.schedule(filter, transaction);
+                    transactionSchedulerService.schedule(filter, transaction);
                     response.put("scheduled", true);
                 } else {
                     return JSONResponses.error("No sell offer is currently available. Please try again when there is an open sell offer. " +

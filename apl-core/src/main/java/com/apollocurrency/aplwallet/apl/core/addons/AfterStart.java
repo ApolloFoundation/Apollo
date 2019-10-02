@@ -22,7 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.addons;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.apollocurrency.aplwallet.apl.util.ThreadPool;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -31,20 +33,25 @@ import javax.enterprise.inject.spi.CDI;
 
 public final class AfterStart implements AddOn {
     private static final Logger LOG = getLogger(AfterStart.class);
+    private static final String BACKGROUND_SERVICE_NAME = "AddonService";
     // TODO: YL remove static instance later
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static TaskDispatchManager taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
 
     @Override
     public void init() {
         String afterStartScript = propertiesHolder.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
-            ThreadPool.runAfterStart("AfterStartScriptRunner", () -> {
-                try {
-                    Runtime.getRuntime().exec(afterStartScript);
-                } catch (Exception e) {
-                    LOG.error("Failed to run after start script: " + afterStartScript, e);
-                }
-            });
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                    .schedule(Task.builder()
+                            .name("AfterStartScriptRunner")
+                            .task(() -> {
+                                try {
+                                    Runtime.getRuntime().exec(afterStartScript);
+                                } catch (Exception e) {
+                                    LOG.error("Failed to run after start script: " + afterStartScript, e);
+                                }
+                            }).build(), TaskOrder.AFTER);
         }
     }
 

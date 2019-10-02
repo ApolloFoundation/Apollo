@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -15,7 +14,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
-import javax.enterprise.inject.Vetoed;
+import java.util.function.Predicate;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public class FileUtils {
@@ -26,7 +27,7 @@ public class FileUtils {
             return Files.deleteIfExists(file);
         }
         catch (IOException e) {
-            log.error("Unable to delete file " + file, e);
+            log.error("Unable to delete file {}, cause: {}", file, e.getMessage());
         }
         return false;
     }
@@ -39,6 +40,15 @@ public class FileUtils {
             handler.accept(e);
         }
         return false;
+    }
+
+    public static boolean deleteFileIfExists(Path file) {
+        try {
+            return Files.deleteIfExists(file);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     public static void clearDirectorySilently(Path directory) {
@@ -100,6 +110,17 @@ public class FileUtils {
                 }
                 return false;
             }).forEach(FileUtils::deleteFileIfExistsQuietly);
+        } catch (IOException e) {
+            log.error("Unable to delete dir {}", directory);
+        }
+    }
+
+    public static void deleteFilesByFilter(Path directory, Predicate<Path> predicate) {
+        if (!Files.isDirectory(directory) || !Files.exists(directory)) {
+            return;
+        }
+        try {
+            Files.list(directory).filter(predicate).forEach(FileUtils::deleteFileIfExistsQuietly);
         } catch (IOException e) {
             log.error("Unable to delete dir {}", directory);
         }

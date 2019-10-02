@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
@@ -13,13 +10,16 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.inject.Inject;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -30,11 +30,13 @@ public class GetShardingInfo extends PeerRequestHandler{
 
     private final ShardDao shardDao;
     private final BlockchainConfig blockchainConfig;
+    private final PeersService peers;
     
     @Inject
-    public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig) {
+    public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig, PeersService peers) {
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;
+        this.peers = peers;
     }
 
     @Override
@@ -51,15 +53,15 @@ public class GetShardingInfo extends PeerRequestHandler{
                     shard.getShardId(),
                     blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
-                    Convert.toHexString(shard.getZipHashCrc()),
-                    shard.getShardHeight().longValue(),""
+                    Convert.toHexString(shard.getCoreZipHash()),
+                    shard.getShardHeight().longValue()
             );
             res.shardingInfo.shards.add(shardInfo);
         }
         log.debug("allShardInfo = [{}], rq.full? = {}", res.shardingInfo.shards.size(), rq.full) ;
         if( rq.full ){ //add list of known peers
-//            for(Peer p: Peers.getAllPeers()){ too many peers that we can't connect
-            for(Peer p: Peers.getActivePeers()){
+//            for(Peer p: PeersService.getAllPeers()){ too many peers that we can't connect
+            for (Peer p : peers.getActivePeers()) {
                 String address = p.getAnnouncedAddress();
                 if(StringUtils.isBlank(address)){
                     address=p.getHostWithPort();

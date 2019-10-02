@@ -3,14 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import com.apollocurrency.aplwallet.apl.core.app.Genesis;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +20,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.EnumSet;
-import javax.inject.Singleton;
 
 /**
  *
@@ -108,7 +109,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                 PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
         ) {
             int i = 0;
-            pstmt.setLong(++i, Genesis.CREATOR_ID);
+            pstmt.setLong(++i, GenesisImporter.CREATOR_ID);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getLong("total_supply");
@@ -155,5 +156,9 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             }
         }
     }
-   
+
+    @Override
+    public MinMaxValue getMinMaxValue(int height) {
+        return super.getMinMaxValue(height, "id");
+    }
 }

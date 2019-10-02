@@ -22,6 +22,7 @@ public class ShardRecovery {
     /**
      * tracked sharding state
      */
+    @Builder.Default
     private String state = MigrateState.INIT.name();
     /**
      * current object/table being processed
@@ -42,16 +43,21 @@ public class ShardRecovery {
     /**
      * automatically updated date-time in UTC zone
      */
+    @Builder.Default
     private Instant updated = Instant.now();
 
     /**
      * Height of the blockchain at the beginning of sharding
      */
-    @Getter
     private int height;
 
+    public int getHeight() {
+        return height;
+    }
 
-    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject, Instant updated) {
+
+    public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName,
+                         Long lastColumnValue, String processedObject, Instant updated, Integer height) {
         Objects.requireNonNull(state);
 
         this.shardRecoveryId = shardRecoveryId;
@@ -61,6 +67,7 @@ public class ShardRecovery {
         this.lastColumnValue = lastColumnValue;
         this.processedObject = processedObject;
         this.updated = updated;
+        this.height = height;
     }
 
     public ShardRecovery(MigrateState state, String objectName, String columnName, Long lastColumnValue, String processedObject) {
@@ -172,6 +179,7 @@ public class ShardRecovery {
         private Long lastColumnValue;
         private String processedObject;
         private Instant updated;
+        private int height;
 
         private ShardRecoveryBuilder() {
         }
@@ -211,10 +219,15 @@ public class ShardRecovery {
             return this;
         }
 
+        public ShardRecoveryBuilder height(Integer height) {
+            this.height = height;
+            return this;
+        }
+
         public ShardRecovery build() {
             return new ShardRecovery(
                     shardRecoveryId, MigrateState.valueOf(state), objectName,
-                    columnName, lastColumnValue, processedObject, updated);
+                    columnName, lastColumnValue, processedObject, updated, height);
         }
     }
 
@@ -228,6 +241,7 @@ public class ShardRecovery {
         sb.append(", lastColumnValue=").append(lastColumnValue);
         sb.append(", processedObject='").append(processedObject).append('\'');
         sb.append(", updated=").append(updated);
+        sb.append(", height=").append(height);
         sb.append('}');
         return sb.toString();
     }

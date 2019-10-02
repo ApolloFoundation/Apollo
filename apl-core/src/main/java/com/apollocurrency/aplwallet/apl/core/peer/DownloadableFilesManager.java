@@ -113,7 +113,7 @@ public class DownloadableFilesManager {
                 fci.fileId = fileId;
                 fci.offset = ci.offset;
                 fci.present = FileChunkState.PRESENT_IN_PEER;
-                fci.size = ci.size.longValue();
+                fci.size = ci.size;
                 fci.chunkId = i;
                 downloadInfo.chunks.add(fci);
             }
@@ -188,7 +188,7 @@ public class DownloadableFilesManager {
                        chainId=UUID.fromString(chainIdStr);
                     }
                     
-                    String fileName = shardNameHelper.getShardArchiveNameByShardId(shardId,chainId);
+                    String fileName = shardNameHelper.getCoreShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
                 } catch (NumberFormatException e) {

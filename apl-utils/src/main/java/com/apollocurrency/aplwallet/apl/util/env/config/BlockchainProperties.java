@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-        "consensusSettings"})
+        "consensusSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;
@@ -22,6 +22,7 @@ public class BlockchainProperties {
     private long maxBalance;
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
+    private FeaturesHeightRequirement featuresHeightRequirement;
 
     @Override
     public boolean equals(Object o) {
@@ -49,12 +50,13 @@ public class BlockchainProperties {
              @JsonProperty("blockTime") int blockTime,
              @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
              @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
-             @JsonProperty("maxBalance") long maxBalance) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
+             @JsonProperty("maxBalance") long maxBalance,
+             @JsonProperty("featuresHeightRequirement") FeaturesHeightRequirement featuresHeightRequirement) {
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, featuresHeightRequirement);
     }
 
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings) {
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings, FeaturesHeightRequirement featuresHeightRequirement) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -63,14 +65,15 @@ public class BlockchainProperties {
         this.maxBalance = maxBalance;
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
+        this.featuresHeightRequirement = featuresHeightRequirement == null ? new FeaturesHeightRequirement() : featuresHeightRequirement;
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null, null);
     }
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings, null);
     }
 
 
@@ -139,9 +142,17 @@ public class BlockchainProperties {
         return shardingSettings;
     }
 
+    public FeaturesHeightRequirement getFeaturesHeightRequirement() {
+        return featuresHeightRequirement;
+    }
+
+    public void setFeaturesHeightRequirement(FeaturesHeightRequirement featuresHeightRequirement) {
+        this.featuresHeightRequirement = featuresHeightRequirement;
+    }
+
     public BlockchainProperties copy() {
         return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
-                shardingSettings.copy(), consensusSettings.copy());
+                shardingSettings.copy(), consensusSettings.copy(), featuresHeightRequirement.copy());
     }
 
     @Override
@@ -155,6 +166,7 @@ public class BlockchainProperties {
                 ", maxBalance=" + maxBalance +
                 ", shardingSettings=" + shardingSettings +
                 ", consensusSettings=" + consensusSettings +
+                ", featuresHeightRequirement=" + featuresHeightRequirement +
                 '}';
     }
 }

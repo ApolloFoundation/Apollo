@@ -20,17 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import org.jboss.resteasy.cdi.i18n.LogMessages_$logger;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,38 +34,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
 
-    /**
-     * Block cache
-     */
+//    @Inject
+//    @CacheProducer
+//    @CacheType(PUBLIC_KEY_CACHE_NAME)
+//    private Cache<Long, BlockIndex> publicKeyCache;
 
-    private static final int DEFAULT_BLOCK_CACHE_SIZE = 10;
-    private int blockCacheSize;
-    private DatabaseManager databaseManager;
-
-
-    public BlockDaoImpl(int blockCacheSize, DatabaseManager databaseManager) {
-        this.blockCacheSize = blockCacheSize;
-        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
-    }
+    private final DatabaseManager databaseManager;
 
     @Inject
     public BlockDaoImpl(DatabaseManager databaseManager) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, databaseManager);
+        // this.blockCacheSize = blockCacheSize;
+        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
-
 
     private void clearBlockCache() {
 //        synchronized (blockCache) {
@@ -105,6 +92,23 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public boolean hasBlock(long blockId) {
         return hasBlock(blockId, Integer.MAX_VALUE, databaseManager.getDataSource());
+    }
+
+    @Override
+    public Block findFirstBlock() {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block order by db_id LIMIT 1")) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                Block block = null;
+                if (rs.next()) {
+                    block = loadBlock(con, rs);
+                }
+                return block;
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -339,8 +343,17 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, TransactionalDataSource dataSource, int index) {
         // Search the database
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+        try (Connection con = dataSource.getConnection()) {
+            return getBlocksAfter(height, blockIdList, result, con, index);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
+        // Search the database
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
                      + "WHERE height > ? "
                      + "ORDER BY height ASC LIMIT ?")) {
             pstmt.setLong(1, height);
@@ -621,23 +634,19 @@ public class BlockDaoImpl implements BlockDao {
             }
             return;
         }
-        LOG.info("Deleting blockchain...");
+        LOG.debug("Deleting blockchain...");
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             try {
                 stmt.executeUpdate("TRUNCATE TABLE transaction");
                 stmt.executeUpdate("TRUNCATE TABLE block");
-            }
-            catch (SQLException e) {
+                LOG.debug("DONE Deleting blockchain...");
+            } catch (SQLException e) {
                 dataSource.rollback(false);
                 throw e;
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        }
-        finally {
-//            clearBlockCache();
         }
     }
 

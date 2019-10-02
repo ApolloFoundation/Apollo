@@ -30,6 +30,10 @@ delete from purchase_feedback;
 delete from purchase_public_feedback;
 delete from PUBLIC.ACCOUNT_CONTROL_PHASING;
 delete from shuffling_data;
+delete from prunable_message;
+delete from phasing_approval_tx;
+delete from dex_offer;
+delete from mandatory_transaction;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -96,10 +100,12 @@ INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_h
 (102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1 , 1),
 (103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1 , 2)
 ;
-INSERT into PUBLIC.SHARD (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc, generator_ids) VALUES
-(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2, 0, null, ()),
-(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 3, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', (782179228250, 4821792282200, 7821792282123976600,)),
-(3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693', 31, 0, null, (57821792282, 22116981092100, 9211698109297098287,))
+INSERT into PUBLIC.SHARD (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc, generator_ids, block_timeouts, block_timestamps, prunable_zip_hash) VALUES
+(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2, 0, null, (), (), (), null),
+(2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 3, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d',
+    (782179228250, 4821792282200, 7821792282123976600,), (0, 1,), (45673250, 45673251,), X'0729528cd01d03c815e1aaf74e1c8950a411e0f20376881747e6ab667452d909'),
+(3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693', 31, 50, null,
+    (57821792282, 22116981092100, 9211698109297098287,), (1, 1,), (45673251, 45673252,), null)
 ;
 INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_transaction_id, height) VALUES
 (10     , 100                    , 101                  ,100    ),
@@ -160,7 +166,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (287);
+INSERT into version values (314);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
@@ -207,12 +213,12 @@ INSERT into PUBLIC.DATA_TAG
 ;
 
 INSERT into PUBLIC.TAGGED_DATA
-(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,       data      ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
-(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,   X'c11dd7986e'  ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
-(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,   X'c11d86986e'  ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
-(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,   X'c11d8344588e' ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
-(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,   X'c11d1234589e' ,   TRUE   ,          73600    ,      35078473        ,   3500),
-(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,   X'c11d1234586e' ,   FALSE  ,          73600    ,      35078473        ,   8000),
+(DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,tags                          , parsed_tags                 ,data              ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
+(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,'tag1,tag2,tag3,tag2,sl'      ,('tag1', 'tag2', 'tag3')     ,X'c11dd7986e'     ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,'tag2,tag2,ss'                ,('tag2')                     ,X'c11d86986e'     ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,'tag3,tag4,tag3,newtag'       ,('tag3', 'tag4', 'newtag')   ,X'c11d8344588e'   ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,'tag3,tag3,tag3,tag2,tag2'    ,('tag3', 'tag2')             ,X'c11d1234589e'   ,   TRUE   ,          73600    ,      35078473        ,   3500),
+(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,'iambatman'                   ,('iambatman')                ,X'c11d1234586e'   ,   FALSE  ,          73600    ,      35078473        ,   8000),
 ;
 
 INSERT into PUBLIC.TAGGED_DATA_EXTEND
@@ -334,3 +340,45 @@ INSERT into shuffling_data
 INSERT into trim
 (DB_ID,     HEIGHT,   DONE ) VALUES
 (1    ,      1000,    true);
+
+INSERT into option
+(NAME,     VALUE) VALUES
+('existingKey'    ,      'existingValue'),
+('existingNullKey'    ,      null),
+('existingEmptyKey'    ,      '');
+
+INSERT INTO prunable_message
+(db_id         ,id                  ,sender_id               , recipient_id          ,message                                                 , encrypted_message                                                                                                                                                                                                                     ,message_is_text  , encrypted_is_text , is_compressed, block_timestamp, transaction_timestamp, height) VALUES
+(1000           ,10                  ,-6004096130734886685   ,4882266200596627944    ,null                                                    ,X'b63f809f0df0b52f46225b702855c2704653e88ae96cd3dfe2c50cf2e30f747907cbb06267616241aa3aa55c2bf90457b1f275e9c96d42c7cc73cdb229a4fed055ad55245c89348c0d05c757e771996d8d597125aabb471bb25cd2d6e524f1bb9811c40f8259eff2cadf1f48df5c06f3'    ,false            , true              , true         , 128            ,  120                   , 10   ),
+(1010           ,20                  ,4882266200596627944    ,-6004096130734886685   ,X'48692c20416c69636521'                                 ,X'7ac5c6571b768208df62ee48d3e9c8151abeb0f11858c66d01bdf0b8170b0741b596da28500094b25ed0bb981a41f4dfe489128c4013638d5c8eb143946b6af77b64da893560374409866b0db539ff456bbe56de583181db3ac90d67ee6f16bc0be3faa400e03ef25616b45789fde2ab'    ,true             , true              , true         , 140            ,  130                   , 12   ),
+(1020           ,30                  ,-6004096130734886685   ,4882266200596627944    ,X'476f6f646279652c20426f6221'                           ,X'dd39282b7262b9369773b68a851491bbecac1f9b7a6ec078381962b129872c2df5ee11b489ef1733e78c6c54fb6fbcf992071fdb83c4e40f501b8101af76dae9c61c3726d86490c43955644a64aa004d4fa45184e37060247a9a535acdc638ac'                                    ,true             , true              , false         ,158            ,  155                   , 14   ),
+(1030           ,40                  ,4882266200596627944    ,-6004096130734886685   ,X'ff3456236527fdab'                                     ,X'dae6440045c8d5bf5c561d5ed9209898654038bb375875e5a50bf0d7bb44bdcaf4c074354638aa0fe97d70d4cb00a6d62c119703b75f63d40a29190feb85ba54d9e8e433e07bfcea5923e0ff59a0e8fd3c9bdd7bcd76a08eb5bcec871c65d06f'                                    ,false            , true              , false         ,160            ,  157                   , 15   ),
+(1040           ,50                  ,-6004096130734886685   ,-6004096130734886685   ,null                                                    ,X'7f39dde4494bdd8036799dc04d2e7967c3cc40af2fd3a0bd40e5113076713b9f2aa6895b6f848bfafce0fc085c991d0f0883ef75fe8b75e3bcf9308d4de27837958436fb572cf954a3dff1523908d4d09ff85558cb2bcd6ac2bba4967c4ae9c6fca25f4f8313b53b3aec308e02e3f758'    ,false            , true              , true          ,180            ,  168                   , 18   ),
+(1050           ,60                  ,-5872452783836294400   ,-6004096130734886685   ,X'54657374206d65737361676520746f20416c696365'           ,null                                                                                                                                                                                                                                   ,true             , false             , false         ,185            ,  178                   , 19   ),
+(1060           ,70                  ,4882266200596627944    ,4882266200596627944    ,null                                                    ,X'a8d8a1784144872e909f5c5c0eb75ea01fc45a3a0aba2f04bbe8bc29414ab1d82c617d184baf26d4dab5f6e584326eb7a69649d70906cbae8a8633c59b5357b5f19ab6a1bcc94939b33723c192c734f62886a8ad860d8bcd23398545d04776d33401adbdf1f4b72d669388ade4cc759c'    ,false            , true              , true          ,211            ,  214                   , 22   ),
+(1070           ,80                  ,-5872452783836294400   ,-6004096130734886685   ,null                                                    ,X'11c48e4daac8e8582c9b83715366a0a0b4a7b7ae048d0ad115d22ae973c9c9e255fbb70f1b17168f6d15d877fa4dfd9017c8aedc9211e4576e434fb4b7102776777164f79368343936dd87f65dd58b24f61b075973c7b7c5947e5020bc835baf'                                    ,false            , true              , false         ,212            ,  225                   , 23   ),
+(1080           ,90                  ,-5872452783836294400   ,4882266200596627944    ,X'f3ab4384a18c2911'                                     ,X'8de2b1bb43fc8f8ed866f551edae2f688494da7601b914fbc69f2c9c406f537845eab9a324a151d432d82a0e9d989467b1ff559a947fe8a5d0c9fe7bf0e6d0a44504273ff6b92b419abf752401b785157eb320f78e6ac13f75036a799ea47a4c'                                    ,false            , false             , false         ,232            ,  230                   , 25   ),
+(1090           ,100                 ,4882266200596627944    ,-5872452783836294400   ,null                                                    ,X'a1e59a83f92fe32e2e8bd4d840adca3af792e65499ae3d87068c793daf7f7d238c9c0820c951a9280d78e492eb27fb5961a974d98f63756728cb7a22d658dabbc0c6bf192eea4f41d950cff9f51c12f03f2f853cd9ead88f3c88ebbdb1ae0423dad64b3d2c0801fc1780b41c84fc330e'    ,false            , false             , true          ,247            ,  242                   , 28   ),
+(1100           ,110                 ,-6004096130734886685   ,-5872452783836294400   ,X'48656c6c6f20436875636b'                               ,null                                                                                                                                                                                                                                   ,true             , false             , false         ,259            ,  254                   , 30   ),
+;
+INSERT INTO phasing_approval_tx
+(db_id       , phasing_tx,        approved_tx,        height,           ) VALUES
+(110         , 5                 , 120           ,    510   ,           ),
+(120         , 10                , 110           ,    525   ,           ),
+(130         , 10                , 130           ,    525   ,           ),
+(140         , 15                , 140           ,    550   ,           ),
+;
+
+INSERT INTO dex_offer
+(db_id     , id              , type , account_id , offer_currency , offer_amount , pair_currency ,pair_rate ,finish_time , status , height , from_address                                ,to_address                                     , latest ) VALUES
+(1000      , 1               , 0    , 100        , 0,               500000      , 1              ,1000000    ,6000        , 5      , 100    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1010      , 2               , 1    , 100        , 0,               200000      , 2              ,160000000  ,6500        , 3      , 110    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1020      , 3               , 0    , 200        , 0,               100000      , 2              ,150000000  ,7000        , 0      , 121    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
+(1030      , 4               , 1    , 100        , 0,               400000      , 1              ,1000000    ,8000        , 4      , 121    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+;
+INSERT INTO mandatory_transaction
+(db_id     , id                 , required_tx_hash                                                      , transaction_bytes) VALUES
+(10        ,749837771503999228  ,X'2f23970cdc290b328e922ab0de51c288066e8579237c7b0fd45add2d064f5ff6'    ,X'09110b252703780070fa32fa006ba1ff67b9809f9b8dd74e0ee5de84ff4834408c106980a8b05f034add89a5076a2218000000000000000000e1f505000000000000000000000000000000000000000000000000000000000000000000000000898f755511cd0a3aec0128094bd87f996a90519e7f9c3b2b183f5d7def77c40ab18215a72f44aaa55ef304371180cfa5517554a87ffc65507dd8bd586226dea200000000000000001a51f385ecc580fe0180c13d459b696166'),
+(20        ,3606021951720989487 ,null                                                                   ,X'09105c1f2703a00570fa32fa006ba1ff67b9809f9b8dd74e0ee5de84ff4834408c106980a8b05f034add89a5076a2218000000000000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000d323abad8bec5704995e40621026a93e29eba1b8726f4fbfb6f7fde06fd22a02135e46d5019536b0282beb549ab87e4f2a888dcdc615445c13d91253e950e18c00000000000000001a51f385ecc580fe0200000010a5d4e800000001102700000000000000db7028032a00307836303232343263363836343065373534363737623638336532306132373430663866393566376433180041504c2d4b3738572d5a374c522d54504a592d3733485a4b'),
+;

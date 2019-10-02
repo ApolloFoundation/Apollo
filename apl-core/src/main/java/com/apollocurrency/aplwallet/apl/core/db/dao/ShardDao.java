@@ -41,15 +41,17 @@ public interface ShardDao {
     long getMaxShardId();
 
     @Transactional
-    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, generator_ids) " +
-                        "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :zipHashCrc, :generatorIds)")
+    @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, prunable_zip_hash, generator_ids, block_timeouts, block_timestamps) " +
+            "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
+            ":blockTimeouts, :blockTimestamps)")
     @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
     void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, " +
-            "zip_hash_crc =:zipHashCrc, generator_ids =:generatorIds where shard_id =:shardId")
+            "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
+            "where shard_id =:shardId")
     @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);
@@ -63,13 +65,11 @@ public interface ShardDao {
     int hardDeleteAllShards();
 
     @Transactional(readOnly = true)
-//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = :height)")
     @SqlQuery("SELECT * FROM shard WHERE shard_height =:height")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getShardAtHeight(@Bind("height") long height);
 
     @Transactional(readOnly = true)
-//    @SqlQuery("SELECT * FROM shard WHERE shard_id = (SELECT shard_id FROM block_index WHERE block_height = (SELECT MAX(block_height) FROM block_index) )")
     @SqlQuery("SELECT * FROM shard WHERE shard_height = (SELECT MAX(shard_height) FROM shard)")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastShard();
@@ -80,8 +80,18 @@ public interface ShardDao {
     Shard getLastCompletedShard();
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 OR shard_state = 50 ORDER BY shard_height DESC LIMIT 1")
+    @RegisterRowMapper(ShardRowMapper.class)
+    Shard getLastCompletedOrArchivedShard();
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 ORDER BY shard_height DESC")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getAllCompletedShards();
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 OR shard_state = 50 ORDER BY shard_height DESC")
+    @RegisterRowMapper(ShardRowMapper.class)
+    List<Shard> getAllCompletedOrArchivedShards();
 
 }

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -13,52 +14,64 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.event.Observes;
-import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
-    private TrimService trimService;
+    private final TrimService trimService;
     private volatile boolean trimDerivedTables = true;
     private int trimFrequency;
     private final Object lock = new Object();
-    private List<Integer> trimHeights = new ArrayList<>();
+    private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-    public void scheduleTrim(int height) {
-        synchronized (lock) {
-            trimHeights.add(height);
-            trimHeights = trimHeights.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-        }
+    @PostConstruct
+    void init() {
+        executorService.scheduleWithFixedDelay(this::processTrimEvent, 0, 2, TimeUnit.SECONDS);
     }
 
-    private boolean processTrimEvent() {
+    @PreDestroy
+    void shutdown() {
+        executorService.shutdownNow();
+    }
+
+    boolean isTrimDerivedTables() {
+        return trimDerivedTables;
+    }
+
+    private void processTrimEvent() {
         if (trimDerivedTables) {
+            Integer trimHeight = null;
             synchronized (lock) {
                 if (trimDerivedTables) {
-                    if (!trimHeights.isEmpty()) {
-                        Integer height = trimHeights.remove(0);
-                        log.debug("Perform trim on height " + height);
-                        trimService.trimDerivedTables(height, true);
-                        return true;
-                    }
+                    trimHeight = trimHeights.poll();
                 }
             }
+            if (trimHeight != null) {
+                log.debug("Perform trim on blockchain height {}", trimHeight);
+                trimService.trimDerivedTables(trimHeight, true);
+            }
         }
-        return false;
     }
 
-    public TrimObserver(TrimService trimService,
-                         int trimFrequency) {
-        this.trimService = trimService;
-        this.trimFrequency = trimFrequency;
+    List<Integer> getTrimHeights() {
+        synchronized (lock) {
+            return new ArrayList<>(trimHeights);
+        }
     }
+
     @Inject
     public TrimObserver(TrimService trimService) {
         this.trimService = trimService;
@@ -66,26 +79,31 @@ public class TrimObserver {
     }
 
 
-    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated Boolean trimDerivedTables) {
-        log.info("Set trim to {} ", trimDerivedTables);
-        this.trimDerivedTables = trimDerivedTables;
+    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
+        log.info("Set trim to {} ", trimConfig.isEnableTrim());
+        this.trimDerivedTables = trimConfig.isEnableTrim();
+        if (trimConfig.isClearTrimQueue()) {
+            synchronized (lock) {
+                trimHeights.clear();
+            }
+        }
     }
 
     public void onBlockScanned(@Observes @BlockEvent(BlockEventType.BLOCK_SCANNED) Block block) {
+        //TODO: please replace 5000 with meaningfull constant name
         if (block.getHeight() % 5000 == 0) {
-            log.info("processed block " + block.getHeight());
+            log.info("Scan: processed block " + block.getHeight());
         }
         if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
             trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
         }
     }
 
-    // async
-    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
         if (block.getHeight() % trimFrequency == 0) {
-
-            scheduleTrim(block.getHeight());
+            synchronized (lock) {
+                trimHeights.add(block.getHeight());
+            }
         }
-        processTrimEvent();
     }
 }

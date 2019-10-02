@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.peer.Peers;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -77,8 +77,15 @@ public class PeerResponses {
 
     public static JSONStreamAware error(Exception e) {
         JSONObject response = new JSONObject();
-        response.put("error", Peers.hideErrorDetails ? e.getClass().getName() : e.toString());
+        response.put("error", PeersService.hideErrorDetails ? e.getClass().getName() : e.toString());
         return response;
+    }
+
+    public static JSONStreamAware getBlackisted(String blacklistingCause) {
+        JSONObject response = new JSONObject();
+        response.put("error", Errors.BLACKLISTED);
+        response.put("cause", blacklistingCause);
+        return JSON.prepare(response);
     }
 
    

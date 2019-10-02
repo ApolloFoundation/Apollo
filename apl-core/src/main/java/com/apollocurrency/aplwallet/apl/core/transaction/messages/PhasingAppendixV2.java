@@ -12,6 +12,9 @@ import java.nio.ByteBuffer;
 
 public class PhasingAppendixV2 extends PhasingAppendix {
 
+    /**
+     * Time in seconds
+     */
     private final int finishTime;
 
     public PhasingAppendixV2(ByteBuffer buffer) {

@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
@@ -17,6 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -28,13 +30,14 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.function.Consumer;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
@@ -72,14 +75,25 @@ public class CsvImporterImpl implements CsvImporter {
      */
     @Override
     public long importCsv(String tableName, int batchLimit, boolean cleanTarget) throws Exception {
-        return this.importCsv(tableName, batchLimit, cleanTarget, null, Map.of());
+        return this.importCsv(tableName, batchLimit, cleanTarget, null, Map.of(), null);
+    }
+
+    @Override
+    public long importCsvWithRowHook(String tableName, int batchLimit, boolean cleanTarget, Consumer<Map<String, Object>> rowDataHook) throws Exception {
+        return this.importCsv(tableName, batchLimit, cleanTarget, null, Map.of(), rowDataHook);
+    }
+
+    @Override
+    public long importCsvWithDefaultParams(String tableName, int batchLimit, boolean cleanTarget, Map<String, Object> defaultParams) throws Exception {
+        return this.importCsv(tableName, batchLimit, cleanTarget, null, defaultParams, null);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
-    public long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease, Map<String, Object> defaultParams) throws Exception {
+    private long importCsv(String tableName, int batchLimit, boolean cleanTarget,
+                           Double stateIncrease, Map<String, Object> defaultParams,
+                           Consumer<Map<String, Object>> rowDataConsumer) throws Exception {
 
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
@@ -89,7 +103,7 @@ public class CsvImporterImpl implements CsvImporter {
             return -1;
         }
         int importedCount = 0;
-        int columnsCount = 0;
+        int columnsCount;
         PreparedStatement preparedInsertStatement = null;
 
         // file 'extension' should be checked on file instance actually
@@ -101,9 +115,10 @@ public class CsvImporterImpl implements CsvImporter {
         }
 
         // clean up data if there is a chance the table could be previously filled
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (cleanTarget) {
             // remove all data from table before importing
-            try (Connection con = databaseManager.getDataSource().getConnection();
+            try (Connection con = dataSource.getConnection();
                  PreparedStatement preparedDelete = con.prepareStatement("TRUNCATE TABLE " + tableName)) {
                 log.trace("Deleting data from '{}'", tableName);
                 int deleted = preparedDelete.executeUpdate();
@@ -121,9 +136,9 @@ public class CsvImporterImpl implements CsvImporter {
 
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
-                ResultSet rs = csvReader.read(
+             ResultSet rs = csvReader.read(
                 inputFileName, null, null);
-             Connection con = databaseManager.getDataSource().getConnection()) {
+             Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin()) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
             // get CSV meta data info
@@ -150,14 +165,18 @@ public class CsvImporterImpl implements CsvImporter {
             int rsCounter=1; //start from 1 for "a%b==0" operations
             // loop over CSV data reading line by line, column by column
             while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
-                    log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
+                    String columnName = meta.getColumnName(i + 1);
+                    log.trace("{}[{} : {}] = {}", columnName, i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
-                        try (InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(((String) object)))) {
+                        byte[] decodedBytes = Base64.getDecoder().decode(((String) object));
+                        try (InputStream is = new ByteArrayInputStream(decodedBytes)) {
                             // meta.getPrecision(i + 1) - is very IMPORTANT here for H2 db !!!
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
+                            row.put(columnName.toLowerCase(), Base64.getDecoder().decode((String) object));
                         }
                         catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
@@ -178,12 +197,17 @@ public class CsvImporterImpl implements CsvImporter {
                                     actualArray[j] = actualValue;
                                 } else if (value.startsWith("\'") && value.endsWith("\'")) { //find string
                                     actualArray[j] = split[j].substring(1, split[j].length() - 1);
-                                } else { // try to process long value
+                                } else { // try to process number
                                     try {
-                                        actualArray[j] = Long.parseLong(split[j]);
+                                        actualArray[j] = Integer.parseInt(split[j]);
                                     }
-                                    catch (NumberFormatException e) { //throw exception, when specified value is not string, long or byte array
-                                        throw new RuntimeException("Value " + split[j] + " of unsupported type");
+                                    catch (NumberFormatException ignored) { // value can be of long type
+                                        try {
+                                            actualArray[j] = Long.parseLong(split[j]); // try to parse long
+                                        }
+                                        catch (NumberFormatException e) { // throw exception, when specified value is not a string, long, int or byte array
+                                            throw new RuntimeException("Value " + split[j] + " of unsupported type");
+                                        }
                                     }
                                 }
                             }
@@ -192,7 +216,9 @@ public class CsvImporterImpl implements CsvImporter {
                         }
                         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
                         preparedInsertStatement.setArray(i + 1, simpleArray);
+                        row.put(columnName.toLowerCase(), actualArray);
                     } else {
+                        row.put(columnName.toLowerCase(), object);
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                 }
@@ -203,9 +229,11 @@ public class CsvImporterImpl implements CsvImporter {
 
                 log.trace("sql = {}", sqlInsert.toString());
                 importedCount += preparedInsertStatement.executeUpdate();
-
+                if (rowDataConsumer != null) {
+                    rowDataConsumer.accept(row);
+                }
                 if (rsCounter % batchLimit == 0) {
-                    con.commit();
+                    dataSource.commit(false);
                     // update state only for ACCOUNT table during LONG running import
                     if (aplAppStatus != null && stateIncrease != null && tableName.equalsIgnoreCase("account")) {
                         Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
@@ -214,9 +242,10 @@ public class CsvImporterImpl implements CsvImporter {
                 }
                 rsCounter++;
             }
-            con.commit(); // final commit
+            dataSource.commit(); // final commit
         } catch (Exception e) {
-            log.error("Error during importing " + tableName, e);
+            log.error("Error during importing '" + tableName + "'", e);
+            dataSource.rollback();
             throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {

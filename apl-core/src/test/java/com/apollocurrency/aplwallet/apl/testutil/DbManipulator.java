@@ -4,17 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class DbManipulator {
@@ -29,16 +30,11 @@ public class DbManipulator {
     public DbManipulator(DbProperties dbProperties, PropertiesHolder propertiesHolder, String dataScriptPath, String schemaScriptPath) {
         Objects.requireNonNull(dbProperties, "dbProperties is NULL");
         PropertiesHolder propertiesHolderParam = propertiesHolder == null ? new PropertiesHolder() : propertiesHolder;
-        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolderParam);
+        this.databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolderParam, new JdbiHandleFactory());
 
         dataScriptPath = StringUtils.isBlank(dataScriptPath) ? DEFAULT_DATA_SCRIPT_PATH : dataScriptPath;
         schemaScriptPath = StringUtils.isBlank(schemaScriptPath) ? DEFAULT_SCHEMA_SCRIPT_PATH : schemaScriptPath;
         // sometimes it can be helpful to skip test data load
-        if (propertiesHolder != null && !propertiesHolder.getBooleanProperty("apl.testData")) {
-            // test data is not loaded
-            logger.warn("-->> test data is not loaded from : {}", dataScriptPath);
-            dataScriptPath = null;
-        }
         this.populator = new DbPopulator(databaseManager.getDataSource(), schemaScriptPath, dataScriptPath);
     }
 

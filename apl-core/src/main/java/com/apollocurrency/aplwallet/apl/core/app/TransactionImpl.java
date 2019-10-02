@@ -20,18 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
@@ -60,10 +48,21 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.enterprise.inject.spi.CDI;
+
 public class TransactionImpl implements Transaction {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionImpl.class);
 
-    @Inject
+//    @Inject
     private static BlockchainImpl blockchain;
 
     public static final class BuilderImpl implements Builder {
@@ -107,7 +106,7 @@ public class TransactionImpl implements Transaction {
             this.amountATM = amountATM;
             this.feeATM = feeATM;
             this.attachment = attachment;
-            this.type = attachment.getTransactionType();
+            this.type = attachment != null ? attachment.getTransactionType() : null;
             if (timestamp < 0) {
                 throw new IllegalArgumentException("Timestamp cannot be less than 0");
             }
@@ -687,7 +686,7 @@ public class TransactionImpl implements Transaction {
                 buffer.putInt(timestamp);
                 buffer.putShort(deadline);
                 buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : Genesis.CREATOR_ID);
+                buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
                 buffer.putLong(amountATM);
                 buffer.putLong(feeATM);
                 if (referencedTransactionFullHash != null) {
@@ -1047,7 +1046,8 @@ public class TransactionImpl implements Transaction {
         return type.isDuplicate(this, duplicates);
     }
 
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+    @Override
+    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 

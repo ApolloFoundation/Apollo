@@ -18,6 +18,15 @@ public enum  DexCurrencies {
     public String getCurrencyCode() {
         return currencyCode;
     }
+    
+    public static Integer getValue( DexCurrencies i ) {
+        switch (i) {
+            case APL : return 0;
+            case ETH : return 1;
+            case PAX : return 2; 
+        }
+        return -1;
+    }
 
     public static DexCurrencies getType(int ordinal){
         if(ordinal < 0 || ordinal > DexCurrencies.values().length){
@@ -28,16 +37,16 @@ public enum  DexCurrencies {
     }
 
     public boolean isEthOrPax(){
-        return this.equals(DexCurrencies.ETH)  || this.equals(DexCurrencies.PAX);
+        return (this == DexCurrencies.ETH) || (this == DexCurrencies.PAX);
     }
 
     public boolean isApl(){
-        return this.equals(DexCurrencies.APL);
+        return this == DexCurrencies.APL;
     }
     public boolean isEth(){
-        return this.equals(DexCurrencies.ETH);
+        return this == DexCurrencies.ETH;
     }
     public boolean isPax(){
-        return this.equals(DexCurrencies.PAX);
+        return this == DexCurrencies.PAX;
     }
 }

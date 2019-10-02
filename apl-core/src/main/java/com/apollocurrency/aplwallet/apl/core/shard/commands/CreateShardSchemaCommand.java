@@ -8,6 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import org.slf4j.Logger;
 
@@ -24,19 +25,19 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     private ShardEngine shardEngine;
     private DbVersion dbVersion;
     private byte[] shardHash; // shardHash can be NULL in one case
-    private Long[] generatorIds;
+    private PrevBlockData prevBlockData;
     private long shardId;
 
     public CreateShardSchemaCommand(
             long shardId,
             ShardEngine shardEngine,
             DbVersion dbVersion,
-            byte[] shardHash, Long[] generatorIds) { // shardHash can be NULL
+            byte[] shardHash, PrevBlockData prevBlockData) { // shardHash can be NULL
         this.shardEngine = Objects.requireNonNull(
                 shardEngine, "shardEngine is NULL");
         this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
         this.shardHash = shardHash;
-        this.generatorIds = generatorIds;
+        this.prevBlockData = prevBlockData;
         this.shardId = shardId;
     }
 
@@ -48,7 +49,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
         log.debug("Create Shard Schema Command execute...");
         return shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder()
                 .shardHash(shardHash)
-                .generatorIds(generatorIds)
+                .prevBlockData(prevBlockData)
                 .shardId(shardId)
                 .build()); // shardHash can be NULL or value
     }

@@ -5,9 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
@@ -21,38 +23,46 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollLinkedTran
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class PhasingPollServiceImpl implements PhasingPollService {
     private final PhasingPollResultTable resultTable;
     private final PhasingPollTable phasingPollTable;
     private final PhasingPollVoterTable voterTable;
     private final PhasingPollLinkedTransactionTable linkedTransactionTable;
+    private final Event<Transaction> event;
     private final PhasingVoteTable phasingVoteTable;
     private final Blockchain blockchain;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
-                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain) {
+                                  PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
         this.linkedTransactionTable = linkedTransactionTable;
         this.phasingVoteTable = phasingVoteTable;
         this.blockchain = blockchain;
+        this.event = Objects.requireNonNull(event);
     }
 
     @Override
@@ -180,10 +190,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
     }
 
-    @Override
-    public void finish(PhasingPoll phasingPoll, long result) {
-        PhasingPollResult phasingPollResult = new PhasingPollResult(null, blockchain.getHeight(), phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
-//        PhasingPollResult phasingPollResult = new PhasingPollResult(phasingPoll, result, blockchain.getHeight());
+    void finish(PhasingPoll phasingPoll, long result) {
+        int height = blockchain.getHeight();
+        PhasingPollResult phasingPollResult = new PhasingPollResult(null, height, phasingPoll.getId(), result, result >= phasingPoll.getQuorum());
         resultTable.insert(phasingPollResult);
     }
 
@@ -195,6 +204,72 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             return linkedFullHashes;
         } else {
             return phasingPoll.getLinkedFullHashes();
+        }
+    }
+
+    private void release(Transaction transaction) {
+
+        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        Account recipientAccount = transaction.getRecipientId() == 0 ? null : Account.getAccount(transaction.getRecipientId());
+        transaction.getAppendages().forEach(appendage -> {
+            if (appendage.isPhasable()) {
+                appendage.apply(transaction, senderAccount, recipientAccount);
+            }
+        });
+        event.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(transaction);
+        log.trace("Phased transaction " + transaction.getStringId() + " has been released");
+    }
+
+    @Override
+    public void reject(Transaction transaction) {
+        Account senderAccount = Account.getAccount(transaction.getSenderId());
+        transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
+        senderAccount.addToUnconfirmedBalanceATM(LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
+                transaction.getAmountATM());
+        event.select(TxEventType.literal(TxEventType.REJECT_PHASED_TRANSACTION)).fire(transaction);
+        log.trace("Phased transaction " + transaction.getStringId() + " has been rejected");
+    }
+
+    @Override
+    public void countVotesAndRelease(Transaction transaction) {
+        if (getResult(transaction.getId()) != null) {
+            return;
+        }
+        PhasingPoll poll = getPoll(transaction.getId());
+        long result = countVotes(poll);
+        finish(poll, result);
+        if (result >= poll.getQuorum()) {
+            try {
+                release(transaction);
+            } catch (RuntimeException e) {
+                log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                reject(transaction);
+            }
+        } else {
+            reject(transaction);
+        }
+    }
+
+    @Override
+    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+        PhasingPoll poll = getPoll(transaction.getId());
+        long result = countVotes(poll);
+        if (result >= poll.getQuorum()) {
+            if (!transaction.attachmentIsDuplicate(duplicates, false)) {
+                try {
+                    release(transaction);
+                    finish(poll, result);
+                    log.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
+                } catch (RuntimeException e) {
+                    log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                }
+            } else {
+                log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
+                        + " is duplicate, cannot finish early");
+            }
+        } else {
+            log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
+                    + " does not yet meet quorum, cannot finish early");
         }
     }
 
@@ -255,6 +330,11 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public long getVoteCount(long phasedTransactionId) {
         return phasingVoteTable.getCount(new DbClause.LongClause("transaction_id", phasedTransactionId));
+    }
+
+    @Override
+    public List<PhasingVote> getVotes(long phasedTransactionId) {
+        return phasingVoteTable.get(phasedTransactionId);
     }
 
     @Override

@@ -4,21 +4,32 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.api.dto.NodeHWStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeHealthInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeNetworkingInfo;
+import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
+import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
+import lombok.Setter;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import lombok.Setter;
 
 /**
  *
@@ -29,12 +40,37 @@ public class BackendControlService {
     
     @Inject @Setter
     AplAppStatus appStatus;
-    
-    @Inject @Setter    
-    PropertiesHolder ph;
-    
-    public NodeHWStatusInfo getHWStatus(){
-        NodeHWStatusInfo res = new NodeHWStatusInfo();
+
+    @Inject
+    @Setter
+    AdminPasswordVerifier apv;
+
+    @Inject
+    @Setter
+    Blockchain blockchain;
+
+    @Inject
+    @Setter
+    private Converter<Peer, PeerDTO> peerConverter;
+
+    @Inject
+    @Setter
+    private Converter<PeerInfo, PeerDTO> peerInfoConverter;
+
+    @Inject
+    @Setter
+    private NetworkService networkService;
+
+    @Inject
+    @Setter
+    private BlockDao blockDao;
+
+    @Inject
+    @Setter
+    private DatabaseManager databaseManager;
+
+    public NodeStatusInfo getNodeStatus() {
+        NodeStatusInfo res = new NodeStatusInfo();
         OperatingSystemMXBean mxbean =  ManagementFactory.getOperatingSystemMXBean();
         res.threadsRunning=java.lang.Thread.activeCount();
         res.cpuCount = Runtime.getRuntime().availableProcessors();
@@ -78,9 +114,30 @@ public class BackendControlService {
     }
     
    //TODO: use AdminPasswordVerifier component 
-    public boolean isAdminPasswordOK(String password){
-        String pw = ph.getStringProperty("apl.adminPassword");
-        boolean res = (!StringUtils.isBlank(pw)&& password!=null && pw.compareTo(password)==0);
+   public boolean isAdminPasswordOK(HttpServletRequest request) {
+       boolean res = apv.checkPassword(request);
+       return res;
+   }
+
+    public NodeHealthInfo getNodeHealth() {
+        NodeHealthInfo info = new NodeHealthInfo();
+        info.dbOK = chekDataBaseOK();
+        info.blockchainHeight = blockchain.getHeight();
+        info.usedDbConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        return info;
+    }
+
+    public NodeNetworkingInfo getNetworkingInfo() {
+        NodeNetworkingInfo info = new NodeNetworkingInfo();
+        info.inboundPeers = networkService.getInboundPeers().size();
+        info.outboundPeers = networkService.getOutboundPeers().size();
+        info.myPeerInfo = peerInfoConverter.convert(networkService.getMyPeerInfo());
+        return info;
+    }
+
+    private boolean chekDataBaseOK() {
+        Block b = blockDao.findLastBlock();
+        boolean res = b != null;
         return res;
     }
 }

@@ -1,11 +1,13 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.jboss.weld.junit5.EnableWeld;
@@ -18,8 +20,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +32,7 @@ import javax.inject.Inject;
 @EnableWeld
 class ZipTest {
     private static final Logger log = getLogger(ZipTest.class);
-
+    private static final String APL_BLOCKCHAIN_ARCH_1_ZIP_HASH = "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2";
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
@@ -111,9 +115,18 @@ class ZipTest {
         File folderNoCsvInside = temporaryFolderExtension.getRoot().toPath().toFile();
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderNoCsvInside + File.separator + zipFileName;
-        assertThrows(RuntimeException.class, () ->
-                zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false)
-        );
+        assertFalse(zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false));
+    }
+
+    @Test
+    void testCalculateHash() throws URISyntaxException {
+
+        URL zipUrl = getClass().getClassLoader().getResource("another-archive-1.zip");
+        byte[] hash = zipComponent.calculateHash(Paths.get(zipUrl.toURI()).toAbsolutePath().toString());
+
+        String hexHash = Convert.toHexString(hash);
+
+        assertEquals(APL_BLOCKCHAIN_ARCH_1_ZIP_HASH, hexHash);
     }
 
     @Test

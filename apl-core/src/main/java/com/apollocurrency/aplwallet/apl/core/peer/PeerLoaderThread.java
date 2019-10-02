@@ -3,15 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.enterprise.inject.spi.CDI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
-
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -20,13 +20,15 @@ import org.slf4j.LoggerFactory;
 class PeerLoaderThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PeerLoaderThread.class);
     private final List<String> defaultPeers;
-    private EpochTime timeService;
+    private TimeService timeService;
     private final List<Future<String>> unresolvedPeers;
+    private PeersService peers;
 
-    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, EpochTime timeService) {
+    public PeerLoaderThread(List<String> defaultPeers, List<Future<String>> unresolvedPeers, TimeService timeService, PeersService peers) {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService=timeService;
+        this.peers = peers;
     }
     private final Set<PeerDb.Entry> entries = new HashSet<>();
     private PeerDb peerDb;
@@ -38,17 +40,17 @@ class PeerLoaderThread implements Runnable {
             peerDb = CDI.current().select(PeerDb.class).get();
         }
         final int now = timeService.getEpochTime();
-        Peers.wellKnownPeers.forEach((address) -> {
+        peers.wellKnownPeers.forEach((address) -> {
             PeerAddress pa = new PeerAddress(address);
             entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
         });
-        if (Peers.usePeersDb) {
+        if (peers.usePeersDb) {
             LOG.debug("'Peer loader': Loading 'well known' peers from the database...");
             defaultPeers.forEach((address) -> {
                 PeerAddress pa = new PeerAddress(address);
                 entries.add(new PeerDb.Entry(pa.getAddrWithPort(), 0, now));
             });
-            if (Peers.savePeers) {
+            if (peers.savePeers) {
                 List<PeerDb.Entry> dbPeers = peerDb.loadPeers();
                 dbPeers.forEach((entry) -> {
                     if (!entries.add(entry)) {
@@ -64,12 +66,12 @@ class PeerLoaderThread implements Runnable {
             LOG.debug("'Peer loader': findOrCreatePeer() 'known peers'...");
         }
         entries.forEach((entry) -> {
-            Future<String> unresolvedAddress = Peers.peersExecutorService.submit(() -> {
-                PeerImpl peer = Peers.findOrCreatePeer(entry.getAddress(), true);
+            Future<String> unresolvedAddress = peers.peersExecutorService.submit(() -> {
+                PeerImpl peer = peers.findOrCreatePeer(null, entry.getAddress(), true);
                 if (peer != null) {
                     peer.setLastUpdated(entry.getLastUpdated());
                     peer.setServices(entry.getServices());
-                    Peers.addPeer(peer);
+                    peers.addPeer(peer);
                     LOG.trace("'Peer loader': Put 'well known' Peer from db into 'Peers Map' = {}", entry);
                     return null;
                 }
@@ -78,7 +80,7 @@ class PeerLoaderThread implements Runnable {
             unresolvedPeers.add(unresolvedAddress);
         });
         LOG.trace("'Peer loader': thread finished. Peers [{}]", entries.size());
-        Peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
+        peers.getAllPeers().stream().forEach((peerHost) -> LOG.trace("'Peer loader': dump = {}", peerHost));
     }
     
 }

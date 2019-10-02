@@ -41,6 +41,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
                     .lastColumnValue(rs.getLong("last_column_value"))
                     .processedObject(rs.getString("processed_object"))
                     .updated(Instant.ofEpochMilli(rs.getDate("updated").getTime()) )
+                    .height(rs.getInt("height"))
                     .build();
             return recovery;
         }

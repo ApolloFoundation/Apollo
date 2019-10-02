@@ -71,8 +71,8 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, value)");
             case 5:
                 return 5;
-            case 21:
-                return 21;
+            case 24:
+                return 24;
             default:
                 throw new RuntimeException("Shard CREATE TABLES database is inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
@@ -92,5 +92,10 @@ public class ShardInitTableSchemaVersion extends DbVersion {
     @Override
     public String toString() {
         return "ShardInitTableSchemaVersion";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj.getClass() == this.getClass();
     }
 }

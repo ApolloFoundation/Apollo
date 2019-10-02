@@ -3,7 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.EpochTime;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,8 +15,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -21,24 +23,39 @@ import org.slf4j.LoggerFactory;
 class PeerConnectingThread implements Runnable {
     
     private static final Logger LOG = LoggerFactory.getLogger(PeerConnectingThread.class);
-    private EpochTime timeService;
-    
-    public PeerConnectingThread(EpochTime timeService) {
+    private final TimeService timeService;
+    private final PeersService peers;
+
+    public PeerConnectingThread(TimeService timeService, PeersService peers) {
         this.timeService=timeService;
+        this.peers = peers;
     }
 
     @Override
     public void run() {
-        if (Peers.shutdown || Peers.suspend) {
+        if (peers.shutdown || peers.suspend) {
             return;
         }
         try {
             try {
                 final int now = timeService.getEpochTime();
-                if (!Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
+                if (!peers.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers)) 
+                {
                     List<Future<?>> futures = new ArrayList<>();
-                    List<Peer> hallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != PeerState.CONNECTED && now - peer.getLastConnectAttempt() > 600 && peer.providesService(Peer.Service.HALLMARK));
-                    List<Peer> nonhallmarkedPeers = Peers.getPeers((peer) -> !peer.isBlacklisted() && peer.getAnnouncedAddress() != null && peer.getState() != PeerState.CONNECTED && now - peer.getLastConnectAttempt() > 600 && !peer.providesService(Peer.Service.HALLMARK));
+                    List<Peer> hallmarkedPeers = peers.getPeers((peer) -> 
+                            !peer.isBlacklisted() 
+                          && peer.getAnnouncedAddress() != null 
+                          && peer.getState() != PeerState.CONNECTED 
+                          && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
+                          && peer.providesService(Peer.Service.HALLMARK)
+                    );
+                    List<Peer> nonhallmarkedPeers = peers.getPeers((peer) -> 
+                            !peer.isBlacklisted() 
+                          && peer.getAnnouncedAddress() != null 
+                          && peer.getState() != PeerState.CONNECTED 
+                          && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
+                          && !peer.providesService(Peer.Service.HALLMARK)
+                    );
                     if (!hallmarkedPeers.isEmpty() || !nonhallmarkedPeers.isEmpty()) {
                         Set<PeerImpl> connectSet = new HashSet<>();
                         for (int i = 0; i < 10; i++) {
@@ -52,11 +69,19 @@ class PeerConnectingThread implements Runnable {
                             }
                             connectSet.add((PeerImpl) peerList.get(ThreadLocalRandom.current().nextInt(peerList.size())));
                         }
-                        connectSet.forEach((peer) -> futures.add(Peers.peersExecutorService.submit(() -> {
-                            peer.handshake(Peers.blockchainConfig.getChain().getChainId());
-                            if (peer.getState() == PeerState.CONNECTED && Peers.enableHallmarkProtection && peer.getWeight() == 0 && Peers.hasTooManyOutboundConnections()) {
+                        connectSet.forEach((peer) -> futures.add(peers.peersExecutorService.submit(() -> {
+                            PeerAddress pa = new PeerAddress(peer.getAnnouncedAddress());
+                            if (peers.isMyAddress(pa)) {
+                                return null;
+                            }
+                            peer.handshake(peers.blockchainConfig.getChain().getChainId());
+                            if (peer.getState() == PeerState.CONNECTED
+                                    && PeersService.enableHallmarkProtection
+                                    && peer.getWeight() == 0
+                                    && peers.hasTooManyOutboundConnections())
+                            {
                                 LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
-                                peer.deactivate();
+                                peer.deactivate("Too many outbound connections");
                             }
                             return null;
                         })));
@@ -65,29 +90,27 @@ class PeerConnectingThread implements Runnable {
                         }
                     }
                 }
-                Peers.peers.values().forEach((peer) -> {
-                    if (peer.getState() == PeerState.CONNECTED && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                        Peers.peersExecutorService.submit(() -> peer.handshake(Peers.blockchainConfig.getChain().getChainId()));
-                    }
-                    if (peer.getLastInboundRequest() != 0 && now - peer.getLastInboundRequest() > Peers.webSocketIdleTimeout / 1000) {
-                        peer.setLastInboundRequest(0);
-                        Peers.notifyListeners(peer, Peers.Event.REMOVE_INBOUND);
-                    }
-                });
-                if (Peers.hasTooManyKnownPeers() && Peers.hasEnoughConnectedPublicPeers(Peers.maxNumberOfConnectedPublicPeers)) {
-                    int initialSize = Peers.peers.size();
-                    for (PeerImpl peer : Peers.peers.values()) {
-                        if (now - peer.getLastUpdated() > 24 * 3600) {
-                            peer.remove();
+                peers.getPeers(peer ->
+                           peer.getState() == PeerState.CONNECTED
+                        && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
+                        && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
+                ).forEach((peer) -> {
+                        PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
+                    if (!peers.isMyAddress(pa)) {
+                        peers.peersExecutorService.submit(() -> peer.handshake(peers.blockchainConfig.getChain().getChainId()));
                         }
-                        if (Peers.hasTooFewKnownPeers()) {
+                });
+                if (peers.hasTooManyKnownPeers() && peers.hasEnoughConnectedPublicPeers(peers.maxNumberOfConnectedPublicPeers)) {
+                    for (Peer peer : peers.getPeers(peer -> now - peer.getLastUpdated() > Constants.ONE_DAY_SECS)) {
+                            peer.remove();
+                        if (peers.hasTooFewKnownPeers()) {
                             break;
                         }
                     }
-                    if (Peers.hasTooManyKnownPeers()) {
-                        PriorityQueue<PeerImpl> sortedPeers = new PriorityQueue<>(Peers.peers.values());
+                    if (peers.hasTooManyKnownPeers()) {
+                        PriorityQueue<Peer> sortedPeers = new PriorityQueue<>(peers.getAllConnectablePeers());
                         int skipped = 0;
-                        while (skipped < Peers.minNumberOfKnownPeers) {
+                        while (skipped < PeersService.minNumberOfKnownPeers) {
                             if (sortedPeers.poll() == null) {
                                 break;
                             }
@@ -97,19 +120,21 @@ class PeerConnectingThread implements Runnable {
                             sortedPeers.poll().remove();
                         }
                     }
-                    LOG.debug("Reduced peer pool size from " + initialSize + " to " + Peers.peers.size());
                 }
-                for (String wellKnownPeer : Peers.wellKnownPeers) {
-                    PeerImpl peer = Peers.findOrCreatePeer(wellKnownPeer, true);
-                    if (peer != null && now - peer.getLastUpdated() > 3600 && now - peer.getLastConnectAttempt() > 600) {
-                        Peers.peersExecutorService.submit(() -> {
-                            Peers.addPeer(peer);
-                            Peers.connectPeer(peer);
+                for (String wellKnownPeer : peers.wellKnownPeers) {
+                    PeerImpl peer = peers.findOrCreatePeer(null, wellKnownPeer, true);
+                    if ( peer != null 
+                         && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
+                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
+
+                        peers.peersExecutorService.submit(() -> {
+                            peers.addPeer(peer);
+                            peers.connectPeer(peer);
                         });
                     }
                 }
             } catch (Exception e) {
-                LOG.debug("Error connecting to peer", e);
+                LOG.debug("Error connecting to some peer", e);
             }
         } catch (Throwable t) {
             LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);

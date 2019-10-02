@@ -43,7 +43,7 @@ public final class GetCumulativeDifficulty extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

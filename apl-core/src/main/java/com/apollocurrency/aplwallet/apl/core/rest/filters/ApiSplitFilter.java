@@ -42,7 +42,7 @@ public class ApiSplitFilter implements Filter{
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest rq = (HttpServletRequest) request;
 
-        logRequest(rq);
+        //logRequest(rq);
         HttpServletResponse resp = (HttpServletResponse) response;
         // Set response values now in case we create an asynchronous context
         resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");

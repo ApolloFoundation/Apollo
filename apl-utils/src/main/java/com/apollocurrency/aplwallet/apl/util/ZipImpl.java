@@ -107,25 +107,33 @@ public class ZipImpl implements Zip {
     @Override
     public byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter, boolean recursive) {
-        byte[] zipCrcHash;
         long start = System.currentTimeMillis();
-        compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
-        // compute CRC/hash sum on zip file
-        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
-        zipCrcHash = chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+        boolean compressed = compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
+        if (compressed) {
+            // compute CRC/hash sum on zip file
+            byte[] zipCrcHash = calculateHash(zipFile);
 
-        log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
-                zipFile, zipCrcHash.length,
-                fileList.size(), (System.currentTimeMillis() - start) / 1000 );
-        return zipCrcHash;
+            log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
+                    zipFile, zipCrcHash.length,
+                    fileList.size(), (System.currentTimeMillis() - start) / 1000);
+            return zipCrcHash;
+        } else {
+            return null;
+        }
     }
 
-    
+    @Override
+    public byte[] calculateHash(String zipFile) {
+        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+        return chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
+    }
+
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+    public boolean compress(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter, boolean recursive) {
         Objects.requireNonNull(zipFile, "zipFile is NULL");
         Objects.requireNonNull(inputFolder, "inputFolder is NULL");
@@ -138,11 +146,9 @@ public class ZipImpl implements Zip {
         List<File> fl = getFileList(directory, filenameFilter, recursive);
 
         // throw exception because it's a error/failure in case sharding process
-        if (fl == null || fl.size() == 0) {
-            String error = String.format(
-                    "Error on creating V zip archive, no csv file(s) were found in folder '%s' !", inputFolder);
-            log.error(error);
-            throw new RuntimeException(error);
+        if (fl.size() == 0) {
+            log.warn("Zip will not created, no files found");
+            return false;
         }
 
         // assign permanent zip file entry info
@@ -186,11 +192,11 @@ public class ZipImpl implements Zip {
                 }
             }
             zos.finish();
+            return true;
         } catch (IOException e) {
             log.error("Error creating zip file: {}", zipFile, e);
-            throw new RuntimeException(e);
+            return false;
         }
-
     }
     
     private List<File> getFileList(File directory, FilenameFilter filenameFilter, boolean recursive) {

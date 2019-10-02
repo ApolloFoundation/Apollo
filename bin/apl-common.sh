@@ -5,6 +5,9 @@
 # base dir for data files, etc
 APPLICATION="${HOME}/.apl-blockchain"
 
+MIN_MEMORY_RQ=700m
+JAVA_OPT="${JAVA_OPT} -Xms${MIN_MEMORY_RQ}"
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # " 
 # SCRIPT_DIR=`dirname $SCRIPT`

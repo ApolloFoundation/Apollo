@@ -23,9 +23,9 @@ package com.apollocurrency.aplwallet.apl.crypto;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +45,9 @@ public final class Convert {
 
     public static final BigInteger two64 = new BigInteger("18446744073709551616");
     public static final long[] EMPTY_LONG = new long[0];
+    public static final int[] EMPTY_INT = new int[0];
     public static final Long[] EMPTY_OBJECT_LONG = new Long[0];
+    public static final Integer[] EMPTY_OBJECT_INT = new Integer[0];
     public static final byte[] EMPTY_BYTE = new byte[0];
     public static final byte[][] EMPTY_BYTES = new byte[0][];
     public static final String[] EMPTY_STRING = new String[0];
@@ -262,13 +264,32 @@ public final class Convert {
         }
         return result;
     }
+    public static Integer[] toArray(int[] array) {
+        Integer[] result = new Integer[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
 
-    public static Long[] toObjectArray(List<Long> longs) {
+    public static Long[] toObjectLongArray(List<Long> longs) {
         return longs.toArray(EMPTY_OBJECT_LONG);
+    }
+
+    public static Integer[] toObjectIntArray(List<Integer> integers) {
+        return integers.toArray(EMPTY_OBJECT_INT);
     }
 
     public static long[] toArray(Long[] array) {
         long[] result = new long[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public static int[] toArrayInt(Integer[] array) {
+        int[] result = new int[array.length];
         for (int i = 0; i < array.length; i++) {
             result[i] = array[i];
         }
@@ -287,11 +308,7 @@ public final class Convert {
     }
 
     public static byte[] toBytes(String s) {
-        try {
-            return s.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return s.getBytes(StandardCharsets.UTF_8);
     }
 
     public static byte[] toBytes(String s, boolean isText) {
@@ -299,11 +316,7 @@ public final class Convert {
     }
 
     public static String toString(byte[] bytes) {
-        try {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     public static String toString(byte[] bytes, boolean isText) {
