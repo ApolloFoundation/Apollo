@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.app.service;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public interface SecureStorageService {
@@ -35,7 +36,7 @@ public interface SecureStorageService {
     /**
      * Delete secure storage file.
      */
-    boolean deleteSecretStorage();
+    boolean deleteSecretStorage(Path path);
 
     /**
      * Create private key for application.

@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -106,7 +105,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     @Override
     public Path getSecureStorageDir() {
         return vaultKeystoreDir == null
-                ? Paths.get(baseDir, applicationName + "-secure-storage", (chainId))
+                ? Paths.get(baseDir, applicationName + "-dex-storage", (chainId))
                 : vaultKeystoreDir;
     }
 
