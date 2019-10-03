@@ -70,8 +70,7 @@ class DexServiceTest {
 
     @Test
     void testNotEnoughConfirmationsForAplTransaction() {
-        doReturn(1000).when(blockchain).getHeight();
-        doReturn(false).when(blockchain).hasTransaction(123, 970);
+        doReturn(false).when(blockchain).hasConfirmations(123, 30);
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
 
@@ -80,8 +79,7 @@ class DexServiceTest {
 
     @Test
     void testHasEnoughConfirmationsForAplTransaction() {
-        doReturn(100).when(blockchain).getHeight();
-        doReturn(true).when(blockchain).hasTransaction(123, 70);
+        doReturn(true).when(blockchain).hasConfirmations(123, 30);
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
 

@@ -27,6 +27,9 @@ public interface MandatoryTransactionDao {
 
     @Transactional
     @SqlUpdate("DELETE from mandatory_transaction WHERE id = :id")
-    void delete(@Bind("id") long id);
+    int delete(@Bind("id") long id);
 
+    @Transactional
+    @SqlUpdate("DELETE FROM mandatory_transaction")
+    int deleteAll();
 }

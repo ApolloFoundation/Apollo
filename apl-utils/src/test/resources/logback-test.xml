@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
+    <property resource="test-env.properties"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- encoders are assigned the type
@@ -9,10 +10,10 @@
         </encoder>
     </appender>
 
-    <logger name="com.apollocurrency.aplwallet" level="INFO" additivity="false">
+    <root level="ERROR">
         <appender-ref ref="STDOUT"/>
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.db.fulltext" level="WARN" additivity="false"/>
+    </root>
+
     <logger name="org.jboss" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
@@ -20,7 +21,20 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <root level="ERROR">
-        <appender-ref ref="STDOUT" />
-    </root>
+    <if condition='property("apl-test.env").equals("quiet")'>
+        <then>
+            <logger name="com.apollocurrency.aplwallet" level="error" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.db.fulltext" level="WARN" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+        </then>
+        <else>
+            <logger name="com.apollocurrency.aplwallet" level="debug" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+        </else>
+    </if>
+
 </configuration>
