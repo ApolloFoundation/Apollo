@@ -503,7 +503,12 @@ public class DexService {
         return true;
     }
 
+    public void broadcastWhenConfirmed(Transaction tx, Transaction uncTx) {
+        transactionProcessor.broadcastWhenConfirmed(tx, uncTx);
+    }
 
+
+    @Transactional
     public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
@@ -531,6 +536,7 @@ public class DexService {
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
+            transactionProcessor.broadcastWhenConfirmed(contractTx, offerTx);
             // will be broadcasted by DexOrderProcessor when offer will be confirmed
             //            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
         } else {
@@ -592,7 +598,7 @@ public class DexService {
 
     public boolean hasConfirmations(ExchangeContract contract, DexOrder dexOrder) {
         if (dexOrder.getType() == OrderType.BUY) {
-            return hasAplConfirmations(Convert.parseUnsignedLong(contract.getTransferTxId()), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
+            return blockchain.hasConfirmations(Convert.parseUnsignedLong(contract.getTransferTxId()), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
         } else if (dexOrder.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
             return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
         } else {
@@ -604,7 +610,7 @@ public class DexService {
         log.debug("DexService: HasConfirmations reached");
         if (dexOrder.getType() == OrderType.BUY) {
          log.debug("desService: HasConfirmations reached");
-            return hasAplConfirmations(dexOrder.getId(), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
+            return blockchain.hasConfirmations(dexOrder.getId(), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
         } 
         else if (dexOrder.getPairCurrency().isEthOrPax()){
             log.debug("Just a sell Sell Order, add eth confirmations check here...");
@@ -613,12 +619,6 @@ public class DexService {
         
         log.debug("hasConfirmations2: just returning true here...");
         return true;
-    }
-
-    public boolean hasAplConfirmations(long txId, int confirmations) {
-        int currentHeight = blockchain.getHeight();
-        int requiredTxHeight = currentHeight - confirmations;
-        return blockchain.hasTransaction(txId, requiredTxHeight);
     }
 
     
