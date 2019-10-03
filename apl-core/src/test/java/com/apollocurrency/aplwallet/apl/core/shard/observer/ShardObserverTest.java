@@ -10,15 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -29,6 +28,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
@@ -45,7 +45,6 @@ public class ShardObserverTest {
     @Mock
     PropertiesHolder propertiesHolder;
     private ShardObserver shardObserver;
-    private Event firedEvent;
 
     @BeforeEach
     void setUp() {
@@ -55,12 +54,11 @@ public class ShardObserverTest {
     }
 
     private void prepare() {
-
         shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder);
     }
 
     @Test
-    void testSkipShardingWhenShardingIsDisabled() throws ExecutionException, InterruptedException {
+    void testSkipShardingWhenShardingIsDisabled() {
         prepare();
         doReturn(false).when(heightConfig).isShardingEnabled();
 
@@ -71,7 +69,7 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() throws ExecutionException, InterruptedException {
+    void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -83,7 +81,7 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testDoNotShardWhenLastTrimHeightIsZero() throws ExecutionException, InterruptedException {
+    void testDoNotShardWhenLastTrimHeightIsZero() {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -99,17 +97,15 @@ public class ShardObserverTest {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        CompletableFuture<MigrateState> completableFuture = new CompletableFuture<>();
+        CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
+        doReturn(MigrateState.COMPLETED).when(completableFuture.get());
         doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         CompletableFuture<MigrateState> state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         assertNotNull(state);
-//        assertNull(state.get()); // make test to hang
+        assertNotNull(state.get());
         verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
-//        verify(shardMigrationExecutor, times(1)).executeAllOperations();
-//        verify(firedEvent, times(1)).fire(true);
-//        verify(firedEvent, times(1)).fire(false);
     }
 
 }
