@@ -29,7 +29,6 @@ import java.util.Objects;
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
 
-
     private static final String TABLE_NAME = "dex_offer";
     private final Blockchain blockchain;
     private DexOrderMapper dexOrderMapper;
@@ -37,7 +36,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     @Inject
     public DexOrderTable(Blockchain blockchain, DexOrderMapper dexOrderMapper, DexOrderKeyFactory keyFactory) {
-        super(TABLE_NAME, keyFactory, true, null,false);
+        super(TABLE_NAME, keyFactory, true, null, false);
         this.keyFactory = keyFactory;
         this.dexOrderMapper = dexOrderMapper;
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
@@ -76,7 +75,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     public void save(Connection con, DexOrder order) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, type, " +
                 "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")){
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, order.getId());
             pstmt.setLong(++i, order.getAccountId());
@@ -92,6 +91,18 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             pstmt.setString(++i, order.getFromAddress());
             pstmt.setString(++i, order.getToAddress());
             pstmt.executeUpdate();
+        }
+    }
+
+    public List<DexOrder> getPendingOrdersWithoutContracts(int height) {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstm = con.prepareStatement(
+                     "SELECT * FROM dex_order LEFT JOIN dex_contract ON dex_order.id = dex_contract.counter_order_id " +
+                             "OR dex_order.id = dex_contract.order_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ?")) {
+            pstm.setInt(1, height);
+            return CollectionUtil.toList(getManyBy(con, pstm, false));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }
