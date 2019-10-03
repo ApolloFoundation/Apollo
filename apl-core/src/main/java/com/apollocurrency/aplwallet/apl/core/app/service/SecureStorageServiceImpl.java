@@ -15,13 +15,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,9 +27,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class SecureStorageServiceImpl implements SecureStorageService {
     private static final Logger LOG = getLogger(SecureStorageServiceImpl.class);
 
-    private Path secureStoragePath;
-    private static final String SECURE_STORE_FILE_NAME = "secure_store";
-    private static final String SECURE_STORE_KEY = "secure_store_key";
+    private Path secureStoragePath_1;
+    private Path secureStoragePath_2;
+    private static final String SECURE_STORE_FILE_NAME_1 = "dex_store_1";
+    private static final String SECURE_STORE_FILE_NAME_2 = "dex_store_2";
+    private static final String SECURE_STORE_KEY_1 = "dex_store_key_1";
+    private static final String SECURE_STORE_KEY_2 = "dex_store_key_2";
     private Map<Long, String> store = new ConcurrentHashMap<>();
     private OptionDAO optionDAO;
 
@@ -44,7 +44,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
         if(restore) {
             Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
-            this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
+            this.secureStoragePath_1 = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME_1);
+            this.secureStoragePath_2 = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME_2);
 
             if (!Files.exists(secureStorageDirPath)) {
                 try {
@@ -54,16 +55,15 @@ public class SecureStorageServiceImpl implements SecureStorageService {
                 }
             }
 
-            boolean isRestored = restoreSecretStorageIfExist();
-            if (isRestored) {
-                deleteSecretStorage();
-            }
+            restoreSecretStorageIfExist();
         }
     }
 
     @Override
     public void addUserPassPhrase(Long accountId, String passPhrase){
         store.put(accountId, passPhrase);
+
+        storeSecretStorage();
     }
 
     @Override
@@ -80,14 +80,26 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * Store storage.
      * @return true - stored successfully.
      */
+    //TODO optimise synchronisation approach.
     @Override
-    public boolean storeSecretStorage() {
-        String privateKey = createPrivateKeyForStorage();
+    public synchronized boolean storeSecretStorage() {
+        deleteSecretStorage(secureStoragePath_1);
+        storeSecretStorage(SECURE_STORE_KEY_1, secureStoragePath_1);
+
+        deleteSecretStorage(secureStoragePath_2);
+        storeSecretStorage(SECURE_STORE_KEY_2, secureStoragePath_2);
+
+        return true;
+    }
+
+
+    public boolean storeSecretStorage(String keyName, Path secureStoragePath) {
+        String privateKey = optionDAO.get(keyName);
 
         if(privateKey == null){
-            return false;
+            optionDAO.set(keyName, createPrivateKeyForStorage());
         }
-        optionDAO.set(SECURE_STORE_KEY, privateKey);
+        privateKey = optionDAO.get(keyName);
 
         SecureStorage secureStore;
         try {
@@ -96,8 +108,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             LOG.error(e.getMessage());
             return false;
         }
-        return secureStore != null && secureStoragePath != null ?  // shutdown case
-                secureStore.store(privateKey, secureStoragePath.toString()) : false;
+
+        return secureStore.store(privateKey, secureStoragePath.toString());
     }
 
     /**
@@ -106,18 +118,18 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      */
     @Override
     public boolean restoreSecretStorage() {
-        String privateKey = optionDAO.get(SECURE_STORE_KEY);
+        String privateKey = optionDAO.get(SECURE_STORE_KEY_1);
         if(privateKey == null){
             return false;
         }
 
-        SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath.toString());
+        SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath_1.toString());
 
         if(fbWallet == null){
             return false;
         }
 
-        fbWallet.get(privateKey, secureStoragePath.toString());
+        fbWallet.get(privateKey, secureStoragePath_1.toString());
 
         store.putAll(fbWallet.getDexKeys());
 
@@ -129,10 +141,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true deleted successfully.
      */
     @Override
-    public boolean deleteSecretStorage() {
-        File file = new File(secureStoragePath.toString());
-        optionDAO.delete(SECURE_STORE_KEY);
-
+    public boolean deleteSecretStorage(Path path) {
+        File file = new File(path.toString());
         return file.delete();
     }
 
@@ -152,7 +162,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true if file restored.
      */
     public boolean restoreSecretStorageIfExist() {
-        File tmpDir = new File(secureStoragePath.toString());
+        File tmpDir = new File(secureStoragePath_1.toString());
         if (tmpDir.exists()){
             return restoreSecretStorage();
         }
@@ -174,6 +184,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
                 LOG.debug("flushed key for account: {}",accountID);
                 store.remove(accountID);
+
+                storeSecretStorage();
                 return true;
             }
         }
