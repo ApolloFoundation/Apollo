@@ -122,12 +122,15 @@ public class TrimObserver {
             Integer trimHeight = null;
             synchronized (lock) {
                 if (trimDerivedTables) {
-                    trimHeight = trimHeights.poll();
+                    trimHeight = trimHeights.peek();
                 }
             }
             if (trimHeight != null && trimHeight <= blockchain.getHeight()) {
                 log.debug("Perform trim on blockchain height={}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
+                synchronized (lock) {
+                    trimHeights.remove();
+                }
             } else {
                 log.trace("NO performed trim on height={}", trimHeight);
             }
@@ -208,7 +211,7 @@ public class TrimObserver {
                         randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
             }
             synchronized (lock) {
-                scheduleTrimHeight = block.getHeight() - randomTrimHeightIncrease; // decrease next trim height with possible divergence
+                scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease; // increase next trim height with possible divergence
                 log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
                 trimHeights.add(scheduleTrimHeight);
             }

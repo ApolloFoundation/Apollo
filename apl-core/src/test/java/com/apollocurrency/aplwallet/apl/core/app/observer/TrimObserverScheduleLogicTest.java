@@ -150,7 +150,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 < 1000);
+        assertTrue(nextTrimHeight1 >= 1000);
     }
 
     @Test
@@ -161,7 +161,7 @@ class TrimObserverScheduleLogicTest {
         doReturn(5000).when(config).getShardingFrequency();
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 < 1000);
+        assertTrue(nextTrimHeight1 >= 1000);
     }
 
     @Test
@@ -177,7 +177,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(6000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(5987, nextTrimHeight1);
+        assertEquals(6013, nextTrimHeight1);
     }
 
     @Test
@@ -193,7 +193,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(10543, nextTrimHeight1);
+        assertEquals(11457, nextTrimHeight1);
     }
 
     @Test
@@ -209,7 +209,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(10000, nextTrimHeight1);
+        assertEquals(12000, nextTrimHeight1);
     }
 
     @Test
@@ -228,7 +228,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(13371, nextTrimHeight);
+        assertEquals(14629, nextTrimHeight);
 
         // e.g. config has changed at that point
         doReturn(3000).when(config).getShardingFrequency(); // emulate changed config
@@ -245,7 +245,7 @@ class TrimObserverScheduleLogicTest {
         doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
         nextTrimHeight = simulateFireBlockPushed(16000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(15444, nextTrimHeight);
+        assertEquals(16556, nextTrimHeight);
     }
 
     @Test
@@ -263,7 +263,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(13699, nextTrimHeight);
+        assertEquals(14301, nextTrimHeight);
         verify(random, times(1)).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1);
     }
 
