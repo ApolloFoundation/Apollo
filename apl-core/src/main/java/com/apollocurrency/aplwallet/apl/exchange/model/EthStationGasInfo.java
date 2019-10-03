@@ -34,7 +34,7 @@ public class EthStationGasInfo implements EthGasInfo {
 
     @JsonProperty("fast")
     public void setFastSpeedPrice(Double fastSpeedPrice) {
-        this.fastSpeedPrice = fastSpeedPrice;
+        this.fastSpeedPrice = fastSpeedPrice / 10;
     }
 
     public Long getAverageSpeedPrice() {
@@ -43,7 +43,7 @@ public class EthStationGasInfo implements EthGasInfo {
 
     @JsonProperty("average")
     public void setAverageSpeedPrice(Double averageSpeedPrice) {
-        this.averageSpeedPrice = averageSpeedPrice;
+        this.averageSpeedPrice = averageSpeedPrice / 10;
     }
 
     public Long getSafeLowSpeedPrice() {
@@ -52,6 +52,6 @@ public class EthStationGasInfo implements EthGasInfo {
 
     @JsonProperty("safeLow")
     public void setSafeLowSpeedPrice(Double safeLowSpeedPrice) {
-        this.safeLowSpeedPrice = safeLowSpeedPrice;
+        this.safeLowSpeedPrice = safeLowSpeedPrice / 10;
     }
 }
