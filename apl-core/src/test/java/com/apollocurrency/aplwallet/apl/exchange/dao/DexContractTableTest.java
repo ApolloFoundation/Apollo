@@ -9,10 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
@@ -81,11 +81,7 @@ public class DexContractTableTest {
     @Test
     void testGetAll() {
         DbIterator<ExchangeContract> iterator = table.getAll(0, 10);
-        List<ExchangeContract> result = new ArrayList<>(9);
-        while (iterator.hasNext()) {
-            ExchangeContract contract = iterator.next();
-            result.add(contract);
-        }
+        List<ExchangeContract> result = CollectionUtil.toList(iterator);
         assertEquals(9, result.size());
     }
 
