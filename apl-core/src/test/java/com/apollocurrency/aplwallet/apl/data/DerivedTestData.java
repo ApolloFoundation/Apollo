@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChangeableDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChangeableNullableDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChildDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedIdEntity;
 
@@ -105,7 +106,35 @@ public class DerivedTestData {
             VCDE_1_3,
             VCDE_4_2
     );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_1_1 = new VersionedChangeableNullableDerivedEntity(1010L, 1 , 100 , 200, null, "1", false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_1_2 = new VersionedChangeableNullableDerivedEntity(1020L, 1 , 99  , 201, "1", null, false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_1_3 = new VersionedChangeableNullableDerivedEntity(1030L, 1 , 98  , 210, null, "2", false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_1_4 = new VersionedChangeableNullableDerivedEntity(1040L, 1 , 97  , 220, "2", null, true);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_2_1 = new VersionedChangeableNullableDerivedEntity(1050L, 2 , 102 , 205, null, null, false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_2_2 = new VersionedChangeableNullableDerivedEntity(1060L, 2 , 101 , 210, "1", null, false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_2_3 = new VersionedChangeableNullableDerivedEntity(1070L, 2 , 100 , 211, "2", "1", false );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_2_4 = new VersionedChangeableNullableDerivedEntity(1080L, 2 , 99  , 250, null,"2", false);
+    public final VersionedChangeableNullableDerivedEntity VCNDE_2_5 = new VersionedChangeableNullableDerivedEntity(1090L, 2 , 98  , 252, null, null, true );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_3_1 = new VersionedChangeableNullableDerivedEntity(1100L, 3 , 99  , 214, "1", "1", false );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_3_2 = new VersionedChangeableNullableDerivedEntity(1110L, 3 , 98  , 215, null, null,false );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_3_3 = new VersionedChangeableNullableDerivedEntity(1120L, 3 , 97  , 220, null, "2", false );
+    public final VersionedChangeableNullableDerivedEntity VCNDE_3_4 = new VersionedChangeableNullableDerivedEntity(1130L, 3 , 96  , 225, "2", null, true);
 
+    public final List<VersionedChangeableNullableDerivedEntity> ALL_VCNDE = List.of(
+            VCNDE_1_1,
+            VCNDE_1_2,
+            VCNDE_1_3,
+            VCNDE_1_4,
+            VCNDE_2_1,
+            VCNDE_2_2,
+            VCNDE_2_3,
+            VCNDE_2_4,
+            VCNDE_2_5,
+            VCNDE_3_1,
+            VCNDE_3_2,
+            VCNDE_3_3,
+            VCNDE_3_4
+    );
 
 
 

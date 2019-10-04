@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 class InMemoryVersionedDerivedEntityRepositoryTest {
-    DerivedTestData data;
+    private DerivedTestData data;
 
 
     private InMemoryVersionedDerivedEntityRepository<VersionedChangeableDerivedEntity> repository = new InMemoryVersionedDerivedEntityRepository<>(new LongKeyFactory<VersionedChangeableDerivedEntity>("id") {
@@ -35,19 +35,19 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         }
     }, List.of("remaining")) {
         @Override
-        public ChangedValue analyzeChanges(String columnName, Object prevValue, VersionedChangeableDerivedEntity entity) {
+        public Value analyzeChanges(String columnName, Object prevValue, VersionedChangeableDerivedEntity entity) {
             if (!columnName.equals("remaining")) {
                 throw new RuntimeException("Unknown column");
             }
             if (prevValue == null) {
-                return new ChangedValue(entity.getRemaining());
+                return new Value(entity.getRemaining());
             }
             int prevRemaining = ((int) prevValue);
             int currentRemaining = entity.getRemaining();
             if (prevRemaining != currentRemaining) {
-                return new ChangedValue(currentRemaining);
+                return new Value(currentRemaining);
             } else {
-                return new ChangedValue();
+                return new Value();
             }
         }
 
