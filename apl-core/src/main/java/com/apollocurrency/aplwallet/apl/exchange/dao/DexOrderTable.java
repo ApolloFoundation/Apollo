@@ -1,6 +1,9 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -18,28 +21,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
  * Use DexOfferDao for not transactional operations. (f.e. search)
+ * DEX trade in derived table hierarchy is used for exporting/importing shard data.
  */
 @Singleton
 @Slf4j
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
-
     private static final String TABLE_NAME = "dex_offer";
-    private final Blockchain blockchain;
-    private DexOrderMapper dexOrderMapper;
-    private DexOrderKeyFactory keyFactory;
+    private DexOrderMapper dexOrderMapper = new DexOrderMapper();
+    private static DexOrderKeyFactory keyFactory = new DexOrderKeyFactory();
 
     @Inject
-    public DexOrderTable(Blockchain blockchain, DexOrderMapper dexOrderMapper, DexOrderKeyFactory keyFactory) {
+    public DexOrderTable() {
         super(TABLE_NAME, keyFactory, true, null, false);
-        this.keyFactory = keyFactory;
-        this.dexOrderMapper = dexOrderMapper;
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
     }
 
     @Override
@@ -87,7 +85,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             pstmt.setLong(++i, EthUtil.ethToGwei(order.getPairRate()));
             pstmt.setInt(++i, order.getFinishTime());
             pstmt.setByte(++i, (byte) order.getStatus().ordinal());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, order.getHeight());
             pstmt.setString(++i, order.getFromAddress());
             pstmt.setString(++i, order.getToAddress());
             pstmt.executeUpdate();
