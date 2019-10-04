@@ -21,11 +21,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +32,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TrimObserver {
@@ -91,7 +91,7 @@ public class TrimObserver {
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
      */
-    Callable<Void> taskToCall = new Callable<>() {
+    private Callable<Void> taskToCall = new Callable<>() {
         public Void call() {
             try {
                 // Do work.
@@ -119,18 +119,20 @@ public class TrimObserver {
     private void processTrimEvent() {
         log.trace("processTrimEvent() scheduled on previous run...");
         if (trimDerivedTables) {
+            boolean performTrim = false;
             Integer trimHeight = null;
             synchronized (lock) {
                 if (trimDerivedTables) {
                     trimHeight = trimHeights.peek();
+                    performTrim = trimHeight != null && trimHeight <= blockchain.getHeight();
+                    if (performTrim) {
+                        trimHeights.remove();
+                    }
                 }
             }
-            if (trimHeight != null && trimHeight <= blockchain.getHeight()) {
+            if (performTrim) {
                 log.debug("Perform trim on blockchain height={}", trimHeight);
                 trimService.trimDerivedTables(trimHeight, true);
-                synchronized (lock) {
-                    trimHeights.remove();
-                }
             } else {
                 log.trace("NO performed trim on height={}", trimHeight);
             }
