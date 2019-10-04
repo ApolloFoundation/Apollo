@@ -31,7 +31,7 @@ public interface SecureStorageService {
     /**
      * Restore user keys from secure storage.
      */
-    boolean restoreSecretStorage();
+    boolean restoreSecretStorage(Path path);
 
     /**
      * Delete secure storage file.

@@ -105,7 +105,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     @Override
     public Path getSecureStorageDir() {
         return vaultKeystoreDir == null
-                ? Paths.get(baseDir, applicationName + "-dex-storage", (chainId))
+                ? Paths.get(baseDir, applicationName + "-secure-storage", (chainId))
                 : vaultKeystoreDir;
     }
 
