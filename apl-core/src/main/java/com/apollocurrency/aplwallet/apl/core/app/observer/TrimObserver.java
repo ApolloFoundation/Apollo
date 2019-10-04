@@ -195,7 +195,10 @@ public class TrimObserver {
                 }
                 // the boolean - if shard is possible by trim height
                 boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
-                // the boolean - if shard is possible by current blockchain height
+
+                // that boolean - if shard is possible by current blockchain height
+                // we don't want support config params for 'maxRollback', 'shardFrequency' matched incorrectly/badly to each other
+                // so we use that in order do not to 'miss' shard height additionally
                 boolean isShardingOnBlockHeight = block.getHeight() % shardingFrequency == 0;
                 // generate pseudo random for 'trim height divergence'
                 randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
