@@ -615,7 +615,22 @@ public class DexService {
         return true;
     }
 
-    
+    public void reopenPendingOrders(int height, int time) throws AplException.ExecutiveProcessException {
+        if (height % 10 == 0) { // every ten blocks
+            List<DexOrder> pendingOrders = dexOrderTable.getPendingOrdersWithoutContracts(height - Constants.DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS);
+            for (DexOrder pendingOrder : pendingOrders) {
+                if (pendingOrder.getFinishTime() > time) {
+                    pendingOrder.setStatus(OrderStatus.OPEN);
+                } else {
+                    pendingOrder.setStatus(OrderStatus.EXPIRED);
+                    refundAPLFrozenMoney(pendingOrder);
+                }
+                dexOrderTable.insert(pendingOrder);
+            }
+        }
+    }
+
+
 
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);
