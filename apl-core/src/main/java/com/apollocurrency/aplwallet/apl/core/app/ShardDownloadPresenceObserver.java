@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;

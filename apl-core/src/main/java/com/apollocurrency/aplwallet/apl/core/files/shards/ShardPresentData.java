@@ -2,7 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.shard;
+package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

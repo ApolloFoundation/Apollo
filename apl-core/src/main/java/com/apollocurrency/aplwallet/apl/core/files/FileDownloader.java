@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

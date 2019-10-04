@@ -6,8 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.files.shards;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloadedEvent;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardDownloader;
+import com.apollocurrency.aplwallet.apl.core.files.FileEventData;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Any;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,7 +24,9 @@ import javax.inject.Singleton;
 public class ShardsDownloadService {
     private final ShardDownloader shardDownloader;
     private final FileDownloader fileDownloader;
-    
+    @Inject @Any
+    Event<ShardPresentData> shardDataEvent;
+     
     @Inject
     public ShardsDownloadService(ShardDownloader shardDownloader, FileDownloader fileDownloader) {
         this.shardDownloader = shardDownloader;
@@ -44,5 +50,10 @@ public class ShardsDownloadService {
                 return shardPresentEventType;
             }
         };
-    }    
+    }  
+    
+
+    public void onAnyFileDownloadEevent(@Observes @FileDownloadedEvent FileEventData fileData){
+        
+    }
 }
