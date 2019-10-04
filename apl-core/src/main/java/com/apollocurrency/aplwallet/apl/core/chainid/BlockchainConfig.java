@@ -155,7 +155,8 @@ public class BlockchainConfig {
     }
 
     /**
-     * Flag to catch changing
+     * Flag to catch configuration changing
+     * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
      * @return
      */
     public boolean isJustUpdated() {

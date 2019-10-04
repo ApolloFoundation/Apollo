@@ -64,6 +64,7 @@ public class ShardObserver {
                 // config didn't change from previous trim scheduling
                 shardingFrequency = currentConfig.getShardingFrequency();
             } else {
+                // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated()' usage and checking
                 // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
                 shardingFrequency = blockchainConfig.getPreviousConfig().isPresent()
                         && blockchainConfig.getPreviousConfig().get().isShardingEnabled() ?
@@ -82,6 +83,7 @@ public class ShardObserver {
                 log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
                         blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
             }
+            // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
             if (blockchainConfig.isJustUpdated()) {
                 blockchainConfig.resetJustUpdated(); // reset flag
             }
