@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,7 +20,7 @@ import java.sql.SQLException;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class DexTradeEntry extends VersionedDerivedEntity {
+public class DexTradeEntry extends DerivedEntity {
 
     private long transactionID;
     private long senderOfferID; 

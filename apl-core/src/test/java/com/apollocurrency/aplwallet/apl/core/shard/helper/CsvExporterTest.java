@@ -495,22 +495,6 @@ class CsvExporterTest {
         assertEquals(expectedRows, lines);
     }
 
-    @Test
-    void testExportDexTradeTable() throws Exception {
-        long exportedRows = csvExporter.exportDexTradeTable(300, 1);
-        assertEquals(8, exportedRows);
-
-        Path dexTradeExportedFile = dataExportPath.resolve("dex_trade.csv");
-        long exportedFiles = Files.list(dataExportPath).count();
-        assertEquals(1, exportedFiles);
-        assertTrue(Files.exists(dexTradeExportedFile));
-
-        List<String> lines = Files.readAllLines(dexTradeExportedFile);
-        assertEquals(9, lines.size());
-        List<String> expectedRows = Files.readAllLines(dexTradeExportedFile);
-        assertEquals(expectedRows, lines);
-    }
-
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
         int readRowsFromFile = 0;
 

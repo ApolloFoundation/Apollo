@@ -177,7 +177,7 @@ public class ShardMigrationExecutor {
         List<TableInfo> coreTableInfoList = List.of(
                 new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
                 new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
-                new TableInfo(ShardConstants.SHARD_TABLE_NAME), new TableInfo(ShardConstants.DEX_TRADE_TABLE_NAME));
+                new TableInfo(ShardConstants.SHARD_TABLE_NAME));
         tableInfoList.addAll(coreTableInfoList);
         return tableInfoList;
     }

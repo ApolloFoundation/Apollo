@@ -104,12 +104,4 @@ public interface CsvExporter {
      * @throws IllegalStateException when block with given height was not found or db has several blocks at the same height
      */
     long exportBlock(int height) throws IllegalStateException;
-
-    /**
-     * Export DEX trade info at given height
-     * @param targetHeight target blockchain height
-     * @param batchLimit rows in batch to commit
-     * @return number of exported rows
-     */
-    long exportDexTradeTable(int targetHeight, int batchLimit);
 }

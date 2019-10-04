@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_TABLE_NAME;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DEX_TRADE_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
@@ -369,55 +368,6 @@ public class CsvExporterImpl implements CsvExporter {
             throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
         }
         return processCount;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long exportDexTradeTable(int targetHeight, int batchLimit) {
-        int processedCount;
-        int totalCount = 0;
-        // prepare connection + statement + writer
-        TransactionalDataSource dataSource = this.databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM " + DEX_TRADE_TABLE_NAME + " WHERE db_id > ? AND height <= ? ORDER BY db_id LIMIT ?");
-             PreparedStatement countPstmt = con.prepareStatement("SELECT count(*) FROM " + DEX_TRADE_TABLE_NAME + " WHERE height <= ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
-        ) {
-            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
-            countPstmt.setInt(1, targetHeight);
-            ResultSet countRs = countPstmt.executeQuery();
-            countRs.next();
-            int count = countRs.getInt(1);
-            log.debug("Table = {},count - {} at height = {}", DEX_TRADE_TABLE_NAME, count, targetHeight);
-
-            // process non empty tables only
-            if (count > 0) {
-                long from = 0;
-                do { // do exporting into csv with pagination
-                    pstmt.setLong(1, from);
-                    pstmt.setInt(2, targetHeight);
-                    pstmt.setInt(3, batchLimit);
-                    CsvExportData csvExportData = csvWriter.append(DEX_TRADE_TABLE_NAME, pstmt.executeQuery());
-                    processedCount = csvExportData.getProcessCount();
-                    if (processedCount > 0) {
-                        from = (Long) csvExportData.getLastRow().get("DB_ID");
-                    }
-                    totalCount += processedCount;
-                } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", DEX_TRADE_TABLE_NAME, totalCount);
-            } else {
-                // skipped empty table
-                log.debug("Skipped exporting Table = {}", DEX_TRADE_TABLE_NAME);
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Exporting table exception " + DEX_TRADE_TABLE_NAME, e);
-        }
-        return totalCount;
-
     }
 
     private long exportTable(String table, String condition, MinMaxValue minMaxValue, Set<String> excludedColumns, StatementConfigurator statementConfigurator) {
