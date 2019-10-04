@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
