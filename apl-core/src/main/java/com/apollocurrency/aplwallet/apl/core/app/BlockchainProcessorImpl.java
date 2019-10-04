@@ -796,7 +796,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             lookupPeers().sendToSomePeers(block);
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
-        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
+        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block); // send sync event to TrimObserver component
+        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
                 block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
@@ -913,7 +914,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         long start = System.currentTimeMillis();
         try {
-            log.trace("Accepting block: {} height: {}", block.getId(), block.getHeight());
+            log.debug("Accepting block: {} height: {}", block.getId(), block.getHeight());
             isProcessingBlock = true;
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
