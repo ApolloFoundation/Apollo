@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 public class AdminPasswordVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(AdminPasswordVerifier.class);
     private final PropertiesHolder propertiesHolder;
-    public static String adminPassword="";
+    public String adminPassword="";
     public final boolean disableAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     private final TimeService timeService;
@@ -99,7 +99,7 @@ public class AdminPasswordVerifier {
                 throw new ParameterException(LOCKED_ADMIN_PASSWORD);
             }
             String adminPassword = Convert.nullToEmpty(req.getParameter("adminPassword"));
-            if (!adminPassword.equals(adminPassword)) {
+            if (!adminPassword.equals(this.adminPassword)) {
                 if (adminPassword.length() > 0) {
                     if (passwordCount == null) {
                         passwordCount = new PasswordCount();
