@@ -21,18 +21,20 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class SecureStorageServiceImpl implements SecureStorageService {
     private static final Logger LOG = getLogger(SecureStorageServiceImpl.class);
 
-    private Path secureStoragePath_1;
-    private Path secureStoragePath_2;
-    private static final String SECURE_STORE_FILE_NAME_1 = "dex_store_1";
-    private static final String SECURE_STORE_FILE_NAME_2 = "dex_store_2";
-    private static final String SECURE_STORE_KEY_1 = "dex_store_key_1";
-    private static final String SECURE_STORE_KEY_2 = "dex_store_key_2";
+    private Path secureStoragePath;
+    private Path secureStoragePathCopy;
+
+    private static final String SECURE_STORE_FILE_NAME = "secure_store";
+    private static final String SECURE_STORE_FILE_COPY_NAME = "secure_store_copy";
+    private static final String SECURE_STORE_KEY = "secure_store_key";
+
     private Map<Long, String> store = new ConcurrentHashMap<>();
     private OptionDAO optionDAO;
 
@@ -44,8 +46,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
         if(restore) {
             Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
-            this.secureStoragePath_1 = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME_1);
-            this.secureStoragePath_2 = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME_2);
+            this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
+            this.secureStoragePathCopy = secureStorageDirPath.resolve(SECURE_STORE_FILE_COPY_NAME);
 
             if (!Files.exists(secureStorageDirPath)) {
                 try {
@@ -80,14 +82,17 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * Store storage.
      * @return true - stored successfully.
      */
-    //TODO optimise synchronisation approach.
     @Override
     public synchronized boolean storeSecretStorage() {
-        deleteSecretStorage(secureStoragePath_1);
-        storeSecretStorage(SECURE_STORE_KEY_1, secureStoragePath_1);
+        deleteSecretStorage(secureStoragePathCopy);
+        storeSecretStorage(SECURE_STORE_KEY, secureStoragePathCopy);
 
-        deleteSecretStorage(secureStoragePath_2);
-        storeSecretStorage(SECURE_STORE_KEY_2, secureStoragePath_2);
+        // Copy to the original file.
+        try {
+            Files.copy(secureStoragePathCopy, secureStoragePath, REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        }
 
         return true;
     }
@@ -117,19 +122,19 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true - restored successfully.
      */
     @Override
-    public boolean restoreSecretStorage() {
-        String privateKey = optionDAO.get(SECURE_STORE_KEY_1);
+    public boolean restoreSecretStorage(Path file) {
+        String privateKey = optionDAO.get(SECURE_STORE_KEY);
         if(privateKey == null){
             return false;
         }
 
-        SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath_1.toString());
+        SecureStorage fbWallet = SecureStorage.get(privateKey, file.toString());
 
         if(fbWallet == null){
             return false;
         }
 
-        fbWallet.get(privateKey, secureStoragePath_1.toString());
+        fbWallet.get(privateKey, file.toString());
 
         store.putAll(fbWallet.getDexKeys());
 
@@ -162,10 +167,24 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true if file restored.
      */
     public boolean restoreSecretStorageIfExist() {
-        File tmpDir = new File(secureStoragePath_1.toString());
-        if (tmpDir.exists()){
-            return restoreSecretStorage();
+        File tmpDir = new File(secureStoragePath.toString());
+        try {
+            if (tmpDir.exists()) {
+                return restoreSecretStorage(secureStoragePath);
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
+
+        try {
+            File oldDir = new File(secureStoragePathCopy.toString());
+            if (oldDir.exists()) {
+                return restoreSecretStorage(secureStoragePathCopy);
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
+
         return false;
     }
 
