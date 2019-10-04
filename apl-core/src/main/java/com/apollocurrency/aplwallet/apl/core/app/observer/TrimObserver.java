@@ -169,6 +169,7 @@ public class TrimObserver {
         int scheduleTrimHeight = -1;
         if (block.getHeight() % trimFrequency == 0) {
             // we need to know that current config was just changed by 'APPLY_BLOCK' event on earlier processing stage
+            // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() usage
             boolean isConfigJustUpdated = blockchainConfig.isJustUpdated();
             HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
             boolean shardingEnabled = currentConfig.isShardingEnabled();
