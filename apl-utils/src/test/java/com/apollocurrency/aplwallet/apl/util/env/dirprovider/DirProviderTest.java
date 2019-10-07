@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class DirProviderTest {
@@ -72,7 +72,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customDbPath = basePath.resolve("db");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(customDbPath.toString(),
-                customLogPath.toString(), null, null, null, null);
+                customLogPath.toString(), null, null, null, null, null);
 
         UserModeDirProvider dirProvider = new UserModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(USER_MODE_PID_FILE, dirProvider.getPIDFile());
@@ -87,7 +87,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customPidPath = basePath.resolve("pid");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(null,
-                customLogPath.toString(), null, customPidPath.toString(), null, null);
+                customLogPath.toString(), null, customPidPath.toString(), null, null, null);
 
         ServiceModeDirProvider dirProvider = new ServiceModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(customPidPath, dirProvider.getPIDFile());
@@ -103,7 +103,7 @@ public class DirProviderTest {
         Path customLogPath = basePath.resolve("log");
         Path customPidPath = basePath.resolve("pid");
         PredefinedDirLocations predefinedDirLocations = new PredefinedDirLocations(null,
-                customLogPath.toString(), null, customPidPath.toString(), null, null);
+                customLogPath.toString(), null, customPidPath.toString(), null, null, null);
 
         UnixServiceModeDirProvider dirProvider = new UnixServiceModeDirProvider(APPLICATION_NAME, CHAIN_ID, predefinedDirLocations);
         assertEquals(customPidPath, dirProvider.getPIDFile());

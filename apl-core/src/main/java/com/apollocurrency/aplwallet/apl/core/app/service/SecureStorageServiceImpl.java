@@ -37,14 +37,15 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     private Map<Long, String> store = new ConcurrentHashMap<>();
     private OptionDAO optionDAO;
+    private boolean isEnabled;
 
     @Inject
     public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO) {
         this.optionDAO = optionDAO;
 
-        boolean restore = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnable");
+        isEnabled = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnabled");
 
-        if(restore) {
+        if (isEnabled) {
             Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
             this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
             this.secureStoragePathCopy = secureStorageDirPath.resolve(SECURE_STORE_FILE_COPY_NAME);
@@ -53,6 +54,7 @@ public class SecureStorageServiceImpl implements SecureStorageService {
                 try {
                     Files.createDirectories(secureStorageDirPath);
                 } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
                     throw new RuntimeException(e.toString(), e);
                 }
             }
@@ -63,9 +65,11 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public void addUserPassPhrase(Long accountId, String passPhrase){
-        store.put(accountId, passPhrase);
+        if (isEnabled) {
+            store.put(accountId, passPhrase);
 
-        storeSecretStorage();
+            storeSecretStorage();
+        }
     }
 
     @Override
@@ -197,8 +201,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean flushAccountKeys(Long accountID, String passPhrase) {
-        LOG.debug("flushAccountKeys entry point");        
-        if (store.containsKey(accountID)) {            
+        LOG.debug("flushAccountKeys entry point");
+        if (isEnabled && store.containsKey(accountID)) {
             String extractedPass = store.get(accountID);
             if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
                 LOG.debug("flushed key for account: {}",accountID);
@@ -208,6 +212,12 @@ public class SecureStorageServiceImpl implements SecureStorageService {
                 return true;
             }
         }
-        return false;        
-    }        
+        return false;
+    }
+
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
+    }
 }
