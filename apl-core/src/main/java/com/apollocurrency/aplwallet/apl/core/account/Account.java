@@ -407,6 +407,7 @@ public class Account {
                 } else {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
+                    publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
                 }
             }
             account.publicKey = publicKey;
@@ -471,6 +472,7 @@ public class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKey.setHeight(blockchain.getHeight());
+            publicKeyCache.put(dbKey, publicKey);
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -565,6 +567,8 @@ public class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                    height, this.publicKey.getHeight(), height - this.publicKey.getHeight(), EFFECTIVE_BALANCE_CONFIRMATIONS);
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -846,7 +850,7 @@ public class Account {
             if (isGenesis) {
                 genesisPublicKeyTable.insert(publicKey);
             } else {
-               publicKeyTable.insert(publicKey);
+                publicKeyTable.insert(publicKey);
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
@@ -857,7 +861,7 @@ public class Account {
             }
         }
         if (publicKeyCache != null) {
-            publicKeyCache.put(dbKey, publicKey);
+            publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
         }
         this.publicKey = publicKey;
     }
