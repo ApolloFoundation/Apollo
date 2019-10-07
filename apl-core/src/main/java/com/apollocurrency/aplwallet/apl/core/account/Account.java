@@ -472,7 +472,7 @@ public class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKey.setHeight(blockchain.getHeight());
-            publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+            publicKeyCache.put(dbKey, publicKey);
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
