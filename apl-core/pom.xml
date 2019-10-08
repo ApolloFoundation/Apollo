@@ -202,6 +202,11 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.j256.two-factor-auth</groupId>

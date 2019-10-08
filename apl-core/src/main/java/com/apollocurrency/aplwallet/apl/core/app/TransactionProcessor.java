@@ -69,4 +69,5 @@ public interface TransactionProcessor {
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 
+    void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx);
 }

@@ -10,24 +10,25 @@ import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.enterprise.event.Event;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
@@ -44,7 +45,6 @@ public class ShardObserverTest {
     @Mock
     PropertiesHolder propertiesHolder;
     private ShardObserver shardObserver;
-    private Event firedEvent;
 
     @BeforeEach
     void setUp() {
@@ -54,12 +54,11 @@ public class ShardObserverTest {
     }
 
     private void prepare() {
-
         shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder);
     }
 
     @Test
-    void testSkipShardingWhenShardingIsDisabled() throws ExecutionException, InterruptedException {
+    void testSkipShardingWhenShardingIsDisabled() {
         prepare();
         doReturn(false).when(heightConfig).isShardingEnabled();
 
@@ -70,7 +69,7 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() throws ExecutionException, InterruptedException {
+    void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -82,7 +81,7 @@ public class ShardObserverTest {
     }
 
     @Test
-    void testDoNotShardWhenLastTrimHeightIsZero() throws ExecutionException, InterruptedException {
+    void testDoNotShardWhenLastTrimHeightIsZero() {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
@@ -92,22 +91,21 @@ public class ShardObserverTest {
         assertNull(c);
         verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
     }
-    @Disabled // 2 times call to ShardObserver.performSharding() line 117
+
     @Test
     void testShardSuccessful() throws ExecutionException, InterruptedException {
         prepare();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        CompletableFuture<MigrateState> completableFuture = new CompletableFuture<>();
+        CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
+        when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
         doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
-        MigrateState state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE).get();
+        CompletableFuture<MigrateState> state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
-        assertNull(state);
+        assertNotNull(state);
+        assertNotNull(state.get());
         verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
-//        verify(shardMigrationExecutor, times(1)).executeAllOperations();
-//        verify(firedEvent, times(1)).fire(true);
-//        verify(firedEvent, times(1)).fire(false);
     }
 
 }

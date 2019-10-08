@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -44,7 +48,10 @@ import static org.mockito.Mockito.verify;
 @EnableWeld
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
-    ExchangeContract contract = new ExchangeContract(1L, 64L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_3, new byte[32], null, null, new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+    ExchangeContract contract = new ExchangeContract(
+            1L, 64L, 200L, 300L, 1000L, 2000L,
+            ExchangeContractStatus.STEP_3, new byte[32], null, null,
+            new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, 1, false);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()

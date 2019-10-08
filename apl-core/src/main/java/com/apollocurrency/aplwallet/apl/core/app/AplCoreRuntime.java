@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,19 @@ public class AplCoreRuntime {
 
     private String getNodeHealth(){
         StringBuilder sb = new StringBuilder("Node health info\n");
-        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        HikariPoolMXBean jmxBean = databaseManager.getDataSource().getJmxBean();
+        String usedConnections = null;
+        if (jmxBean != null) {
+            int totalConnections = jmxBean.getTotalConnections();
+            int activeConnections = jmxBean.getActiveConnections();
+            int idleConnections = jmxBean.getIdleConnections();
+            int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
+            usedConnections = String.format("Total/Active/Idle connections in Pool '%d'/'%d'/'%d', threadsAwaitPool=[%d], 'main-db'",
+                    totalConnections,
+                    activeConnections,
+                    idleConnections,
+                    threadAwaitingConnections);
+        }
         sb.append("Used DB connections: ").append(usedConnections);
         Runtime runtime = Runtime.getRuntime();
         sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
