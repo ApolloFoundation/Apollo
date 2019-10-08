@@ -18,8 +18,7 @@ public class DexTradeEntryMapper implements RowMapper<DexTradeEntry> {
     
     @Override
     public DexTradeEntry map(ResultSet rs, StatementContext ctx) throws SQLException {
-        DexTradeEntry dexTradeEntry = new DexTradeEntry();
-        dexTradeEntry.setDbId(rs.getLong("db_id"));
+        DexTradeEntry dexTradeEntry = new DexTradeEntry(rs); // set dbId + height
         dexTradeEntry.setTransactionID(rs.getLong("transaction_id"));
         dexTradeEntry.setSenderOfferID(rs.getLong("sender_offer_id"));
         dexTradeEntry.setReceiverOfferID(rs.getLong("receiver_offer_id"));
@@ -29,7 +28,6 @@ public class DexTradeEntryMapper implements RowMapper<DexTradeEntry> {
         dexTradeEntry.setPairCurrency(rs.getByte("pair_currency"));
         dexTradeEntry.setPairRate( EthUtil.gweiToEth(rs.getLong("pair_rate")));
         dexTradeEntry.setFinishTime(rs.getInt("finish_time"));
-        dexTradeEntry.setHeight(rs.getInt("height"));
         return dexTradeEntry;
     }
 

@@ -74,6 +74,8 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -260,6 +262,10 @@ class CsvExporterTest {
         AccountAssetTable.getInstance().init();
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
         dataExportPath = createPath("csvExportDir");
         csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
     }
@@ -472,6 +478,7 @@ class CsvExporterTest {
         assertEquals(0, exportedFiles);
         assertFalse(Files.exists(shardExportedFile));
     }
+
     @Test
     void testExportShardTableIgnoringLastHashesWhenOnlyOneShardExists() throws IOException, URISyntaxException {
         long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(2, 1);
@@ -487,7 +494,6 @@ class CsvExporterTest {
         List<String> expectedRows = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("shard-last-hashes-null.csv").toURI())).subList(0, 2);
         assertEquals(expectedRows, lines);
     }
-
 
     private int importCsvAndCheckContent(String itemName, Path dataExportDir) throws Exception {
         int readRowsFromFile = 0;
