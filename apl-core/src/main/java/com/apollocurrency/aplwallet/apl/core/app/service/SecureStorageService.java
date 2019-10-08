@@ -51,5 +51,7 @@ public interface SecureStorageService {
      * @return flag whether the corresponding pair was found
      */
     boolean flushAccountKeys(Long accountID, String passPhrase);
-    
+
+
+    boolean isEnabled();
 }

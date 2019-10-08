@@ -163,7 +163,8 @@ public class Apollo {
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
                 StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
                 StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
 
@@ -306,7 +307,7 @@ public class Apollo {
 
         try {
             // updated shutdown hook explicitly created with instances
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
 //            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
