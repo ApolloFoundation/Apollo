@@ -852,18 +852,32 @@ public class Account {
             } else {
                 publicKeyTable.insert(publicKey);
             }
+            if (publicKeyCache != null) {
+                updateInCache(dbKey);
+            }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
+                if (publicKeyCache != null) {
+                    updateInCache(dbKey);
+                }
+            }
+        } else {
+            if (publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
             }
         }
-        if (publicKeyCache != null) {
-            publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
-        }
         this.publicKey = publicKey;
+    }
+
+    private void updateInCache(DbKey dbKey) {
+        PublicKey key = publicKeyTable.get(dbKey, true);
+        if (key != null) {
+            publicKeyCache.put(dbKey, key);
+        }
     }
 
     public void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
