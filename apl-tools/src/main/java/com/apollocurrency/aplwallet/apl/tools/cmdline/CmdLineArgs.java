@@ -35,6 +35,8 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
+    @Parameter(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
+    public String dexKeystoreDir = "";
     @Parameter(names = {"--testnet", "-t"}, help = true, description = "Connect to testent [1-3] instead of mainnet")
     public int testnetIdx=0;     
     public boolean isResourceIgnored() {

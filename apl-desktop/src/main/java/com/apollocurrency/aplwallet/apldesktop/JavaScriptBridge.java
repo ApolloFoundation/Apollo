@@ -89,6 +89,11 @@ public class JavaScriptBridge {
         }
     }*/
 
+////TODO: why?
+//    public String getAdminPassword() {
+//        return AdminPasswordVerifier.adminPassword;
+//    }
+
 
     @SuppressWarnings("unused")
     public void popupHandlerURLChange(String newValue) {

@@ -26,7 +26,7 @@ class BackgroundTaskDispatcherTest {
     private TaskDispatcher taskDispatcher;
     private Runnable runnable;
     private Task task;
-    private static int SLEEP_DELAY = 160;
+    private static int SLEEP_DELAY = 180;
     @BeforeEach
     void setUp() {
         runnable = mock(Runnable.class);
@@ -156,7 +156,7 @@ class BackgroundTaskDispatcherTest {
         log.debug("Thread dispatch");
 
         try {
-            Thread.sleep(250);
+            Thread.sleep(300);
         } catch (InterruptedException ignored) {}
 
         assertTrue(count1.get()<9, "Exception was occurred in the Main task.");

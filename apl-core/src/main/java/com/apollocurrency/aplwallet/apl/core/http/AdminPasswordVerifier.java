@@ -34,7 +34,7 @@ import javax.ws.rs.core.Response;
 public class AdminPasswordVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(AdminPasswordVerifier.class);
     private final PropertiesHolder propertiesHolder;
-    public String adminPassword = "";
+    public String adminPassword= "";
     public final boolean disableAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     private final TimeService timeService;

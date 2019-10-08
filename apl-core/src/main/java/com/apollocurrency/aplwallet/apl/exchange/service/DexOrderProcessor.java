@@ -81,22 +81,22 @@ public class DexOrderProcessor {
 
 
     public void processContracts() {
-        List<Long> accounts = secureStorageService.getAccounts();
+        if (secureStorageService.isEnabled()) {
 
-        for (Long account : accounts) {
-            //TODO run this 3 functions not every time. (improve performance)
-            processCancelOrders(account);
-            processExpiredOrders(account);
-            refundDepositsForLostOrders(account);
+            List<Long> accounts = secureStorageService.getAccounts();
 
-
-            processContractsForUserStep1(account);
-            processContractsForUserStep2(account);
-
-            processIncomeContractsForUserStep3(account);
-            processOutcomeContractsForUserStep3(account);
+            for (Long account : accounts) {
+                //TODO run this 3 functions not every time. (improve performance)
+                processCancelOrders(account);
+                processExpiredOrders(account);
+                refundDepositsForLostOrders(account);
+                processContractsForUserStep1(account);
+                processContractsForUserStep2(account);
+                processIncomeContractsForUserStep3(account);
+                processOutcomeContractsForUserStep3(account);
+                processMandatoryTransactions();
+            }
         }
-
     }
 
     /**
