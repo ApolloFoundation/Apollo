@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -24,6 +23,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     private Path dbDir;
     private Path logsDir;
     private Path vaultKeystoreDir;
+    private Path dexKeystoreDir;
     private Path pidFilePath;
     private Path twoFactorAuthDir;
     private Path dataExportDir; // path to keep exported CSV files
@@ -49,6 +49,7 @@ public abstract class AbstractDirProvider implements DirProvider {
             this.pidFilePath = dirLocations.getPidFilePath();
             this.twoFactorAuthDir = dirLocations.getTwoFactorAuthDir();
             this.dataExportDir = dirLocations.getDataExportDir();
+            this.dexKeystoreDir = dirLocations.getDexKeystoreDir();
         }
     }
 
@@ -105,9 +106,9 @@ public abstract class AbstractDirProvider implements DirProvider {
 
     @Override
     public Path getSecureStorageDir() {
-        return vaultKeystoreDir == null
+        return dexKeystoreDir == null
                 ? Paths.get(baseDir, applicationName + "-secure-storage", (chainId))
-                : vaultKeystoreDir;
+                : dexKeystoreDir;
     }
 
     @Override
