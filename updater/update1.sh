@@ -123,7 +123,34 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
+#download corect db
+#TODO Only for version 1.38.7:
+
     cd $1 
+    mkdir tmpdir
+    cd tmpdir
+    curl --retry 100 https://apollowallet.org/db09102019.tar.gz
+    tar -zxvf db09102019.tar.gz
+    
+    if [ $3 == true ]
+    then
+	rm -rfv ~/.apl-blockchain/apl-blockchain-db/b5d7b6
+	cp -rfv $1/tmpdir/b5d7b6 ~/.apl-blockchain/apl-blockchain-db/
+	 
+    else
+	if [ -f $1/conf/apl-blockchain.properties]
+	then
+	    if [ 1 == $(cat $1/conf/apl-blockchain.properties | grep customDbDir | grep -v "#" | wc -l) ]
+	    then 
+		cd $1
+		cd $(cat $1/conf/apl-blockchain.properties | grep customDbDir | cut -f2 -d'=')
+		rm -rfv b5d7b6
+		cp -rfv $1/tmpdir/b5d7b6 .
+	    fi
+	fi
+    fi
+    
+    cd $1
     chmod 755 bin/*.sh
 
     cd $1 
