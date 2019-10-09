@@ -409,7 +409,8 @@ public class Account {
                     publicKeyTable.insert(publicKey);
                 }
                 if (publicKeyCache != null) {
-                    publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                    //TODO: what if insert above fails?
+                       publicKeyCache.put(dbKey, publicKey);
                 }
             }
             account.publicKey = publicKey;
