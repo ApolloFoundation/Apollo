@@ -407,7 +407,9 @@ public class Account {
                 } else {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
-                    publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                    if (publicKeyCache != null) {
+                        publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                    }
                 }
             }
             account.publicKey = publicKey;
@@ -472,7 +474,9 @@ public class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKey.setHeight(blockchain.getHeight());
-            publicKeyCache.put(dbKey, publicKey);
+            if (publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
