@@ -64,13 +64,11 @@ public class SecureStorage extends FbWallet {
         try {
             byte[] key = keyFromPassPhrase(privateKey, salt);
             saveFile(storagePath, key, salt);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            return false;
-        } catch (CryptoNotValidException e) {
+        } catch (IOException | CryptoNotValidException e) {
             LOG.error(e.getMessage(), e);
             return false;
         }
+
         return true;
     }
 

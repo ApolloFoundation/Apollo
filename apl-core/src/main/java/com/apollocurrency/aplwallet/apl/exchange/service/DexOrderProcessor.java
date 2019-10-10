@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
@@ -81,22 +82,25 @@ public class DexOrderProcessor {
 
 
     public void processContracts() {
-        List<Long> accounts = secureStorageService.getAccounts();
+        if (secureStorageService.isEnabled()) {
 
-        for (Long account : accounts) {
-            //TODO run this 3 functions not every time. (improve performance)
-            processCancelOrders(account);
-            processExpiredOrders(account);
-            refundDepositsForLostOrders(account);
+            List<Long> accounts = secureStorageService.getAccounts();
+
+            for (Long account : accounts) {
+                //TODO run this 3 functions not every time. (improve performance)
+                processCancelOrders(account);
+                processExpiredOrders(account);
+                refundDepositsForLostOrders(account);
 
 
-            processContractsForUserStep1(account);
-            processContractsForUserStep2(account);
+                processContractsForUserStep1(account);
+                processContractsForUserStep2(account);
 
-            processIncomeContractsForUserStep3(account);
-            processOutcomeContractsForUserStep3(account);
+                processIncomeContractsForUserStep3(account);
+                processOutcomeContractsForUserStep3(account);
+                processMandatoryTransactions();
+            }
         }
-
     }
 
     /**
@@ -188,8 +192,24 @@ public class DexOrderProcessor {
         if (transferTx != null) {
             MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTx, contractTx.getFullHash(), null);
             mandatoryTransactionDao.insert(transferMandatoryTx);
-            dexService.broadcastWhenConfirmed(transferTx, contractTx);
+            broadcastWhenConfirmed(transferTx, contractTx);
         }
+    }
+
+    private void broadcastWhenConfirmed(Transaction txToBroadcast, Transaction unconfirmedTx) {
+        CompletableFuture.runAsync(() -> {
+            while (!dexService.txExists(unconfirmedTx.getId())) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(250);
+                } catch (InterruptedException ignored) {
+                }
+            }
+            try {
+                dexService.broadcast(txToBroadcast);
+            } catch (Exception e) {
+                log.error(e.toString(), e);
+            }
+        });
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
@@ -581,6 +601,54 @@ public class DexOrderProcessor {
 
     public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
         rollbackCachedOrderDbIds(block.getHeight());
+    }
+
+    void processMandatoryTransactions() {
+        long dbId = 0;
+        while (true) {
+            List<MandatoryTransaction> all = mandatoryTransactionDao.getAll(dbId, ORDERS_SELECT_SIZE);
+            for (MandatoryTransaction currentTx : all) {
+                try {
+                    dbId = currentTx.getDbEntryId();
+                    boolean expired = dexService.isExpired(currentTx);
+                    boolean confirmed = dexService.txExists(currentTx.getId());
+                    if (!expired) {
+                        if (!confirmed) {
+                            byte[] requiredTxHash = currentTx.getRequiredTxHash();
+                            MandatoryTransaction prevRequiredTx = null;
+                            boolean brodcast = true; // brodcast current tx
+                            while (requiredTxHash != null) {
+                                long id = Convert.fullHashToId(requiredTxHash);
+                                MandatoryTransaction requiredTx = mandatoryTransactionDao.get(id);
+                                boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
+                                if (hasConfirmations) {
+                                    if (prevRequiredTx != null) {
+                                        validateAndBroadcast(prevRequiredTx.getTransaction());
+                                        brodcast = false;
+                                    }
+                                    break;
+                                } else if (requiredTx.getRequiredTxHash() == null) {
+                                    validateAndBroadcast(requiredTx.getTransaction());
+                                    break;
+                                }
+                                prevRequiredTx = requiredTx;
+                                requiredTxHash = requiredTx.getRequiredTxHash();
+                            }
+                            if (brodcast) {
+                                validateAndBroadcast(currentTx.getTransaction());
+                            }
+                        }
+                    } else {
+                        mandatoryTransactionDao.delete(currentTx.getId());
+                    }
+                } catch (Throwable e) {
+                    log.warn("Unable to brodcast mandatory tx {}, reason - {}", currentTx.getId(), e.getMessage());
+                }
+            }
+            if (all.size() < ORDERS_SELECT_SIZE) {
+                break;
+            }
+        }
     }
 
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
