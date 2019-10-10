@@ -95,7 +95,8 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
 
     @Override
     protected boolean requirePassword() {
-        return true;
+        //TODO: this is bor bitmart. check for for possible vulnerabilities
+        return false;
     }
 
     @Override
