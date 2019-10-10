@@ -57,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -66,6 +67,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -73,10 +75,17 @@ import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Slf4j
 public final class AplCore {
     private static Logger LOG;// = LoggerFactory.getLogger(AplCore.class);
 
@@ -107,9 +116,15 @@ public final class AplCore {
     private InMemoryCacheManager cacheManager;
 
     @Inject @Setter
+    private DexOrderProcessor dexOrderProcessor;
+
+    @Inject
+    @Setter
     PeersService peers;
     private String initCoreTaskID;
-    
+
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
     }
@@ -246,7 +261,7 @@ public final class AplCore {
                 AccountGuaranteedBalanceTable guaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
                 //Account initialization
                 Cache<DbKey, PublicKey> publicKeyCache = null;
-                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")){
+                if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
                     publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                 }
                 //Account.init(databaseManager, propertiesHolder, blockchainProcessor,blockchainConfig,blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
@@ -293,10 +308,21 @@ public final class AplCore {
                 //start all background tasks
                 taskDispatchManager.dispatch();
 
+                //TODO move to taskDispatchManager Andrii K
+                Runnable task = () -> {
+                    log.info("DexOrderProcessor: start");
+                    try {
+                        dexOrderProcessor.processContracts();
+                    } catch (Throwable e) {
+                        log.warn("DexOrderProcessor error", e);
+                    }
+                    log.info("DexOrderProcessor: finish");
+                };
+                executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
+
                 try {
                     secureRandomInitThread.join(10000);
-                }
-                catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {}
                 testSecureRandom();
 
                 long currentTime = System.currentTimeMillis();
@@ -310,7 +336,7 @@ public final class AplCore {
                 if (API.getWelcomePageUri() != null) {
                     LOG.info("Client UI is at " + API.getWelcomePageUri());
                 }
-                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore inited successfully");
+                aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore initialized successfully");
             }
             catch (final RuntimeException e) {
                 if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {

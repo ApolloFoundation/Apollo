@@ -47,22 +47,22 @@ public abstract class AbstractAPIRequestHandler {
     private BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
-    protected static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static AccountService accountService;
-    private static AccountPublicKeyService accountPublicKeyService;
-    private static AccountLedgerService accountLedgerService;
-    private static AccountAssetService accountAssetService;
-    private static AccountCurrencyService accountCurrencyService;
-    private static AccountInfoService accountInfoService;
-    private static AccountLeaseService accountLeaseService;
-    private static AccountPropertyService accountPropertyService;
+    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private AccountService accountService;
+    private AccountPublicKeyService accountPublicKeyService;
+    private AccountLedgerService accountLedgerService;
+    private AccountAssetService accountAssetService;
+    private AccountCurrencyService accountCurrencyService;
+    private AccountInfoService accountInfoService;
+    private AccountLeaseService accountLeaseService;
+    private AccountPropertyService accountPropertyService;
     private PeersService peers;
 
-    protected PeersService lookupPeersService(){
+    protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }

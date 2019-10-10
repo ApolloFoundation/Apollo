@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
@@ -13,6 +11,8 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Command archive all CSV data into zip and calculate CRC/Hash.

@@ -1068,7 +1068,8 @@ public class TransactionImpl implements Transaction {
         return type.isDuplicate(this, duplicates);
     }
 
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
+    @Override
+    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> duplicates) {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 

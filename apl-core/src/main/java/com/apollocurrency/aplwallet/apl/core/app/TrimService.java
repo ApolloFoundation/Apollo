@@ -17,12 +17,12 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 public class TrimService {
@@ -126,15 +126,12 @@ public class TrimService {
                 trimDao.clear();
                 trimEntry = trimDao.save(trimEntry);
                 dbManager.getDataSource().commit(false);
-//reduce trim time by aguiring lock once causes test fails with strange results (3 but expected 6)
-//TODO: check it
-//                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, true);
                 int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                 if (async) {
-                    log.debug("Fire doTrimDerived async event height '{}'", blockchainHeight);
+                    log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
                     trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 } else {
-                    log.debug("Fire doTrimDerived sync event height '{}'", blockchainHeight);
+                    log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
                     trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                 }
                 trimEntry.setDone(true);
@@ -179,7 +176,7 @@ public class TrimService {
                         table.trim(height);
                         dataSource.commit(false);
                         long duration = System.currentTimeMillis() - startTime;
-                        log.debug("Trim of {} took {} ms",table.getName(), duration);
+                        log.debug("Trim of {} took {} ms", table.getName(), duration);
                         onlyTrimTime += duration;
                     } finally {
                         if (!oneLock) {

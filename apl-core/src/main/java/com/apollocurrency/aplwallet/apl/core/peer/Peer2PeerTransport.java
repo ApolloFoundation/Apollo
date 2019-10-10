@@ -3,9 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.CountingOutputWriter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.google.common.util.concurrent.TimeLimiter;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,13 +25,12 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  *
@@ -49,6 +53,8 @@ public class Peer2PeerTransport {
     private PeerWebSocket inboundWebSocket;
     //this should be final because it is problematic to stop websocket client properly
     private PeerWebSocketClient outboundWebSocket;
+    @Getter
+    private final TimeLimiter limiter;
     @Getter
     private long lastActivity;
 
@@ -77,11 +83,12 @@ public class Peer2PeerTransport {
         return which;
     }
 
-    public Peer2PeerTransport(Peer peer, PeerServlet peerServlet) {
+    public Peer2PeerTransport(Peer peer, PeerServlet peerServlet, TimeLimiter limiter) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = new SoftReference<>(peerServlet);
         rnd = new Random(System.currentTimeMillis());
         lastActivity=System.currentTimeMillis();
+        this.limiter = limiter;
     }
 
     public long getDownloadedVolume() {
@@ -92,8 +99,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             downloadedVolume += volume;
         }
-       //TODO: do we need this here? 
-       // PeersService.notifyListeners(getPeer(), PeersService.Event.DOWNLOADED_VOLUME);
+        //TODO: do we need this here?
+        // PeersService.notifyListeners(getPeer(), PeersService.Event.DOWNLOADED_VOLUME);
     }
 
     public long getUploadedVolume() {
@@ -104,8 +111,8 @@ public class Peer2PeerTransport {
         synchronized (volumeMonitor) {
             uploadedVolume += volume;
         }
-       //TODO: do we need this here? 
-       // PeersService.notifyListeners(getPeer(), PeersService.Event.UPLOADED_VOLUME);
+        //TODO: do we need this here?
+        // PeersService.notifyListeners(getPeer(), PeersService.Event.UPLOADED_VOLUME);
     }
 
     public void onIncomingMessage(String message, PeerWebSocket ws, Long rqId) {
@@ -186,7 +193,7 @@ public class Peer2PeerTransport {
         if(p!=null){
             p.deactivate("Websocket close event");
         }else{
-             ws.close();
+            ws.close();
         }
     }
 
@@ -215,7 +222,7 @@ public class Peer2PeerTransport {
             connection.setReadTimeout(PeersService.readTimeout);
             connection.setRequestProperty("Accept-Encoding", "gzip");
             connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"))) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8))) {
                 CountingOutputWriter cow = new CountingOutputWriter(writer);
                 cow.write(request);
                 updateUploadedVolume(cow.getCount());
@@ -230,7 +237,7 @@ public class Peer2PeerTransport {
                 if ("gzip".equals(connection.getHeaderField("Content-Encoding"))) {
                     responseStream = new GZIPInputStream(responseStream);
                 }
-                try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"))) {
+                try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
                     CountingInputReader cir = new CountingInputReader(reader, PeersService.MAX_RESPONSE_SIZE);
                     updateDownloadedVolume(cir.getCount());
                     StringWriter sw = new StringWriter(1000);
@@ -259,8 +266,10 @@ public class Peer2PeerTransport {
                 return sendOK;
             }
             sendOK = ws.send(wsRequest, requestId);
+        } catch (AplException.AplIOException ex) {
+            log.debug("Can't sent to {}, cause {}", getHostWithPort(), ex.getMessage());
         } catch (IOException ex) {
-            log.debug("Can not sent to {}. Exception: {}", getHostWithPort(), ex);
+            log.debug("Can't sent to "+getHostWithPort(), ex);
         }
         return sendOK;
     }

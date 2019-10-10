@@ -24,15 +24,15 @@ public class ImportantUpdater extends AbstractUpdater {
     private int maxUpdateAttempts;
 
     public ImportantUpdater(UpdateData updateDataHolder, UpdaterService updaterService, UpdaterMediator updaterMediator, int minBlocksDelay,
-                            int maxBlocksDelay, int maxUpdateAttempts) {
-        super(updateDataHolder, updaterService, updaterMediator);
+                            int maxBlocksDelay, int maxUpdateAttempts, UpdateInfo updateInfo) {
+        super(updateDataHolder, updaterService, updaterMediator, updateInfo);
         this.minBlocksDelay = minBlocksDelay;
         this.maxBlocksDelay = maxBlocksDelay;
         this.maxUpdateAttempts = maxUpdateAttempts;
     }
     public ImportantUpdater(UpdateData updateDataHolder, UpdaterService updaterService, UpdaterMediator updaterMediator, int minBlocksDelay,
-                            int maxBlocksDelay) {
-        this(updateDataHolder, updaterService, updaterMediator, minBlocksDelay, maxBlocksDelay, DEFAULT_MAX_UPDATE_ATTEMPTS);
+                            int maxBlocksDelay, UpdateInfo updateInfo) {
+        this(updateDataHolder, updaterService, updaterMediator, minBlocksDelay, maxBlocksDelay, DEFAULT_MAX_UPDATE_ATTEMPTS, updateInfo);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ImportantUpdater extends AbstractUpdater {
     }
 
     private void waitHeight(int updateHeight) {
-        LOG.info("Update estimated height: ", updateHeight);
+        LOG.info("Update estimated height: {}", updateHeight);
         while (updaterMediator.getBlockchainHeight() < updateHeight) {
             try {
                 TimeUnit.MILLISECONDS.sleep(500);

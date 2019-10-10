@@ -26,14 +26,14 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
 import java.math.BigInteger;
@@ -143,6 +143,9 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                         for (Generator generator : sortedForgers) {
+                            if (suspendForging) {
+                                break;
+                            }
                             if (generator.getHitTime() > generationLimit || generator.forge(lastBlock, generationLimit)) {
                                 return;
                             }
@@ -456,12 +459,20 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static void suspendForging() {
-        suspendForging = true;
-        LOG.info("Block generation was suspended");
+        if (!suspendForging) {
+            globalSync.updateLock();
+            suspendForging = true;
+            globalSync.updateUnlock();
+            LOG.info("Block generation was suspended");
+        }
     }
     public static void resumeForging() {
-        suspendForging = false;
-        LOG.debug("Forging was resumed");
+        if (suspendForging) {
+            globalSync.updateLock();
+            suspendForging = false;
+            globalSync.updateUnlock();
+            LOG.debug("Forging was resumed");
+        }
     }
 
 }

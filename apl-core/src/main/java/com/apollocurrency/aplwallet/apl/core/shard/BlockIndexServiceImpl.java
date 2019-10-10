@@ -19,19 +19,20 @@ import static com.apollocurrency.aplwallet.apl.core.cache.BlockIndexCacheConfig.
 /**
  * Block finding service that uses block_index table via BlockIndexDao This
  * class is wrapper of DAO with managed cache
+ *
  * @author alukin@gmail.com
  */
 @Singleton
-public class BlockIndexServiceImpl  implements BlockIndexService {
+public class BlockIndexServiceImpl implements BlockIndexService {
 
     private final BlockIndexDao blockIndexDao;
     private final Cache<Long, BlockIndex> blockIndexCache;
 
     @Inject
     public BlockIndexServiceImpl(BlockIndexDao blockIndexDao,
-                             @CacheProducer
-                             @CacheType(BLOCK_INDEX_CACHE_NAME)
-                                     Cache<Long, BlockIndex> blockIndexCache
+                                 @CacheProducer
+                                 @CacheType(BLOCK_INDEX_CACHE_NAME)
+                                         Cache<Long, BlockIndex> blockIndexCache
     ) {
         this.blockIndexDao = blockIndexDao;
         this.blockIndexCache = blockIndexCache;
@@ -39,13 +40,13 @@ public class BlockIndexServiceImpl  implements BlockIndexService {
 
     @Override
     public BlockIndex getByBlockId(long blockId) {
-        BlockIndex res=null;
-        if(blockIndexCache!=null){
+        BlockIndex res = null;
+        if (blockIndexCache != null) {
             res = blockIndexCache.getIfPresent(blockId);
         }
-        if(res==null){
+        if (res == null) {
             res = blockIndexDao.getByBlockId(blockId);
-            if(blockIndexCache!=null && res!=null){
+            if (blockIndexCache != null && res != null) {
                 blockIndexCache.put(blockId, res);
             }
         }
@@ -73,7 +74,7 @@ public class BlockIndexServiceImpl  implements BlockIndexService {
     @Override
     public Integer getHeight(long id) {
         BlockIndex blockIndex = getByBlockId(id);
-        if (blockIndex != null){
+        if (blockIndex != null) {
             return blockIndex.getBlockHeight();
         }
         return null;
@@ -86,7 +87,7 @@ public class BlockIndexServiceImpl  implements BlockIndexService {
 
     @Override
     public int hardDeleteAllBlockIndex() {
-        if(blockIndexCache!=null){
+        if (blockIndexCache != null) {
             blockIndexCache.cleanUp();
         }
         return blockIndexDao.hardDeleteAllBlockIndex();

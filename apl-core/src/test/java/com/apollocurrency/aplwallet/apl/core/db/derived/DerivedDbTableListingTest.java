@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
@@ -60,6 +61,8 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
@@ -120,7 +123,7 @@ class DerivedDbTableListingTest {
             TaggedDataDao.class,
             PropertyBasedFileConfig.class,
             DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
             KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
@@ -181,6 +184,10 @@ class DerivedDbTableListingTest {
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
         purchaseTable.init();
     }
 
@@ -194,9 +201,9 @@ class DerivedDbTableListingTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-                MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
-                assertTrue(minMaxValue.getMax() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
-                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
+            MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
+            assertTrue(minMaxValue.getMax() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
+            log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
         });
     }
 }

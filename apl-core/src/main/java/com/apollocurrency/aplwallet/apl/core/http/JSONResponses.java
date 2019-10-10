@@ -31,6 +31,8 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.util.Arrays;
+
 public final class JSONResponses {
 
     public static final JSONStreamAware INCORRECT_ALIAS = incorrect("alias");
@@ -469,6 +471,15 @@ public final class JSONResponses {
         response.put("errorDescription", "Cannot access to private transactions! Use GetPrivateBlockchainTransactions instead.");
         PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
     }
+
+    public static final JSONStreamAware DEX_SELF_ORDER_MATCHING_DENIED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5001);
+        response.put("errorDescription", "Unable to match dex order. Self order matching is not allowed");
+        DEX_SELF_ORDER_MATCHING_DENIED = JSON.prepare(response);
+    }
+
 
     public static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();

@@ -29,7 +29,7 @@ public class NetworkServiceImpl implements NetworkService {
     
     @Override
     public Peer findPeerByAddress(String peerAddress){
-        return peersService.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
+        return peersService.findOrCreatePeer(new PeerAddress(peerAddress), null, false);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public Peer putPeerInBlackList(String peerAddress) {
-        Peer peer = peersService.findOrCreatePeer(null,peerAddress, true);
+        Peer peer = peersService.findOrCreatePeer(null, peerAddress, true);
         if (peer != null) {
             peersService.addPeer(peer);
             peer.blacklist("Manual blacklist");
