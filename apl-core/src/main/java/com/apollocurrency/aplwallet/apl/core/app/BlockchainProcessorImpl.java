@@ -1077,6 +1077,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
             dataSource.commit(false); // should happen definately, otherwise
+
         }
         catch (RuntimeException e) {
             log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());

@@ -95,8 +95,8 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     public List<DexOrder> getPendingOrdersWithoutContracts(int height) {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstm = con.prepareStatement(
-                     "SELECT * FROM dex_order LEFT JOIN dex_contract ON dex_order.id = dex_contract.counter_order_id " +
-                             "OR dex_order.id = dex_contract.order_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ?")) {
+                     "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
+                             "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ?")) {
             pstm.setInt(1, height);
             return CollectionUtil.toList(getManyBy(con, pstm, false));
         } catch (SQLException e) {
