@@ -1,21 +1,17 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountBlockCount;
+import com.sun.org.slf4j.internal.Logger;
+import com.sun.org.slf4j.internal.LoggerFactory;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
-import org.bouncycastle.cms.Recipient;
 import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.api.dto.RequestType.*;
-import static com.apollocurrency.aplwallet.api.dto.RequestType.getBalance;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.getInstanse;
