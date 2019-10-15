@@ -45,7 +45,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Singleton
-public class ShardDownloader {
+public class ShardInfoDownloader {
 
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
@@ -67,7 +67,7 @@ public class ShardDownloader {
     
     @Inject
 
-    public ShardDownloader(FileDownloader fileDownloader,
+    public ShardInfoDownloader(FileDownloader fileDownloader,
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,

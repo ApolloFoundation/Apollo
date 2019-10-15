@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class FileEventData {
+    public Boolean fileOk;
+    public String reason;
     public String id;
     public String absPath;
 }

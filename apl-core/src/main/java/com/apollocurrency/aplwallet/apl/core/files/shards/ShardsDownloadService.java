@@ -22,13 +22,13 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class ShardsDownloadService {
-    private final ShardDownloader shardDownloader;
+    private final ShardInfoDownloader shardDownloader;
     private final FileDownloader fileDownloader;
     @Inject @Any
     Event<ShardPresentData> shardDataEvent;
      
     @Inject
-    public ShardsDownloadService(ShardDownloader shardDownloader, FileDownloader fileDownloader) {
+    public ShardsDownloadService(ShardInfoDownloader shardDownloader, FileDownloader fileDownloader) {
         this.shardDownloader = shardDownloader;
         this.fileDownloader = fileDownloader;
     }
