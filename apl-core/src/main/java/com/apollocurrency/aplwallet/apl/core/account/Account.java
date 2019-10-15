@@ -20,24 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -54,11 +36,13 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
@@ -69,13 +53,30 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.cache.Cache;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Used as global access point to all interactions with account and public keys
  * TODO Required massive refactoring
  */
-public final class Account {
+public class Account {
 
     private static final Logger LOG = getLogger(Account.class);
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
@@ -104,7 +105,7 @@ public final class Account {
     private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
     private static AccountPropertyTable accountPropertyTable;
 
-    private static  ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    private static Cache<DbKey, PublicKey> publicKeyCache = null;
            
     
     private static final Listeners<Account, Event> listeners = new Listeners<>();
@@ -130,7 +131,8 @@ public final class Account {
                             GlobalSync globalSync,
                             PublicKeyTable pkTable,
                             AccountTable accTable,
-                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable
+                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+                            Cache<DbKey, PublicKey> cache
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -147,9 +149,9 @@ public final class Account {
         accountPropertyTable = AccountPropertyTable.getInstance();
         genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
 
-        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
-            publicKeyCache = new ConcurrentHashMap<>();
-        }
+        //if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+        publicKeyCache = cache;
+        //}
     }
 
 
@@ -157,23 +159,31 @@ public final class Account {
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            clearCache();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
+            clearCache();
+        }
+
+        private void clearCache() {
             if (publicKeyCache != null) {
-                publicKeyCache.clear();
+                publicKeyCache.cleanUp();
             }
         }
 
         public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
             if (publicKeyCache != null) {
-                publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
+                publicKeyCache.invalidate(AccountTable.newKey(block.getGeneratorId()));
                 block.getOrLoadTransactions().forEach(transaction -> {
-                    publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
+                    publicKeyCache.invalidate(AccountTable.newKey(transaction.getSenderId()));
                     if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
+                        publicKeyCache.invalidate(AccountTable.newKey(transaction.getRecipientId()));
                     }
                     if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
                         ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                         for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.remove(AccountTable.newKey(Account.getId(publicKey)));
+                            publicKeyCache.invalidate(AccountTable.newKey(Account.getId(publicKey)));
                         }
                     }
                 });
@@ -370,20 +380,11 @@ public final class Account {
 
     public static byte[] getPublicKey(long id) {
         DbKey dbKey = PublicKeyTable.newKey(id);
-        byte[] key = null;
-        if (publicKeyCache != null) {
-            key = publicKeyCache.get(dbKey);
+        PublicKey publicKey = getPublicKey(dbKey);
+        if (publicKey == null || publicKey.publicKey == null) {
+            return null;
         }
-        if (key == null) {
-            PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.publicKey) == null) {
-                return null;
-            }
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, key);
-            }
-        }
-        return key;
+        return publicKey.publicKey;
     }
 
     public static Account addOrGetAccount(long id) {
@@ -407,6 +408,14 @@ public final class Account {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
                 }
+                if (publicKeyCache != null) {
+                    //TODO: what if insert above fails?
+                    if (isGenesis) {
+                        publicKeyCache.put(dbKey, genesisPublicKeyTable.get(dbKey, true));
+                    } else {
+                        publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                    }
+                }
             }
             account.publicKey = publicKey;
         }
@@ -414,9 +423,18 @@ public final class Account {
     }
 
     private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        PublicKey publicKey = null;
+        if (publicKeyCache != null) {
+            publicKey = publicKeyCache.getIfPresent(dbKey);
+        }
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey);
+            publicKey = publicKeyTable.get(dbKey);
+            if (publicKey == null) {
+                publicKey = genesisPublicKeyTable.get(dbKey);
+            }
+            if (publicKey != null && publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
         }
         return publicKey;
     }
@@ -461,6 +479,9 @@ public final class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKey.setHeight(blockchain.getHeight());
+            if (publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -555,6 +576,8 @@ public final class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                    height, this.publicKey.getHeight(), height - this.publicKey.getHeight(), EFFECTIVE_BALANCE_CONFIRMATIONS);
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -816,6 +839,16 @@ public final class Account {
         apply(key, false);
     }
 
+    public static void addGenesisPublicKey(byte[] key) {
+        long accountId = Convert.getId(key);
+        PublicKey t = new PublicKey(accountId, key, 0);
+        t.setDbKey(new LongKey(accountId));
+        genesisPublicKeyTable.insert(t);
+        if (publicKeyCache != null) {
+            publicKeyCache.put(t.getDbKey(), t);
+        }
+    }
+
     public void apply(byte[] key, boolean isGenesis) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
@@ -826,7 +859,10 @@ public final class Account {
             if (isGenesis) {
                 genesisPublicKeyTable.insert(publicKey);
             } else {
-               publicKeyTable.insert(publicKey);
+                publicKeyTable.insert(publicKey);
+            }
+            if (publicKeyCache != null) {
+                updateInCache(dbKey);
             }
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
@@ -834,12 +870,23 @@ public final class Account {
             PublicKey dbPublicKey = getPublicKey(dbKey, false);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
                 publicKeyTable.insert(publicKey);
+                if (publicKeyCache != null) {
+                    updateInCache(dbKey);
+                }
+            }
+        } else {
+            if (publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
             }
         }
-        if (publicKeyCache != null) {
+        this.publicKey = publicKey;
+    }
+
+    private void updateInCache(DbKey dbKey) {
+        PublicKey key = publicKeyTable.get(dbKey, true);
+        if (key != null) {
             publicKeyCache.put(dbKey, key);
         }
-        this.publicKey = publicKey;
     }
 
     public void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {

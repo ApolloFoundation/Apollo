@@ -4,16 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.CSV_FILE_EXTENSION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
@@ -25,10 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
@@ -48,7 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxDbId;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
@@ -59,6 +49,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
@@ -71,6 +63,8 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -93,6 +87,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,7 +105,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.CSV_FILE_EXTENSION;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -131,7 +135,6 @@ class CsvWriterReaderDerivedTablesTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
@@ -151,6 +154,7 @@ class CsvWriterReaderDerivedTablesTest {
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
@@ -160,6 +164,7 @@ class CsvWriterReaderDerivedTablesTest {
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(keyStore, KeyStoreService.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
 
     @Inject
@@ -193,6 +198,10 @@ class CsvWriterReaderDerivedTablesTest {
         publicKeyTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
         purchaseTable.init();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
     }
 
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
@@ -227,34 +236,34 @@ class CsvWriterReaderDerivedTablesTest {
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
-                MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
-                minDbValue = minMaxDbId.getMinDbId();
-                maxDbValue = minMaxDbId.getMaxDbId();
-                assertTrue(minMaxDbId.getMaxDbId() >= 0);
-                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
+                MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
+                minDbValue = minMaxValue.getMin();
+                maxDbValue = minMaxValue.getMax();
+                assertTrue(minMaxValue.getMax() >= 0);
+                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
 
                 // process non empty tables
-                if (minMaxDbId.getCount() > 0) {
+                if (minMaxValue.getCount() > 0) {
                     do { // do exporting into csv with pagination
                         CsvExportData csvExportData = csvWriter.append(item.toString(),
-                                item.getRangeByDbId(con, pstmt, minMaxDbId, batchLimit));
+                                item.getRangeByDbId(con, pstmt, minMaxValue, batchLimit));
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxDbId.setMinDbId((Long) csvExportData.getLastRow().get("DB_ID"));
+                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID"));
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
 
                     log.debug("Table = {}, exported rows = {}", item.toString(), totalCount);
-                    assertEquals(minMaxDbId.getCount(), totalCount);
+                    assertEquals(minMaxValue.getCount(), totalCount);
 
                     int deletedCount = dropDataByName(minDbValue, maxDbValue, item.toString()); // drop exported data only
-                    assertEquals(minMaxDbId.getCount(), deletedCount);
+                    assertEquals(minMaxValue.getCount(), deletedCount);
 
                     int imported = importCsv(item.toString(), batchLimit, dirProvider.getDataExportDir());
                     log.debug("Table = {}, imported rows = {}", item.toString(), imported);
-                    assertEquals(minMaxDbId.getCount(), imported, "incorrect value for '" + item.toString() + "'");
+                    assertEquals(minMaxValue.getCount(), imported, "incorrect value for '" + item.toString() + "'");
 
                 }
             } catch (Exception e) {

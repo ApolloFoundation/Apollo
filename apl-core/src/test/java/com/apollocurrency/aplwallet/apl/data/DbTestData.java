@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 import java.util.UUID;
-
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
 public class DbTestData {
     private static final Random random = new Random();
@@ -29,14 +29,9 @@ public class DbTestData {
     }
 
     private static DbProperties getDbUrlProps(String url) {
-        try {
             DbProperties dbProperties = DB_PROPERTIES.deepCopy();
             dbProperties.dbUrl(url);
             return dbProperties;
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Unable to create copy of dbProperties!", e);
-        }
     }
 
     public static DbProperties getDbFileProperties(String fileName) {

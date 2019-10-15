@@ -20,7 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.tools;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -40,15 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PassphraseRecovery {
     private static final Logger LOG = getLogger(PassphraseRecovery.class);
@@ -122,7 +123,7 @@ public final class PassphraseRecovery {
 
     static Map<Long, byte[]> getPublicKeys() {
         DbProperties dbProperties = CDI.current().select(DbProperties.class).get(); // it should be present and initialized
-        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder, new JdbiHandleFactory());
         Map<Long, byte[]> publicKeys = new HashMap<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM public_key WHERE latest=TRUE");

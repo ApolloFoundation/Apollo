@@ -4,19 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -30,9 +17,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.util.List;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 class TrimServiceTest {
     @RegisterExtension
@@ -218,10 +218,10 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
 
-        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeight(2000));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeight(2000, true));
 
-        verify(globalSync, times(2)).readLock();
-        verify(globalSync, times(2)).readUnlock();
+//        verify(globalSync, times(1)).readLock();
+//        verify(globalSync, times(1)).readUnlock();
         verify(dataSource, times(2)).commit(false);
 
         verify(derivedTable, times(2)).trim(2000);

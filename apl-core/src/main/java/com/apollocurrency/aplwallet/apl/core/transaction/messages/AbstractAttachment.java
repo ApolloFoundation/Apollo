@@ -19,8 +19,8 @@ import javax.enterprise.inject.spi.CDI;
  * @author al
  */
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
-    
-    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+
+    protected Blockchain blockchain;
 
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
@@ -78,7 +78,14 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     public int getFinishValidationHeight(Transaction transaction) {
-        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : blockchain.getHeight();
+        return isPhased(transaction) ? transaction.getPhasing().getFinishHeight() - 1 : lookupBlockchain().getHeight();
+    }
+
+    private Blockchain lookupBlockchain() {
+        if (blockchain == null) {
+            blockchain = CDI.current().select(Blockchain.class).get();
+        }
+        return blockchain;
     }
     
 }

@@ -20,17 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import org.jboss.resteasy.cdi.i18n.LogMessages_$logger;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,38 +34,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
 
-    /**
-     * Block cache
-     */
+//    @Inject
+//    @CacheProducer
+//    @CacheType(PUBLIC_KEY_CACHE_NAME)
+//    private Cache<Long, BlockIndex> publicKeyCache;
 
-    private static final int DEFAULT_BLOCK_CACHE_SIZE = 10;
-    private int blockCacheSize;
-    private DatabaseManager databaseManager;
-
-
-    public BlockDaoImpl(int blockCacheSize, DatabaseManager databaseManager) {
-        this.blockCacheSize = blockCacheSize;
-        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
-    }
+    private final DatabaseManager databaseManager;
 
     @Inject
     public BlockDaoImpl(DatabaseManager databaseManager) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, databaseManager);
+        // this.blockCacheSize = blockCacheSize;
+        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
-
 
     private void clearBlockCache() {
 //        synchronized (blockCache) {

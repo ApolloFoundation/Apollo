@@ -20,20 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -43,7 +42,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -72,6 +72,7 @@ public final class Generator implements Comparable<Generator> {
     private static final Listeners<Generator,Event> listeners = new Listeners<>();
 
     private static final ConcurrentMap<Long, Generator> generators = new ConcurrentHashMap<>();
+    //TODO: OL remove or solve this
     private static final Collection<Generator> allGenerators = Collections.unmodifiableCollection(generators.values());
     private static volatile List<Generator> sortedForgers = null;
     private static long lastBlockId;
@@ -135,6 +136,9 @@ public final class Generator implements Comparable<Generator> {
                             }
                         }
                         for (Generator generator : sortedForgers) {
+                            if (suspendForging) {
+                                break;
+                            }
                             if (generator.getHitTime() > generationLimit || generator.forge(lastBlock, generationLimit)) {
                                 return;
                             }
@@ -448,12 +452,20 @@ public final class Generator implements Comparable<Generator> {
     }
 
     public static void suspendForging() {
-        suspendForging = true;
-        LOG.info("Block generation was suspended");
+        if (!suspendForging) {
+            globalSync.updateLock();
+            suspendForging = true;
+            globalSync.updateUnlock();
+            LOG.info("Block generation was suspended");
+        }
     }
     public static void resumeForging() {
-        suspendForging = false;
-        LOG.debug("Forging was resumed");
+        if (suspendForging) {
+            globalSync.updateLock();
+            suspendForging = false;
+            globalSync.updateUnlock();
+            LOG.debug("Forging was resumed");
+        }
     }
 
 }

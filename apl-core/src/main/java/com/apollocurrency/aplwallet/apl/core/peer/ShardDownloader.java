@@ -4,20 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
@@ -33,8 +19,22 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import javax.enterprise.inject.Instance;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.Instance;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -63,11 +63,11 @@ public class ShardDownloader {
     
     @Inject
     public ShardDownloader(Instance<FileDownloader> fileDownloaders,
-            BlockchainConfig blockchainConfig,
-            DownloadableFilesManager downloadableFilesManager,
-            javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
-            PeersService peers) {
+                           BlockchainConfig blockchainConfig,
+                           DownloadableFilesManager downloadableFilesManager,
+                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+                           PropertiesHolder propertiesHolder,
+                           PeersService peers) {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
         this.myChainId = blockchainConfig.getChain().getChainId();
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
@@ -78,7 +78,7 @@ public class ShardDownloader {
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.fileDownloaders=fileDownloaders;
         this.propertiesHolder=propertiesHolder;
-        this.peers=peers;
+        this.peers = peers;
     }
 
     private boolean processPeerShardInfo(Peer p) {
@@ -117,8 +117,8 @@ public class ShardDownloader {
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
-        int counterTotal = 0;        
-        FileDownloader fileDownloader = fileDownloaders.get();        
+        int counterTotal = 0;
+        FileDownloader fileDownloader = fileDownloaders.get();
         Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers

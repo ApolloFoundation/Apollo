@@ -456,7 +456,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
 
 //    protected abstract void save(Connection con, T entity) throws SQLException;
 
-    public final void insert(T t) {
+    public void insert(T t) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");

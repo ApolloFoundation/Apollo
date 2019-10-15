@@ -20,12 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
@@ -39,6 +38,9 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,9 +48,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffler {
     private static final Logger LOG = getLogger(Shuffler.class);
@@ -198,6 +199,7 @@ public final class Shuffler {
     public static void stopAllShufflers() {
         globalSync.writeLock();
         try {
+            LOG.trace("Stopped all [{}] shufflers", shufflingsMap.size());
             shufflingsMap.clear();
         } finally {
             globalSync.writeUnlock();
@@ -311,6 +313,10 @@ public final class Shuffler {
         }
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+            stopAllShufflers();
+        }
+
+        public void onDbHotSwapBegin(@Observes DbHotSwapConfig config) {
             stopAllShufflers();
         }
     }

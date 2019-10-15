@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DirProviderFactoryTest {
     @BeforeEach
@@ -51,7 +51,7 @@ class DirProviderFactoryTest {
         assertNotNull(df.getDbDir());
         assertNotNull(df.getVaultKeystoreDir());
 
-        dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir", "dataExportDir");
+        dirLocations = new PredefinedDirLocations("dbDir", "logDir", "vaultDir", "pidDir", "twoFADir", "dataExportDir", "dexStorage");
         DirProviderFactory.setup(true, UUID.randomUUID(), "Default", dirLocations);
         df =  DirProviderFactory.getProvider();
         assertNotNull(df.getAppBaseDir());

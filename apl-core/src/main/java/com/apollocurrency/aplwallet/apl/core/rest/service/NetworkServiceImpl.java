@@ -11,30 +11,30 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * @see NetworkService
  */
 public class NetworkServiceImpl implements NetworkService {
     private final PeersService peers;
-    
+
     @Inject
     public NetworkServiceImpl(PeersService peers) {
         this.peers = peers;
     }
-    
+
     @Override
     public Peer findPeerByAddress(String peerAddress){
-        return peers.findOrCreatePeer(new PeerAddress(peerAddress),null, false);
+        return peers.findOrCreatePeer(new PeerAddress(peerAddress), null, false);
     }
 
     @Override
     public Peer findOrCreatePeerByAddress(String peerAddress){
-        return peers.findOrCreatePeer(null,peerAddress, true);
+        return peers.findOrCreatePeer(null, peerAddress, true);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public Peer putPeerInBlackList(String peerAddress) {
-        Peer peer = peers.findOrCreatePeer(null,peerAddress, true);
+        Peer peer = peers.findOrCreatePeer(null, peerAddress, true);
         if (peer != null) {
             peers.addPeer(peer);
             peer.blacklist("Manual blacklist");
@@ -82,7 +82,7 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public List<Peer> getOutboundPeers() {
-       return peers.getOutboundPeers(); 
+        return peers.getOutboundPeers();
     }
 
     @Override

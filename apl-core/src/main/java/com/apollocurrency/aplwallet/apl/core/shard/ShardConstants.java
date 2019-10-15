@@ -18,6 +18,7 @@ public class ShardConstants {
     public static final String TRANSACTION_INDEX_TABLE_NAME = "transaction_shard_index";
     public static final String GOODS_TABLE_NAME = "goods";
     public static final String PHASING_POLL_TABLE_NAME = "phasing_poll";
+    public static final String DB_BACKUP_FORMAT = "BACKUP-BEFORE-%s.zip";
     public static final String TAGGED_DATA_TABLE_NAME = "tagged_data";
     public static final String DATA_TAG_TABLE_NAME = "data_tag";
     public static final String UNCONFIRMED_TX_TABLE_NAME = "unconfirmed_transaction";

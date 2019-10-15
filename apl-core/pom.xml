@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.36.6</version>
+        <version>1.38.8</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -70,10 +70,6 @@
             <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
         <!-- RESTEasy runtime dependencies -->
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-servlet-initializer</artifactId>
@@ -169,7 +165,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>27.0.1-jre</version>
         </dependency>
         <!-- unit tests -->
         <dependency>
@@ -205,6 +200,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -248,12 +248,11 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
         </dependency>
-<dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
 
         <dependency>
             <groupId>com.apollocurrency.antifraud</groupId>

@@ -28,7 +28,7 @@ class GetMorePeersThread implements Runnable {
     private final TimeService timeService;
     private final PeersService peers;
     private final JSONStreamAware getPeersRequest;
-      
+
     public GetMorePeersThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
         this.peers = peers;
@@ -37,7 +37,6 @@ class GetMorePeersThread implements Runnable {
         request.put("chainId", peers.blockchainConfig.getChain().getChainId());
         getPeersRequest = JSON.prepareRequest(request);        
     }
-       
 
 
     private volatile boolean updatedPeer;
@@ -65,7 +64,7 @@ class GetMorePeersThread implements Runnable {
                     int now = timeService.getEpochTime();
                     for (int i = 0; i < peersArray.size(); i++) {
                         String announcedAddress = (String) peersArray.get(i);
-                        PeerImpl newPeer = peers.findOrCreatePeer(null,announcedAddress, true);
+                        PeerImpl newPeer = peers.findOrCreatePeer(null, announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);

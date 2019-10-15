@@ -24,16 +24,29 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.36.6");
+    public static final Version VERSION = new Version("1.38.8");
 
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
+    public static final long LONG_TIME_TWO_SECONDS = 2000L;
+    public static final long LONG_TIME_FIVE_SECONDS = 5000L;
+    public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
     public static final long ONE_APL = 100000000;
-    
+    public static final long APL_COMMISSION = 10;
+    public static final long ETH_GAS_MULTIPLIER = 5;
+
+    public static final int OFFER_VALIDATE_OK = 1;
+    public static final int OFFER_VALIDATE_ERROR_APL_FREEZE = -1;
+    public static final int OFFER_VALIDATE_ERROR_APL_COMMISSION = -2;
+    public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3;
+    public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
+    public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
+
     public static final int ONE_DAY_SECS=24*3600;
     
     public static final int MIN_TRANSACTION_SIZE = 176;
@@ -140,15 +153,32 @@ public final class Constants {
 
     //Eth/Pax
     public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
-    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(100_000);
+    public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(300_000);
+    public static final BigInteger GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT = BigInteger.valueOf(400_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
 
     //DEX
 
+    public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
+    public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
+    public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
     //24 h
     public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
+    //24 h TODO CHANGe time
+    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2 = 24 * 60 * 60;
+    //minutes
+    public static Integer DEX_OFFER_PROCESSOR_DELAY = 10;
+
+    //24 h
+    public static Integer DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = 24 * 60 * 60;
+    //168h
+    public static Integer DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
+
+    public static int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
+    public static int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
+    public static int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 
     private Constants() {} // never
 

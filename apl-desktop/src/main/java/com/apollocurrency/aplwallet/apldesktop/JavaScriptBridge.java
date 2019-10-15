@@ -21,8 +21,9 @@
 package com.apollocurrency.aplwallet.apldesktop;
 
 //import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import javafx.application.Platform;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -30,8 +31,6 @@ import org.slf4j.Logger;
 
 import java.awt.*;
 import java.net.URI;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * The class itself and methods in this class are invoked from JavaScript therefore has to be public
@@ -89,10 +88,10 @@ public class JavaScriptBridge {
             return JSON.toJSONString(response);
         }
     }*/
-//TODO: why?
-    public String getAdminPassword() {
-        return AdminPasswordVerifier.adminPassword;
-    }
+////TODO: why?
+//    public String getAdminPassword() {
+//        return AdminPasswordVerifier.adminPassword;
+//    }
 
     @SuppressWarnings("unused")
     public void popupHandlerURLChange(String newValue) {

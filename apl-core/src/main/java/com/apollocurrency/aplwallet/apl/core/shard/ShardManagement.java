@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,13 +31,9 @@ public interface ShardManagement {
     long SHARD_EVICTION_TIME = 15;
 
 
-    /**
-     * Find and return all available shard Ids from main db 'SHARD' table
-     *
-     * @param transactionalDataSource main db data source to search for another shards in
-     * @return shard and file name
-     */
-    List<Long> findAllShards(TransactionalDataSource transactionalDataSource);
+    void initFullShards(Collection<Long> ids);
+
+    void addFullShard(Long shard);
 
     /**
      * That is preferred way to retrieve cached shard data source or create it fully initialized
@@ -80,15 +77,6 @@ public interface ShardManagement {
     TransactionalDataSource getShardDataSourceById(long shardId);
 
     /**
-     * Method gives ability to create new 'shard database' file with fully initialized internal schema.
-     * It opens existing shard file and adds it into cached shard data source list.
-     *
-     * @param shardId shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @return shard database connection pool instance is put into internal cache
-     */
-    TransactionalDataSource createAndAddShard(Long shardId);
-
-    /**
      * Method gives ability to create new 'shard database' file with partially initialized internal schema.
      * It opens existing shard file and adds it into cached shard data source list.
      * Partial schema is specified by dbVersion implementation
@@ -97,7 +85,7 @@ public interface ShardManagement {
      * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
 
 
     /**

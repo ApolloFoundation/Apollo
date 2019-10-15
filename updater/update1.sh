@@ -37,7 +37,7 @@ then
     fi
 
     kill $(ps -ef | grep apl-de | awk '{ print $2 }')
-
+    $1/bin/apl-stop.sh
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
@@ -112,7 +112,7 @@ then
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
-
+    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
     curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
@@ -123,7 +123,37 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
+#download corect db
+#TODO Only for version 1.38.7:
+
+    echo Downloading database...
     cd $1 
+    mkdir tmpdir
+    cd tmpdir
+    rm -rfv db09102019.tar.gz
+    curl --retry 100 https://apollowallet.org/db09102019.tar.gz -o db09102019.tar.gz
+    tar -zxvf db09102019.tar.gz
+    
+    if [ $3 == true ]
+    then
+	rm -rfv ~/.apl-blockchain/apl-blockchain-db/b5d7b6
+	cp -rfv $1/tmpdir/b5d7b6 ~/.apl-blockchain/apl-blockchain-db/
+    else
+	if [ -f $1/conf/apl-blockchain.properties ]
+	then
+	    if [ 1 == $(cat $1/conf/apl-blockchain.properties | grep customDbDir | grep -v "#" | wc -l) ]
+	    then 
+		cd $1
+		cd $(cat $1/conf/apl-blockchain.properties | grep customDbDir | cut -f2 -d'=')
+		rm -rfv b5d7b6
+		cp -rfv $1/tmpdir/b5d7b6 .
+	    fi
+	fi
+    fi
+    
+    rm -rfv $/tmpdir
+
+    cd $1
     chmod 755 bin/*.sh
 
     cd $1 

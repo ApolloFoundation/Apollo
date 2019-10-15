@@ -105,8 +105,8 @@ public final class GetInfo extends PeerRequestHandler {
             peerImpl.remove();
             return INVALID_APPLICATION;
         }
-        
-        if(!PeersService.myPI.getChainId().equalsIgnoreCase(pi.getChainId())){
+
+        if (!PeersService.myPI.getChainId().equalsIgnoreCase(pi.getChainId())) {
             peerImpl.remove();
             return INVALID_CHAINID;
         }

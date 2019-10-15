@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -18,6 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -35,9 +36,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
@@ -91,7 +91,9 @@ public class CsvImporterImpl implements CsvImporter {
     /**
      * {@inheritDoc}
      */
-    private long importCsv(String tableName, int batchLimit, boolean cleanTarget, Double stateIncrease, Map<String, Object> defaultParams, Consumer<Map<String,Object>> rowDataConsumer) throws Exception {
+    private long importCsv(String tableName, int batchLimit, boolean cleanTarget,
+                           Double stateIncrease, Map<String, Object> defaultParams,
+                           Consumer<Map<String, Object>> rowDataConsumer) throws Exception {
 
         Objects.requireNonNull(tableName, "tableName is NULL");
         // skip hard coded table
@@ -134,9 +136,9 @@ public class CsvImporterImpl implements CsvImporter {
 
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
-                ResultSet rs = csvReader.read(
+             ResultSet rs = csvReader.read(
                 inputFileName, null, null);
-             Connection con = dataSource.begin()) {
+             Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin()) {
             csvReader.setOptions("fieldDelimiter="); // do not remove, setting = do not put "" around column/values
 
             // get CSV meta data info
@@ -242,8 +244,8 @@ public class CsvImporterImpl implements CsvImporter {
             }
             dataSource.commit(); // final commit
         } catch (Exception e) {
+            log.error("Error during importing '" + tableName + "'", e);
             dataSource.rollback();
-            log.error("Error during importing " + tableName, e);
             throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {

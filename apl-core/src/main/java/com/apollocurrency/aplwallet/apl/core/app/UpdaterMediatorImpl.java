@@ -4,26 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import org.slf4j.Logger;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 @Singleton
 public class UpdaterMediatorImpl implements UpdaterMediator {
@@ -89,16 +85,6 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
             blockchain = CDI.current().select(BlockchainImpl.class).get();
         }
         return blockchain;
-    }
-
-    @Override
-    public void addUpdateListener(Listener<List<? extends Transaction>> listener) {
-        lookupTransactionProcessor().addListener(listener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
-    }
-
-    @Override
-    public void removeUpdateListener(Listener<List<? extends Transaction>> listener) {
-        lookupTransactionProcessor().removeListener(listener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
     }
 
     @Override

@@ -14,18 +14,24 @@ import java.util.Objects;
 public class NetworkStats {
     private Map<String, Integer> peerHeight;
     private List<PeerDiffStat> peerDiffStats;
+    private Map<String, List<String>> peerShards;
     private int currentMaxDiff;
     private Map<Integer, Integer> diffForTime;
 
-    public NetworkStats(List<PeerDiffStat> peerDiffStats, int currentMaxDiff, Map<Integer, Integer> diffForTime, Map<String, Integer> peerHeight) {
+    public NetworkStats(List<PeerDiffStat> peerDiffStats, int currentMaxDiff, Map<Integer, Integer> diffForTime, Map<String, Integer> peerHeight, Map<String, List<String>> peerShards) {
         this.peerDiffStats = peerDiffStats;
         this.currentMaxDiff = currentMaxDiff;
         this.diffForTime = diffForTime;
         this.peerHeight = peerHeight;
+        this.peerShards = peerShards;
     }
 
     public NetworkStats() {
-        this(new ArrayList<>(), -1, new LinkedHashMap<>(), new HashMap<>());
+        this(new ArrayList<>(), -1, new LinkedHashMap<>(), new HashMap<>(), new HashMap<>());
+    }
+
+    public Map<String, List<String>> getPeerShards() {
+        return peerShards;
     }
 
     @Override
@@ -34,14 +40,15 @@ public class NetworkStats {
         if (!(o instanceof NetworkStats)) return false;
         NetworkStats that = (NetworkStats) o;
         return currentMaxDiff == that.currentMaxDiff &&
+                Objects.equals(peerHeight, that.peerHeight) &&
                 Objects.equals(peerDiffStats, that.peerDiffStats) &&
-                Objects.equals(diffForTime, that.diffForTime) &&
-                Objects.equals(peerHeight, that.peerHeight);
+                Objects.equals(peerShards, that.peerShards) &&
+                Objects.equals(diffForTime, that.diffForTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(peerDiffStats, currentMaxDiff, diffForTime, peerHeight);
+        return Objects.hash(peerHeight, peerDiffStats, peerShards, currentMaxDiff, diffForTime);
     }
 
     public Map<String, Integer> getPeerHeight() {

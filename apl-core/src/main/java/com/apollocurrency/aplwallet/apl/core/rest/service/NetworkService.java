@@ -73,14 +73,17 @@ public interface NetworkService {
      * @return the forced peer
      */
     Peer setForcedPeer(Peer peer);
+
     /**
      * Get list of peers we're connected to
+     *
      * @return list of outbound  peers
      */
     public List<Peer> getOutboundPeers();
-    
+
     /**
      * Get info amout my peer
+     *
      * @return peer info of this peer
      */
 

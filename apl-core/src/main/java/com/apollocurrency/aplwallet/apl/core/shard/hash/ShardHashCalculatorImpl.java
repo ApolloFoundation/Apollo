@@ -12,13 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * <p>This implementation uses merkle tree and block signatures for hash calculations</p>
@@ -106,9 +106,6 @@ public class ShardHashCalculatorImpl implements ShardHashCalculator {
         Shard lastShard = shardDao.getShardAtHeight(height);
         if (lastShard == null) {
             Block genesisBlock = blockchain.getBlockAtHeight(0); // extract genesis block
-            if (genesisBlock == null) { // should not happen
-                throw new RuntimeException("Genesis block not found! Database is inconsistent");
-            }
             prevHash = genesisBlock.getGenerationSignature();
         } else {
             prevHash = lastShard.getShardHash();

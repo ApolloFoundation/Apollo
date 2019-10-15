@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-
-import org.junit.jupiter.api.Test;
 
 class PredefinedDirLocationsTest {
 
@@ -24,7 +24,7 @@ class PredefinedDirLocationsTest {
     @Test
     void createWithDirs() {
         PredefinedDirLocations locations = new PredefinedDirLocations(
-                "dbpath", "logs", "vaultKeyStore", "pidDir", "twoFA", "dataExportDir");
+                "dbpath", "logs", "vaultKeyStore", "pidDir", "twoFA", "dataExportDir", "dexStorage");
         assertNotNull(locations.getDbDir());
         assertNotNull(locations.getLogsDir());
         assertNotNull(locations.getPidFilePath());

@@ -70,6 +70,10 @@ public class HeightConfig {
 
     public String getShardingDigestAlgorithm() {return bp.getShardingSettings().getDigestAlgorithm();}
 
+    public Integer getHeightReqForPhasingApprovalTxFeature() {
+        return bp.getFeaturesHeightRequirement() != null ? bp.getFeaturesHeightRequirement().getPhasingApprovalTx() : null;
+    }
+
     public ConsensusSettings.Type getConsensusType() {return bp.getConsensusSettings().getType();}
 
     public int getAdaptiveBlockTime() {return bp.getConsensusSettings().getAdaptiveForgingSettings().getAdaptiveBlockTime();}

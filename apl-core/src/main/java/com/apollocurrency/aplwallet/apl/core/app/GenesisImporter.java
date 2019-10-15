@@ -4,6 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -20,22 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
@@ -236,9 +236,11 @@ public class GenesisImporter {
 
     public List<Map.Entry<String, Long>> loadGenesisAccounts() {
         String path = blockchainConfig.getChain().getGenesisLocation();
-        log.debug("Genesis accounts path = " + path);
+        log.debug("Genesis accounts json resource path = " + path);
         try (InputStreamReader is = new InputStreamReader(
-                Objects.requireNonNull(GenesisImporter.class.getClassLoader().getResourceAsStream(path)))) {
+                Objects.requireNonNull(
+                        GenesisImporter.class.getClassLoader().getResourceAsStream(path),
+                        "Genesis accounts json was NOT found as resource by path = " + path))) {
             JsonNode root = mapper.readTree(is);
             JsonNode balancesArray = root.get("balances");
             Map<String, Long> map = mapper.readValue(balancesArray.toString(), new TypeReference<Map<String, Long>>(){});

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.36.6</version>
+        <version>1.38.8</version>
     </parent>
 
     <artifactId>apl-utils</artifactId>
@@ -27,7 +27,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>        
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
         <!-- json-simple should be gone after new REST completion -->
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
@@ -85,10 +89,6 @@
             <artifactId>weld-servlet-shaded</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
         </dependency>  
@@ -139,6 +139,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

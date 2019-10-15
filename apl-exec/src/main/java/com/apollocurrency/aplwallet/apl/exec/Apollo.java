@@ -49,6 +49,7 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -59,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -98,10 +98,7 @@ public class Apollo {
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
-        String packageName = "com.apollocurrency.aplwallet";
-        if(logLevel<0){
-            return;
-        }
+        String packageName = "com.apollocurrency.aplwallet.apl";
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }   
@@ -166,7 +163,8 @@ public class Apollo {
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
                 StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
                 StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
 
@@ -202,6 +200,11 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+
+        System.setProperty("javax.net.ssl.trustStore", "cacerts");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+
 //cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
@@ -291,6 +294,8 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
+        if (log != null) log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+
         app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
@@ -304,7 +309,7 @@ public class Apollo {
 
         try {
             // updated shutdown hook explicitly created with instances
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
 //            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);

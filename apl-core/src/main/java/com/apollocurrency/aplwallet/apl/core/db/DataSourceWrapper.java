@@ -20,7 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderStatusFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.DbException;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
+import org.h2.jdbc.JdbcSQLException;
+import org.jdbi.v3.core.ConnectionException;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.h2.H2DatabasePlugin;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.io.PrintWriter;
@@ -31,24 +49,9 @@ import java.sql.Statement;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.BigIntegerArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.DexCurrenciesFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferStatusFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OfferTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.exception.DbException;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.HikariPoolMXBean;
-import org.jdbi.v3.core.ConnectionException;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.h2.H2DatabasePlugin;
-import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.slf4j.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Represent basic implementation of DataSource
@@ -56,6 +59,8 @@ import org.slf4j.Logger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
+    private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
+    private String shardId = "main-db";
 
     @Override
     public Connection getConnection(String username, String password) {
@@ -113,7 +118,7 @@ public class DataSourceWrapper implements DataSource {
     private HikariDataSource dataSource;
     private HikariPoolMXBean jmxBean;
 //    private JdbcConnectionPool dataSource;
-    private volatile int maxActiveConnections;
+//    private volatile int maxActiveConnections;
     private final String dbUrl;
     private final String dbUsername;
     private final String dbPassword;
@@ -136,6 +141,10 @@ public class DataSourceWrapper implements DataSource {
         String dbUrl = dbProperties.getDbUrl();
         if (StringUtils.isBlank(dbUrl)) {
             String dbFileName = dbProperties.getDbFileName();
+            Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
+            if (m.find()) { // if found
+                shardId = m.group(); // store shard id
+            }
             dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
         }
         if (!dbUrl.contains("MV_STORE=")) {
@@ -180,7 +189,8 @@ public class DataSourceWrapper implements DataSource {
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(60_000 * 5); // 5 minutes
         config.setIdleTimeout(60_000 * 20); // 20 minutes in milliseconds
-        log.debug("Creating DataSource pool, path = {}", dbUrl);
+        config.setPoolName(shardId);
+        log.debug("Creating DataSource pool '{}', path = {}", shardId, dbUrl);
         updateTransactionTable(config, dbVersion);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
@@ -208,8 +218,8 @@ public class DataSourceWrapper implements DataSource {
         jdbi.installPlugin(new H2DatabasePlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
-        jdbi.registerArgument(new OfferTypeFactory());
-        jdbi.registerArgument(new OfferStatusFactory());
+        jdbi.registerArgument(new OrderTypeFactory());
+        jdbi.registerArgument(new OrderStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
         jdbi.registerArgument(new ShardStateFactory());
@@ -229,6 +239,10 @@ public class DataSourceWrapper implements DataSource {
     public void init(DbVersion dbVersion) {
         initDatasource(dbVersion);
         setInitialzed();
+    }
+
+    public void update(DbVersion dbVersion) {
+        dbVersion.init(this);
     }
 
     private void updateTransactionTable(HikariConfig config, DbVersion dbVersion) {
@@ -261,10 +275,11 @@ public class DataSourceWrapper implements DataSource {
             stmt.execute("SHUTDOWN COMPACT");
             shutdown = true;
             initialized = false;
-            con.close();
             dataSource.close();
 //            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
+        } catch (JdbcSQLException e) {
+            log.info(e.toString());
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
@@ -294,15 +309,20 @@ public class DataSourceWrapper implements DataSource {
 
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
-        int activeConnections = jmxBean.getActiveConnections();
-//        int activeConnections = dataSource.getActiveConnections();
-        if (activeConnections > maxActiveConnections) {
-            maxActiveConnections = activeConnections;
-            log.debug("Used/Maximum connections from Pool '{}'/'{}' Tread: {}",
-//                    dataSource.getActiveConnections(), dataSource.getMaxConnections());
-                    jmxBean.getActiveConnections(), 
-                    jmxBean.getTotalConnections(), 
-                    Thread.currentThread().getName());
+        if (jmxBean != null) {
+            int totalConnections = jmxBean.getTotalConnections();
+            int activeConnections = jmxBean.getActiveConnections();
+            int idleConnections = jmxBean.getIdleConnections();
+            int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
+            if (log.isDebugEnabled() && idleConnections <= totalConnections * 0.1) {
+                log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
+                        totalConnections,
+                        activeConnections,
+                        idleConnections,
+                        threadAwaitingConnections,
+                        dataSource.getPoolName(), // show main or shard db
+                        Thread.currentThread().getName());
+            }
         }
         return con;
     }
@@ -311,4 +331,12 @@ public class DataSourceWrapper implements DataSource {
         return dbUrl;
     }
 
+    @Override
+    public String toString() {
+        return "DataSourceWrapper{" +
+                "dbUrl='" + dbUrl + '\'' +
+                ", initialized=" + initialized +
+                ", shutdown=" + shutdown +
+                '}';
+    }
 }

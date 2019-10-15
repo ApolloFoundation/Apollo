@@ -6,13 +6,10 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-
-import java.math.BigDecimal;
-import java.util.Random;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -21,9 +18,14 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
@@ -40,19 +42,30 @@ public class DexTradeDaoTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             DaoConfig.class,
-            JdbiHandleFactory.class, 
             DexTradeDao.class
             )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .build();
     
     
     @Inject
-    private DexTradeDao dao;   
-        
+    private DexTradeDao dao;
+
+    @Test
+    void testGetAllExisting() {
+        Integer startTime = 53409447; // hardcoded in 'data.sql' - included value
+        Integer finishTime = 53409464; // hardcoded in 'data.sql' - excluded value
+        List<DexTradeEntry>  result = dao.getDexEntriesForInterval(startTime, finishTime, (byte)1, 0, 1000);
+        assertNotNull(result);
+        assertEquals(6, result.size());
+    }
+
     @Test
     void testInsert() {
+        //clean all data inserted from 'data.sql'
+        dao.hardDeleteAllDexTrade();
 
         Integer currentTimeFake = 1234567890;
         List<DexTradeEntry> storedEntries =  new ArrayList<>();        
@@ -62,7 +75,7 @@ public class DexTradeDaoTest {
         Random random = new Random();
         
         for ( Integer i = currentTimeFake; i<= currentTimeFake + (iters * discr); i+= discr ) {
-            DexTradeEntry dexTradeEntryWrite = new DexTradeEntry();            
+            DexTradeEntry dexTradeEntryWrite = new DexTradeEntry(null, null);
             dexTradeEntryWrite.setSenderOfferID(random.nextLong());        
             dexTradeEntryWrite.setReceiverOfferID(random.nextLong());
             dexTradeEntryWrite.setSenderOfferType((byte)0);        
@@ -99,7 +112,7 @@ public class DexTradeDaoTest {
             assert( currentPairRate.equals(stored.getPairRate()) );         
             assert( current.getTransactionID() == stored.getTransactionID());
             assert( current.getFinishTime().equals(stored.getFinishTime()) );
-            assert( current.getHeight().equals(stored.getHeight()));
+            assert( current.getHeight() == stored.getHeight());
         }
     }
 }

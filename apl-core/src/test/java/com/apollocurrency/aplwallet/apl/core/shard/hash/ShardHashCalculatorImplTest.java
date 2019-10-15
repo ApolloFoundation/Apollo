@@ -4,16 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -26,6 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactor
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -43,11 +41,15 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 public class ShardHashCalculatorImplTest {
@@ -64,17 +66,18 @@ public class ShardHashCalculatorImplTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class)
+    WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
+                    MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class),
                     MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
                     MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),
-                    MockBean.of(mock(NtpTime.class), NtpTime.class)
+                    MockBean.of(mock(NtpTime.class), NtpTime.class),
+                    MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class)
             ).build();
 
     @Inject

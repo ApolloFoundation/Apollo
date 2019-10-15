@@ -8,11 +8,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.UpdaterMediatorImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UpdateAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -25,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +34,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -47,46 +46,39 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private UpdaterMediator updaterMediator;
     private UpdaterFactory updaterFactory;
     private UpdateTransactionVerifier updateTransactionVerifier;
-    private UpdateTransactionProcessingListener updateTransactionProcessingListener;
-    private Listener<UpdateData> updatePerformingListener;
-    private AtomicReference<UpdateInfo> updateInfo;
-
-
-    private void setUpdateInfo(UpdateInfo updateInfo) {
-        this.updateInfo.getAndSet(updateInfo);
-    }
+    private final UpdateInfo updateInfo;
+    private volatile boolean processUpdateTxs = false;
 
     @Override
     public UpdateInfo getUpdateInfo() {
-        return updateInfo.get();
+        return updateInfo;
     }
 
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator) {
-        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService),
-                new UpdateTransactionVerifierImpl(updaterMediator, updaterService));
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
+        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
+                new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo);
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator) {
-        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator);
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo) {
+        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo);
     }
 
 
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateTransactionVerifier updateTransactionVerifier) {
-        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService), updateTransactionVerifier);
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
+        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo), updateTransactionVerifier, updateInfo);
     }
 
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdaterFactory updaterFactory,
-                           UpdateTransactionVerifier updateTransactionVerifier) {
+                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
         this.updaterService = updaterService;
         this.updaterMediator = updaterMediator;
         this.updaterFactory = updaterFactory;
+        this.updateInfo = Objects.requireNonNull(updateInfo);
         this.updateTransactionVerifier = updateTransactionVerifier;
-        this.updateTransactionProcessingListener = new UpdateTransactionProcessingListener(updateTransactionVerifier);
-        this.updatePerformingListener = new UpdatePerformingListener();
-        this.updateInfo = new AtomicReference<>(new UpdateInfo());
     }
+
     @Override
     public void init() {
         init(null, false);
@@ -111,7 +103,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                 updateTransaction = updaterService.getLast();
             }
             catch (Throwable e) {
-                LOG.debug("Updater db error: ", e.getLocalizedMessage());
+                LOG.debug("Updater db error: {}", e.getLocalizedMessage());
             }
             if (updateTransaction != null) {
                 Transaction transaction = updateTransaction.getTransaction();
@@ -127,7 +119,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                             startUpdater = false;
                             startUpdate(updateData);
                         } else {
-                            setUpdateInfo(transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_START));
+                            updateState(transaction, UpdateInfo.UpdateState.REQUIRED_START);
                         }
                     }
                 } else {
@@ -138,8 +130,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                                 " " + " updateVersion: " + expectedVersion);
                         if (transaction.getType() == Update.CRITICAL) {
                             updaterMediator.suspendBlockchain();
-                            UpdateInfo currentUpdateInfo = transactionToUpdateInfo(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
-                            setUpdateInfo(currentUpdateInfo);
+                            updateState(transaction, UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL);
                             startUpdater = false;
                             LOG.error("Manual install required for critical update!");
                         } else {
@@ -149,9 +140,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
                 }
             }
         }
-        if (startUpdater) {
-            registerListeners();
-        }
+        processUpdateTxs = startUpdater;
     }
 
     private UpdateAttachment loadFromFile(String updateAttachmentFile) {
@@ -201,112 +190,47 @@ public class UpdaterCoreImpl implements UpdaterCore {
 
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
-        setUpdateInfo(updater.getUpdateInfo());
         getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }
 
-
-    public class UpdateTransactionProcessingListener implements Listener<List<? extends Transaction>> {
-        private UpdateTransactionVerifier verifier;
-        private final Listeners<UpdateData, UpdateEvent> listeners = new Listeners<>();
-        public UpdateTransactionProcessingListener(UpdateTransactionVerifier verifier) {
-            this.verifier = verifier;
-        }
-
-        public void addListener(UpdateEvent event, Listener<UpdateData> updateDataListener) {
-            listeners.addListener(updateDataListener, event);
-        }
-        public void removeListener(UpdateEvent event, Listener<UpdateData> updateDataListener) {
-            listeners.removeListener(updateDataListener, event);
-        }
-        @Override
-        public void notify(List<? extends Transaction> transactions) {
+    public void onTransactionsConfirmed(@Observes @TxEvent(TxEventType.ADDED_CONFIRMED_TRANSACTIONS) List<Transaction> transactions) {
+        if (processUpdateTxs) {
             transactions.forEach(transaction -> {
-                UpdateData updateData = verifier.process(transaction);
+                UpdateData updateData = updateTransactionVerifier.process(transaction);
                 if (updateData != null) {
-                    if (updateData.isAutomaticUpdate()) {
-                        updaterMediator.removeUpdateListener(this);
-                    }
                     LOG.debug("Found appropriate update transaction: " + updateData.getAttachment().getJSONObject().toJSONString());
-                    listeners.notify(updateData, UpdateEvent.NEW_UPDATE);
+                    updaterService.clearAndSave(new UpdateTransaction(updateData.getTransactionId(), false));
+                    if (updateData.isAutomaticUpdate()) {
+                        processUpdateTxs = false;
+                        startUpdate(updateData);
+                    } else {
+                        updateState(updateData, UpdateInfo.UpdateState.REQUIRED_START);
+                    }
                 }
             });
         }
     }
 
-    private class UpdatePerformingListener implements Listener<UpdateData> {
-
-        @Override
-        public void notify(UpdateData updateData) {
-            updaterService.clearAndSave(new UpdateTransaction(updateData.getTransactionId(), false));
-            if (updateData.isAutomaticUpdate()) {
-                deregisterUpdateProcessingListener();
-                startUpdate(updateData);
-            } else {
-                UpdateInfo updateInfo = transactionToUpdateInfo(updateData, UpdateInfo.UpdateState.REQUIRED_START);
-                setUpdateInfo(updateInfo);
-            }
-        }
-    }
-
-    private UpdateInfo transactionToUpdateInfo(UpdateData updateData, UpdateInfo.UpdateState state) {;
+    private void updateState(UpdateData updateData, UpdateInfo.UpdateState state) {
         UpdateAttachment updateAttachment = updateData.getAttachment();
-
-        return new UpdateInfo(true,
-                updateData.getTransactionId(),
-                ((Update) updateAttachment.getTransactionType()).getLevel(),
-//                updaterMediator.getBlockchainHeight(),
-//                from(updateAttachment.getTransactionType()),
-                updateAttachment.getAppVersion(),
-                state);
-    }
-
-    private UpdateInfo transactionToUpdateInfo(Transaction transaction, UpdateInfo.UpdateState state) {;
-        UpdateAttachment updateAttachment = (UpdateAttachment) transaction.getAttachment();
-
-        return new UpdateInfo(true,
-                transaction.getId(),
-                ((Update) updateAttachment.getTransactionType()).getLevel(),
-//                updaterMediator.getBlockchainHeight(),
-//                from(updateAttachment.getTransactionType()),
-                updateAttachment.getAppVersion(),
-                state);
-    }
-
-    public enum UpdateEvent {
-        NEW_UPDATE
-    }
-
-    private Level from(TransactionType type) {
-
-        if (type == Update.CRITICAL) {
-            return Level.CRITICAL;
-        } else if (type == Update.IMPORTANT) {
-            return Level.IMPORTANT;
-        } else if (type == Update.MINOR) {
-            return Level.MINOR;
+        synchronized (updateInfo) {
+            updateInfo.setUpdate(true);
+            updateInfo.setId(updateData.getTransactionId());
+            updateInfo.setLevel(((Update) updateAttachment.getTransactionType()).getLevel());
+            updateInfo.setVersion(updateAttachment.getAppVersion());
+            updateInfo.setUpdateState(state);
         }
-        return null;
     }
 
-    @Override
-    public void shutdown() {
-        deregisterListeners();
-    }
-
-    private void deregisterUpdateProcessingListener() {
-        updaterMediator.removeUpdateListener(updateTransactionProcessingListener);
-    }
-
-    private void registerListeners() {
-        updateTransactionProcessingListener.addListener(UpdateEvent.NEW_UPDATE, updatePerformingListener);
-        updaterMediator.addUpdateListener(updateTransactionProcessingListener);
-    }
-
-    private void deregisterListeners() {
-        deregisterUpdateProcessingListener();
-        updateTransactionProcessingListener.removeListener(UpdateEvent.NEW_UPDATE, updatePerformingListener);
+    private void updateState(Transaction transaction, UpdateInfo.UpdateState state) {
+        UpdateAttachment updateAttachment = (UpdateAttachment) transaction.getAttachment();
+        synchronized (updateInfo) {
+            updateInfo.setUpdate(true);
+            updateInfo.setId(transaction.getId());
+            updateInfo.setVersion(updateAttachment.getAppVersion());
+            updateInfo.setUpdateState(state);
+        }
     }
 }

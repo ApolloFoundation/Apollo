@@ -32,16 +32,16 @@ public class ChainsConfigLoaderTest {
     private static UUID chainId1 = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES1 = Arrays.asList(
-        new BlockchainProperties(0, 255, 60, 67, 53, 30000000000L),
+        new BlockchainProperties(0, 255, 60, 67, 53, 30000000000L, new FeaturesHeightRequirement(0)),
             new BlockchainProperties(2000, 300, 2, 4, 1,  30000000000L, new ConsensusSettings(ConsensusSettings.Type.POS,
                     new AdaptiveForgingSettings(true, 60, 0))),
-            new BlockchainProperties(42300, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
+            new BlockchainProperties(42300, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0)), new FeaturesHeightRequirement(0)),
             new BlockchainProperties(100000, 300, 2, 4, 1, 30000000000L, new ShardingSettings(true, 1_000_000),
-                    new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
+                    new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0)), new FeaturesHeightRequirement(0)),
             new BlockchainProperties(100100, 300, 5, 7, 2, 30000000000L, new ShardingSettings(true, "SHA-512"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
-            new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8)
+            new BlockchainProperties(0, 2000, 2, 3, 1, (long) 1e8,  new FeaturesHeightRequirement(0))
     );
 
     private static final Chain CHAIN1 = new Chain(chainId1, true, Collections.emptyList(), Arrays.asList("51.15.250.32",

@@ -14,6 +14,8 @@ import java.math.BigInteger;
 
 public class EthUtil {
 
+    private static final String ETH_ADDRESS_PATTERN = "^0x[0-9a-f]{40}$";
+
     /**
      * Generate new account with random key.
      * @return EthWallet
@@ -50,24 +52,22 @@ public class EthUtil {
         return weiToEther(gweiToWei(gwei));
     }
 
-    public static BigDecimal aplToEth(Long apl) {
-        return weiToEther(gweiToWei(aplToGwei(apl)));
+    public static BigDecimal atmToEth(Long apl) {
+        return weiToEther(gweiToWei(atmToGwei(apl)));
     }
 
-    public static Long aplToGwei(Long apl) {
+    public static Long atmToGwei(Long apl) {
         return apl * 10;
     }
 
-    public static Long gweiToApl(Long gwei) {
+    public static Long gweiToAtm(Long gwei) {
         return weiToEther(gweiToWei(gwei)).multiply(BigDecimal.valueOf(Constants.ONE_APL)).longValue();
     }
 
 
 
     public static boolean isAddressValid(String address){
-        String regex = "^0x[0-9a-f]{40}$";
-
-        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(regex);
+        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);
     }
 
 }

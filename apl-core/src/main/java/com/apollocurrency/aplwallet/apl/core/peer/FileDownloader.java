@@ -92,7 +92,7 @@ public class FileDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.peers=peers;
+        this.peers = peers;
     }
     
     public void setFileId(String fileID){

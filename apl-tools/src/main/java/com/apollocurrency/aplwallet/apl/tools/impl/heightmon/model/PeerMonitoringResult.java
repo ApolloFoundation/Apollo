@@ -4,20 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.Block;
 import com.apollocurrency.aplwallet.apl.util.Version;
 
+import java.util.List;
+
 public class PeerMonitoringResult {
     private List<Block> blocks;
+    private List<ShardDTO> shards;
     private int height;
     private Version version;
 
-    public PeerMonitoringResult(List<Block> blocks, Version version, int height) {
+    public PeerMonitoringResult(List<Block> blocks, Version version, int height, List<ShardDTO> shards) {
         this.blocks = blocks;
         this.height = height;
         this.version = version;
+        this.shards = shards;
     }
 
     public int getHeight() {
@@ -42,5 +44,13 @@ public class PeerMonitoringResult {
 
     public void setVersion(Version version) {
         this.version = version;
+    }
+
+    public List<ShardDTO> getShards() {
+        return shards;
+    }
+
+    public void setShards(List<ShardDTO> shards) {
+        this.shards = shards;
     }
 }

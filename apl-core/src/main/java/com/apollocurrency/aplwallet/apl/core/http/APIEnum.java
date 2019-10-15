@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import java.util.*;
-
 import com.apollocurrency.aplwallet.apl.core.http.get.CalculateFullHash;
 import com.apollocurrency.aplwallet.apl.core.http.get.CanDeleteCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.get.DecodeHallmark;
@@ -246,8 +244,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.DividendPayment;
 import com.apollocurrency.aplwallet.apl.core.http.post.DumpPeers;
 import com.apollocurrency.aplwallet.apl.core.http.post.Enable2FA;
 import com.apollocurrency.aplwallet.apl.core.http.post.EncodeQRCode;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventRegister;
-import com.apollocurrency.aplwallet.apl.core.http.post.EventWait;
 import com.apollocurrency.aplwallet.apl.core.http.post.ExportKey;
 import com.apollocurrency.aplwallet.apl.core.http.post.ExtendTaggedData;
 import com.apollocurrency.aplwallet.apl.core.http.post.FullReset;
@@ -297,7 +293,13 @@ import com.apollocurrency.aplwallet.apl.core.http.post.TransferAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransferCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.TrimDerivedTables;
 import com.apollocurrency.aplwallet.apl.core.http.post.UploadTaggedData;
-import org.apache.http.annotation.Obsolete;
+
+import java.util.Base64;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum APIEnum {
     //To preserve compatibility, please add new APIs to the end of the enum.
@@ -330,8 +332,6 @@ public enum APIEnum {
     DECODE_Q_R_CODE("decodeQRCode", new DecodeQRCode()),
     ENCODE_Q_R_CODE("encodeQRCode", new  EncodeQRCode()),
     ENCRYPT_TO("encryptTo", new EncryptTo()),
-    EVENT_REGISTER("eventRegister", new EventRegister()),
-    EVENT_WAIT("eventWait", new EventWait()),
     GENERATE_TOKEN("generateToken", new GenerateToken()),
     GENERATE_FILE_TOKEN("generateFileToken", new GenerateFileToken()),
     GET_ACCOUNT("getAccount", new GetAccount()),

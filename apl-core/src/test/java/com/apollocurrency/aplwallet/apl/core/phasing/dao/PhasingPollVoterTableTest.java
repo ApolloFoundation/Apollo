@@ -4,12 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -24,6 +21,8 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollVoter;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -38,8 +37,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import java.util.List;
 import javax.inject.Inject;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -47,7 +49,6 @@ public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVote
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class,
             GlobalSyncImpl.class,
             PhasingPollVoterTable.class,
             FullTextConfigImpl.class,
@@ -55,10 +56,12 @@ public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVote
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     PhasingPollVoterTable table;

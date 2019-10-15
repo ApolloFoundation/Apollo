@@ -1,17 +1,17 @@
 package com.apollocurrency.aplwallet.apl.eth.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class EthUtilTest {
 
     private BigInteger WEI = new BigInteger("1234567890000000000");
     private Long GWEI = 1234567890L;
-    private Long APL = 123456789L;
+    private Long ATM = 123456789L;
     private BigDecimal ETH = new BigDecimal("1.23456789");
 
     @Test
@@ -45,14 +45,14 @@ class EthUtilTest {
     }
 
     @Test
-    void aplToEth() {
-        BigDecimal eth = EthUtil.aplToEth(APL);
+    void atmToEth() {
+        BigDecimal eth = EthUtil.atmToEth(ATM);
         assertEquals(ETH, eth);
     }
 
     @Test
-    void gweiToApl() {
-        Long apl = EthUtil.gweiToApl(GWEI);
-        assertEquals(APL, apl);
+    void gweiToAtm() {
+        Long apl = EthUtil.gweiToAtm(GWEI);
+        assertEquals(ATM, apl);
     }
 }

@@ -4,28 +4,29 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.zaxxer.hikari.HikariPoolMXBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Runtime environment for AplCores (singleton) TODO: make it injectable
@@ -61,8 +62,8 @@ public class AplCoreRuntime {
     public AplCoreRuntime() {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
-        this.peers = CDI.current().select(PeersService.class).get(); 
-        
+        this.peers = CDI.current().select(PeersService.class).get();
+
     }
 
     public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
@@ -86,20 +87,41 @@ public class AplCoreRuntime {
         ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
         long[] ids = tmx.findDeadlockedThreads();
         if (ids != null) {
+            // threads that are in deadlock waiting to acquire object monitors or ownable synchronizers
             sb.append("DeadLocked threads found:\n");
-            ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
-            sb.append("Following Threads are deadlocked:\n");
-            for (ThreadInfo info : infos) {
-                sb.append(info.toString()).append("\n");
-            }
-        }else{
+            printDeadLockedThreadInfo(sb, tmx, ids);
+        } else if (tmx.findMonitorDeadlockedThreads() != null) {
+            //threads that are blocked waiting to enter a synchronization block or waiting to reenter a synchronization block
+            sb.append("Monitor DeadLocked threads found:\n");
+            printDeadLockedThreadInfo(sb, tmx, tmx.findMonitorDeadlockedThreads());
+        } else {
             sb.append("\nNo dead-locked threads found.\n");
-        }        
+        }
+    }
+
+    private void printDeadLockedThreadInfo(StringBuilder sb, ThreadMXBean tmx, long[] ids) {
+        ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
+        sb.append("Following Threads are deadlocked:\n");
+        for (ThreadInfo info : infos) {
+            sb.append(info.toString()).append("\n");
+        }
     }
 
     private String getNodeHealth(){
         StringBuilder sb = new StringBuilder("Node health info\n");
-        int usedConnections = databaseManager.getDataSource().getJmxBean().getActiveConnections();
+        HikariPoolMXBean jmxBean = databaseManager.getDataSource().getJmxBean();
+        String usedConnections = null;
+        if (jmxBean != null) {
+            int totalConnections = jmxBean.getTotalConnections();
+            int activeConnections = jmxBean.getActiveConnections();
+            int idleConnections = jmxBean.getIdleConnections();
+            int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
+            usedConnections = String.format("Total/Active/Idle connections in Pool '%d'/'%d'/'%d', threadsAwaitPool=[%d], 'main-db'",
+                    totalConnections,
+                    activeConnections,
+                    idleConnections,
+                    threadAwaitingConnections);
+        }
         sb.append("Used DB connections: ").append(usedConnections);
         Runtime runtime = Runtime.getRuntime();
         sb.append("\nRuntime total memory :").append(String.format(" %,d KB", (runtime.totalMemory() / 1024)));
@@ -137,6 +159,7 @@ public class AplCoreRuntime {
         }
         runtimeMode.shutdown();
     }
+
 
     public static void logSystemProperties() {
         String[] loggedProperties = new String[]{
