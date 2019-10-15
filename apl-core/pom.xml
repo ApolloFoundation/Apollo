@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.38.8</version>
+        <version>1.38.7</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -110,7 +110,7 @@
         </dependency>
 
         <!-- Swagger runtime dependencies -->
-        <!-- Swagger annotation for model auto-documenting -->
+        <!-- Swagger annotation for API auto-documenting --> 
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
@@ -200,11 +200,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
             <scope>test</scope>
         </dependency>
 

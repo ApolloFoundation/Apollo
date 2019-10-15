@@ -174,10 +174,7 @@ public class ShardMigrationExecutor {
                 .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
                 .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
                 .collect(Collectors.toList());
-        List<TableInfo> coreTableInfoList = List.of(
-                new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
-                new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
-                new TableInfo(ShardConstants.SHARD_TABLE_NAME));
+        List<TableInfo> coreTableInfoList = List.of(new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME), new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME), new TableInfo(ShardConstants.SHARD_TABLE_NAME));
         tableInfoList.addAll(coreTableInfoList);
         return tableInfoList;
     }

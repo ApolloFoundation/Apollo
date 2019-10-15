@@ -1,7 +1,8 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
-
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;

@@ -10,12 +10,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author al
  */
 public class BasicAccount {
-    //@JsonAlias({"account", "accountRS"}) // from json
+    @JsonAlias({"account", "accountRS"}) // from json
     @JsonProperty("account") //to json
     public long id;
-    public String accountRS;
-    @JsonAlias("secretPhrase")
-    public String passphrase;
 
     public BasicAccount() {
     }

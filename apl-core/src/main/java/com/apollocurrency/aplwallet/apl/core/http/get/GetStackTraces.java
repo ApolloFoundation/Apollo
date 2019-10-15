@@ -35,7 +35,7 @@ import java.lang.management.ThreadMXBean;
 import javax.enterprise.inject.Vetoed;
 
 /**
- * <p>The GetStackTraces model will return the current stack trace for
+ * <p>The GetStackTraces API will return the current stack trace for
  * each Apl thread.</p>
  *
  * <p>Request parameters:</p>
@@ -85,10 +85,10 @@ public class GetStackTraces extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetStackTraces model request
+     * Process the GetStackTraces API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

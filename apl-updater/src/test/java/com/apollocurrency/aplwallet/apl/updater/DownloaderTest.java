@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.udpater.intfce.DownloadInfo;
 import com.apollocurrency.aplwallet.apl.updater.downloader.DownloadExecutor;
 import com.apollocurrency.aplwallet.apl.updater.downloader.Downloader;
@@ -12,14 +17,9 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.xml.bind.DatatypeConverter;
 
 public class DownloaderTest {
         private static final Logger LOG = getLogger(DownloaderTest.class);
@@ -40,7 +40,7 @@ public class DownloaderTest {
     public void testTryDownloadWithInvalidUrl() {
 
         DownloadInfo downloadInfo = new DownloadInfo();
-        Downloader downloader = new DownloaderImpl(downloadInfo, 1, 1, (path, hash) -> true, new ThrowingDownloadExecutor());
+        Downloader downloader = new DownloaderImpl(downloadInfo, 1, 10, (path, hash) -> true, new ThrowingDownloadExecutor());
 
         Path result = downloader.tryDownload("unknow.url", new byte[0]);
         assertNull(result);

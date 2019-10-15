@@ -63,8 +63,6 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -198,10 +196,6 @@ class CsvWriterReaderDerivedTablesTest {
         publicKeyTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
         purchaseTable.init();
-        DexContractTable dexContractTable = new DexContractTable();
-        registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable();
-        registry.registerDerivedTable(dexOrderTable);
     }
 
     @DisplayName("Gather all derived tables, export data up to height = 8000," +

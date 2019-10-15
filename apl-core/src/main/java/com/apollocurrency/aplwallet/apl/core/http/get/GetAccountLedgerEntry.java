@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>
- * The GetAccountLedgerEntry model will return an entry from the account ledger.  The
+ * The GetAccountLedgerEntry API will return an entry from the account ledger.  The
  * account ledger tracks all account changes as determined by the apl.ledgerAccounts,
  * apl.ledgerLogUnconfirmed and apl.ledgerTrimKeep properties.
  * </p>
@@ -186,10 +186,10 @@ public class GetAccountLedgerEntry extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetAccountLedgerEntry model request
+     * Process the GetAccountLedgerEntry API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      * @throws  AplException        Invalid request
      */
     @Override

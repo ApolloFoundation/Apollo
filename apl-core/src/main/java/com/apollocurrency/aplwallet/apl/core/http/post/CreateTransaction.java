@@ -81,14 +81,14 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     public CreateTransaction(APITag[] apiTags, String... parameters) {
         super(apiTags, addCommonParameters(parameters));
         if (!getAPITags().contains(APITag.CREATE_TRANSACTION)) {
-            throw new RuntimeException("CreateTransaction model " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
+            throw new RuntimeException("CreateTransaction API " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
         }
     }
 
     public CreateTransaction(String fileParameter, APITag[] apiTags, String... parameters) {
         super(fileParameter, apiTags, addCommonParameters(parameters));
         if (!getAPITags().contains(APITag.CREATE_TRANSACTION)) {
-            throw new RuntimeException("CreateTransaction model " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
+            throw new RuntimeException("CreateTransaction API " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
         }
     }
 

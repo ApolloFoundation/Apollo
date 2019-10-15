@@ -1,7 +1,3 @@
-/*
- * Copyright © 2018-2019 Apollo Foundation
- */
-
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;

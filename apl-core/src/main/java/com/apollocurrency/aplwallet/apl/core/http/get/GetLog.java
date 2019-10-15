@@ -36,7 +36,7 @@ import java.util.Iterator;
 import javax.enterprise.inject.Vetoed;
 
 /**
- * <p>The GetLog model will return log messages from the ring buffer
+ * <p>The GetLog API will return log messages from the ring buffer
  * maintained by the MemoryAppender log handler.  The most recent
  * 'count' messages will be returned.  All log messages in the
  * ring buffer will be returned if 'count' is omitted.</p>
@@ -62,10 +62,10 @@ public final class GetLog extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetLog model request
+     * Process the GetLog API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

@@ -53,7 +53,7 @@ public final class ProcessBlock extends PeerRequestHandler {
                         peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             lookupPeersService().peersExecutorService.submit(() -> {
                 try {
-                    LOG.debug("model: need to process better peer block");
+                    LOG.debug("API: need to process better peer block");
                     lookupBlockchainProcessor().processPeerBlock(request);
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {

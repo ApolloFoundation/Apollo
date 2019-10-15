@@ -158,14 +158,4 @@ public class PropertiesHolder {
         sb.append('}');
         return sb.toString();
     }
-
-    public String dumpAllProperties() {
-        final StringBuffer sb = new StringBuffer("PropertiesHolder_DUMP : \n");
-        properties.forEach((k, v) ->
-            sb.append('\'').append(k).append("'->").append(v).append(", ")
-        );
-        sb.append('\n');
-        return sb.toString();
-
-    }
 }

@@ -1,7 +1,3 @@
-/*
- * Copyright © 2018-2019 Apollo Foundation
- */
-
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -18,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,10 +22,8 @@ import java.util.List;
 
 /**
  * Use DexContractDao for not transactional operations. ( f.e. search)
- * DEX Contract in derived table hierarchy is used for exporting/importing shard data.
  */
 @Slf4j
-@Singleton
 public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {
 
     private static ExchangeContractMapper exchangeContractMapper = new ExchangeContractMapper();
@@ -43,11 +36,14 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     };
 
     private static final String TABLE_NAME = "dex_contract";
-    private ExchangeContractMapper mapper = new ExchangeContractMapper();
+    private ExchangeContractMapper mapper;
+    private Blockchain blockchain;
 
     @Inject
-    public DexContractTable() {
+    public DexContractTable(ExchangeContractMapper mapper, Blockchain blockchain) {
         super(TABLE_NAME, KEY_FACTORY, false);
+        this.mapper = mapper;
+        this.blockchain = blockchain;
     }
 
     @Override
@@ -72,7 +68,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
             pstmt.setString(++i, entity.getCounterTransferTxId());
             pstmt.setInt(++i, entity.getDeadlineToReply());
             pstmt.setByte(++i, (byte) entity.getContractStatus().ordinal());
-            pstmt.setInt(++i, entity.getHeight());
+            pstmt.setInt(++i, blockchain.getHeight());
 
             pstmt.executeUpdate();
         }

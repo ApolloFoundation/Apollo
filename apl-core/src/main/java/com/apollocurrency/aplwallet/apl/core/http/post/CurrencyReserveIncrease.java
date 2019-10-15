@@ -47,11 +47,11 @@ import javax.servlet.http.HttpServletRequest;
  * <p>
  * Constraints
  * <p>
- * This model is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} and is not yet active.
+ * This API is allowed only when the currency is {@link com.apollocurrency.aplwallet.apl.CurrencyType#RESERVABLE} and is not yet active.
  * <p>
  * The sender account is registered as a founder. Once the currency becomes active
  * the total supply is distributed between the founders based on their proportional investment<br>
- * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} model.
+ * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} API.
  */
 @Vetoed
 public final class CurrencyReserveIncrease extends CreateTransaction {

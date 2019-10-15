@@ -49,7 +49,7 @@ public class APITestServlet extends HttpServlet {
             "    <meta charset='UTF-8'/>\n" +
             "    <meta http-equiv='X-UA-Compatible' content='IE=edge'>\n" +
             "    <meta name='viewport' content='width=device-width, initial-scale=1'>\n" +
-            "    <title>Apollo http model</title>\n" +
+            "    <title>Apollo http API</title>\n" +
             "    <link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' />\n" +
             "    <link href='css/font-awesome.min.css' rel='stylesheet' type='text/css' />\n" +
             "    <link href='css/highlight.style.css' rel='stylesheet' type='text/css' />\n" +
@@ -63,7 +63,7 @@ public class APITestServlet extends HttpServlet {
             "<div class='navbar navbar-default' role='navigation'>\n" +
             "   <div class='container' style='min-width: 90%;'>\n" +
             "       <div class='navbar-header'>\n" +
-            "           <a class='navbar-brand' href='/test'>Apollo http model</a>\n" +
+            "           <a class='navbar-brand' href='/test'>Apollo http API</a>\n" +
             "       </div>\n" +
             "       <div class='navbar-collapse collapse'>\n" +
             "           <ul class='nav navbar-nav navbar-right'>\n" +
@@ -221,7 +221,7 @@ public class APITestServlet extends HttpServlet {
                         bufJSCalls.append("    ATS.apiCalls.push('").append(type).append("');\n");
                     }
                 } else {
-                    writer.print(fullTextMessage("No model calls selected.", "info"));
+                    writer.print(fullTextMessage("No API calls selected.", "info"));
                 }
             }
             writer.print(FOOTER1);

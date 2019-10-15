@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import com.apollocurrency.aplwallet.apl.core.app.GeneratedAccount;
-import com.apollocurrency.aplwallet.apl.core.app.Version;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
@@ -572,7 +570,7 @@ public class NodeClient {
         String json = getJson(createURI(url), params);
         JsonNode root = MAPPER.readTree(json);
         JsonNode versionString = root.get("version");
-        return new Version(versionString.asText()); // .from(String) was removed in class!
+        return Version.from(versionString.asText());
     }
 
     public List<ChatInfo> getChatInfo(String url, String account, int firstIndex, int lastIndex) throws IOException {

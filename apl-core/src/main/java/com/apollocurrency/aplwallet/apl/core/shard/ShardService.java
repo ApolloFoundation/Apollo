@@ -140,9 +140,7 @@ public class ShardService {
                     FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                         Path fileName = p.getFileName();
                         int shardIndex = fileName.toString().indexOf("-shard-");
-                        if ( (fileName.toString().endsWith("h2.db") || fileName.toString().endsWith("trace.db")
-                                || fileName.toString().endsWith("lock.db"))
-                                && shardIndex != -1) {
+                        if (fileName.toString().endsWith("h2.db") && shardIndex != -1) {
                             String idString = fileName.toString().substring(shardIndex + 7);
                             String id = idString.substring(0, idString.indexOf("-"));
                             long fileShardId = Long.parseLong(id);
@@ -280,13 +278,9 @@ public class ShardService {
 
     @Transactional
     public void saveShardRecoveryAndShard(long nextShardId, int lastTrimBlockHeight, int blockchainHeight) {
-        Shard newShard = new Shard(nextShardId, lastTrimBlockHeight); // shard starts on specified 'Trim height'
-        // shard recovery is stored on specified 'Trim height'
-        ShardRecovery recovery = ShardRecovery.builder().state(MigrateState.INIT.toString()).height(lastTrimBlockHeight).build();
-        shardRecoveryDao.saveShardRecovery(recovery);
+        Shard newShard = new Shard(nextShardId, lastTrimBlockHeight);
+        shardRecoveryDao.saveShardRecovery(ShardRecovery.builder().state(MigrateState.INIT.toString()).height(blockchainHeight).build());
         shardDao.saveShard(newShard); // store shard with HEIGHT AND ID ONLY
-        log.debug("Saved initial:\n{}\n{}\nfor trimHeight='{}' at current bch height='{}'",
-                newShard, recovery, lastTrimBlockHeight, blockchainHeight);
     }
 
     private boolean shouldPerformSharding() {

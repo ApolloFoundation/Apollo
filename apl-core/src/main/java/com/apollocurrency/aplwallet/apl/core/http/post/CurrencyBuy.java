@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
  * A single transaction can match multiple sell offers or none.
  * Unlike asset bid order, currency buy is not saved. It's either executed immediately (fully or partially) or not executed
  * at all.
- * For every match between buyer and seller an exchange record is saved, exchange records can be retrieved using the {@link GetExchanges} model
+ * For every match between buyer and seller an exchange record is saved, exchange records can be retrieved using the {@link GetExchanges} API
  */
 @Vetoed
 public final class CurrencyBuy extends CreateTransaction {

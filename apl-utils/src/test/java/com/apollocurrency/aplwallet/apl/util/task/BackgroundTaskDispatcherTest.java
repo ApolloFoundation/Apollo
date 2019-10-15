@@ -50,7 +50,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.schedule(task);
 
         taskDispatcher.dispatch();
-        log.debug("Thread dispatch");
+        log.info("Thread dispatch");
 
         try {
             Thread.sleep(SLEEP_DELAY);
@@ -70,20 +70,20 @@ class BackgroundTaskDispatcherTest {
         final Count count = new Count(0);
         task = Task.builder()
                 .name("task-1")
-                .task(()-> {count.inc(); log.debug("task-body: task running");})
+                .task(()-> {count.inc(); log.info("task-body: task running");})
                 .initialDelay(0)
                 .delay(10)
                 .build();
 
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
-        log.debug("Thread dispatch");
+        log.info("Thread dispatch");
         Thread.sleep(SLEEP_DELAY);
-        log.debug("Suspend dispatcher");
+        log.info("Suspend dispatcher");
         taskDispatcher.suspend();
         int val1 = count.value;
         Thread.sleep(SLEEP_DELAY);
-        log.debug("Resume dispatcher");
+        log.info("Resume dispatcher");
         int val2 = count.value;
         taskDispatcher.resume();
         Thread.sleep(SLEEP_DELAY);
@@ -103,28 +103,28 @@ class BackgroundTaskDispatcherTest {
 
         Task task0 = Task.builder()
                 .name("task-INIT1")
-                .task(()-> {count0.dec(); log.debug("task-body: INIT task running");})
+                .task(()-> {count0.dec(); log.info("task-body: INIT task running");})
                 .initialDelay(0)
                 .build();
 
         Task task1 = Task.builder()
                 .name("task-BEFORE1")
-                .task(()-> {count0.dec(); log.debug("task-body: BEFORE task 1 running");})
+                .task(()-> {count0.dec(); log.info("task-body: BEFORE task 1 running");})
                 .initialDelay(10)
                 .build();
         Task task12 = Task.builder()
                 .name("task-BEFORE12")
-                .task(()-> {count0.dec(); log.debug("task-body: BEFORE task 12 running");})
+                .task(()-> {count0.dec(); log.info("task-body: BEFORE task 12 running");})
                 .initialDelay(20)
                 .build();
         Task task2 = Task.builder()
                 .name("task-AFTER1")
-                .task(()-> {count0.dec();log.debug("task-body: AFTER task 1 running");})
+                .task(()-> {count0.dec();log.info("task-body: AFTER task 1 running");})
                 .delay(10)
                 .build();
         Task task22 = Task.builder()
                 .name("task-AFTER12")
-                .task(()-> {count0.dec();log.debug("task-body: AFTER task 2 running");})
+                .task(()-> {count0.dec();log.info("task-body: AFTER task 2 running");})
                 .delay(20)
                 .build();
         Task taskMain = Task.builder()
@@ -132,9 +132,9 @@ class BackgroundTaskDispatcherTest {
                 .task(()->{
                     for (;;){
                         assertTrue(count0.get()<=7);//10-3 = 7; 3 tasks={INIT, BEFORE1, BEFORE12}
-                        log.debug("task-body: MAIN task running, thread={}", getThreadInfo());
+                        log.info("task-body: MAIN task running, thread={}", getThreadInfo());
                         count1.dec();
-                        log.debug("task-body: count0={} count1={}", count0.get(), count1.get());
+                        log.info("task-body: count0={} count1={}", count0.get(), count1.get());
                         try {
                             Thread.sleep(SLEEP_DELAY);
                         } catch (InterruptedException e) {
@@ -153,7 +153,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.schedule(task22, TaskOrder.AFTER);
 
         taskDispatcher.dispatch();
-        log.debug("Thread dispatch");
+        log.info("Thread dispatch");
 
         try {
             Thread.sleep(300);
@@ -169,7 +169,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfo");
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
-        log.debug("Thread dispatch");
+        log.info("Thread dispatch");
         try {
             Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException ignored) {}

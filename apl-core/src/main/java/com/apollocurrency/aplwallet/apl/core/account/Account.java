@@ -409,12 +409,7 @@ public class Account {
                     publicKeyTable.insert(publicKey);
                 }
                 if (publicKeyCache != null) {
-                    //TODO: what if insert above fails?
-                    if (isGenesis) {
-                        publicKeyCache.put(dbKey, genesisPublicKeyTable.get(dbKey, true));
-                    } else {
-                        publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
-                    }
+                    publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
                 }
             }
             account.publicKey = publicKey;

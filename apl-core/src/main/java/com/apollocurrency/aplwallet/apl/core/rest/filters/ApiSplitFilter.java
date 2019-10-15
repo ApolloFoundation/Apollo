@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ApiSplitFilter implements Filter{
     /**
-     * this is just a "fuse" to disable model calls while core is starting.
-     * Should be removed as soon as all model will be on RestEasy
+     * this is just a "fuse" to disable API calls while core is starting.
+     * Should be removed as soon as all API will be on RestEasy
      */
     public static boolean isCoreReady = false;
     
@@ -58,7 +58,7 @@ public class ApiSplitFilter implements Filter{
         logger.trace("========= RequestType IS EMPTY!==========");
 
         String forwardUri = NewApiRegistry.getRestPath(rqType);
-        //forward to new model, it should be ready always because it is on CDI and
+        //forward to new API, it should be ready always because it is on CDI and 
         //does not require completion of old static init() methods
         if(forwardUri != null && !forwardUri.isEmpty()){
            logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
@@ -66,7 +66,7 @@ public class ApiSplitFilter implements Filter{
             return;
         }
         if(!isCoreReady){
-           // Core is not signaled that is is ready to serve requests, so old model
+           // Core is not signaled that is is ready to serve requests, so old API
            // implementation shoud wait
            resp.sendError(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), "Application is starting, please wait!");
            return;

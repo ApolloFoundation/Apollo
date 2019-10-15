@@ -8,15 +8,14 @@ package com.apollocurrency.aplwallet.apl.inttest.http;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.GeneratedAccount;
-import com.apollocurrency.aplwallet.apl.core.app.PassphraseGenerator;
-import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.GeneratedAccount;
+import com.apollocurrency.aplwallet.apl.PassphraseGenerator;
+import com.apollocurrency.aplwallet.apl.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.inttest.core.TestConstants;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import com.apollocurrency.aplwallet.api.dto.Account2FA;
@@ -29,7 +28,7 @@ public class Confirm2FATest extends DeleteGeneratedAccountsTest {
     @Test
     public void testConfirm2FAVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestConstants.TEST_LOCALHOST, PASSPHRASE);
-        generatedAccounts.add(Convert2.rsAccount(generatedAccount.getId()));
+        generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         TwoFactorAuthAccountDetails details = nodeClient.enable2FA(TestConstants.TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()),
                 PASSPHRASE);
         Account2FA account = nodeClient.confirm2FA(TestConstants.TEST_LOCALHOST, generatedAccount, PASSPHRASE,
@@ -42,7 +41,7 @@ public class Confirm2FATest extends DeleteGeneratedAccountsTest {
     @Test(expected = MismatchedInputException.class)
     public void testConfirm2FANotConfirmedWhenWrongPassphraseVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestConstants.TEST_LOCALHOST, PASSPHRASE);
-        generatedAccounts.add(Convert2.rsAccount(generatedAccount.getId()));
+        generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         TwoFactorAuthAccountDetails details = nodeClient.enable2FA(TestConstants.TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()),
                 PASSPHRASE);
         nodeClient.confirm2FA(TestConstants.TEST_LOCALHOST, generatedAccount, TwoFactorAuthTestData.INVALID_PASSPHRASE,
@@ -51,7 +50,7 @@ public class Confirm2FATest extends DeleteGeneratedAccountsTest {
     @Test
     public void testConfirm2FANotConfirmedWhenInvalidCodeVaultWallet() throws IOException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestConstants.TEST_LOCALHOST, PASSPHRASE);
-        generatedAccounts.add(Convert2.rsAccount(generatedAccount.getId()));
+        generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         nodeClient.enable2FA(TestConstants.TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()),
                 PASSPHRASE);
         Account2FA account2FA = nodeClient.confirm2FA(TestConstants.TEST_LOCALHOST, generatedAccount, PASSPHRASE, TwoFactorAuthTestData.INVALID_CODE);
@@ -61,7 +60,7 @@ public class Confirm2FATest extends DeleteGeneratedAccountsTest {
     @Test
     public void testConfirm2FANotConfirmedWhenNotEnabledVaultWallet() throws IOException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestConstants.TEST_LOCALHOST, PASSPHRASE);
-        generatedAccounts.add(Convert2.rsAccount(generatedAccount.getId()));
+        generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         Account2FA account2FA = nodeClient.confirm2FA(TestConstants.TEST_LOCALHOST, generatedAccount, PASSPHRASE, TwoFactorAuthTestData.INVALID_CODE);
         Assert.assertEquals(generatedAccount.getAccountRS(), account2FA.getAccountRS());
         Assert.assertEquals(TwoFactorAuthService.Status2FA.NOT_ENABLED, account2FA.getStatus2FA());
@@ -69,7 +68,7 @@ public class Confirm2FATest extends DeleteGeneratedAccountsTest {
     @Test
     public void testConfirm2FAAlreadyConfirmedVaultWallet() throws IOException, GeneralSecurityException {
         GeneratedAccount generatedAccount = nodeClient.generateAccount(TestConstants.TEST_LOCALHOST, PASSPHRASE);
-        generatedAccounts.add(Convert2.rsAccount(generatedAccount.getId()));
+        generatedAccounts.add(Convert.rsAccount(generatedAccount.getId()));
         TwoFactorAuthAccountDetails details = nodeClient.enable2FA(TestConstants.TEST_LOCALHOST, Convert.rsAccount(generatedAccount.getId()),
                 PASSPHRASE);
         Account2FA account = nodeClient.confirm2FA(TestConstants.TEST_LOCALHOST, generatedAccount, PASSPHRASE,

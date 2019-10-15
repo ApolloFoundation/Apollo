@@ -70,14 +70,9 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         String fn = (dirProvider == null ? DEFAULT_CONF_DIR : dirProvider.getConfigDirectoryName()) + "/" + resourceName;
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fn)) {
-            if (is == null){
-                System.err.println("The resource could not be found: " + fn);
-            } else {
-                T defaultConfig = read(is);
-                config = merge(config, defaultConfig);
-            }
-        }
-        catch (IOException|IllegalArgumentException e) {
+            T defaultConfig = read(is);
+            config = merge(config, defaultConfig);
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Can not load resource: " + fn);
             e.printStackTrace();
         }

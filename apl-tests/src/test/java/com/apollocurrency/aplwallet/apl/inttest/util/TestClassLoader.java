@@ -33,7 +33,7 @@ public class TestClassLoader extends ClassLoader {
         classNames.add(rootDirName + ".Apl");
         classNames.add(rootDirName + ".TransactionProcessor");
         classNames.add(rootDirName + ".CurrencyExchangeOffer");
-        classNames.add(rootDirName + ".http.model");
+        classNames.add(rootDirName + ".http.API");
         classNames.add(rootDirName + ".DebugTrace");
         classNames.add(rootDirName + ".http.APITag");
         classNames.add(rootDirName + ".http.EventWait");

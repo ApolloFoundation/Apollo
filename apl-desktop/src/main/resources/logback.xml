@@ -4,7 +4,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
-    <!--Memory handler for the GetLog model with a 200-message ring buffer-->
+    <!--Memory handler for the GetLog API with a 200-message ring buffer-->
 <!--    <appender name="inMemory" class="com.apollocurrency.aplwallet.apl.util.MemoryAppender">
         <size>200</size>
         <encoder>

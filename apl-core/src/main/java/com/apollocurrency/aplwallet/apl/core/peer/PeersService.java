@@ -30,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.task.limiter.TimeLimiterService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -160,7 +159,6 @@ public class PeersService {
     public final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
 
     private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
-    private final TimeLimiterService timeLimiterService;
 
     // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
@@ -177,15 +175,13 @@ public class PeersService {
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
-                        TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
-                        TimeLimiterService timeLimiterService) {
+                        TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
         this.timeService = timeService;
         this.taskDispatchManager = taskDispatchManager;
         this.peerHttpServer = peerHttpServer;
-        this.timeLimiterService = timeLimiterService;
 
         isLightClient = propertiesHolder.isLightClient();
     }
@@ -428,11 +424,6 @@ public class PeersService {
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
         }
-        try {
-            timeLimiterService.shutdown();
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
-        }
     }
 
     public void suspend() {
@@ -600,8 +591,7 @@ public class PeersService {
         //check not-null announced address and do not create peer
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
-        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
-                this, timeLimiterService.acquireLimiter("P2PTransport"));
+        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(), this);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{

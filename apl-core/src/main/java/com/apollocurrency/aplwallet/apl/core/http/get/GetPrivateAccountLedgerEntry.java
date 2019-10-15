@@ -33,10 +33,10 @@ public class GetPrivateAccountLedgerEntry extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetPrivateAccountLedgerEntry model request
+     * Process the GetPrivateAccountLedgerEntry API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      * @throws  AplException        Invalid request
      */
     @Override

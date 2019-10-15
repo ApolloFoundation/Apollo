@@ -44,7 +44,7 @@ import javax.enterprise.inject.Vetoed;
 
 /**
  * <p>
- * The GetAccountLedger model will return entries from the account ledger.  The
+ * The GetAccountLedger API will return entries from the account ledger.  The
  * account ledger tracks all account changes as determined by the apl.ledgerAccounts,
  * apl.ledgerLogUnconfirmed and apl.ledgerTrimKeep properties.
  * </p>
@@ -244,10 +244,10 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the GetAccountLedger model request
+     * Process the GetAccountLedger API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      * @throws  AplException        Invalid request
      */
     @Override

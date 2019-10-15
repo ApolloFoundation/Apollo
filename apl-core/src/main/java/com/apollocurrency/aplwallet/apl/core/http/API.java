@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
@@ -54,6 +52,9 @@ import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.MultipartConfigElement;
 import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -67,9 +68,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.MultipartConfigElement;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 @Singleton
@@ -281,7 +281,6 @@ public final class API {
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
-                            .add(SecurityInterceptor.class.getName())
                                 .add(RestParameterExceptionMapper.class.getName())
                             .toString()
             );

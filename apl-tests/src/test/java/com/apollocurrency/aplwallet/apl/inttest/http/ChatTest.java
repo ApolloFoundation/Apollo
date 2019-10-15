@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.apollocurrency.aplwallet.apl.core.app.TestAccount;
+import com.apollocurrency.aplwallet.apl.TestAccount;
 import com.apollocurrency.aplwallet.apl.inttest.core.TestDataGenerator;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert;
 import com.apollocurrency.aplwallet.api.dto.ChatInfo;
 import com.apollocurrency.aplwallet.api.dto.JSONTransaction;
 import org.junit.Assert;

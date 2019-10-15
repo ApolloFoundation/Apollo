@@ -125,7 +125,7 @@ public class ShardServiceIntegrationTest {
         DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFileProperties(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
         Chain mockChain = mock(Chain.class);
         doReturn(mockChain).when(blockchainConfig).getChain();
-        doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
+        doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(mockChain).getChainId();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
         });
@@ -144,7 +144,7 @@ public class ShardServiceIntegrationTest {
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         TransactionalDataSource shardDatasource = databaseManager.getOrCreateShardDataSourceById(1L);
         databaseManager.getDataSource().begin();
-        Path zipPath = dbDir.resolve("BACKUP-BEFORE-apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path zipPath = dbDir.resolve("BACKUP-BEFORE-apl-blockchain-shard-1-chain-a2e9b946-290b-48b6-9985-dc2e5a5860a1.zip");
         zip.compress(zipPath.toAbsolutePath().toString(), dbPath.getParent().toAbsolutePath().toString(), 0L, null, false);
 
         boolean reset = shardService.reset(1);
@@ -153,7 +153,7 @@ public class ShardServiceIntegrationTest {
         assertThrows(IllegalStateException.class, () -> databaseManager.getDataSource().commit()); //previous datasource was closed
         assertThrows(SQLException.class, shardDatasource::getConnection); //shard datasource was closed
         List<Path> files = Files.list(dbDir).collect(Collectors.toList());
-        assertEquals(5, files.size());
+        assertEquals(6, files.size());
         Files.exists(zipPath);
         Files.exists(backupDir);
         Files.exists(dbDir.resolve(Constants.APPLICATION_DIR_NAME + ".h2.db"));

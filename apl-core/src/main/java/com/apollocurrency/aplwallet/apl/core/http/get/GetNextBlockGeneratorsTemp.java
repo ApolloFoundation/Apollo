@@ -42,13 +42,13 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>
- * The GetNextBlockGenerators model will return the next block generators ordered by the
+ * The GetNextBlockGenerators API will return the next block generators ordered by the
  * hit time.  The list of active forgers is initialized using the block generators
  * with at least 2 blocks generated within the previous 10,000 blocks.  Accounts without
  * a public key will not be included.  The list is
  * updated as new blocks are processed.  This means the results will not be 100%
  * correct since previously active generators may no longer be running and new generators
- * won't be known until they generate a block.  This model will be replaced when transparent
+ * won't be known until they generate a block.  This API will be replaced when transparent
  * forging is activated.
  * <p>
  * Request parameters:

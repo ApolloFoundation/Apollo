@@ -45,11 +45,11 @@ import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * <p>The DecodeQRCode model converts a base64-encoded image of a
+ * <p>The DecodeQRCode API converts a base64-encoded image of a
  * 2-D QR (Quick Response) code to a UTF-8 string, using the ZXing library.
  * </p>
  * 
- * <p>The input qrCodeBase64 can be the output of the DecodeQRCode model.</p>
+ * <p>The input qrCodeBase64 can be the output of the DecodeQRCode API.</p>
  * 
  * <p>Request parameters:</p>
  * 

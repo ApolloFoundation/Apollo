@@ -8,8 +8,6 @@ import static com.apollocurrency.aplwallet.apl.inttest.core.TestConstants.TEST_L
 import static org.slf4j.LoggerFactory.getLogger;
 import static com.apollocurrency.aplwallet.apl.inttest.util.TestUtil.atm;
 
-import com.apollocurrency.aplwallet.apl.core.app.Account;
-import com.apollocurrency.aplwallet.apl.core.app.TestAccount;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.api.dto.JSONTransaction;

@@ -103,7 +103,7 @@ public final class AddOns {
                     LOG.error("Add-on " + addOn.getClass().getName() + " attempted to override requestType " + requestType + ", skipping");
                     continue;
                 }
-                LOG.info("Add-on " + addOn.getClass().getName() + " registered new model: " + requestType);
+                LOG.info("Add-on " + addOn.getClass().getName() + " registered new API: " + requestType);
                 map.put(requestType, requestHandler);
             }
         }

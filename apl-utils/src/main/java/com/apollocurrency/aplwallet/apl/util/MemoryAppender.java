@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MemoryAppender maintains a ring buffer of log messages.  The GetLog model is used
+ * MemoryAppender maintains a ring buffer of log messages.  The GetLog API is used
  * to retrieve these log messages.
  *
  * The following logging.properties entries are used:

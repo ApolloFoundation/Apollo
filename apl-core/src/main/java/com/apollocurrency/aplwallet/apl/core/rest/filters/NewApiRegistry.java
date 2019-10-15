@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Registry for implemented endpoints of new model.
+ * Registry for implemented endpoints of new API.
  * Should be removed along with ApiSplitFilter after 
  * @author alukin@gmail.com
  */

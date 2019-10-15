@@ -24,15 +24,13 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.38.8");
+    public static final Version VERSION = new Version("1.38.7");
 
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
-    public static final long LONG_TIME_TWO_SECONDS = 2000L;
-    public static final long LONG_TIME_FIVE_SECONDS = 5000L;
     public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
     public static final long ONE_APL = 100000000;
@@ -176,7 +174,6 @@ public final class Constants {
     //168h
     public static Integer DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
 
-    public static int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
     public static int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
     public static int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 

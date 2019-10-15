@@ -218,7 +218,7 @@ public final class JSONResponses {
     static {
         JSONObject response  = new JSONObject();
         response.put("errorCode", 16);
-        response.put("errorDescription", "This model has been disabled");
+        response.put("errorDescription", "This API has been disabled");
         ERROR_DISABLED = JSON.prepare(response);
     }
 
@@ -434,7 +434,7 @@ public final class JSONResponses {
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 20);
-        response.put("errorDescription", "This model is disabled when running as light client");
+        response.put("errorDescription", "This API is disabled when running as light client");
         LIGHT_CLIENT_DISABLED_API = JSON.prepare(response);
     }
 
@@ -450,7 +450,7 @@ public final class JSONResponses {
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 5);
-        response.put("errorDescription", "Peer is not providing open model");
+        response.put("errorDescription", "Peer is not providing open API");
         PEER_NOT_OPEN_API = JSON.prepare(response);
     }
 

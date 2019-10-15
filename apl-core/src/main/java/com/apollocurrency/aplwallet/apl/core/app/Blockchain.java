@@ -156,7 +156,4 @@ public interface Blockchain {
 
     List<TransactionDbInfo> getTransactionsBeforeHeight(int height);
 
-    boolean hasConfirmations(long id, int confirmations);
-
-    boolean isExpired(Transaction tx);
 }

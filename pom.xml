@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.38.8</version>
+    <version>1.38.7</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -84,7 +84,7 @@
         <openjfx.version>12-ea+3</openjfx.version>
         <tika.version>1.20</tika.version>
         <upnp.version>0.1.4</upnp.version>
-        <jackson.version>2.10.0.pr3</jackson.version>
+        <jackson.version>2.10.0.pr2</jackson.version>
         <!--Indexing-->
         <lucene.version>7.5.0</lucene.version>
 
@@ -99,6 +99,7 @@
         <!--Tests-->
         <json-simple.version>1.1.1</json-simple.version>
         <json-unit.version>1.20.0</json-unit.version>
+        <mockito.version>2.22.0</mockito.version>
         <okhttp-eventsource.version>1.8.0</okhttp-eventsource.version>
         <okhttp.version>2.7.5</okhttp.version>
         <!-- TODO: cleanup -->
@@ -107,10 +108,9 @@
         <weld.version>3.1.2.Final</weld.version>
         <weld-junit5.version>2.0.0.Final</weld-junit5.version>
         <rs-api.version>2.1.1</rs-api.version>
-        <resteasy.version>4.3.1.Final</resteasy.version>
+        <resteasy.version>4.3.0.Final</resteasy.version>
         <swagger.version>2.0.9</swagger.version>
-        <junit5-bom.version>5.5.2</junit5-bom.version>
-        <mockito.version>3.0.0</mockito.version>
+        <junit5-bom.version>5.4.1</junit5-bom.version>
         <hikari.version>3.3.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
         <jdbi3-core.version>3.9.1</jdbi3-core.version>
@@ -119,7 +119,6 @@
         <surefire-plugin.version>2.22.2</surefire-plugin.version>
         <compile-plugin.version>3.8.1</compile-plugin.version>
         <guava.version>28.0-jre</guava.version>
-        <janino.version>3.1.0</janino.version>
 
     </properties>
 
@@ -648,7 +647,7 @@
             <dependency>
                 <groupId>org.codehaus.janino</groupId>
                 <artifactId>janino</artifactId>
-                <version>${janino.version}</version>
+                <version>3.0.6</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

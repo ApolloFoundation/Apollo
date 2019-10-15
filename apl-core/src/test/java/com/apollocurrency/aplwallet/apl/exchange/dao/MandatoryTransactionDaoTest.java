@@ -1,7 +1,3 @@
-/*
- * Copyright © 2018-2019 Apollo Foundation
- */
-
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -24,7 +20,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -32,8 +27,9 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-@Disabled // TEMPorary
+import org.junit.jupiter.api.Disabled;
+//TODO: re-enable after backmerge
+@Disabled
 @EnableWeld
 class MandatoryTransactionDaoTest {
     @RegisterExtension

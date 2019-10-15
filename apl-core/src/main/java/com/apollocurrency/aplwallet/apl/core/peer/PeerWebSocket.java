@@ -3,10 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.google.common.util.concurrent.Monitor;
-import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -19,9 +16,6 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.ProtocolException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -31,10 +25,7 @@ import java.util.zip.GZIPOutputStream;
  */
 @Slf4j
 public class PeerWebSocket extends WebSocketAdapter {
-
-    private final Monitor sendMonitor;
-    protected final TimeLimiter limiter;
-
+    
     /** we use reference here to avoid memory leaks */
     private final SoftReference<Peer2PeerTransport> peerReference;
 
@@ -55,8 +46,6 @@ public class PeerWebSocket extends WebSocketAdapter {
     public PeerWebSocket(Peer2PeerTransport peer) {
         peerReference = new SoftReference<>(peer);
         lastActivityTime=System.currentTimeMillis();
-        sendMonitor = new Monitor();
-        this.limiter = peer.getLimiter();
     }
     
     String which(){
@@ -137,7 +126,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                     }
                 }
             }
-            String message = new String(msgBytes, StandardCharsets.UTF_8);
+            String message = new String(msgBytes, "UTF-8");
             Peer2PeerTransport p = peerReference.get();
             if(p!=null){
                 p.onIncomingMessage(message,this,rqId);
@@ -160,68 +149,39 @@ public class PeerWebSocket extends WebSocketAdapter {
      * @return requestId
      * @throws IOException
      */
-    public boolean send(String message, Long requestId) throws IOException {
-        boolean sendOk = true;
+    public  synchronized boolean send(String message, Long requestId) throws IOException {
         if(StringUtils.isBlank(message.trim())){
             log.warn("Empty request from us to {}",which());
             return false;
+        }        
+        byte[] requestBytes = message.getBytes("UTF-8");
+        int requestLength = requestBytes.length;
+        int flags = 0;
+        if (PeersService.isGzipEnabled && requestLength >= PeersService.MIN_COMPRESS_SIZE) {
+            flags |= FLAG_COMPRESSED;
+            ByteArrayOutputStream outStream = new ByteArrayOutputStream(requestLength);
+            try (GZIPOutputStream gzipStream = new GZIPOutputStream(outStream)) {
+                gzipStream.write(requestBytes);
+            }
+            requestBytes = outStream.toByteArray();
         }
-        Session s = getSession();
-        if (s != null) {
-            if(log.isTraceEnabled()) {
-                log.trace("thisWebSocket={} jetty.Session={}", this, getSession());
-            }
-            byte[] requestBytes = message.getBytes(StandardCharsets.UTF_8);
-            int requestLength = requestBytes.length;
-            int flags = 0;
-            if (PeersService.isGzipEnabled && requestLength >= PeersService.MIN_COMPRESS_SIZE) {
-                flags |= FLAG_COMPRESSED;
-                ByteArrayOutputStream outStream = new ByteArrayOutputStream(requestLength);
-                try (GZIPOutputStream gzipStream = new GZIPOutputStream(outStream)) {
-                    gzipStream.write(requestBytes);
-                }
-                requestBytes = outStream.toByteArray();
-            }
-            ByteBuffer buf = ByteBuffer.allocate(requestBytes.length + 20);
-            buf.putInt(version)
-                    .putLong(requestId)
-                    .putInt(flags)
-                    .putInt(requestLength)
-                    .put(requestBytes)
-                    .flip();
-            if (buf.limit() > PeersService.MAX_MESSAGE_SIZE) {
-                throw new ProtocolException("POST request length exceeds max message size");
-            }
-            //synchronizing here
-            sendMonitor.enter();
-            try {
-                limiter.runWithTimeout(() -> sendBytes(buf), 5000, TimeUnit.MILLISECONDS);
-            } catch (IllegalStateException e) {
-                log.error("Can't send to {}, cause {}", s.getRemoteAddress(), e.getMessage());
-                throw new IOException("Websocket session for " + which(), e);
-            } catch (RuntimeException e){
-                throw new AplException.AplIOException("Can't send to "+s.getRemote(), e);
-            } catch (InterruptedException e) {
-                log.trace("Can't send to "+s.getRemote()+", interrupted.");
-                //Thread.currentThread().interrupt();
-                throw new AplException.AplIOException(e.getMessage());
-            } catch (TimeoutException e) {
-                throw new AplException.AplIOException("Can't send to "+s.getRemote()+", time limit is reached.");
-            } finally {
-                sendMonitor.leave();
-            }
-        } else {
-            throw new AplException.AplIOException("Websocket session is null for " + which());
+        ByteBuffer buf = ByteBuffer.allocate(requestBytes.length + 20);
+        buf.putInt(version)
+                .putLong(requestId)
+                .putInt(flags)
+                .putInt(requestLength)
+                .put(requestBytes)
+                .flip();
+        if (buf.limit() > PeersService.MAX_MESSAGE_SIZE) {
+            throw new ProtocolException("POST request length exceeds max message size");
         }
-        return sendOk;
-    }
-
-    private void sendBytes(ByteBuffer data){
-        try {
-            getSession().getRemote().sendBytes(data);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Session s =  getSession();
+        if(s!=null){
+           s.getRemote().sendBytes(buf);
+        }else{
+          throw new IOException("Websocket session is null for "+which())  ;
         }
+        return true;
     }
 
     public void close(){
@@ -231,15 +191,13 @@ public class PeerWebSocket extends WebSocketAdapter {
             try {
                 s.disconnect();                
             } catch (IOException ex) {
-                log.debug("Exception on session disconnect to {}",which(),ex);
+                log.debug("Excetion on session disconnect to {}",which(),ex);
             }
         }
     }
-
     long getLastActivityTime() {
         return lastActivityTime;
     }
-
     public Peer2PeerTransport getTransport(){
         return peerReference.get();
     }

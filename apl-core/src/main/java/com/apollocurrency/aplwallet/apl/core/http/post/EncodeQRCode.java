@@ -50,14 +50,14 @@ import javax.enterprise.inject.Vetoed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * <p>The EncodeQRCode model converts a UTF-8 string to a base64-encoded
+ * <p>The EncodeQRCode API converts a UTF-8 string to a base64-encoded
  * jpeg image of a 2-D QR (Quick Response) code, using the ZXing library.</p>
  * 
  * <p>The output qrCodeBase64 string can be incorporated into an in-line HTML
  * image like this: &lt;img src="data:image/jpeg;base64,qrCodeBase64"&gt;
  * </p>
  * 
- * <p>The output qrCodeBase64 can be input to the DecodeQRCode model to
+ * <p>The output qrCodeBase64 can be input to the DecodeQRCode API to
  * recover the original qrCodeData.</p>
  * 
  * <p>Request parameters:</p>

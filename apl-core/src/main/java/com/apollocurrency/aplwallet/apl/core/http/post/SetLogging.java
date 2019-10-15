@@ -34,7 +34,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * <p>The SetLogging model will set the ARS log level for all log messages.
+ * <p>The SetLogging API will set the ARS log level for all log messages.
  * It will also set the communication events that are logged.</p>
  *
  * <p>Request parameters:</p>
@@ -97,10 +97,10 @@ public class SetLogging extends AbstractAPIRequestHandler {
     }
 
     /**
-     * Process the SetLogging model request
+     * Process the SetLogging API request
      *
-     * @param   req                 model request
-     * @return                      model response
+     * @param   req                 API request
+     * @return                      API response
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {

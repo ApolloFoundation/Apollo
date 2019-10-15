@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
@@ -51,21 +50,10 @@ public class DexTradeDaoTest {
     
     
     @Inject
-    private DexTradeDao dao;
-
-    @Test
-    void testGetAllExisting() {
-        Integer startTime = 53409447; // hardcoded in 'data.sql' - included value
-        Integer finishTime = 53409464; // hardcoded in 'data.sql' - excluded value
-        List<DexTradeEntry>  result = dao.getDexEntriesForInterval(startTime, finishTime, (byte)1, 0, 1000);
-        assertNotNull(result);
-        assertEquals(6, result.size());
-    }
-
+    private DexTradeDao dao;   
+        
     @Test
     void testInsert() {
-        //clean all data inserted from 'data.sql'
-        dao.hardDeleteAllDexTrade();
 
         Integer currentTimeFake = 1234567890;
         List<DexTradeEntry> storedEntries =  new ArrayList<>();        
@@ -75,7 +63,7 @@ public class DexTradeDaoTest {
         Random random = new Random();
         
         for ( Integer i = currentTimeFake; i<= currentTimeFake + (iters * discr); i+= discr ) {
-            DexTradeEntry dexTradeEntryWrite = new DexTradeEntry(null, null);
+            DexTradeEntry dexTradeEntryWrite = new DexTradeEntry();            
             dexTradeEntryWrite.setSenderOfferID(random.nextLong());        
             dexTradeEntryWrite.setReceiverOfferID(random.nextLong());
             dexTradeEntryWrite.setSenderOfferType((byte)0);        
@@ -112,7 +100,7 @@ public class DexTradeDaoTest {
             assert( currentPairRate.equals(stored.getPairRate()) );         
             assert( current.getTransactionID() == stored.getTransactionID());
             assert( current.getFinishTime().equals(stored.getFinishTime()) );
-            assert( current.getHeight() == stored.getHeight());
+            assert( current.getHeight().equals(stored.getHeight()));
         }
     }
 }
