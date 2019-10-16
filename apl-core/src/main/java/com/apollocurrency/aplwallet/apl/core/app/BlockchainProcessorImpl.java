@@ -998,7 +998,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
                 dexService.closeOverdueContracts(block.getTimestamp());
-                if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && blockchainConfig.getDexPendingOrdersReopeningHeight() >= block.getHeight()) {
+                if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
             } catch (AplException.ExecutiveProcessException e) {
