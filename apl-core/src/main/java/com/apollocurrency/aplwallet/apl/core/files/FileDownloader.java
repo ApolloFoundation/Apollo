@@ -70,8 +70,7 @@ public class FileDownloader {
     public static final int DOWNLOAD_THREADS = 6;
     private String fileID;
     private FileDownloadInfo downloadInfo;
-    private List<HasHashSum> goodPeers;
-    private List<HasHashSum> badPeers;
+
     private final Status status = new Status();
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
@@ -85,25 +84,20 @@ public class FileDownloader {
     @Getter
     private CompletableFuture<Boolean> downloadTask;
     private PeersService peers;
+    private FileInfoDownloader infoDownloader;
     
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
                           AplAppStatus aplAppStatus,
+                          FileInfoDownloader infoDownloader,
                           PeersService peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
+        this.infoDownloader = infoDownloader;
         this.peers = peers;
-    }
-    
-    public void setFileId(String fileID){
-      if(this.fileID==null){
-        this.fileID=fileID;
-      }else{
-          throw new RuntimeException("Can not set new filed ID in FileDownloader, it is already set");
-      }
     }
     
     public void startDownload() {
@@ -121,42 +115,6 @@ public class FileDownloader {
     public Status getDownloadStatus() {
         status.completed = ((1.0D * status.chunksReady.get()) / (1.0D * status.chunksTotal.get())) * 100.0D;
         return status;
-    }
-
-    public FileDownloadInfo getDownloadInfo() {
-        return downloadInfo;
-    }
-
-    public FileDownloadDecision prepareForDownloading(Set<Peer> onlyPeers) {
-        log.debug("prepareForDownloading()...");
-        FileDownloadDecision res;
-        Set<Peer> allPeers;
-        if(onlyPeers==null || onlyPeers.isEmpty()){
-           allPeers = getAllAvailablePeers();
-        }else{
-           allPeers=new HashSet<>(); 
-           allPeers.addAll(onlyPeers);
-        }
-        log.debug("prepareForDownloading(), allPeers = {}", allPeers);
-        PeersList<PeerFileInfo> pl = new PeersList<>();
-        allPeers.forEach((pi) -> {
-            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
-            if(pfi.retreiveHash()!=null){
-              pl.add(pfi);
-            }
-        });
-        log.debug("prepareForDownloading(), pl = {}", pl);
-        PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
-        res = pvdm.calcualteNetworkState();
-        goodPeers = pvdm.getValidPeers();
-        badPeers = pvdm.getInvalidPeers();
-        log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
-        if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
-            PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
-            downloadInfo = pfi.getFdi();
-        }
-        log.debug("prepareForDownloading(), res = {}", res);
-        return res;
     }
 
     private FileChunkInfo getNextEmptyChunk() {
@@ -246,7 +204,7 @@ public class FileDownloader {
 
     public Status download() {
         int peerCount = 0;
-        for (HasHashSum p : goodPeers) {
+        for (HasHashSum p : infoDownloader.getGoodPeers()) {
             Future<Boolean> dn_res = executor.submit(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
@@ -280,12 +238,7 @@ public class FileDownloader {
         return status;
     }
 
-    public Set<Peer> getAllAvailablePeers() {
-        Set<Peer> res = new HashSet<>();
-        Collection<? extends Peer> knownPeers = peers.getAllConnectablePeers();
-        res.addAll(knownPeers);
-        return res;
-    }
+
     
     @PreDestroy
     public void preDestroy(){

@@ -126,7 +126,7 @@ public class ShardInfoDownloader {
         int counterTotal = 0;        
     //   FileDownloader fileDownloader = fileDownloaders.get();        
 
-        Set<Peer> knownPeers = fileDownloader.getAllAvailablePeers();
+        Set<Peer> knownPeers = peers.getAllConnectedPeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
@@ -275,8 +275,10 @@ public class ShardInfoDownloader {
 //        FileDownloader fileDownloader = fileDownloaders.get();
         String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
         log.debug("fileID = '{}'", fileID);
-        fileDownloader.setFileId(fileID);
-        result = fileDownloader.prepareForDownloading(thisShardPeers);
+//        
+//        fileDownloader.setFileId(fileID);
+//        result = fileDownloader.prepareForDownloading(thisShardPeers);
+        
         if (isAcceptable(result)) {
             log.debug("Starting shard downloading: '{}'", fileID);
             fileDownloader.startDownload();
