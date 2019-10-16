@@ -34,6 +34,7 @@ public class DexOrder extends VersionedDerivedEntity {
     private DexCurrencies pairCurrency;
     private BigDecimal pairRate;
     private Integer finishTime;
+    private boolean hasFrozenMoney;
 
     public DexOrder() {
         super(null, null);
@@ -88,7 +89,7 @@ public class DexOrder extends VersionedDerivedEntity {
         }
     }
 
-    public DexOrderDto toDto() {
+    public DexOrderDto toDto(boolean hasFrozenMoney) {
         DexOrderDto dexOrderDto = new DexOrderDto();
 
         dexOrderDto.id = Long.toUnsignedString(this.getId());
@@ -104,6 +105,7 @@ public class DexOrder extends VersionedDerivedEntity {
         dexOrderDto.status = this.getStatus().ordinal();
         //TODO make changes on UI. Send BigDecimal.
         dexOrderDto.pairRate = EthUtil.ethToGwei(this.getPairRate());
+        dexOrderDto.hasFrozenMoney = hasFrozenMoney;
 
         return dexOrderDto;
     }
