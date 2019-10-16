@@ -1,4 +1,4 @@
-package com.apollocurrrency.aplwallet.inttest.helper;
+package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
     getForging,

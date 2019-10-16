@@ -26,9 +26,12 @@ public class TestHelper {
     private static final String baseURL_API = "http://"+
             TestConfiguration.getTestConfiguration().getBaseURL()+":"+
             TestConfiguration.getTestConfiguration().getPort()+"/apl?";
+    /*
     private static final String baseURL = "http://"+
                                           TestConfiguration.getTestConfiguration().getBaseURL()+":"+
                                           TestConfiguration.getTestConfiguration().getPort();
+
+     */
     private static HashMap<String,Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
 
@@ -151,10 +154,10 @@ public class TestHelper {
         try {
         response =  httpCallPost();
         responseBody = response.body().string();
-        //System.out.println(responseBody);
         Assert.assertEquals(200, response.code());
-        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE"))
-        assertFalse(responseBody.contains("errorDescription"), responseBody);
+        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
+            assertFalse(responseBody.contains("errorDescription"), responseBody);
+        }
         return (T) mapper.readValue(responseBody, clas);
         }
         catch (Exception e)
