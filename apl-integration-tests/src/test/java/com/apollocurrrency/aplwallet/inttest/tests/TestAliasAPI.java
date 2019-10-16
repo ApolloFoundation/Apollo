@@ -5,7 +5,6 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.GetAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.GetCountAliasesResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.ErrorAPI;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.*;
