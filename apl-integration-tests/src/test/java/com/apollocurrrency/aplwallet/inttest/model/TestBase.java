@@ -1,8 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.http.get.GetAccountBlockCount;
 import com.sun.org.slf4j.internal.Logger;
 import com.sun.org.slf4j.internal.LoggerFactory;
 import net.jodah.failsafe.Failsafe;
@@ -15,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.getInstanse;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -30,12 +29,14 @@ public class TestBase {
                 .retryWhen(false)
                 .withMaxRetries(20)
                 .withDelay(1, TimeUnit.SECONDS);
+        /*
         try {
             getTestConfiguration()
                     .getVaultWallet()
                     .setPass(importKey(getTestConfiguration()
                     .getVaultWallet()).passphrase);
         }catch (Exception e){}
+         */
     }
 
 

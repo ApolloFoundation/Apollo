@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.NodeStatusInfo;
 
 
 /**
+ *
  * @author alukin@gmail.com
  */
 public class NodeHealthResponse extends ResponseBase {

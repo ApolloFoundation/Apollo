@@ -16,11 +16,9 @@ import java.util.List;
 
 /**
  * Response that contains node forgers
- *
  * @author alukin@gmail.com
  */
-@Getter
-@Setter
+@Getter @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NodeForgersResponse extends ResponseBase {
     public List<GeneratorInfo> generators = new ArrayList<>();
