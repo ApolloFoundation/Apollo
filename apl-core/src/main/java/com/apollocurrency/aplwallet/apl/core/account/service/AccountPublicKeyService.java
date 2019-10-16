@@ -9,18 +9,18 @@ import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
-import java.util.Map;
-
 /**
  * @author andrew.zinchenko@gmail.com
  */
 public interface AccountPublicKeyService {
 
+    void clearCache();
+
+    void removeFromCache(DbKey key);
+
     int getCount();
 
     boolean isCacheEnabled();
-
-    Map<DbKey, byte[]> getPublicKeyCache();
 
     byte[] getPublicKey(long id);
 

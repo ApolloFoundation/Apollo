@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class AccountPublicKeyServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private PublicKeyTable publicKeyTable = mock(PublicKeyTable.class);
     private GenesisPublicKeyTable genesisPublicKeyTable = mock(GenesisPublicKeyTable.class);
+    private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -44,7 +46,8 @@ class AccountPublicKeyServiceTest {
                 propertiesHolder,
                 blockchain,
                 publicKeyTable,
-                genesisPublicKeyTable
+                genesisPublicKeyTable,
+                cacheManager
         ));
 
     }

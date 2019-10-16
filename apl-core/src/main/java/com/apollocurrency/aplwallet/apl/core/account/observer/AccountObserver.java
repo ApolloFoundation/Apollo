@@ -69,8 +69,8 @@ public class AccountObserver {
     }
 
     private void clearCache() {
-        if (accountPublicKeyService.isCacheEnabled()) {//TODO: make cache injectable
-            accountPublicKeyService.getPublicKeyCache().clear();
+        if (accountPublicKeyService.isCacheEnabled()) {
+            accountPublicKeyService.clearCache();
         }
     }
 
@@ -78,17 +78,16 @@ public class AccountObserver {
         log.trace("Catch event (BLOCK_POPPED) {}", block);
         if (accountPublicKeyService.isCacheEnabled()) {
             //TODO: make cache injectable
-            final Map<DbKey, byte[]> publicKeyCache = accountPublicKeyService.getPublicKeyCache();
-            publicKeyCache.remove(AccountTable.newKey(block.getGeneratorId()));
+            accountPublicKeyService.removeFromCache(AccountTable.newKey(block.getGeneratorId()));
             block.getOrLoadTransactions().forEach(transaction -> {
-                publicKeyCache.remove(AccountTable.newKey(transaction.getSenderId()));
+                accountPublicKeyService.removeFromCache(AccountTable.newKey(transaction.getSenderId()));
                 if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                    publicKeyCache.remove(AccountTable.newKey(transaction.getRecipientId()));
+                    accountPublicKeyService.removeFromCache(AccountTable.newKey(transaction.getRecipientId()));
                 }
                 if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
                     ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
                     for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        publicKeyCache.remove(AccountTable.newKey(AccountService.getId(publicKey)));
+                        accountPublicKeyService.removeFromCache(AccountTable.newKey(AccountService.getId(publicKey)));
                     }
                 }
             });

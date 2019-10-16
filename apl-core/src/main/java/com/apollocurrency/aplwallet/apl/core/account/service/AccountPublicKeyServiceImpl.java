@@ -9,20 +9,20 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -31,8 +31,9 @@ import java.util.concurrent.ConcurrentMap;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    //TODO: make cache injectable. There is quite nice cache library with eviction policy. https://github.com/ben-manes/caffeine
-    private ConcurrentMap<DbKey, byte[]> publicKeyCache = null;
+    private InMemoryCacheManager cacheManager;
+    private Cache<DbKey, PublicKey> publicKeyCache = null;
+
     private boolean cacheEnabled = false;
 
     private PropertiesHolder propertiesHolder;
@@ -41,17 +42,18 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     private GenesisPublicKeyTable genesisPublicKeyTable;
 
     @Inject
-    public AccountPublicKeyServiceImpl(PropertiesHolder propertiesHolder, Blockchain blockchain, PublicKeyTable publicKeyTable, GenesisPublicKeyTable genesisPublicKeyTable) {
+    public AccountPublicKeyServiceImpl(PropertiesHolder propertiesHolder, Blockchain blockchain, PublicKeyTable publicKeyTable, GenesisPublicKeyTable genesisPublicKeyTable, InMemoryCacheManager cacheManager) {
         this.propertiesHolder = propertiesHolder;
         this.blockchain = blockchain;
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;
+        this.cacheManager = cacheManager;
     }
 
     @PostConstruct
     void init(){
         if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
-            publicKeyCache = new ConcurrentHashMap<>();
+            publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             cacheEnabled = true;
         }
     }
@@ -60,22 +62,39 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     public boolean isCacheEnabled() {
         return cacheEnabled;
     }
-    @Override
-    public Map<DbKey, byte[]> getPublicKeyCache() {
-        return publicKeyCache;
-    }
 
-    private byte[] putInCache(DbKey key, byte[] value){
-        if (isCacheEnabled()){
-            return publicKeyCache.put(key, value);
-        }else {
-            return null;
+    @Override
+    public void clearCache() {
+        if ( isCacheEnabled()) {
+            publicKeyCache.cleanUp();
         }
     }
 
-    private byte[] getFromCache(DbKey key){
+    @Override
+    public void removeFromCache(DbKey key) {
+        if ( isCacheEnabled()) {
+            publicKeyCache.invalidate(key);
+        }
+    }
+
+    private void putInCache(DbKey key, PublicKey value){
         if (isCacheEnabled()){
-            return publicKeyCache.get(key);
+            publicKeyCache.put(key, value);
+        }
+    }
+
+    private void updateInCache(DbKey dbKey) {
+        if ( isCacheEnabled()) {
+            PublicKey key = publicKeyTable.get(dbKey, true);
+            if (key != null) {
+                publicKeyCache.put(dbKey, key);
+            }
+        }
+    }
+
+    private PublicKey getFromCache(DbKey key){
+        if (isCacheEnabled()){
+            return publicKeyCache.getIfPresent(key);
         }else{
             return null;
         }
@@ -89,22 +108,24 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     @Override
     public byte[] getPublicKey(long id) {
         DbKey dbKey = publicKeyTable.newKey(id);
-        byte[] key = getFromCache(dbKey);
-        if (key == null) {
-            PublicKey publicKey = getPublicKey(dbKey);
-            if (publicKey == null || (key = publicKey.getPublicKey()) == null) {
-                return null;
-            }
-            putInCache(dbKey, key);
+        PublicKey publicKey = getPublicKey(dbKey);
+        if (publicKey == null || publicKey.getPublicKey() == null) {
+            return null;
         }
-        return key;
+        return publicKey.getPublicKey();
     }
 
     @Override
     public PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey);
+        PublicKey publicKey = getFromCache(dbKey);
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey);
+            publicKey = publicKeyTable.get(dbKey);
+            if (publicKey == null) {
+                publicKey = genesisPublicKeyTable.get(dbKey);
+            }
+            if (publicKey != null) {
+                putInCache(dbKey, publicKey);
+            }
         }
         return publicKey;
     }
@@ -171,6 +192,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
             publicKey.setHeight(blockchain.getHeight());
+            putInCache(dbKey, publicKey);
             return true;
         }
         return Arrays.equals(publicKey.getPublicKey(), key);
@@ -194,15 +216,18 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             } else {
                 publicKeyTable.insert(publicKey);
             }
+            updateInCache(account.getDbKey());
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
             PublicKey dbPublicKey = getPublicKey(account.getDbKey(), false);
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 publicKeyTable.insert(publicKey);
+                updateInCache(account.getDbKey());
             }
+        } else {
+            putInCache(account.getDbKey(), publicKey);
         }
-        putInCache(account.getDbKey(), key);
         account.setPublicKey(publicKey);
     }
 
@@ -211,6 +236,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         EntityDbTable<PublicKey> table = isGenesis ? genesisPublicKeyTable: publicKeyTable;
         PublicKey publicKey = table.newEntity(dbKey);
         table.insert(publicKey);
+        if ( isCacheEnabled()) {
+            publicKeyCache.put(dbKey, table.get(dbKey, true));
+        }
         return publicKey;
     }
 }
