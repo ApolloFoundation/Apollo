@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -31,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -41,8 +43,11 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
+import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -91,16 +96,21 @@ public class DexController {
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     private DexSmartContractService dexSmartContractService;
+    private Cache<Long, OrderFreezing> cache;
+
 
     @Inject
     public DexController(DexService service, DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService) {
-        this.service = Objects.requireNonNull(service,"DexService is null");
+                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService,
+                         @CacheProducer
+                         @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
+        this.service = Objects.requireNonNull(service, "DexService is null");
         this.dexOrderTransactionCreator = Objects.requireNonNull(dexOrderTransactionCreator, "DexOfferTransactionCreator is null");
-        this.timeService = Objects.requireNonNull(timeService,"EpochTime is null");
-        this.dexEthService = Objects.requireNonNull(dexEthService,"DexEthService is null");
+        this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
+        this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexSmartContractService = dexSmartContractService;
+        this.cache = Objects.requireNonNull(cache);
     }
 
     //For DI
@@ -346,7 +356,7 @@ public class DexController {
 
         List<DexOrder> orders = service.getOrders(dexOrderDBRequest);
         return Response.ok(orders.stream()
-                .map(order -> order.toDto(service.hasFrozenMoney(order)))
+                .map(order -> order.toDto(cache.).hasFrozenMoney(order)))
                 .collect(Collectors.toList())
         ).build();
     }

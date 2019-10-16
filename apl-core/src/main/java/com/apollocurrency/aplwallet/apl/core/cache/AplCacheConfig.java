@@ -4,23 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.cache;
 
+import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfiguration;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
 import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
 public class AplCacheConfig implements InMemoryCacheConfigurator {
 
     private static final int ADDRESSABLE_MEM_PERCENT_FOR_CACHE = 30; //30 percent of Available memory;
-
+    @Inject
+    DexService dexService;
     private CacheConfiguration[] cacheConfigurations = {
             new PublicKeyCacheConfig(60),
-            new BlockIndexCacheConfig(60)
+            new BlockIndexCacheConfig(60),
+            new DexOrderFreezingCacheConfig(15, dexService),
+
     };
 
     @PostConstruct
