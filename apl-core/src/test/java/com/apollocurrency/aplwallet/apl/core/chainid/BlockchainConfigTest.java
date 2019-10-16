@@ -4,6 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -19,22 +27,15 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
 
 @EnableWeld
 public class BlockchainConfigTest {
@@ -42,9 +43,9 @@ public class BlockchainConfigTest {
     @WeldSetup
     private WeldInitiator weld =
             WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
-    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L, new FeaturesHeightRequirement(0));
-    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L, new FeaturesHeightRequirement(0));
-    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L, new FeaturesHeightRequirement(0));
+    private static final BlockchainProperties bp1 = new BlockchainProperties(0, 0, 1, 0, 0, 100L);
+    private static final BlockchainProperties bp2 = new BlockchainProperties(100, 0, 1, 0, 0, 100L);
+    private static final BlockchainProperties bp3 = new BlockchainProperties(200, 0, 2, 0, 0, 100L);
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES = Arrays.asList(
             bp1,
             bp2,
@@ -53,12 +54,12 @@ public class BlockchainConfigTest {
 
 
 
-    private static final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
+    private final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(),
             "test",
             "test",
             "TEST",
-            "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES);
+            "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100));
 
     @Inject
     BlockchainConfig blockchainConfig;
@@ -73,6 +74,18 @@ public class BlockchainConfigTest {
         assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
         assertEquals(1209600, blockchainConfig.getMaxPrunableLifetime());
         assertEquals(1209600, blockchainConfig.getMinPrunableLifetime());
+    }
+
+    @Test
+    void testInitBlockchainConfigForFeatureHeightRequirement() {
+        blockchainConfig.updateChain(chain);
+        assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
+
+        chain.setFeaturesHeightRequirement(null);
+        assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
+        assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
     }
 
     @Test
