@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>api-integration-tests</artifactId>
+    <artifactId>apl-integration-tests</artifactId>
     <dependencies>
 
         <dependency>
