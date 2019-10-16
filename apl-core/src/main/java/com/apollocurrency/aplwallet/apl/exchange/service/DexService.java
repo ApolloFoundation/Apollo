@@ -213,7 +213,7 @@ public class DexService {
             List<UserEthDepositInfo> deposits = dexSmartContractService.getUserFilledDeposits(order.getFromAddress());
             BigDecimal expectedFrozenAmount = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
             for (UserEthDepositInfo deposit : deposits) {
-                if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().equals(expectedFrozenAmount)) {
+                if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().compareTo(expectedFrozenAmount) == 0) {
                     return true;
                 }
             }

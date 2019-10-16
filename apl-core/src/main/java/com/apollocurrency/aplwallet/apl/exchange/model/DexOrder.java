@@ -34,7 +34,6 @@ public class DexOrder extends VersionedDerivedEntity {
     private DexCurrencies pairCurrency;
     private BigDecimal pairRate;
     private Integer finishTime;
-    private boolean hasFrozenMoney;
 
     public DexOrder() {
         super(null, null);
