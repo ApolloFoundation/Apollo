@@ -29,7 +29,6 @@ public class BlockchainConfig {
     private int minPrunableLifetime;
     private boolean enablePruning;
     private int maxPrunableLifetime;
-    // lastKnownBlock must also be set in html/www/js/ars.constants.js
     private short shufflingProcessingDeadline;
     private long lastKnownBlock;
     private long unconfirmedPoolDepositAtm;
@@ -65,7 +64,6 @@ public class BlockchainConfig {
         this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
         this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
         this.guaranteedBalanceConfirmations = 1440;
-
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
     }
@@ -130,6 +128,14 @@ public class BlockchainConfig {
 
     public int getMaxPrunableLifetime() {
         return maxPrunableLifetime;
+    }
+
+    public Integer getDexPendingOrdersReopeningHeight() {
+        if (chain.getFeaturesHeightRequirement() != null) {
+            return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
+        } else {
+            return null;
+        }
     }
 
     public HeightConfig getCurrentConfig() {
