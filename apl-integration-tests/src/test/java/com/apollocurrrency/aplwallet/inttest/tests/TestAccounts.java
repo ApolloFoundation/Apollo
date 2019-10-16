@@ -10,12 +10,10 @@ import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -28,9 +26,9 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount() throws IOException {
-        GetAccountBlockCount accountBlockCount = getAccountBlockCount(getTestConfiguration().getStandartWallet().getUser());
-        log.trace("Acoount count = {}", accountBlockCount.numberOfBlocks);
-        assertTrue(accountBlockCount.numberOfBlocks > 0);
+        GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getStandartWallet().getUser());
+        log.trace("Acoount count = {}", accountBlockCount.getNumberOfBlocks());
+        assertTrue(accountBlockCount.getNumberOfBlocks() > 0);
     }
 
     @Test
@@ -91,7 +89,7 @@ public class TestAccounts extends TestBase {
     @Test
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
-        AccountPropertiesResponse  accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
+        AccountPropertiesResponse accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(accountPropertiesResponse.properties,"Account Properties is NULL");
         assertTrue(accountPropertiesResponse.properties.size() > 0,"Account Properties count = 0");
     }
@@ -111,7 +109,7 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
         sendMoney(wallet, getTestConfiguration().getStandartWallet().getUser(),2);
-        TransactionListInfoResponse transactionInfos = getUnconfirmedTransactions(wallet);
+        TransactionListResponse transactionInfos = getUnconfirmedTransactions(wallet);
         assertNotNull(transactionInfos.unconfirmedTransactions);
         assertTrue(transactionInfos.unconfirmedTransactions.size() > 0);
     }

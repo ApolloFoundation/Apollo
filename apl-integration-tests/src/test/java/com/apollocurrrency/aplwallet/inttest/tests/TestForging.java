@@ -2,7 +2,6 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.GetForgingResponse;
-import com.apollocurrency.aplwallet.api.response.GetPropertyResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;

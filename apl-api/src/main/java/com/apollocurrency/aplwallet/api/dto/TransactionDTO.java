@@ -21,4 +21,5 @@ public class TransactionDTO extends UnconfirmedTransactionDTO {
     public TransactionDTO(UnconfirmedTransactionDTO o) {
         super(o);
     }
+
 }

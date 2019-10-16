@@ -1,6 +1,8 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
+import com.apollocurrency.aplwallet.api.response.*;
 import com.sun.org.slf4j.internal.Logger;
 import com.sun.org.slf4j.internal.LoggerFactory;
 import net.jodah.failsafe.Failsafe;
@@ -8,6 +10,7 @@ import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.junit.jupiter.api.*;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -53,7 +56,7 @@ public class TestBase {
     {
         boolean inBlock = false;
         try {
-            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).confirmations>=0);
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
             assertTrue(inBlock);
         }
         catch (Exception e)
@@ -83,10 +86,10 @@ public class TestBase {
     }
 
 
-    public GetAccountBlockCount getAccountBlockCount(String account) throws IOException {
+    public GetAccountBlockCountResponse getAccountBlockCount(String account) throws IOException {
         addParameters(RequestType.requestType, getAccountBlockCount);
         addParameters(Parameters.account, account);
-        return getInstanse(GetAccountBlockCount.class);
+        return getInstanse(GetAccountBlockCountResponse.class);
     }
 
     public AccountBlockIdsResponse getAccountBlockIds(String account) throws IOException {
@@ -119,10 +122,10 @@ public class TestBase {
         return  getInstanse(SearchAccountsResponse.class);
     }
 
-    public TransactionListInfoResponse getUnconfirmedTransactions(Wallet wallet) throws IOException {
+    public TransactionListResponse getUnconfirmedTransactions(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getUnconfirmedTransactions);
         addParameters(Parameters.wallet,wallet);
-        return getInstanse(TransactionListInfoResponse.class);
+        return getInstanse(TransactionListResponse.class);
     }
 
     public AccountTransactionIdsResponse getUnconfirmedTransactionIds(String account) throws IOException {
@@ -205,31 +208,31 @@ public class TestBase {
         return   getInstanse(CreateTransactionResponse.class);
     }
 
-    public GetPropertyResponse  getAccountProperty(Wallet wallet) throws IOException {
+    public AccountPropertiesResponse getAccountProperty(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAccountProperties);
         addParameters(Parameters.recipient, wallet.getUser());
-        return  getInstanse(GetPropertyResponse.class);
+        return  getInstanse(AccountPropertiesResponse.class);
     }
 
     //Skrypchenko Serhii
-    public GetAliasesResponse getAliases  (Wallet wallet) throws IOException {
+    public AccountAliasesResponse getAliases  (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliases);
         addParameters(Parameters.wallet, wallet);
-        return  getInstanse(GetAliasesResponse.class);
+        return  getInstanse(AccountAliasesResponse.class);
     }
 
     //Skrypchenko Serhii
-    public GetCountAliasesResponse getAliasCount(Wallet wallet) throws IOException {
+    public AccountCountAliasesResponse getAliasCount(Wallet wallet) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliasCount);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetCountAliasesResponse.class);
+        return getInstanse(AccountCountAliasesResponse.class);
     }
 
     //Skrypchenko Serhii
-    public AliasDTO getAlias(String aliasname) throws IOException {
+    public AccountAliasDTO getAlias(String aliasname) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAlias);
         addParameters(Parameters.aliasName, aliasname);
-        return  getInstanse(AliasDTO.class);
+        return getInstanse(AccountAliasDTO.class);
     }
 
 
@@ -257,10 +260,10 @@ public class TestBase {
     }
 
     //Serhii Skrypchenko
-    public GetAliasesResponse getAliasesLike(String aliasename) throws IOException {
+    public AccountAliasesResponse getAliasesLike(String aliasename) throws IOException {
         addParameters(RequestType.requestType,RequestType.getAliasesLike);
         addParameters(Parameters.aliasPrefix, aliasename);
-        return getInstanse(GetAliasesResponse.class);
+        return getInstanse(AccountAliasesResponse.class);
     }
 
 
@@ -327,26 +330,26 @@ public class TestBase {
     }
 
 
-    public String[] getPeers() throws IOException {
+    public List<PeerDTO> getPeers() throws IOException {
         addParameters(RequestType.requestType, RequestType.getPeers);
         addParameters(Parameters.active, true);
         Response response = httpCallGet();
         assertEquals(200, response.code());
-        Peers peers = mapper.readValue(response.body().string(), Peers.class);
-        return peers.peers;
+        GetPeersResponse peers = mapper.readValue(response.body().string(), GetPeersResponse.class);
+        return peers.getPeers();
     }
 
-    public Peer getPeer(String peer) throws IOException {
+    public PeerDTO getPeer(String peer) throws IOException {
         addParameters(RequestType.requestType, RequestType.getPeer);
         addParameters(Parameters.peer, peer);
-        return getInstanse(Peer.class);
+        return getInstanse(PeerDTO.class);
     }
 
-    public Peer addPeer(String ip) throws IOException {
+    public PeerDTO addPeer(String ip) throws IOException {
         addParameters(RequestType.requestType, RequestType.addPeer);
         addParameters(Parameters.peer, ip);
         addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-        return getInstanse(Peer.class);
+        return getInstanse(PeerDTO.class);
     }
 
     public PeerInfo getMyInfo() throws IOException {
@@ -374,25 +377,25 @@ public class TestBase {
         return getInstanse(BlockchainInfoDTO.class);
     }
 
-    public GetBloksResponse getBlocks() throws IOException {
+    public AccountBlocksResponse getBlocks() throws IOException {
         addParameters(RequestType.requestType, getBlocks);
-        return getInstanse(GetBloksResponse.class);
+        return getInstanse(AccountBlocksResponse.class);
     }
 
 
     public void verifyCreatingTransaction (CreateTransactionResponse transaction) {
         assertNotNull(transaction);
-        assertNotNull(transaction.transaction,transaction.errorDescription);
-        assertNotNull(transaction.transactionJSON,transaction.errorDescription);
-        assertNotNull(transaction.transactionJSON.senderPublicKey);
-        assertNotNull(transaction.transactionJSON.signature);
-        assertNotNull(transaction.transactionJSON.fullHash);
-        assertNotNull(transaction.transactionJSON.amountATM);
-        assertNotNull(transaction.transactionJSON.ecBlockId);
-        assertNotNull(transaction.transactionJSON.senderRS);
-        assertNotNull(transaction.transactionJSON.transaction);
-        assertNotNull(transaction.transactionJSON.feeATM);
-        assertNotNull(transaction.transactionJSON.type);
+        assertNotNull(transaction.getTransaction(), transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON(),transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON().getSenderPublicKey());
+        assertNotNull(transaction.getTransactionJSON().getSignature());
+        assertNotNull(transaction.getTransactionJSON().getFullHash());
+        assertNotNull(transaction.getTransactionJSON().getAmountATM());
+        assertNotNull(transaction.getTransactionJSON().getEcBlockId());
+        assertNotNull(transaction.getTransactionJSON().getSenderRS());
+        assertNotNull(transaction.getTransactionJSON().getTransaction());
+        assertNotNull(transaction.getTransactionJSON().getFeeATM());
+        assertNotNull(transaction.getTransactionJSON().getType());
 
     }
 
@@ -483,129 +486,138 @@ public class TestBase {
 
 
     //getAccountAssets
-    public  GetAccountAssetsResponse getAccountAssets (Wallet wallet) throws IOException {
+    public AccountAssetsResponse getAccountAssets (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountAssets);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetAccountAssetsResponse.class);
+        return getInstanse(AccountAssetsResponse.class);
     }
 
     //getAccountAssetCount
-    public  GetAssetAccountCountResponse getAccountAssetCount (Wallet wallet) throws IOException {
+    public  AccountAssetsCountResponse getAccountAssetCount (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountAssetCount);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetAssetAccountCountResponse.class);
+        return getInstanse(AccountAssetsCountResponse.class);
     }
 
     //getAsset
-    public AssetDTO getAsset (String asset) throws IOException {
+    public AccountAssetDTO getAsset (String asset) throws IOException {
         addParameters(RequestType.requestType, getAsset);
         addParameters(Parameters.asset, asset);
-        return getInstanse(AssetDTO.class);
+        return getInstanse(AccountAssetDTO.class);
     }
 
 
     //getAccountCurrentAskOrderIds
-    public GetOrderIdsResponse getAccountCurrentAskOrderIds (Wallet wallet) throws IOException {
+    public AccountCurrentAssetAskOrderIdsResponse getAccountCurrentAskOrderIds (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountCurrentAskOrderIds);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetOrderIdsResponse.class);
+        return getInstanse(AccountCurrentAssetAskOrderIdsResponse.class);
     }
 
     //getAccountCurrentBidOrderIds
-    public GetOrderIdsResponse getAccountCurrentBidOrderIds (Wallet wallet) throws IOException {
+    public AccountCurrentAssetBidOrderIdsResponse getAccountCurrentBidOrderIds (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountCurrentBidOrderIds);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetOrderIdsResponse.class);
+        return getInstanse(AccountCurrentAssetBidOrderIdsResponse.class);
     }
 
 
     //getAccountCurrentAskOrders
-    public GetAccountCurrentOrdersResponse getAccountCurrentAskOrders (Wallet wallet) throws IOException {
+    public AccountCurrentAssetAskOrdersResponse getAccountCurrentAskOrders (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountCurrentAskOrders);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetAccountCurrentOrdersResponse.class);
+        return getInstanse(AccountCurrentAssetAskOrdersResponse.class);
     }
 
     //getAccountCurrentBidOrders
-    public GetAccountCurrentOrdersResponse getAccountCurrentBidOrders (Wallet wallet) throws IOException {
+    public AccountCurrentAssetBidOrdersResponse getAccountCurrentBidOrders (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountCurrentBidOrders);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetAccountCurrentOrdersResponse.class);
+        return getInstanse(AccountCurrentAssetBidOrdersResponse.class);
     }
 
     //getAllAssets
-    public GetAllAssetsResponse getAllAssets () throws IOException {
+    public AssetsResponse getAllAssets () throws IOException {
         addParameters(RequestType.requestType, getAllAssets);
-        return getInstanse(GetAllAssetsResponse.class);
+        return getInstanse(AssetsResponse.class);
     }
 
     //getAllOpenAskOrders
-    public GetOpenOrderResponse getAllOpenAskOrders () throws IOException {
+    public AccountOpenAssetOrdersResponse getAllOpenAskOrders () throws IOException {
         addParameters(RequestType.requestType, getAllOpenAskOrders);
-        return getInstanse(GetOpenOrderResponse.class);
+        return getInstanse(AccountOpenAssetOrdersResponse.class);
     }
 
 
     //getAllOpenBidOrders
-    public GetOpenOrderResponse getAllOpenBidOrders () throws IOException {
+    public AccountOpenAssetOrdersResponse getAllOpenBidOrders () throws IOException {
         addParameters(RequestType.requestType, getAllOpenBidOrders);
-        return getInstanse(GetOpenOrderResponse.class);
+        return getInstanse(AccountOpenAssetOrdersResponse.class);
     }
 
     //getAllTrades
-    public GetAllTradeResponse getAllTrades () throws IOException {
+    public AssetTradeResponse getAllTrades () throws IOException {
         addParameters(RequestType.requestType, getAllTrades);
-        return getInstanse(GetAllTradeResponse.class);
+        return getInstanse(AssetTradeResponse.class);
     }
 
     //getAskOrder
-    public OrderDTO getAskOrder (String askOrder) throws IOException {
+    public AccountAssetOrderDTO getAskOrder (String askOrder) throws IOException {
         addParameters(RequestType.requestType, getAskOrder);
         addParameters(Parameters.order, askOrder);
-        return getInstanse(OrderDTO.class);
+        return getInstanse(AccountAssetOrderDTO.class);
     }
 
     //getAskOrderIds
-    public GetOrderIdsResponse getAskOrderIds (String assetID) throws IOException {
+    public AccountCurrentAssetAskOrderIdsResponse getAskOrderIds (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAskOrderIds);
         addParameters(Parameters.asset, assetID);
-        return getInstanse(GetOrderIdsResponse.class);
+        return getInstanse(AccountCurrentAssetAskOrderIdsResponse.class);
     }
 
     //getAskOrders
-    public GetOpenOrderResponse getAskOrders (String assetID) throws IOException {
+    public AccountCurrentAssetAskOrdersResponse getAskOrders (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAskOrders);
         addParameters(Parameters.asset, assetID);
 
-        return getInstanse(GetOpenOrderResponse.class);
+        return getInstanse(AccountCurrentAssetAskOrdersResponse.class);
     }
 
+    //getBidOrders
+    public AccountCurrentAssetBidOrdersResponse getBidOrders (String assetID) throws IOException {
+        addParameters(RequestType.requestType, getBidOrders);
+        addParameters(Parameters.asset, assetID);
+
+        return getInstanse(AccountCurrentAssetBidOrdersResponse.class);
+    }
+
+
     //getAssetAccountCount
-    public  GetAssetAccountCountResponse getAssetAccountCount (String assetID) throws IOException {
+    public AccountAssetsCountResponse getAssetAccountCount (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAssetAccountCount);
         addParameters(Parameters.asset, assetID);
-        return getInstanse(GetAssetAccountCountResponse.class);
+        return getInstanse(AccountAssetsCountResponse.class);
     }
 
     //getAssetAccounts
-    public  GetAccountAssetsResponse getAssetAccounts (String assetID) throws IOException {
+    public  AccountAssetsResponse getAssetAccounts (String assetID) throws IOException {
         addParameters(RequestType.requestType, getAssetAccounts);
         addParameters(Parameters.asset, assetID);
-        return getInstanse(GetAccountAssetsResponse.class);
+        return getInstanse(AccountAssetsResponse.class);
     }
 
     //getAssetDeletes
-    public  GetExpectedAssetDeletes getAssetDeletes (Wallet wallet) throws IOException {
+    public ExpectedAssetDeletes getAssetDeletes (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAssetDeletes);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetExpectedAssetDeletes.class);
+        return getInstanse(ExpectedAssetDeletes.class);
     }
 
     //getExpectedAssetDeletes
-    public  GetExpectedAssetDeletes getExpectedAssetDeletes (Wallet wallet) throws IOException {
+    public  ExpectedAssetDeletes getExpectedAssetDeletes (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getExpectedAssetDeletes);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(GetExpectedAssetDeletes.class);
+        return getInstanse(ExpectedAssetDeletes.class);
     }
 
     //getAssetDividends NOT READY YET!!!!!
@@ -616,9 +628,9 @@ public class TestBase {
     }*/
 
     //getAssetIds
-    public  GetAssetIdsResponse getAssetIds () throws IOException {
+    public AccountAssetsIdsResponse getAssetIds () throws IOException {
         addParameters(RequestType.requestType, getAssetIds);
-        return getInstanse(GetAssetIdsResponse.class);
+        return getInstanse(AccountAssetsIdsResponse.class);
     }
 
     //transferAsset
@@ -636,15 +648,15 @@ public class TestBase {
 
 
 
-    public ECBlock getECBlock() throws IOException {
+    public ECBlockDTO getECBlock() throws IOException {
         addParameters(RequestType.requestType, getECBlock);
-        return getInstanse(ECBlock.class);
+        return getInstanse(ECBlockDTO.class);
     }
 
-    public GetForgingResponse getForging() throws IOException{
+    public ForgingResponse getForging() throws IOException{
         addParameters(RequestType.requestType, getForging);
         addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
-        return getInstanse(GetForgingResponse.class);
+        return getInstanse(ForgingResponse.class);
     }
 
     public ForgingDetails startForging(Wallet wallet) throws IOException{
@@ -671,11 +683,11 @@ public class TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    public PrunableMessageDTO readMessage(Wallet wallet,String transaction) throws IOException {
+    public AccountMessageDTO readMessage(Wallet wallet,String transaction) throws IOException {
         addParameters(RequestType.requestType,RequestType.readMessage);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.transaction,transaction);
-        return getInstanse(PrunableMessageDTO.class);
+        return getInstanse(AccountMessageDTO.class);
     }
 
     /*
@@ -687,7 +699,7 @@ public class TestBase {
      total ATU for models 2 and 3
      the number of transactions for model 4  1 for model 5
     */
-    public void phasing(long phasingFinishHeight, VoteWeighting.VotingModel votingModel, int phasingQuorum,Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding){
+    public void phasing(long phasingFinishHeight, Parameters votingModel, int phasingQuorum,Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding){
         addParameters(Parameters.phased, true);
         addParameters(Parameters.phasingFinishHeight, phasingFinishHeight);
         addParameters(Parameters.votingModel, votingModel);

@@ -1,10 +1,6 @@
-/*
- *
- *  Copyright © 2018-2019 Apollo Foundation
- *
- */
 package com.apollocurrency.aplwallet.api.response;
 
+import com.apollocurrency.aplwallet.api.dto.AssetDeleteDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,10 +12,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AccountCurrentAskOrderIdsResponse extends ResponseBase {
-    private List<String> askOrderIds;
-
-    public AccountCurrentAskOrderIdsResponse(List<String> askOrderIds) {
-        this.askOrderIds = askOrderIds;
-    }
+public class ExpectedAssetDeletes extends ResponseBase {
+    private List<AssetDeleteDTO> deletes;
 }

@@ -22,6 +22,7 @@ public class BasicAccount extends BaseDTO {
     @JsonAlias({"account"}) // from json
     @JsonProperty("account") //to json
     private long id;
+    public String accountRS;
 
     public BasicAccount(String account) {
         this.id = Convert.parseAccountId(account);

@@ -28,6 +28,8 @@ public class AccountDTO extends BaseDTO {
     private String account;
     private String accountRS;
     private String publicKey;
+    private String passphrase;
+    private String secret;
     //account info
     private boolean is2FA;
     private String name;

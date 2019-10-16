@@ -59,5 +59,12 @@ public enum  Parameters {
     broadcast,
     block,
     height,
-    amountATMPerATU
+    amountATMPerATU,
+    phased,
+    phasingFinishHeight,
+    votingModel,
+    phasingQuorum,
+    phasingMinBalance,
+    phasingMinBalanceModel,
+    phasingHolding
 }

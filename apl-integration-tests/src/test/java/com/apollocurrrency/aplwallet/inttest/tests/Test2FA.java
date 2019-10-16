@@ -23,7 +23,7 @@ public class Test2FA extends TestBase {
     @Test
     public void  deleteKey() throws IOException { ;
         AccountDTO accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.account,accountDTO.passphrase, null,"0");
+        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
         Account2FA deletedAccount = deleteKey(wallet);
         assertEquals(Status2FA.OK,deletedAccount.getStatus());
     }
@@ -33,9 +33,9 @@ public class Test2FA extends TestBase {
     @Test
     public void  exportKey() throws IOException {
         AccountDTO accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.account,accountDTO.passphrase, null,"0");
+        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
         Account2FA exportKey = exportKey(wallet);
-        assertEquals(accountDTO.accountRS,exportKey.accountRS);
+        assertEquals(accountDTO.getAccountRS(),exportKey.accountRS);
         assertNotNull(exportKey.secretBytes);
     }
 
@@ -43,7 +43,7 @@ public class Test2FA extends TestBase {
     @Test
     public void  importKey() throws IOException {
         AccountDTO accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.account,accountDTO.passphrase, null,"0");
+        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
         Account2FA exportKey = exportKey(wallet);
         wallet.setSecretKey(exportKey.secretBytes);
         deleteKey(wallet);
@@ -56,6 +56,6 @@ public class Test2FA extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void  enable2FATest(Wallet wallet) throws IOException { ;
         AccountDTO accountDTO = enable2FA(wallet);
-        assertNotNull(accountDTO.secret);
+        assertNotNull(accountDTO.getSecret());
     }
 }

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Account2FA extends BasicAccount {
     @JsonAlias("errorDescription")
     private Status2FA status;
+    public String secretBytes;
 
     @JsonCreator
     public Account2FA(@JsonProperty(value = "account", required = true) String account,
@@ -36,7 +37,7 @@ public class Account2FA extends BasicAccount {
     public String toString() {
         return "Account2FA{" +
                 "status=" + status +
-                ", id=" + Crypto.rsEncode(id) +
+                ", id=" + Crypto.rsEncode(getId()) +
                 '}';
     }
 }

@@ -5,7 +5,7 @@
  */
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.BlockDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +16,10 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter @Setter
 @NoArgsConstructor
-public class AccountBlocksResponse extends ResponseBase {
-    private List<BlockDTO> blocks;
+public class AccountAssetsIdsResponse extends ResponseBase {
+    private List<String> assetIds;
+
+    public AccountAssetsIdsResponse(List<String> assetIds) {
+        this.assetIds = assetIds;
+    }
 }
