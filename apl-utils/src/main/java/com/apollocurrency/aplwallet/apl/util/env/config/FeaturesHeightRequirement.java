@@ -13,14 +13,14 @@ import lombok.ToString;
 @EqualsAndHashCode
 @NoArgsConstructor
 public class FeaturesHeightRequirement {
-    private Integer phasingApprovalTx;
+    private Integer dexReopenPendingOrdersHeight;
 
     @JsonCreator
-    public FeaturesHeightRequirement(@JsonProperty("phasingApprovalTx") Integer phasingApprovalTx) {
-        this.phasingApprovalTx = phasingApprovalTx;
+    public FeaturesHeightRequirement(@JsonProperty("dexReopenPendingOrdersHeight") Integer dexReopenPendingOrdersHeight) {
+        this.dexReopenPendingOrdersHeight = dexReopenPendingOrdersHeight;
     }
 
     public FeaturesHeightRequirement copy(){
-        return new FeaturesHeightRequirement(phasingApprovalTx);
+        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight);
     }
 }

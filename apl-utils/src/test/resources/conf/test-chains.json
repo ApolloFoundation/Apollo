@@ -17,6 +17,7 @@
     "prefix": "APL",
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {},
     "blockchainProperties": [
       {
         "height": 0,
