@@ -16,9 +16,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.addParameters;
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallGet;
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.httpCallPost;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallGet;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallPost;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ public class TestSmokeAPI extends TestBase {
                 .withDelay(5, TimeUnit.SECONDS);
 
         //Verify count of peers
-        List<PeerDTO> peers = getPeers();
+        List<String> peers = getPeers();
         assertTrue("Peer counts < 3",  peers.size() >= 3);
 
         //Verify transaction in block
@@ -123,7 +123,7 @@ public class TestSmokeAPI extends TestBase {
          return resp.getBlocks().get(0).getHeight();
     }
 
-    private void verifyBlockHeighOnPeers(long etalonPeerBlockHeight, List<PeerDTO> peers) throws IOException {
+    private void verifyBlockHeighOnPeers(long etalonPeerBlockHeight, List<String> peers) throws IOException {
         for (int i = 0; i < peers.size() ; i++) {
                 long blockID = getLastBlock(String.valueOf(peers.get(i)));
                 System.out.println("Heigh block: " + blockID + " On peer " + peers.get(i));

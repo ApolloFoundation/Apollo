@@ -6,9 +6,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
-import java.io.IOException;
 
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.mapper;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
 
 public class TestConfiguration {

@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.*;
-import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.getInstanse;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -335,7 +335,7 @@ public class TestBase {
     }
 
 
-    public List<PeerDTO> getPeers() throws IOException {
+    public List<String> getPeers() throws IOException {
         addParameters(RequestType.requestType, RequestType.getPeers);
         addParameters(Parameters.active, true);
         Response response = httpCallGet();

@@ -10,6 +10,6 @@ import java.util.List;
 @Getter @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetPeersResponse extends ResponseBase {
-    private List<PeerDTO> peers;
+    private List<String> peers;
 
 }

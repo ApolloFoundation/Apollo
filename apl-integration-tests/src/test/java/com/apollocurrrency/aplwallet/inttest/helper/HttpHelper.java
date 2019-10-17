@@ -1,7 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
+
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,8 +9,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Assert;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,17 +18,16 @@ import java.util.UnknownFormatConversionException;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-public class TestHelper {
+public class HttpHelper {
     public static ObjectMapper mapper = new ObjectMapper();
     private static final String baseURL_API = "http://"+
             TestConfiguration.getTestConfiguration().getBaseURL()+":"+
             TestConfiguration.getTestConfiguration().getPort()+"/apl?";
-    /*
-    private static final String baseURL = "http://"+
-                                          TestConfiguration.getTestConfiguration().getBaseURL()+":"+
-                                          TestConfiguration.getTestConfiguration().getPort();
 
-     */
+    private static final String baseURL_API_RREST_EASY = "http://"+
+            TestConfiguration.getTestConfiguration().getBaseURL()+":"+
+            TestConfiguration.getTestConfiguration().getPort()+"/rest/";
+
     private static HashMap<String,Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
 
@@ -64,6 +60,7 @@ public class TestHelper {
                 .url(buildGetReqestUrl())
                 .post(body)
                 .build();
+        System.out.println(buildGetReqestUrl());
         return getClient().newCall(request).execute();
     }
 
@@ -155,7 +152,7 @@ public class TestHelper {
         response =  httpCallPost();
         responseBody = response.body().string();
         Assert.assertEquals(200, response.code());
-          //  System.out.println(responseBody);
+        System.out.println(responseBody);
         if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
             assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
