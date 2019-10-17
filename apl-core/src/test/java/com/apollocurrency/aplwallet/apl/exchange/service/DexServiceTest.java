@@ -4,12 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
@@ -17,20 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.exchange.dao.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 class DexServiceTest {
@@ -128,42 +112,6 @@ class DexServiceTest {
         assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, order));
     }
 
-    @Test
-    void testHasFrozenMoneyForSellOrder() {
-        order.setType(OrderType.SELL);
-
-        boolean result = dexService.hasFrozenMoney(order);
-
-        assertTrue(result);
-    }
-    @Test
-    void testHasFrozenMoneyForBuyOrder() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of(new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000126), 2L), new UserEthDepositInfo(1L, BigDecimal.valueOf(0.000127), 1L), new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000127), 1L));
-        doReturn(userDeposits).when(dexSmartContractService).getUserFilledDeposits(order.getFromAddress());
-
-        boolean result = dexService.hasFrozenMoney(order);
-
-        assertTrue(result);
-    }
-
-    @Test
-    void testHasFrozenMoneyForBuyOrderWithoutUserDeposits() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of();
-        doReturn(userDeposits).when(dexSmartContractService).getUserFilledDeposits(order.getFromAddress());
-
-        boolean result = dexService.hasFrozenMoney(order);
-
-        assertFalse(result);
-    }
-
-    @Test
-    void testHasFrozenMoneyForBuyOrderWithException() throws AplException.ExecutiveProcessException {
-        doThrow(new AplException.ExecutiveProcessException()).when(dexSmartContractService).getUserFilledDeposits(order.getFromAddress());
-
-        boolean result = dexService.hasFrozenMoney(order);
-
-        assertFalse(result);
-    }
 
 //    @Test
 //    void closeOverdueContracts() {
