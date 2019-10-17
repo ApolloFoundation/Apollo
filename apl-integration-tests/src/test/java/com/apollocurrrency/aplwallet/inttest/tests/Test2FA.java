@@ -2,27 +2,25 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class Test2FA extends TestBase {
+public class Test2FA extends TestBaseOld {
     @DisplayName("Delete Secret Key")
     @Test
     public void  deleteKey() throws IOException { ;
         AccountDTO accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
-        Account2FA deletedAccount = deleteKey(wallet);
+        Account2FA deletedAccount = deleteSecretFile(wallet);
         assertEquals(Status2FA.OK,deletedAccount.getStatus());
     }
 
@@ -32,7 +30,7 @@ public class Test2FA extends TestBase {
     public void  exportKey() throws IOException {
         AccountDTO accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
-        Account2FA exportKey = exportKey(wallet);
+        Account2FA exportKey = exportSecretFile(wallet);
         assertEquals(accountDTO.getAccountRS(),exportKey.accountRS);
         assertNotNull(exportKey.secretBytes);
     }
@@ -42,10 +40,10 @@ public class Test2FA extends TestBase {
     public void  importKey() throws IOException {
         AccountDTO accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,"0");
-        Account2FA exportKey = exportKey(wallet);
+        Account2FA exportKey = exportSecretFile(wallet);
         wallet.setSecretKey(exportKey.secretBytes);
-        deleteKey(wallet);
-        Account2FA importKey = importKey(wallet);
+        deleteSecretFile(wallet);
+        Account2FA importKey = importSecretFile(wallet);
         assertEquals(Status2FA.OK,importKey.getStatus());
     }
 

@@ -3,19 +3,18 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import com.apollocurrency.aplwallet.api.dto.*;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestForging extends TestBase {
+public class TestForging extends TestBaseOld {
 
 
     @DisplayName("Start Get Stop Forging")
