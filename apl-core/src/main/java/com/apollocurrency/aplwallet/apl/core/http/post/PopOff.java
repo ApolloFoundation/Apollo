@@ -54,7 +54,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
         List<? extends Block> blocks;
         BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         try {
-            blockchainProcessor.setGetMoreBlocks(false);
+            blockchainProcessor.suspendBlockchainDownloading();
             if (numBlocks > 0) {
                 blocks = blockchainProcessor.popOffTo(lookupBlockchain().getHeight() - numBlocks);
             } else if (height > 0) {
@@ -63,7 +63,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
                 return JSONResponses.missing("numBlocks", "height");
             }
         } finally {
-            blockchainProcessor.setGetMoreBlocks(true);
+            blockchainProcessor.resumeBlockchainDownloading();
         }
         //usually we do not need those blocks in output
         //JSONArray blocksJSON = new JSONArray();

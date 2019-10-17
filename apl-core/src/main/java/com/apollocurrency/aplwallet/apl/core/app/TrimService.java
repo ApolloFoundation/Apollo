@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -13,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
+import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ public class TrimService {
     private final ReentrantLock lock = new ReentrantLock();
 
     private Event<TrimData> trimEvent;
+    private Event<TrimConfig> trimConfigEvent;
 
 
     @Inject
@@ -46,6 +49,7 @@ public class TrimService {
                        GlobalSync globalSync,
                        TimeService timeService,
                        Event<TrimData> trimEvent,
+                       Event<TrimConfig> trimConfigEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
     ) {
@@ -57,6 +61,7 @@ public class TrimService {
         this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
+        this.trimConfigEvent = Objects.requireNonNull(trimConfigEvent, "TrimConfig event should not be null");
     }
 
     public int getLastTrimHeight() {
@@ -199,7 +204,20 @@ public class TrimService {
 //        return pruningTime;
     }
 
+    public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
+        log.debug("Send event to {} trim thread", enableTrim?"enable":"disable");
+        trimConfigEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(enableTrim, clearQueue));
+    }
+
     public boolean isTrimming() {
         return lock.isLocked();
+    }
+
+    public void waitTrimming(){
+        log.debug("Waiting until the latest trim ends");
+        while (isTrimming()) {
+            ThreadUtils.sleep(100);
+        }
     }
 }

@@ -206,12 +206,12 @@ public class ShardMigrationExecutor {
     private void stopNetOperations() {
         peers.suspend();
         Generator.suspendForging();
-        blockchainProcessor.setGetMoreBlocks(false);
+        blockchainProcessor.suspendBlockchainDownloading();
     }
 
     private void resumeNetOperations() {
         peers.resume();
-        blockchainProcessor.setGetMoreBlocks(true);
+        blockchainProcessor.resumeBlockchainDownloading();
         Generator.resumeForging();
     }
     public MigrateState executeAllOperations() {

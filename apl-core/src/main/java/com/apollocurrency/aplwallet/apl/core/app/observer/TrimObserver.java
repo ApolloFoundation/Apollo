@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +43,11 @@ import javax.inject.Singleton;
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
     private final TrimService trimService;
-    private volatile boolean trimDerivedTables = true;
+    private volatile boolean trimDerivedTablesEnabled = true;
     private int trimFrequency;
     private final Object lock = new Object();
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
-    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
     private BlockchainConfig blockchainConfig;
     private PropertiesHolder propertiesHolder;
     private Blockchain blockchain;
@@ -64,11 +65,7 @@ public class TrimObserver {
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.isShardingOff = this.propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
-        if (random == null) {
-            this.random = new Random();
-        } else {
-            this.random = random;
-        }
+        this.random = Objects.requireNonNullElseGet(random, Random::new);
         this.maxRollback = this.propertiesHolder.getIntProperty("apl.maxRollback", 720);
     }
 
@@ -95,7 +92,7 @@ public class TrimObserver {
         public Void call() {
             try {
                 // Do work.
-                processTrimEvent();
+                processScheduledTrimEvent();
             } finally {
                 // Reschedule next new Callable with next random delay within 5 sec range
                 executorService.schedule(this,
@@ -112,17 +109,17 @@ public class TrimObserver {
         executorService.shutdownNow();
     }
 
-    boolean isTrimDerivedTables() {
-        return trimDerivedTables;
+    boolean isTrimDerivedTablesEnabled() {
+        return trimDerivedTablesEnabled;
     }
 
-    private void processTrimEvent() {
+    private void processScheduledTrimEvent() {
         log.trace("processTrimEvent() scheduled on previous run...");
-        if (trimDerivedTables) {
+        if (trimDerivedTablesEnabled) {
             boolean performTrim = false;
             Integer trimHeight = null;
             synchronized (lock) {
-                if (trimDerivedTables) {
+                if (trimDerivedTablesEnabled) {
                     trimHeight = trimHeights.peek();
                     performTrim = trimHeight != null && trimHeight <= blockchain.getHeight();
                     if (performTrim) {
@@ -147,7 +144,7 @@ public class TrimObserver {
 
     public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
         log.info("Set trim to {} ", trimConfig.isEnableTrim());
-        this.trimDerivedTables = trimConfig.isEnableTrim();
+        this.trimDerivedTablesEnabled = trimConfig.isEnableTrim();
         if (trimConfig.isClearTrimQueue()) {
             synchronized (lock) {
                 trimHeights.clear();
@@ -160,7 +157,7 @@ public class TrimObserver {
         if (block.getHeight() % 5000 == 0) {
             log.info("Scan: processed block " + block.getHeight());
         }
-        if (trimDerivedTables && block.getHeight() % trimFrequency == 0) {
+        if (trimDerivedTablesEnabled && block.getHeight() % trimFrequency == 0) {
             trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
         }
     }

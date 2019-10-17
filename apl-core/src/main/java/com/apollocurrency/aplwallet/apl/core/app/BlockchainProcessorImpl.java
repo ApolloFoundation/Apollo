@@ -478,7 +478,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void fullReset() {
         globalSync.writeLock();
         try {
-            setGetMoreBlocks(false);
+            suspendBlockchainDownloading();
             try {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
                 dataSource.begin();
@@ -504,17 +504,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
             } finally {
-                setGetMoreBlocks(true);
+                resumeBlockchainDownloading();
             }
         } finally {
             globalSync.writeUnlock();
         }
-    }
-
-    @Override
-    public void setGetMoreBlocks(boolean getMoreBlocks) {
-        log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);
-        this.getMoreBlocks = getMoreBlocks;
     }
 
     @Override
@@ -673,7 +667,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
             log.info("Last block height: " + lastBlock.getHeight());
-            setGetMoreBlocks(true); // turn ON blockchain downloading
+            resumeBlockchainDownloading(); // turn ON blockchain downloading
             scheduleOneScan();
             return;
         }
@@ -1067,7 +1061,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
-            dataSource.commit(false); // should happen definately, otherwise
+            dataSource.commit(false); // should happen definitely otherwise
 
         }
         catch (RuntimeException e) {
@@ -1117,6 +1111,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         } finally {
             globalSync.writeUnlock();
+            this.resumeBlockchainDownloading();
         }
     }
 
@@ -1272,12 +1267,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void scan(int height, boolean validate) {
-        scan(height, validate, false);
+        try {
+            trimService.updateTrimConfig(false, true);
+            scan(height, validate, false);
+        }finally {
+            trimService.updateTrimConfig(false, true);
+        }
     }
 
     @Override
     public void fullScanWithShutdown() {
-        scan(0, true, true);
+        try {
+            trimService.updateTrimConfig(false, true);
+            scan(0, true, true);
+        }finally {
+            trimService.updateTrimConfig(false, true);
+        }
     }
 
     private void scan(int height, boolean validate, boolean shutdown) {
@@ -1297,7 +1302,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (height < shardInitialHeight) {
-                log.warn("Scanning of blocks before last shard block is not supported");
+                log.warn("Scanning of blocks before last shard block is not supported (height={} < shardInitialHeight={})", height, shardInitialHeight);
                 return;
             }
             scheduleScan(height, validate);
@@ -1490,15 +1495,20 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return totalPercents / Math.max(events, 1);
     }
 
+    @Override
+    public void setGetMoreBlocks(boolean getMoreBlocks) {
+        log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);
+        this.getMoreBlocks = getMoreBlocks;
+    }
 
     @Override
     public void suspendBlockchainDownloading() {
-        getMoreBlocks = false;
+        setGetMoreBlocks(false);
     }
 
     @Override
     public void resumeBlockchainDownloading() {
-        getMoreBlocks = true;
+        setGetMoreBlocks(true);
     }
 
     private class GetMoreBlocksThread implements Runnable {
