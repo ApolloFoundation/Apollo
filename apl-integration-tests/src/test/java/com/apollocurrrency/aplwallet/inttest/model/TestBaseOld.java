@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -31,6 +32,7 @@ public class TestBaseOld extends TestBase {
     @BeforeAll
     static void initAll() {
         getTestConfiguration();
+        new RestHelper();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(20)

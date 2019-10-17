@@ -82,6 +82,12 @@
             <version>4.1.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>spring-web-test-client</artifactId>
+            <version>4.1.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
