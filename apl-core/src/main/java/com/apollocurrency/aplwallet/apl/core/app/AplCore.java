@@ -95,8 +95,8 @@ public final class AplCore {
     private static volatile boolean shutdown = false;
 
     private TimeService time;
-    private static Blockchain blockchain;
-    private static BlockchainProcessor blockchainProcessor;
+    private Blockchain blockchain;
+    private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
