@@ -4,6 +4,8 @@ import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrrency.aplwallet.inttest.model.Parameters;
+import com.apollocurrrency.aplwallet.inttest.model.RequestType;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import net.jodah.failsafe.Failsafe;
@@ -11,6 +13,7 @@ import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestHelper.addParameters;
@@ -46,11 +49,11 @@ public class TestSmokeAPI extends TestBase {
                 .withDelay(5, TimeUnit.SECONDS);
 
         //Verify count of peers
-        String [] peers = getPeers();
-        assertTrue("Peer counts < 3",  peers.length >= 3);
+        List<PeerDTO> peers = getPeers();
+        assertTrue("Peer counts < 3",  peers.size() >= 3);
 
         //Verify transaction in block
-        String transactionIndex =  sendMoney(testConfiguration.getStandartWallet(),200000000, 100000000).transaction;
+        String transactionIndex =  sendMoney(testConfiguration.getStandartWallet(),200000000, 100000000).getTransaction();
         String blockIndex = Failsafe.with(retryPolicy).get(() -> verifyTransactionInBlock(transactionIndex,null));
         assertNotNull("Transaction don't added to block", blockIndex);
 
@@ -59,10 +62,10 @@ public class TestSmokeAPI extends TestBase {
         verifyBlockHeighOnPeers(etalonPeerBlockHeight,peers);
 
         //Verify transactionIndex on peers
-        for (int i = 0; i < peers.length ; i++) {
+        for (int i = 0; i < peers.size() ; i++) {
                 int finalI = i;
-                String blockIndexOnPeer = Failsafe.with(retryPolicy).get(() -> verifyTransactionInBlock(transactionIndex,peers[finalI]));
-                System.out.println("Block Index: "+blockIndexOnPeer+" peer"+peers[i]);
+                String blockIndexOnPeer = Failsafe.with(retryPolicy).get(() -> verifyTransactionInBlock(transactionIndex, String.valueOf(peers.get(finalI))));
+                System.out.println("Block Index: "+blockIndexOnPeer+" peer"+peers.get(i));
                 assertEquals(blockIndex,blockIndexOnPeer);
         }
 
@@ -102,11 +105,11 @@ public class TestSmokeAPI extends TestBase {
             response = httpCallGet(peerURL);
         assertEquals( 200, response.code());
         String rs = response.body().string().toString();
-        return   mapper.readValue(rs, TransactionDTO.class).block;
+        return   mapper.readValue(rs, TransactionDTO.class).getBlock();
     }
 
     private long getLastBlock(String peerURL) throws IOException {
-        addParameters(RequestType.requestType,RequestType.getBlocks);
+        addParameters(RequestType.requestType, RequestType.getBlocks);
         addParameters(Parameters.lastIndex, 0);
         Response response;
         if (peerURL == null)
@@ -117,14 +120,14 @@ public class TestSmokeAPI extends TestBase {
 
         BlockListInfoResponse resp =   mapper.readValue(response.body().string().toString(), BlockListInfoResponse.class);
       //  return resp.blocks[0].height;
-         return resp.blocks.get(0).height;
+         return resp.getBlocks().get(0).getHeight();
     }
 
-    private void verifyBlockHeighOnPeers(long etalonPeerBlockHeight, String[] peers) throws IOException {
-        for (int i = 0; i < peers.length ; i++) {
-                long blockID = getLastBlock(peers[i]);
-                System.out.println("Heigh block: " + blockID + " On peer " + peers[i]);
-                assertTrue("Peer: " + peers[i], blockID == etalonPeerBlockHeight);
+    private void verifyBlockHeighOnPeers(long etalonPeerBlockHeight, List<PeerDTO> peers) throws IOException {
+        for (int i = 0; i < peers.size() ; i++) {
+                long blockID = getLastBlock(String.valueOf(peers.get(i)));
+                System.out.println("Heigh block: " + blockID + " On peer " + peers.get(i));
+                assertTrue("Peer: " + peers.get(i), blockID == etalonPeerBlockHeight);
         }
     }
 }

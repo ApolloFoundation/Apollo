@@ -27,7 +27,7 @@ public class TestAccounts extends TestBase {
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount() throws IOException {
         GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getStandartWallet().getUser());
-        log.trace("Acoount count = {}", accountBlockCount.getNumberOfBlocks());
+        log.trace("Account count = {}", accountBlockCount.getNumberOfBlocks());
         assertTrue(accountBlockCount.getNumberOfBlocks() > 0);
     }
 
@@ -35,19 +35,19 @@ public class TestAccounts extends TestBase {
     @DisplayName("Verify GetAccount endpoint")
     public void testAccount() throws IOException {
         GetAccountResponse account = getAccount(getTestConfiguration().getStandartWallet().getUser());
-        log.trace("Get Account = {}", account.accountRS);
-        assertEquals(account.accountRS, getTestConfiguration().getStandartWallet().getUser());
-        assertNotNull(account.account,"Check account");
-        assertNotNull(account.balanceATM,"Check balanceATM");
-        assertNotNull(account.publicKey,"Check publicKey");
+        log.trace("Get Account = {}", account.getAccountRS());
+        assertEquals(account.getAccountRS(), getTestConfiguration().getStandartWallet().getUser());
+        assertNotNull(account.getAccount(),"Check account");
+        assertNotNull(account.getBalanceATM(),"Check balanceATM");
+        assertNotNull(account.getPublicKey(),"Check publicKey");
     }
 
     @Test
     @DisplayName("Verify AccountBlockIds endpoint")
     public void testAccountBlockIds() throws IOException {
         AccountBlockIdsResponse accountBlockIds = getAccountBlockIds( getTestConfiguration().getStandartWallet().getUser());
-        log.trace("BlockIds count = {}", accountBlockIds.blockIds.size());
-        assertTrue(accountBlockIds.blockIds.size() > 0);
+        log.trace("BlockIds count = {}", accountBlockIds.getBlockIds().size());
+        assertTrue(accountBlockIds.getBlockIds().size() > 0);
     }
 
 
@@ -55,8 +55,8 @@ public class TestAccounts extends TestBase {
     @DisplayName("Verify getAccountBlocks endpoint")
     public void testAccountBlocks() throws IOException {
         BlockListInfoResponse accountBlocks = getAccountBlocks( getTestConfiguration().getStandartWallet().getUser());
-        log.trace("Blocks count = {}", accountBlocks.blocks.size());
-        assertTrue(accountBlocks.blocks.size() > 0);
+        log.trace("Blocks count = {}", accountBlocks.getBlocks().size());
+        assertTrue(accountBlocks.getBlocks().size() > 0);
     }
 
 
@@ -65,9 +65,9 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testAccountId(Wallet wallet) throws IOException {
         AccountDTO account = getAccountId(wallet);
-        assertEquals(getTestConfiguration().getStandartWallet().getUser(),account.accountRS);
-        assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(),account.publicKey);
-        assertNotNull(account.account);
+        assertEquals(getTestConfiguration().getStandartWallet().getUser(),account.getAccountRS());
+        assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(),account.getPublicKey());
+        assertNotNull(account.getAccount());
     }
 
     @DisplayName("Verify getAccountLedger endpoint")
@@ -75,14 +75,14 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testAccountLedger(Wallet wallet) throws IOException {
         AccountLedgerResponse accountLedger = getAccountLedger(wallet);
-        assertTrue(accountLedger.entries.length > 0,"Ledger is NULL");
-        assertNotNull(accountLedger.entries[0].account);
-        assertNotNull(accountLedger.entries[0].accountRS);
-        assertNotNull(accountLedger.entries[0].balance);
-        assertNotNull(accountLedger.entries[0].block);
-        assertNotNull(accountLedger.entries[0].change);
-        assertNotNull(accountLedger.entries[0].height);
-        assertNotNull(accountLedger.entries[0].ledgerId);
+        assertTrue(accountLedger.getEntries().size() > 0,"Ledger is NULL");
+        assertNotNull(accountLedger.getEntries().get(0).getAccount());
+        assertNotNull(accountLedger.getEntries().get(0).getAccountRS());
+        assertNotNull(accountLedger.getEntries().get(0).getBalance());
+        assertNotNull(accountLedger.getEntries().get(0).getBlock());
+        assertNotNull(accountLedger.getEntries().get(0).getChange());
+        assertNotNull(accountLedger.getEntries().get(0).getHeight());
+        assertNotNull(accountLedger.getEntries().get(0).getLedgerId());
     }
 
 
@@ -90,8 +90,8 @@ public class TestAccounts extends TestBase {
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
         AccountPropertiesResponse accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
-        assertNotNull(accountPropertiesResponse.properties,"Account Properties is NULL");
-        assertTrue(accountPropertiesResponse.properties.size() > 0,"Account Properties count = 0");
+        assertNotNull(accountPropertiesResponse.getProperties(),"Account Properties is NULL");
+        assertTrue(accountPropertiesResponse.getProperties().size() > 0,"Account Properties count = 0");
     }
 
     @Test
@@ -100,8 +100,8 @@ public class TestAccounts extends TestBase {
         //Before set Account info Test1
         SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
         assertNotNull(searchAccountsResponse, "Response - null");
-        assertNotNull(searchAccountsResponse.accounts, "Response accountDTOS - null");
-        assertTrue(searchAccountsResponse.accounts.length >0,"Account not found");
+        assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
+        assertTrue(searchAccountsResponse.getAccounts().size() > 0,"Account not found");
     }
 
     @DisplayName("Verify Unconfirmed Transactions endpoint")
@@ -110,8 +110,8 @@ public class TestAccounts extends TestBase {
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
         sendMoney(wallet, getTestConfiguration().getStandartWallet().getUser(),2);
         TransactionListResponse transactionInfos = getUnconfirmedTransactions(wallet);
-        assertNotNull(transactionInfos.unconfirmedTransactions);
-        assertTrue(transactionInfos.unconfirmedTransactions.size() > 0);
+        assertNotNull(transactionInfos.getUnconfirmedTransactions());
+        assertTrue(transactionInfos.getUnconfirmedTransactions().size() > 0);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TestAccounts extends TestBase {
                 .withDelay(5, TimeUnit.SECONDS);
         sendMoney( getTestConfiguration().getStandartWallet(), getTestConfiguration().getStandartWallet().getUser(),2);
         AccountTransactionIdsResponse accountTransactionIdsResponse = Failsafe.with(retryPolicy).get(() -> getUnconfirmedTransactionIds( getTestConfiguration().getStandartWallet().getUser()));
-        assertTrue(accountTransactionIdsResponse.unconfirmedTransactionIds.size() > 0);
+        assertTrue(accountTransactionIdsResponse.getUnconfirmedTransactionIds().size() > 0);
     }
 
 
@@ -131,7 +131,7 @@ public class TestAccounts extends TestBase {
     @DisplayName("Verify Get Guaranteed Balance endpoint")
     public void testGetGuaranteedBalance() throws IOException {
         BalanceDTO balance = getGuaranteedBalance( getTestConfiguration().getStandartWallet().getUser(), 2000);
-        assertTrue(balance.guaranteedBalanceATM > 1);
+        assertTrue(balance.getGuaranteedBalanceATM() > 1);
     }
 
     @DisplayName("Verify Get Balance endpoint")
@@ -139,8 +139,8 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testGetBalance(Wallet wallet) throws IOException {
         BalanceDTO balance = getBalance(wallet);
-        assertTrue(balance.balanceATM > 1);
-        assertTrue(balance.unconfirmedBalanceATM > 1);
+        assertTrue(balance.getBalanceATM() > 1);
+        assertTrue(balance.getUnconfirmedBalanceATM() > 1);
     }
 
 
@@ -148,13 +148,13 @@ public class TestAccounts extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountLedgerEntry(Wallet wallet) throws IOException {
-        EntryDTO ledgerEntry = getAccountLedgerEntry(String.valueOf(getAccountLedger(wallet).entries[0].ledgerId));
-        assertNotNull(ledgerEntry.eventType);
-        assertNotNull(ledgerEntry.ledgerId);
-        assertNotNull(ledgerEntry.balance);
-        assertNotNull(ledgerEntry.holdingType);
-        assertNotNull(ledgerEntry.block);
-        assertNotNull(ledgerEntry.account);
+        EntryDTO ledgerEntry = getAccountLedgerEntry(String.valueOf(getAccountLedger(wallet).getEntries().get(0).getLedgerId()));
+        assertNotNull(ledgerEntry.getEventType());
+        assertNotNull(ledgerEntry.getLedgerId());
+        assertNotNull(ledgerEntry.getBalance());
+        assertNotNull(ledgerEntry.getHoldingType());
+        assertNotNull(ledgerEntry.getBlock());
+        assertNotNull(ledgerEntry.getAccount());
     }
 
 
@@ -163,7 +163,7 @@ public class TestAccounts extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountPublicKey(Wallet wallet) throws IOException {
-        assertEquals(wallet.getPublicKey(), getAccountPublicKey(wallet).publicKey);
+        assertEquals(wallet.getPublicKey(), getAccountPublicKey(wallet).getPublicKey());
 
     }
 
@@ -174,7 +174,7 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountTransaction(Wallet wallet)throws IOException {
         BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(wallet);
-        assertTrue(blockchainTransactionsResponse.transactions.size()>0);
+        assertTrue(blockchainTransactionsResponse.getTransactions().size()>0);
     }
 
 
@@ -183,14 +183,7 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {
         CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
-        assertNotNull(sendMoneyResponse.transactionJSON.senderPublicKey);
-        assertNotNull(sendMoneyResponse.transactionJSON.signature);
-        assertNotNull(sendMoneyResponse.transactionJSON.fullHash);
-        assertNotNull(sendMoneyResponse.transactionJSON.amountATM);
-        assertNotNull(sendMoneyResponse.transactionJSON.ecBlockId);
-        assertNotNull(sendMoneyResponse.transactionJSON.senderRS);
-        assertNotNull(sendMoneyResponse.transactionJSON.transaction);
-        assertNotNull(sendMoneyResponse.transactionJSON.feeATM);
+        verifyCreatingTransaction(sendMoneyResponse);
     }
 
 
@@ -199,14 +192,7 @@ public class TestAccounts extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
         CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
-        assertNotNull(sendMoneyResponse.transactionJSON.senderPublicKey);
-        assertNotNull(sendMoneyResponse.transactionJSON.signature);
-        assertNotNull(sendMoneyResponse.transactionJSON.fullHash);
-        assertNotNull(sendMoneyResponse.transactionJSON.amountATM);
-        assertNotNull(sendMoneyResponse.transactionJSON.ecBlockId);
-        assertNotNull(sendMoneyResponse.transactionJSON.senderRS);
-        assertNotNull(sendMoneyResponse.transactionJSON.transaction);
-        assertNotNull(sendMoneyResponse.transactionJSON.feeATM);
+        verifyCreatingTransaction(sendMoneyResponse);
     }
 
 
@@ -217,15 +203,8 @@ public class TestAccounts extends TestBase {
         String accountName = "Account "+new Date().getTime();
         String accountDesc= "Decription "+new Date().getTime();
         CreateTransactionResponse setAccountInfo = setAccountInfo(wallet,accountName,accountDesc);
-        assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
-        assertNotNull(setAccountInfo.transactionJSON.signature);
-        assertNotNull(setAccountInfo.transactionJSON.fullHash);
-        assertNotNull(setAccountInfo.transactionJSON.amountATM);
-        assertNotNull(setAccountInfo.transactionJSON.ecBlockId);
-        assertNotNull(setAccountInfo.transactionJSON.senderRS);
-        assertNotNull(setAccountInfo.transactionJSON.transaction);
-        assertNotNull(setAccountInfo.transactionJSON.feeATM);
-        verifyTransactionInBlock(setAccountInfo.transactionJSON.transaction);
+        verifyCreatingTransaction(setAccountInfo);
+        verifyTransactionInBlock(setAccountInfo.getTransactionJSON().getTransaction());
     }
 
 
@@ -234,14 +213,7 @@ public class TestAccounts extends TestBase {
     public void setAccountProperty() throws IOException {
         String property = "Property "+new Date().getTime();
         CreateTransactionResponse setAccountInfo = setAccountProperty( getTestConfiguration().getStandartWallet(),property);
-        assertNotNull(setAccountInfo.transactionJSON.senderPublicKey);
-        assertNotNull(setAccountInfo.transactionJSON.signature);
-        assertNotNull(setAccountInfo.transactionJSON.fullHash);
-        assertNotNull(setAccountInfo.transactionJSON.amountATM);
-        assertNotNull(setAccountInfo.transactionJSON.ecBlockId);
-        assertNotNull(setAccountInfo.transactionJSON.senderRS);
-        assertNotNull(setAccountInfo.transactionJSON.transaction);
-        assertNotNull(setAccountInfo.transactionJSON.feeATM);
+        verifyCreatingTransaction(setAccountInfo);
     }
 
 
@@ -249,8 +221,8 @@ public class TestAccounts extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void  getAccountPropertyTest(Wallet wallet) throws IOException { ;
-        GetPropertyResponse propertyResponse = getAccountProperty(wallet);
-        assertTrue(propertyResponse.properties.length >0);
+        AccountPropertiesResponse propertyResponse = getAccountProperty(wallet);
+        assertTrue(propertyResponse.getProperties().size() > 0);
     }
 
     @DisplayName("Delete Account Property")
@@ -260,27 +232,19 @@ public class TestAccounts extends TestBase {
     public void  deleteAccountProperty(Wallet wallet) throws IOException {
         String property = "Property "+new Date().getTime();
         CreateTransactionResponse setAccountInfo = setAccountProperty(wallet,property);
-        verifyTransactionInBlock(setAccountInfo.transaction);
-        CreateTransactionResponse transaction = deleteAccountProperty(wallet,getAccountProperty(wallet).properties[0].property);
-        assertNotNull(transaction.transactionJSON.senderPublicKey);
-        assertNotNull(transaction.transactionJSON.signature);
-        assertNotNull(transaction.transactionJSON.fullHash);
-        assertNotNull(transaction.transactionJSON.amountATM);
-        assertNotNull(transaction.transactionJSON.ecBlockId);
-        assertNotNull(transaction.transactionJSON.senderRS);
-        assertNotNull(transaction.transactionJSON.transaction);
-        assertNotNull(transaction.transactionJSON.feeATM);
-
+        verifyTransactionInBlock(setAccountInfo.getTransaction());
+        CreateTransactionResponse transaction = deleteAccountProperty(wallet, getAccountProperty(wallet).getProperties().get(0).getProperty());
+        verifyCreatingTransaction(transaction);
     }
 
     @DisplayName("Generate Account")
     @Test
     public void  generateAccount() throws IOException { ;
         AccountDTO accountDTO = generateNewAccount();
-        assertNotNull(accountDTO.accountRS);
-        assertNotNull(accountDTO.passphrase);
-        assertNotNull(accountDTO.publicKey);
-        assertNotNull(accountDTO.account);
+        assertNotNull(accountDTO.getAccountRS());
+        assertNotNull(accountDTO.getPassphrase());
+        assertNotNull(accountDTO.getPublicKey());
+        assertNotNull(accountDTO.getAccount());
     }
 
 

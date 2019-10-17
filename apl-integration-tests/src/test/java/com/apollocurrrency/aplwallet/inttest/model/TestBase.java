@@ -3,12 +3,13 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.junit.jupiter.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -493,7 +494,7 @@ public class TestBase {
     }
 
     //getAccountAssetCount
-    public  AccountAssetsCountResponse getAccountAssetCount (Wallet wallet) throws IOException {
+    public AccountAssetsCountResponse getAccountAssetCount (Wallet wallet) throws IOException {
         addParameters(RequestType.requestType, getAccountAssetCount);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountAssetsCountResponse.class);

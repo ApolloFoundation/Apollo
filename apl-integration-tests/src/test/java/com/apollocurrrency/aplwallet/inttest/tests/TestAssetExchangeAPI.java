@@ -1,21 +1,17 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.AssetDTO;
-import com.apollocurrency.aplwallet.api.dto.OrderDTO;
+import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.function.BooleanSupplier;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,10 +36,10 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"setAsset", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        GetAccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
-        assertTrue(getAccountAssets.accountAssets.length >= 1);
+        AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
+        assertTrue(getAccountAssets.getAccountAssets().size() >= 1);
 
     }
 
@@ -54,11 +50,11 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"setAsset", "issueAssettestAPI", 11);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
-        assertTrue(getAccountAssetCount.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.numberOfAssets);
+        AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
+        assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
+        System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
     }
 
     @DisplayName("getAsset")
@@ -71,13 +67,13 @@ public class TestAssetExchangeAPI extends TestBase {
         Integer quantityATU = 10;
         CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, description, quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
- 
-        AssetDTO getAsset = getAsset(assetID);   
-        assertTrue(getAsset.name.equals(assetName),String.valueOf(getAsset.asset.equals(issueAsset.transaction)));
-        assertTrue(getAsset.accountRS.equals(wallet.getUser()));
-        System.out.println("asset = " + getAsset.asset + " ; name = " + getAsset.name + " ;  AccountRS = " + wallet.getUser());
+
+        AccountAssetDTO getAsset = getAsset(assetID);
+        assertTrue(getAsset.getName().equals(assetName),String.valueOf(getAsset.getAsset().equals(issueAsset.getTransaction())));
+        assertTrue(getAsset.getAccountRS().equals(wallet.getUser()));
+        System.out.println("asset = " + getAsset.getAsset() + " ; name = " + getAsset.getName() + " ;  AccountRS = " + wallet.getUser());
     }
 
 
@@ -90,14 +86,14 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"AskOrder0", "Creating Asset -> placeAskOrder -> getAccountCurrentAskOrderIds", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
-        GetOrderIdsResponse getAccountCurrentAskOrderIds = getAccountCurrentAskOrderIds(wallet);
-        assertTrue(Arrays.stream(getAccountCurrentAskOrderIds.askOrderIds).anyMatch(orderID::equals));
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
+        AccountCurrentAssetAskOrderIdsResponse getAccountCurrentAskOrderIds = getAccountCurrentAskOrderIds(wallet);
+        assertTrue(getAccountCurrentAskOrderIds.getAskOrderIds().stream().anyMatch(orderID::equals));
 
     }
 
@@ -111,14 +107,14 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"BidOrder1", "Creating Asset -> placeBidOrder -> getAccountCurrentBidOrderIds", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
-        verifyTransactionInBlock(placeBidOrder.transaction);
-        orderID = placeBidOrder.transaction;
-        GetOrderIdsResponse getAccountCurrentBidOrderIds = getAccountCurrentBidOrderIds(wallet);
-        assertTrue(Arrays.stream(getAccountCurrentBidOrderIds.bidOrderIds).anyMatch(orderID::equals));
+        verifyTransactionInBlock(placeBidOrder.getTransaction());
+        orderID = placeBidOrder.getTransaction();
+        AccountCurrentAssetBidOrderIdsResponse getAccountCurrentBidOrderIds = getAccountCurrentBidOrderIds(wallet);
+        assertTrue(getAccountCurrentBidOrderIds.getBidOrderIds().stream().anyMatch(orderID::equals));
 
     }
 
@@ -127,19 +123,18 @@ public class TestAssetExchangeAPI extends TestBase {
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
     public void getAccountCurrentAskOrdersTest(Wallet wallet) throws IOException {
-
         String assetID;
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"AskOrder2", "Creating Asset -> placeAskOrder -> getAccountCurrentAskOrders", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
-        GetAccountCurrentOrdersResponse getAccountCurrentAskOrders = getAccountCurrentAskOrders(wallet);
-        assertTrue(Arrays.stream(getAccountCurrentAskOrders.askOrders).filter(orderDTO -> orderDTO.order.equals(orderID)).count()==1);
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
+        AccountCurrentAssetAskOrdersResponse getAccountCurrentAskOrders = getAccountCurrentAskOrders(wallet);
+        assertTrue(getAccountCurrentAskOrders.getAskOrders().stream().filter(orderDTO -> orderDTO.getOrder().equals(orderID)).count()==1);
 
     }
 
@@ -153,14 +148,14 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"BidOrder2", "Creating Asset -> placeBidOrder -> getAccountCurrentBidOrders", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
-        verifyTransactionInBlock(placeBidOrder.transaction);
-        orderID = placeBidOrder.transaction;
-        GetAccountCurrentOrdersResponse getAccountCurrentBidOrders = getAccountCurrentBidOrders(wallet);
-        assertTrue(Arrays.stream(getAccountCurrentBidOrders.bidOrders).filter(orderDTO -> orderDTO.order.equals(orderID)).count()==1);
+        verifyTransactionInBlock(placeBidOrder.getTransaction());
+        orderID = placeBidOrder.getTransaction();
+        AccountCurrentAssetBidOrdersResponse getAccountCurrentBidOrders = getAccountCurrentBidOrders(wallet);
+        assertTrue(getAccountCurrentBidOrders.getBidOrders().stream().filter(orderDTO -> orderDTO.getOrder().equals(orderID)).count()== 1);
 
     }
 
@@ -171,12 +166,12 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"GetAll", "Creating Asset -> getAllAssets", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        GetAllAssetsResponse getAllAssets = getAllAssets();
+        AssetsResponse getAllAssets = getAllAssets();
         //System.out.println(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count() >= 1);
         //System.out.println(assetID);
-        assertTrue(getAllAssets.assets.length >= 1); //return only first 100 assets
+        assertTrue(getAllAssets.getAssets().size() >= 1); //return only first 100 assets
 
     }
 
@@ -190,15 +185,15 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"AssetOpen1", "Creating Asset -> getAllAssets", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
-        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders();
-        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
-        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
+        AccountOpenAssetOrdersResponse getAllOpenAskOrders = getAllOpenAskOrders();
+        assertTrue(getAllOpenAskOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getOrder().equals(orderID)).count() == 1);
+        assertTrue(getAllOpenAskOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getAsset().equals(assetID)).count() == 1);
     }
 
     //getAllOpenBidOrders
@@ -210,17 +205,17 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"AssetBid1", "Creating Asset -> getAllAssets", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         System.out.println(assetID);
         CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
-        verifyTransactionInBlock(placeBidOrder.transaction);
-        orderID = placeBidOrder.transaction;
+        verifyTransactionInBlock(placeBidOrder.getTransaction());
+        orderID = placeBidOrder.getTransaction();
         System.out.println(orderID);
-        GetOpenOrderResponse getAllOpenBidOrders = getAllOpenBidOrders();
-        assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
-        assertTrue(Arrays.stream(getAllOpenBidOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+        AccountOpenAssetOrdersResponse getAllOpenBidOrders = getAllOpenBidOrders();
+        assertTrue(getAllOpenBidOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getOrder().equals(orderID)).count() == 1);
+        assertTrue(getAllOpenBidOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getAsset().equals(assetID)).count() == 1);
 
     }
 
@@ -229,8 +224,8 @@ public class TestAssetExchangeAPI extends TestBase {
     @DisplayName("getAllTrades")
     @Test
     public  void getAllTradesTest () throws IOException {
-        GetAllTradeResponse getAllTrades = getAllTrades();
-        assertTrue(getAllTrades.trades.length >= 1);
+        AssetTradeResponse getAllTrades = getAllTrades();
+        assertTrue(getAllTrades.getTrades().size() >= 1);
     }
 
 
@@ -246,53 +241,51 @@ public class TestAssetExchangeAPI extends TestBase {
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
 
-        GetOrderIdsResponse getAskOrderIds = getAskOrderIds(assetID);
-        assertTrue(getAskOrderIds.askOrderIds.length == 0);
+        AccountCurrentAssetAskOrderIdsResponse getAskOrderIds = getAskOrderIds(assetID);
+        assertTrue(getAskOrderIds.getAskOrderIds().size() == 0);
 
 
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
         System.out.println(orderID);
 
-        GetOrderIdsResponse getAskOrderIds1 = getAskOrderIds(assetID);
-        assertTrue(Arrays.stream(getAskOrderIds1.askOrderIds).anyMatch(orderID::equals));
+        AccountCurrentAssetAskOrderIdsResponse getAskOrderIds1 = getAskOrderIds(assetID);
+        assertTrue(getAskOrderIds1.getAskOrderIds().stream().anyMatch(orderID::equals));
 
-        GetOpenOrderResponse getAskOrders = getAskOrders(assetID);
+        AccountCurrentAssetAskOrdersResponse getAskOrders = getAskOrders(assetID);
 
-        System.out.println(Arrays.stream(getAskOrders.askOrders).filter(askOrders -> askOrders.order.equals(orderID)).count());
-        assertTrue(Arrays.stream(getAskOrders.askOrders).filter(askOrders -> askOrders.order.equals(orderID)).count()==1);
+        assertTrue(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count() == 1);
 
-        GetOpenOrderResponse getAllOpenAskOrders = getAllOpenAskOrders();
-        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
-        assertTrue(Arrays.stream(getAllOpenAskOrders.openOrders).filter(openOrders -> openOrders.asset.equals(assetID)).count()==1);
+        AccountOpenAssetOrdersResponse getAllOpenAskOrders = getAllOpenAskOrders();
+        assertTrue(getAllOpenAskOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getOrder().equals(orderID)).count() == 1);
+        assertTrue(getAllOpenAskOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getAsset().equals(assetID)).count() == 1);
 
-        OrderDTO getAskOrder = getAskOrder(orderID);
-        assertTrue(getAskOrder.order.equals(orderID));
+        AccountAssetOrderDTO getAskOrder = getAskOrder(orderID);
+        assertTrue(getAskOrder.getOrder().equals(orderID));
 
         cancelorderID = cancelAskOrder(wallet, orderID);
         verifyCreatingTransaction(cancelorderID);
-        verifyTransactionInBlock(cancelorderID.transaction);
+        verifyTransactionInBlock(cancelorderID.getTransaction());
 
-        GetOrderIdsResponse getAskOrderIds2 = getAskOrderIds(assetID);
-        assertFalse(Arrays.stream(getAskOrderIds2.askOrderIds).anyMatch(orderID::equals));
-        assertTrue(getAskOrderIds.askOrderIds.length == 0);
+        AccountCurrentAssetAskOrderIdsResponse getAskOrderIds2 = getAskOrderIds(assetID);
+        assertFalse(getAskOrderIds2.getAskOrderIds().stream().anyMatch(orderID::equals));
+        assertTrue(getAskOrderIds.getAskOrderIds().size() == 0);
 
-        GetOpenOrderResponse getAskOrder1 = getAllOpenAskOrders();
-        System.out.println(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count());
+        AccountOpenAssetOrdersResponse getAskOrder1 = getAllOpenAskOrders();
 
-        assertFalse(Arrays.stream(getAskOrder1.openOrders).filter(openOrders -> openOrders.order.equals(orderID)).count()==1);
+        assertFalse(getAskOrder1.getOpenOrders().stream().filter(openOrders -> openOrders.getOrder().equals(orderID)).count()==1);
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
         verifyCreatingTransaction(deleteAssetShares);
-        verifyTransactionInBlock(deleteAssetShares.transaction);
+        verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
-        GetAllAssetsResponse getAllAssets = getAllAssets();
-        assertTrue(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count()== 0);
+        AssetsResponse getAllAssets = getAllAssets();
+        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).count()== 0);
 
     }
 
@@ -310,21 +303,21 @@ public class TestAssetExchangeAPI extends TestBase {
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset + placeAskOrder + getAskOrders", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         System.out.println("issueAsset API PASS: assetID = " + assetID);
 
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
         System.out.println("placeAskOrder API PASS: orderID = " + orderID);
 
 
-        GetOpenOrderResponse getAskOrders = getAskOrders(assetID);
+        AccountCurrentAssetAskOrdersResponse getAskOrders = getAskOrders(assetID);
 
-        System.out.println(Arrays.stream(getAskOrders.askOrders).filter(askOrders -> askOrders.order.equals(orderID)).count());
-        assertTrue(Arrays.stream(getAskOrders.askOrders).filter(askOrders -> askOrders.order.equals(orderID)).count()==1);
+        System.out.println(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count());
+        assertTrue(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count() == 1);
 
     }
 
@@ -339,26 +332,25 @@ public class TestAssetExchangeAPI extends TestBase {
         Integer quantityATU = 50;
         String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
 
-        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetAccountCount API test", quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "assetAccountCount API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
 
 
-        GetAssetAccountCountResponse getAssetAccountCount = getAssetAccountCount(assetID);
+        AccountAssetsCountResponse assetAccountCount = getAssetAccountCount(assetID);
 
-        assertTrue(getAssetAccountCount.getNumberOfAccounts() == 1);
-        System.out.println("number of Accounts using  " + assetID + " = " + getAssetAccountCount.getNumberOfAccounts());
+        assertTrue(assetAccountCount.getNumberOfAssets() == 1);
+        System.out.println("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAssets());
 
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
         verifyCreatingTransaction(deleteAssetShares);
-        verifyTransactionInBlock(deleteAssetShares.transaction);
-        getAssetAccountCount = getAssetAccountCount(assetID);
+        verifyTransactionInBlock(deleteAssetShares.getTransaction());
+        assetAccountCount = getAssetAccountCount(assetID);
 
-        System.out.println("number of Accounts using  " + assetID + " = " + getAssetAccountCount.getNumberOfAccounts());
-        //System.out.println("number of Accounts using  " + assetID + " = " + getAssetAccountCount.getNumberOfAccounts());
-        assertTrue(getAssetAccountCount.getNumberOfAccounts() == 0);
+        log.trace("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAssets());
+        assertTrue(assetAccountCount.getNumberOfAssets() == 0);
 
     }
 
@@ -375,22 +367,20 @@ public class TestAssetExchangeAPI extends TestBase {
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetAccounts API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         System.out.println("assetID = " + assetID);
 
-        GetAccountAssetsResponse getAssetAccount = getAssetAccounts(assetID);
-        System.out.println(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
-        assertTrue(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+        AccountAssetsResponse assetAccounts = getAssetAccounts(assetID);
+        assertTrue(assetAccounts.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count()==1);
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
         verifyCreatingTransaction(deleteAssetShares);
-        verifyTransactionInBlock(deleteAssetShares.transaction);
+        verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
-        getAssetAccount = getAssetAccounts(assetID);
-        System.out.println(getAssetAccount.accountAssets.length);
+        assetAccounts = getAssetAccounts(assetID);
         //assertTrue(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
-        assertTrue(getAssetAccount.accountAssets.length == 0);
+        assertTrue(assetAccounts.getAccountAssets().size() == 0);
     }
 
 
@@ -406,32 +396,30 @@ public class TestAssetExchangeAPI extends TestBase {
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "getAssetDelete API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         System.out.println("assetID = " + assetID);
 
 
-        GetExpectedAssetDeletes getAssetDeletes = getAssetDeletes(wallet);
-        assertTrue(Arrays.stream(getAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==0);
+        ExpectedAssetDeletes assetDeletes = getAssetDeletes(wallet);
+        assertTrue(assetDeletes.getDeletes().stream().filter(deletes -> deletes.getAsset().contains(assetID)).count() == 0);
 
-        GetAccountAssetsResponse getAssetAccount = getAssetAccounts(assetID);
-        System.out.println(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
-        assertTrue(Arrays.stream(getAssetAccount.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+        AccountAssetsResponse assetAccounts = getAssetAccounts(assetID);
+        assertTrue(assetAccounts.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count()==1);
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
 
-        GetExpectedAssetDeletes getExpectedAssetDeletes = getExpectedAssetDeletes(wallet);
-        assertTrue(Arrays.stream(getExpectedAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==1);
+        ExpectedAssetDeletes getExpectedAssetDeletes = getExpectedAssetDeletes(wallet);
+        assertTrue(getExpectedAssetDeletes.getDeletes().stream().filter(deletes -> deletes.getAsset().contains(assetID)).count()==1);
 
         verifyCreatingTransaction(deleteAssetShares);
-        verifyTransactionInBlock(deleteAssetShares.transaction);
+        verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
-        getAssetAccount = getAssetAccounts(assetID);
-        System.out.println(getAssetAccount.accountAssets.length);
-        assertTrue(getAssetAccount.accountAssets.length == 0);
+        assetAccounts = getAssetAccounts(assetID);
+        assertTrue(assetAccounts.getAccountAssets().size() == 0);
 
-        getAssetDeletes = getAssetDeletes(wallet);
-        assertTrue(Arrays.stream(getAssetDeletes.deletes).filter(deletes -> deletes.asset.contains(assetID)).count()==1);
+        assetDeletes = getAssetDeletes(wallet);
+        assertTrue(assetDeletes.getDeletes().stream().filter(deletes -> deletes.getAsset().contains(assetID)).count()==1);
 
     }
 
@@ -442,8 +430,8 @@ public class TestAssetExchangeAPI extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public  void getAssetIdsTest () throws IOException {
 
-        GetAssetIdsResponse getAssetIds = getAssetIds();
-        assertTrue(getAssetIds.assetIds.length >= 0);
+        AccountAssetsIdsResponse getAssetIds = getAssetIds();
+        assertTrue(getAssetIds.getAssetIds().size() >= 0);
 
     }
 
@@ -459,25 +447,25 @@ public class TestAssetExchangeAPI extends TestBase {
 
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "transferAsset API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         System.out.println("assetID = " + assetID);
 
         if (wallet.getSecretKey() == null) {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getVaultWallet().getUser());
             verifyCreatingTransaction(transferAsset);
-            verifyTransactionInBlock(transferAsset.transaction);
+            verifyTransactionInBlock(transferAsset.getTransaction());
 
-            GetAccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
-            assertTrue(Arrays.stream(getAccountAssets.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getVaultWallet());
+            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count()==1);
         }
         else {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getStandartWallet().getUser());
             verifyCreatingTransaction(transferAsset);
-            verifyTransactionInBlock(transferAsset.transaction);
+            verifyTransactionInBlock(transferAsset.getTransaction());
 
-            GetAccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet());
-            assertTrue(Arrays.stream(getAccountAssets.accountAssets).filter(accountAssets -> accountAssets.asset.contains(assetID)).count()==1);
+            AccountAssetsResponse getAccountAssets = getAccountAssets(getTestConfiguration().getStandartWallet());
+            assertTrue(getAccountAssets.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count()==1);
 
         }
 
@@ -494,7 +482,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER9", "issueAssettestAPI", 100);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         verifyCreatingTransaction(placeAskOrder(wallet,assetID, "99",10));
     }
@@ -507,12 +495,12 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"APIASK0", "Creating Asset -> placeAskOrder -> cancelAskOrder", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
-        verifyTransactionInBlock(placeAskOrder.transaction);
-        orderID = placeAskOrder.transaction;
+        verifyTransactionInBlock(placeAskOrder.getTransaction());
+        orderID = placeAskOrder.getTransaction();
         verifyCreatingTransaction(cancelAskOrder(wallet,orderID));
     }
 
@@ -524,7 +512,7 @@ public class TestAssetExchangeAPI extends TestBase {
         String assetID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID", "issueAsset -> placeBidOrder", 60);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         verifyCreatingTransaction(placeBidOrder(wallet,assetID, "99",10));
     }
@@ -537,12 +525,12 @@ public class TestAssetExchangeAPI extends TestBase {
         String orderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID0", "Creating Asset -> placeBidOrder -> cancelBidOrder", 50);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
-        verifyTransactionInBlock(placeBidOrder.transaction);
-        orderID = placeBidOrder.transaction;
+        verifyTransactionInBlock(placeBidOrder.getTransaction());
+        orderID = placeBidOrder.getTransaction();
         verifyCreatingTransaction(cancelBidOrder(wallet,orderID));
     }
 
@@ -557,24 +545,24 @@ public class TestAssetExchangeAPI extends TestBase {
         Integer quantityATU = 50;
         CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, "Creating Asset -> getAccountAssetCount + getAccountAssets -> Delete created asset", quantityATU);
         verifyCreatingTransaction(issueAsset);
-        assetID = issueAsset.transaction;
+        assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
 
-        GetAssetAccountCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
-        assertTrue(getAccountAssetCount.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.numberOfAssets);
+        AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
+        assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
+        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.getNumberOfAssets());
 
-        GetAccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
-        assertTrue(getAccountAssets.accountAssets.length >= 1);
+        AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
+        assertTrue(getAccountAssets.getAccountAssets().size() >= 1);
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
         verifyCreatingTransaction(deleteAssetShares);
 
-        verifyTransactionInBlock(deleteAssetShares.transaction);
+        verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
-        GetAssetAccountCountResponse getAccountAssetCount1 = getAccountAssetCount(wallet);
-        assertTrue(getAccountAssetCount1.numberOfAssets.intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.numberOfAssets);
+        AccountAssetsCountResponse getAccountAssetCount1 = getAccountAssetCount(wallet);
+        assertTrue(getAccountAssetCount1.getNumberOfAssets().intValue() >= 1);
+        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.getNumberOfAssets());
 
     }
 

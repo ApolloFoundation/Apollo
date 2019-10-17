@@ -1,15 +1,15 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.AliasDTO;
+import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
-import com.apollocurrency.aplwallet.api.response.GetCountAliasesResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import com.apollocurrency.aplwallet.api.dto.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,13 +30,13 @@ public class TestAliasAPI extends TestBase {
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        alias = setAlias.transaction;
+        alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
-        GetCountAliasesResponse getAliasesCount = getAliasCount(wallet);
-        assertTrue(getAliasesCount.numberOfAliases >= 1);
-        System.out.println(getAliasesCount.numberOfAliases);
+        AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
+        assertTrue(getAliasesCount.getNumberOfAliases() >= 1);
+        System.out.println(getAliasesCount.getNumberOfAliases());
         AccountAliasesResponse accountAliasesResponse = getAliases(wallet);
-        assertTrue(Arrays.stream(accountAliasesResponse.aliases).filter(aliasDTO -> aliasDTO.alias.equals(alias)).count()==1);
+        assertTrue(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(alias)).count()==1);
 
     }
 
@@ -47,11 +47,11 @@ public class TestAliasAPI extends TestBase {
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        alias = setAlias.transaction;
+        alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
-        GetCountAliasesResponse getAliasesCount = getAliasCount(wallet);
-        assertTrue(getAliasesCount.numberOfAliases >= 1);
-        System.out.println(getAliasesCount.numberOfAliases);
+        AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
+        assertTrue(getAliasesCount.getNumberOfAliases() >= 1);
+        System.out.println(getAliasesCount.getNumberOfAliases());
     }
 
 
@@ -63,10 +63,10 @@ public class TestAliasAPI extends TestBase {
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        alias = setAlias.transaction;
+        alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
-        AliasDTO aliasDTO = getAlias(aliasname);
-        assertTrue(Arrays.stream(new String[]{aliasDTO.aliasName}).anyMatch(aliasname::equals));
+        AccountAliasDTO aliasDTO = getAlias(aliasname);
+        assertTrue(Arrays.asList(new String[]{aliasDTO.getAliasName()}).contains(aliasname));
     }
 
 
@@ -90,17 +90,17 @@ public class TestAliasAPI extends TestBase {
         String aliasdelete;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 1000000000, 1400);
         verifyCreatingTransaction(setAlias);
-        aliasset = setAlias.transaction;
+        aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
-        AliasDTO getAlias = getAlias(aliasname);
-        assertTrue(Arrays.stream(new String[]{getAlias.aliasName}).anyMatch(aliasname::equals));
+        AccountAliasDTO getAlias = getAlias(aliasname);
+        assertTrue(Arrays.asList(new String[]{getAlias.getAliasName()}).contains(aliasname));
         CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);
         verifyCreatingTransaction(deleteAlias);
-        aliasdelete = deleteAlias.transaction;
+        aliasdelete = deleteAlias.getTransaction();
         verifyTransactionInBlock(aliasdelete);
 
         AccountAliasesResponse accountAliasesResponse = getAliases(wallet);
-        assertFalse(Arrays.stream(accountAliasesResponse.aliases).filter(aliasDTO -> aliasDTO.alias.equals(aliasname)).count()==1);
+        assertFalse(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(aliasname)).count() == 1);
     }
 
 
@@ -114,11 +114,11 @@ public class TestAliasAPI extends TestBase {
 
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        aliasset = setAlias.transaction;
+        aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
         AccountAliasesResponse getAliasesLike = getAliasesLike(aliasname);
         //assertTrue(Arrays.stream(getAliasesLike.aliases)).anyMatch(aliasname::equals));
-        assertTrue(Arrays.stream(getAliasesLike.aliases).filter(aliasDTO -> aliasDTO.aliasName.contains(aliassearch)).count()>=1);
+        assertTrue(getAliasesLike.getAliases().stream().filter(aliasDTO -> aliasDTO.getAliasName().contains(aliassearch)).count() >= 1);
 
 
     }
@@ -132,13 +132,13 @@ public class TestAliasAPI extends TestBase {
         String aliassell;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        aliasset = setAlias.transaction;
+        aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
 
         CreateTransactionResponse sellAlias = sellAlias(wallet,aliasname);
         assertTrue(sellAlias.toString().length() >= 1);
         verifyCreatingTransaction(sellAlias);
-        aliassell = sellAlias.transaction;
+        aliassell = sellAlias.getTransaction();
         verifyTransactionInBlock(aliassell);
 
 
@@ -162,7 +162,7 @@ public class TestAliasAPI extends TestBase {
 
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", aliasname, 400000000, 1400);
         verifyCreatingTransaction(setAlias);
-        aliasset = setAlias.transaction;
+        aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
         System.out.println(aliasname);
 
@@ -174,7 +174,7 @@ public class TestAliasAPI extends TestBase {
         CreateTransactionResponse deleteAlias = deleteAlias(wallet, aliasname);
         verifyCreatingTransaction(deleteAlias);
 
-        verifyTransactionInBlock(deleteAlias.transaction);
+        verifyTransactionInBlock(deleteAlias.getTransaction());
 
     }
 
