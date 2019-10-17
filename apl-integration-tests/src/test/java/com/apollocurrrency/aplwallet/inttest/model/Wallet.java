@@ -16,6 +16,10 @@ public class Wallet {
         this.publicKey = publicKey;
         this.secretKey = secretKey;
     }
+    public Wallet(String user, String pass) {
+        this.user = user;
+        this.pass = pass;
+    }
 
     public String getUser() {
         return user;

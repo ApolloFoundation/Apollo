@@ -3,9 +3,11 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
+import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,10 @@ public class TestBase {
                 .retryWhen(false)
                 .withMaxRetries(20)
                 .withDelay(1, TimeUnit.SECONDS);
+        startForgingSetUp();
+        setUpTestData();
+
+
         /*
         try {
             getTestConfiguration()
@@ -45,12 +51,10 @@ public class TestBase {
 
 
 
-
     @BeforeEach
     void setUP(TestInfo testInfo) {
         TestBase.testInfo = testInfo;
     }
-
 
 
     public boolean verifyTransactionInBlock(String transaction)
@@ -666,6 +670,7 @@ public class TestBase {
         addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         return getInstanse(ForgingDetails.class);
     }
+
     public ForgingDetails stopForging(Wallet wallet) throws IOException{
         addParameters(RequestType.requestType, stopForging);
         addParameters(Parameters.wallet, wallet);
@@ -710,10 +715,77 @@ public class TestBase {
         addParameters(Parameters.phasingHolding, phasingHolding);
     }
 
+
+
+    private static void setUpTestData(){
+        try {
+            CreateTransactionResponse transactionResponse;
+            if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 900000000) {
+                transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
+                verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+            }
+            if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 900000000) {
+                transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
+                verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+            }
+        } catch (IOException e) {
+            Assert.assertTrue("Errro Set Up Test Data",false);
+        }
+    }
+
+
+    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet,String recipient, int moneyAmount) throws IOException {
+        addParameters(RequestType.requestType,RequestType.sendMoney);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "500000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    private static boolean verifyTransactionInBlockSetUp(String transaction)
+    {
+        boolean inBlock = false;
+        try {
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
+            assertTrue(inBlock);
+        }
+        catch (Exception e)
+        {
+            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+        }
+        return inBlock;
+    }
+
+    private static TransactionDTO getTransactionSetUP(String transaction) throws IOException {
+        addParameters(RequestType.requestType, RequestType.getTransaction);
+        addParameters(Parameters.transaction, transaction);
+        return getInstanse(TransactionDTO.class);
+    }
+
+    private static BalanceDTO getBalanceSetUP(Wallet wallet) throws IOException {
+        addParameters(RequestType.requestType, getBalance);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(BalanceDTO.class);
+    }
+
+    private static void startForgingSetUp(){
+        addParameters(RequestType.requestType, getForging);
+        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+        ForgingResponse forgingResponse =  getInstanse(ForgingResponse.class);
+        if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
+            addParameters(RequestType.requestType, startForging);
+            addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+        }
+    }
+
+
     @AfterEach
     void testEnd() {
         TestBase.testInfo = null;
     }
+
 
     @AfterAll
     static void afterAll() {
