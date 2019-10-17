@@ -19,11 +19,15 @@ public class GetAccountResponse extends ResponseBase {
     private String unconfirmedBalanceATM;
     private String account;
     private Long numberOfBlocks;
+    private Long guaranteedBalanceATM;
+    private Long effectiveBalanceAPL;
     private Long requestProcessingTime;
     private String name;
-    private boolean is2FA;
+    private Boolean is2FA;
     private BigInteger currentLessee;
     private String currentLesseeRS;
     private Long currentLeasingHeightTo;
     private Long currentLeasingHeightFrom;
+    private String description;
+
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TransactionListResponse {
+public class TransactionListResponse extends ResponseBase {
     private List<TransactionDTO> transactions;
     private List<TransactionDTO> unconfirmedTransactions;
 
