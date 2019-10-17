@@ -506,7 +506,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
-
+                    invalidateAllPublicKeyCache();
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
