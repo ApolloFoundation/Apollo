@@ -7,9 +7,9 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter @Setter
+@Getter
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetPeersResponse extends ResponseBase {
-    private List<PeerDTO> peers;
-
+public class GetPeersIpResponse extends ResponseBase {
+    private List<String> peers;
 }

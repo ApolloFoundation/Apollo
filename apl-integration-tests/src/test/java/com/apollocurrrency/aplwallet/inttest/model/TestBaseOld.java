@@ -349,7 +349,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.active, true);
         Response response = httpCallGet();
         assertEquals(200, response.code());
-        GetPeersResponse peers = mapper.readValue(response.body().string(), GetPeersResponse.class);
+        GetPeersIpResponse peers = mapper.readValue(response.body().string(), GetPeersIpResponse.class);
         return peers.getPeers();
         } catch (IOException e) {
             e.printStackTrace();

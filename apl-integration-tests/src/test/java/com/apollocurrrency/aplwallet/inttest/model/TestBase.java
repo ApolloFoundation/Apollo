@@ -1,6 +1,10 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
+import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -11,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 
 public abstract class TestBase implements ITest {
-    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
     protected TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
+    protected static RestHelper restHelper;
 
     @BeforeAll
     static void initAll() {
@@ -22,6 +26,7 @@ public abstract class TestBase implements ITest {
                      .retryWhen(false)
                      .withMaxRetries(20)
                      .withDelay(1, TimeUnit.SECONDS);
+        restHelper = new RestHelper();
     }
 
     @BeforeEach

@@ -8,6 +8,8 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
 
+import static io.restassured.RestAssured.given;
+
 public class TestBaseNew extends TestBase {
     @Override
     public boolean verifyTransactionInBlock(String transaction) {
@@ -191,7 +193,10 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public List<String> getPeers() {
-        throw new NotImplementedException("Not implemented");
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .when()
+                .get("/rest/networking/peer/all").as(GetPeersIpResponse.class).getPeers();
     }
 
     @Override
