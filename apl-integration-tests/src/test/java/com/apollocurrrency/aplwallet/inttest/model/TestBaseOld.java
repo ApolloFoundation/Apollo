@@ -26,36 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
-    public static TestInfo testInfo;
-    private static RetryPolicy retryPolicy;
-
-    @BeforeAll
-    static void initAll() {
-        getTestConfiguration();
-        new RestHelper();
-        retryPolicy = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(20)
-                .withDelay(1, TimeUnit.SECONDS);
-        startForgingSetUp();
-        setUpTestData();
-
-
-        /*
-        try {
-            getTestConfiguration()
-                    .getVaultWallet()
-                    .setPass(importKey(getTestConfiguration()
-                    .getVaultWallet()).passphrase);
-        }catch (Exception e){}
-         */
-    }
-
-
 
     @BeforeEach
     void setUP(TestInfo testInfo) {
-        TestBaseOld.testInfo = testInfo;
+        this.testInfo = testInfo;
     }
 
 
@@ -311,11 +285,11 @@ public class TestBaseOld extends TestBase {
     }
 
 
-     public Account2FA deleteSecretFile(Wallet wallet) {
+     public Account2FAResponse deleteSecretFile(Wallet wallet) {
          try {
          addParameters(RequestType.requestType,RequestType.deleteKey);
          addParameters(Parameters.wallet, wallet);
-          return mapper.readValue(httpCallPost().body().string(), Account2FA.class);
+          return mapper.readValue(httpCallPost().body().string(), Account2FAResponse.class);
          } catch (IOException e) {
              e.printStackTrace();
          }
@@ -323,16 +297,16 @@ public class TestBaseOld extends TestBase {
      }
 
 
-    public Account2FA exportSecretFile(Wallet wallet) {
+    public Account2FAResponse exportSecretFile(Wallet wallet) {
         addParameters(RequestType.requestType,RequestType.exportKey);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(Account2FA.class);
+        return getInstanse(Account2FAResponse.class);
     }
 
-    public Account2FA importSecretFile(Wallet wallet) {
+    public Account2FAResponse importSecretFile(Wallet wallet) {
         addParameters(RequestType.requestType, importKey);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(Account2FA.class);
+        return getInstanse(Account2FAResponse.class);
     }
 
 
@@ -730,7 +704,7 @@ public class TestBaseOld extends TestBase {
 
 
 
-    private static void setUpTestData(){
+    public static void setUpTestData(){
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 900000000) {
             transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
@@ -779,20 +753,23 @@ public class TestBaseOld extends TestBase {
         return getInstanse(BalanceDTO.class);
     }
 
-    private static void startForgingSetUp(){
+    public static void startForgingSetUp(){
         addParameters(RequestType.requestType, getForging);
         addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         ForgingResponse forgingResponse =  getInstanse(ForgingResponse.class);
         if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
+            System.out.println("Strat Forging on APL-NZKH-MZRE-2CTT-98NPZ");
             addParameters(RequestType.requestType, startForging);
             addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+            addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+            getInstanse(ForgingDetails.class);
         }
     }
 
 
     @AfterEach
     void testEnd() {
-        TestBaseOld.testInfo = null;
+        this.testInfo = null;
     }
 
 

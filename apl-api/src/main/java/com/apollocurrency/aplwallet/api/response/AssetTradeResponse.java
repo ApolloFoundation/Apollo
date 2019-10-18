@@ -12,6 +12,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AssetTradeResponse {
+public class AssetTradeResponse extends ResponseBase {
     private List<AssetTradeDTO> trades;
 }

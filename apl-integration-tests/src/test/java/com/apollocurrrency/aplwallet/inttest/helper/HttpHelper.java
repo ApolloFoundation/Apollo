@@ -1,6 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
 
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,10 +24,6 @@ public class HttpHelper {
     private static final String baseURL_API = "http://"+
             TestConfiguration.getTestConfiguration().getBaseURL()+":"+
             TestConfiguration.getTestConfiguration().getPort()+"/apl?";
-
-    private static final String baseURL_API_RREST_EASY = "http://"+
-            TestConfiguration.getTestConfiguration().getBaseURL()+":"+
-            TestConfiguration.getTestConfiguration().getPort()+"/rest/";
 
     private static HashMap<String,Object> reqestParam = new HashMap<>();
     private static OkHttpClient client;
@@ -153,7 +150,7 @@ public class HttpHelper {
         responseBody = response.body().string();
         Assert.assertEquals(200, response.code());
         System.out.println(responseBody);
-        if (TestBaseOld.testInfo != null && TestBaseOld.testInfo.getTags()!=null && !TestBaseOld.testInfo.getTags().contains("NEGATIVE")) {
+        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
             assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
         return (T) mapper.readValue(responseBody, clazz);

@@ -43,9 +43,9 @@ public interface ITest {
     CreateTransactionResponse buyAlias (Wallet wallet,String aliasName);
     CreateTransactionResponse sendMoneyPrivate(Wallet wallet,String recipient, int moneyAmount);
     AccountDTO generateNewAccount();
-    Account2FA deleteSecretFile(Wallet wallet);
-    Account2FA exportSecretFile(Wallet wallet);
-    Account2FA importSecretFile(Wallet wallet);
+    Account2FAResponse deleteSecretFile(Wallet wallet);
+    Account2FAResponse exportSecretFile(Wallet wallet);
+    Account2FAResponse importSecretFile(Wallet wallet);
     AccountDTO enable2FA(Wallet wallet);
     List<String> getPeers();
     PeerDTO getPeer(String peer);

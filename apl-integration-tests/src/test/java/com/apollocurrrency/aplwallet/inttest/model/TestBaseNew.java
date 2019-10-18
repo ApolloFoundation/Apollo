@@ -3,11 +3,15 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.sun.xml.bind.v2.TODO;
 import org.apache.commons.lang3.NotImplementedException;
 
 
+import java.util.HashMap;
 import java.util.List;
 
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static io.restassured.RestAssured.given;
 
 public class TestBaseNew extends TestBase {
@@ -168,21 +172,33 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public AccountDTO generateNewAccount() {
-        throw new NotImplementedException("Not implemented");
+        //TODO: Change on REST Easy
+        addParameters(RequestType.requestType,RequestType.generateAccount);
+        return getInstanse(AccountDTO.class);
     }
 
     @Override
-    public Account2FA deleteSecretFile(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+    public Account2FAResponse deleteSecretFile(Wallet wallet) {
+         throw new NotImplementedException("Not implemented");
     }
 
     @Override
-    public Account2FA exportSecretFile(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+    public Account2FAResponse exportSecretFile(Wallet wallet) {
+        HashMap<String, String> param = new HashMap();
+        param.put("account", wallet.getUser());
+        param.put("passPhrase", wallet.getPass());
+
+        String path = String.format("/rest/keyStore/download");
+         given().log().all()
+                .spec(restHelper.getSpec())
+                .body(param)
+                .when()
+                .post(path).print();
+        return null;
     }
 
     @Override
-    public Account2FA importSecretFile(Wallet wallet) {
+    public Account2FAResponse importSecretFile(Wallet wallet) {
         throw new NotImplementedException("Not implemented");
     }
 
@@ -193,15 +209,20 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public List<String> getPeers() {
-        return given().log().all()
+        String path = String.format("/rest/networking/peer/all");
+        return given().log().uri()
                 .spec(restHelper.getSpec())
                 .when()
-                .get("/rest/networking/peer/all").as(GetPeersIpResponse.class).getPeers();
+                .get(path).as(GetPeersIpResponse.class).getPeers();
     }
 
     @Override
     public PeerDTO getPeer(String peer) {
-        throw new NotImplementedException("Not implemented");
+        String path = String.format("/rest/networking/peer?peer=%s",peer);
+        return given().log().uri()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(PeerDTO.class);
     }
 
     @Override
@@ -211,7 +232,11 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public PeerInfo getMyInfo() {
-        throw new NotImplementedException("Not implemented");
+        String path = "/rest/networking/peer/mypeerinfo";
+        return given().log().uri()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(PeerInfo.class);
     }
 
     @Override

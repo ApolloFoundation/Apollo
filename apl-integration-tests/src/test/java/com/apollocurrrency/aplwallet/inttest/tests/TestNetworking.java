@@ -21,13 +21,13 @@ public class TestNetworking extends TestBaseNew {
         assertTrue(super.getPeers().size() > 0);
     }
 
-    /*
+
     @Test
     @DisplayName("Get Peer")
     public void getPeer(){
         PeerDTO peer = getPeer(String.valueOf(getPeers().get(0)));
         assertNotNull(peer.getAddress());
-        assertEquals("a2e9b946-290b-48b6-9985-dc2e5a5860a1",peer.getChainId());
+        assertNotNull(peer.getChainId());
         assertEquals("Apollo",peer.getApplication());
     }
 
@@ -37,5 +37,5 @@ public class TestNetworking extends TestBaseNew {
         PeerInfo peer = getMyInfo();
         assertNotNull(peer.getAddress());
     }
-     */
+
 }

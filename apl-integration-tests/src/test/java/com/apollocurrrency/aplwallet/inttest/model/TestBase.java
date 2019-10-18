@@ -12,21 +12,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrrency.aplwallet.inttest.model.TestBaseOld.setUpTestData;
+import static com.apollocurrrency.aplwallet.inttest.model.TestBaseOld.startForgingSetUp;
 
 
 public abstract class TestBase implements ITest {
-    protected TestInfo testInfo;
+    public static TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
 
     @BeforeAll
     static void initAll() {
+        System.out.println("--------------1----------------");
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
                      .retryWhen(false)
                      .withMaxRetries(20)
                      .withDelay(1, TimeUnit.SECONDS);
         restHelper = new RestHelper();
+        startForgingSetUp();
+        setUpTestData();
     }
 
     @BeforeEach
@@ -37,7 +42,7 @@ public abstract class TestBase implements ITest {
 
     @AfterEach
     void testEnd(){
-        TestBaseOld.testInfo = null;
+        this.testInfo = null;
     }
 
     @AfterAll

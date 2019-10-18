@@ -220,7 +220,10 @@ public class TestAccounts extends TestBaseOld {
     @DisplayName("Get Account Property")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    public void  getAccountPropertyTest(Wallet wallet) throws IOException { ;
+    public void  getAccountPropertyTest(Wallet wallet) throws IOException {
+        String property = "Property "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountProperty(wallet,property);
+        verifyTransactionInBlock(setAccountInfo.getTransaction());
         AccountPropertiesResponse propertyResponse = getAccountProperty(wallet);
         assertTrue(propertyResponse.getProperties().size() > 0);
     }
