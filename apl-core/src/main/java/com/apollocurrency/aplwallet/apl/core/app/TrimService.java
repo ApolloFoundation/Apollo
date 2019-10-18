@@ -87,6 +87,7 @@ public class TrimService {
                 log.info("Finish trim at height {}", lastTrimHeight);
                 trimDerivedTables(lastTrimHeight, false);
             }
+            //TODO: Do we really need to do so many iterations or something about two-three would be enough?
             for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
                 log.info("Perform trim on height {}", i);
                 trimDerivedTables(i, false);
