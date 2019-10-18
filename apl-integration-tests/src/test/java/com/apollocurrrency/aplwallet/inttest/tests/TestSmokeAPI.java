@@ -6,7 +6,7 @@ import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.model.Parameters;
 import com.apollocurrrency.aplwallet.inttest.model.RequestType;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 //@RunWith(JUnitPlatform.class)
 
-public class TestSmokeAPI extends TestBase {
+public class TestSmokeAPI extends TestBaseOld {
 
     private TestConfiguration testConfiguration;
     private  static ObjectMapper mapper = new ObjectMapper(); 

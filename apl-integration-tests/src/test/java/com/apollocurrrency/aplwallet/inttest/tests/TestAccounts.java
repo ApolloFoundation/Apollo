@@ -1,7 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
@@ -20,7 +20,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static org.junit.jupiter.api.Assertions.*;
 
 //@RunWith(JUnitPlatform.class)
-public class TestAccounts extends TestBase {
+public class TestAccounts extends TestBaseOld {
 
 
     @Test

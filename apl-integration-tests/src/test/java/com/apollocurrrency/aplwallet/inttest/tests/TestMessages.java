@@ -2,7 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestMessages extends TestBase {
+public class TestMessages extends TestBaseOld {
 
 
     @DisplayName("Send Message/Read Message")
@@ -33,7 +33,7 @@ public class TestMessages extends TestBase {
     @ArgumentsSource(WalletProvider.class)
     public void readMessagePhasing(Wallet wallet) throws IOException {
         String textMessage = "Test MSG Phasing";
-       // phasing(VoteWeighting.VotingModel.ATM,"136524",1, 1,0,"0");
+       // createPhasingVote(VoteWeighting.VotingModel.ATM,"136524",1, 1,0,"0");
         CreateTransactionResponse response = sendMessage(wallet,wallet.getUser(),textMessage);
         verifyCreatingTransaction(response);
         verifyTransactionInBlock(response.getTransaction());
