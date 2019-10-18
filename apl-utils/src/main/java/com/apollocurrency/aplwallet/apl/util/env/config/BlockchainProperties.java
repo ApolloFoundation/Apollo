@@ -22,7 +22,6 @@ public class BlockchainProperties {
     private long maxBalance;
     private ShardingSettings shardingSettings;
     private ConsensusSettings consensusSettings;
-    private FeaturesHeightRequirement featuresHeightRequirement;
 
     @Override
     public boolean equals(Object o) {
@@ -50,13 +49,12 @@ public class BlockchainProperties {
              @JsonProperty("blockTime") int blockTime,
              @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
              @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,
-             @JsonProperty("maxBalance") long maxBalance,
-             @JsonProperty("featuresHeightRequirement") FeaturesHeightRequirement featuresHeightRequirement) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null, featuresHeightRequirement);
+             @JsonProperty("maxBalance") long maxBalance) {
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, null);
     }
 
 
-    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings, FeaturesHeightRequirement featuresHeightRequirement) {
+    public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings, ConsensusSettings consensusSettings) {
         this.height = height;
         this.maxNumberOfTransactions = maxNumberOfTransactions;
         this.blockTime = blockTime;
@@ -65,15 +63,14 @@ public class BlockchainProperties {
         this.maxBalance = maxBalance;
         this.shardingSettings = shardingSettings == null ? new ShardingSettings() : shardingSettings;
         this.consensusSettings = consensusSettings == null ? new ConsensusSettings() : consensusSettings;
-        this.featuresHeightRequirement = featuresHeightRequirement == null ? new FeaturesHeightRequirement() : featuresHeightRequirement;
     }
 
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit, long maxBalance, ShardingSettings shardingSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null, null);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, null);
     }
     public BlockchainProperties(int height, int maxNumberOfTransactions, int blockTime, int maxBlockTimeLimit, int minBlockTimeLimit,
                                 long maxBalance, ConsensusSettings consensusSettings) {
-        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings, null);
+        this(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, null, consensusSettings);
     }
 
 
@@ -142,17 +139,9 @@ public class BlockchainProperties {
         return shardingSettings;
     }
 
-    public FeaturesHeightRequirement getFeaturesHeightRequirement() {
-        return featuresHeightRequirement;
-    }
-
-    public void setFeaturesHeightRequirement(FeaturesHeightRequirement featuresHeightRequirement) {
-        this.featuresHeightRequirement = featuresHeightRequirement;
-    }
-
     public BlockchainProperties copy() {
         return new BlockchainProperties(height, maxNumberOfTransactions, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance,
-                shardingSettings.copy(), consensusSettings.copy(), featuresHeightRequirement.copy());
+                shardingSettings.copy(), consensusSettings.copy());
     }
 
     @Override
@@ -166,7 +155,6 @@ public class BlockchainProperties {
                 ", maxBalance=" + maxBalance +
                 ", shardingSettings=" + shardingSettings +
                 ", consensusSettings=" + consensusSettings +
-                ", featuresHeightRequirement=" + featuresHeightRequirement +
                 '}';
     }
 }
