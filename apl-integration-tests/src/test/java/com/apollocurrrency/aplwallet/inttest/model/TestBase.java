@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -24,6 +25,7 @@ public abstract class TestBase implements ITest {
     public static TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
+    protected static ObjectMapper mapper = new ObjectMapper();
 
     @BeforeAll
     static void initAll() {

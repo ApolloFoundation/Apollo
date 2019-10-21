@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;
 
@@ -41,11 +42,11 @@ public interface ITest {
     CreateTransactionResponse sellAlias (Wallet wallet,String aliasName);
     CreateTransactionResponse buyAlias (Wallet wallet,String aliasName);
     CreateTransactionResponse sendMoneyPrivate(Wallet wallet,String recipient, int moneyAmount);
-    AccountDTO generateNewAccount();
-    Account2FAResponse deleteSecretFile(Wallet wallet);
+    Account2FAResponse generateNewAccount() throws JsonProcessingException;
+    Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException;
     VaultWalletResponse exportSecretFile(Wallet wallet);
     boolean importSecretFile(String pathToSecretFile, String pass);
-    AccountDTO enable2FA(Wallet wallet);
+    AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException;
     List<String> getPeers();
     PeerDTO getPeer(String peer);
     PeerDTO addPeer(String ip);

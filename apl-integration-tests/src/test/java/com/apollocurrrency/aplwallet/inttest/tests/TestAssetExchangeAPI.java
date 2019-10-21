@@ -450,7 +450,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(assetID);
         System.out.println("assetID = " + assetID);
 
-        if (wallet.getSecretKey() == null) {
+        if (!wallet.isVault()) {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getVaultWallet().getUser());
             verifyCreatingTransaction(transferAsset);
             verifyTransactionInBlock(transferAsset.getTransaction());

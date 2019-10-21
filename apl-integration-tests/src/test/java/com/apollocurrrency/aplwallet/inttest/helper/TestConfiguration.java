@@ -29,7 +29,7 @@ public class TestConfiguration {
             host = (String) jsonObject.get("host");
             port = (String) jsonObject.get("port");
             adminPass = (String) jsonObject.get("adminPassword");
-            standartWallet= mapper.readValue(jsonObject.get("standartWallet").toString(), Wallet.class);
+            standartWallet = mapper.readValue( jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet= mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
 
 

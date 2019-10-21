@@ -243,7 +243,7 @@ public class TestAccounts extends TestBaseOld {
     @DisplayName("Generate Account")
     @Test
     public void  generateAccount() throws IOException { ;
-        AccountDTO accountDTO = generateNewAccount();
+        Account2FAResponse accountDTO = generateNewAccount();
         assertNotNull(accountDTO.getAccountRS());
         assertNotNull(accountDTO.getPassphrase());
         assertNotNull(accountDTO.getPublicKey());
