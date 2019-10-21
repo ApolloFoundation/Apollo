@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -66,10 +65,10 @@ public class GenesisImporter {
      * Has a hardcoded value because of the immutability of this file.
      */
     private final int balanceNumberTotal;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
     private byte[] CREATOR_PUBLIC_KEY;
     private BlockchainConfig blockchainConfig;
     private AplAppStatus aplAppStatus;
-    private BlockchainConfigUpdater blockchainConfigUpdater;
     private DatabaseManager databaseManager;
     private String genesisTaskId;
     private byte[] computedDigest;
@@ -267,8 +266,8 @@ public class GenesisImporter {
     public void importGenesisJson(final boolean loadOnlyPublicKeys) {
         final long start = System.currentTimeMillis();
 
-        this.blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         this.blockchainConfigUpdater.reset();
+
         final TransactionalDataSource dataSource = databaseManager.getDataSource();
         // load 'public Keys' from JSON only
         if (!dataSource.isInTransaction()) {
