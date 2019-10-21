@@ -3,10 +3,12 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
-import com.sun.xml.bind.v2.TODO;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
 
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -183,23 +185,31 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public Account2FAResponse exportSecretFile(Wallet wallet) {
+    public VaultWalletResponse exportSecretFile(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put("account", wallet.getUser());
         param.put("passPhrase", wallet.getPass());
 
         String path = String.format("/rest/keyStore/download");
-         given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
-                .body(param)
+                 .contentType(ContentType.URLENC)
+                .formParams(param)
                 .when()
-                .post(path).print();
-        return null;
+                .post(path).as(VaultWalletResponse.class);
     }
 
     @Override
-    public Account2FAResponse importSecretFile(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+    public boolean importSecretFile(String pathToSecretFile, String pass) {
+        String path = "/rest/keyStore/upload";
+        Response response = given().log().all()
+                .spec(restHelper.getSpec())
+                .header("Content-Type", "multipart/form-data")
+                .multiPart("keyStore", new File(pathToSecretFile))
+                .formParam("passPhrase", pass)
+                .when()
+                .post(path);
+        return !response.body().asString().contains("error");
     }
 
     @Override

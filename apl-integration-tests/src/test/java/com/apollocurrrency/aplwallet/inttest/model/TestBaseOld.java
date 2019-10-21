@@ -3,19 +3,16 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
-import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
-import org.junit.Assert;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
@@ -297,16 +294,17 @@ public class TestBaseOld extends TestBase {
      }
 
 
-    public Account2FAResponse exportSecretFile(Wallet wallet) {
+    public VaultWalletResponse exportSecretFile(Wallet wallet) {
         addParameters(RequestType.requestType,RequestType.exportKey);
         addParameters(Parameters.wallet, wallet);
-        return getInstanse(Account2FAResponse.class);
+        return getInstanse(VaultWalletResponse.class);
     }
 
-    public Account2FAResponse importSecretFile(Wallet wallet) {
-        addParameters(RequestType.requestType, importKey);
-        addParameters(Parameters.wallet, wallet);
-        return getInstanse(Account2FAResponse.class);
+    public boolean importSecretFile(String pathToSecretFile, String pass) {
+       // addParameters(RequestType.requestType, importKey);
+      //  addParameters(Parameters.wallet, wallet);
+      //  return getInstanse(Account2FAResponse.class);
+        throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
 
