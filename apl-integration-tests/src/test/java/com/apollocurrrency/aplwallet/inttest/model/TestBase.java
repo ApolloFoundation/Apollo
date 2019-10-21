@@ -35,11 +35,13 @@ public abstract class TestBase implements ITest {
                      .withMaxRetries(20)
                      .withDelay(1, TimeUnit.SECONDS);
         restHelper = new RestHelper();
-        startForgingSetUp();
-        setUpTestData();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
         importSecretFileSetUp(secretFilePath,"1");
+        startForgingSetUp();
+        setUpTestData();
+
+
     }
 
     @BeforeEach

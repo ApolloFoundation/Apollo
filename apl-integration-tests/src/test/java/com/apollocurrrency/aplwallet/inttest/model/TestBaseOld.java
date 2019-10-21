@@ -709,14 +709,21 @@ public class TestBaseOld extends TestBase {
             transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
+
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 900000000) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
+            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
+
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
+        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
     }
 
 
-    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet,String recipient, int moneyAmount) {
+    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
         addParameters(RequestType.requestType,RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.amountATM, moneyAmount+"00000000");
@@ -757,7 +764,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
         ForgingResponse forgingResponse =  getInstanse(ForgingResponse.class);
         if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
-            System.out.println("Strat Forging on APL-NZKH-MZRE-2CTT-98NPZ");
+            System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
             addParameters(RequestType.requestType, startForging);
             addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
             addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
