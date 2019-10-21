@@ -3,8 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
-import net.jodah.failsafe.RetryPolicy;
-import org.junit.jupiter.api.*;
+
 import java.util.List;
 
 
@@ -43,9 +42,9 @@ public interface ITest {
     CreateTransactionResponse buyAlias (Wallet wallet,String aliasName);
     CreateTransactionResponse sendMoneyPrivate(Wallet wallet,String recipient, int moneyAmount);
     AccountDTO generateNewAccount();
-    Account2FA deleteSecretFile(Wallet wallet);
-    Account2FA exportSecretFile(Wallet wallet);
-    Account2FA importSecretFile(Wallet wallet);
+    Account2FAResponse deleteSecretFile(Wallet wallet);
+    VaultWalletResponse exportSecretFile(Wallet wallet);
+    boolean importSecretFile(String pathToSecretFile, String pass);
     AccountDTO enable2FA(Wallet wallet);
     List<String> getPeers();
     PeerDTO getPeer(String peer);

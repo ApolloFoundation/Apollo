@@ -15,4 +15,8 @@ public class RestHelper {
                 .setBaseUri(String.format("http://%s:%s",host,port))
                 .build();
     }
+
+    public RequestSpecification getSpec() {
+        return spec;
+    }
 }
