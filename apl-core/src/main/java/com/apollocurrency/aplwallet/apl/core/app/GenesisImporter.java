@@ -246,7 +246,7 @@ public class GenesisImporter {
 
         this.computedDigest = updateComputedDigest(digest);
 
-        Long usedBytes = null; // Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
+        final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
         log.debug("Digest is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
                 usedBytes != null ? usedBytes / 1024 : "not calculated");
 
@@ -288,7 +288,7 @@ public class GenesisImporter {
         final Integer balanceNumber = balanceStatistics.getRight();
         final long total = balanceStatistics.getLeft();
 
-        long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
+        final long maxBalanceATM = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
@@ -300,6 +300,10 @@ public class GenesisImporter {
         log.debug("Public Keys [{}] + Balances [{}] were saved in {} ms", publicKeyNumber, balanceNumber,
                 (System.currentTimeMillis() - start) / 1000);
         this.genesisTaskId = null;
+
+        final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
+        log.debug("ImportGenesisJson is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
+                usedBytes != null ? usedBytes / 1024 : "not calculated");
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})

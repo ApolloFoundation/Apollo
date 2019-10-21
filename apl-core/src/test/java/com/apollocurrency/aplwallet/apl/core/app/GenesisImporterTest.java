@@ -206,7 +206,7 @@ class GenesisImporterTest {
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         Block block = genesisImporter.newGenesisBlock();
-//        genesisImporter.importGenesisJson(false); // COMMENTED OUT because it TAKES LONG TIME with HUGE json !!!!
+        //genesisImporter.importGenesisJson(false); // COMMENTED OUT because it adds 10+sec to this test
         assertNotNull(block);
         assertEquals(1739068987193023818L, GenesisImporter.CREATOR_ID);
         assertEquals(1515931200000L, GenesisImporter.EPOCH_BEGINNING);
