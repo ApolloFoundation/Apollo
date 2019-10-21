@@ -278,7 +278,7 @@ public class TestBaseOld extends TestBase {
 
     public Account2FAResponse generateNewAccount() {
         addParameters(RequestType.requestType,RequestType.generateAccount);
-        return getInstanse(AccountDTO.class);
+        return getInstanse(Account2FAResponse.class);
     }
 
 
@@ -584,10 +584,10 @@ public class TestBaseOld extends TestBase {
 
 
     //getAssetAccountCount
-    public AccountAssetsCountResponse getAssetAccountCount (String assetID) {
+    public AssetsAccountsCountResponse getAssetAccountCount (String assetID) {
         addParameters(RequestType.requestType, getAssetAccountCount);
         addParameters(Parameters.asset, assetID);
-        return getInstanse(AccountAssetsCountResponse.class);
+        return getInstanse(AssetsAccountsCountResponse.class);
     }
 
     //getAssetAccounts

@@ -418,7 +418,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountAssetsCountResponse getAssetAccountCount(String assetID) {
+    public AssetsAccountsCountResponse getAssetAccountCount(String assetID) {
         throw new NotImplementedException("Not implemented");
     }
 
