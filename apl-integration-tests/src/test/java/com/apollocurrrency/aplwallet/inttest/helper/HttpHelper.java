@@ -56,7 +56,6 @@ public class HttpHelper {
                 .url(buildGetReqestUrl())
                 .post(body)
                 .build();
-        System.out.println(buildGetReqestUrl());
         return getClient().newCall(request).execute();
     }
 

@@ -337,10 +337,10 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(assetID);
 
 
-        AccountAssetsCountResponse assetAccountCount = getAssetAccountCount(assetID);
+        AssetsAccountsCountResponse assetAccountCount = getAssetAccountCount(assetID);
 
-        assertTrue(assetAccountCount.getNumberOfAssets() == 1);
-        System.out.println("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAssets());
+        assertTrue(assetAccountCount.getNumberOfAccounts() == 1);
+        System.out.println("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAccounts());
 
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
@@ -348,8 +348,8 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
         assetAccountCount = getAssetAccountCount(assetID);
 
-        log.trace("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAssets());
-        assertTrue(assetAccountCount.getNumberOfAssets() == 0);
+        log.trace("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAccounts());
+        assertTrue(assetAccountCount.getNumberOfAccounts() == 0);
 
     }
 

@@ -16,7 +16,8 @@ public class TestBlock extends TestBaseOld {
     @Test
     @DisplayName("Get Block")
     public void getBlock() throws IOException {
-        BlockDTO block = getBlock("6401614631656403323");
+        GetBlockIdResponse blockID = getBlockId("0");
+        BlockDTO block = getBlock(blockID.getBlock());
         assertNotNull(block.getHeight());
         assertNotNull(block.getTransactions());
         assertNotNull(block.getGenerationSignature());
@@ -30,8 +31,8 @@ public class TestBlock extends TestBaseOld {
     @Test
     @DisplayName("Get Block ID")
     public void getBlockID() throws IOException {
-        GetBlockIdResponse block = getBlockId("28731");
-        assertEquals("11382032888285605874",block.getBlock());
+        GetBlockIdResponse block = getBlockId("0");
+        assertNotNull(block.getBlock());
 
     }
 
@@ -39,7 +40,7 @@ public class TestBlock extends TestBaseOld {
     @DisplayName("Get Blockchain Status")
     public void getBlockchainStat() throws IOException {
         BlockchainInfoDTO blockchainStatus = getBlockchainStatus();
-        assertEquals("a2e9b946-290b-48b6-9985-dc2e5a5860a1",blockchainStatus.getChainId());
+        assertNotNull(blockchainStatus.getChainId());
         assertNotEquals(BlockchainState.FORK, blockchainStatus.getBlockchainState());
         assertEquals("Apollo", blockchainStatus.getCoinSymbol());
         assertEquals("APL", blockchainStatus.getAccountPrefix());

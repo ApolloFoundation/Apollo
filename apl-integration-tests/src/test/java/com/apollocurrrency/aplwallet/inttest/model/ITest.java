@@ -78,7 +78,7 @@ public interface ITest {
     AccountCurrentAssetAskOrderIdsResponse getAskOrderIds (String assetID);
     AccountCurrentAssetAskOrdersResponse getAskOrders (String assetID);
     AccountCurrentAssetBidOrdersResponse getBidOrders (String assetID);
-    AccountAssetsCountResponse getAssetAccountCount (String assetID);
+    AssetsAccountsCountResponse getAssetAccountCount (String assetID);
     AccountAssetsResponse getAssetAccounts (String assetID);
     ExpectedAssetDeletes getAssetDeletes (Wallet wallet);
     ExpectedAssetDeletes getExpectedAssetDeletes (Wallet wallet);
