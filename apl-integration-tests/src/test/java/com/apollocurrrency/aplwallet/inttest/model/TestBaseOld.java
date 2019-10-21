@@ -276,7 +276,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    public AccountDTO generateNewAccount() {
+    public Account2FAResponse generateNewAccount() {
         addParameters(RequestType.requestType,RequestType.generateAccount);
         return getInstanse(AccountDTO.class);
     }
@@ -309,9 +309,10 @@ public class TestBaseOld extends TestBase {
 
 
     public AccountDTO enable2FA(Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.enable2FA);
-        addParameters(Parameters.wallet, wallet);
-        return getInstanse(AccountDTO.class);
+       // addParameters(RequestType.requestType,RequestType.enable2FA);
+      //  addParameters(Parameters.wallet, wallet);
+       // return getInstanse(AccountDTO.class);
+        throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
 

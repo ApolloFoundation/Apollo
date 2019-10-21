@@ -2,7 +2,6 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 
 
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -83,14 +82,14 @@ public class HttpHelper {
                 Wallet wallet = (Wallet) pair.getValue();
                 reqestUrl.append("account="+wallet.getUser());
                 reqestUrl.append("&");
-                if (wallet.getSecretKey() == null)
+                if (!wallet.isVault())
                 {
                     reqestUrl.append("secretPhrase="+wallet.getPass());
                     reqestUrl.append("&");
                 }
                 else
                 {
-                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("secretBytes="+wallet.isVault());
                     reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
                     reqestUrl.append("&");
@@ -117,14 +116,14 @@ public class HttpHelper {
                 Wallet wallet = (Wallet) pair.getValue();
                 reqestUrl.append("account="+wallet.getUser());
                 reqestUrl.append("&");
-                if (wallet.getSecretKey() == null)
+                if (!wallet.isVault())
                 {
                     reqestUrl.append("secretPhrase="+wallet.getPass());
                     reqestUrl.append("&");
                 }
                 else
                 {
-                    reqestUrl.append("secretBytes="+wallet.getSecretKey());
+                    reqestUrl.append("secretBytes="+wallet.isVault());
                     reqestUrl.append("&");
                     reqestUrl.append("sender="+wallet.getUser());
                     reqestUrl.append("&");
@@ -149,7 +148,7 @@ public class HttpHelper {
         response =  httpCallPost();
         responseBody = response.body().string();
         Assert.assertEquals(200, response.code());
-        System.out.println(responseBody);
+       // System.out.println(responseBody);
         if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
             assertFalse(responseBody.contains("errorDescription"), responseBody);
         }

@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
@@ -173,15 +174,35 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountDTO generateNewAccount() {
+    public Account2FAResponse generateNewAccount() throws JsonProcessingException {
         //TODO: Change on REST Easy
-        addParameters(RequestType.requestType,RequestType.generateAccount);
-        return getInstanse(AccountDTO.class);
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.generateAccount.toString());
+        String path = "/apl";
+        Response response =  given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+       return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
     }
 
     @Override
-    public Account2FAResponse deleteSecretFile(Wallet wallet) {
-         throw new NotImplementedException("Not implemented");
+    public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.deleteKey.toString());
+        param.put(Parameters.account.toString(), wallet.getUser());
+        param.put(Parameters.passphrase.toString(), wallet.getPass());
+        String path = "/apl";
+        Response response =  given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
     }
 
     @Override
@@ -190,7 +211,7 @@ public class TestBaseNew extends TestBase {
         param.put("account", wallet.getUser());
         param.put("passPhrase", wallet.getPass());
 
-        String path = String.format("/rest/keyStore/download");
+        String path = "/rest/keyStore/download";
         return given().log().all()
                 .spec(restHelper.getSpec())
                  .contentType(ContentType.URLENC)
@@ -213,13 +234,25 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountDTO enable2FA(Wallet wallet) {
-        throw new NotImplementedException("Not implemented");
+    public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.enable2FA.toString());
+        param = restHelper.addWalletParameters(param,wallet);
+
+        String path = "/apl";
+        Response response =  given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), AccountDTO.class);
     }
 
     @Override
     public List<String> getPeers() {
-        String path = String.format("/rest/networking/peer/all");
+        String path = "/rest/networking/peer/all";
         return given().log().uri()
                 .spec(restHelper.getSpec())
                 .when()

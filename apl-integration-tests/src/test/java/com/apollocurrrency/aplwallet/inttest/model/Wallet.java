@@ -4,17 +4,17 @@ public class Wallet {
     private String user;
     private String pass;
     private String publicKey;
-    private String secretKey;
+    private boolean vault;
 
 
     public Wallet() {
     }
 
-    public Wallet(String user, String pass, String publicKey, String secretKey) {
+    public Wallet(String user, String pass, String publicKey, boolean vault) {
         this.user = user;
         this.pass = pass;
         this.publicKey = publicKey;
-        this.secretKey = secretKey;
+        this.vault = vault;
     }
     public Wallet(String user, String pass) {
         this.user = user;
@@ -33,12 +33,12 @@ public class Wallet {
         return publicKey;
     }
 
-    public String getSecretKey() {
-        return secretKey;
+    public boolean isVault() {
+        return vault;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
+    public void setVault(boolean vault) {
+        this.vault = vault;
     }
 
     public void setPass(String pass) {
@@ -47,7 +47,7 @@ public class Wallet {
 
     @Override
     public String toString() {
-        if(secretKey == null) return "Standart Wallet";
+        if(!vault) return "Standart Wallet";
         else return "Vault Wallet";
 
     }

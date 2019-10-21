@@ -66,5 +66,6 @@ public enum  Parameters {
     phasingQuorum,
     phasingMinBalance,
     phasingMinBalanceModel,
-    phasingHolding
+    phasingHolding,
+    sender
 }
