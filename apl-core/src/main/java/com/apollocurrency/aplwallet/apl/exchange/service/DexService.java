@@ -77,14 +77,14 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -522,12 +522,6 @@ public class DexService {
         return true;
     }
 
-    // DEPRECATED ??
-    public void broadcastWhenConfirmed(Transaction tx, Transaction uncTx) {
-        transactionProcessor.broadcastWhenConfirmed(tx, uncTx);
-    }
-
-
     @Transactional
     public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
@@ -647,9 +641,8 @@ public class DexService {
         return blockchain.hasTransaction(txId, requiredTxHeight);
     }
 
-    // DEPRECATED ??
     public void reopenPendingOrders(int height, int time) throws AplException.ExecutiveProcessException {
-        if (height % 10 == 0) { // every ten blocks
+        if (height % 10 == 0 ) { // every ten blocks
             List<DexOrder> pendingOrders = dexOrderTable.getPendingOrdersWithoutContracts(height - Constants.DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS);
             for (DexOrder pendingOrder : pendingOrders) {
                 if (pendingOrder.getFinishTime() > time) {
