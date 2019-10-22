@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -22,7 +21,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancel
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCreator;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -30,12 +38,8 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
-import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.LoadingCache;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,7 +55,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -82,21 +92,18 @@ public class DexController {
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     private DexSmartContractService dexSmartContractService;
-    private LoadingCache<Long, OrderFreezing> cache;
+
 
 
     @Inject
     public DexController(DexService service, DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexEthService dexEthService,
-                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService,
-                         @CacheProducer
-                         @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
+                         EthereumWalletService ethereumWalletService, DexSmartContractService dexSmartContractService) {
         this.service = Objects.requireNonNull(service, "DexService is null");
         this.dexOrderTransactionCreator = Objects.requireNonNull(dexOrderTransactionCreator, "DexOfferTransactionCreator is null");
         this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
         this.dexSmartContractService = dexSmartContractService;
-        this.cache = (LoadingCache<Long, OrderFreezing>) Objects.requireNonNull(cache);
     }
 
     //For DI
@@ -289,6 +296,7 @@ public class DexController {
                                 @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
                                 @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                                 @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
+                                @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
@@ -338,11 +346,12 @@ public class DexController {
                 .maxBidPrice(maxBidPrice)
                 .offerCur(offset)
                 .limit(limit)
+                .hasFrozenMoney(hasFrozenMoney)
                 .build();
 
-        List<DexOrder> orders = service.getOrders(dexOrderDBRequest);
+        List<DexOrderWithFreezing> orders = service.getOrdersWithFreezing(dexOrderDBRequest);
         return Response.ok(orders.stream()
-                .map(order -> order.toDto(order.getType() == OrderType.SELL || cache.getUnchecked(order.getId()).isHasFrozenMoney()))
+                .map(order -> order.getDexOrder().toDto(order.isHasFrozenMoney()))
                 .collect(Collectors.toList())
         ).build();
     }

@@ -3,10 +3,16 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -22,18 +28,49 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.dao.*;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
+import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
+import com.google.common.cache.Cache;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -48,6 +85,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -64,7 +102,7 @@ public class DexService {
     private TransactionProcessor transactionProcessor;
     private SecureStorageService secureStorageService;
     private MandatoryTransactionDao mandatoryTransactionDao;
-
+    private LoadingCache<Long, OrderFreezing> orderFreezingCache;
     private DexTradeDao dexTradeDao;
 
     private DexOrderTransactionCreator dexOrderTransactionCreator;
@@ -77,7 +115,9 @@ public class DexService {
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
-                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao) {
+                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
+                      @CacheProducer
+                      @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -94,6 +134,7 @@ public class DexService {
         this.dexMatcherService = dexMatcherService;
         this.phasingApprovedResultTable = phasingApprovedResultTable;
         this.mandatoryTransactionDao = mandatoryTransactionDao;
+        this.orderFreezingCache = (LoadingCache<Long, OrderFreezing>) cache;
     }
 
 
@@ -171,8 +212,43 @@ public class DexService {
     }
 
     @Transactional(readOnly = true)
+    public List<DexOrderWithFreezing> getOrdersWithFreezing(DexOrderDBRequest dexOrderDBRequest) {
+        List<DexOrderWithFreezing> orders;
+        if (dexOrderDBRequest.getHasFrozenMoney() != null) {
+            List<DexOrder> fetchedOrders;
+            orders = new ArrayList<>();
+            do {
+                fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+                Integer offset = dexOrderDBRequest.getOffset();
+                if (offset != null) {
+                    dexOrderDBRequest.setOffset(dexOrderDBRequest.getOffset() + dexOrderDBRequest.getLimit());
+                } else {
+                    dexOrderDBRequest.setOffset(dexOrderDBRequest.getLimit());
+                }
+                List<DexOrderWithFreezing> dexOrderWithFreezings = mapToOrdersWithFreezing(fetchedOrders);
+                dexOrderWithFreezings
+                        .stream()
+                        .filter(o -> o.isHasFrozenMoney() == dexOrderDBRequest.getHasFrozenMoney())
+                        .limit(dexOrderDBRequest.getLimit() - orders.size())
+                        .forEach(orders::add);
+            }
+            while (orders.size() < dexOrderDBRequest.getLimit() && fetchedOrders.size() == dexOrderDBRequest.getLimit());
+        } else {
+            List<DexOrder> fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+            orders = mapToOrdersWithFreezing(fetchedOrders);
+        }
+        return orders;
+    }
+
+
+    @Transactional(readOnly = true)
     public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
         return dexOrderDao.getOrders(dexOrderDBRequest);
+    }
+
+
+    private List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
+        return orders.stream().map(order -> new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney())).collect(Collectors.toList());
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {
