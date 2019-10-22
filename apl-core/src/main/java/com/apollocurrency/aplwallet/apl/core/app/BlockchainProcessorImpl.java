@@ -184,7 +184,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return databaseManager.getDataSource();
     }
 
-    private PeersService lookupPeersService() {
+    private PeersService lookupPeers() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }
@@ -204,12 +204,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //
                 // Locate an archive peer
                 //
-                List<Peer> peersList = lookupPeersService().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+                List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                         !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
                 while (!peersList.isEmpty()) {
                     Peer chkPeer = peersList.get(ThreadLocalRandom.current().nextInt(peersList.size()));
                     if (chkPeer.getState() != PeerState.CONNECTED) {
-                        lookupPeersService().connectPeer(chkPeer);
+                        lookupPeers().connectPeer(chkPeer);
                     }
                     if (chkPeer.getState() == PeerState.CONNECTED) {
                         peer = chkPeer;
@@ -565,7 +565,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (!isPruned) {
             return transaction;
         }
-        List<Peer> peersList = lookupPeersService().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
+        List<Peer> peersList = lookupPeers().getPeers(chkPeer -> chkPeer.providesService(Peer.Service.PRUNABLE) &&
                 !chkPeer.isBlacklisted() && chkPeer.getAnnouncedAddress() != null);
         if (peersList.isEmpty()) {
             log.debug("Cannot find any archive peers");
@@ -580,7 +580,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         JSONStreamAware request = JSON.prepareRequest(json);
         for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
-                lookupPeersService().connectPeer(peer);
+                lookupPeers().connectPeer(peer);
             }
             if (peer.getState() != PeerState.CONNECTED) {
                 continue;
@@ -793,11 +793,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getTimestamp() >= curTime - 600) {
             log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                     Convert2.rsAccount(block.getGeneratorId()));
-            lookupPeersService().sendToSomePeers(block);
+            lookupPeers().sendToSomePeers(block);
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
-        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block); // send sync event to TrimObserver component
-        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
+        blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block);
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
                 block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
@@ -914,7 +913,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         long start = System.currentTimeMillis();
         try {
-            log.debug("Accepting block: {} height: {}", block.getId(), block.getHeight());
+            log.trace("Accepting block: {} height: {}", block.getId(), block.getHeight());
             isProcessingBlock = true;
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
@@ -998,9 +997,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
                 dexService.closeOverdueContracts(block.getTimestamp());
-                if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
-                    dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
-                }
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.toString(), e);
                 throw new RuntimeException(e.getMessage(), e);
@@ -1565,14 +1561,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 long startTime = System.currentTimeMillis();
                 int numberOfForkConfirmations = lookupBlockhain().getHeight() > Constants.LAST_CHECKSUM_BLOCK - Constants.MAX_AUTO_ROLLBACK ?
                         defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-                connectedPublicPeers = lookupPeersService().getPublicPeers(PeerState.CONNECTED, true);
+                connectedPublicPeers = lookupPeers().getPublicPeers(PeerState.CONNECTED, true);
                 if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                     log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                             connectedPublicPeers.size(), numberOfForkConfirmations);
                     return;
                 }
                 peerHasMore = true;
-                final Peer peer = lookupPeersService().getWeightedPeer(connectedPublicPeers);
+                final Peer peer = lookupPeers().getWeightedPeer(connectedPublicPeers);
                 if (peer == null) {
                     log.debug("Can not find weighted peer");
                     return;
@@ -1643,8 +1639,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //TODO: check do we need lock here
 // Maybe better to find another sync solution
                 globalSync.updateLock();
-//                Generator.suspendForging();
                 try {
+//                    Generator.suspendForging();
                     if (betterCumulativeDifficulty.compareTo(lookupBlockhain().getLastBlock().getCumulativeDifficulty()) <= 0) {
                         return;
                     }
@@ -1700,9 +1696,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         log.debug("Did not accept peer's blocks, back to our own fork");
                     }
                 } finally {
+//                    Generator.resumeForging();
                     globalSync.updateUnlock();
                     isDownloading = false;
-//                    Generator.resumeForging();
                 }
             } catch (AplException.StopException e) {
                 log.info("Blockchain download stopped: " + e.getMessage());
