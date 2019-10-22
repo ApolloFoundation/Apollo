@@ -55,6 +55,7 @@ public final class Scan extends AbstractAPIRequestHandler {
             BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
             try {
                 blockchainProcessor.suspendBlockchainDownloading();
+                blockchainProcessor.waitUntilBlockchainDownloadingStops();
                 if (numBlocks > 0) {
                     blockchainProcessor.scan(lookupBlockchain().getHeight() - numBlocks + 1, validate);
                 } else if (height >= 0) {

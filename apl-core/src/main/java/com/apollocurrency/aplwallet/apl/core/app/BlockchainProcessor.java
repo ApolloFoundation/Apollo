@@ -73,6 +73,8 @@ public interface BlockchainProcessor {
 
     Transaction restorePrunedTransaction(long transactionId);
 
+    void waitUntilBlockchainDownloadingStops();
+
     class BlockNotAcceptedException extends AplException {
 
         private final Block block;

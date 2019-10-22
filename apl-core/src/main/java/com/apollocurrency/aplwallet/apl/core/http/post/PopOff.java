@@ -55,6 +55,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
         BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
         try {
             blockchainProcessor.suspendBlockchainDownloading();
+            blockchainProcessor.waitUntilBlockchainDownloadingStops();
             if (numBlocks > 0) {
                 blocks = blockchainProcessor.popOffTo(lookupBlockchain().getHeight() - numBlocks);
             } else if (height > 0) {
