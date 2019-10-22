@@ -6,13 +6,11 @@ import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
-import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -30,6 +28,7 @@ import org.web3j.tx.gas.StaticGasProvider;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,6 +123,26 @@ public class DexSmartContractService {
 
         return isApproved;
     }
+
+    public boolean hasFrozenMoney(DexOrder order) {
+        if (order.getType() == OrderType.SELL) {
+            return true;
+        }
+        try {
+            List<UserEthDepositInfo> deposits = getUserFilledDeposits(order.getFromAddress());
+            BigDecimal expectedFrozenAmount = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+            for (UserEthDepositInfo deposit : deposits) {
+                if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().compareTo(expectedFrozenAmount) == 0) {
+                    return true;
+                }
+            }
+        }
+        catch (AplException.ExecutiveProcessException e) {
+            log.warn("Unable to extract user deposits (possible cause - eth service is not available)", e);
+        }
+        return false;
+    }
+
 
     public SwapDataInfo getSwapData(byte[] secretHash) throws AplException.ExecutiveProcessException {
         return getSwapData(Credentials.create(ACCOUNT_TO_READ_DATA), secretHash);

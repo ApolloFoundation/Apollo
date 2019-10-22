@@ -11,18 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.dao.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,7 +50,7 @@ class DexServiceTest {
     @Mock
     MandatoryTransactionDao mandatoryTransactionDao;
 
-    DexOrder offer = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 100_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
+    DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 127_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
     ExchangeContract contract = new ExchangeContract(
             0L, 2L, 1L, 3L, 200L, 100L,
             ExchangeContractStatus.STEP_3, new byte[32], "123",
@@ -81,7 +69,7 @@ class DexServiceTest {
         doReturn(60).when(blockchain).getHeight();
         doReturn(false).when(blockchain).hasTransaction(123, 30);
 
-        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
+        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
         assertFalse(hasEnoughConfirmations);
     }
@@ -91,37 +79,37 @@ class DexServiceTest {
         doReturn(60).when(blockchain).getHeight();
         doReturn(true).when(blockchain).hasTransaction(123, 30);
 
-        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
+        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
         assertTrue(hasEnoughConfirmations);
     }
 
     @Test
     void testNotEnoughConfirmationsForEthTransaction() {
-        offer.setType(OrderType.SELL);
+        order.setType(OrderType.SELL);
         doReturn(9).when(ethWalletService).getNumberOfConfirmations(contract.getTransferTxId());
 
-        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
+        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
         assertFalse(hasEnoughConfirmations);
     }
 
     @Test
     void testHasEnoughConfirmationsForEthTransaction() {
-        offer.setType(OrderType.SELL);
+        order.setType(OrderType.SELL);
         doReturn(10).when(ethWalletService).getNumberOfConfirmations(contract.getTransferTxId());
 
-        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, offer);
+        boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
         assertTrue(hasEnoughConfirmations);
     }
 
     @Test
     void testHasConfirmationsForUnknownCurrency() {
-        offer.setPairCurrency(DexCurrencies.APL); //set apl here, because apl cannot represent paired currency
-        offer.setType(OrderType.SELL);
+        order.setPairCurrency(DexCurrencies.APL); //set apl here, because apl cannot represent paired currency
+        order.setType(OrderType.SELL);
 
-        assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, offer));
+        assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, order));
     }
 
 
