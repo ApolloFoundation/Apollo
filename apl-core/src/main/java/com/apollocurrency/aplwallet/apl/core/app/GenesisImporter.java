@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -66,13 +67,13 @@ public class GenesisImporter {
      */
     private final int balanceNumberTotal;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
-    private byte[] CREATOR_PUBLIC_KEY;
     private final BlockchainConfig blockchainConfig;
     private final AplAppStatus aplAppStatus;
     private final DatabaseManager databaseManager;
+    private final String genesisParametersLocation;
+    private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
-    private final String genesisParametersLocation;
 
     @Inject
     public GenesisImporter(
@@ -197,11 +198,10 @@ public class GenesisImporter {
         int balanceCount = 0;
         int publicKeyCount = 0;
         try (
-                final InputStream is = new DigestInputStream(
-                        ClassLoader.getSystemResourceAsStream(path),
-                        digest
-                );
-                final JsonParser jsonParser = jsonFactory.createParser(is)
+                final InputStream filteredIs =
+                        new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+                final InputStream digestIs = new DigestInputStream(filteredIs, digest);
+                final JsonParser jsonParser = jsonFactory.createParser(digestIs)
         ) {
             boolean isBalancesProcessingOn = false;
             boolean isPublicKeysProcessingOn = false;
@@ -315,11 +315,10 @@ public class GenesisImporter {
 
         final MessageDigest digest = Crypto.sha256();
         try (
-                final InputStream is = new DigestInputStream(
-                        ClassLoader.getSystemResourceAsStream(path),
-                        digest
-                );
-                final JsonParser jsonParser = jsonFactory.createParser(is)
+                final InputStream filteredIs =
+                        new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+                final InputStream digestedIs = new DigestInputStream(filteredIs, digest);
+                final JsonParser jsonParser = jsonFactory.createParser(digestedIs)
         ) {
             boolean isPublicKeysProcessingOn = false;
             while (!jsonParser.isClosed()) {

@@ -144,24 +144,16 @@ class GenesisImporterTest {
         Block block = genesisImporter.newGenesisBlock();
         assertNotNull(block);
         assertEquals(1739068987193023818L, block.getGeneratorId());
-        assertEquals(getOSDependentExpectedBlockId(), block.getId());
+        assertEquals(4997592126877716673L, block.getId());
         assertEquals(0, block.getHeight());
         assertEquals("1259ec21d31a30898d7cd1609f80d9668b4778e3d97e941044b39f0c44d2e51b",
                 Convert.toHexString(genesisImporter.getCreatorPublicKey()));
-        assertEquals(getOSDependentHexComputedDigest(),
-                Convert.toHexString(genesisImporter.getComputedDigest()));
+        assertEquals(
+                "9056ecb5bf764f7513195bc6655756b83e55dcb2c4c2fdb20d5e5aa5348617ed",
+                Convert.toHexString(genesisImporter.getComputedDigest())
+        );
         assertEquals(1739068987193023818L, GenesisImporter.CREATOR_ID);
         assertEquals(1515931200000L, GenesisImporter.EPOCH_BEGINNING);
-    }
-
-    private String getOSDependentHexComputedDigest() {
-        return OS.WINDOWS.isCurrentOs()
-                ? "9e68ab77ede7ed8cc97aee76fbf306d7f9e3adc1ab56ac6acac1fbffeb5380e5"
-                : "9056ecb5bf764f7513195bc6655756b83e55dcb2c4c2fdb20d5e5aa5348617ed";
-    }
-
-    private long getOSDependentExpectedBlockId() {
-        return OS.WINDOWS.isCurrentOs() ? -6547017061124833224L : 4997592126877716673L;
     }
 
     @Test
