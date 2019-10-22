@@ -14,7 +14,7 @@ public class AccountWithKey extends BasicAccount {
         this.secretBytes = secretBytes;
     }
     public AccountWithKey(long account, byte[] secretBytes) {
-        super(account);
+        super(String.valueOf(account));
         this.secretBytes = secretBytes;
     }
 
