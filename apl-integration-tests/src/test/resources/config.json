@@ -1,0 +1,20 @@
+{
+  "host":"localhost",
+  "port":"7876",
+  "adminPassword":"1",
+  "standartWallet":
+     {
+      "user":"APL-AKU5-JP6B-Y42V-H5X8U",
+      "pass":"111",
+      "publicKey":"02a16b0e1e01a451ba2904ccc0c6d4ed88e3d8e2294b2099580d801eecb34e1c",
+      "vault":"false"
+     },
+
+  "vaultWallet":
+     {
+      "user":"APL-MK35-9X23-YQ5E-8QBKH",
+      "pass":"1",
+      "publicKey":"226361039b9906728c21b3a43b9b2cbc746b0cf06d97bbca6b6054805edf131c",
+      "vault":true
+     }
+}
