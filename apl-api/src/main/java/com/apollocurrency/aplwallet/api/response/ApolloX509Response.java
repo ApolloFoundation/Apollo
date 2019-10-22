@@ -9,6 +9,6 @@ import com.apollocurrency.aplwallet.api.dto.ApolloX509Info;
  *
  * @author alukin@gmail.com
  */
-public class ApolloX509Response extends ResponseBase{
+public class ApolloX509Response extends ResponseBase {
     public ApolloX509Info info;
 }
