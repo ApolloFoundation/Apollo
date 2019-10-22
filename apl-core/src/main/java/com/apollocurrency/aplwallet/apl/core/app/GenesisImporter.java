@@ -67,12 +67,12 @@ public class GenesisImporter {
     private final int balanceNumberTotal;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private byte[] CREATOR_PUBLIC_KEY;
-    private BlockchainConfig blockchainConfig;
-    private AplAppStatus aplAppStatus;
-    private DatabaseManager databaseManager;
+    private final BlockchainConfig blockchainConfig;
+    private final AplAppStatus aplAppStatus;
+    private final DatabaseManager databaseManager;
     private String genesisTaskId;
     private byte[] computedDigest;
-    private String genesisParametersLocation;
+    private final String genesisParametersLocation;
 
     @Inject
     public GenesisImporter(
