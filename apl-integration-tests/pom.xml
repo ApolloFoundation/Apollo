@@ -8,11 +8,13 @@
         <version>1.38.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <artifactId>apl-integration-tests</artifactId>
+
     <properties>
         <aspectj.version>1.9.4</aspectj.version>
+        <test.env>localhost</test.env>
     </properties>
 
-    <artifactId>apl-integration-tests</artifactId>
     <dependencies>
         <dependency>
             <groupId>io.qameta.allure</groupId>
@@ -111,6 +113,7 @@
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                         <allure.link.issue.pattern>https://example.org/browse/{}</allure.link.issue.pattern>
+                        <test.env>${test.env}</test.env>
                     </systemPropertyVariables>
                     <systemProperties>
                         <property>
