@@ -20,44 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WHITELIST;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PROPERTY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ALIAS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ASSET;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -100,6 +62,10 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -108,10 +74,44 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ARBITRARY_MESSAGE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_TOO_LONG;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_DATA_ZERO_LENGTH;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_LINKED_FULL_HASH;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_MESSAGE_TO_ENCRYPT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_CHANNEL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_DESCRIPTION;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_FILENAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TAGS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_TAGGED_DATA_TYPE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_WHITELIST;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_OR_ALIAS_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_PROPERTY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_RECIPIENT_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_TRANSACTION_BYTES_OR_JSON;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ACCOUNT;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ALIAS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ASSET;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_CURRENCY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_OFFER;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_POLL;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_PUBLIC_KEY;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_SHUFFLING;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.either;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public final class ParameterParser {
@@ -422,13 +422,13 @@ public final class ParameterParser {
         try {
             nonce = Convert.parseHexString(nonceString);
         } catch (RuntimeException e) {
-            throw new ParameterException(JSONResponses.incorrect(messageType + "Nonce"));
+            throw new ParameterException(incorrect(messageType + "Nonce"));
         }
         if (dataString != null) {
             try {
                 data = Convert.parseHexString(dataString);
             } catch (RuntimeException e) {
-                throw new ParameterException(JSONResponses.incorrect(messageType + "Data"));
+                throw new ParameterException(incorrect(messageType + "Data"));
             }
         } else {
             if (req.getContentType() == null || !req.getContentType().startsWith("multipart/form-data")) {
@@ -443,7 +443,7 @@ public final class ParameterParser {
                 data = fileData.getData();
             } catch (IOException | ServletException e) {
                 LOG.debug("error in reading file data", e);
-                throw new ParameterException(JSONResponses.incorrect(messageType + "File"));
+                throw new ParameterException(incorrect(messageType + "File"));
             }
         }
         return new EncryptedData(data, nonce);
@@ -492,7 +492,7 @@ public final class ParameterParser {
             return Helper2FA.findAplSecretBytes(senderId, passphrase);
         }
         if (isMandatory) {
-            throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, JSONResponses.incorrect("secretPhrase",
+            throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, incorrect("secretPhrase",
                     "passphrase"));
         }
         return null;
@@ -618,7 +618,7 @@ public final class ParameterParser {
     public static String getStringParameter(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {
         String parameter = Convert.emptyToNull(req.getParameter(name));
         if (parameter == null && isMandatory) {
-            throw new ParameterException(JSONResponses.missing(name));
+            throw new ParameterException(missing(name));
         }
         return parameter;
     }
@@ -629,7 +629,7 @@ public final class ParameterParser {
     }
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(passphrase) && isMandatory) {
-            throw new ParameterException(JSONResponses.missing(passphrase));
+            throw new ParameterException(missing(passphrase));
         }
         return elGamal.elGamalDecrypt(passphrase);
     }
@@ -701,6 +701,9 @@ public final class ParameterParser {
         if (!apw.checkPassword(req)) {
             int firstIndex = Math.min(getFirstIndex(req), Integer.MAX_VALUE - API.maxRecords + 1);
             lastIndex = Math.min(lastIndex, firstIndex + API.maxRecords - 1);
+            if (lastIndex < firstIndex) {
+                lastIndex = firstIndex + API.maxRecords - 1;
+            }
         }
         return lastIndex;
     }
@@ -732,7 +735,7 @@ public final class ParameterParser {
     public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
         long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
-            throw new ParameterException(JSONResponses.incorrect("holding",
+            throw new ParameterException(incorrect("holding",
                     "holding id should not be specified if holdingType is " + blockchainConfig.getCoinSymbol()));
         }
         return holdingId;
@@ -750,7 +753,7 @@ public final class ParameterParser {
         String query = Convert.nullToEmpty(req.getParameter("query")).trim();
         String tags = Convert.nullToEmpty(req.getParameter("tag")).trim();
         if (query.isEmpty() && tags.isEmpty()) {
-            throw new ParameterException(JSONResponses.missing("query", "tag"));
+            throw new ParameterException(missing("query", "tag"));
         }
         if (!tags.isEmpty()) {
             StringJoiner stringJoiner = new StringJoiner(" AND TAGS:", "TAGS:", "");
@@ -770,7 +773,7 @@ public final class ParameterParser {
             throw new ParameterException(either("transactionBytes", "transactionJSON"));
         }
         if (prunableAttachmentJSON != null && transactionBytes == null) {
-            throw new ParameterException(JSONResponses.missing("transactionBytes"));
+            throw new ParameterException(missing("transactionBytes"));
         }
         if (transactionJSON != null) {
             try {
@@ -1009,10 +1012,10 @@ public final class ParameterParser {
         String secretPhrase = Convert.emptyToNull(ParameterParser.getSecretPhrase(req, false));
 
         if (isMandatory && secretPhrase == null && passphrase == null) {
-            throw new ParameterException(JSONResponses.missing("secretPhrase", "passphrase"));
+            throw new ParameterException(missing("secretPhrase", "passphrase"));
         }
         if (secretPhrase != null && passphrase != null) {
-            throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
+            throw new ParameterException(either("secretPhrase", "passphrase"));
         }
         long accountId = 0;
         if (passphrase != null) {
@@ -1036,7 +1039,7 @@ public final class ParameterParser {
 
         if(phasingFinishHeight != -1 && phasingTimeLockDuration != -1){
             throw new ParameterException(
-                    JSONResponses.incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
+                    incorrect("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'"));
         }
 
         int phasingFinishTime = -1;

@@ -10,7 +10,12 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
-import com.apollocurrency.aplwallet.apl.exchange.model.*;
+import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -236,17 +241,17 @@ public class DexSmartContractService {
         BigInteger orderIdUnsign = new BigInteger(Long.toUnsignedString(orderId));
         ContractGasProvider contractGasProvider = new StaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, credentials, contractGasProvider);
-        TransactionReceipt transactionReceipt = null;
         try {
             if(token==null) {
-                transactionReceipt = dexContract.deposit(orderIdUnsign, weiValue).sendAsync().get();
+                return dexContract.deposit(orderIdUnsign, weiValue);
             } else {
-                transactionReceipt = dexContract.deposit(orderIdUnsign, weiValue, token).sendAsync().get();
+                return dexContract.deposit(orderIdUnsign, weiValue, token);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
-        return transactionReceipt != null ? transactionReceipt.getTransactionHash() : null;
+
+        return null;
     }
 
 

@@ -299,4 +299,8 @@ public class ShardService {
         return performSharding;
     }
 
+    public Shard getLastShard() {
+        return shardDao.getLastShard();
+    }
+
 }

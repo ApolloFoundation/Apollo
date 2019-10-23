@@ -330,10 +330,10 @@ public class DexController {
 
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
-        int offset = firstIndex > 0 ? firstIndex : 0;
+
         int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
 
-        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, orderStatus, minAskPrice, maxBidPrice, offset, limit);
+        log.debug("args dump, type: {}, currentTime: {}, pairCur: {}, accountId: {}, offerStatus: {}, minAskPrice: {}, maxBidPrice: {}, offset: {}, limit: {}", type, currentTime, pairCur, accountId, orderStatus, minAskPrice, maxBidPrice, firstIndex, limit);
 
         DexOrderDBRequest dexOrderDBRequest = DexOrderDBRequest.builder()
                 .type(type != null ? type.ordinal() : null)
@@ -344,7 +344,7 @@ public class DexController {
                 .status(orderStatus)
                 .minAskPrice(minAskPrice)
                 .maxBidPrice(maxBidPrice)
-                .offerCur(offset)
+                .offset(firstIndex)
                 .limit(limit)
                 .hasFrozenMoney(hasFrozenMoney)
                 .build();

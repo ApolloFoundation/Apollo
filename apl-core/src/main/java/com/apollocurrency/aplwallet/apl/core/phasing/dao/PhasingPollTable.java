@@ -106,15 +106,16 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<Transaction> getFinishingTransactionsByTime(int time) {
+    public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
         Connection con = null;
         List<Transaction> transactions = new ArrayList<>();
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time <= ? " +
+                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
-            pstmt.setInt(1, time);
+            pstmt.setInt(1, startTime);
+            pstmt.setInt(2, finishTime);
             blockchain.getTransactions(con, pstmt).forEach(transactions::add);
 
             return transactions;
