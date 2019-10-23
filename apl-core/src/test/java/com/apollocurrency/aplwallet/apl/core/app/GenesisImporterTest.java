@@ -43,7 +43,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
@@ -56,6 +55,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,11 +120,15 @@ class GenesisImporterTest {
         accountTable = new AccountTable();
         publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
+        //TODO: propertiesHolder is never used in Account.init()
         Account.init(extension.getDatabaseManager(), propertiesHolder, null,
                 null, blockchain, null, publicKeyTable, accountTable, null, null);
+        //TODO: propertiesHolder is empty, default values will be used
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
         testData = new BalancesPublicKeysTestData();
+
+        propertiesHolder.init(getGenesisAccountTotalProperty());
     }
 
     @Test
@@ -137,7 +141,8 @@ class GenesisImporterTest {
                 extension.getDatabaseManager(),
                 aplAppStatus,
                 genesisImporterProducer,
-                weld.select(ApplicationJsonFactory.class).get()
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
@@ -166,7 +171,8 @@ class GenesisImporterTest {
                 extension.getDatabaseManager(),
                 aplAppStatus,
                 genesisImporterProducer,
-                weld.select(ApplicationJsonFactory.class).get()
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
         );
         assertThrows(RuntimeException.class, () -> {
             genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
@@ -193,7 +199,8 @@ class GenesisImporterTest {
                 extension.getDatabaseManager(),
                 aplAppStatus,
                 genesisImporterProducer,
-                weld.select(ApplicationJsonFactory.class).get()
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
@@ -208,18 +215,20 @@ class GenesisImporterTest {
     void savePublicKeysOnly() throws Exception {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
-        DatabaseManager databaseManager = extension.getDatabaseManager();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                mockedPropertiesHolder
+        );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         genesisImporter.importGenesisJson(false);
@@ -251,11 +260,11 @@ class GenesisImporterTest {
                 extension.getDatabaseManager(),
                 aplAppStatus,
                 genesisImporterProducer,
-                weld.select(ApplicationJsonFactory.class).get()
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
         );
 
         assertThrows(RuntimeException.class, () -> genesisImporter.newGenesisBlock());
-
     }
 
     @Test
@@ -263,16 +272,20 @@ class GenesisImporterTest {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                mockedPropertiesHolder
+        );
         dataSource.begin();
         genesisImporter.importGenesisJson(true);
         int count = publicKeyTable.getCount();
@@ -288,16 +301,15 @@ class GenesisImporterTest {
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         doReturn(30000000L).when(config).getMaxBalanceATM(); // incorrect value here
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
+        );
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
 
@@ -305,16 +317,15 @@ class GenesisImporterTest {
     void missingBalanceValues() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
+        );
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
 
@@ -337,16 +348,20 @@ class GenesisImporterTest {
     void loadGenesisAccounts() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                mockedPropertiesHolder
+        );
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
         assertEquals(9, result.size()); // genesis is skipped
@@ -356,16 +371,15 @@ class GenesisImporterTest {
     void loadGenesisAccountsIncorrectKey() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(weld.select(ApplicationJsonFactory.class).get())
-                .publicKeyNumberTotal(10)
-                .balanceNumberTotal(10)
-                .build();
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                weld.select(ApplicationJsonFactory.class).get(),
+                propertiesHolder
+        );
         assertThrows(RuntimeException.class, () -> genesisImporter.loadGenesisAccounts());
     }
 
@@ -382,18 +396,15 @@ class GenesisImporterTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
-        final int publicKeyNumberTotal = 10;
-        final int balanceNumberTotal = 10;
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(databaseManager)
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(jsonFactory)
-                .publicKeyNumberTotal(publicKeyNumberTotal)
-                .balanceNumberTotal(balanceNumberTotal)
-                .build();
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                databaseManager,
+                aplAppStatus,
+                genesisImporterProducer,
+                jsonFactory,
+                propertiesHolder
+        );
 
         //WHEN
         final Executable executable =
@@ -417,18 +428,20 @@ class GenesisImporterTest {
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
         when(jsonParser.nextToken()).thenReturn(JsonToken.END_OBJECT);
-        final int publicKeyNumberTotal = 0;
-        final int balanceNumberTotal = 10;
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(databaseManager)
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(jsonFactory)
-                .publicKeyNumberTotal(publicKeyNumberTotal)
-                .balanceNumberTotal(balanceNumberTotal)
-                .build();
+        final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(0);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                databaseManager,
+                aplAppStatus,
+                genesisImporterProducer,
+                jsonFactory,
+                mockedPropertiesHolder
+        );
 
         //WHEN
         final Executable executable =
@@ -447,24 +460,33 @@ class GenesisImporterTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.nextToken()).thenReturn(JsonToken.END_OBJECT);
-        final int publicKeyNumberTotal = 10;
-        final int balanceNumberTotal = 10;
-        genesisImporter = GenesisImporter.builder()
-                .blockchainConfig(blockchainConfig)
-                .blockchainConfigUpdater(blockchainConfigUpdater)
-                .databaseManager(extension.getDatabaseManager())
-                .aplAppStatus(aplAppStatus)
-                .genesisImporterProducer(genesisImporterProducer)
-                .jsonFactory(jsonFactory)
-                .publicKeyNumberTotal(publicKeyNumberTotal)
-                .balanceNumberTotal(balanceNumberTotal)
-                .build();
+        final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+                .thenReturn(10);
+        genesisImporter = new GenesisImporter(
+                blockchainConfig,
+                blockchainConfigUpdater,
+                extension.getDatabaseManager(),
+                aplAppStatus,
+                genesisImporterProducer,
+                jsonFactory,
+                mockedPropertiesHolder
+        );
 
         //WHEN
         final Executable executable = () -> genesisImporter.loadGenesisAccounts();
 
         //THEN
         assertThrows(IllegalStateException.class, executable);
+    }
+
+    private Properties getGenesisAccountTotalProperty() {
+        Properties properties = new Properties();
+        properties.put(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, "230730");
+        properties.put(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME, "84832");
+        return properties;
     }
 
     private Path createPath(String fileName) {

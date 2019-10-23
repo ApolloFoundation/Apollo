@@ -15,10 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacter
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,7 +46,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Singleton
 public class GenesisImporter {
-
+    static final String PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME = "apl.genesisAccounts.publicKeyNumberTotal";
+    static final String BALANCE_NUMBER_TOTAL_PROPERTY_NAME = "apl.genesisAccounts.balanceNumberTotal";
     private static final String LOADING_STRING_PUB_KEYS = "Loading public keys %d / %d...";
     private static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
     private static final String BALANCES_JSON_FIELD_NAME = "balances";
@@ -82,71 +83,27 @@ public class GenesisImporter {
             DatabaseManager databaseManager,
             AplAppStatus aplAppStatus,
             GenesisImporterProducer genesisImporterProducer,
-            ApplicationJsonFactory jsonFactory
+            ApplicationJsonFactory jsonFactory,
+            PropertiesHolder propertiesHolder
     ) {
-        this.blockchainConfig = getBlockchainConfig(blockchainConfig);
-        this.blockchainConfigUpdater = getBlockchainConfigUpdater(blockchainConfigUpdater);
-        this.databaseManager = getDatabaseManager(databaseManager);
-        this.aplAppStatus = getAplAppStatus(aplAppStatus);
+        this.blockchainConfig =
+                Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
+        this.blockchainConfigUpdater =
+                Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
+        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.genesisParametersLocation = getGenesisParametersLocation(genesisImporterProducer);
-        this.jsonFactory = getJsonFactory(jsonFactory);
-        this.publicKeyNumberTotal = 230730;
-        this.balanceNumberTotal = 84832;
+        this.jsonFactory = Objects.requireNonNull(jsonFactory, "jsonFactory is NULL");
+        this.publicKeyNumberTotal =
+                propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
+        this.balanceNumberTotal =
+                propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
     }
 
-    /**
-     * Secondary constructor to use in unit tests so that to inject publicKeyNumberTotal and balanceNumberTotal
-     * into corresponding class member variables.
-     * Cannot reuse the main GenesisImporter constrictor because of the initialisation of
-     * above mentioned final variables within the main constrictor.
-     */
-    @Builder
-    GenesisImporter(
-            final BlockchainConfig blockchainConfig,
-            final BlockchainConfigUpdater blockchainConfigUpdater,
-            final DatabaseManager databaseManager,
-            final AplAppStatus aplAppStatus,
-            final GenesisImporterProducer genesisImporterProducer,
-            final ApplicationJsonFactory jsonFactory,
-            final int publicKeyNumberTotal,
-            final int balanceNumberTotal
-    ) {
-        this.blockchainConfig = getBlockchainConfig(blockchainConfig);
-        this.blockchainConfigUpdater = getBlockchainConfigUpdater(blockchainConfigUpdater);
-        this.databaseManager = getDatabaseManager(databaseManager);
-        this.aplAppStatus = getAplAppStatus(aplAppStatus);
-        this.genesisParametersLocation = getGenesisParametersLocation(genesisImporterProducer);
-        this.jsonFactory = getJsonFactory(jsonFactory);
-        this.publicKeyNumberTotal = publicKeyNumberTotal;
-        this.balanceNumberTotal = balanceNumberTotal;
-    }
-
-    private ApplicationJsonFactory getJsonFactory(final ApplicationJsonFactory jsonFactory) {
-        return Objects.requireNonNull(jsonFactory, "jsonFactory is NULL");
-    }
-
-    private DatabaseManager getDatabaseManager(final DatabaseManager databaseManager) {
-        return Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-    }
-
-    private String getGenesisParametersLocation(final GenesisImporterProducer genesisImporterProducer) {
+    private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
         return Optional.ofNullable(genesisImporterProducer)
                 .map(GenesisImporterProducer::genesisParametersLocation)
                 .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
-    }
-
-    private AplAppStatus getAplAppStatus(final AplAppStatus aplAppStatus) {
-        return Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-    }
-
-    private BlockchainConfigUpdater getBlockchainConfigUpdater(
-            final BlockchainConfigUpdater blockchainConfigUpdater
-    ) {
-        return Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
-    }
-
-    private BlockchainConfig getBlockchainConfig(final BlockchainConfig blockchainConfig) {
-        return Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
     }
 
     @PostConstruct
