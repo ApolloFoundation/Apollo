@@ -705,16 +705,16 @@ public class TestBaseOld extends TestBase {
 
     public static void setUpTestData(){
         CreateTransactionResponse transactionResponse;
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 900000000) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
+            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
         transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 900000000) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10000000);
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 9000000000000L) {
+            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
