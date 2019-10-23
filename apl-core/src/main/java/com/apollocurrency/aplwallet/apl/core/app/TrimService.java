@@ -216,7 +216,7 @@ public class TrimService {
     }
 
     public void waitTrimming(){
-        log.debug("Waiting until the latest trim ends");
+        log.debug("Waiting for the end of the latest trim");
         while (isTrimming()) {
             ThreadUtils.sleep(100);
         }

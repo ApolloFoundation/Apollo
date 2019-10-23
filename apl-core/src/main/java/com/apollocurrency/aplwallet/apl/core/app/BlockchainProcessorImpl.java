@@ -117,7 +117,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     private static final String BACKGROUND_SERVICE_NAME = "BlockchainService";
-    private static final String SCANNING_OF_BLOCKS_BEFORE_LAST_SHARD_BLOCK_IS_NOT_SUPPORTED = "Scanning of blocks before last shard block is not supported (height={} < shardInitialHeight={})";
 
     private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
@@ -1044,9 +1043,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (commonBlock.getHeight() < shardInitialHeight) {
-                log.warn(SCANNING_OF_BLOCKS_BEFORE_LAST_SHARD_BLOCK_IS_NOT_SUPPORTED, commonBlock.getHeight(), shardInitialHeight);
+                log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})", commonBlock.getHeight(), shardInitialHeight);
             }else {
-                popOffWithRescan(commonBlock.getHeight());//TODO: AB Is it really need to add 1, parameter was getHeight()+1
+                popOffWithRescan(commonBlock.getHeight() + 1);
             }
             return Collections.emptyList();
         }
@@ -1320,12 +1319,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (height < shardInitialHeight) {
-                log.warn(SCANNING_OF_BLOCKS_BEFORE_LAST_SHARD_BLOCK_IS_NOT_SUPPORTED, height, shardInitialHeight);
+                log.warn("Scanning of blocks that before the last shard block is not supported (height={} < shardInitialHeight={})", height, shardInitialHeight);
                 return;
             }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
-                log.info("Rollback to height less than " + getMinRollbackHeight() + " not supported, will do a full scan");
+                log.info("Rollback to height less than {} not supported, will do a full scan", getMinRollbackHeight());
                 height = shardInitialHeight;
             }
             if (height < 0) {
