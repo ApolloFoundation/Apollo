@@ -94,6 +94,7 @@ public class GenesisImporter {
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.genesisParametersLocation = getGenesisParametersLocation(genesisImporterProducer);
         this.jsonFactory = Objects.requireNonNull(jsonFactory, "jsonFactory is NULL");
+        Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.publicKeyNumberTotal =
                 propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
