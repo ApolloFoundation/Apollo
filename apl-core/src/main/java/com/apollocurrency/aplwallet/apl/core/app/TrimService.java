@@ -212,13 +212,17 @@ public class TrimService {
     }
 
     public boolean isTrimming() {
-        return lock.isLocked();
+        return lock.isLocked() && lock.getHoldCount()>0;
     }
 
     public void waitTrimming(){
         log.debug("Waiting for the end of the latest trim");
-        while (isTrimming()) {
+        while ( isTrimming() ) {
             ThreadUtils.sleep(100);
+            if(log.isTraceEnabled()) {
+                log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+                        lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
+            }
         }
     }
 }
