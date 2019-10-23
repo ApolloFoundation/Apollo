@@ -1397,7 +1397,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     shardImporter.importLastShard(height);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
-                    blockchain.setLastBlock(blockchain.getBlockAtHeight(height));//TODO: AB Why did we use here -1, parameter was (height-1)
+                    blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
                 lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
