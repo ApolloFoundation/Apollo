@@ -1028,11 +1028,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     dataSource.begin();
                     return popOffToInTransaction(commonBlock,dataSource);
                 } finally {
-                    if(dataSource.isInTransaction()) {
-                        dataSource.commit();
-                    }else {
-                        log.error("Unexpected error: Illegal state = Datasource is Not in transaction.");
-                    }
+                    dataSource.commit();
                 }
             } else {
                 return popOffToInTransaction(commonBlock,dataSource);
@@ -1134,7 +1130,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(scanHeight, false);
                 }catch (BlockchainScanException e){
                     log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + e.toString(), e);
-                    System.exit(-1);
                 }
             }
         } finally {
@@ -1295,22 +1290,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void scan(int height, boolean validate) {
-        try {
-            trimService.updateTrimConfig(false, true);
-            scan(height, validate, false);
-        }finally {
-            trimService.updateTrimConfig(true, true);
-        }
+        trimService.updateTrimConfig(true, true);
+        trimService.waitTrimming();
+
+        scan(height, validate, false);
     }
 
     @Override
     public void fullScanWithShutdown() {
-        try {
-            trimService.updateTrimConfig(false, true);
-            scan(0, true, true);
-        }finally {
-            trimService.updateTrimConfig(true, true);
-        }
+        trimService.updateTrimConfig(true, true);
+        trimService.waitTrimming();
+        scan(0, true, true);
     }
 
     private void scan(int height, boolean validate, boolean shutdown) {
@@ -1397,7 +1387,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     shardImporter.importLastShard(height);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
-                    blockchain.setLastBlock(blockchain.getBlockAtHeight(height));//TODO: AB Why did we use here -1, parameter was (height-1)
+                    blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
                 }
                 lookupBlockhainConfigUpdater().rollback(blockchain.getLastBlock().getHeight());
                 if (shutdown) {
@@ -1632,10 +1622,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 Block lastBlock = lookupBlockhain().getLastBlock();
-                if (lastBlock == null) {
-                    log.error("Unexpected error - LAST Block is null");
-                    return;
-                }
                 BigInteger curCumulativeDifficulty = lastBlock.getCumulativeDifficulty();
                 String peerCumulativeDifficulty = (String) response.get("cumulativeDifficulty");
                 if (peerCumulativeDifficulty == null) {
