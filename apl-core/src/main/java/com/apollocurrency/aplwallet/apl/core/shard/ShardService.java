@@ -222,22 +222,22 @@ public class ShardService {
     public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
         MigrateState resultState = MigrateState.FAILED;
         if (!shouldPerformSharding()) {
-            log.debug("Will skip sharding due to lack of memory or cmd/config properties");
+            log.debug("Will skip sharding due to lack of memory or cmd/config properties, shardId='{}'", shardId);
         } else {
             long start = System.currentTimeMillis();
-            log.info("Start sharding....");
+            log.info("Start sharding '{}'....", shardId);
 
             try {
                 shardMigrationExecutor.cleanCommands();
                 shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
             } catch (Exception t) {
-                log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+                log.error("Error occurred while trying create shard " + shardId + " at height " + minRollbackHeight, t);
             }
             if (resultState != MigrateState.FAILED) {
-                log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
+                log.info("Finished sharding successfully in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
             } else {
-                log.info("FAILED sharding in {} secs", (System.currentTimeMillis() - start) / 1000);
+                log.info("FAILED sharding in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
             }
         }
         return resultState;
