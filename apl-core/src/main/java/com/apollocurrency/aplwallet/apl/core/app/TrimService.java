@@ -71,7 +71,7 @@ public class TrimService {
 
 
     public void init(int height) {
-        log.debug("init() at height = {}", height);
+        log.debug("TRIM: init() at height = {}", height);
         lock.lock();
         try {
             TrimEntry trimEntry = trimDao.get();
@@ -98,6 +98,7 @@ public class TrimService {
     }
 
     public void trimDerivedTables(int height, boolean async) {
+        log.debug("TRIM: trimDerivedTables on height={}, async={}", height, async);
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         lock.lock();
@@ -122,7 +123,7 @@ public class TrimService {
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight, boolean async) {
-        log.debug("doTrimDerived on height {} as async operation (? = {})", blockchainHeight, async);
+        log.debug("TRIM: doTrimDerivedTablesOnBlockchainHeight on height {} as async operation (? = {})", blockchainHeight, async);
         lock.lock();
         try {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
@@ -155,6 +156,7 @@ public class TrimService {
 
     @Transactional
     public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height, oneLock);
         long start = System.currentTimeMillis();
         lock.lock();
         try {
@@ -174,7 +176,9 @@ public class TrimService {
             try {
                 for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
                     if (!oneLock) {
+                        log.trace("Try to acquire lock...");
                         globalSync.readLock();
+                        log.trace("Got it.");
                     }
                     try {
                         long startTime = System.currentTimeMillis();
@@ -212,7 +216,7 @@ public class TrimService {
     }
 
     public boolean isTrimming() {
-        return lock.isLocked() && lock.getHoldCount()>0;
+        return lock.isLocked();
     }
 
     public void waitTrimming(){

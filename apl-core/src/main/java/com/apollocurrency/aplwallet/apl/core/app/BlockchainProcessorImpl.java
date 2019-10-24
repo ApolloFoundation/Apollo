@@ -1289,16 +1289,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public void scan(int height, boolean validate) {
-        trimService.updateTrimConfig(true, true);
-        trimService.waitTrimming();
-
         scan(height, validate, false);
     }
 
     @Override
     public void fullScanWithShutdown() {
-        trimService.updateTrimConfig(true, true);
-        trimService.waitTrimming();
         scan(0, true, true);
     }
 

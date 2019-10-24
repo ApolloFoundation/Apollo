@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -36,7 +35,7 @@ import javax.enterprise.inject.Vetoed;
 public final class PopOff extends AbstractAPIRequestHandler {
 
     public PopOff() {
-        super(new APITag[] {APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
+        super(new APITag[]{APITag.DEBUG}, "numBlocks", "height", "keepTransactions");
     }
 
     @Override
@@ -45,16 +44,22 @@ public final class PopOff extends AbstractAPIRequestHandler {
         int numBlocks = 0;
         try {
             numBlocks = Integer.parseInt(req.getParameter("numBlocks"));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         int height = 0;
         try {
             height = Integer.parseInt(req.getParameter("height"));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
-        BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
+        lookupBlockchainProcessor();
         try {
             blockchainProcessor.suspendBlockchainDownloading();
+            //TODO: It's a temporary approach to prevent hanging on calling the waitTrimming method.
+            // It needs to look for the thread that keeps the readLock so long time.
+            _waitForSuitableConditionBeforePopOff();
+
             if (numBlocks > 0) {
                 blocks = blockchainProcessor.popOffTo(lookupBlockchain().getHeight() - numBlocks);
             } else if (height > 0) {
@@ -74,6 +79,13 @@ public final class PopOff extends AbstractAPIRequestHandler {
             blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getOrLoadTransactions()));
         }
         return response;
+    }
+
+    private void _waitForSuitableConditionBeforePopOff() {
+        blockchainProcessor.waitUntilBlockchainDownloadingStops(); //No events 'onBlockPushed' are generated here
+        lookupTrimService();
+        trimService.updateTrimConfig(true, true);//clear trim heights queue
+        trimService.waitTrimming();//to prevent eventual deadlock
     }
 
     @Override
