@@ -4,12 +4,12 @@ import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
+import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,17 +20,20 @@ import java.io.IOException;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+import io.qameta.allure.Description;
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")
     @Test
+    @Description("Delete Secret Key")
+    @Epic("Secret File")
     public void  deleteKey() throws JsonProcessingException {
 
         Account2FAResponse accountDTO = generateNewAccount();
         Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,true);
         Account2FAResponse deletedAccount = deleteSecretFile(wallet);
         assertEquals(Status2FA.OK,deletedAccount.getStatus());
+
     }
 
 

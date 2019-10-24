@@ -34,7 +34,6 @@ public class TestAliasAPI extends TestBaseOld {
         verifyTransactionInBlock(alias);
         AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
         assertTrue(getAliasesCount.getNumberOfAliases() >= 1);
-        System.out.println(getAliasesCount.getNumberOfAliases());
         AccountAliasesResponse accountAliasesResponse = getAliases(wallet);
         assertTrue(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(alias)).count()==1);
 
@@ -51,7 +50,6 @@ public class TestAliasAPI extends TestBaseOld {
         verifyTransactionInBlock(alias);
         AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
         assertTrue(getAliasesCount.getNumberOfAliases() >= 1);
-        System.out.println(getAliasesCount.getNumberOfAliases());
     }
 
 
@@ -155,8 +153,6 @@ public class TestAliasAPI extends TestBaseOld {
     public void buyAlias(Wallet wallet) throws IOException {
         String aliasname = "AlS"+String.valueOf(new Date().getTime()).substring(7);
         Date date = new Date();
-        System.out.println(date.getTime());
-        System.out.println(String.valueOf(date.getTime()).substring(7));
         String aliasset;
 
 
@@ -164,7 +160,6 @@ public class TestAliasAPI extends TestBaseOld {
         verifyCreatingTransaction(setAlias);
         aliasset = setAlias.getTransaction();
         verifyTransactionInBlock(aliasset);
-        System.out.println(aliasname);
 
 
         CreateTransactionResponse buyAlias = buyAlias(wallet,aliasname);

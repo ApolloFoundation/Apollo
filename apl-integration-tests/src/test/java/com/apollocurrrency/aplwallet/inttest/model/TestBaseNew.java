@@ -454,7 +454,11 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public ForgingResponse getForging() {
-        throw new NotImplementedException("Not implemented");
+        String path = "/rest/nodeinfo/forgers";
+        return given().log().uri()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(ForgingResponse.class);
     }
 
     @Override

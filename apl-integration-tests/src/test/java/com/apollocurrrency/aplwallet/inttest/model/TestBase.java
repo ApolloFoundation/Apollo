@@ -1,19 +1,35 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.*;
 
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrrency.aplwallet.inttest.model.TestBaseOld.setUpTestData;
-import static com.apollocurrrency.aplwallet.inttest.model.TestBaseOld.startForgingSetUp;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public abstract class TestBase implements ITest {
@@ -65,5 +81,146 @@ public abstract class TestBase implements ITest {
                 .formParam("passPhrase", pass)
                 .when()
                 .post(path);
+    }
+
+    public static void setUpTestData(){
+        CreateTransactionResponse transactionResponse;
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
+            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
+            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+        }
+
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 9000000000000L) {
+            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
+            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+        }
+
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
+        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
+    }
+
+
+    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
+        addParameters(RequestType.requestType,RequestType.sendMoney);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "500000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    private static boolean verifyTransactionInBlockSetUp(String transaction)
+    {
+        boolean inBlock = false;
+        try {
+            inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
+            assertTrue(inBlock);
+        }
+        catch (Exception e)
+        {
+            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+        }
+        return inBlock;
+    }
+
+    private static TransactionDTO getTransactionSetUP(String transaction) {
+        addParameters(RequestType.requestType, RequestType.getTransaction);
+        addParameters(Parameters.transaction, transaction);
+        return getInstanse(TransactionDTO.class);
+    }
+
+    private static BalanceDTO getBalanceSetUP(Wallet wallet) {
+        addParameters(RequestType.requestType, getBalance);
+        addParameters(Parameters.wallet, wallet);
+        return getInstanse(BalanceDTO.class);
+    }
+
+    private static void startForgingSetUp() {
+        String path = "/rest/networking/peer/all";
+        List<String> peersIp = given()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(GetPeersIpResponse.class).getPeers();
+        if (peersIp != null && peersIp.size()> 0){
+         boolean isForgingEnableOnGen = false;
+        for (String ip: peersIp) {
+
+            HashMap<String, String> param = new HashMap();
+            param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
+            param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+            path = "/apl";
+            Response response =  given().log().all()
+                    .spec(restHelper.getSpec())
+                    .contentType(ContentType.URLENC)
+                    .formParams(param)
+                    .when()
+                    .post(path);
+            ForgingResponse forgingResponse = null;
+            try {
+                forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            if (forgingResponse.getGenerators().size() > 0){
+                isForgingEnableOnGen = true;
+                break;
+            }
+            //need when  rest/nodeinfo/forgers will be worked
+         /*
+            RequestSpecification spec = new RequestSpecBuilder()
+                    .setContentType(ContentType.JSON)
+                    .setBaseUri(String.format("http://%s:%s",ip,7876))
+                    .build();
+
+            path = "/rest/nodeinfo/forgers";
+            ForgingResponse forgingResponse = given()
+                    .spec(spec)
+                    .when()
+                    .get(path).as(ForgingResponse.class);
+
+            System.out.println("+++++++++++++++++++++"+ip+"++++++++++++++++++++++++");
+            System.out.println(forgingResponse.getGenerators().size());
+            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
+          */
+          }
+          if (!isForgingEnableOnGen){
+              addParameters(RequestType.requestType, startForging);
+              addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+              addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+              getInstanse(ForgingDetails.class);
+          }
+
+        } else {
+            addParameters(RequestType.requestType, getForging);
+            addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
+            ForgingResponse forgingResponse = getInstanse(ForgingResponse.class);
+
+            if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
+                System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
+                addParameters(RequestType.requestType, startForging);
+                addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+                addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+                getInstanse(ForgingDetails.class);
+            }
+        }
+
+    }
+
+    private static void checkForgingAccountsBalance(){
+        for (int i = 1; i < 200 ; i++) {
+            addParameters(RequestType.requestType, getAccountId);
+            addParameters(Parameters.secretPhrase,i);
+            AccountDTO accountID  = getInstanse(AccountDTO.class);
+            addParameters(RequestType.requestType, getAccount);
+            addParameters(Parameters.account,accountID.getAccount());
+            GetAccountResponse account = getInstanse(GetAccountResponse.class);
+            if (Long.valueOf(account.getBalanceATM()) < 10000000000000L){
+                sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), account.getAccountRS(), 5000000);
+            }
+        }
     }
 }
