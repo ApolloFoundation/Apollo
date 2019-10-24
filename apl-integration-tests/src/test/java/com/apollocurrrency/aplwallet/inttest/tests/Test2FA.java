@@ -21,12 +21,12 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import io.qameta.allure.Description;
+@Epic("Secret File")
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")
     @Test
     @Description("Delete Secret Key")
-    @Epic("Secret File")
     public void  deleteKey() throws JsonProcessingException {
 
         Account2FAResponse accountDTO = generateNewAccount();

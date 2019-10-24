@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestMessages extends TestBaseOld {
 
-
     @DisplayName("Send Message/Read Message")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)

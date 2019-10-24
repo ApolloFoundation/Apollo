@@ -4,8 +4,11 @@ import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.qameta.allure.Step;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang3.NotImplementedException;
 
 
@@ -253,10 +256,11 @@ public class TestBaseNew extends TestBase {
     @Override
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
-        return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(GetPeersIpResponse.class).getPeers();
+            return given().log().uri()
+                    .spec(restHelper.getSpec())
+                    .when()
+                    .get(path).as(GetPeersIpResponse.class).getPeers();
+
     }
 
     @Override
@@ -459,6 +463,17 @@ public class TestBaseNew extends TestBase {
                 .spec(restHelper.getSpec())
                 .when()
                 .get(path).as(ForgingResponse.class);
+    }
+
+    @Override
+    @Step
+    public List<ShardDTO> getShards(String ip) {
+        String path = "/rest/shards";
+        return given().log().uri()
+                .contentType(ContentType.JSON)
+                .baseUri(String.format("http://%s:%s",ip,7876))
+                .when()
+                .get(path).as(List.class);
     }
 
     @Override

@@ -1,11 +1,13 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
 
+import com.apollocurrrency.aplwallet.inttest.model.NetConfig;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -21,7 +23,8 @@ public class TestConfiguration {
     private Wallet standartWallet;
     private Wallet vaultWallet;
     private String adminPass;
-    private HashMap<String,List<String>> testNetIp;
+    private List<String> hosts;
+    private String env;
 
     private TestConfiguration(){
         try {
@@ -34,17 +37,16 @@ public class TestConfiguration {
             adminPass = (String) jsonObject.get("adminPassword");
             standartWallet = mapper.readValue( jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet= mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
-            testNetIp = mapper.readValue(jsonObject.get("net").toString(), HashMap.class);
-
+            HashMap<String, NetConfig> testNetIp = mapper.readValue(jsonObject.get("net").toString(), HashMap.class);
             Random rand = new Random();
-            String env = System.getProperty("test.env");
-            List<String> hosts = testNetIp.get(env);
+            env = System.getProperty("test.env");
             if (!env.equals(host)){
+                hosts = testNetIp.get(env).getPeers();
                 host = hosts.get(rand.nextInt(hosts.size()));
+            }else {
+                hosts = new ArrayList<>();
+                hosts.add(host);
             }
-
-            System.out.println(host);
-
 
         }
         catch (Exception e)
@@ -75,9 +77,7 @@ public class TestConfiguration {
     public Wallet getVaultWallet() {
         return vaultWallet;
     }
-    public HashMap<String, List<String>> getTestNetIp() {
-        return testNetIp;
+    public List<String> getHosts() {
+        return hosts;
     }
-
-
 }

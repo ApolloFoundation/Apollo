@@ -146,19 +146,27 @@ public abstract class TestBase implements ITest {
                 .when()
                 .get(path).as(GetPeersIpResponse.class).getPeers();
         if (peersIp != null && peersIp.size()> 0){
+
          boolean isForgingEnableOnGen = false;
+
         for (String ip: peersIp) {
+            RequestSpecification spec = new RequestSpecBuilder()
+                    .setContentType(ContentType.JSON)
+                    .setBaseUri(String.format("http://%s:%s",ip,7876))
+                    .build();
 
             HashMap<String, String> param = new HashMap();
             param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
             param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+
             path = "/apl";
             Response response =  given().log().all()
-                    .spec(restHelper.getSpec())
+                    .spec(spec)
                     .contentType(ContentType.URLENC)
                     .formParams(param)
                     .when()
                     .post(path);
+
             ForgingResponse forgingResponse = null;
             try {
                 forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
@@ -171,10 +179,7 @@ public abstract class TestBase implements ITest {
             }
             //need when  rest/nodeinfo/forgers will be worked
          /*
-            RequestSpecification spec = new RequestSpecBuilder()
-                    .setContentType(ContentType.JSON)
-                    .setBaseUri(String.format("http://%s:%s",ip,7876))
-                    .build();
+
 
             path = "/rest/nodeinfo/forgers";
             ForgingResponse forgingResponse = given()

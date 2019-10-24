@@ -229,10 +229,9 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Delete Account Property")
-    @Disabled
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    public void  deleteAccountProperty(Wallet wallet) throws IOException {
+    public void  deleteAccountProperty(Wallet wallet) {
         String property = "Property "+new Date().getTime();
         CreateTransactionResponse setAccountInfo = setAccountProperty(wallet,property);
         verifyTransactionInBlock(setAccountInfo.getTransaction());
@@ -242,7 +241,7 @@ public class TestAccounts extends TestBaseOld {
 
     @DisplayName("Generate Account")
     @Test
-    public void  generateAccount() throws IOException { ;
+    public void  generateAccount(){ ;
         Account2FAResponse accountDTO = generateNewAccount();
         assertNotNull(accountDTO.getAccountRS());
         assertNotNull(accountDTO.getPassphrase());

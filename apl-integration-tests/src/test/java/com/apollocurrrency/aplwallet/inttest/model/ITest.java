@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -90,6 +91,7 @@ public interface ITest {
     ForgingDetails stopForging(Wallet wallet);
     CreateTransactionResponse sendMessage(Wallet wallet,String recipient, String testMessage);
     AccountMessageDTO readMessage(Wallet wallet,String transaction);
+    List<ShardDTO> getShards(String ip);
     void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum,Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding);
 
 }

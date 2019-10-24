@@ -25,7 +25,6 @@ public class TestAliasAPI extends TestBaseOld {
     @DisplayName("setAlias + getAliasesCount + Get Aliases")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    @Disabled
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);

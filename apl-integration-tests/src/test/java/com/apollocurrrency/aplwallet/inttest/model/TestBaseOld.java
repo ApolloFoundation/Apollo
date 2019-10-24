@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
@@ -200,6 +201,7 @@ public class TestBaseOld extends TestBase {
     }
 
     //Skrypchenko Serhii
+    @Step
     public AccountCountAliasesResponse getAliasCount(Wallet wallet) {
         addParameters(RequestType.requestType,RequestType.getAliasCount);
         addParameters(Parameters.wallet, wallet);
@@ -215,6 +217,7 @@ public class TestBaseOld extends TestBase {
 
 
     //Skrypchenko Serhii
+    @Step
     public  CreateTransactionResponse setAlias (Wallet wallet,String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
         addParameters(RequestType.requestType,RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
@@ -307,6 +310,10 @@ public class TestBaseOld extends TestBase {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
+    @Override
+    public  List<ShardDTO> getShards(String ip) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
 
     public AccountDTO enable2FA(Wallet wallet) {
        // addParameters(RequestType.requestType,RequestType.enable2FA);
