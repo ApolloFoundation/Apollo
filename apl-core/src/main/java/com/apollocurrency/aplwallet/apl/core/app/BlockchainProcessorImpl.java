@@ -506,7 +506,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
-                    invalidateAllPublicKeyCache();
+//                    invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
@@ -1086,7 +1086,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
-            invalidateAllPublicKeyCache();
+//            invalidateAllPublicKeyCache(); // TODO: YL we need another more sophisticated approach
             dataSource.commit(false); // should happen definitely, otherwise
         } catch (RuntimeException e) {
             log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
@@ -1379,7 +1379,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
                 dataSource.clearCache();
-                invalidateAllPublicKeyCache();
+//                invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
@@ -1455,7 +1455,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     dataSource.clearCache();
-                                    invalidateAllPublicKeyCache();
+//                                    invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }
