@@ -7,6 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.apollocurrency.aplwallet.api.trading.ConversionType;
+import com.apollocurrency.aplwallet.api.trading.RateLimit;
+import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -65,6 +69,10 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+import org.checkerframework.checker.units.qual.C;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -600,6 +608,103 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
         
+    }
+    
+     @GET
+    @Path("/histominute")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get histominute", description = "getting histominute")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getHistominute(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
+                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
+                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
+                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
+                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+
+            int initialTime = toTs - (60*2000);
+            int startGraph = initialTime;
+
+
+            TradingDataOutput tradingDataOutput = new TradingDataOutput();
+            
+            tradingDataOutput.setResponse("Success");
+            tradingDataOutput.setType(100);
+            tradingDataOutput.setAggregated(false);
+            
+            
+            List<SimpleTradingEntry> data = new ArrayList<>();
+            
+            int acc = 0;
+            
+            int width=200;
+            Random r = new Random();
+            
+            double prevClose=50;
+            
+            for (int i=0; i< 2000; i++) {
+                                                                    
+                SimpleTradingEntry randomEntry = new SimpleTradingEntry();
+                randomEntry.time = initialTime;
+                
+                boolean sign = (r.nextInt(2) == 1);
+                
+                double rWidth = r.nextInt(50) + r.nextDouble();
+                
+                if (sign) rWidth = -rWidth;
+                                
+                randomEntry.open =  prevClose;
+                randomEntry.close =  randomEntry.open + rWidth;
+                
+                int rHigh = 15+ r.nextInt(25);
+                int rLow = 15+r.nextInt(25);
+                
+                if (rWidth>0) {                    
+                    randomEntry.high = randomEntry.open + rHigh;
+                    randomEntry.low = randomEntry.close - rLow;
+                } else {
+                    randomEntry.high = randomEntry.close + rHigh;
+                    randomEntry.low = randomEntry.open - rLow;
+                }
+                
+                prevClose = randomEntry.close;
+                                
+                randomEntry.volumefrom = r.nextInt(10);
+                randomEntry.volumeto = r.nextInt(50);
+
+                initialTime += 60;
+                acc += 10;
+                data.add(randomEntry);
+                }
+            
+            // Collections.reverse(data);
+            tradingDataOutput.setData(data);
+            
+            tradingDataOutput.setTimeTo(toTs);
+            
+            tradingDataOutput.setTimeFrom(startGraph);
+            
+            
+            tradingDataOutput.setFirstValueInArray(true);
+           
+            ConversionType conversionType = new ConversionType();
+            conversionType.type = "force_direct";
+            conversionType.conversionSymbol = "";
+            
+            tradingDataOutput.setConversionType(conversionType);
+           
+            // Object rateLimit = new Object();
+            // tradingDataOutput.setRateLimit(rateLimit);
+            tradingDataOutput.setHasWarning(false);
+            
+            
+            return Response.ok( tradingDataOutput.toDTO() ) .build();
+
+
     }
 
 
