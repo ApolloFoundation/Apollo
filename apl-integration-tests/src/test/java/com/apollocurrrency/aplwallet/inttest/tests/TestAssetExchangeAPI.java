@@ -53,7 +53,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(assetID);
         AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
+       // System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
     }
 
     @DisplayName("getAsset")
@@ -72,7 +72,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         AccountAssetDTO getAsset = getAsset(assetID);
         assertTrue(getAsset.getName().equals(assetName),String.valueOf(getAsset.getAsset().equals(issueAsset.getTransaction())));
         assertTrue(getAsset.getAccountRS().equals(wallet.getUser()));
-        System.out.println("asset = " + getAsset.getAsset() + " ; name = " + getAsset.getName() + " ;  AccountRS = " + wallet.getUser());
+        //System.out.println("asset = " + getAsset.getAsset() + " ; name = " + getAsset.getName() + " ;  AccountRS = " + wallet.getUser());
     }
 
 
@@ -206,12 +206,10 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        System.out.println(assetID);
         CreateTransactionResponse placeBidOrder = placeBidOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeBidOrder);
         verifyTransactionInBlock(placeBidOrder.getTransaction());
         orderID = placeBidOrder.getTransaction();
-        System.out.println(orderID);
         AccountOpenAssetOrdersResponse getAllOpenBidOrders = getAllOpenBidOrders();
         assertTrue(getAllOpenBidOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getOrder().equals(orderID)).count() == 1);
         assertTrue(getAllOpenBidOrders.getOpenOrders().stream().filter(openOrders -> openOrders.getAsset().equals(assetID)).count() == 1);
@@ -251,7 +249,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(placeAskOrder);
         verifyTransactionInBlock(placeAskOrder.getTransaction());
         orderID = placeAskOrder.getTransaction();
-        System.out.println(orderID);
 
         AccountCurrentAssetAskOrderIdsResponse getAskOrderIds1 = getAskOrderIds(assetID);
         assertTrue(getAskOrderIds1.getAskOrderIds().stream().anyMatch(orderID::equals));
