@@ -51,7 +51,7 @@ public interface ITest {
     PeerDTO getPeer(String peer);
     PeerDTO addPeer(String ip);
     PeerInfo getMyInfo();
-    BlockDTO getBlock(String block);
+    BlockDTO getBlock(String block) throws JsonProcessingException;
     GetBlockIdResponse getBlockId(String height);
     BlockchainInfoDTO getBlockchainStatus();
     AccountBlocksResponse getBlocks();

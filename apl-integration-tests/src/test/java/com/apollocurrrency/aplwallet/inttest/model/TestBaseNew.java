@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.model;
 import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.type.ArrayType;
@@ -21,6 +22,7 @@ import java.util.List;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlock;
 import static io.restassured.RestAssured.given;
 
 public class TestBaseNew extends TestBase {
@@ -290,8 +292,32 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public BlockDTO getBlock(String block) {
-        throw new NotImplementedException("Not implemented");
+    public BlockDTO getBlock(String block) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
+        String path = "/apl";
+        Response response = given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+    }
+    @Step
+    public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
+        String path = "/apl";
+        Response response = given()
+                .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
     }
 
     @Override
