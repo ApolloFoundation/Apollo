@@ -49,6 +49,7 @@
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
+        <module>apl-integration-tests</module>
     </modules>
 
     <properties>
