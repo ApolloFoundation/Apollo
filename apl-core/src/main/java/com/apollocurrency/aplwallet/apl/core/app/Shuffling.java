@@ -327,7 +327,7 @@ public final class Shuffling {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
                     } else {
-                        LOG.trace("Skip shuffling {}, block is full");
+                        LOG.trace("Skip shuffling {}, block is full", block.getId());
                     }
                 }
                 LOG.trace("Shufflings to process - {} ", shufflings.size());

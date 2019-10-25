@@ -21,16 +21,19 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
+import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -67,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -75,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
+import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -103,6 +108,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -165,6 +172,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
+    private InMemoryCacheManager cacheManager;
+    private Optional<Cache<DbKey, PublicKey>> publicKeyCache = Optional.empty();
+
 
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
@@ -301,7 +311,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager, javax.enterprise.event.Event<List<Transaction>> txEvent) {
+                                   TaskDispatchManager taskDispatchManager, javax.enterprise.event.Event<List<Transaction>> txEvent,
+                                   InMemoryCacheManager cacheManager) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -321,6 +332,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
 
+        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+            this.cacheManager = Objects.requireNonNull(cacheManager, "cacheManager is NULL");
+            this.publicKeyCache = Optional.of( this.cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME) );
+        }
         configureBackgroundTasks();
 
     }
@@ -491,7 +506,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
-
+//                    invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
@@ -641,9 +656,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void shutdown() {
+        log.info("BlchProcImpl shutdown started...");
         try {
+            suspendBlockchainDownloading();
             Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
-            getMoreBlocks = false;
+            log.info("BlchProcImpl shutdown finished");
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
@@ -792,7 +809,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block); // send sync event to TrimObserver component
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
-        log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
+        log.debug("Push block at height {} tx cnt: {} took {} ms (lock acquiring: {} ms)",
                 block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
 
@@ -1069,8 +1086,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
-            dataSource.commit(false); // should happen definitely otherwise
-
+//            invalidateAllPublicKeyCache(); // TODO: YL we need another more sophisticated approach
+            dataSource.commit(false); // should happen definately, otherwise
         }
         catch (RuntimeException e) {
             log.error("Error popping off to {}, cause {}", commonBlock.getHeight(), e.toString());
@@ -1087,6 +1104,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             throw e;
         }
         return poppedOffBlocks;
+    }
+
+    /**
+     * Public keys cache clean up in case rolback/popoff
+     */
+    private void invalidateAllPublicKeyCache() {
+        log.trace("invalidate all public keys from cache...");
+        publicKeyCache.ifPresent(Cache::invalidateAll);
     }
 
     private Block popLastBlock() {
@@ -1370,6 +1395,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
                 dataSource.clearCache();
+//                invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
@@ -1445,6 +1471,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     dataSource.clearCache();
+//                                    invalidateAllPublicKeyCache();// TODO: YL we need another more sophisticated approach
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }

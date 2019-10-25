@@ -452,7 +452,9 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
-                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime);
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
+                        case ShardConstants.DEX_ORDER_TABLE_NAME:
+                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
                         default:
                             return exportDerivedTable(tableInfo, paramInfo, pruningTime);
                     }
@@ -510,17 +512,34 @@ public class ShardEngineImpl implements ShardEngine {
         shardRecoveryDaoJdbc.updateShardRecovery(databaseManager.getDataSource(), recovery);
     }
 
-    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo, Set<String> excludedColumns, int pruningTime) {
+    private Long exportDerivedTable(TableInfo info, CommandParamInfo paramInfo,
+                                    Set<String> excludedColumns, int pruningTime,
+                                    String sortColumn) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
         if (derivedTable != null) {
             if (!info.isPrunable()) {
+                // not prunable table
                 if (excludedColumns == null) {
+                    // no columns to exclude from export
                     return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                 } else {
-                    return csvExporter.exportDerivedTable(derivedTable, paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize(), excludedColumns);
+                    // some column(s) are excluded
+                    if (sortColumn != null && !sortColumn.isEmpty()) {
+                        // there is sorting column
+                        return csvExporter.exportDerivedTableCustomSort(
+                                derivedTable, paramInfo.getSnapshotBlockHeight(),
+                                paramInfo.getCommitBatchSize(), excludedColumns, sortColumn);
+                    } else {
+                        // no special sorting column, most probable DB_ID will be used by default
+                        return csvExporter.exportDerivedTable(
+                                derivedTable, paramInfo.getSnapshotBlockHeight(),
+                                paramInfo.getCommitBatchSize(), excludedColumns);
+                    }
                 }
             } else {
-                return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable), paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
+                // prunable table export
+                return csvExporter.exportPrunableDerivedTable(((PrunableDbTable) derivedTable),
+                        paramInfo.getSnapshotBlockHeight(), pruningTime, paramInfo.getCommitBatchSize());
             }
         } else {
             durableTaskUpdateByState(FAILED, null, null);
@@ -529,7 +548,7 @@ public class ShardEngineImpl implements ShardEngine {
     }
 
     private Long exportDerivedTable(TableInfo tableInfo, CommandParamInfo paramInfo, int pruningTime) {
-        return exportDerivedTable(tableInfo, paramInfo, null, pruningTime);
+        return exportDerivedTable(tableInfo, paramInfo, null, pruningTime, null);
     }
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {

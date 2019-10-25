@@ -832,7 +832,9 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS mandatory_transaction " +
                         "(db_id IDENTITY, id BIGINT NOT NULL, transaction_bytes VARBINARY NOT NULL, required_tx_hash BINARY(32))");
             case 317:
-                return 317;
+                apply("CREATE INDEX IF NOT EXISTS dex_order_height_idx ON dex_offer (height)");
+            case 318:
+                return 318;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
