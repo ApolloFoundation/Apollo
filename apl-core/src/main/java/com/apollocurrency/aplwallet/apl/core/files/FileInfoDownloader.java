@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,13 +24,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class FileInfoDownloader {
-    private PeersService peers;
+    private final PeersService peers;
     private List<HasHashSum> goodPeers;
     private List<HasHashSum> badPeers;
     private FileDownloadInfo downloadInfo;
      
     @Inject
-      public FileInfoDownloader(PeersService peers) {
+    public FileInfoDownloader(PeersService peers) {
         this.peers = peers;
     }
       

@@ -55,23 +55,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 public class FileDownloader {
 
-    @Vetoed
-    public static class Status {
-        double completed = 0.0;
-        AtomicInteger chunksTotal = new AtomicInteger(1); //init to 1 to avoid zero division
-        AtomicInteger chunksReady = new AtomicInteger(0);
-        List<String> peers = new ArrayList<>();
-        FileDownloadDecision decision = FileDownloadDecision.NotReady;
-        boolean isComplete(){
-            return chunksReady.get()>=chunksTotal.get();
-        }
-    }
 
     public static final int DOWNLOAD_THREADS = 6;
     private String fileID;
     private FileDownloadInfo downloadInfo;
 
-    private final Status status = new Status();
+    private final FileDownloadStatus status = new FileDownloadStatus();
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
     private String taskId;
@@ -112,7 +101,7 @@ public class FileDownloader {
         });
     }
 
-    public Status getDownloadStatus() {
+    public FileDownloadStatus getDownloadStatus() {
         status.completed = ((1.0D * status.chunksReady.get()) / (1.0D * status.chunksTotal.get())) * 100.0D;
         return status;
     }
@@ -202,7 +191,7 @@ public class FileDownloader {
         return res;
     }
 
-    public Status download() {
+    public FileDownloadStatus download() {
         int peerCount = 0;
         for (HasHashSum p : infoDownloader.getGoodPeers()) {
             Future<Boolean> dn_res = executor.submit(new Callable<Boolean>() {
