@@ -1133,7 +1133,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         } finally {
             globalSync.writeUnlock();
-            this.resumeBlockchainDownloading();
         }
     }
 
