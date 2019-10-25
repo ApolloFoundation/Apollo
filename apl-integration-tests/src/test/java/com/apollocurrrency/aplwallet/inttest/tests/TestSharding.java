@@ -3,15 +3,12 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.bouncycastle.crypto.tls.MACAlgorithm;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertThat;
 
 public class TestSharding extends TestBaseNew {
 
