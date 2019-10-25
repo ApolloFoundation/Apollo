@@ -1,9 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
-import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
-import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
@@ -15,6 +12,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.junit.Assert;
 import org.junit.jupiter.api.*;
 
 
@@ -48,9 +46,15 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
-        importSecretFileSetUp(secretFilePath,"1");
-        startForgingSetUp();
-        setUpTestData();
+        try {
+            importSecretFileSetUp(secretFilePath,"1");
+            startForgingSetUp();
+            setUpTestData();
+        }catch (Exception ex){
+            Assert.assertNotNull("Precondition FAILED", ex);
+            ex.printStackTrace();
+        }
+
 
 
     }
@@ -139,13 +143,28 @@ public abstract class TestBase implements ITest {
         return getInstanse(BalanceDTO.class);
     }
 
-    private static void startForgingSetUp() {
-        String path = "/rest/networking/peer/all";
-        List<String> peersIp = given()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(GetPeersIpResponse.class).getPeers();
-        if (peersIp != null && peersIp.size()> 0){
+    private static void startForgingSetUp() throws JsonProcessingException {
+        List<String> peersIp;
+        String path;
+        if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")){
+            //TODO: Change on REST Easy
+            HashMap<String, String> param = new HashMap();
+            param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
+
+            path = "/apl";
+            Response response =  given().log().all()
+                    .spec(restHelper.getSpec())
+                    .contentType(ContentType.URLENC)
+                    .formParams(param)
+                    .when()
+                    .post(path);
+            BlockchainInfoDTO status = mapper.readValue(response.body().prettyPrint(), BlockchainInfoDTO.class);
+            peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+          }else {
+            peersIp = TestConfiguration.getTestConfiguration().getPeers();
+        }
+
+      if (peersIp != null && peersIp.size() > 0){
 
          boolean isForgingEnableOnGen = false;
 

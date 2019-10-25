@@ -4,6 +4,8 @@ import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.type.ArrayType;
 import io.qameta.allure.Step;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
@@ -13,6 +15,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 
@@ -473,7 +476,7 @@ public class TestBaseNew extends TestBase {
                 .contentType(ContentType.JSON)
                 .baseUri(String.format("http://%s:%s",ip,7876))
                 .when()
-                .get(path).as(List.class);
+                .get(path).getBody().jsonPath().getList("",ShardDTO.class);
     }
 
     @Override
