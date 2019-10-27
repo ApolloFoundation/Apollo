@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.*;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -26,13 +27,15 @@ class DexSmartContractServiceTest {
     private PropertiesHolder holder;
     @Mock private DexEthService dexEthService;
     @Mock private EthereumWalletService ethereumWalletService;
+    @Mock
+    private DexTransactionDao dexTransactionDao;
     private DexSmartContractService service;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 127_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
 
     @BeforeEach
     void setUp() {
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService));
+        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao));
     }
 
 

@@ -36,6 +36,7 @@ delete from dex_offer;
 delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_trade;
+delete from dex_transaction;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -417,4 +418,11 @@ INSERT INTO dex_trade
 (8      , -7687407464048556007  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409464      , 300       ),
 (9      , 3468015179521711523   , 7477442401604846627   , -582612439131997299   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409563      , 400       ),
 (10     , 6490420391026496458   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409723      , 400       ),
+;
+
+INSERT INTO dex_transaction
+(db_id , hash ,                                                                                                                                 tx ,  operation , params , account , timestamp )
+(100   , '0xa69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26' , '0xff', 0,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 250),
+(200   , '0x203b36aac62037ac7c4502aa023887f7fcae843c456fde083e6a1dc70a29f3d61a73f57d79481f06e27ea279c74528e1ba6b1854d219b1e3b255729889ca5926' , '0xff', 1,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 300),
+(300   , '0x05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1' , '0xff', 0,        102,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 400),
 ;

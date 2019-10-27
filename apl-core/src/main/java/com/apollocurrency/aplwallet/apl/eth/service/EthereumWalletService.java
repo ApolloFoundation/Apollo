@@ -248,6 +248,15 @@ public class EthereumWalletService {
         return tx;
     }
 
+    public BigInteger getAllowance(String spenderAddress, String owner, String contractAddress) throws IOException {
+        Function function = allowance(owner, spenderAddress);
+        String responseValue = callSmartContractFunction(function, contractAddress, owner);
+
+        List<Type> response = FunctionReturnDecoder.decode(responseValue, function.getOutputParameters());
+
+        return (BigInteger) response.get(0).getValue();
+    }
+
 
     /**
      * Get Eth ERC-20 balance.

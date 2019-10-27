@@ -26,10 +26,8 @@ import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tuples.generated.Tuple9;
 import org.web3j.tx.Contract;
-import org.web3j.tx.FastRawTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.response.NoOpProcessor;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -158,12 +156,13 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
-    public RemoteCall<TransactionReceipt> withdraw(BigInteger orderId) {
+    public String withdraw(BigInteger orderId) {
         final Function function = new Function(
                 FUNC_WITHDRAW, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<Tuple4<Boolean, String, BigInteger, Boolean>> getDepositedOrderDetails(BigInteger orderId, String user) {
@@ -255,12 +254,12 @@ public class DexContract extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public RemoteCall<TransactionReceipt> refund(byte[] secretHash) {
+    public String refund(byte[] secretHash) {
         final Function function = new Function(
                 FUNC_REFUND,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<BigInteger> getUserDepositsAmount(String user) {
@@ -270,7 +269,7 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
-    public RemoteCall<TransactionReceipt> initiate(BigInteger orderId, byte[] secretHash, String recipient, BigInteger refundTimestamp) {
+    public String initiate(BigInteger orderId, byte[] secretHash, String recipient, BigInteger refundTimestamp) {
         final Function function = new Function(
                 FUNC_INITIATE,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId),
@@ -278,7 +277,7 @@ public class DexContract extends Contract {
                         new org.web3j.abi.datatypes.Address(recipient),
                         new org.web3j.abi.datatypes.generated.Uint256(refundTimestamp)),
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<String> owner() {
@@ -326,12 +325,9 @@ public class DexContract extends Contract {
     }
 
     public String sendTx(Function function, BigInteger weiValue) {
-        NoOpProcessor processor = new NoOpProcessor(web3j);
-        TransactionManager txManager = new FastRawTransactionManager(web3j, credentials, processor);
-
         EthSendTransaction sendTransaction;
         try {
-            sendTransaction = txManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
+            sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
                     gasProvider.getGasLimit(function.getName()),
                     contractAddress,
                     FunctionEncoder.encode(function),
@@ -373,12 +369,12 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, Boolean.class);
     }
 
-    public RemoteCall<TransactionReceipt> redeem(byte[] secret) {
+    public String redeem(byte[] secret) {
         final Function function = new Function(
                 FUNC_REDEEM,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secret)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<TransactionReceipt> transferOwnership(String newOwner) {
