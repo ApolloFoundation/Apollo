@@ -40,7 +40,7 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify AccountBlockCount endpoint")
     public void testAccountBlockCount() throws IOException {
-        GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getStandartWallet().getUser());
+        GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("Account count = {}", accountBlockCount.getNumberOfBlocks());
         assertTrue(accountBlockCount.getNumberOfBlocks() > 0);
     }
@@ -59,7 +59,7 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify AccountBlockIds endpoint")
     public void testAccountBlockIds() throws IOException {
-        AccountBlockIdsResponse accountBlockIds = getAccountBlockIds( getTestConfiguration().getStandartWallet().getUser());
+        AccountBlockIdsResponse accountBlockIds = getAccountBlockIds(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("BlockIds count = {}", accountBlockIds.getBlockIds().size());
         assertTrue(accountBlockIds.getBlockIds().size() > 0);
     }
@@ -68,7 +68,7 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify getAccountBlocks endpoint")
     public void testAccountBlocks() throws IOException {
-        BlockListInfoResponse accountBlocks = getAccountBlocks( getTestConfiguration().getStandartWallet().getUser());
+        BlockListInfoResponse accountBlocks = getAccountBlocks( getTestConfiguration().getGenesisWallet().getUser());
         log.trace("Blocks count = {}", accountBlocks.getBlocks().size());
         assertTrue(accountBlocks.getBlocks().size() > 0);
     }
@@ -144,7 +144,7 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify Get Guaranteed Balance endpoint")
     public void testGetGuaranteedBalance() throws IOException {
-        BalanceDTO balance = getGuaranteedBalance( getTestConfiguration().getStandartWallet().getUser(), 2000);
+        BalanceDTO balance = getGuaranteedBalance( getTestConfiguration().getGenesisWallet().getUser(), 1);
         assertTrue(balance.getGuaranteedBalanceATM() > 1);
     }
 

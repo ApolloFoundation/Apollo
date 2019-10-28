@@ -24,6 +24,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.File;
@@ -46,6 +48,7 @@ public abstract class TestBase implements ITest {
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
+    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
 
     @BeforeAll
     static void initAll() {
@@ -53,7 +56,7 @@ public abstract class TestBase implements ITest {
         retryPolicy = new RetryPolicy()
                      .retryWhen(false)
                      .withMaxRetries(20)
-                     .withDelay(1, TimeUnit.SECONDS);
+                     .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
