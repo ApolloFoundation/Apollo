@@ -217,6 +217,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public Account2FAResponse generateNewAccount() throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -232,6 +233,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -249,6 +251,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put("account", wallet.getUser());
@@ -264,6 +267,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public boolean importSecretFile(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         Response response = given().log().all()
@@ -294,6 +298,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
             return given().log().uri()
@@ -304,6 +309,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public PeerDTO getPeer(String peer) {
         String path = String.format("/rest/networking/peer?peer=%s",peer);
         return given().log().uri()
@@ -541,6 +547,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public ForgingResponse getForging() {
         String path = "/rest/nodeinfo/forgers";
         return given().log().uri()
