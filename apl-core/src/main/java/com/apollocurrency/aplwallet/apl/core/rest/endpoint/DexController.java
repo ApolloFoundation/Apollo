@@ -660,15 +660,15 @@ public class DexController {
                 randomEntry.open =  prevClose;
                 randomEntry.close =  randomEntry.open + rWidth;
                 
-                int rHigh = 15+ r.nextInt(25);
-                int rLow = 15+r.nextInt(25);
+                int rHigh = 50;// 15+ r.nextInt(25);
+                int rLow = 50;// 15+r.nextInt(25);
                 
                 if (rWidth>0) {                    
-                    randomEntry.high = randomEntry.open + rHigh;
-                    randomEntry.low = randomEntry.close - rLow;
-                } else {
                     randomEntry.high = randomEntry.close + rHigh;
                     randomEntry.low = randomEntry.open - rLow;
+                } else {
+                    randomEntry.high = randomEntry.open + rHigh;
+                    randomEntry.low = randomEntry.close - rLow;
                 }
                 
                 prevClose = randomEntry.close;
