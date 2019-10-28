@@ -1142,7 +1142,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // rollback not scan safe derived tables with blocks and transactions
                 for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
                     if (!derivedTable.isScanSafe()) {
-                        log.debug("Rollback not scan safe table {}", derivedTable.getName());
+                        log.debug("Rollback not scan safe table {}, height={}", derivedTable.getName(), height);
                         derivedTable.rollback(height);
                     }
                 }
@@ -1343,7 +1343,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
-                log.info("Rollback to height less than {} not supported, will do a full scan", getMinRollbackHeight());
+                log.info("Rollback to height less than {} (min rollback height) not supported, will do a full scan", getMinRollbackHeight());
                 height = shardInitialHeight;
             }
             if (height < 0) {
@@ -1403,7 +1403,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == shardInitialHeight) {
                     blockchain.setLastBlock(currentBlock); // special case to avoid no last block
                     aplAppStatus.durableTaskUpdate(scanTaskId, 20.5, "Apply genesis");
-                    shardImporter.importLastShard(height);
+                    shardImporter.importLastShard(height); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     aplAppStatus.durableTaskUpdate(scanTaskId, 24.5, "Genesis applied");
                 } else {
                     blockchain.setLastBlock(blockchain.getBlockAtHeight(height - 1));
