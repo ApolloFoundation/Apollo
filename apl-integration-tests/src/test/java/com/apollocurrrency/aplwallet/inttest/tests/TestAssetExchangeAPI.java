@@ -293,7 +293,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
         AssetsResponse getAllAssets = getAllAssets();
         System.out.println(getAllAssets);
-        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).count()== 0);
+        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).findFirst().get().getQuantityATU() == 0);
 
     }
 

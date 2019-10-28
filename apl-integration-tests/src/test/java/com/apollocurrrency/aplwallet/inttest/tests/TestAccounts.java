@@ -103,6 +103,9 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Get Account Properties")
     public void testAccountProperties() throws IOException {
+        String property = "Property "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountProperty( getTestConfiguration().getStandartWallet(),property);
+        verifyTransactionInBlock(setAccountInfo.getTransaction());
         AccountPropertiesResponse accountPropertiesResponse = getAccountProperties(getTestConfiguration().getStandartWallet().getUser());
         assertNotNull(accountPropertiesResponse.getProperties(),"Account Properties is NULL");
         assertTrue(accountPropertiesResponse.getProperties().size() > 0,"Account Properties count = 0");
