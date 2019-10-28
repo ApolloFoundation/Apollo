@@ -50,6 +50,7 @@
         <module>apl-exec</module>
         <module>apl-desktop</module>
         <module>apl-integration-tests</module>
+        <module>apl-performance-tests</module>
     </modules>
 
     <properties>
