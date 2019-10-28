@@ -1,7 +1,20 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;

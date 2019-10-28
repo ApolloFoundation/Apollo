@@ -1,15 +1,16 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
+import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import com.apollocurrency.aplwallet.api.dto.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,7 +26,6 @@ public class TestAliasAPI extends TestBaseOld {
     @DisplayName("setAlias + getAliasesCount + Get Aliases")
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    @Disabled
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);

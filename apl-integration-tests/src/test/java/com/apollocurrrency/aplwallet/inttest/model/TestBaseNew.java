@@ -1,9 +1,54 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
+import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
+import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
+import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsResponse;
+import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
+import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
+import com.apollocurrency.aplwallet.api.response.ForgingResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
+import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
+import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
+import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
+import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
@@ -12,9 +57,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
-
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static io.restassured.RestAssured.given;
 
 public class TestBaseNew extends TestBase {
@@ -253,10 +295,11 @@ public class TestBaseNew extends TestBase {
     @Override
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
-        return given().log().uri()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(GetPeersIpResponse.class).getPeers();
+            return given().log().uri()
+                    .spec(restHelper.getSpec())
+                    .when()
+                    .get(path).as(GetPeersIpResponse.class).getPeers();
+
     }
 
     @Override
@@ -283,8 +326,32 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public BlockDTO getBlock(String block) {
-        throw new NotImplementedException("Not implemented");
+    public BlockDTO getBlock(String block) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
+        String path = "/apl";
+        Response response = given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+    }
+    @Step
+    public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
+        //TODO: Change on REST Easy
+        HashMap<String, String> param = new HashMap();
+        param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
+        String path = "/apl";
+        Response response = given()
+                .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path);
+        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
     }
 
     @Override
@@ -459,6 +526,17 @@ public class TestBaseNew extends TestBase {
                 .spec(restHelper.getSpec())
                 .when()
                 .get(path).as(ForgingResponse.class);
+    }
+
+    @Override
+    @Step
+    public List<ShardDTO> getShards(String ip) {
+        String path = "/rest/shards";
+        return given().log().uri()
+                .contentType(ContentType.JSON)
+                .baseUri(String.format("http://%s:%s",ip,7876))
+                .when()
+                .get(path).getBody().jsonPath().getList("",ShardDTO.class);
     }
 
     @Override
