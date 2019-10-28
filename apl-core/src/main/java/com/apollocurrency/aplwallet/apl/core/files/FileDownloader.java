@@ -11,38 +11,29 @@ import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileInfo;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PreDestroy;
-import javax.enterprise.inject.Vetoed;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -64,7 +55,7 @@ public class FileDownloader {
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
     private String taskId;
-    private ReadWriteLock fileChunksLock =  new ReentrantReadWriteLock();
+    private final ReadWriteLock fileChunksLock =  new ReentrantReadWriteLock();
     private final AtomicLong lastPercent = new AtomicLong(0L);
             
     ExecutorService executor;
@@ -72,8 +63,8 @@ public class FileDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
-    private PeersService peers;
-    private FileInfoDownloader infoDownloader;
+    private final PeersService peers;
+    private final FileInfoDownloader infoDownloader;
     
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
@@ -89,7 +80,9 @@ public class FileDownloader {
         this.peers = peers;
     }
     
-    public void startDownload() {
+    public void startDownload(FileDownloadInfo downloadInfo) {
+        this.downloadInfo = downloadInfo;
+        fileID = downloadInfo.fileInfo.fileId;
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
         downloadTask = CompletableFuture.supplyAsync(() -> {

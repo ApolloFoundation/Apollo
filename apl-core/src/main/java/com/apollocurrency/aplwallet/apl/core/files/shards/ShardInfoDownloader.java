@@ -50,7 +50,7 @@ public class ShardInfoDownloader {
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
     private final Set<String> additionalPeers;
-    private final UUID myChainId;
+
     private final Map<Long, Set<ShardInfo>> sortedShards;
     private final Map<Long, Set<Peer>> shardsPeers;
     private final Map<String,ShardingInfo> shardInfoByPeers;
@@ -59,15 +59,14 @@ public class ShardInfoDownloader {
     private final DownloadableFilesManager downloadableFilesManager;
     Map<Long,List<HasHashSum>> goodPeersMap=new HashMap<>();
     Map<Long,List<HasHashSum>> badPeersMap=new HashMap<>();
-//hope I do not need this hack
-//    private final Instance<FileDownloader> fileDownloaders;
-    private final FileDownloader fileDownloader;    
+
     private final PropertiesHolder propertiesHolder;
     private final PeersService peers;
-    
+    private final UUID myChainId;
+       
     @Inject
 
-    public ShardInfoDownloader(FileDownloader fileDownloader,
+    public ShardInfoDownloader(
             BlockchainConfig blockchainConfig,
             DownloadableFilesManager downloadableFilesManager,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
@@ -75,16 +74,16 @@ public class ShardInfoDownloader {
             PeersService peers) {
 
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
-        this.myChainId = blockchainConfig.getChain().getChainId();
+
         this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
         this.sortedShards = Collections.synchronizedMap(new HashMap<>());
         this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
         this.shardInfoByPeers = Collections.synchronizedMap(new HashMap<>());
         this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
-        this.fileDownloader=fileDownloader;
         this.propertiesHolder=propertiesHolder;
         this.peers = peers;
+        this.myChainId = blockchainConfig.getChain().getChainId();
     }
 
     private boolean processPeerShardInfo(Peer p) {
@@ -177,13 +176,7 @@ public class ShardInfoDownloader {
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
-    private void fireShardPresentEvent(Long shardId) {
-        ShardNameHelper snh = new ShardNameHelper();
-        String fileId = snh.getFullShardId(shardId, myChainId);
-        ShardPresentData shardPresentData = new ShardPresentData(fileId);
-        log.debug("Firing 'SHARD_PRESENT' event {}...", fileId);
-        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is used
-    }
+
 
     private byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
@@ -267,7 +260,7 @@ public class ShardInfoDownloader {
         // check if zip file exists on local node
         byte[] goodHash = goodPeersMap.get(shardId).get(0).getHash();
         if (checkShardDownloadedAlready(shardId, goodHash)) {
-            fireShardPresentEvent(shardId);
+//            fireShardPresentEvent(shardId);
             result = FileDownloadDecision.OK;
             return result;
         }
@@ -281,7 +274,7 @@ public class ShardInfoDownloader {
         
         if (isAcceptable(result)) {
             log.debug("Starting shard downloading: '{}'", fileID);
-            fileDownloader.startDownload();
+            // fileDownloader.startDownload();
             //see FileDownloader::getNextEmptyChunk() for sucess event emition
         } else {
             log.warn("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
