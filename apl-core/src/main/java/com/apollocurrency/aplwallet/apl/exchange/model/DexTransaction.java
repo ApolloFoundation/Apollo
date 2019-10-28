@@ -9,9 +9,9 @@ public class DexTransaction {
     private Long dbId;
     private byte[] hash;
     private byte[] rawTransactionBytes;
-    private DexOperation dexOperation;
+    private DexOperation operation;
     private String params;
-    private String address;
+    private String account;
     private long timestamp;
 
     public enum DexOperation {

@@ -88,6 +88,7 @@ public class DefaultRawTransactionManager extends TransactionManager {
         String txHashLocal = Hash.sha3(hexValue);
         transaction.setHash(Numeric.hexStringToByteArray(txHashLocal));
         transaction.setRawTransactionBytes(Numeric.hexStringToByteArray(hexValue));
+        transaction.setTimestamp(System.currentTimeMillis());
         dexTransactionDao.add(transaction);
         EthSendTransaction ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send();
 

@@ -177,7 +177,7 @@ public class DexContract extends Contract {
         return new RemoteCall<Tuple4<Boolean, String, BigInteger, Boolean>>(
                 new Callable<Tuple4<Boolean, String, BigInteger, Boolean>>() {
                     @Override
-                    public Tuple4<Boolean, String, BigInteger, Boolean> call() throws Exception {
+            public Tuple4<Boolean, String, BigInteger, Boolean> call() throws Exception {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple4<Boolean, String, BigInteger, Boolean>(
                                 (Boolean) results.get(0).getValue(), 

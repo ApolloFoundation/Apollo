@@ -15,17 +15,23 @@ import java.util.List;
 public interface DexTransactionDao {
     @Transactional(readOnly = true)
     @RegisterRowMapper(DexTransactionMapper.class)
-    @SqlQuery("SELECT * FROM dex_transaction WHERE params =:params AND address =:address AND operation=:operation")
+    @SqlQuery("SELECT * FROM dex_transaction WHERE params =:params AND account =:account AND operation=:operation")
     @RegisterArgumentFactory(DexOperationArgumentFactory.class)
-    DexTransaction get(@Bind("params") String params, @Bind("address") String address, @Bind("operation") DexTransaction.DexOperation operation);
+    DexTransaction get(@Bind("params") String params, @Bind("account") String account, @Bind("operation") DexTransaction.DexOperation operation);
+
+    @Transactional(readOnly = true)
+    @RegisterRowMapper(DexTransactionMapper.class)
+    @SqlQuery("SELECT * FROM dex_transaction WHERE db_id = :dbId")
+    @RegisterArgumentFactory(DexOperationArgumentFactory.class)
+    DexTransaction get(@Bind("dbId") long dbId);
 
     @Transactional
-    @SqlUpdate("INSERT INTO dex_transaction (hash, tx, operation, params, address, timestamp) VALUES (:hash, :rawTransactionBytes, :operation, :params, :address, :timestamp")
+    @SqlUpdate("INSERT INTO dex_transaction (hash, tx, operation, params, account, timestamp) VALUES (:hash, :rawTransactionBytes, :operation, :params, :account, :timestamp)")
     @RegisterArgumentFactory(DexOperationArgumentFactory.class)
     void add(@BindBean DexTransaction tx);
 
     @Transactional
-    @SqlUpdate("UPDATE dex_transaction SET hash = :hash, tx = :rawTransactionBytes, timestamp :=address WHERE params =:params AND address =:address AND operation=:operation")
+    @SqlUpdate("UPDATE dex_transaction SET hash = :hash, tx = :rawTransactionBytes, timestamp = :timestamp WHERE params =:params AND account =:account AND operation=:operation")
     @RegisterArgumentFactory(DexOperationArgumentFactory.class)
     void update(@BindBean DexTransaction tx);
 
@@ -34,10 +40,11 @@ public interface DexTransactionDao {
     void deleteAllBeforeTimestamp(@Bind("timestamp") long timestamp);
 
     @Transactional
-    @SqlUpdate("DELETE FROM dex_transaction WHERE db_id = :dbid")
+    @SqlUpdate("DELETE FROM dex_transaction WHERE db_id = :dbId")
     void delete(@Bind("dbId") long dbId);
 
     @Transactional
+    @RegisterRowMapper(DexTransactionMapper.class)
     @SqlQuery("SELECT * FROM dex_transaction WHERE db_id > :dbId LIMIT :limit")
     List<DexTransaction> getAll(@Bind("dbId") long fromDbId, @Bind("limit") int limit);
 
