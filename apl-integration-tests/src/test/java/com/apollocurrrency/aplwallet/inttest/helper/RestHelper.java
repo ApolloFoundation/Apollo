@@ -5,10 +5,8 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-
 import java.util.HashMap;
 
-import static com.apollocurrrency.aplwallet.inttest.model.Parameters.secretPhrase;
 
 public class RestHelper {
     public RequestSpecification spec;

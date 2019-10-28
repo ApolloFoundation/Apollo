@@ -1,14 +1,14 @@
 package com.apollocurrrency.aplwallet.inttest.helper;
 
 
+import com.apollocurrrency.aplwallet.inttest.model.NetConfig;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
@@ -21,7 +21,9 @@ public class TestConfiguration {
     private Wallet standartWallet;
     private Wallet vaultWallet;
     private String adminPass;
-    private HashMap<String,List<String>> testNetIp;
+    private List<String> peers;
+    private String env;
+    private HashMap<String, NetConfig> testNetIp;
 
     private TestConfiguration(){
         try {
@@ -34,17 +36,17 @@ public class TestConfiguration {
             adminPass = (String) jsonObject.get("adminPassword");
             standartWallet = mapper.readValue( jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet= mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
-            testNetIp = mapper.readValue(jsonObject.get("net").toString(), HashMap.class);
-
+            TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {};
+            testNetIp = mapper.readValue(jsonObject.get("net").toString(), typeRef);
             Random rand = new Random();
-            String env = System.getProperty("test.env");
-            List<String> hosts = testNetIp.get(env);
+            env = System.getProperty("test.env");
             if (!env.equals(host)){
-                host = hosts.get(rand.nextInt(hosts.size()));
+                peers = testNetIp.get(env).getPeers();
+                host = peers.get(rand.nextInt(peers.size()));
+            }else {
+                peers = new ArrayList<>();
+                peers.add(host);
             }
-
-            System.out.println(host);
-
 
         }
         catch (Exception e)
@@ -75,9 +77,15 @@ public class TestConfiguration {
     public Wallet getVaultWallet() {
         return vaultWallet;
     }
-    public HashMap<String, List<String>> getTestNetIp() {
-        return testNetIp;
+    public List<String> getPeers() {
+        return peers;
     }
-
-
+    public List<String> getHostsByChainID(String chainId) {
+        testNetIp.forEach((k, v) -> {
+            if (v.getChainId().equals(chainId)){
+                this.peers = v.getPeers();
+        }
+        });
+        return this.peers;
+    }
 }

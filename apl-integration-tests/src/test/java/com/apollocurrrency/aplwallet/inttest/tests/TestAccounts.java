@@ -1,13 +1,27 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
+import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
+import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
+import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -229,10 +243,9 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Delete Account Property")
-    @Disabled
     @ParameterizedTest
     @ArgumentsSource(WalletProvider.class)
-    public void  deleteAccountProperty(Wallet wallet) throws IOException {
+    public void  deleteAccountProperty(Wallet wallet) {
         String property = "Property "+new Date().getTime();
         CreateTransactionResponse setAccountInfo = setAccountProperty(wallet,property);
         verifyTransactionInBlock(setAccountInfo.getTransaction());
@@ -242,7 +255,7 @@ public class TestAccounts extends TestBaseOld {
 
     @DisplayName("Generate Account")
     @Test
-    public void  generateAccount() throws IOException { ;
+    public void  generateAccount(){ ;
         Account2FAResponse accountDTO = generateNewAccount();
         assertNotNull(accountDTO.getAccountRS());
         assertNotNull(accountDTO.getPassphrase());

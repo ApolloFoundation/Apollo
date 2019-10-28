@@ -2,9 +2,12 @@ package com.apollocurrrency.aplwallet.inttest.model;
 
 import com.apollocurrency.aplwallet.api.dto.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ForgingResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,7 +18,12 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.junit.jupiter.api.*;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 
 import java.io.File;
@@ -30,6 +38,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public abstract class TestBase implements ITest {
@@ -48,9 +57,14 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
-        importSecretFileSetUp(secretFilePath,"1");
-        startForgingSetUp();
-        setUpTestData();
+        try {
+            importSecretFileSetUp(secretFilePath,"1");
+            startForgingSetUp();
+            setUpTestData();
+        }catch (Exception ex){
+            fail("Precondition FAILED: "+ex.getMessage(), ex);
+        }
+
 
 
     }
@@ -139,19 +153,14 @@ public abstract class TestBase implements ITest {
         return getInstanse(BalanceDTO.class);
     }
 
-    private static void startForgingSetUp() {
-        String path = "/rest/networking/peer/all";
-        List<String> peersIp = given()
-                .spec(restHelper.getSpec())
-                .when()
-                .get(path).as(GetPeersIpResponse.class).getPeers();
-        if (peersIp != null && peersIp.size()> 0){
-         boolean isForgingEnableOnGen = false;
-        for (String ip: peersIp) {
-
+    private static void startForgingSetUp() throws JsonProcessingException {
+        List<String> peersIp;
+        String path;
+        if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")){
+            //TODO: Change on REST Easy
             HashMap<String, String> param = new HashMap();
-            param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
-            param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+            param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
+
             path = "/apl";
             Response response =  given().log().all()
                     .spec(restHelper.getSpec())
@@ -159,6 +168,34 @@ public abstract class TestBase implements ITest {
                     .formParams(param)
                     .when()
                     .post(path);
+            BlockchainInfoDTO status = mapper.readValue(response.body().prettyPrint(), BlockchainInfoDTO.class);
+            peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+          }else {
+            peersIp = TestConfiguration.getTestConfiguration().getPeers();
+        }
+
+      if (peersIp != null && peersIp.size() > 0){
+
+         boolean isForgingEnableOnGen = false;
+
+        for (String ip: peersIp) {
+            RequestSpecification spec = new RequestSpecBuilder()
+                    .setContentType(ContentType.JSON)
+                    .setBaseUri(String.format("http://%s:%s",ip,7876))
+                    .build();
+
+            HashMap<String, String> param = new HashMap();
+            param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
+            param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+
+            path = "/apl";
+            Response response =  given().log().all()
+                    .spec(spec)
+                    .contentType(ContentType.URLENC)
+                    .formParams(param)
+                    .when()
+                    .post(path);
+
             ForgingResponse forgingResponse = null;
             try {
                 forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
@@ -171,10 +208,7 @@ public abstract class TestBase implements ITest {
             }
             //need when  rest/nodeinfo/forgers will be worked
          /*
-            RequestSpecification spec = new RequestSpecBuilder()
-                    .setContentType(ContentType.JSON)
-                    .setBaseUri(String.format("http://%s:%s",ip,7876))
-                    .build();
+
 
             path = "/rest/nodeinfo/forgers";
             ForgingResponse forgingResponse = given()
