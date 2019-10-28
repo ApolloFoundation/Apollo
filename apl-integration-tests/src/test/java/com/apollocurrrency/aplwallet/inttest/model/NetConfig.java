@@ -1,15 +1,14 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@ToString
+@Data
 public class NetConfig {
     private List<String> peers;
     private String chainId;

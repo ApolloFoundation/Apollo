@@ -1,7 +1,13 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ForgingResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,7 +19,11 @@ import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.Assert;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 
 import java.io.File;
@@ -28,6 +38,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public abstract class TestBase implements ITest {
@@ -51,8 +62,7 @@ public abstract class TestBase implements ITest {
             startForgingSetUp();
             setUpTestData();
         }catch (Exception ex){
-            Assert.assertNotNull("Precondition FAILED", ex);
-            ex.printStackTrace();
+            fail("Precondition FAILED: "+ex.getMessage(), ex);
         }
 
 

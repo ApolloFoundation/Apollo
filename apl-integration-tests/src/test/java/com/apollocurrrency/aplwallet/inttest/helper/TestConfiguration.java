@@ -9,7 +9,6 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
