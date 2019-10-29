@@ -9,13 +9,11 @@ import io.gatling.jdbc.Predef._
 import scala.util.Random
 import scalaj.http._
 
-class RecordedSimulation extends Simulation {
+class PerformanceSimulation extends Simulation {
 
-	var peers = ConfigFactory.load("application.conf").getStringList("peers").asScala.toList
+	var peers = ConfigFactory.load("application.conf").getStringList("n1").asScala.toList
 	val random = new Random
-	var httpProtocol = http.baseUrls(peers)
-		.inferHtmlResources()
-		.acceptHeader("*/*")
+	val httpProtocol = http.baseUrls(peers)
 
 	before {
 		println("Stop/Start forging!")
@@ -32,7 +30,7 @@ class RecordedSimulation extends Simulation {
 			}
 		 }
 
-		for( i <- 1 to 10) {
+		for( i <- 1 to 5) {
 				try {
 					val peer = peers(
 						random.nextInt(peers.length)
@@ -50,15 +48,26 @@ class RecordedSimulation extends Simulation {
 	}
 
 
-
-	val scn = scenario("RecordedSimulation")
-		.exec(http("StopForging")
-		.post("/apl?requestType=sendmoney&adminPassword=1"))
+	val scn = scenario("Send Money")
+		.exec(http("Get Account Id")
+		.post("/apl?requestType=getAccountId&secretPhrase="+random.nextInt(200).toString).check(jsonPath("$.accountRS").find.saveAs("accountRS")))
 		.pause(1)
-
+		.exec(session => {
+			val transaction = session("accountRS").asOption[String]
+			session
+		})
+		.exec(http("Send Money")
+		.post("/apl?" +
+			"requestType=sendMoney&" +
+			"feeATM=3000000000&" +
+			"deadline=1440&" +
+			"amountATM="+random.nextInt(2000).toString+"00000000&" +
+			"recipient=${accountRS}&secretPhrase="+random.nextInt(200).toString))
 		.exec { session =>
 			println(session)
 			session
 		}
-	setUp(scn.inject(atOnceUsers(1))).protocols(httpProtocol)
+
+	val inject = 	constantUsersPerSec(2) during (60 minutes)
+	setUp(scn.inject(inject)).protocols(httpProtocol)
 }
