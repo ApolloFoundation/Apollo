@@ -1,13 +1,61 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-import com.apollocurrency.aplwallet.api.dto.*;
+import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockDTO;
+import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
+import com.apollocurrency.aplwallet.api.dto.EntryDTO;
+import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
+import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.api.response.*;
-import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
+import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsResponse;
+import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
+import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
+import com.apollocurrency.aplwallet.api.response.ForgingResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
+import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
+import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
+import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
+import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
+import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
+import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +66,6 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseOld extends TestBase {
@@ -35,11 +82,11 @@ public class TestBaseOld extends TestBase {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
-            assertTrue(inBlock);
+            Assertions.assertTrue(inBlock);
         }
         catch (Exception e)
         {
-            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+            Assertions.assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
         }
         return inBlock;
     }
@@ -200,6 +247,7 @@ public class TestBaseOld extends TestBase {
     }
 
     //Skrypchenko Serhii
+    @Step
     public AccountCountAliasesResponse getAliasCount(Wallet wallet) {
         addParameters(RequestType.requestType,RequestType.getAliasCount);
         addParameters(Parameters.wallet, wallet);
@@ -215,6 +263,7 @@ public class TestBaseOld extends TestBase {
 
 
     //Skrypchenko Serhii
+    @Step
     public  CreateTransactionResponse setAlias (Wallet wallet,String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
         addParameters(RequestType.requestType,RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
@@ -307,11 +356,20 @@ public class TestBaseOld extends TestBase {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
+    @Override
+    public  List<ShardDTO> getShards(String ip) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
 
     public AccountDTO enable2FA(Wallet wallet) {
        // addParameters(RequestType.requestType,RequestType.enable2FA);
       //  addParameters(Parameters.wallet, wallet);
        // return getInstanse(AccountDTO.class);
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -321,7 +379,7 @@ public class TestBaseOld extends TestBase {
         addParameters(RequestType.requestType, RequestType.getPeers);
         addParameters(Parameters.active, true);
         Response response = httpCallGet();
-        assertEquals(200, response.code());
+        Assertions.assertEquals(200, response.code());
         GetPeersIpResponse peers = mapper.readValue(response.body().string(), GetPeersIpResponse.class);
         return peers.getPeers();
         } catch (IOException e) {
@@ -703,74 +761,8 @@ public class TestBaseOld extends TestBase {
 
 
 
-    public static void setUpTestData(){
-        CreateTransactionResponse transactionResponse;
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 900000000) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10000000);
-            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-        }
-
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
-        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 900000000) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10000000);
-            verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-        }
-
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
-        verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
-    }
 
 
-    private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
-        addParameters(RequestType.requestType,RequestType.sendMoney);
-        addParameters(Parameters.recipient, recipient);
-        addParameters(Parameters.amountATM, moneyAmount+"00000000");
-        addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.feeATM, "500000000");
-        addParameters(Parameters.deadline, 1440);
-        return getInstanse(CreateTransactionResponse.class);
-    }
-
-    private static boolean verifyTransactionInBlockSetUp(String transaction)
-    {
-        boolean inBlock = false;
-        try {
-            inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
-            assertTrue(inBlock);
-        }
-        catch (Exception e)
-        {
-            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
-        }
-        return inBlock;
-    }
-
-    private static TransactionDTO getTransactionSetUP(String transaction) {
-        addParameters(RequestType.requestType, RequestType.getTransaction);
-        addParameters(Parameters.transaction, transaction);
-        return getInstanse(TransactionDTO.class);
-    }
-
-    private static BalanceDTO getBalanceSetUP(Wallet wallet) {
-        addParameters(RequestType.requestType, getBalance);
-        addParameters(Parameters.wallet, wallet);
-        return getInstanse(BalanceDTO.class);
-    }
-
-    public static void startForgingSetUp(){
-        addParameters(RequestType.requestType, getForging);
-        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
-        ForgingResponse forgingResponse =  getInstanse(ForgingResponse.class);
-        if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
-            System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
-            addParameters(RequestType.requestType, startForging);
-            addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
-            addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
-            getInstanse(ForgingDetails.class);
-        }
-    }
 
 
     @AfterEach

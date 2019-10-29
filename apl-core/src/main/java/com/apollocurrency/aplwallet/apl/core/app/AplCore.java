@@ -95,8 +95,8 @@ public final class AplCore {
     private static volatile boolean shutdown = false;
 
     private TimeService time;
-    private static Blockchain blockchain;
-    private static BlockchainProcessor blockchainProcessor;
+    private Blockchain blockchain;
+    private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
@@ -263,7 +263,10 @@ public final class AplCore {
                 //Account initialization
                 Cache<DbKey, PublicKey> publicKeyCache = null;
                 if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+                    log.debug("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                     publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
+                } else {
+                    log.info("'{}' is TURNED OFF...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
                 }
                 Account.init(databaseManager, propertiesHolder, blockchainProcessor, blockchainConfig, blockchain, sync, publicKeyTable, accountTable, guaranteedBalanceTable, publicKeyCache);
                 GenesisAccounts.init();

@@ -22,3 +22,5 @@ nbactions.xml
 **/apl.log
 **/pom.xml.versionsBackup
 /apl-core/nbproject/
+/apl-integration-tests/allure-results
+/apl-integration-tests/.allure

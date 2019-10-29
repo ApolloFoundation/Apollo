@@ -68,21 +68,22 @@ import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -151,9 +152,11 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
-    @Transactional
     public void saveOrder(DexOrder order) {
         order.setHeight(this.blockchain.getHeight()); // new height value
+        if (log.isTraceEnabled()) {
+            log.trace("Save order {} at height {} : {} ", order.getId(), order.getHeight(), StackTraceUtils.lastNStacktrace(3));
+        }
         dexOrderTable.insert(order);
     }
 
@@ -241,10 +244,8 @@ public class DexService {
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
-            order.setHeight(this.blockchain.getHeight()); // new height value
-            dexOrderTable.insert(order);
-
-            refundFrozenAplForOrder(order);
+            saveOrder(order);
+            refundFrozenAplForOrderIfWeCan(order);
 
             reopenIncomeOrders(order.getId());
 
@@ -270,13 +271,11 @@ public class DexService {
         if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
-                order.setHeight(this.blockchain.getHeight()); // new height value
-                dexOrderTable.insert(order);
+                saveOrder(order);
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
-                order.setHeight(this.blockchain.getHeight()); // new height value
-                dexOrderTable.insert(order);
-                refundFrozenAplForOrder(order);
+                saveOrder(order);
+                refundFrozenAplForOrderIfWeCan(order);
                 reopenIncomeOrders(order.getId());
             }
 
@@ -285,13 +284,14 @@ public class DexService {
         }
     }
 
-    public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
+    public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             refundAPLFrozenMoney(order);
         }
     }
 
-    public void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
+
+    private void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
 
         //Return APL.
@@ -630,9 +630,9 @@ public class DexService {
                     pendingOrder.setStatus(OrderStatus.OPEN);
                 } else {
                     pendingOrder.setStatus(OrderStatus.EXPIRED);
-                    refundAPLFrozenMoney(pendingOrder);
+                    refundFrozenAplForOrderIfWeCan(pendingOrder);
                 }
-                dexOrderTable.insert(pendingOrder);
+                saveOrder(pendingOrder);
             }
         }
     }
