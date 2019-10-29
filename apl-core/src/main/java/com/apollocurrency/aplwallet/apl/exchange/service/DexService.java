@@ -245,7 +245,7 @@ public class DexService {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
             saveOrder(order);
-            refundFrozenAplForOrder(order);
+            refundFrozenAplForOrderIfWeCan(order);
 
             reopenIncomeOrders(order.getId());
 
@@ -275,7 +275,7 @@ public class DexService {
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
                 saveOrder(order);
-                refundFrozenAplForOrder(order);
+                refundFrozenAplForOrderIfWeCan(order);
                 reopenIncomeOrders(order.getId());
             }
 
@@ -284,13 +284,14 @@ public class DexService {
         }
     }
 
-    public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
+    public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             refundAPLFrozenMoney(order);
         }
     }
 
-    public void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
+
+    private void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
 
         //Return APL.
@@ -629,7 +630,7 @@ public class DexService {
                     pendingOrder.setStatus(OrderStatus.OPEN);
                 } else {
                     pendingOrder.setStatus(OrderStatus.EXPIRED);
-                    refundAPLFrozenMoney(pendingOrder);
+                    refundFrozenAplForOrderIfWeCan(pendingOrder);
                 }
                 saveOrder(pendingOrder);
             }
