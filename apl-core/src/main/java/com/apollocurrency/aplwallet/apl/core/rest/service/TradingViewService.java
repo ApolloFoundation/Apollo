@@ -5,6 +5,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
+import java.util.List;
 import javax.inject.Singleton;
 
 /**
@@ -16,6 +19,8 @@ import javax.inject.Singleton;
 public interface TradingViewService {
     
     
+    List<DexTradeEntryMin> getTradeInfoForInterval(DexCurrencies pairCurrency, 
+            Integer start, Integer end);    
     /** 
      * Start transport interaction service
      */
