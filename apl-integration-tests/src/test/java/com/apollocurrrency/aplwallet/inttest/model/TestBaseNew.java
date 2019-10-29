@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -216,6 +217,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public Account2FAResponse generateNewAccount() throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -231,6 +233,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -248,6 +251,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put("account", wallet.getUser());
@@ -263,6 +267,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public boolean importSecretFile(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         Response response = given().log().all()
@@ -293,6 +298,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
             return given().log().uri()
@@ -303,6 +309,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public PeerDTO getPeer(String peer) {
         String path = String.format("/rest/networking/peer?peer=%s",peer);
         return given().log().uri()
@@ -352,6 +359,26 @@ public class TestBaseNew extends TestBase {
                 .when()
                 .post(path);
         return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+    }
+
+    //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
+
+    @Override
+    public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
+        HashMap<String, String> param = new HashMap();
+        param.put("orderType", orderType);
+        param.put("pairCurrency", pairCurrency);
+        param.put("status", status);
+        param.put("accountId", accountId);
+
+        String path = "/rest/dex/offers";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                //.get(path).as(DexOrderResponse.class);
+                .get(path)
+                .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
     @Override
@@ -520,6 +547,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public ForgingResponse getForging() {
         String path = "/rest/nodeinfo/forgers";
         return given().log().uri()

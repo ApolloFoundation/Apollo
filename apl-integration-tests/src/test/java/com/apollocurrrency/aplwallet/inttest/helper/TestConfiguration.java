@@ -19,6 +19,7 @@ public class TestConfiguration {
     private String host;
     private String port;
     private Wallet standartWallet;
+    private Wallet genesisWallet;
     private Wallet vaultWallet;
     private String adminPass;
     private List<String> peers;
@@ -36,6 +37,7 @@ public class TestConfiguration {
             adminPass = (String) jsonObject.get("adminPassword");
             standartWallet = mapper.readValue( jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet= mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
+            genesisWallet =  mapper.readValue(jsonObject.get("genesisWallet").toString(), Wallet.class);
             TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {};
             testNetIp = mapper.readValue(jsonObject.get("net").toString(), typeRef);
             Random rand = new Random();
@@ -88,4 +90,12 @@ public class TestConfiguration {
         });
         return this.peers;
     }
+
+    public Wallet getGenesisWallet() {
+        return genesisWallet;
+    }
+    public void setGenesisWallet(Wallet genesisWallet) {
+        this.genesisWallet = genesisWallet;
+    }
+
 }

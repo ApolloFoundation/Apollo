@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -61,7 +62,8 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
+        log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
         String fileId = shardPresentData.getFileIdValue();
         try {
             shardImporter.importShardByFileId(fileId);

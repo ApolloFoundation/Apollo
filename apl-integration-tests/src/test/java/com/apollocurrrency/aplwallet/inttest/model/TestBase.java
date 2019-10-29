@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
+import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.File;
@@ -46,6 +49,7 @@ public abstract class TestBase implements ITest {
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
+    public static final Logger log = LoggerFactory.getLogger(TestBase.class);
 
     @BeforeAll
     static void initAll() {
@@ -53,7 +57,7 @@ public abstract class TestBase implements ITest {
         retryPolicy = new RetryPolicy()
                      .retryWhen(false)
                      .withMaxRetries(20)
-                     .withDelay(1, TimeUnit.SECONDS);
+                     .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
@@ -100,19 +104,23 @@ public abstract class TestBase implements ITest {
     public static void setUpTestData(){
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
+            transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
+                    TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(), TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getStandartWallet(),
+                TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 9000000000000L) {
-            transactionResponse = sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
+            transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
+                    TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
         }
 
-        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(), TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
+        transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getVaultWallet(),
+                TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
     }
 
@@ -156,24 +164,29 @@ public abstract class TestBase implements ITest {
     private static void startForgingSetUp() throws JsonProcessingException {
         List<String> peersIp;
         String path;
-        if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")){
-            //TODO: Change on REST Easy
-            HashMap<String, String> param = new HashMap();
-            param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
-
-            path = "/apl";
-            Response response =  given().log().all()
+        if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")) {
+            path = "/rest/networking/peer/all";
+            List<String> peers = given().log().uri()
                     .spec(restHelper.getSpec())
-                    .contentType(ContentType.URLENC)
-                    .formParams(param)
                     .when()
-                    .post(path);
-            BlockchainInfoDTO status = mapper.readValue(response.body().prettyPrint(), BlockchainInfoDTO.class);
-            peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
-          }else {
-            peersIp = TestConfiguration.getTestConfiguration().getPeers();
-        }
+                    .get(path).as(GetPeersIpResponse.class).getPeers();
+            if (peers.size() > 0) {
+                //TODO: Change on REST Easy
+                HashMap<String, String> param = new HashMap();
+                param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
 
+                path = "/apl";
+                Response response = given().log().all()
+                        .spec(restHelper.getSpec())
+                        .contentType(ContentType.URLENC)
+                        .formParams(param)
+                        .when()
+                        .post(path);
+                BlockchainInfoDTO status = mapper.readValue(response.body().prettyPrint(), BlockchainInfoDTO.class);
+                peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+            } else {
+                peersIp = TestConfiguration.getTestConfiguration().getPeers();
+            }
       if (peersIp != null && peersIp.size() > 0){
 
          boolean isForgingEnableOnGen = false;
@@ -221,12 +234,14 @@ public abstract class TestBase implements ITest {
             System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
           */
           }
+
           if (!isForgingEnableOnGen){
               addParameters(RequestType.requestType, startForging);
-              addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+              addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
               addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
               getInstanse(ForgingDetails.class);
           }
+      }
 
         } else {
             addParameters(RequestType.requestType, getForging);
@@ -236,7 +251,7 @@ public abstract class TestBase implements ITest {
             if (forgingResponse.getGenerators() != null && forgingResponse.getGenerators().size() == 0) {
                 System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
                 addParameters(RequestType.requestType, startForging);
-                addParameters(Parameters.wallet, new Wallet("APL-NZKH-MZRE-2CTT-98NPZ","0"));
+                addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
                 addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
                 getInstanse(ForgingDetails.class);
             }
@@ -253,7 +268,7 @@ public abstract class TestBase implements ITest {
             addParameters(Parameters.account,accountID.getAccount());
             GetAccountResponse account = getInstanse(GetAccountResponse.class);
             if (Long.valueOf(account.getBalanceATM()) < 10000000000000L){
-                sendMoneySetUp(new Wallet("APL-NZKH-MZRE-2CTT-98NPZ", "0"), account.getAccountRS(), 5000000);
+                sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(), account.getAccountRS(), 5000000);
             }
         }
     }

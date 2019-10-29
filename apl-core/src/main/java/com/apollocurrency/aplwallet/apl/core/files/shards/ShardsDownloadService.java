@@ -82,7 +82,7 @@ public class ShardsDownloadService {
         ShardNameHelper snh = new ShardNameHelper();
         String fileId = snh.getFullShardId(shardId, myChainId);
         ShardPresentData shardPresentData = new ShardPresentData(fileId);
-        log.debug("Firing 'SHARD_PRESENT' event {}...", fileId);
-        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fire(shardPresentData); // data is used
-    }    
+        log.debug("Firing 'SHARD_PRESENT' event {}...", shardPresentData);
+        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is used
+    }   
 }

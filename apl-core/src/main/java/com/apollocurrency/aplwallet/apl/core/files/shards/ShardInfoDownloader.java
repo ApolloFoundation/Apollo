@@ -176,8 +176,6 @@ public class ShardInfoDownloader {
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
-
-
     private byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
         ShardingInfo psi = shardInfoByPeers.get(peerAddr);
