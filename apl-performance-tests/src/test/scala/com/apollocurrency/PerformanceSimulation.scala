@@ -72,6 +72,6 @@ class PerformanceSimulation extends Simulation {
 			session
 		}
 
-	val inject = 	constantUsersPerSec(2) during (60 minutes)
+	val inject = 	constantUsersPerSec(2) during (1 minutes)
 	setUp(scn.inject(inject)).protocols(httpProtocol)
 }
