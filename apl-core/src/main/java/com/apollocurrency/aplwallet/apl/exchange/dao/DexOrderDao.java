@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -53,5 +54,18 @@ public interface DexOrderDao {
             " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOffersForMatchingPure(@BindBean DexOrderDBMatchingRequest dexOrderDBMatchingRequest, @Define("orderby") String orderBy);
-
+    
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +                        
+            "AND (:currentTime is NULL OR offer.finish_time > :startInterval) " +
+            "AND (:currentTime is NULL OR offer.finish_time <= :endInterval) " +
+            "AND (:type is NULL OR offer.type = 1) " +
+            "AND (:status is NULL OR offer.status = 0) " +            
+            "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +            
+            "OFFSET :offset LIMIT :limit"
+    )
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
+    
 }
