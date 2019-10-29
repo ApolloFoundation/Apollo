@@ -11,7 +11,11 @@ import scalaj.http._
 
 class PerformanceSimulation extends Simulation {
 
-	var peers = ConfigFactory.load("application.conf").getStringList("n1").asScala.toList
+	val env: String = System.getProperty("test.env")
+	println("+++++++++++++++++++++++++++++++++++++++")
+	println(env)
+
+	var peers = ConfigFactory.load("application.conf").getStringList(env).asScala.toList
 	val random = new Random
 	val httpProtocol = http.baseUrls(peers)
 

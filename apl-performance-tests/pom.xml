@@ -10,6 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>apl-performance-tests</artifactId>
+    <properties>
+        <aspectj.version>1.9.4</aspectj.version>
+        <test.env>n2</test.env>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -28,13 +32,17 @@
             <version>2.3.0</version>
         </dependency>
     </dependencies>
-
     <build>
     <plugins>
         <plugin>
             <groupId>io.gatling</groupId>
             <artifactId>gatling-maven-plugin</artifactId>
             <version>3.0.4</version>
+            <configuration>
+                <jvmArgs>
+                    <jvmArg>-Dtest.env=${test.env}</jvmArg>
+                </jvmArgs>
+            </configuration>
         </plugin>
     </plugins>
     </build>
