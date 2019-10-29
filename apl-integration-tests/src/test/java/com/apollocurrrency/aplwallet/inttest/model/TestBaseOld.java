@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -364,6 +365,11 @@ public class TestBaseOld extends TestBase {
        // addParameters(RequestType.requestType,RequestType.enable2FA);
       //  addParameters(Parameters.wallet, wallet);
        // return getInstanse(AccountDTO.class);
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
