@@ -18,6 +18,8 @@ public class DexTradeEntryMinToDtoConverter implements Converter< DexTradeEntryM
         dexTradeInfoMinDto.hi = t.getHi();
         dexTradeInfoMinDto.open = t.getOpen();
         dexTradeInfoMinDto.close = t.getClose();
+        dexTradeInfoMinDto.volumefrom = t.getVolumefrom();
+        dexTradeInfoMinDto.volumeto = t.getVolumeto();
         return dexTradeInfoMinDto;
     }
     

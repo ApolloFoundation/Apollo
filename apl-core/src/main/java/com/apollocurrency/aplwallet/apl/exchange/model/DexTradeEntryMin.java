@@ -18,4 +18,6 @@ public class DexTradeEntryMin {
      private BigDecimal low;
      private BigDecimal open;
      private BigDecimal close;
+     private BigDecimal volumefrom;
+     private BigDecimal volumeto;
 }

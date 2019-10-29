@@ -21,5 +21,9 @@ public class DexTradeInfoMinDto {
     public BigDecimal open;
     @Schema(name="close", description="the rate at the moment of closing")
     public BigDecimal close;    
+    @Schema(name="volumefrom", description="min volume of trade operations")
+    public BigDecimal volumefrom;
+    @Schema(name="volumeto", description="max volume of trade operations")
+    public BigDecimal volumeto;        
 }
 
