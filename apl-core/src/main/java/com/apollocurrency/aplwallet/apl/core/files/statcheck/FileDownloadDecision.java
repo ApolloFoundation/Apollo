@@ -14,5 +14,5 @@ public enum FileDownloadDecision {
     NeedsInvestigation, //network contains critical number of bad host and may be unusable
     Bad, // network is unusable
     NoPeers, // Just no peers with requested file
-    NotReady // Decision is not ready, not started or in progress
+    NotReady; // Decision is not ready, not started or in progress
 }

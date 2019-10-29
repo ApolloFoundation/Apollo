@@ -10,13 +10,13 @@ import java.util.List;
  */
 public class PeerInfoGroup {
     private String hash;
-    List<HasHashSum> pl = new ArrayList<>();    
+    List<PeerFileHashSum> pl = new ArrayList<>();    
 
     public PeerInfoGroup(String hash) {
         this.hash = hash;
     }
     
-    public void add(HasHashSum pi){
+    public void add(PeerFileHashSum pi){
         pl.add(pi);
     }
     
@@ -24,7 +24,7 @@ public class PeerInfoGroup {
         return pl.size();
     }
 
-    boolean contains(HasHashSum pi) {
+    boolean contains(PeerFileHashSum pi) {
         return pl.contains(pi);
     }
     

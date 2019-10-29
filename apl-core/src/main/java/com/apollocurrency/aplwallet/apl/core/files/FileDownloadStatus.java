@@ -15,15 +15,23 @@ import javax.enterprise.inject.Vetoed;
  */
 @Vetoed
 public class FileDownloadStatus {
-    
+    private final String id;
     double completed = 0.0;
     AtomicInteger chunksTotal = new AtomicInteger(1); //init to 1 to avoid zero division
     AtomicInteger chunksReady = new AtomicInteger(0);
     List<String> peers = new ArrayList<>();
     FileDownloadDecision decision = FileDownloadDecision.NotReady;
 
+    public FileDownloadStatus(String id) {
+        this.id = id;
+    }
+
     boolean isComplete() {
         return chunksReady.get() >= chunksTotal.get();
     }
     
+    @Override
+    public String toString(){
+       return String.format("File ID: %s completed %f3.2 decision %s", id, completed,decision.name());
+    }
 }

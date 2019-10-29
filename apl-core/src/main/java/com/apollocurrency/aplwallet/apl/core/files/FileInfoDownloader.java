@@ -5,8 +5,6 @@ package com.apollocurrency.aplwallet.apl.core.files;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -17,6 +15,11 @@ import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.Getter;
 
 /**
  *
@@ -25,31 +28,41 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FileInfoDownloader {
     private final PeersService peers;
-    private List<HasHashSum> goodPeers;
-    private List<HasHashSum> badPeers;
-    private FileDownloadInfo downloadInfo;
-     
+    @Getter
+    private Set<PeerFileHashSum> goodPeers;
+    @Getter
+    private Set<PeerFileHashSum> badPeers;
+    private final Map<String,FileDownloadInfo> peersDownloadInfo  = new HashMap<>();
+    @Getter
+    private FileDownloadInfo fileDownloadInfo; 
+    
     @Inject
     public FileInfoDownloader(PeersService peers) {
         this.peers = peers;
     }
       
-    public FileDownloadDecision prepareForDownloading(String fileID, Set<Peer> onlyPeers) {
+    public FileDownloadDecision prepareForDownloading(String fileID, Set<String> onlyPeers) {
         log.debug("prepareForDownloading()...");
         FileDownloadDecision res;
         Set<Peer> allPeers;
         if(onlyPeers==null || onlyPeers.isEmpty()){
            allPeers = peers.getAllConnectedPeers();
         }else{
-           allPeers=new HashSet<>(); 
-           allPeers.addAll(onlyPeers);
+           allPeers=new HashSet<>();
+           onlyPeers.stream().map((peerAddr) -> peers.findOrCreatePeer(null, peerAddr, true)).forEachOrdered((p) -> {
+               allPeers.add(p);
+            });
         }
         log.debug("prepareForDownloading(), allPeers = {}", allPeers);
-        PeersList<PeerFileInfo> pl = new PeersList<>();
-        allPeers.forEach((pi) -> {
-            PeerFileInfo pfi = new PeerFileInfo(new PeerClient(pi), fileID);
-            if(pfi.retreiveHash()!=null){
-              pl.add(pfi);
+        PeersList pl = new PeersList();
+        allPeers.forEach((p) -> {
+            PeerClient pc = new PeerClient(p);
+            FileDownloadInfo fdi = pc.getFileInfo(fileID);
+            if(fdi!=null){
+              byte[] hash = Convert.parseHexString(fdi.fileInfo.hash);
+              PeerFileHashSum pfhs = new PeerFileHashSum(hash, fileID, fileID);
+              pl.add(pfhs);
+              peersDownloadInfo.put(p.getHostWithPort(), fdi);
             }
         });
         log.debug("prepareForDownloading(), pl = {}", pl);
@@ -59,16 +72,11 @@ public class FileInfoDownloader {
         badPeers = pvdm.getInvalidPeers();
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
         if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
-            PeerFileInfo pfi = (PeerFileInfo)goodPeers.get(0);
-            downloadInfo = pfi.getFdi();
+            PeerFileHashSum pfi = goodPeers.iterator().next();
+            fileDownloadInfo = peersDownloadInfo.get(pfi.getPeerId());            
         }
         log.debug("prepareForDownloading(), res = {}", res);
         return res;
-    }
-  
-
-    public List<HasHashSum> getGoodPeers() {
-        return goodPeers;
     }
     
 }

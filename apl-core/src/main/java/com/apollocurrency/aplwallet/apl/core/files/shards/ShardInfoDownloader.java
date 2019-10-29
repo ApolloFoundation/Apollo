@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
-import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
@@ -12,8 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerShardInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
@@ -38,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 
 /**
  *
@@ -57,8 +55,8 @@ public class ShardInfoDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final DownloadableFilesManager downloadableFilesManager;
-    Map<Long,List<HasHashSum>> goodPeersMap=new HashMap<>();
-    Map<Long,List<HasHashSum>> badPeersMap=new HashMap<>();
+    Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
+    Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
 
     private final PropertiesHolder propertiesHolder;
     private final PeersService peers;
@@ -194,9 +192,10 @@ public class ShardInfoDownloader {
 
     private FileDownloadDecision checkShard(Long shardId, Set<Peer> shardPeers) {
         //do statistical analysys of shard's hashes
-        PeersList<PeerShardInfo> shardPeerList = new PeersList<>();
+        PeersList shardPeerList = new PeersList();
+        ShardNameHelper snh = new ShardNameHelper();
         for (Peer p : shardPeers) {
-            PeerShardInfo psi = new PeerShardInfo(new PeerClient(p), shardId, myChainId);
+            PeerFileHashSum psi = new PeerFileHashSum(p.getHostWithPort(), snh.getFullShardId(shardId, myChainId));
             psi.setHash(getHash(shardId, p.getHostWithPort()));
             shardPeerList.add(psi);
         }
@@ -256,14 +255,13 @@ public class ShardInfoDownloader {
             return result;
         }
         // check if zip file exists on local node
-        byte[] goodHash = goodPeersMap.get(shardId).get(0).getHash();
+        PeerFileHashSum good = goodPeersMap.get(shardId).iterator().next();
+        byte[] goodHash = good.getHash();
         if (checkShardDownloadedAlready(shardId, goodHash)) {
-//            fireShardPresentEvent(shardId);
             result = FileDownloadDecision.OK;
             return result;
         }
         log.debug("Start preparation to downloading...");
-//        FileDownloader fileDownloader = fileDownloaders.get();
         String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
         log.debug("fileID = '{}'", fileID);
 //        

@@ -11,68 +11,63 @@ import lombok.extern.slf4j.Slf4j;
  * @author al
  */
 @Slf4j
-public class PeersList< T extends HasHashSum> {
+public class PeersList {
 
-    private final List<T> allPeers = new ArrayList<>();
-    
-    public void add(T p){
+    private final List<PeerFileHashSum> allPeers = new ArrayList<>();
+
+    public void add(PeerFileHashSum p) {
         allPeers.add(p);
     }
-    
-    public HasHashSum getPeer(int id){
-        return allPeers.get(id);
+
+    public PeerFileHashSum getPeer(int idx) {
+        return allPeers.get(idx);
     }
-    
+
     /**
      * get random peers or all if number is bigger then count of peers
+     *
      * @param number number of peers to get
      * @return set of peers that have requested file
      */
-    public Set<T> getPeersWithRequestedFile(int number){        
-       Set<T> res = new HashSet<>();
-       Set<Integer> idxSet = new HashSet<>();
-       if(number>allPeers.size()){ //add all if we have less the required
-           for(int i=0; i<allPeers.size(); i++){
-               idxSet.add(i);
-           }
-       }else{
-         while(idxSet.size()<number){ //add random peers from list
-             int i = (int)Math.round(Math.random()*(allPeers.size()-1));
-             idxSet.add(i);
-         }
-       }
-       //well, now we have to get hash of entity from peers
-       //but there coud be not enough of them
-       //TODO: what to do if we have less? Just request bigger numbers?
-       for(int idx: idxSet) {
-             T p = allPeers.get(idx);
-             if(p!=null && p.getHash()==null){
-                 if(p.retreiveHash()!=null){
-                   res.add(p);
-                   
-                 }else{                                         
-                   log.trace("Can not get hash from {}",p.getId());
-                 }
-             } else{
-                   res.add(p);
-             }
-       }
-       return res;
-    }
-    
-    public T getRandomPeer(){
-       int i = (int)Math.round(Math.random()*(allPeers.size()-1));
-       T res = allPeers.get(i);
-       res.retreiveHash();
-       return res;
-    }  
-    
-    public Set<T> getEnoughRandomPeers(long min, double min_percent){
-        Long n = Math.round(allPeers.size()*min_percent/100);
-        if(n<min){
-            n=min;
+    public Set<PeerFileHashSum> getNPeers(int number) {
+        Set<PeerFileHashSum> res = new HashSet<>();
+        Set<Integer> idxSet = new HashSet<>();
+        if (number > allPeers.size()) { //add all if we have less the required
+            for (int i = 0; i < allPeers.size(); i++) {
+                idxSet.add(i);
+            }
+        } else {
+            while (idxSet.size() < number) { //add random peers from list
+                int i = (int) Math.round(Math.random() * (allPeers.size() - 1));
+                idxSet.add(i);
+            }
         }
-        Set<T> is = getPeersWithRequestedFile(n.intValue());
+        //well, now we have to get hash of entity from peers
+        //but there coud be not enough of them
+        //TODO: what to do if we have less? Just request bigger numbers?
+        for (int idx : idxSet) {
+            PeerFileHashSum p = allPeers.get(idx);
+            if (p != null && p.getHash() != null) {
+                res.add(p);
+            } else {
+                log.trace("Can not get hash from {}", p == null ? "null" : p.getPeerId());
+            }
+        }
+        return res;
+    }
+
+    public PeerFileHashSum getRandomPeer() {
+        int i = (int) Math.round(Math.random() * (allPeers.size() - 1));
+        PeerFileHashSum res = allPeers.get(i);
+        return res;
+    }
+
+    public Set<PeerFileHashSum> getEnoughRandomPeers(long min, double min_percent) {
+        Long n = Math.round(allPeers.size() * min_percent / 100);
+        if (n < min) {
+            n = min;
+        }
+        Set<PeerFileHashSum> is = getNPeers(n.intValue());
         return is;
     }
 }

@@ -13,9 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.HasHashSum;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +37,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
+import java.util.HashSet;
 
 /**
  * This class performs complete file downloading from peers
@@ -51,7 +54,6 @@ public class FileDownloader {
     private String fileID;
     private FileDownloadInfo downloadInfo;
 
-    private final FileDownloadStatus status = new FileDownloadStatus();
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
     private String taskId;
@@ -63,40 +65,45 @@ public class FileDownloader {
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
-    private final PeersService peers;
-    private final FileInfoDownloader infoDownloader;
-    
+    @Getter
+    private FileDownloadStatus status;
+    private final Set<Peer> peers=new HashSet<>();
+    private final PeersService peersService;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
                           AplAppStatus aplAppStatus,
-                          FileInfoDownloader infoDownloader,
                           PeersService peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.infoDownloader = infoDownloader;
-        this.peers = peers;
+        this.peersService=peers;
     }
     
-    public void startDownload(FileDownloadInfo downloadInfo) {
+    public void startDownload(FileDownloadInfo downloadInfo, FileDownloadStatus status, Set<PeerFileHashSum> goodPeers) {
         this.downloadInfo = downloadInfo;
+        this.status=status;
+        peers.clear();
+        for(PeerFileHashSum ps: goodPeers){
+           PeerAddress actualAddr = new PeerAddress(ps.getPeerId());
+           peers.add((Peer)peersService.findOrCreatePeer(actualAddr, null, false));
+        }
         fileID = downloadInfo.fileInfo.fileId;
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
         log.debug("startDownload()...");
         downloadTask = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal.set(downloadInfo.chunks.size());
                 status.chunksReady.set(0);
+                updateStatus();
                 log.debug("Starting file chunks downloading");
                 download();
                 return status.isComplete();
         });
     }
 
-    public FileDownloadStatus getDownloadStatus() {
+    private void updateStatus() {
         status.completed = ((1.0D * status.chunksReady.get()) / (1.0D * status.chunksTotal.get())) * 100.0D;
-        return status;
     }
 
     private FileChunkInfo getNextEmptyChunk() {
@@ -111,6 +118,7 @@ public class FileDownloader {
                     break;
                 }
             }
+            updateStatus();
         } finally {
             fileChunksLock.writeLock().unlock();
         }
@@ -171,10 +179,10 @@ public class FileDownloader {
         while ((fci = getNextEmptyChunk())!= null) {
             boolean isLast = downloadAndSaveChunk(fci, p, fops);
             if(fci.present==FileChunkState.SAVED){
-                long percent = Math.round(getDownloadStatus().completed);
+                long percent = Math.round(status.completed);
                 if(lastPercent.get()+5<percent){
                     lastPercent.set(percent);
-                    aplAppStatus.durableTaskUpdate(this.taskId, getDownloadStatus().completed, "File downloading: "+this.fileID+"...");            
+                    aplAppStatus.durableTaskUpdate(this.taskId, status.completed, "File downloading: "+this.fileID+"...");            
                 }
             }
             if(isLast){
@@ -187,12 +195,11 @@ public class FileDownloader {
 
     public FileDownloadStatus download() {
         int peerCount = 0;
-        for (HasHashSum p : infoDownloader.getGoodPeers()) {
+        for (Peer p : peers) {
             Future<Boolean> dn_res = executor.submit(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
-                    PeerFileInfo pfi = (PeerFileInfo) p;
-                    return doPeerDownload(pfi.getPeerClient());
+                    return doPeerDownload(new PeerClient(p));
                 }
             });
             runningDownloaders.add(dn_res);
