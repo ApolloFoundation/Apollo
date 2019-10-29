@@ -22,7 +22,7 @@ public class EthWalletBalanceInfo {
         return address;
     }
 
-    public void put(String currency, BigInteger balance){
+    public void put(String currency, BigInteger balance) {
         balances.put(currency, balance);
     }
 
@@ -32,11 +32,11 @@ public class EthWalletBalanceInfo {
     }
 
 
-    public BigInteger getEth(){
+    public BigInteger getEth() {
         return balances.get(DexCurrencies.ETH.getCurrencyCode());
     }
 
-    public BigInteger getPax(){
+    public BigInteger getPax() {
         return balances.get(DexCurrencies.PAX.getCurrencyCode());
     }
 }

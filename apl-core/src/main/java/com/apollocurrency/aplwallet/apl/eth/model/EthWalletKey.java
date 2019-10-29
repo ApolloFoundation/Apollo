@@ -11,7 +11,7 @@ public class EthWalletKey {
         this.credentials = credentials;
     }
 
-    public EthWalletKey(byte[] privateKey){
+    public EthWalletKey(byte[] privateKey) {
         ECKeyPair ecKeyPair = ECKeyPair.create(privateKey);
         this.credentials = Credentials.create(ecKeyPair);
     }
