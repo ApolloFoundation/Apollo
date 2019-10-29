@@ -166,6 +166,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
 
+
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         return transactionProcessor;
@@ -491,7 +492,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
                     FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
-
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
@@ -647,9 +647,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void shutdown() {
+        log.info("BlchProcImpl shutdown started...");
         try {
+            suspendBlockchainDownloading();
             Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
-            getMoreBlocks = false;
+            log.info("BlchProcImpl shutdown finished");
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
@@ -798,7 +800,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block); // send sync event to TrimObserver component
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
-        log.debug("Push block at height {} tx cnt: {} took {} ms (lock aquiring: {} ms)",
+        log.debug("Push block at height {} tx cnt: {} took {} ms (lock acquiring: {} ms)",
                 block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
 
@@ -1069,10 +1071,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
-            dataSource.commit(false); // should happen definately, otherwise
-
-        }
-        catch (RuntimeException e) {
+            dataSource.commit(false); // should happen definitely, otherwise
+        } catch (RuntimeException e) {
             log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown

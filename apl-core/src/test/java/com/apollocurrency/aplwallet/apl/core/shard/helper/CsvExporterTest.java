@@ -190,7 +190,7 @@ class CsvExporterTest {
             AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            GenesisPublicKeyTable.class)
+            GenesisPublicKeyTable.class, DexOrderTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -225,6 +225,8 @@ class CsvExporterTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
+    @Inject
+    DexOrderTable dexOrderTable;
 
     CsvExporter csvExporter;
 
@@ -264,7 +266,7 @@ class CsvExporterTest {
         publicKeyTable.init();
         DexContractTable dexContractTable = new DexContractTable();
         registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable();
+//        DexOrderTable dexOrderTable = new DexOrderTable();
         registry.registerDerivedTable(dexOrderTable);
         dataExportPath = createPath("csvExportDir");
         csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
@@ -408,6 +410,16 @@ class CsvExporterTest {
         assertTrue(allLines.get(1).startsWith("\'1"));
         assertTrue(allLines.get(2).startsWith("\'Some product"));
         assertTrue(allLines.get(6).startsWith("\'Test product"));
+    }
+
+    @Test
+    void testExportDexOfferSortedByHeight() throws IOException {
+        csvExporter.exportDerivedTableCustomSort(dexOrderTable, 542100, 2, Set.of("DB_ID", "LATEST"), "height");
+        List<String> allLines = Files.readAllLines(dataExportPath.resolve("dex_offer.csv"));
+        assertEquals(6, allLines.size());
+        assertTrue(allLines.get(1).startsWith("1,0,100"));
+        assertTrue(allLines.get(2).startsWith("2,1,100"));
+        assertTrue(allLines.get(5).startsWith("5,0,100"));
     }
 
     @Test
