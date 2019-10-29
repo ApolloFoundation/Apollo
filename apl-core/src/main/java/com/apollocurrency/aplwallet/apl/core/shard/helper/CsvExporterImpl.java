@@ -386,14 +386,14 @@ public class CsvExporterImpl implements CsvExporter {
         int processedCount;
         int totalCount = 0;
         // prepare connection + statement + writer
+        String sql = "select * from " + table + " " + condition;
         try (Connection con = this.databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement(
-                     "select * from " + table + " " + condition);
+             PreparedStatement pstmt = con.prepareStatement(sql);
              CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
         ) {
-
-            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv            // select Min, Max DbId + rows count
-            log.debug("Table = {}, Min/Max = {}", table, minMaxValue);
+            csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+            // select Min, Max DbId + rows count
+            log.debug("Table = {}, Min/Max = {}, sql = {}", table, minMaxValue, sql);
 
             // process non empty tables only
             if (minMaxValue.getCount() > 0) {

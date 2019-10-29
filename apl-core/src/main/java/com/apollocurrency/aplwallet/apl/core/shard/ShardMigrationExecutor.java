@@ -103,7 +103,7 @@ public class ShardMigrationExecutor {
     @Transactional
     public void createAllCommands(int height, long shardId, MigrateState state) {
         int shardStartHeight = getShardStartHeight();
-        log.info("Create commands for shard between heights[{},{}]", shardStartHeight, height);
+        log.info("Create commands for shard '{}' between heights[{},{}]", shardId, shardStartHeight, height);
         List<TableInfo> tableInfoList = null;
         ExcludeInfo excludeInfo = null;
         switch (state) {
