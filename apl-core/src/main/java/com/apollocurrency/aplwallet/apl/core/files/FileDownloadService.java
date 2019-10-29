@@ -19,34 +19,42 @@ import lombok.extern.slf4j.Slf4j;
 public class FileDownloadService {
 
     private final Instance<FileDownloader> fileDownloaders;
-    private final FileInfoDownloader fileInfoDownloader;
+    private final Instance<FileInfoDownloader> fileInfoDownloaders;
     private final Map<String, FileDownloadStatus> downloadStatus = new HashMap<>();
 
     @Inject
     public FileDownloadService(Instance<FileDownloader> fileDownloaders,
-            FileInfoDownloader fileInfoDownloader
+            Instance<FileInfoDownloader> fileInfoDownloaders
     ) {
         this.fileDownloaders = fileDownloaders;
-        this.fileInfoDownloader = fileInfoDownloader;
+        this.fileInfoDownloaders = fileInfoDownloaders;
     }
 
-    public boolean prepareForDownloading(String fileId) {
-        boolean res = false;
-        return res;
-    }
-
-    public void startDownload(String fileId, Set<String> onlyPeers) {
+    private synchronized FileDownloadStatus prepareForDownloading(String fileId, Set<String> onlyPeers) {
         FileDownloadStatus fstatus = downloadStatus.get(fileId);
         if (fstatus != null) {
             log.warn("File {} is already in progress or downloaded. Status: {}", fileId, fstatus.toString());
-            return;
+            return fstatus;
         }
+        FileInfoDownloader fileInfoDownloader = fileInfoDownloaders.get();
+        fileInfoDownloader.prepareForDownloading(fileId, onlyPeers);
         fstatus = new FileDownloadStatus(fileId);
         downloadStatus.put(fileId, fstatus);
         fstatus.decision = fileInfoDownloader.prepareForDownloading(fileId, onlyPeers);
-        if(isAccaptable(fstatus.decision)){
+        fstatus.goodPeers = fileInfoDownloader.getGoodPeers();
+        fstatus.fileDownloadInfo = fileInfoDownloader.getFileDownloadInfo();
+        return fstatus;
+    }
+
+    public void startDownload(String fileId, Set<String> onlyPeers) {
+        FileDownloadStatus fstatus = prepareForDownloading(fileId, onlyPeers);
+        if(fstatus.downloaderStarted){
+            log.warn("File {} is already in progress or downloaded. Status: {}", fileId, fstatus.toString());
+            return;
+        }
+        if (isAccaptable(fstatus.decision)) {            
             FileDownloader downloader = fileDownloaders.get();
-            downloader.startDownload(fileInfoDownloader.getFileDownloadInfo(),fstatus, fileInfoDownloader.getGoodPeers());
+            downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
         }
     }
 
@@ -56,7 +64,7 @@ public class FileDownloadService {
     }
 
     public static boolean isAccaptable(FileDownloadDecision decision) {
-        boolean res = (decision==FileDownloadDecision.AbsOK) || (decision == FileDownloadDecision.OK);
+        boolean res = (decision == FileDownloadDecision.AbsOK) || (decision == FileDownloadDecision.OK);
         return res;
     }
 
