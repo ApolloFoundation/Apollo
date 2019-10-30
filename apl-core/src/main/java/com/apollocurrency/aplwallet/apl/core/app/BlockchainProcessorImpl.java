@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardInfoDownloader;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
@@ -156,7 +157,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ShardImporter shardImporter;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
-    private final ShardInfoDownloader shardDownloader;
+    private final ShardsDownloadService shardDownloader;
     private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -300,7 +301,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionApplier transactionApplier,
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
-                                   ShardInfoDownloader shardDownloader,
+                                   ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, javax.enterprise.event.Event<List<Transaction>> txEvent) {
         this.validator = validator;

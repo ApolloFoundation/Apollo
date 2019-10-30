@@ -55,6 +55,8 @@ public class FileDownloadService {
         if (isAccaptable(fstatus.decision)) {            
             FileDownloader downloader = fileDownloaders.get();
             downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
+        }else{
+            
         }
     }
 

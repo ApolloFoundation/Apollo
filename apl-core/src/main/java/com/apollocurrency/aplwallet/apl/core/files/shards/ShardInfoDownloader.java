@@ -3,17 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
-import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
-import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -22,43 +17,44 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import lombok.Getter;
 
 /**
  *
  * @author alukin@gmailk.com
  */
 @Slf4j
-@Singleton
 public class ShardInfoDownloader {
 
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
     private final Set<String> additionalPeers;
-
+    // shardId:shardInfo map
+    @Getter
     private final Map<Long, Set<ShardInfo>> sortedShards;
+    //shardId:peer map
+    @Getter
     private final Map<Long, Set<Peer>> shardsPeers;
+    @Getter
+    private final Map<Long,FileDownloadDecision> shardsDesisons = new HashMap<>();
+    //peerId:alShards map
+    @Getter
     private final Map<String,ShardingInfo> shardInfoByPeers;
-    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
-    private final ShardNameHelper shardNameHelper = new ShardNameHelper();
-    private final DownloadableFilesManager downloadableFilesManager;
+    @Getter
     Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
     Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
 
-    private final PropertiesHolder propertiesHolder;
+
     private final PeersService peers;
     private final UUID myChainId;
        
@@ -66,9 +62,6 @@ public class ShardInfoDownloader {
 
     public ShardInfoDownloader(
             BlockchainConfig blockchainConfig,
-            DownloadableFilesManager downloadableFilesManager,
-            javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
             PeersService peers) {
 
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
@@ -77,9 +70,6 @@ public class ShardInfoDownloader {
         this.sortedShards = Collections.synchronizedMap(new HashMap<>());
         this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
         this.shardInfoByPeers = Collections.synchronizedMap(new HashMap<>());
-        this.downloadableFilesManager = Objects.requireNonNull(downloadableFilesManager, "downloadableFilesManager is NULL");
-        this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
-        this.propertiesHolder=propertiesHolder;
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
     }
@@ -145,7 +135,7 @@ public class ShardInfoDownloader {
             additionalPeersCopy.addAll(additionalPeers);
             //avoid modification while iterating
             for (String pa : additionalPeersCopy) {
-
+                //here we are trying to create peers
                 Peer p = peers.findOrCreatePeer(null, pa, true);
                 if(p!=null) {
                     if (processPeerShardInfo(p)) {
@@ -165,13 +155,10 @@ public class ShardInfoDownloader {
             }
         }
         log.debug("Request ShardInfo result {}", sortedShards);
+        sortedShards.keySet().forEach((idx) -> {
+            shardsDesisons.put(idx,checkShard(idx));
+        });
         return sortedShards;
-    }
-
-    private void fireNoShardEvent() {
-        ShardPresentData shardPresentData = new ShardPresentData();
-        log.debug("Firing 'NO_SHARD' event...");
-        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
     private byte[] getHash(long shardId, String peerAddr) {
@@ -190,7 +177,15 @@ public class ShardInfoDownloader {
         return res;
     }
 
-    private FileDownloadDecision checkShard(Long shardId, Set<Peer> shardPeers) {
+    private FileDownloadDecision checkShard(Long shardId) {
+        FileDownloadDecision result;
+        Set<Peer> shardPeers = shardsPeers.get(shardId);
+        if (shardPeers.size() < 2) { //we cannot use Student's T distribution with 1 sample
+            result = FileDownloadDecision.NoPeers;
+            //FIRE event when shard is NOT PRESENT
+            log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
+            return result;
+        }        
         //do statistical analysys of shard's hashes
         PeersList shardPeerList = new PeersList();
         ShardNameHelper snh = new ShardNameHelper();
@@ -204,127 +199,7 @@ public class ShardInfoDownloader {
         goodPeersMap.put(shardId,pvdm.getValidPeers());
         badPeersMap.put(shardId,pvdm.getInvalidPeers());
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
-
         return res;
     }
 
-    private boolean checkShardDownloadedAlready(Long shardId, byte[] hash) {
-        boolean res = false;
-        // check if zip file exists on local node
-        String shardFileId = shardNameHelper.getFullShardId(shardId, myChainId);
-        File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(shardFileId).toFile();
-        log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
-        if (zipInExportedFolder.exists()) {
-            log.info("No need to download '{}'  as it is found in path = '{}'", shardFileId, zipInExportedFolder.toString());
-            //check integrity
-            FileInfo fi = downloadableFilesManager.getFileInfo(shardFileId);
-            String fileHashActual = fi.hash;
-            String receivedHash = Convert.toHexString(hash);
-            if (fileHashActual.equalsIgnoreCase(receivedHash)) {
-                res = true;
-                log.debug("Good zip hash was computed return '{}'...", res);
-            } else {
-                boolean deleteResult = zipInExportedFolder.delete();
-                res = false;
-                log.debug("bad shard file: '{}', received hash: '{}'. Calculated hash: '{}'. Zip is deleted = '{}'",
-                        zipInExportedFolder.getAbsolutePath(), receivedHash, fileHashActual, deleteResult);
-            }
-        }
-        return res;
-    }
-
-    private boolean isAcceptable(FileDownloadDecision d) {
-        boolean res = (d == FileDownloadDecision.AbsOK || d == FileDownloadDecision.OK );
-        return res;
-    }
-
-    public FileDownloadDecision tryDownloadShard(Long shardId) {
-        FileDownloadDecision result;
-        log.debug("Processing shardId '{}'", shardId);
-        // chek before downloading
-        Set<Peer> thisShardPeers = shardsPeers.get(shardId);
-        if (thisShardPeers.size() < 2) { //we cannot use Student's T distribution with 1 sample
-            result = FileDownloadDecision.NoPeers;
-            //FIRE event when shard is NOT PRESENT
-            log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
-            return result;
-        }
-        result = checkShard(shardId, thisShardPeers);
-        if (!isAcceptable(result)) {
-            log.warn("Shard {} can not be loaded from peers", shardId);
-            return result;
-        }
-        // check if zip file exists on local node
-        PeerFileHashSum good = goodPeersMap.get(shardId).iterator().next();
-        byte[] goodHash = good.getHash();
-        if (checkShardDownloadedAlready(shardId, goodHash)) {
-            result = FileDownloadDecision.OK;
-            return result;
-        }
-        log.debug("Start preparation to downloading...");
-        String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
-        log.debug("fileID = '{}'", fileID);
-//        
-//        fileDownloader.setFileId(fileID);
-//        result = fileDownloader.prepareForDownloading(thisShardPeers);
-        
-        if (isAcceptable(result)) {
-            log.debug("Starting shard downloading: '{}'", fileID);
-            // fileDownloader.startDownload();
-            //see FileDownloader::getNextEmptyChunk() for sucess event emition
-        } else {
-            log.warn("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
-            // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
-        }
-
-        return result;
-    }
-
-    public FileDownloadDecision prepareAndStartDownload() {
-        boolean goodShardFound = false;
-        log.debug("prepareAndStartDownload...");
-        boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
-        FileDownloadDecision result = FileDownloadDecision.NotReady;
-        if(doNotShardImport){
-            fireNoShardEvent();
-            result=FileDownloadDecision.NoPeers;
-            log.warn("prepareAndStartDownload: skipping shard import due to config/command-line option");
-            return result;        
-        }
-        if (sortedShards.isEmpty()) { //???
-            getShardInfoFromPeers();
-            log.debug("Shards received from Peers '{}'", sortedShards);
-        }
-        if (sortedShards.isEmpty()) {
-            result = FileDownloadDecision.NoPeers;
-            //FIRE event when shard is NOT PRESENT
-            log.debug("result = {}, Fire = {}", result, "NO_SHARD");
-            fireNoShardEvent();
-            return result;
-        } else {
-            //we have some shards available on the networks, let's decide what to do
-            List<Long> shardIds = new ArrayList(sortedShards.keySet());
-            Collections.sort(shardIds, Collections.reverseOrder());
-            for (Long shardId : shardIds) {
-                result = tryDownloadShard(shardId);
-                goodShardFound = isAcceptable(result);
-                if (goodShardFound) {
-                    break;
-                }
-            }
-            if (!goodShardFound) {
-                fireNoShardEvent();
-            }
-        }
-        return result;
-    }
-
-    private AnnotationLiteral<ShardPresentEvent> literal(ShardPresentEventType shardPresentEventType) {
-        return new ShardPresentEventBinding() {
-            @Override
-            public ShardPresentEventType value() {
-                return shardPresentEventType;
-            }
-        };
-    }
 }
