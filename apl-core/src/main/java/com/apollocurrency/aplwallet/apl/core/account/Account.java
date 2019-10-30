@@ -663,7 +663,10 @@ public class Account {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
                     || height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
+                LOG.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
+                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
+                        height, blockchain.getHeight() );
+                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
             }
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
