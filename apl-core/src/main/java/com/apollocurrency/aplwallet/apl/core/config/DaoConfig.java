@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 
 import javax.enterprise.inject.Produces;
@@ -71,6 +72,11 @@ public class DaoConfig {
     @Produces
     private MandatoryTransactionDao mandatoryTransactionDao() {
         return createDaoInterfaceProxy(MandatoryTransactionDao.class);
+    }
+
+    @Produces
+    private DexTransactionDao dexTransactionDao() {
+        return createDaoInterfaceProxy(DexTransactionDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {
