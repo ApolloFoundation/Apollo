@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -13,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
+import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ public class TrimService {
     private final ReentrantLock lock = new ReentrantLock();
 
     private Event<TrimData> trimEvent;
+    private Event<TrimConfig> trimConfigEvent;
 
 
     @Inject
@@ -46,6 +49,7 @@ public class TrimService {
                        GlobalSync globalSync,
                        TimeService timeService,
                        Event<TrimData> trimEvent,
+                       Event<TrimConfig> trimConfigEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
     ) {
@@ -57,6 +61,7 @@ public class TrimService {
         this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
+        this.trimConfigEvent = Objects.requireNonNull(trimConfigEvent, "TrimConfig event should not be null");
     }
 
     public int getLastTrimHeight() {
@@ -66,7 +71,7 @@ public class TrimService {
 
 
     public void init(int height) {
-        log.debug("init() at height = {}", height);
+        log.debug("TRIM: init() at height = {}", height);
         lock.lock();
         try {
             TrimEntry trimEntry = trimDao.get();
@@ -82,6 +87,7 @@ public class TrimService {
                 log.info("Finish trim at height {}", lastTrimHeight);
                 trimDerivedTables(lastTrimHeight, false);
             }
+            //TODO: Do we really need to do so many iterations or something about two-three would be enough?
             for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
                 log.info("Perform trim on height {}", i);
                 trimDerivedTables(i, false);
@@ -92,6 +98,7 @@ public class TrimService {
     }
 
     public void trimDerivedTables(int height, boolean async) {
+        log.debug("TRIM: trimDerivedTables on height={}, async={}", height, async);
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         lock.lock();
@@ -116,7 +123,7 @@ public class TrimService {
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight, boolean async) {
-        log.debug("doTrimDerived on height {} as async operation (? = {})", blockchainHeight, async);
+        log.debug("TRIM: doTrimDerivedTablesOnBlockchainHeight on height {} as async operation (? = {})", blockchainHeight, async);
         lock.lock();
         try {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
@@ -149,6 +156,7 @@ public class TrimService {
 
     @Transactional
     public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height, oneLock);
         long start = System.currentTimeMillis();
         lock.lock();
         try {
@@ -168,7 +176,9 @@ public class TrimService {
             try {
                 for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
                     if (!oneLock) {
+                        log.trace("Try to acquire lock...");
                         globalSync.readLock();
+                        log.trace("Got it.");
                     }
                     try {
                         long startTime = System.currentTimeMillis();
@@ -199,7 +209,24 @@ public class TrimService {
 //        return pruningTime;
     }
 
+    public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
+        log.debug("Send event to {} trim thread", enableTrim?"enable":"disable");
+        trimConfigEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(enableTrim, clearQueue));
+    }
+
     public boolean isTrimming() {
         return lock.isLocked();
+    }
+
+    public void waitTrimming(){
+        log.debug("Waiting for the end of the latest trim");
+        while ( isTrimming() ) {
+            ThreadUtils.sleep(100);
+            if(log.isTraceEnabled()) {
+                log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+                        lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
+            }
+        }
     }
 }

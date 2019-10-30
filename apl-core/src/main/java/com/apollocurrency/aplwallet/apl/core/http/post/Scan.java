@@ -54,7 +54,7 @@ public final class Scan extends AbstractAPIRequestHandler {
             long start = System.currentTimeMillis();
             BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
             try {
-                blockchainProcessor.setGetMoreBlocks(false);
+                blockchainProcessor.suspendBlockchainDownloading();
                 if (numBlocks > 0) {
                     blockchainProcessor.scan(lookupBlockchain().getHeight() - numBlocks + 1, validate);
                 } else if (height >= 0) {
@@ -63,7 +63,7 @@ public final class Scan extends AbstractAPIRequestHandler {
                     return JSONResponses.missing("numBlocks", "height");
                 }
             } finally {
-                blockchainProcessor.setGetMoreBlocks(true);
+                blockchainProcessor.resumeBlockchainDownloading();
             }
             long end = System.currentTimeMillis();
             response.put("done", true);

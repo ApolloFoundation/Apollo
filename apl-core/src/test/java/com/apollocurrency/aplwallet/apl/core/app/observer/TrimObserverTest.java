@@ -32,7 +32,6 @@ import java.util.Random;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -42,7 +41,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 @Slf4j
@@ -85,7 +83,7 @@ class TrimObserverTest {
     void testOnTrimConfigUpdated() {
         doReturn(5000).when(config).getShardingFrequency();
 
-        assertTrue(observer.isTrimDerivedTables());
+        assertTrue(observer.isTrimDerivedTablesEnabled());
         fireBlockPushed(5000);
         fireBlockPushed(6000);
         assertEquals(2, observer.getTrimHeights().size());
@@ -93,13 +91,13 @@ class TrimObserverTest {
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(false, true));
 
-        assertFalse(observer.isTrimDerivedTables());
+        assertFalse(observer.isTrimDerivedTablesEnabled());
         assertEquals(0, observer.getTrimHeights().size());
 
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(true, false));
 
-        assertTrue(observer.isTrimDerivedTables());
+        assertTrue(observer.isTrimDerivedTablesEnabled());
     }
 
     @Test

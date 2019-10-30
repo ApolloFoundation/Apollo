@@ -167,7 +167,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
 
-
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         return transactionProcessor;
@@ -480,7 +479,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void fullReset() {
         globalSync.writeLock();
         try {
-            setGetMoreBlocks(false);
+            suspendBlockchainDownloading();
             try {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
                 dataSource.begin();
@@ -505,17 +504,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
             } finally {
-                setGetMoreBlocks(true);
+                resumeBlockchainDownloading();
             }
         } finally {
             globalSync.writeUnlock();
         }
-    }
-
-    @Override
-    public void setGetMoreBlocks(boolean getMoreBlocks) {
-        log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);
-        this.getMoreBlocks = getMoreBlocks;
     }
 
     @Override
@@ -676,7 +669,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
             popOffTo(lastBlock);
             log.info("Last block height: " + lastBlock.getHeight());
-            setGetMoreBlocks(true); // turn ON blockchain downloading
+            resumeBlockchainDownloading(); // turn ON blockchain downloading
             scheduleOneScan();
             return;
         }
@@ -1049,7 +1042,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource) {
         if (commonBlock.getHeight() < getMinRollbackHeight()) {
             log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
-            popOffWithRescan(commonBlock.getHeight() + 1);
+
+            int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
+            if (commonBlock.getHeight() < shardInitialHeight) {
+                log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})", commonBlock.getHeight(), shardInitialHeight);
+            }else {
+                popOffWithRescan(commonBlock.getHeight() + 1);
+            }
             return Collections.emptyList();
         }
         if (!lookupBlockhain().hasBlock(commonBlock.getId())) {
@@ -1060,7 +1059,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             Block block = lookupBlockhain().getLastBlock();
             ((BlockImpl) block).loadTransactions();
-            log.debug("Rollback from block " + block.getStringId() + " at height " + block.getHeight()
+            log.debug("ROLLBACK       from block " + block.getStringId() + " at height " + block.getHeight()
                     + " to " + commonBlock.getStringId() + " at " + commonBlock.getHeight());
             while (block.getId() != commonBlock.getId() && block.getHeight() > 0) {
                 poppedOffBlocks.add(block);
@@ -1072,14 +1071,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
-            dataSource.commit(false); // should happen definitely, otherwise
-        } catch (RuntimeException e) {
-            log.error("Error popping off to " + commonBlock.getHeight() + ", " + e.toString());
+            dataSource.commit(false); // should happen definitely otherwise
+        }
+        catch (RuntimeException e) {
+            log.error("Error popping off to {}, cause {}", commonBlock.getHeight(), e.toString());
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown
                 Block lastBlock = blockchain.findLastBlock();
-                blockchain.setLastBlock(lastBlock);
-                popOffToInTransaction(lastBlock, dataSource);
+                if (lastBlock == null){
+                    log.error("Error popping off, lastBlock is NULL.", e);
+                } else {
+                    blockchain.setLastBlock(lastBlock);
+                    popOffToInTransaction(lastBlock, dataSource);
+                }
             }
             throw e;
         }
@@ -1101,22 +1105,32 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private void popOffWithRescan(int height) {
         globalSync.writeLock();
         try {
+            int scanHeight = 0;
+            int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
+            if ( shardInitialHeight > 0 ) {
+                scanHeight = Math.max(height, shardInitialHeight);
+            }
+            log.debug("Set the height for Scan process to {}, shards' initialBlock height={}", scanHeight, shardInitialHeight);
             try {
-                scheduleScan(0, false);
+                scheduleScan(scanHeight, false);
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
                 // rollback not scan safe derived tables with blocks and transactions
                 for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
                     if (!derivedTable.isScanSafe()) {
+                        log.debug("Rollback not scan safe table {}", derivedTable.getName());
                         derivedTable.rollback(height);
                     }
                 }
                 lookupBlockhain().setLastBlock(lastBLock);
-
                 lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
-                log.debug("Deleted blocks starting from height {}", height);
+                log.debug("Blockchain config updated, lastblock={} at height={}", lastBLock.getId(), lastBLock.getHeight());
             } finally {
-                scan(0, false);
+                try {
+                    scan(scanHeight, false);
+                }catch (BlockchainScanException e){
+                    log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + e.toString(), e);
+                }
             }
         } finally {
             globalSync.writeUnlock();
@@ -1300,12 +1314,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (height < shardInitialHeight) {
-                log.warn("Scanning of blocks before last shard block is not supported");
+                log.warn("Scanning of blocks that before the last shard block is not supported (height={} < shardInitialHeight={})", height, shardInitialHeight);
                 return;
             }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
-                log.info("Rollback to height less than " + getMinRollbackHeight() + " not supported, will do a full scan");
+                log.info("Rollback to height less than {} not supported, will do a full scan", getMinRollbackHeight());
                 height = shardInitialHeight;
             }
             if (height < 0) {
@@ -1478,8 +1492,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 lastRestoreTime = 0;
             } catch (SQLException e) {
-                dataSource.rollback(false);
-                throw new RuntimeException(e.toString(), e);
+                //if (e.getErrorCode() != 90007) { //The error with code 90007 is thrown when trying to call a JDBC method on an object that has been closed.
+                try {
+                    dataSource.rollback(false);
+                }catch (IllegalStateException ex){
+                    log.error("Error during the Rollback caused by SQL Exception", e);
+                }
+                //}
+                throw new BlockchainScanException(e.toString(), e);
             } finally {
                 isScanning = false;
                 aplAppStatus.durableTaskFinished(scanTaskId, false, "");
@@ -1493,15 +1513,27 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return totalPercents / Math.max(events, 1);
     }
 
+    @Override
+    public void setGetMoreBlocks(boolean getMoreBlocks) {
+        log.debug("Setting thread for block downloading into '{}'", getMoreBlocks);
+        this.getMoreBlocks = getMoreBlocks;
+    }
 
     @Override
     public void suspendBlockchainDownloading() {
-        getMoreBlocks = false;
+        setGetMoreBlocks(false);
     }
 
     @Override
     public void resumeBlockchainDownloading() {
-        getMoreBlocks = true;
+        setGetMoreBlocks(true);
+    }
+
+    @Override
+    public void waitUntilBlockchainDownloadingStops(){
+        log.debug("Waiting until blockchain downloading stops.");
+        globalSync.updateLock();
+        globalSync.updateUnlock();
     }
 
     private class GetMoreBlocksThread implements Runnable {
@@ -1583,7 +1615,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("Null response wile getCumulativeDifficultyRequest from peer {}",peer.getHostWithPort());
                     return;
                 }
-                BigInteger curCumulativeDifficulty = lookupBlockhain().getLastBlock().getCumulativeDifficulty();
+                Block lastBlock = lookupBlockhain().getLastBlock();
+                BigInteger curCumulativeDifficulty = lastBlock.getCumulativeDifficulty();
                 String peerCumulativeDifficulty = (String) response.get("cumulativeDifficulty");
                 if (peerCumulativeDifficulty == null) {
                     return;
