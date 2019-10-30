@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
@@ -159,7 +158,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardDownloader shardDownloader;
-    private final ShardDao shardDao;
     private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -305,8 +303,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardDownloader shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
-                                   ShardDao shardDao) {
+                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -325,7 +322,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
-        this.shardDao = shardDao;
 
         configureBackgroundTasks();
 
@@ -769,7 +765,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
                 List<Transaction> validPhasedTransactions = new ArrayList<>();
                 List<Transaction> invalidPhasedTransactions = new ArrayList<>();
-                validatePhasedTransactions(previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
                 block.setPrevious(previousLastBlock);
@@ -818,14 +814,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         };
     }
 
-    private void validatePhasedTransactions(Block lastBlock, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
+    private void validatePhasedTransactions(Block currentBlock, Block prevBlock, List<Transaction> validPhasedTransactions, List<Transaction> invalidPhasedTransactions,
                                             Map<TransactionType, Map<String, Integer>> duplicates) {
-        int height = lastBlock.getHeight();
+        int height = prevBlock.getHeight();
 
-        List<Transaction> transactions = new ArrayList<>(phasingPollService.getFinishingTransactions(lastBlock.getHeight() + 1));
-        int startTime = getPhasingStartTime(lastBlock);
+        List<Transaction> transactions = new ArrayList<>(phasingPollService.getFinishingTransactions(prevBlock.getHeight() + 1));
 
-        transactions.addAll(phasingPollService.getFinishingTransactionsByTime(startTime, lastBlock.getTimestamp()));
+        transactions.addAll(phasingPollService.getFinishingTransactionsByTime(prevBlock.getTimestamp(), currentBlock.getTimestamp()));
 
         for (Transaction phasedTransaction : transactions) {
             //TODO check it in the sql.
@@ -846,18 +841,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 invalidPhasedTransactions.add(phasedTransaction);
             }
         }
-    }
-
-    private int getPhasingStartTime(Block lastBlock) {
-        int startTime;
-        if (lastBlock.getHeight() == 0) {
-            startTime = 0;
-        } else if (blockchain.getShardInitialBlock().getHeight() == lastBlock.getHeight()) {
-            startTime = shardDao.getLastShard().getBlockTimestamps()[0];
-        } else {
-            startTime = blockchain.getBlock(lastBlock.getPreviousBlockId()).getTimestamp();
-        }
-        return startTime;
     }
 
     private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
@@ -1218,7 +1201,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         //TODo What is duplicates list for?
         Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
         List<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(lookupBlockhain().getHeight() + 1);
-        phasedTransactions.addAll(phasingPollService.getFinishingTransactionsByTime(getPhasingStartTime(previousBlock), previousBlock.getTimestamp()));
+        phasedTransactions.addAll(phasingPollService.getFinishingTransactionsByTime(previousBlock.getTimestamp(), blockTimestamp));
         for (Transaction phasedTransaction : phasedTransactions) {
             try {
                 transactionValidator.validate(phasedTransaction);
@@ -1426,7 +1409,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
                                     List<Transaction> validPhasedTransactions = new ArrayList<>();
                                     List<Transaction> invalidPhasedTransactions = new ArrayList<>();
-                                    validatePhasedTransactions(blockchain.getLastBlock(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                                    validatePhasedTransactions(currentBlock, blockchain.getLastBlock(), validPhasedTransactions, invalidPhasedTransactions, duplicates);
                                     if (validate && currentBlock.getHeight() > shardInitialHeight) {
                                         int curTime = timeService.getEpochTime();
                                         validator.validate(currentBlock, blockchain.getLastBlock(), curTime);
