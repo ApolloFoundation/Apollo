@@ -9,13 +9,12 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UnknownFormatConversionException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 
 public class HttpHelper {
@@ -149,7 +148,7 @@ public class HttpHelper {
         Assert.assertEquals(200, response.code());
        // System.out.println(responseBody);
         if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
-            assertFalse(responseBody.contains("errorDescription"), responseBody);
+            Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
         return (T) mapper.readValue(responseBody, clazz);
         }

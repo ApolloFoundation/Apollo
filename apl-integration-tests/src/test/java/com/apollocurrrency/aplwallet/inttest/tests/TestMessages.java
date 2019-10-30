@@ -1,5 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
+import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
@@ -7,14 +8,12 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import com.apollocurrency.aplwallet.api.dto.*;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestMessages extends TestBaseOld {
-
 
     @DisplayName("Send Message/Read Message")
     @ParameterizedTest

@@ -1,7 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrency.aplwallet.api.dto.*;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.model.Parameters;

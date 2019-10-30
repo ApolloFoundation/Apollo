@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TrimService {
     private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
+    @Getter
     private final int maxRollback;
     private final int trimFrequency;
     private final DatabaseManager dbManager;

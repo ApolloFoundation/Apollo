@@ -1,7 +1,20 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
+import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AssetsResponse;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
@@ -53,7 +66,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(assetID);
         AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
-       // System.out.println("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
+        log.trace("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
     }
 
     @DisplayName("getAsset")
@@ -72,7 +85,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         AccountAssetDTO getAsset = getAsset(assetID);
         assertTrue(getAsset.getName().equals(assetName),String.valueOf(getAsset.getAsset().equals(issueAsset.getTransaction())));
         assertTrue(getAsset.getAccountRS().equals(wallet.getUser()));
-        //System.out.println("asset = " + getAsset.getAsset() + " ; name = " + getAsset.getName() + " ;  AccountRS = " + wallet.getUser());
+        log.trace("asset = " + getAsset.getAsset() + " ; name = " + getAsset.getName() + " ;  AccountRS = " + wallet.getUser());
     }
 
 
@@ -168,8 +181,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         AssetsResponse getAllAssets = getAllAssets();
-        //System.out.println(Arrays.stream(getAllAssets.assets).filter(assetDTO -> assetDTO.asset.equals(assetID)).count() >= 1);
-        //System.out.println(assetID);
         assertTrue(getAllAssets.getAssets().size() >= 1); //return only first 100 assets
 
     }
@@ -281,7 +292,8 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
         AssetsResponse getAllAssets = getAllAssets();
-        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).count()== 0);
+        System.out.println(getAllAssets);
+        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).findFirst().get().getQuantityATU() == 0);
 
     }
 
@@ -301,18 +313,17 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        System.out.println("issueAsset API PASS: assetID = " + assetID);
+        log.trace("Issue Asset API PASS: assetID = " + assetID);
 
         CreateTransactionResponse placeAskOrder = placeAskOrder(wallet,assetID, "99",10);
         verifyCreatingTransaction(placeAskOrder);
         verifyTransactionInBlock(placeAskOrder.getTransaction());
         orderID = placeAskOrder.getTransaction();
-        System.out.println("placeAskOrder API PASS: orderID = " + orderID);
-
+        log.trace("Place Ask Order API PASS: orderID = " + orderID);
 
         AccountCurrentAssetAskOrdersResponse getAskOrders = getAskOrders(assetID);
 
-        System.out.println(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count());
+        log.trace(String.valueOf(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count()));
         assertTrue(getAskOrders.getAskOrders().stream().filter(askOrders -> askOrders.getOrder().equals(orderID)).count() == 1);
 
     }
@@ -337,7 +348,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         AssetsAccountsCountResponse assetAccountCount = getAssetAccountCount(assetID);
 
         assertTrue(assetAccountCount.getNumberOfAccounts() == 1);
-        System.out.println("number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAccounts());
+        log.trace("Number of Accounts using  " + assetID + " = " + assetAccountCount.getNumberOfAccounts());
 
 
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet,assetID, quantityATU.toString());
@@ -365,7 +376,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        System.out.println("assetID = " + assetID);
 
         AccountAssetsResponse assetAccounts = getAssetAccounts(assetID);
         assertTrue(assetAccounts.getAccountAssets().stream().filter(accountAssets -> accountAssets.getAsset().contains(assetID)).count()==1);
@@ -394,8 +404,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        System.out.println("assetID = " + assetID);
-
 
         ExpectedAssetDeletes assetDeletes = getAssetDeletes(wallet);
         assertTrue(assetDeletes.getDeletes().stream().filter(deletes -> deletes.getAsset().contains(assetID)).count() == 0);
@@ -445,7 +453,6 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
-        System.out.println("assetID = " + assetID);
 
         if (!wallet.isVault()) {
             CreateTransactionResponse transferAsset = transferAsset(wallet, assetID, quantityATU, getTestConfiguration().getVaultWallet().getUser());
@@ -546,7 +553,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
         AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.getNumberOfAssets());
+        log.trace("Number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.getNumberOfAssets());
 
         AccountAssetsResponse getAccountAssets = getAccountAssets(wallet);
         assertTrue(getAccountAssets.getAccountAssets().size() >= 1);
@@ -558,7 +565,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
         AccountAssetsCountResponse getAccountAssetCount1 = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount1.getNumberOfAssets().intValue() >= 1);
-        System.out.println("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.getNumberOfAssets());
+        log.trace("Number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.getNumberOfAssets());
 
     }
 
