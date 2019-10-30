@@ -148,20 +148,6 @@ public class DexController {
         }
     }
 
-    @GET
-    @Path("/history")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get trading history for certain account", description = "get trading history for certain account")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Wallets balances"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistory( @NotNull  @QueryParam("account") String account,  @QueryParam("pair") String pair,  @QueryParam("type") String type,@Context SecurityContext securityContext)
-            throws NotFoundException {
-
-        log.debug("getHistory: account: {}, pair: {}, type: {}", account, pair, type );
-
-        return Response.ok(service.getHistory(account,pair,type)).build();
-    }
 
     @POST
     @Path("/offer")
