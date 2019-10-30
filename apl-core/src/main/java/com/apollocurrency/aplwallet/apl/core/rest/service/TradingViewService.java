@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 /**
  *
- * @author nemez
+ * @author Serhiy Lymar
  */
 
 @Singleton
