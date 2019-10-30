@@ -12,8 +12,8 @@ import scalaj.http._
 class PerformanceSimulation extends Simulation {
 
 	val env: String = System.getProperty("test.env")
-	println("+++++++++++++++++++++++++++++++++++++++")
-	println(env)
+	val users = System.getProperty("users").toDouble
+	val duration = System.getProperty("duration").toDouble
 
 	var peers = ConfigFactory.load("application.conf").getStringList(env).asScala.toList
 	val random = new Random
@@ -34,7 +34,7 @@ class PerformanceSimulation extends Simulation {
 			}
 		 }
 
-		for( i <- 1 to 5) {
+		for( i <- 1 to 200) {
 				try {
 					val peer = peers(
 						random.nextInt(peers.length)
@@ -72,6 +72,6 @@ class PerformanceSimulation extends Simulation {
 			session
 		}
 
-	val inject = 	constantUsersPerSec(2) during (1 minutes)
+	val inject = 	constantUsersPerSec(users) during (duration minutes)
 	setUp(scn.inject(inject)).protocols(httpProtocol)
 }

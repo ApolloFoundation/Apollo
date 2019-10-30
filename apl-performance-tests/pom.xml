@@ -13,6 +13,8 @@
     <properties>
         <aspectj.version>1.9.4</aspectj.version>
         <test.env>n2</test.env>
+        <users>10</users>
+        <duration>1</duration>
     </properties>
 
     <dependencies>
@@ -39,7 +41,10 @@
             <artifactId>gatling-maven-plugin</artifactId>
             <version>3.0.4</version>
             <configuration>
+                <runMultipleSimulations>true</runMultipleSimulations>
                 <jvmArgs>
+                    <jvmArg>-Dusers=${users}</jvmArg>
+                    <jvmArg>-Dduration=${duration}</jvmArg>
                     <jvmArg>-Dtest.env=${test.env}</jvmArg>
                 </jvmArgs>
             </configuration>
