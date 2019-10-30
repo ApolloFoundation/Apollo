@@ -101,8 +101,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public List<Transaction> getFinishingTransactionsByTime(int time) {
-        return phasingPollTable.getFinishingTransactionsByTime(time);
+    public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
+        return phasingPollTable.getFinishingTransactionsByTime(startTime, finishTime);
     }
 
     @Override
