@@ -1466,7 +1466,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             if (validate) {
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED), new AnnotationLiteral<ScanValidate>() {}).fire(currentBlock);
                             } else {
-                                blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
+                                if (shardInitialHeight == 0 || currentBlock.getHeight() >= (shardInitialHeight + trimService.getMaxRollback())){
+                                    blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
+                                }
                             }
                             hasMore = true;
                         }
