@@ -154,7 +154,7 @@ public final class Constants {
     //Eth/Pax
     public static final BigInteger GAS_LIMIT_ETHER_TX = BigInteger.valueOf(21_000);
     public static final BigInteger GAS_LIMIT_FOR_ERC20 = BigInteger.valueOf(300_000);
-    public static final BigInteger GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT = BigInteger.valueOf(400_000);
+    public static final BigInteger GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT = BigInteger.valueOf(300_000);
     public static final Integer MAX_ADDRESS_LENGTH = 110;
 
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
