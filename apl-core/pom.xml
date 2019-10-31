@@ -308,7 +308,11 @@
             <version>1.5.21</version>
             <type>jar</type>
         </dependency>
-                
+
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
