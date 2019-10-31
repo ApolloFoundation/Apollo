@@ -41,7 +41,8 @@ public class TradingViewServiceImpl implements TradingViewService{
     @Override
     public void start() {
         
-        log.debug("Ingition point: "); 
+            log.debug("Trading view service startup point: ");
+            done = false;
          
             Runnable task = () -> {
                 for(;;) {                    

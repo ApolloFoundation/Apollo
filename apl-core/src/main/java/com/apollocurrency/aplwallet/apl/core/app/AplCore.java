@@ -53,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.service.TradingViewService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
@@ -101,6 +102,7 @@ public final class AplCore {
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
+    private static TradingViewService tradingViewService;
     private API apiServer;
     private IDexMatcherInterface tcs;
 
@@ -172,6 +174,11 @@ public final class AplCore {
             LOG.info("transport interaction service shutdown...");
             transportInteractionService.stop();
         }
+        
+        if (tradingViewService != null) {
+            LOG.info("tradingview service shutdown...");
+            tradingViewService.stop();            
+        }
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
@@ -217,6 +224,10 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
                 transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
                 transportInteractionService.start();
+                
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.8, "TradingView service initialization");
+                tradingViewService = CDI.current().select(TradingViewService.class).get();
+                tradingViewService.start();
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
