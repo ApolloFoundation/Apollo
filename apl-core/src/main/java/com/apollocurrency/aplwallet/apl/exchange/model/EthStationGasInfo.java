@@ -29,9 +29,9 @@ public class EthStationGasInfo implements EthGasInfo {
 
     public EthGasInfoDto toDto() {
         EthGasInfoDto ethGasInfoDto = new EthGasInfoDto();
-        ethGasInfoDto.fast = this.fastSpeedPrice.toString();
-        ethGasInfoDto.average = this.averageSpeedPrice.toString();
-        ethGasInfoDto.safeLow = this.safeLowSpeedPrice.toString();
+        ethGasInfoDto.fast = this.getFastSpeedPrice().toString();
+        ethGasInfoDto.average = this.getAverageSpeedPrice().toString();
+        ethGasInfoDto.safeLow = this.getSafeLowSpeedPrice().toString();
 
         return ethGasInfoDto;
     }

@@ -553,7 +553,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
-    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, AplException.ExecutiveProcessException {
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();
