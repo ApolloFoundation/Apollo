@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.json.simple.JSONStreamAware;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -32,12 +34,14 @@ public class GetShardingInfo extends PeerRequestHandler{
     private final ShardDao shardDao;
     private final BlockchainConfig blockchainConfig;
     private final PeersService peers;
-    
+    private final ShardNameHelper snh = new ShardNameHelper();
+    private final UUID chainId;
     @Inject
     public GetShardingInfo(ShardDao shardDao, BlockchainConfig blockchainConfig, PeersService peers) {
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;
         this.peers = peers;
+        chainId= blockchainConfig.getChain().getChainId();
     }
 
     @Override
@@ -51,11 +55,16 @@ public class GetShardingInfo extends PeerRequestHandler{
         for (Shard shard: allShards) {
             List<String>adFileIDs = new ArrayList<>();
             List<String>adFileHashes = new ArrayList<>();
-            //TODO: fill additional files lists
-            // create shardInfo from Shard record
+            //at the moment we have one additional file with prunables
+            //that could be absent
+            if(shard.getPrunableZipHash()!=null){
+                String prunablesFileId=snh.getFullShardPrunId(shard.getShardId(), chainId);
+                adFileIDs.add(prunablesFileId);
+                adFileHashes.add(Convert.toHexString(shard.getPrunableZipHash()));
+            }
             ShardInfo shardInfo = new ShardInfo(
                     shard.getShardId(),
-                    blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
+                    chainId.toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
                     Convert.toHexString(shard.getCoreZipHash()),
                     shard.getShardHeight().longValue(),

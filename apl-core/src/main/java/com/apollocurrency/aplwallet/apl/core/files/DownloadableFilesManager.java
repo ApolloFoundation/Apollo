@@ -33,7 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Downloadable files info
- *
+ * Pattern for resource naing is:
+ * type::modifier::id
  * @author alukin@gmail.com
  */
 //TODO: cache purging
@@ -45,7 +46,7 @@ public class DownloadableFilesManager {
     public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
-    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "attachment", 1, "file", 2, "debug", 3);
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
@@ -196,17 +197,38 @@ public class DownloadableFilesManager {
                 }
             };
             break;
-            case 1: //attachment
+            case 1: //shardprun
+            {
+                long shardId = 0;
+                try {
+                    shardId = Long.valueOf(parsed.fileId);
+                    UUID chainId;
+                    if(parsed.modifiers.isEmpty()){
+                      chainId=blockchainConfig.getChain().getChainId();
+                    }else{
+                       String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
+                       chainId=UUID.fromString(chainIdStr);
+                    }
+                    
+                    String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId,chainId);
+                    String fileBaseDir = dirProvider.getDataExportDir().toString();
+                    absPath = fileBaseDir + File.separator + fileName;
+                } catch (NumberFormatException e) {
+                    log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
+                }
+            };
+            break;    
+            case 2: //attachment
             {
                  log.warn("Attachment downloading is not implemented yet");
             };
             break;
-            case 2: //file
+            case 3: //file
             {
                  log.warn("File downloading is not implemented yet");
             };
             break;
-            case 3: //debug and tests
+            case 4: //debug and tests
             {
                 String fileBaseDir =System.getProperty("java.io.tmpdir");
                 absPath = fileBaseDir + "/"+Constants.APPLICATION+"/" + parsed.fileId;
