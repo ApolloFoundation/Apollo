@@ -14,11 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -200,6 +198,22 @@ public class ShardInfoDownloader {
         badPeersMap.put(shardId,pvdm.getInvalidPeers());
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
         return res;
+    }
+    /**
+     * 
+     * @param shardId
+     * @return 
+     */
+    public ShardInfo getShardInfo(Long shardId) {
+        ShardInfo res = null;
+        PeerFileHashSum pfhs = goodPeersMap.get(shardId).iterator().next();
+        if(pfhs==null){
+            return res;
+        }
+        String peerId=pfhs.getPeerId();
+        ShardingInfo srdInfo = shardInfoByPeers.get(peerId);
+        res=srdInfo.getShards().get(0);
+        return res;        
     }
 
 }

@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
+import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
@@ -136,6 +137,12 @@ public class ShardsDownloadService {
         return res;
     }
     
+   private List<String> checkAdditionalFiles(Long shardId){
+       List<String> additionalFilesIDs = new ArrayList<>();
+       ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
+       return additionalFilesIDs;
+   }
+   
    public FileDownloadDecision tryDownloadShard(Long shardId) {
         FileDownloadDecision result;
         log.debug("Processing shardId '{}'", shardId);
@@ -163,7 +170,8 @@ public class ShardsDownloadService {
             shardInfoDownloader.getGoodPeersMap().get(shardId).forEach((pfhs) -> {
                 peers.add(pfhs.getPeerId());
             });
-            fileDownloadService.startDownload(fileID,peers);
+            fileDownloadService.startDownload(fileID, peers);
+            checkAdditionalFiles(shardId);
         } else {
             log.warn("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
             fireNoShardEvent();

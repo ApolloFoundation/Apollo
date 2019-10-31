@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -48,13 +49,18 @@ public class GetShardingInfo extends PeerRequestHandler{
         List<Shard> allShards = shardDao.getAllCompletedShards();
         log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
+            List<String>adFileIDs = new ArrayList<>();
+            List<String>adFileHashes = new ArrayList<>();
+            //TODO: fill additional files lists
             // create shardInfo from Shard record
             ShardInfo shardInfo = new ShardInfo(
                     shard.getShardId(),
                     blockchainConfig.getChain().getChainId().toString() /* no chainId in db */,
                     Convert.toHexString(shard.getShardHash()),
                     Convert.toHexString(shard.getCoreZipHash()),
-                    shard.getShardHeight().longValue()
+                    shard.getShardHeight().longValue(),
+                    adFileIDs,
+                    adFileHashes
             );
             res.shardingInfo.shards.add(shardInfo);
         }
