@@ -54,7 +54,9 @@ class PerformanceSimulation extends Simulation {
 
 	val scn = scenario("Send Money")
 		.exec(http("Get Account Id")
-		.post("/apl?requestType=getAccountId&secretPhrase="+random.nextInt(200).toString).check(jsonPath("$.accountRS").find.saveAs("accountRS")))
+		.post("/apl?requestType=getAccountId&secretPhrase="+random.nextInt(200).toString)
+			.check(status.is(200))
+			.check(jsonPath("$.accountRS").find.saveAs("accountRS")))
 		.pause(1)
 		.exec(session => {
 			val transaction = session("accountRS").asOption[String]
