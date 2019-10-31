@@ -20,7 +20,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,6 +44,7 @@ class TrimServiceTest {
 
     TrimService trimService;
     Event event = mock(Event.class);
+    Event trimConfigEvent = mock(Event.class);
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     DerivedTableInterface derivedTable = mock(DerivedTableInterface.class);
     TimeService timeService = mock(TimeService.class);
@@ -50,7 +53,7 @@ class TrimServiceTest {
 
     @BeforeEach
     void setUp() {
-        trimService = new TrimService(databaseManager, registry, globalSync, timeService, event, trimDao, 1000);
+        trimService = new TrimService(databaseManager, registry, globalSync, timeService, event, trimConfigEvent, trimDao, 1000);
     }
 
     @Test
