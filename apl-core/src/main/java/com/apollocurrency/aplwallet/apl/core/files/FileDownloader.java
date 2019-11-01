@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
@@ -131,22 +130,20 @@ public class FileDownloader {
         this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: " + fileID);
         //FIRE event when shard is PRESENT + ZIP is downloaded
         FileEventData data = new FileEventData(
-                true,
                 fileID,
-                "",
-                null
+                true,
+                ""
         );
         log.debug("Firing 'FILE_DOWNLOADED_PRESENT' event {}", data);
         fileEvent.fireAsync(data);
     }
     //TODO: change to more general signal, not shard   
 
-    private void signalFailed() {
+    private void signalFailed(String reason) {
           FileEventData data = new FileEventData(
-                true,
                 fileID,
-                "",
-                null
+                false,
+                reason
         );      
         fileEvent.fireAsync(data);
     } 
@@ -234,7 +231,7 @@ public class FileDownloader {
         if(allOk){
             signalFinishedOK();
         }else{
-            signalFailed();
+            signalFailed("File downloading failed");
         }
         return status;
     }

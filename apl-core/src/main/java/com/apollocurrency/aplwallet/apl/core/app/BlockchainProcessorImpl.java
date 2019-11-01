@@ -683,7 +683,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // try make delay before PeersService are up and running
             Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
-            FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
+            FileDownloadDecision downloadDecision = shardDownloader.tryDownloadLastGoodShard();
             disableScheduleOneScan();
             log.debug("NO_SHARD/SHARD_PRESENT decision was = '{}'", downloadDecision);
         } catch (InterruptedException e) {

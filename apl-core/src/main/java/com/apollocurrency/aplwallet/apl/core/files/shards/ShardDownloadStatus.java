@@ -16,6 +16,7 @@ public class ShardDownloadStatus {
     public final static int FOUND_IN_PEERS = 1;
     public final static int DNLD_STARTED = 2;
     public final static int OK = 3;
+    public final static int FAILED=4;
     private final Map<String,Integer> status;
 
     public ShardDownloadStatus(List<String> fileIds) {
@@ -24,8 +25,14 @@ public class ShardDownloadStatus {
           status.put(s, NONE);
         });
     }
-    
-    public boolean isFullyDowloaded(){
+    public boolean isDownloadCompleted(){
+        boolean res = true;
+        for(Integer st: status.values()){
+            res = res && (st>=3);
+        }
+        return res;      
+    }
+    public boolean isDowloadedOK(){
         boolean res = true;
         for(Integer st: status.values()){
             res = res && (st==3);
