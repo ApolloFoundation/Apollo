@@ -216,6 +216,13 @@ class TrimServiceTest {
     }
 
     @Test
+    void testResetTrimToHeight() {
+        trimService.resetTrim(2000);
+        verify(trimDao).clear();
+        verify(trimDao).save(new TrimEntry(null, 2000, true));
+    }
+
+    @Test
     void testDoTrimDerivedTablesOnHeight() {
         doReturn(List.of(derivedTable, derivedTable)).when(registry).getDerivedTables();
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());

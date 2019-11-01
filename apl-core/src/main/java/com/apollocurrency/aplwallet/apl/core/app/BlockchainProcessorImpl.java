@@ -1355,7 +1355,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == shardInitialHeight) {
-                    trimService.resetTrim();
+                    trimService.resetTrim(height+trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
@@ -1472,9 +1472,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             if (validate) {
                                 blockEvent.select(literal(BlockEventType.BLOCK_SCANNED), new AnnotationLiteral<ScanValidate>() {}).fire(currentBlock);
                             } else {
-                                if (shardInitialHeight == 0 || currentBlock.getHeight() >= (shardInitialHeight + trimService.getMaxRollback())){
-                                    blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
-                                }
+                                blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(currentBlock);
                             }
                             hasMore = true;
                         }

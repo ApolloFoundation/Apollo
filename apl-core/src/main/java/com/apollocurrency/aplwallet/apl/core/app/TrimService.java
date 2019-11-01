@@ -130,22 +130,30 @@ public class TrimService {
         try {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
             if (trimHeight > 0) {
-
-                TrimEntry trimEntry = new TrimEntry(null, blockchainHeight, false);
-                trimDao.clear();
-                trimEntry = trimDao.save(trimEntry);
-                dbManager.getDataSource().commit(false);
-                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
-                if (async) {
-                    log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
-                    trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
-                } else {
-                    log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
-                    trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                TrimEntry trimEntry = trimDao.get();
+                if (trimEntry == null) {
+                    trimEntry = new TrimEntry(null, blockchainHeight, false);
                 }
-                trimEntry.setDone(true);
-                trimDao.save(trimEntry);
-                log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
+                if (!trimEntry.isDone() || trimEntry.getHeight() < blockchainHeight) {
+                    trimDao.clear();
+                    trimEntry = trimDao.save(trimEntry);
+                    dbManager.getDataSource().commit(false);
+                    int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
+                    if (async) {
+                        log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
+                        trimEvent.select(new AnnotationLiteral<Async>() {
+                        }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                    } else {
+                        log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
+                        trimEvent.select(new AnnotationLiteral<Sync>() {
+                        }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                    }
+                    trimEntry.setDone(true);
+                    trimDao.save(trimEntry);
+                    log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
+                }else{
+                    log.debug("doTrimDerived skipped at blockchain height={} and trim height={}", blockchainHeight, trimHeight);
+                }
             }
         } finally {
             lock.unlock();
@@ -153,7 +161,34 @@ public class TrimService {
     }
 
     public void resetTrim() {
-        trimDao.clear();
+        resetTrim(0);
+    }
+
+    public void resetTrim(int height) {
+        TransactionalDataSource dataSource = dbManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
+        lock.lock();
+        try {
+            try {
+                if (!inTransaction) {
+                    dataSource.begin();
+                }
+                trimDao.clear();
+                if (height > 0) {
+                    trimDao.save(new TrimEntry(null, height, true));
+                    log.debug("Reset Trim to height={}", height);
+                } else {
+                    log.debug("Reset Trim.");
+                }
+                dataSource.commit(!inTransaction);
+            }catch (Exception e){
+                log.warn(e.toString(), e);
+                dataSource.rollback(!inTransaction);
+                throw e;
+            }
+        }finally {
+            lock.unlock();
+        }
     }
 
     @Transactional
