@@ -3,7 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files;
 
+import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,13 +24,15 @@ public class FileDownloadService {
     private final Instance<FileDownloader> fileDownloaders;
     private final Instance<FileInfoDownloader> fileInfoDownloaders;
     private final Map<String, FileDownloadStatus> downloadStatus = new HashMap<>();
-
+    private final DownloadableFilesManager downloadableFilesManager;
     @Inject
     public FileDownloadService(Instance<FileDownloader> fileDownloaders,
-            Instance<FileInfoDownloader> fileInfoDownloaders
+            Instance<FileInfoDownloader> fileInfoDownloaders,
+            DownloadableFilesManager downloadableFilesManager
     ) {
         this.fileDownloaders = fileDownloaders;
         this.fileInfoDownloaders = fileInfoDownloaders;
+        this.downloadableFilesManager = downloadableFilesManager;
     }
 
     private synchronized FileDownloadStatus prepareForDownloading(String fileId, Set<String> onlyPeers) {
@@ -69,5 +74,27 @@ public class FileDownloadService {
         boolean res = (decision == FileDownloadDecision.AbsOK) || (decision == FileDownloadDecision.OK);
         return res;
     }
-
+    
+    public boolean isFileDownloadedAlready(String fileId, String hexHashString){
+        boolean res =  false;
+        File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(fileId).toFile();
+        log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
+        if (zipInExportedFolder.exists()) {
+            log.info("No need to download '{}'  as it is found in path = '{}'", fileId, zipInExportedFolder.toString());
+            //check integrity
+            FileInfo fi = downloadableFilesManager.getFileInfo(fileId);
+            String fileHashActual = fi.hash;
+            if (fileHashActual.equalsIgnoreCase(hexHashString)) {
+                res = true;
+                log.debug("Good zip hash was computed return '{}'...", res);
+            } else {
+                boolean deleteResult = zipInExportedFolder.delete();
+                res = false;
+                log.debug("bad shard file: '{}', received hash: '{}'. Calculated hash: '{}'. Zip is deleted = '{}'",
+                        zipInExportedFolder.getAbsolutePath(), hexHashString, fileHashActual, deleteResult);
+            }
+        }
+        
+        return res;
+    }
 }

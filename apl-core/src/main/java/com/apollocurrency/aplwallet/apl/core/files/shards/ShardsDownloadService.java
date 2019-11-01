@@ -3,20 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
-import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadService;
-import com.apollocurrency.aplwallet.apl.core.files.FileDownloadedEvent;
 import com.apollocurrency.aplwallet.apl.core.files.FileEventData;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +26,9 @@ import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import java.io.File;
 import java.util.Map;
 import java.util.HashMap;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
 
 /**
  * Service for background downloading of shard files and related files
@@ -47,11 +42,9 @@ public class ShardsDownloadService {
     
     private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
     private final FileDownloadService fileDownloadService;
-    private final DownloadableFilesManager downloadableFilesManager;
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();   
-    //shardId:fileId
-    private final Map<Long,String> shardDownloaded = new HashMap<>();
+    private final Map<Long,ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
     @Inject @Any
     Event<ShardPresentData> shardDataEvent;
      
@@ -60,22 +53,33 @@ public class ShardsDownloadService {
             BlockchainConfig blockchainConfig,
             javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
             PropertiesHolder propertiesHolder,
-            DownloadableFilesManager downloadableFilesManager,
             FileDownloadService fileDownloadService
             ) 
     {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
         this.myChainId = blockchainConfig.getChain().getChainId();
-        this.downloadableFilesManager = downloadableFilesManager;
         this.presentDataEvent = presentDataEvent;
         this.propertiesHolder = propertiesHolder;
     }
     
     public boolean getShardingInfoFromPeers(){
-       boolean res = false;
-       shardInfoDownloader.getShardInfoFromPeers();
-       return res;
+       Map<Long,Set<ShardInfo>> shards = shardInfoDownloader.getShardInfoFromPeers();
+       shards.keySet().forEach((sId) -> {
+           ShardInfo si =  shardInfoDownloader.getShardInfo(sId);
+           List<String> shardFiles = new ArrayList<>();
+           shardFiles.add(shardNameHelper.getFullShardId(sId, myChainId));
+           shardFiles.addAll(si.additionalFiles);
+           ShardDownloadStatus st = new ShardDownloadStatus(shardFiles);
+           shardDownloadStatuses.put(sId, st);
+        });    
+       return !shards.isEmpty();
+    }
+
+    public void onAnyFileDownloadEevent(@Observes @FileDownloadEvent FileEventData fileData){
+        //TODO: process events carefully
+        Long shardId = 0L;
+        fireShardPresentEvent(shardId);
     }
     
     private static boolean isAcceptable(FileDownloadDecision d) {
@@ -92,12 +96,6 @@ public class ShardsDownloadService {
         };
     }  
 
-    public void onAnyFileDownloadEevent(@Observes @FileDownloadedEvent FileEventData fileData){
-        //TODO: process events carefully
-        Long shardId = 0L;
-        fireShardPresentEvent(shardId);
-    }
-    
     private void fireNoShardEvent() {
         ShardPresentData shardPresentData = new ShardPresentData();
         log.debug("Firing 'NO_SHARD' event...");
@@ -107,41 +105,35 @@ public class ShardsDownloadService {
     private void fireShardPresentEvent(Long shardId) {
         ShardNameHelper snh = new ShardNameHelper();
         String fileId = snh.getFullShardId(shardId, myChainId);
-        ShardPresentData shardPresentData = new ShardPresentData(fileId);
+        ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
+        ShardPresentData shardPresentData = new ShardPresentData(
+                shardId,
+                fileId,
+                si.additionalFiles
+        );
         log.debug("Firing 'SHARD_PRESENT' event {}...", shardPresentData);
         presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData); // data is used
     }
     
-    private boolean checkShardDownloadedAlready(Long shardId, byte[] hash) {
-        boolean res = false;
+    /**
+     * Checks if files from shard are available locally and OK
+     * @param si shard info record
+     * @return list of files we yet have to download from peers
+     */
+    private List<String> checkShardDownloadedAlready(ShardInfo si) {
+        List<String> res = new ArrayList<>();
         // check if zip file exists on local node
-        String shardFileId = shardNameHelper.getFullShardId(shardId, myChainId);
-        File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(shardFileId).toFile();
-        log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
-        if (zipInExportedFolder.exists()) {
-            log.info("No need to download '{}'  as it is found in path = '{}'", shardFileId, zipInExportedFolder.toString());
-            //check integrity
-            FileInfo fi = downloadableFilesManager.getFileInfo(shardFileId);
-            String fileHashActual = fi.hash;
-            String receivedHash = Convert.toHexString(hash);
-            if (fileHashActual.equalsIgnoreCase(receivedHash)) {
-                res = true;
-                log.debug("Good zip hash was computed return '{}'...", res);
-            } else {
-                boolean deleteResult = zipInExportedFolder.delete();
-                res = false;
-                log.debug("bad shard file: '{}', received hash: '{}'. Calculated hash: '{}'. Zip is deleted = '{}'",
-                        zipInExportedFolder.getAbsolutePath(), receivedHash, fileHashActual, deleteResult);
+        String shardFileId = shardNameHelper.getFullShardId(si.shardId, myChainId);
+        if(!fileDownloadService.isFileDownloadedAlready(shardFileId,si.zipCrcHash)){
+            res.add(shardFileId);
+        }
+        for(int i=0; i<si.additionalFiles.size();i++){
+            if(!fileDownloadService.isFileDownloadedAlready(si.additionalFiles.get(i), si.additionalHashes.get(i))){
+                res.add(si.additionalFiles.get(i));
             }
         }
         return res;
     }
-    
-   private List<String> checkAdditionalFiles(Long shardId){
-       List<String> additionalFilesIDs = new ArrayList<>();
-       ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
-       return additionalFilesIDs;
-   }
    
    public FileDownloadDecision tryDownloadShard(Long shardId) {
         FileDownloadDecision result;
@@ -151,34 +143,23 @@ public class ShardsDownloadService {
             log.warn("Shard {} can not be loaded from peers", shardId);
             return result;
         }
-        
 
-        // check if zip file exists on local node
-        PeerFileHashSum good = shardInfoDownloader.getGoodPeersMap().get(shardId).iterator().next();
-        byte[] goodHash = good.getHash();
-        if (checkShardDownloadedAlready(shardId, goodHash)) {
+        // check if shard files exist on local node
+        ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
+        List<String> filesToDownload = checkShardDownloadedAlready(si);
+        if (filesToDownload.isEmpty()) {
             result = FileDownloadDecision.OK;
             return result;
         }
-        log.debug("Start preparation to downloading...");
-        String fileID = shardNameHelper.getFullShardId(shardId, myChainId);
-        log.debug("fileID = '{}'", fileID);
-        
-        if (isAcceptable(result)) {            
-            log.debug("Starting shard downloading: '{}'", fileID);
-            Set<String> peers = new HashSet<>();
-            shardInfoDownloader.getGoodPeersMap().get(shardId).forEach((pfhs) -> {
-                peers.add(pfhs.getPeerId());
-            });
-            fileDownloadService.startDownload(fileID, peers);
-            checkAdditionalFiles(shardId);
-        } else {
-            log.warn("Can not find enough peers with good shard: '{}' because result '{}'", fileID, result);
-            fireNoShardEvent();
-            // We CAN'T download latest SHARD archive, start from the beginning - FIRE event here
-        }
-
-        return result;
+        log.debug("Start downloading missing shard files...");
+       Set<String> peers = new HashSet<>();
+       shardInfoDownloader.getGoodPeersMap().get(shardId).forEach((pfhs) -> {
+           peers.add(pfhs.getPeerId());
+       });       
+       for(String fileId: filesToDownload){
+           fileDownloadService.startDownload(fileId, peers);
+       }
+       return result;
     }
      public FileDownloadDecision prepareAndStartDownload() {
         boolean goodShardFound = false;

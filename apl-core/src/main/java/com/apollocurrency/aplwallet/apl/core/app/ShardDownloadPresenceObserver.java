@@ -64,7 +64,7 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
-        String fileId = shardPresentData.getFileIdValue();
+        String fileId = shardPresentData.getShardFileId();
         try {
             shardImporter.importShardByFileId(fileId);
         } catch (Exception e) {

@@ -40,6 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import java.util.HashSet;
+import javax.enterprise.event.Event;
 
 /**
  * This class performs complete file downloading from peers
@@ -62,7 +63,7 @@ public class FileDownloader {
             
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
-    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private final Event<FileEventData> fileEvent;
     @Getter
     private CompletableFuture<Boolean> downloadTask;
     @Getter
@@ -71,12 +72,12 @@ public class FileDownloader {
     private final PeersService peersService;
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
-                          javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+                          Event<FileEventData> fileEvent,
                           AplAppStatus aplAppStatus,
                           PeersService peers) {
         this.manager = Objects.requireNonNull(manager, "manager is NULL");
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
-        this.presentDataEvent = Objects.requireNonNull(presentDataEvent, "presentDataEvent is NULL");
+        this.fileEvent = fileEvent;
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
         this.peersService=peers;
     }
@@ -129,15 +130,25 @@ public class FileDownloader {
         log.debug("signaling finished fileID = {}", fileID);
         this.aplAppStatus.durableTaskFinished(this.taskId, false, "File downloading finished: " + fileID);
         //FIRE event when shard is PRESENT + ZIP is downloaded
-        ShardPresentData shardPresentData = new ShardPresentData(fileID);
-        log.debug("Firing 'SHARD_PRESENT' event {}", shardPresentData);
-        presentDataEvent.select(literal(ShardPresentEventType.SHARD_PRESENT)).fireAsync(shardPresentData);
+        FileEventData data = new FileEventData(
+                true,
+                fileID,
+                "",
+                null
+        );
+        log.debug("Firing 'FILE_DOWNLOADED_PRESENT' event {}", data);
+        fileEvent.fireAsync(data);
     }
     //TODO: change to more general signal, not shard   
 
     private void signalFailed() {
-        ShardPresentData shardPresentData = new ShardPresentData();
-        presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored      
+          FileEventData data = new FileEventData(
+                true,
+                fileID,
+                "",
+                null
+        );      
+        fileEvent.fireAsync(data);
     } 
       
     private void setFileChunkState(FileChunkState state, FileChunkInfo fci){
