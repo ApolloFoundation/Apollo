@@ -242,10 +242,10 @@ public class CsvImporterImpl implements CsvImporter {
                 }
                 rsCounter++;
             }
-            dataSource.commit(); // final commit
+            dataSource.commit(false); // final commit
         } catch (Exception e) {
             log.error("Error during importing '" + tableName + "'", e);
-            dataSource.rollback();
+            dataSource.rollback(false);
             throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {

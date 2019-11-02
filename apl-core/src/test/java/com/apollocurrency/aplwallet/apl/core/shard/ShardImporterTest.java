@@ -276,9 +276,10 @@ class ShardImporterTest {
         assertNotNull(resourceAsStreamAccount);
         Files.copy(resourceAsStreamAccount, csvImporter.getDataExportPath().resolve("account.csv"));
 
-//        DbUtils.inTransaction(dataSource, (con)-> {
-        shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
-//        });
+        DbUtils.inTransaction(dataSource, (con)-> {
+            shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
+            dataSource.commit(false);
+        });
 
         List<DataTag> allTags = CollectionUtil.toList(dataTagDao.getAllTags(0, Integer.MAX_VALUE));
         assertEquals(6, allTags.size());

@@ -180,8 +180,10 @@ class CsvImporterTest {
                 long result = 0;
                 try {
                     result = csvImporter.importCsv(tableName, 1, true);
+                    dataSource.commit(false);
                 } catch (Exception e) {
                     log.error("Import error " + tableName, e);
+                    throw new RuntimeException(e);
                 }
                 assertTrue(result > 0, "incorrect '" + tableName + "'");
                 log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -214,12 +216,14 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(4, result);
 
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = con.createStatement().executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -259,11 +263,13 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(2, result);
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -307,11 +313,13 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(14, result);
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -358,9 +366,10 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsvWithDefaultParams(tableName, 10, true, Map.of("height", 100));
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
-
+                throw new RuntimeException(e);
             }
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -404,8 +413,10 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 10, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -449,8 +460,10 @@ class CsvImporterTest {
                 result = csvImporter.importCsvWithRowHook(ShardConstants.PHASING_POLL_TABLE_NAME, 10, true, (row) -> {
                     counter.incrementAndGet();
                 });
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + ShardConstants.PHASING_POLL_TABLE_NAME, e);
+                throw new RuntimeException(e);
             }
             assertEquals(3, counter.get());
             assertEquals(result, counter.get());
@@ -459,6 +472,7 @@ class CsvImporterTest {
                 phasingPollCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve("phasing_poll.csv"));
             } catch (IOException e) {
                 log.error("Load all lines error", e);
+                throw new RuntimeException(e);
             }
             assertEquals(phasingPollCsv.size() - 1, result);
             verifyCount(dataSource, ShardConstants.PHASING_POLL_TABLE_NAME, 3);
@@ -466,7 +480,7 @@ class CsvImporterTest {
     }
 
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
-        try (Connection con = dataSource.begin();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
         ) {
             long result = -1;
