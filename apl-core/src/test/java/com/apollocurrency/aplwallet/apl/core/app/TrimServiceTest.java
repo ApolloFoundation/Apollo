@@ -20,9 +20,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -77,13 +75,14 @@ class TrimServiceTest {
 
     @Test
     void testInitWithExistingNotFinishedTrimEntry() {
-        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).get();
+        TrimEntry entry = new TrimEntry(1L, 5000, false);
+        doReturn(entry).when(trimDao).get();
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
-        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
+        doReturn(entry).when(trimDao).save(entry);
         doReturn(7300).when(timeService).getEpochTime();
 
         trimService.init(5999);
@@ -91,8 +90,8 @@ class TrimServiceTest {
         verify(globalSync).readLock();
         verify(globalSync).readUnlock();
         verify(trimDao).clear();
-        verify(trimDao).save(new TrimEntry(null, 5000, false));
-        verify(trimDao).save(new TrimEntry(1L, 5000, true));
+        //verify(trimDao).save(new TrimEntry(null, 5000, false));
+        verify(trimDao, times(2)).save(new TrimEntry(1L, 5000, true));
         verify(dataSource).begin();
         verify(dataSource).commit(true);
         verify(firedEvent).fire(new TrimData(4000, 5000, 7200));
@@ -128,6 +127,8 @@ class TrimServiceTest {
     @Test
     void testInitWithExistingOldNotFinishedTrimEntry() {
         doReturn(new TrimEntry(1L, 10000, false)).when(trimDao).get();
+        doReturn(new TrimEntry(1L, 10000, false)).when(trimDao).save(new TrimEntry(1L, 10000, false));
+        doReturn(new TrimEntry(1L, 10000, true)).when(trimDao).save(new TrimEntry(1L, 10000, true));
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
@@ -176,6 +177,16 @@ class TrimServiceTest {
         verifyZeroInteractions(trimDao);
     }
 
+    @Test
+    void testDoTrimDerivedTablesAtAlreadyScannedHeight() {
+        Event firedEvent = mock(Event.class);
+        doReturn(new TrimEntry(1L, 250000, true)).when(trimDao).get();
+
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(250000, true));
+
+        verify(trimDao, times(0)).clear();
+        verifyZeroInteractions(firedEvent);
+    }
 
     @Test
     void testTrimDerivedTablesInOuterTransaction() {

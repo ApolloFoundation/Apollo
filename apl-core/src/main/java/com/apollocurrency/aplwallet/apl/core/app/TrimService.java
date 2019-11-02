@@ -131,10 +131,10 @@ public class TrimService {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
             if (trimHeight > 0) {
                 TrimEntry trimEntry = trimDao.get();
-                if (trimEntry == null) {
-                    trimEntry = new TrimEntry(null, blockchainHeight, false);
-                }
-                if (!trimEntry.isDone() || trimEntry.getHeight() < blockchainHeight) {
+                if (trimEntry == null || !trimEntry.isDone() || trimEntry.getHeight() < blockchainHeight) {
+                    if (trimEntry == null || trimEntry.getHeight() < blockchainHeight){
+                        trimEntry = new TrimEntry(null, blockchainHeight, false);
+                    }
                     trimDao.clear();
                     trimEntry = trimDao.save(trimEntry);
                     dbManager.getDataSource().commit(false);
