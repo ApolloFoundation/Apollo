@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.eth.contracts;
 
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;
@@ -86,6 +87,7 @@ public class DexContract extends Contract {
     public static final String FUNC_GETSWAPDATA = "getSwapData";
 
     private Credentials credentials;
+    private EthereumWalletService ethereumWalletService;
 
     public static final Event INITIATED_EVENT = new Event("Initiated",
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {
@@ -144,8 +146,9 @@ public class DexContract extends Contract {
         super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
     }
 
-    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
         super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
+        this.ethereumWalletService = ethereumWalletService;
     }
 
     public RemoteCall<BigInteger> getSwapType(byte[] secretHash) {
@@ -326,17 +329,17 @@ public class DexContract extends Contract {
 
     public String sendTx(Function function, BigInteger weiValue) {
         EthSendTransaction sendTransaction;
+        BigInteger gasLimit = ethereumWalletService.estimateGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue);
         try {
             sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
-                    gasProvider.getGasLimit(function.getName()),
+                    gasLimit,
                     contractAddress,
                     FunctionEncoder.encode(function),
                     weiValue);
+            return sendTransaction.getTransactionHash();
         } catch (IOException e) {
-            return null;
+            throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
         }
-
-        return sendTransaction.getTransactionHash();
     }
 
 //  TODO Second variant, remove after success testing.
@@ -657,8 +660,8 @@ public class DexContract extends Contract {
         return new DexContract(contractAddress, web3j, credentials, contractGasProvider);
     }
 
-    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
-        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider);
+    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
+        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider, ethereumWalletService);
     }
 
     public static RemoteCall<DexContract> deploy(Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {

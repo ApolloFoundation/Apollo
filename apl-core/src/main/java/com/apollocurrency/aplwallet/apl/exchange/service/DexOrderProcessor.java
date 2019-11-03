@@ -461,13 +461,14 @@ public class DexOrderProcessor {
 
 
     private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) throws ParameterException {
+        byte[] keySeed = Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
                 .builder()
                 .passphrase(passphrase)
                 .deadlineValue("1440")
-                .publicKey(Account.getPublicKey(accountId))
+                .publicKey(Crypto.getPublicKey(keySeed))
                 .senderAccount(Account.getAccount(accountId))
-                .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase)))
+                .keySeed(keySeed)
                 .broadcast(true)
                 .recipientId(0L)
                 .ecBlockHeight(0)
