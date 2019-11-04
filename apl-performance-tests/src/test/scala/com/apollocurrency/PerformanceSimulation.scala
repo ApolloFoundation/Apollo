@@ -110,9 +110,9 @@ class PerformanceSimulation extends Simulation {
 
 
 	val inject = 	constantUsersPerSec(users) during (duration minutes)
-	val inject_low = 	constantUsersPerSec(1) during (duration minutes)
+	val inject_low = 	rampUsers(25) during (duration seconds)
 	setUp(
 		scn.inject(inject),
-	  scn_1.inject(inject)
+	  scn_1.inject(inject_low)
 	).protocols(httpProtocol)
 }
