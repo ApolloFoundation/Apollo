@@ -156,7 +156,18 @@ public class DownloadableFilesManager {
         log.trace("<< ParsedFileId = {}", res);
         return res;
     }
-
+    
+    private UUID getChainId(ParsedFileId parsed){
+        UUID chainId;
+        if (parsed.modifiers.isEmpty()) {
+            chainId = blockchainConfig.getChain().getChainId();
+        } else {
+            String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
+            chainId = UUID.fromString(chainIdStr);
+        }
+        return chainId;
+    }
+    
     /**
      * Find the real ZIP file in folder by specified fileId.
      *
@@ -181,14 +192,7 @@ public class DownloadableFilesManager {
                 long shardId = 0;
                 try {
                     shardId = Long.valueOf(parsed.fileId);
-                    UUID chainId;
-                    if(parsed.modifiers.isEmpty()){
-                      chainId=blockchainConfig.getChain().getChainId();
-                    }else{
-                       String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
-                       chainId=UUID.fromString(chainIdStr);
-                    }
-                    
+                    UUID chainId = getChainId(parsed);
                     String fileName = shardNameHelper.getCoreShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
@@ -202,14 +206,7 @@ public class DownloadableFilesManager {
                 long shardId = 0;
                 try {
                     shardId = Long.valueOf(parsed.fileId);
-                    UUID chainId;
-                    if(parsed.modifiers.isEmpty()){
-                      chainId=blockchainConfig.getChain().getChainId();
-                    }else{
-                       String chainIdStr = parsed.modifiers.get(MOD_CHAINID);
-                       chainId=UUID.fromString(chainIdStr);
-                    }
-                    
+                    UUID chainId = getChainId(parsed);
                     String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
