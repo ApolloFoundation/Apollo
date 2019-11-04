@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
@@ -19,6 +20,7 @@ import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -56,6 +58,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -388,13 +391,14 @@ public class EthereumWalletService {
     }
 
     private String execute(Credentials credentials, Function function, String contractToAddress, Long gasPrice) throws ExecutionException, InterruptedException {
-        BigInteger gasLimitWei = estimateGasLimit(credentials.getAddress(), contractToAddress, function,BigInteger.ZERO);
+        BigInteger gasPriceWei = EthUtil.gweiToWei(gasPrice);
+        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function,BigInteger.ZERO, gasPriceWei);
         BigInteger nonce = getNonce(credentials.getAddress());
         String encodedFunction = FunctionEncoder.encode(function);
 
         RawTransaction rawTransaction = RawTransaction.createTransaction(
                 nonce,
-                EthUtil.gweiToWei(gasPrice),
+                gasPriceWei,
                 gasLimitWei,
                 contractToAddress,
                 encodedFunction);
@@ -411,7 +415,8 @@ public class EthereumWalletService {
             EthEstimateGas ethEstimateGas  = web3j.ethEstimateGas(new Transaction(fromAddress, null, null, null
                     , toAddress, weiValue, FunctionEncoder.encode(function))).send();
             if (ethEstimateGas.getError() != null) {
-                userErrorMessageDao.add(new UserErrorMessage(null, fromAddress, ethEstimateGas.getError().getMessage(), System.currentTimeMillis()));
+                String parameters = function.getInputParameters().stream().map(TypeEncoder::encode).collect(Collectors.joining(","));
+                userErrorMessageDao.add(new UserErrorMessage(null, fromAddress, ethEstimateGas.getError().getMessage(),function.getName(), parameters, System.currentTimeMillis()));
                 throw new NotValidTransactionException(String.format("Unable to send eth transaction from %s to %s : %s, error - %s", fromAddress, toAddress, function.getName() , ethEstimateGas.getError().getMessage()));
             }
             BigInteger amountUsed = ethEstimateGas.getAmountUsed();
@@ -419,6 +424,17 @@ public class EthereumWalletService {
         } catch (IOException e) {
             throw new RuntimeException("I/O error occurred, maybe eth node is down");
         }
+    }
+
+    public BigInteger validateBalanceAndReturnGasLimit(String fromAddress, String toAddress, Function function, BigInteger weiValue, BigInteger gasPrice) {
+        BigInteger gasLimit = estimateGasLimit(fromAddress, toAddress, function, weiValue);
+        BigInteger balance = getEthBalanceWei(fromAddress);
+        BigInteger fee = gasLimit.multiply(gasPrice);
+        BigInteger requiredAmount = fee.add(weiValue);
+        if (balance.compareTo(requiredAmount) < 0) {
+            throw new NotSufficientFundsException("Not enough eth to pay fee + amount. Current balance -  " + balance + ", required " + requiredAmount);
+        }
+        return gasLimit;
     }
 
     private BigInteger getNonce(String address) throws ExecutionException, InterruptedException {
