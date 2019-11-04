@@ -82,7 +82,6 @@ public class DexSmartContractService {
      */
     public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
-
         Long gasPrice = gas;
         if(gasPrice == null){
             gasPrice = getEthGasPrice();
@@ -280,7 +279,7 @@ public class DexSmartContractService {
     }
 
     DexContract createDexContract(ContractGasProvider gasProvider, DexTransaction dexTransaction, Credentials credentials) {
-       return new DexContractImpl(smartContractAddress, web3j, createTransactionManager(dexTransaction, credentials), gasProvider);
+       return new DexContractImpl(smartContractAddress, web3j, createTransactionManager(dexTransaction, credentials), gasProvider, ethereumWalletService);
     }
 
     private String checkExistingTx(DexTransaction tx) {
@@ -359,7 +358,7 @@ public class DexSmartContractService {
 
     public DepositedOrderDetails getDepositedOrderDetails(String address, Long orderId) {
         TransactionManager transactionManager = new ClientTransactionManager(web3j, address);
-        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, transactionManager, null);
+        DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, transactionManager, null, null);
         try {
             return DepositedOrderDetailsMapper.map(dexContract.getDepositedOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {

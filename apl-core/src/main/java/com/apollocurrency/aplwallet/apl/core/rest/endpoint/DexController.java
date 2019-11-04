@@ -463,7 +463,7 @@ public class DexController {
         String transaction;
         try {
             transaction = service.withdraw(sender.getId(), passphrase, fromAddress, toAddress, amount, currencies, transferFee);
-        } catch (AplException.ExecutiveProcessException e){
+        } catch (Exception e){
             return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
         }
 

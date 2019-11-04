@@ -37,6 +37,7 @@ delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_trade;
 delete from dex_transaction;
+delete from user_error_message;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   TIMESTAMP,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -425,4 +426,10 @@ INSERT INTO dex_transaction
 (100   , X'a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26' , X'ff', 0,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 250),
 (200   , X'203b36aac62037ac7c4502aa023887f7fcae843c456fde083e6a1dc70a29f3d61a73f57d79481f06e27ea279c74528e1ba6b1854d219b1e3b255729889ca5926' , X'ff', 1,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 300),
 (300   , X'05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1' , X'ff', 0,        102,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 400),
+;
+INSERT INTO user_error_message
+(db_id,           address,                                      error,               timestamp) VALUES
+(100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction', 1000),
+(200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'         , 1100),
+(300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'    , 1200),
 ;
