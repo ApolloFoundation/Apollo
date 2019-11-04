@@ -91,10 +91,13 @@ public class ShardDownloadPresenceObserver {
     private void cleanUpPreviouslyImportedData() {
         log.debug("start CleanUp after UNSUCCESSFUL zip import...");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
         try (Connection connection = dataSource.getConnection()) {
             blockchain.deleteAll();
             derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
-            dataSource.commit();
+            dataSource.commit(false);
             log.debug("Finished CleanUp after UNSUCCESSFUL zip import");
         } catch (Exception e) {
             log.error("Error cleanUp after UNSUCCESSFUL zip import", e);

@@ -78,7 +78,7 @@ public class ShardsDownloadService {
         return !shards.isEmpty();
     }
 
-    public void onAnyFileDownloadEevent(@Observes @FileDownloadEvent FileEventData fileData) {
+    public void onAnyFileDownloadEvent(@Observes @FileDownloadEvent FileEventData fileData) {
         //TODO: process events carefully
         for(Long shardId: shardDownloadStatuses.keySet()){
             ShardDownloadStatus status = shardDownloadStatuses.get(shardId);
