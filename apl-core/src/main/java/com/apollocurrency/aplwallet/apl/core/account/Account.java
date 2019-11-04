@@ -576,8 +576,13 @@ public class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
-                    height, this.publicKey.getHeight(), height - this.publicKey.getHeight(), EFFECTIVE_BALANCE_CONFIRMATIONS);
+            if(LOG.isTraceEnabled()) {
+                LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                        height,
+                        this.publicKey!=null?this.publicKey.getHeight():null,
+                        height - (this.publicKey!=null?this.publicKey.getHeight():0),
+                        EFFECTIVE_BALANCE_CONFIRMATIONS);
+            }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {

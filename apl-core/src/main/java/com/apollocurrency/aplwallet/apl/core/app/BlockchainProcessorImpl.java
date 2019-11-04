@@ -1123,7 +1123,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // rollback not scan safe derived tables with blocks and transactions
                 for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
                     if (!derivedTable.isScanSafe()) {
-                        log.debug("Rollback not scan safe table {}", derivedTable.getName());
+                        log.debug("Rollback not scan safe table {}, height={}", derivedTable.getName(), height);
                         derivedTable.rollback(height);
                     }
                 }
@@ -1325,7 +1325,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
-                log.info("Rollback to height less than {} not supported, will do a full scan", getMinRollbackHeight());
+                log.info("Rollback to height less than {} (min rollback height) not supported, will do a full scan", getMinRollbackHeight());
                 height = shardInitialHeight;
             }
             if (height < 0) {
@@ -1355,7 +1355,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == shardInitialHeight) {
-                    trimService.resetTrim();
+                    trimService.resetTrim(height+trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
