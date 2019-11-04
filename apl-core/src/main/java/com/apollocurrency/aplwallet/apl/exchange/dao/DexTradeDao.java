@@ -40,5 +40,7 @@ public interface  DexTradeDao {
     @Transactional
     @SqlUpdate("DELETE FROM dex_trade")
     int hardDeleteAllDexTrade();
+    
+    
 
 }

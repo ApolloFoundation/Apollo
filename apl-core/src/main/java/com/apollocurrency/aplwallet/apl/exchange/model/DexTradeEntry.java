@@ -30,7 +30,7 @@ public class DexTradeEntry extends DerivedEntity {
     private long senderOfferAmount;
     private byte pairCurrency;
     private BigDecimal pairRate;
-    private Integer finishTime;
+    private long finishTime;
 
     public DexTradeEntry(Long dbId, Integer height) {
         super(dbId, height);
@@ -43,7 +43,7 @@ public class DexTradeEntry extends DerivedEntity {
     @Builder(builderMethodName = "builder")
     public DexTradeEntry(Long dbId, Integer height, long transactionID, long senderOfferID,
                          long receiverOfferID, byte senderOfferType, byte senderOfferCurrency, long senderOfferAmount,
-                         byte pairCurrency, BigDecimal pairRate, Integer finishTime) {
+                         byte pairCurrency, BigDecimal pairRate, long finishTime) {
         super(dbId, height);
         this.transactionID = transactionID;
         this.senderOfferID = senderOfferID;

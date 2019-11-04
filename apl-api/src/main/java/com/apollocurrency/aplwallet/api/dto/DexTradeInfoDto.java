@@ -37,7 +37,7 @@ public class DexTradeInfoDto {
     @Schema(name="Exchange rate", description="parameter in gwei units")    
     public BigDecimal pairRate;
     @Schema(name="Finish time", description="Order finish time")
-    public Integer finishTime;
+    public long finishTime;
     @Schema(name="Order height", description="Blockchain-related height value")
     public Integer height; 
 }

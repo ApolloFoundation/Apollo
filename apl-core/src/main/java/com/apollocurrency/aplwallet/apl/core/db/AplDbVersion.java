@@ -836,10 +836,16 @@ public class AplDbVersion extends DbVersion {
             
             case 318: 
                 apply("CREATE TABLE IF NOT EXISTS TRADING_TRACK ( LAST_TIMESTAMP BIGINT NOT NULL);");
+                                        
+            case 319:   
+                apply("DELETE FROM dex_trade"); 
+                
+                
+            case 320:
+                apply("ALTER TABLE dex_trade MODIFY FINISH_TIME BIGINT NOT NULL");
             
-            case 319:
-                return 319;
-            
+            case 321:    
+                return 321;
                 
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
