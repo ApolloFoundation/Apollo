@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -29,7 +29,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -50,16 +49,19 @@ public class CsvImporterImpl implements CsvImporter {
     private DatabaseManager databaseManager;
     private Set<String> excludeTables; // skipped tables,
     private  AplAppStatus aplAppStatus;
+    private ValueParser parser;
 
     @Inject
     public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath,
                            DatabaseManager databaseManager,
-                           AplAppStatus aplAppStatus) {
+                           AplAppStatus aplAppStatus,
+                           ValueParser parser) {
         Objects.requireNonNull(dataExportPath, "dataExport path is NULL");
         this.dataExportPath = dataExportPath;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
         this.aplAppStatus = aplAppStatus;
+        this.parser = Objects.requireNonNull(parser, "value parser is NULL");
     }
 
     /**
@@ -172,51 +174,25 @@ public class CsvImporterImpl implements CsvImporter {
                     log.trace("{}[{} : {}] = {}", columnName, i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
-                        byte[] decodedBytes = Base64.getDecoder().decode(((String) object));
+                        final byte[] decodedBytes = parser.parseBinaryObject(object);
                         try (InputStream is = new ByteArrayInputStream(decodedBytes)) {
                             // meta.getPrecision(i + 1) - is very IMPORTANT here for H2 db !!!
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
-                            row.put(columnName.toLowerCase(), Base64.getDecoder().decode((String) object));
-                        }
-                        catch (SQLException e) {
+                            row.put(columnName.toLowerCase(), decodedBytes);
+                        } catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
                             throw e;
                         }
                         // ignore error here
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
-                        String objectArray = (String)object;
-                        Object[] actualArray;
-                        if (!StringUtils.isBlank(objectArray)) {
-                            String[] split = objectArray.split(",");
-                            actualArray = new Object[split.length];
-                            for (int j = 0; j < split.length; j++) {
-                                String value = split[j];
-                                if (value.startsWith("b\'") && value.endsWith("\'")) { //find byte arrays
-                                    //byte array found
-                                    byte[] actualValue = Base64.getDecoder().decode(value.substring(2, value.length() - 1));
-                                    actualArray[j] = actualValue;
-                                } else if (value.startsWith("\'") && value.endsWith("\'")) { //find string
-                                    actualArray[j] = split[j].substring(1, split[j].length() - 1);
-                                } else { // try to process number
-                                    try {
-                                        actualArray[j] = Integer.parseInt(split[j]);
-                                    }
-                                    catch (NumberFormatException ignored) { // value can be of long type
-                                        try {
-                                            actualArray[j] = Long.parseLong(split[j]); // try to parse long
-                                        }
-                                        catch (NumberFormatException e) { // throw exception, when specified value is not a string, long, int or byte array
-                                            throw new RuntimeException("Value " + split[j] + " of unsupported type");
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            actualArray = new Object[0];
-                        }
+                        Object[] actualArray = parser.parseArrayObject(object);
                         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
                         preparedInsertStatement.setArray(i + 1, simpleArray);
                         row.put(columnName.toLowerCase(), actualArray);
+                    } else if (object != null && (meta.getColumnType(i + 1) == Types.VARCHAR || meta.getColumnType(i + 1) == Types.NVARCHAR)) {
+                        String value = parser.parseStringObject(object);
+                        row.put(columnName.toLowerCase(), value);
+                        preparedInsertStatement.setString(i + 1, value);
                     } else {
                         row.put(columnName.toLowerCase(), object);
                         preparedInsertStatement.setObject(i + 1, object);
