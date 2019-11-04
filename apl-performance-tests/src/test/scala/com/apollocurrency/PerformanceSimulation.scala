@@ -8,6 +8,7 @@ import io.gatling.http.Predef._
 import io.gatling.jdbc.Predef._
 import scala.util.Random
 import scalaj.http._
+import java.util.UUID.randomUUID
 
 class PerformanceSimulation extends Simulation {
 
@@ -18,6 +19,7 @@ class PerformanceSimulation extends Simulation {
 	var peers = ConfigFactory.load("application.conf").getStringList(env).asScala.toList
 	val random = new Random
 	val httpProtocol = http.baseUrls(peers)
+
 
 	before {
 		println("Stop/Start forging!")
@@ -74,6 +76,43 @@ class PerformanceSimulation extends Simulation {
 			session
 		}
 
+	val scn_1 = scenario("Shuffling")
+		.exec(http("Shuffling Create")
+			.post("/apl?" +
+				"requestType=shufflingCreate&" +
+				"amount=100000000000&" +
+				"registrationPeriod=4000&" +
+				"holdingType=0&" +
+				"participantCount=3&" +
+				"secretPhrase="+random.nextInt(50).toString+"&" +
+				"feeATM=3000000000&deadline=1440")
+			.check(status.is(200))
+			.check(jsonPath("$.fullHash").find.saveAs("fullHash")))
+		.pause(30)
+		.exec(session => {
+			val fullHash = session("fullHash").asOption[String]
+			session
+		})
+  	.repeat(5) {
+			exec(http("Shuffling Join")
+				.post("/apl?requestType=startShuffler&" +
+					"shufflingFullHash=${fullHash}&" +
+					"recipientSecretPhrase=" + randomUUID().toString + "&" +
+					"secretPhrase=" + random.nextInt(200).toString + "&" +
+					"createNoneTransactionMethod=true&" +
+					"feeATM=3000000000&deadline=1440"))
+		}
+		.exec { session =>
+			println(session)
+			session
+		}
+
+
+
 	val inject = 	constantUsersPerSec(users) during (duration minutes)
-	setUp(scn.inject(inject)).protocols(httpProtocol)
+	val inject_low = 	constantUsersPerSec(1) during (duration minutes)
+	setUp(
+		scn.inject(inject),
+	  scn_1.inject(inject)
+	).protocols(httpProtocol)
 }
