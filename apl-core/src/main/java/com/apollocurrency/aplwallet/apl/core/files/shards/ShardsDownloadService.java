@@ -90,7 +90,7 @@ public class ShardsDownloadService {
             if(status.isDowloadedOK()){
                 fireShardPresentEvent(shardId);                
             }else if(status.isDownloadCompleted()){                
-                fireNoShardEvent();
+                fireNoShardEvent("SHARDING: shard download failed");
             }
         }
     }
@@ -109,8 +109,9 @@ public class ShardsDownloadService {
         };
     }
 
-    private void fireNoShardEvent() {
+    private void fireNoShardEvent(String reason) {
         ShardPresentData shardPresentData = new ShardPresentData();
+        log.warn(reason);
         log.debug("Firing 'NO_SHARD' event...");
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
@@ -157,7 +158,7 @@ public class ShardsDownloadService {
             log.warn("Shard {} can not be loaded from peers", shardId);
             return result;
         }
-
+        
         // check if shard files exist on local node
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
         List<String> filesToDownload = checkShardDownloadedAlready(si);
@@ -182,17 +183,20 @@ public class ShardsDownloadService {
         boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
         FileDownloadDecision result = FileDownloadDecision.NotReady;
         if (doNotShardImport) {
-            fireNoShardEvent();
+            fireNoShardEvent("SHARDING: skipping shard import due to config/command-line option");
             result = FileDownloadDecision.NoPeers;
-            log.warn("prepareAndStartDownload: skipping shard import due to config/command-line option");
             return result;
         }
-
+        if(!getShardingInfoFromPeers()){
+            fireNoShardEvent("SHARDING: no good shards foud in the network");
+            result = FileDownloadDecision.NoPeers;
+            return result;            
+        }
         if (shardInfoDownloader.getSortedShards().isEmpty()) {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
-            fireNoShardEvent();
+            fireNoShardEvent("SHARDING: No good shards peers found");
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
@@ -206,7 +210,7 @@ public class ShardsDownloadService {
                 }
             }
             if (!goodShardFound) {
-                fireNoShardEvent();
+                fireNoShardEvent("SHARDING: No good shards found");
             }
         }
         return result;
