@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 
 /**
@@ -64,10 +65,10 @@ public class ShardInfoDownloader {
 
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
 
-        this.additionalPeers = Collections.synchronizedSet(new HashSet<>());
-        this.sortedShards = Collections.synchronizedMap(new HashMap<>());
-        this.shardsPeers = Collections.synchronizedMap(new HashMap<>());
-        this.shardInfoByPeers = Collections.synchronizedMap(new HashMap<>());
+        this.additionalPeers = ConcurrentHashMap.newKeySet();
+        this.sortedShards = new ConcurrentHashMap();
+        this.shardsPeers = new ConcurrentHashMap();
+        this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
     }
@@ -95,7 +96,7 @@ public class ShardInfoDownloader {
                         Set<ShardInfo> rs = sortedShards.get(s.shardId);
                         if (rs == null) {
                             rs = new HashSet<>();
-                            sortedShards.put(s.shardId, rs);
+                            sortedShards.putIfAbsent(s.shardId, rs);
                         }
                         rs.add(s);
                     }
