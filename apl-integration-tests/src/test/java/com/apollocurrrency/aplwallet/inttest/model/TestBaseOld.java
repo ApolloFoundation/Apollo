@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
@@ -373,6 +374,25 @@ public class TestBaseOld extends TestBase {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
+    @Override
+    public List<DexOrderDto> getDexOrders() {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public List<DexOrderDto> getDexHistory(String account) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public EthGasInfoResponse getEthGas() {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
 
     public List<String> getPeers() {
         try {
