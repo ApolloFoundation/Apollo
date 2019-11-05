@@ -395,7 +395,7 @@ public class EthereumWalletService {
 
     private BigInteger getNonce(String address) throws ExecutionException, InterruptedException {
         EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
-                address, DefaultBlockParameterName.LATEST).sendAsync().get();
+                address, DefaultBlockParameterName.PENDING).sendAsync().get();
 
         return ethGetTransactionCount.getTransactionCount();
     }
