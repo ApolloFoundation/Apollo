@@ -1,10 +1,12 @@
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.math3.distribution.TDistribution;
 
 /**
@@ -19,7 +21,7 @@ public class PeerInfoStatistics {
             
     private final Map<String,PeerInfoGroup> sorted = new HashMap<>();
     
-    public void add(HasHashSum pi){
+    public void add(PeerFileHashSum pi){
       if(pi!=null)  {
         String hash = Convert.toHexString(pi.getHash());
         PeerInfoGroup pg = sorted.get(hash);
@@ -64,7 +66,7 @@ public class PeerInfoStatistics {
         return res;
     }
     
-    boolean isAlreadyCounted(HasHashSum pi){
+    boolean isAlreadyCounted(PeerFileHashSum pi){
         boolean res = false;
         for(String hash: sorted.keySet()){
             PeerInfoGroup pg = sorted.get(hash);
@@ -78,8 +80,8 @@ public class PeerInfoStatistics {
         return res;
     }
     
-    public List<HasHashSum> getByHash(String hash){
-        List<HasHashSum> res = new ArrayList<>();
+    public Set<PeerFileHashSum> getByHash(String hash){
+        Set<PeerFileHashSum> res = new HashSet<>();
         PeerInfoGroup pg = sorted.get(hash);
         if(pg!=null){
             res.addAll(pg.pl);
@@ -87,8 +89,8 @@ public class PeerInfoStatistics {
         return res;
     }
 
-    List<HasHashSum> getAllExceptHash(String key) {
-        List<HasHashSum> res = new ArrayList<>();
+    public Set<PeerFileHashSum> getAllExceptHash(String key) {
+        Set<PeerFileHashSum> res = new HashSet<>();
         for(String h: sorted.keySet()){
             PeerInfoGroup pg = sorted.get(h);
             if(h.equals(key)){

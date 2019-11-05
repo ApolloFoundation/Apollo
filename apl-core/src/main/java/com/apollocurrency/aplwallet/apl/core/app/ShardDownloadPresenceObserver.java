@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -64,7 +64,7 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
-        String fileId = shardPresentData.getFileIdValue();
+        String fileId = shardPresentData.getShardFileId();
         try {
             shardImporter.importShardByFileId(fileId);
         } catch (Exception e) {
@@ -91,10 +91,13 @@ public class ShardDownloadPresenceObserver {
     private void cleanUpPreviouslyImportedData() {
         log.debug("start CleanUp after UNSUCCESSFUL zip import...");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
         try (Connection connection = dataSource.getConnection()) {
             blockchain.deleteAll();
             derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
-            dataSource.commit();
+            dataSource.commit(false);
             log.debug("Finished CleanUp after UNSUCCESSFUL zip import");
         } catch (Exception e) {
             log.error("Error cleanUp after UNSUCCESSFUL zip import", e);
