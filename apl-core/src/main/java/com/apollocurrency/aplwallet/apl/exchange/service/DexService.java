@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
@@ -26,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -52,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
@@ -147,6 +150,37 @@ public class DexService {
                                                      Byte pairCurrency, Integer offset, Integer limit) {
         return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
     }
+    
+    @Transactional
+    public DexTradeEntryMin getTradeInfoMinForPeriod(Integer start, Integer finish,
+                                                     Byte pairCurrency, Integer offset, Integer limit) {
+        
+        List<DexTradeEntry> tradeEntries =  dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
+        DexTradeEntryMin dexTradeEntryMin = new DexTradeEntryMin();
+        
+        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
+        
+        BigDecimal hi = cnv.apply( tradeEntries.get(0)).pairRate;//,low=t,open,close; 
+        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;
+        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
+        BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
+        
+        // iterate list to find the highest or the lowest values
+        for (DexTradeEntry currEl : tradeEntries) {    
+            DexTradeInfoDto currElDto = cnv.apply(currEl);
+            if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
+            if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
+        }
+        
+        dexTradeEntryMin.setHi(hi);
+        dexTradeEntryMin.setLow(low);
+        dexTradeEntryMin.setOpen(open);
+        dexTradeEntryMin.setClose(close);
+        
+        return dexTradeEntryMin;
+    }
+
+    
 
     @Transactional
     public void saveDexTradeEntry(DexTradeEntry dexTradeEntry) {
