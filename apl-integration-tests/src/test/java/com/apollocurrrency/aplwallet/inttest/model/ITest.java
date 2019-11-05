@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -37,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
@@ -135,4 +137,9 @@ public interface ITest {
     List getShards(String ip);
     void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum,Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding);
     List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId);
+    List<DexOrderDto> getDexOrders();
+    List<DexOrderDto> getDexHistory(String account, String pair, String type);
+    List<DexOrderDto> getDexHistory(String account);
+    EthGasInfoResponse getEthGasInfo();
+    List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime);
 }

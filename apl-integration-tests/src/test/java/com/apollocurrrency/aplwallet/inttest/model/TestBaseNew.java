@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -38,6 +39,7 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
@@ -362,7 +364,6 @@ public class TestBaseNew extends TestBase {
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
-
     @Override
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         HashMap<String, String> param = new HashMap();
@@ -380,6 +381,74 @@ public class TestBaseNew extends TestBase {
                 .get(path)
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
+
+    //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
+    @Override
+    public List<DexOrderDto> getDexOrders() {
+        String path = "/rest/dex/offers";
+        return   given().log().all()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path)
+                .getBody().jsonPath().getList("", DexOrderDto.class);
+    }
+
+
+    @Override
+    public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
+        HashMap<String, String> param = new HashMap();
+        param.put("pair", pair);
+        param.put("type", type);
+        param.put("accountId", account);
+
+        String path = "/rest/dex/history";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                .get(path)
+                .getBody().jsonPath().getList("", DexOrderDto.class);
+    }
+
+    @Override
+    public List<DexOrderDto> getDexHistory(String account) {
+        HashMap<String, String> param = new HashMap();
+        param.put("accountId", account);
+
+        String path = "/rest/dex/history";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                .get(path)
+                .getBody().jsonPath().getList("", DexOrderDto.class);
+    }
+
+    @Override
+    public EthGasInfoResponse getEthGasInfo() {
+        String path = "/rest/dex/ethInfo";
+        return given().log().uri()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(EthGasInfoResponse.class);
+    }
+
+    @Override
+    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
+        HashMap<String, String> param = new HashMap();
+        param.put("pairCurrency", pairCurrency);
+        param.put("start", String.valueOf(startTime));
+        param.put("finish", String.valueOf(finishTime));
+
+        String path = "/rest/dex/tradeInfo";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                .get(path)
+                .getBody().jsonPath().getList("", DexTradeInfoDto.class);
+    }
+
 
     @Override
     public GetBlockIdResponse getBlockId(String height) {
