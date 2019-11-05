@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -431,6 +432,23 @@ public class TestBaseNew extends TestBase {
                 .when()
                 .get(path).as(EthGasInfoResponse.class);
     }
+
+    @Override
+    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
+        HashMap<String, String> param = new HashMap();
+        param.put("pairCurrency", pairCurrency);
+        param.put("start", String.valueOf(startTime));
+        param.put("finish", String.valueOf(finishTime));
+
+        String path = "/rest/dex/tradeInfo";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                .get(path)
+                .getBody().jsonPath().getList("", DexTradeInfoDto.class);
+    }
+
 
     @Override
     public GetBlockIdResponse getBlockId(String height) {

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
@@ -391,6 +392,11 @@ public class TestBaseOld extends TestBase {
 
     @Override
     public EthGasInfoResponse getEthGasInfo() {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

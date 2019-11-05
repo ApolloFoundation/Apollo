@@ -1,6 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
+import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
@@ -44,5 +45,18 @@ public class TestDex extends TestBaseNew {
         assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
     }
 
+    @DisplayName("obtaining trading information for the given period")
+    @Test
+    public void getDexTradeInfoETH() {
+        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("1", 0, 999999999);
+        assertNotNull(dexTrades);
+    }
+
+    @DisplayName("obtaining trading information for the given period")
+    @Test
+    public void getDexTradeInfoPAX() {
+        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("2", 0, 999999999);
+        assertNotNull(dexTrades);
+    }
 
 }
