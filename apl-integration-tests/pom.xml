@@ -13,6 +13,7 @@
     <properties>
         <aspectj.version>1.9.4</aspectj.version>
         <test.env>localhost</test.env>
+        <skipTests>true</skipTests>
     </properties>
 
     <dependencies>
@@ -106,7 +107,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>${skipTests}</skipTests>
                     <testFailureIgnore>true</testFailureIgnore>
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
@@ -146,6 +147,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>
