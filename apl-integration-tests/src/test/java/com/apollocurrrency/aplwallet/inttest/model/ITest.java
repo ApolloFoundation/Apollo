@@ -139,5 +139,5 @@ public interface ITest {
     List<DexOrderDto> getDexOrders();
     List<DexOrderDto> getDexHistory(String account, String pair, String type);
     List<DexOrderDto> getDexHistory(String account);
-    EthGasInfoResponse getEthGas();
+    EthGasInfoResponse getEthGasInfo();
 }

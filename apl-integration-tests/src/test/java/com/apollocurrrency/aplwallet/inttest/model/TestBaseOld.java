@@ -390,7 +390,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Override
-    public EthGasInfoResponse getEthGas() {
+    public EthGasInfoResponse getEthGasInfo() {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

@@ -424,7 +424,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public EthGasInfoResponse getEthGas() {
+    public EthGasInfoResponse getEthGasInfo() {
         String path = "/rest/dex/ethInfo";
         return given().log().uri()
                 .spec(restHelper.getSpec())

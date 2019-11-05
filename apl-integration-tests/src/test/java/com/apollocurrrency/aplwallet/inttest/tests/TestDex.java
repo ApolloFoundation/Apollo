@@ -18,30 +18,30 @@ public class TestDex extends TestBaseNew {
     @Test
     public void getExchangeOrders() {
         List<DexOrderDto> orders = getDexOrders();
-        assertTrue(orders.size() >= 0);
+        assertNotNull(orders);
     }
 
     @DisplayName("Get trading history for certain account")
     @Test
     public void getTradeHistory() {
         List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), "1", "1");
-        assertTrue(orders.size() >= 0);
+        assertNotNull(orders);
     }
 
     @DisplayName("Get trading history for certain account")
     @Test
     public void getAllTradeHistoryByAccount() {
         List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getUser());
-        assertTrue(orders.size() >= 0);
+        assertNotNull(orders);
     }
 
     @DisplayName("get gas prices for different tx speed")
     @Test
     public void getEthGasPrice(){
-        EthGasInfoResponse gasPrice = getEthGas();
-        assertTrue(Float.valueOf(gasPrice.fast)>=Float.valueOf(gasPrice.average));
-        assertTrue(Float.valueOf(gasPrice.average)>=Float.valueOf(gasPrice.safeLow));
-        assertTrue(Float.valueOf(gasPrice.safeLow)>0);
+        EthGasInfoResponse gasPrice = getEthGasInfo();
+        assertTrue(Float.valueOf(gasPrice.getFast())>=Float.valueOf(gasPrice.getAverage()));
+        assertTrue(Float.valueOf(gasPrice.getAverage())>=Float.valueOf(gasPrice.getSafeLow()));
+        assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
     }
 
 
