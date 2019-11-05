@@ -165,18 +165,35 @@ public class DexService {
         BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
         BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
         
+        BigDecimal volumefrom = BigDecimal.ZERO;
+        BigDecimal volumeto = BigDecimal.ZERO;
+        
+        
         // iterate list to find the highest or the lowest values
         for (DexTradeEntry currEl : tradeEntries) {    
             DexTradeInfoDto currElDto = cnv.apply(currEl);
             if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
             if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
+            
+            // pairCurrency is either ETH or PAX
+            // if eth
+            
+            BigDecimal amount = BigDecimal.valueOf( currElDto.senderOfferAmount );
+            
+            BigDecimal vx = BigDecimal.valueOf(currElDto.senderOfferAmount).multiply(currElDto.pairRate);
+            
+            volumefrom = volumefrom.add(amount);
+            volumeto = volumeto.add(vx);
+            
+            
         }
         
         dexTradeEntryMin.setHi(hi);
         dexTradeEntryMin.setLow(low);
         dexTradeEntryMin.setOpen(open);
         dexTradeEntryMin.setClose(close);
-        
+        dexTradeEntryMin.setVolumefrom(volumefrom);
+        dexTradeEntryMin.setVolumeto(volumeto);
         return dexTradeEntryMin;
     }
 

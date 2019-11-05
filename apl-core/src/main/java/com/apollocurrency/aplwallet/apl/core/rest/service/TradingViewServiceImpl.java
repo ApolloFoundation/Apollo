@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Setter;
@@ -59,7 +60,7 @@ public class TradingViewServiceImpl implements TradingViewService{
         long currentTime = System.currentTimeMillis() + 86400000L;
         Integer height = 45123; 
         Random random = new Random();
-        
+      //  long v = ThreadLocalRandom.current().nextLong(100);
         
         for ( Long i = initialTimestamp; i<= currentTime; i+= (testUpdateInterval * 1000) ) {
             DexTradeEntry dexTradeEntryWrite = new DexTradeEntry(null, null);
@@ -67,9 +68,9 @@ public class TradingViewServiceImpl implements TradingViewService{
             dexTradeEntryWrite.setReceiverOfferID(random.nextLong());
             dexTradeEntryWrite.setSenderOfferType((byte)0);        
             dexTradeEntryWrite.setSenderOfferCurrency((byte)0);        
-            dexTradeEntryWrite.setSenderOfferAmount(random.nextLong());
+            dexTradeEntryWrite.setSenderOfferAmount( ThreadLocalRandom.current().nextLong(10000) );
             dexTradeEntryWrite.setPairCurrency((byte)1);
-            dexTradeEntryWrite.setPairRate(BigDecimal.valueOf(random.nextLong()));           
+            dexTradeEntryWrite.setPairRate(BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1000)));           
             Long randomTransactionID = random.nextLong();
             dexTradeEntryWrite.setTransactionID(randomTransactionID);
             dexTradeEntryWrite.setFinishTime(i);            
