@@ -82,11 +82,10 @@ public class PeerWebSocketClient extends PeerWebSocket{
     public void close() {
         try {
             super.close();
-            if(session!=null){
-               if(session.isOpen()){
-                   session.disconnect();
-               }
-               session.close();
+            if (isClientConnected()) {
+                session.disconnect();
+                session.close();
+                session=null;
             }
         } catch (IOException ex) {
             log.warn("Can not close websocket");
