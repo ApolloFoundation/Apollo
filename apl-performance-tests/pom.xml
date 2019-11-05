@@ -14,7 +14,7 @@
         <aspectj.version>1.9.4</aspectj.version>
         <test.env>n2</test.env>
         <users>10</users>
-        <duration>1</duration>
+        <duration>2</duration>
     </properties>
 
     <dependencies>

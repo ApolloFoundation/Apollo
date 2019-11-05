@@ -9,6 +9,8 @@ import io.gatling.jdbc.Predef._
 import scala.util.Random
 import scalaj.http._
 import java.util.UUID.randomUUID
+import java.util.concurrent.TimeUnit
+
 
 class PerformanceSimulation extends Simulation {
 
@@ -22,6 +24,7 @@ class PerformanceSimulation extends Simulation {
 
 
 	before {
+
 		println("Stop/Start forging!")
 		for (peer <- peers) {
 			try {
@@ -88,31 +91,55 @@ class PerformanceSimulation extends Simulation {
 				"feeATM=3000000000&deadline=1440")
 			.check(status.is(200))
 			.check(jsonPath("$.fullHash").find.saveAs("fullHash")))
-		.pause(30)
 		.exec(session => {
 			val fullHash = session("fullHash").asOption[String]
 			session
 		})
-  	.repeat(5) {
-			exec(http("Shuffling Join")
-				.post("/apl?requestType=startShuffler&" +
-					"shufflingFullHash=${fullHash}&" +
-					"recipientSecretPhrase=" + randomUUID().toString + "&" +
-					"secretPhrase=" + random.nextInt(200).toString + "&" +
-					"createNoneTransactionMethod=true&" +
-					"feeATM=3000000000&deadline=1440"))
-		}
-		.exec { session =>
-			println(session)
-			session
-		}
+	    .pause(10 seconds)
+      .repeat(3) {
+        val feeder = Iterator.continually(Map("id" -> randomUUID().toString,"pass" -> random.nextInt(200).toString))
+        feed(feeder)
+          .exec(http("Shuffling Join")
+            .post("/apl?requestType=startShuffler&" +
+              "shufflingFullHash=${fullHash}&" +
+              "recipientSecretPhrase=${id}&" +
+              "secretPhrase=${pass}&" +
+              "createNoneTransactionMethod=true&" +
+              "feeATM=3000000000" +
+              "&deadline=1440")
+            .check(status.is(200))
+            .check(bodyString.saveAs("Response")))
+        .exec { session =>
+            println(session("Response").asOption[String])
+            session
+          }
+      }
 
+  var pass = random.nextInt(200).toString
+  println(pass)
+	val scn_2 = scenario("Alias")
+			.exec(http("Set Alias")
+				.post("/apl?" +
+          "requestType=setAlias&" +
+					"aliasURI=https://biblos.firstbridge.work/job/PerformanceTests-testnet-2&" +
+					"aliasName=AL"+ System.currentTimeMillis().toString + "&" +
+			  	"secretPhrase=" + pass + "&" +
+					"feeATM=3000000000&" +
+					"deadline=1440")
+				.check(status.is(200))
+        .check(bodyString.saveAs("BODY")))
+			.exec(session => {
+        val response = session("BODY").as[String]
+          println(s"Response body: \n$response")
+          session
+				})
 
 
 	val inject = 	constantUsersPerSec(users) during (duration minutes)
-	val inject_low = 	rampUsers(25) during (duration seconds)
+	val inject_ramp = 	rampUsers(25) during (duration minutes)
 	setUp(
-		scn.inject(inject),
-	  scn_1.inject(inject_low)
+	  	scn.inject(inject),
+	    scn_1.inject(inject_ramp),
+      scn_2.inject(inject_ramp)
 	).protocols(httpProtocol)
 }
