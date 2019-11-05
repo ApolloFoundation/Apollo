@@ -152,7 +152,7 @@ public class DexService {
     }
     
     @Transactional
-    public DexTradeEntryMin getTradeInfoMinForPeriod(Integer start, Integer finish,
+    public DexTradeEntryMin getTradeInfoMinForPeriod(long start, long finish,
                                                      Byte pairCurrency, Integer offset, Integer limit) {
         
         List<DexTradeEntry> tradeEntries =  dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
@@ -160,7 +160,7 @@ public class DexService {
         
         DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
         
-        BigDecimal hi = cnv.apply( tradeEntries.get(0)).pairRate;//,low=t,open,close; 
+        BigDecimal hi = cnv.apply( tradeEntries.get(0) ).pairRate;//,low=t,open,close; 
         BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;
         BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
         BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;

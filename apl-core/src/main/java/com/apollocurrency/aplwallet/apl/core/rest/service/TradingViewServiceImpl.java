@@ -102,7 +102,7 @@ public class TradingViewServiceImpl implements TradingViewService{
             Runnable task = () -> {
                 for(;;) {   
                     
-                    log.debug("trying to pour in the database: ");
+                    // log.debug("trying to pour in the database: ");
                     
                     
                     try {                        

@@ -34,7 +34,7 @@ public interface  DexTradeDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_trade as tradeinfo WHERE tradeinfo.finish_time >= :start AND tradeinfo.finish_time < :finish AND tradeinfo.pair_currency = :pairCurrency OFFSET :offset LIMIT :limit")
     @RegisterRowMapper(DexTradeEntryMapper.class)
-    List<DexTradeEntry> getDexEntriesForInterval(@Bind("start") Integer start, @Bind("finish") Integer finish, @Bind("pairCurrency") Byte pairCurrency,
+    List<DexTradeEntry> getDexEntriesForInterval(@Bind("start") long start, @Bind("finish") long finish, @Bind("pairCurrency") Byte pairCurrency,
             @Bind("offset") Integer offset, @Bind("limit") Integer limit);
 
     @Transactional

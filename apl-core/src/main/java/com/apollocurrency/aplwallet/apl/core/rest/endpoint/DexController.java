@@ -733,8 +733,8 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getTradeInfoForPeriodMin(  
-                                @Parameter(description = "period start time", required = true) @QueryParam("start") Integer start,
-                                @Parameter(description = "period finish time", required = true) @QueryParam("finish") Integer finish,
+                                @Parameter(description = "period start time", required = true) @QueryParam("start") long start,
+                                @Parameter(description = "period finish time", required = true) @QueryParam("finish") long finish,
                                 @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("pairCurrency") Byte pairCurrency,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
@@ -742,31 +742,9 @@ public class DexController {
         int firstIndex = ParameterParser.getFirstIndex(req);
         int lastIndex = ParameterParser.getLastIndex(req);
         int offset = firstIndex > 0 ? firstIndex : 0;
-        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
-        
-        List<DexTradeEntry> tradeEntries = service.getTradeInfoForPeriod(start, finish, pairCurrency, offset, limit);
-                
-        DexTradeEntryMin dexTradeEntryMin = new DexTradeEntryMin(); // dexTradeInfoMinDto = new DexTradeInfoMinDto();
-        
-        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
-        
-        BigDecimal hi = cnv.apply( tradeEntries.get(0)).pairRate;//,low=t,open,close; 
-        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;
-        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
-        BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
-        
-        // iterate list to find the highest or the lowest values
-        for (DexTradeEntry currEl : tradeEntries) {    
-            DexTradeInfoDto currElDto = cnv.apply(currEl);
-            if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
-            if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
-        }
-        
-        dexTradeEntryMin.setHi(hi);
-        dexTradeEntryMin.setLow(low);
-        dexTradeEntryMin.setOpen(open);
-        dexTradeEntryMin.setClose(close);
-        
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);        
+        DexTradeEntryMin dexTradeEntryMin = service.getTradeInfoMinForPeriod(start, finish, pairCurrency, offset, limit);                        
+        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();                
         return Response.ok( ( new DexTradeEntryMinToDtoConverter().apply(dexTradeEntryMin))).build();
                 
     }

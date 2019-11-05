@@ -27,7 +27,7 @@ public class DexTradeEntryMapper implements RowMapper<DexTradeEntry> {
         dexTradeEntry.setSenderOfferAmount(rs.getLong("sender_offer_amount"));
         dexTradeEntry.setPairCurrency(rs.getByte("pair_currency"));
         dexTradeEntry.setPairRate( EthUtil.gweiToEth(rs.getLong("pair_rate")));
-        dexTradeEntry.setFinishTime(rs.getInt("finish_time"));
+        dexTradeEntry.setFinishTime(rs.getLong("finish_time"));
         return dexTradeEntry;
     }
 
