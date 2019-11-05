@@ -95,7 +95,7 @@ public class ZipImpl implements Zip {
             }
 
         } catch (IOException ex) {
-            log.error("Error extractiong zip file: {}", zipFile, ex);
+            log.error("Error extracting zip file: {}", zipFile, ex);
             res = false;
         }
         return res;
