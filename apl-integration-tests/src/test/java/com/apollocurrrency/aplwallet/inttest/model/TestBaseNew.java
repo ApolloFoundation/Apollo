@@ -283,6 +283,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -326,6 +327,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public PeerInfo getMyInfo() {
         String path = "/rest/networking/peer/mypeerinfo";
         return given().log().uri()
@@ -335,6 +337,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public BlockDTO getBlock(String block) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -365,6 +368,7 @@ public class TestBaseNew extends TestBase {
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
+    @Step
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         HashMap<String, String> param = new HashMap();
         param.put("orderType", orderType);
@@ -384,6 +388,7 @@ public class TestBaseNew extends TestBase {
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
+    @Step
     public List<DexOrderDto> getDexOrders() {
         String path = "/rest/dex/offers";
         return   given().log().all()
@@ -395,6 +400,7 @@ public class TestBaseNew extends TestBase {
 
 
     @Override
+    @Step
     public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
         HashMap<String, String> param = new HashMap();
         param.put("pair", pair);
@@ -411,6 +417,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public List<DexOrderDto> getDexHistory(String account) {
         HashMap<String, String> param = new HashMap();
         param.put("accountId", account);
@@ -425,6 +432,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public EthGasInfoResponse getEthGasInfo() {
         String path = "/rest/dex/ethInfo";
         return given().log().uri()
@@ -434,6 +442,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    @Step
     public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
         HashMap<String, String> param = new HashMap();
         param.put("pairCurrency", pairCurrency);

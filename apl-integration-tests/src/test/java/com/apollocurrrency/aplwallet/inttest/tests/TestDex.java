@@ -41,7 +41,7 @@ public class TestDex extends TestBaseNew {
     public void getEthGasPrice(){
         EthGasInfoResponse gasPrice = getEthGasInfo();
         assertTrue(Float.valueOf(gasPrice.getFast())>=Float.valueOf(gasPrice.getAverage()));
-        assertTrue(Float.valueOf(gasPrice.getAverage())>=Float.valueOf(gasPrice.getSafeLow()));
+        assertTrue(Float.valueOf(gasPrice.getAverage())>= Float.valueOf(gasPrice.getSafeLow()));
         assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
     }
 
