@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.38.8");
+    public static final Version VERSION = new Version("1.39.0");
 
 
     public static final String APPLICATION = "Apollo";
