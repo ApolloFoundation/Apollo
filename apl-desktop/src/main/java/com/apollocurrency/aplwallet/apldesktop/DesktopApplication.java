@@ -68,14 +68,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-//import netscape.javascript.JSObject;
-
-//import netscape.javascript.JSObject;
-
-//import com.apollocurrency.aplwallet.apl.core.app.Db;
-//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
-
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
 
