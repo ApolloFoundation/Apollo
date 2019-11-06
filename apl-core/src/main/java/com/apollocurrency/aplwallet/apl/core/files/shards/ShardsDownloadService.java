@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.HashMap;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
+import javax.enterprise.event.ObservesAsync;
 
 /**
  * Service for background downloading of shard files and related files
@@ -47,9 +48,6 @@ public class ShardsDownloadService {
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
-    @Inject
-    @Any
-    Event<ShardPresentData> shardDataEvent;
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
@@ -78,7 +76,7 @@ public class ShardsDownloadService {
         return !shards.isEmpty();
     }
 
-    public void onAnyFileDownloadEvent(@Observes @FileDownloadEvent FileEventData fileData) {
+    public void onAnyFileDownloadEvent(@ObservesAsync @FileDownloadEvent FileEventData fileData) {
         //TODO: process events carefully
         for(Long shardId: shardDownloadStatuses.keySet()){
             ShardDownloadStatus status = shardDownloadStatuses.get(shardId);

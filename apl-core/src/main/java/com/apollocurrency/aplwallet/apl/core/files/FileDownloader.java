@@ -135,7 +135,7 @@ public class FileDownloader {
                 ""
         );
         log.debug("Firing 'FILE_DOWNLOADED_PRESENT' event {}", data);
-        fileEvent.fireAsync(data);
+        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
     }
     //TODO: change to more general signal, not shard   
 
@@ -145,7 +145,7 @@ public class FileDownloader {
                 false,
                 reason
         );      
-        fileEvent.fireAsync(data);
+        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
     } 
       
     private void setFileChunkState(FileChunkState state, FileChunkInfo fci){

@@ -10,7 +10,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,14 +27,18 @@ public class FileDownloadService {
     private final Instance<FileInfoDownloader> fileInfoDownloaders;
     private final Map<String, FileDownloadStatus> downloadStatus = new HashMap<>();
     private final DownloadableFilesManager downloadableFilesManager;
+    private Event<FileEventData> fileEvent;
+    
     @Inject
     public FileDownloadService(Instance<FileDownloader> fileDownloaders,
             Instance<FileInfoDownloader> fileInfoDownloaders,
+            Event<FileEventData> fileEvent,
             DownloadableFilesManager downloadableFilesManager
     ) {
         this.fileDownloaders = fileDownloaders;
         this.fileInfoDownloaders = fileInfoDownloaders;
         this.downloadableFilesManager = downloadableFilesManager;
+        this.fileEvent = fileEvent;
     }
 
     private synchronized FileDownloadStatus prepareForDownloading(String fileId, Set<String> onlyPeers) {
@@ -42,7 +48,6 @@ public class FileDownloadService {
             return fstatus;
         }
         FileInfoDownloader fileInfoDownloader = fileInfoDownloaders.get();
-        fileInfoDownloader.prepareForDownloading(fileId, onlyPeers);
         fstatus = new FileDownloadStatus(fileId);
         downloadStatus.put(fileId, fstatus);
         fstatus.decision = fileInfoDownloader.prepareForDownloading(fileId, onlyPeers);
@@ -60,8 +65,13 @@ public class FileDownloadService {
         if (isAccaptable(fstatus.decision)) {            
             FileDownloader downloader = fileDownloaders.get();
             downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
-        }else{
-            
+        } else {
+            FileEventData data = new FileEventData(
+                    fileId,
+                    false,
+                    "File statistics is not acceptable: " + fstatus.decision.toString()
+            );
+            fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
         }
     }
 
