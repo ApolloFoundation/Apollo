@@ -139,14 +139,7 @@ public class GenesisImporter {
 
     private byte[] loadBalancesAccountsComputeDigest() {
         final long start = System.currentTimeMillis();
-        if (genesisTaskId == null) {
-            final Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
-            if (task.isPresent()) {
-                genesisTaskId = task.get().getId();
-            } else {
-                genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances", true);
-            }
-        }
+        createGenesisTaskIdForStatus();
 
         final String path = blockchainConfig.getChain().getGenesisLocation();
         log.trace("path = {}", path);
@@ -210,6 +203,17 @@ public class GenesisImporter {
         return this.computedDigest;
     }
 
+    private void createGenesisTaskIdForStatus() {
+        if (genesisTaskId == null) {
+            final Optional<DurableTaskInfo> task = aplAppStatus.findTaskByName("Shard data import");
+            if (task.isPresent()) {
+                genesisTaskId = task.get().getId();
+            } else {
+                genesisTaskId = aplAppStatus.durableTaskStart("Genesis account load", "Loading and creating Genesis accounts + balances", true);
+            }
+        }
+    }
+
     private void traceDumpData(String pattern, Object... data) {
         if (log.isTraceEnabled()) {
             log.trace(pattern, data);
@@ -223,6 +227,7 @@ public class GenesisImporter {
     @Transactional
     public void importGenesisJson(final boolean loadOnlyPublicKeys) {
         final long start = System.currentTimeMillis();
+        createGenesisTaskIdForStatus(); // recreate taskId for task execution status update
 
         this.blockchainConfigUpdater.reset();
 

@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporterImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
@@ -276,9 +276,10 @@ class ShardImporterTest {
         assertNotNull(resourceAsStreamAccount);
         Files.copy(resourceAsStreamAccount, csvImporter.getDataExportPath().resolve("account.csv"));
 
-//        DbUtils.inTransaction(dataSource, (con)-> {
-        shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
-//        });
+        DbUtils.inTransaction(dataSource, (con)-> {
+            shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
+            dataSource.commit(false);
+        });
 
         List<DataTag> allTags = CollectionUtil.toList(dataTagDao.getAllTags(0, Integer.MAX_VALUE));
         assertEquals(6, allTags.size());

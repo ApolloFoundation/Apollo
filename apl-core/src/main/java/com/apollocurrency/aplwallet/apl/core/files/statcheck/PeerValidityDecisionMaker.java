@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.peer.statcheck;
+package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import java.math.BigInteger;
 import java.util.AbstractMap;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -46,13 +47,13 @@ public class PeerValidityDecisionMaker {
      *
      * @param n number of peers to get
      * @return map of hypotetic probabilities for each discovered hash value
-     * @throws com.apollocurrency.aplwallet.apl.core.peer.statcheck.NotEnoughDataException
+     * @throws com.apollocurrency.aplwallet.apl.core.files.statcheck.NotEnoughDataException
      */
     public Map<String, ProbabInfo> calculateInitialProb(int n) throws NotEnoughDataException {
-        List<HasHashSum> first = new ArrayList<>();
+        List<PeerFileHashSum> first = new ArrayList<>();
         first.addAll(peers.getEnoughRandomPeers(MIN_PEERS, MIN_PEERS_PRCENT));
         //sort by hash
-        for (HasHashSum pi : first) {
+        for (PeerFileHashSum pi : first) {
             stats.add(pi);
         }
         //calculate initial probabilities as frequences
@@ -75,10 +76,10 @@ public class PeerValidityDecisionMaker {
         return new AbstractMap.SimpleEntry<>(hashMax, currentProbabilities.get(hashMax));
     }
 
-    private HasHashSum getOneMorePeer() {
+    private PeerFileHashSum getOneMorePeer() {
         boolean isNew = false;
         int nTries = 0;
-        HasHashSum pi = null;
+        PeerFileHashSum pi = null;
         while(isNew){
             pi = peers.getRandomPeer();
             isNew = !stats.isAlreadyCounted(pi);
@@ -96,7 +97,7 @@ public class PeerValidityDecisionMaker {
 
     public Map<String, ProbabInfo> calculateByAddingPeers(int nPeers) throws NotEnoughDataException{
         for (int i = 0; i < nPeers; i++) {
-            HasHashSum pi = getOneMorePeer();
+            PeerFileHashSum pi = getOneMorePeer();
             //re-calculate frequencies/probabilities simply adding more peers.
             stats.add(pi);
         }
@@ -108,7 +109,7 @@ public class PeerValidityDecisionMaker {
      * Gets all peers that have most probable hash value
      * @return list of peers with most probable hash value
      */
-    public List<HasHashSum> getValidPeers(){
+    public Set<PeerFileHashSum> getValidPeers(){
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getByHash(mp.getKey());
     }
@@ -117,7 +118,7 @@ public class PeerValidityDecisionMaker {
      * Gets all peers that have hash values different from most probale
      * @return list of bad peers
      */
-    public List<HasHashSum> getInvalidPeers(){
+    public Set<PeerFileHashSum> getInvalidPeers(){
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getAllExceptHash(mp.getKey());      
     }

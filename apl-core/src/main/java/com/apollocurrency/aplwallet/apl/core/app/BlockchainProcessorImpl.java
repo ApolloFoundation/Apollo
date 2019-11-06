@@ -42,8 +42,9 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.peer.ShardDownloader;
-import com.apollocurrency.aplwallet.apl.core.peer.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardInfoDownloader;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -157,7 +158,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ShardImporter shardImporter;
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
-    private final ShardDownloader shardDownloader;
+    private final ShardsDownloadService shardDownloader;
     private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -300,7 +301,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TransactionApplier transactionApplier,
                                    TrimService trimService, DatabaseManager databaseManager, DexService dexService,
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
-                                   ShardDownloader shardDownloader,
+                                   ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent) {
         this.validator = validator;
@@ -682,7 +683,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // try make delay before PeersService are up and running
             Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
-            FileDownloadDecision downloadDecision = shardDownloader.prepareAndStartDownload();
+            FileDownloadDecision downloadDecision = shardDownloader.tryDownloadLastGoodShard();
             disableScheduleOneScan();
             log.debug("NO_SHARD/SHARD_PRESENT decision was = '{}'", downloadDecision);
         } catch (InterruptedException e) {
@@ -1123,7 +1124,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // rollback not scan safe derived tables with blocks and transactions
                 for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
                     if (!derivedTable.isScanSafe()) {
-                        log.debug("Rollback not scan safe table {}", derivedTable.getName());
+                        log.debug("Rollback not scan safe table {}, height={}", derivedTable.getName(), height);
                         derivedTable.rollback(height);
                     }
                 }
@@ -1325,7 +1326,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             scheduleScan(height, validate);
             if (height > 0 && height < getMinRollbackHeight()) {
-                log.info("Rollback to height less than {} not supported, will do a full scan", getMinRollbackHeight());
+                log.info("Rollback to height less than {} (min rollback height) not supported, will do a full scan", getMinRollbackHeight());
                 height = shardInitialHeight;
             }
             if (height < 0) {
@@ -1355,7 +1356,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == shardInitialHeight) {
-                    trimService.resetTrim();
+                    trimService.resetTrim(height+trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");

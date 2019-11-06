@@ -231,7 +231,7 @@ class CsvWriterReaderDerivedTablesTest {
 
             // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?");
+                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id BETWEEN ? and  ? limit ?");
                  CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
@@ -250,7 +250,7 @@ class CsvWriterReaderDerivedTablesTest {
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID"));
+                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID") + 1);
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
@@ -372,7 +372,7 @@ class CsvWriterReaderDerivedTablesTest {
     private int dropDataByName(long minDbValue, long maxDbValue, String itemName) {
         // drop data
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("delete from " + itemName + " where db_id > ? AND db_id < ?")) {
+             PreparedStatement pstmt = con.prepareStatement("delete from " + itemName + " where db_id  BETWEEN ? AND ?")) {
             pstmt.setLong(1, minDbValue);
             pstmt.setLong(2, maxDbValue);
             int deleted = pstmt.executeUpdate();
