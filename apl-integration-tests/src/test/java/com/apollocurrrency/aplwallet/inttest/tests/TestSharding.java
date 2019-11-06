@@ -3,13 +3,14 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-
+@DisplayName("Sharding")
 public class TestSharding extends TestBaseNew {
 
 

@@ -12,8 +12,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -22,7 +24,7 @@ import java.util.Objects;
 
 import io.qameta.allure.Description;
 
-@Epic("Secret File")
+@DisplayName("Secret File")
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")
@@ -31,7 +33,7 @@ public class Test2FA extends TestBaseNew {
     public void  deleteKey() throws JsonProcessingException {
 
         Account2FAResponse accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,true);
+        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,true, null, null);
         Account2FAResponse deletedAccount = deleteSecretFile(wallet);
         Assertions.assertEquals(Status2FA.OK,deletedAccount.getStatus());
 
@@ -42,7 +44,7 @@ public class Test2FA extends TestBaseNew {
     @Test
     public void  exportKey() throws JsonProcessingException {
         Account2FAResponse accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.getAccountRS(),accountDTO.getPassphrase(), null,true);
+        Wallet wallet = new Wallet(accountDTO.getAccountRS(),accountDTO.getPassphrase(), null,true, null, null);
         VaultWalletResponse secretFile = exportSecretFile(wallet);
         Assertions.assertTrue(secretFile.getFileName().contains(accountDTO.getAccountRS()));
         Assertions.assertNotNull(secretFile.getFileName());

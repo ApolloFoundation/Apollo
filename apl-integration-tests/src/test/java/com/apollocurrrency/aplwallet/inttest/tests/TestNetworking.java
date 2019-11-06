@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
+@DisplayName("Networking")
 public class TestNetworking extends TestBaseNew {
 //public class TestNetworking extends TestBaseOld {
 

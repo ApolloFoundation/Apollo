@@ -16,6 +16,8 @@ public class Wallet {
     private String pass;
     private String publicKey;
     private boolean vault;
+    private String ethAddress;
+    private String accountId;
 
     public Wallet(String user, String pass) {
         this.user = user;

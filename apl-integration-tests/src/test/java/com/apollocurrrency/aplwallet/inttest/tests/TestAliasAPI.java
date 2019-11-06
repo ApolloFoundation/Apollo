@@ -19,12 +19,12 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
+@DisplayName("Alias")
 public class TestAliasAPI extends TestBaseOld {
 
     //Skrypchenko Serhii
     @DisplayName("setAlias + getAliasesCount + Get Aliases")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
@@ -40,7 +40,7 @@ public class TestAliasAPI extends TestBaseOld {
     }
 
     @DisplayName("Get Alias Count")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasCountTest(Wallet wallet) throws IOException {
         String alias;
@@ -54,7 +54,7 @@ public class TestAliasAPI extends TestBaseOld {
 
 
     @DisplayName("setAlias + Get Alias")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAlias(Wallet wallet) throws IOException {
         String aliasname = "setAliasAPI"+new Date().getTime();
@@ -69,7 +69,7 @@ public class TestAliasAPI extends TestBaseOld {
 
 
     @DisplayName("Set Alias")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void setAliasTest(Wallet wallet) throws IOException {
         CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAlias"+new Date().getTime(), 400000000, 1400);
@@ -80,7 +80,7 @@ public class TestAliasAPI extends TestBaseOld {
 
    // @Disabled
     @DisplayName("Delete Alias")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void deleteAliasTest(Wallet wallet) throws IOException {
         String aliasname = "setAliasAPI"+String.valueOf(new Date().getTime()).substring(7);
@@ -103,7 +103,7 @@ public class TestAliasAPI extends TestBaseOld {
 
 
     @DisplayName("Get Aliases Like")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesLikeTest(Wallet wallet) throws IOException {
         String aliasname = "Alias"+new Date().getTime();
@@ -122,7 +122,7 @@ public class TestAliasAPI extends TestBaseOld {
     }
 
     @DisplayName("setAlias + sellAlias + buyAlias")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void sellAlias(Wallet wallet) throws IOException {
         String aliasname = "Alias"+new Date().getTime();
@@ -148,7 +148,7 @@ public class TestAliasAPI extends TestBaseOld {
 
     @DisplayName("NEGATIVE: buyAlias if ALIAS is not for sale at the moment")
     @Tag("NEGATIVE")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void buyAlias(Wallet wallet) throws IOException {
         String aliasname = "AlS"+String.valueOf(new Date().getTime()).substring(7);

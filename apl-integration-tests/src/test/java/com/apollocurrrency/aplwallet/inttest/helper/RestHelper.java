@@ -2,6 +2,7 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 
 import com.apollocurrrency.aplwallet.inttest.model.Parameters;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -17,6 +18,7 @@ public class RestHelper {
         spec = new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)
                 .setBaseUri(String.format("http://%s:%s",host,port))
+                .addFilter(new AllureRestAssured())
                 .build();
     }
 

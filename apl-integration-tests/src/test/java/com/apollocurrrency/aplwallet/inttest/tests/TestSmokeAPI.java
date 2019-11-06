@@ -21,6 +21,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallGe
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallPost;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +29,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 //@RunWith(JUnitPlatform.class)
-
+@DisplayName("Disabled Test")
 public class TestSmokeAPI extends TestBaseOld {
 
     private TestConfiguration testConfiguration;
