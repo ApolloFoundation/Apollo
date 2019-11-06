@@ -20,17 +20,20 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import org.slf4j.Logger;
-import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Paths;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import javax.swing.*;
 
 public class DesktopMode {
     public static String logDir = System.getProperty("user.home" + "/.apl-blockchain/apl-desktop");
@@ -85,7 +88,7 @@ public class DesktopMode {
                 desktopApp.launch();
         });
         desktopAppThread.start();
-        new Thread(() -> runBackend()).start();
+        new Thread(() -> runBackend(args)).start();
         Runnable statusUpdater = () -> {
             while (!checkAPI()) {
                 try {
@@ -111,28 +114,33 @@ public class DesktopMode {
     private static boolean checkAPI()
     {
         OkHttpClient client = new OkHttpClient();
-        //String url = properties.getStringProperty("apl.APIURL");
-        //TODO: This code was written when I was very tired, resolvin CDI NPE...
-        
-        String[] APIPorts = {"6876", "7876"};
-        //String url = properties.getStringProperty("apl.APIURL");
-        String url = "http://localhost:" + APIPorts[new Random().nextInt(2)] + "/";
-        Request request = new Request.Builder().url(url).build();
-
-        Response response;
         try {
-            response = client.newCall(request).execute();
-        } catch (IOException ex) {
-            //java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
-        
-        if( response.code() == 200){
-            APIUrl = url;
-            return true;
-        }
-        else if ( response.code() == 200){
-            DesktopApplication.updateSplashScreenStatus(response.body().toString());
+            //String url = properties.getStringProperty("apl.APIURL");
+            //TODO: This code was written when I was very tired, resolvin CDI NPE...
+
+            String[] APIPorts = {"6876", "7876"};
+            //String url = properties.getStringProperty("apl.APIURL");
+            String url = "http://localhost:" + APIPorts[new Random().nextInt(2)] + "/";
+            Request request = new Request.Builder().url(url).build();
+
+            Response response;
+            try {
+                response = client.newCall(request).execute();
+            }
+            catch (IOException ex) {
+                //java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
+                return false;
+            }
+
+            if (response.code() == 200) {
+                APIUrl = url;
+                return true;
+            } else if (response.code() == 200) {
+                DesktopApplication.updateSplashScreenStatus(response.body().toString());
+            }
+        } finally {
+            client.dispatcher().executorService().shutdown();
+            client.connectionPool().evictAll();
         }
             
         return false;
@@ -174,10 +182,10 @@ public class DesktopMode {
         desktopApp.updateSplashScreenStatus(newStatus);
     }
 
-    private static void runBackend(){
+    private static void runBackend(String[] args){
         Process p;
         try{
-            
+            String cmdArgs = String.join(" ", args);
             //TODO: Refactor that funny code below
             
             String command = "apl-run";
@@ -191,28 +199,29 @@ public class DesktopMode {
                     command = "apl-run-secure-transport";
                 }
             }
-            if (System.getProperty("os.name").toLowerCase().contains("win")) 
-            {
-                ProcessBuilder pb = new ProcessBuilder(".\\" + command + ".bat")
-                // Some magic: Without Redirect Output will not work on Windows
-                    .redirectOutput(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Output.log"))
-                    .redirectError(new File(System.getProperty("java.io.tmpdir") + "\\Apollo-Error.log"));
-                pb.start();
+            ProcessBuilder pb;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                pb = new ProcessBuilder(".\\" + command + ".bat ", cmdArgs);
+            } else {
+                pb = new ProcessBuilder("/bin/bash", "./apl-start.sh", cmdArgs);
             }
-            else
-            {
-                command = "apl-start";
-                LOG.debug("./" + command + ".sh");
-                ProcessBuilder pb = new ProcessBuilder("/bin/bash" , "./" + command + ".sh")
-                    .redirectOutput(new File("/dev/null"))
-                    .redirectError(new File("/dev/null"));
-                pb.start();;
-            }
-            
+            LOG.info("Will run command: {}", pb.command());
+
+            String tempDir = System.getProperty("java.io.tmpdir");
+            File outputLogFile = Paths.get(tempDir).resolve("backend-start-output.txt").toFile();
+            File errorLogFile = Paths.get(tempDir).resolve("backend-start-error.txt").toFile();
+            LOG.info("Output log file: {}, Error log file: {}", outputLogFile, errorLogFile);
+            pb.redirectOutput(ProcessBuilder.Redirect.to(outputLogFile))
+                    .redirectError(ProcessBuilder.Redirect.to(errorLogFile));
+            int code = pb.start().waitFor();
+            LOG.info("Backend start script returned code {}", code);
         }            
         catch (IOException e)
         {
             LOG.debug(e.getMessage());
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
         }
         /* catch (InterruptedException ex) {
             java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
