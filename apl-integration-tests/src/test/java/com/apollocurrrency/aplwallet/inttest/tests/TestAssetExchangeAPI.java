@@ -18,12 +18,14 @@ import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Date;
+import java.util.UUID;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
@@ -245,7 +247,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         String assetID;
         String orderID;
         Integer quantityATU = 50;
-        String assetName = "Ask"+String.valueOf(new Date().getTime()).substring(7);
+        String assetName = "Ask"+ RandomStringUtils.randomAlphabetic(7);
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -292,8 +294,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
         AssetsResponse getAllAssets = getAllAssets();
-        System.out.println(getAllAssets);
-        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).findFirst().get().getQuantityATU() == 0);
+        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), "Asset was deleted");
 
     }
 
