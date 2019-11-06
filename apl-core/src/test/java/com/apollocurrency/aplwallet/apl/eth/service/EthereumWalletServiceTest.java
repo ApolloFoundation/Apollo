@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.eth.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -12,12 +13,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.generated.Bytes32;
-import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.utils.Numeric;
@@ -173,7 +175,6 @@ class EthereumWalletServiceTest {
     @Test
     void testEstimateGasWithError() throws IOException {
         mockEstimateGasRequestResponse(new Response.Error(1, "Error"), null);
-        Credentials credentials = Credentials.create("1");
 
         assertThrows(NotValidTransactionException.class, () -> service.estimateGasLimit(accountAddress, "", function, BigInteger.TEN));
     }
@@ -194,5 +195,47 @@ class EthereumWalletServiceTest {
         doThrow(new IOException()).when(request).send();
 
         assertThrows(RuntimeException.class, () -> service.estimateGasLimit(accountAddress, "", function, BigInteger.TEN));
+    }
+
+    @Test
+    void testValidateBalance() throws IOException {
+        mockEstimateGasRequestResponse(null, BigInteger.TEN);
+
+        Request balanceRequest = mock(Request.class);
+        doReturn(balanceRequest).when(web3j).ethGetBalance(accountAddress, DefaultBlockParameterName.LATEST);
+        EthGetBalance getBalanceResponse = new EthGetBalance();
+        getBalanceResponse.setResult("0x64");
+        doReturn(getBalanceResponse).when(balanceRequest).send();
+
+        BigInteger gasLimit = service.validateBalanceAndReturnGasLimit(accountAddress, "", function, BigInteger.TEN, BigInteger.TWO);
+
+        assertEquals(BigInteger.valueOf(11), gasLimit);
+    }
+
+    @Test
+    void testValidateBalanceMatchExact() throws IOException {
+        mockEstimateGasRequestResponse(null, BigInteger.valueOf(5));
+
+        Request balanceRequest = mock(Request.class);
+        doReturn(balanceRequest).when(web3j).ethGetBalance(accountAddress, DefaultBlockParameterName.LATEST);
+        EthGetBalance getBalanceResponse = new EthGetBalance();
+        getBalanceResponse.setResult("0x64");
+        doReturn(getBalanceResponse).when(balanceRequest).send();
+
+        BigInteger gasLimit = service.validateBalanceAndReturnGasLimit(accountAddress, "", function, BigInteger.valueOf(90), BigInteger.TWO);
+
+        assertEquals(BigInteger.valueOf(5), gasLimit);
+    }
+    @Test
+    void testValidateBalanceNotEnoughFundsToPayFee() throws IOException {
+        mockEstimateGasRequestResponse(null, BigInteger.TEN);
+
+        Request balanceRequest = mock(Request.class);
+        doReturn(balanceRequest).when(web3j).ethGetBalance(accountAddress, DefaultBlockParameterName.LATEST);
+        EthGetBalance getBalanceResponse = new EthGetBalance();
+        getBalanceResponse.setResult("0x64");
+        doReturn(getBalanceResponse).when(balanceRequest).send();
+
+        assertThrows(NotSufficientFundsException.class, () -> service.validateBalanceAndReturnGasLimit(accountAddress, "", function, BigInteger.valueOf(79), BigInteger.TWO));
     }
 }

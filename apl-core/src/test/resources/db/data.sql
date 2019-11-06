@@ -428,8 +428,8 @@ INSERT INTO dex_transaction
 (300   , X'05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1' , X'ff', 0,        102,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 400),
 ;
 INSERT INTO user_error_message
-(db_id,           address,                                      error,               timestamp) VALUES
-(100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction', 1000),
-(200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'         , 1100),
-(300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'    , 1200),
+(db_id,           address,                                      error,              operation,   details,                                                            timestamp) VALUES
+(100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction' ,'deposit',  '900'                                                             , 1000),
+(200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
+(300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200),
 ;

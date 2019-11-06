@@ -19,7 +19,7 @@ public interface UserErrorMessageDao {
 
 
     @Transactional
-    @SqlUpdate("INSERT INTO user_error_message (address, error, timestamp) VALUES (:address, :error, :timestamp)")
+    @SqlUpdate("INSERT INTO user_error_message (address, error, operation, details, timestamp) VALUES (:address, :error, :operation, :details, :timestamp)")
     void add(@BindBean UserErrorMessage errorMessage);
 
     @Transactional(readOnly = true)

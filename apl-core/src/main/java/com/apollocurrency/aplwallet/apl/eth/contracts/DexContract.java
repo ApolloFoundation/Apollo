@@ -330,7 +330,7 @@ public class DexContract extends Contract {
 
     public String sendTx(Function function, BigInteger weiValue) {
         EthSendTransaction sendTransaction;
-        BigInteger gasLimit = ethereumWalletService.estimateGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue);
+        BigInteger gasLimit = ethereumWalletService.validateBalanceAndReturnGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue, gasProvider.getGasPrice(function.getName()));
         try {
             sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
                     gasLimit,
