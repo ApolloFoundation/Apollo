@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@DisplayName("Dex")
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")
@@ -22,7 +22,7 @@ public class TestDex extends TestBaseNew {
         assertNotNull(orders);
     }
 
-    @DisplayName("Get trading history for certain account")
+    @DisplayName("Get trading history for certain account with param")
     @Test
     public void getTradeHistory() {
         List<DexOrderDto> orders = getDexHistory(TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), "1", "1");
@@ -36,7 +36,7 @@ public class TestDex extends TestBaseNew {
         assertNotNull(orders);
     }
 
-    @DisplayName("get gas prices for different tx speed")
+    @DisplayName("Get gas prices for different tx speed")
     @Test
     public void getEthGasPrice(){
         EthGasInfoResponse gasPrice = getEthGasInfo();
@@ -45,14 +45,14 @@ public class TestDex extends TestBaseNew {
         assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
     }
 
-    @DisplayName("obtaining trading information for the given period")
+    @DisplayName("Obtaining trading information for the given period")
     @Test
     public void getDexTradeInfoETH() {
         List<DexTradeInfoDto> dexTrades = getDexTradeInfo("1", 0, 999999999);
         assertNotNull(dexTrades);
     }
 
-    @DisplayName("obtaining trading information for the given period")
+    @DisplayName("Obtaining trading information for the given period")
     @Test
     public void getDexTradeInfoPAX() {
         List<DexTradeInfoDto> dexTrades = getDexTradeInfo("2", 0, 999999999);

@@ -12,8 +12,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -22,7 +24,7 @@ import java.util.Objects;
 
 import io.qameta.allure.Description;
 
-@Epic("Secret File")
+@DisplayName("Secret File")
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")

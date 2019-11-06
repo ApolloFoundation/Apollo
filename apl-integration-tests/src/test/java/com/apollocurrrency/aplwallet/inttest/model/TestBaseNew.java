@@ -52,9 +52,11 @@ import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Step;
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
+import org.junit.jupiter.api.DisplayName;
 
 
 import java.io.File;
@@ -219,7 +221,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Generate New Account")
     public Account2FAResponse generateNewAccount() throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -235,7 +237,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Delete Secret File")
     public Account2FAResponse deleteSecretFile(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -253,7 +255,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Export Secret File")
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
         HashMap<String, String> param = new HashMap();
         param.put("account", wallet.getUser());
@@ -269,7 +271,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Import Secret File")
     public boolean importSecretFile(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         Response response = given().log().all()
@@ -283,7 +285,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Enable 2FA")
     public AccountDTO enable2FA(Wallet wallet) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -302,6 +304,7 @@ public class TestBaseNew extends TestBase {
 
     @Override
     @Step
+    @DisplayName("Get All Peers")
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
             return given().log().uri()
@@ -313,6 +316,7 @@ public class TestBaseNew extends TestBase {
 
     @Override
     @Step
+    @DisplayName("Get Peer")
     public PeerDTO getPeer(String peer) {
         String path = String.format("/rest/networking/peer?peer=%s",peer);
         return given().log().uri()
@@ -327,7 +331,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get My Peer Info")
     public PeerInfo getMyInfo() {
         String path = "/rest/networking/peer/mypeerinfo";
         return given().log().uri()
@@ -337,7 +341,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Block")
     public BlockDTO getBlock(String block) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -351,7 +355,7 @@ public class TestBaseNew extends TestBase {
                 .post(path);
         return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
     }
-    @Step
+    @Step("Get Last Block")
     public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
@@ -368,7 +372,7 @@ public class TestBaseNew extends TestBase {
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
-    @Step
+    @Step("Get Dex Orders with param: Type {orderType}, Pair Currency {pairCurrency}")
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         HashMap<String, String> param = new HashMap();
         param.put("orderType", orderType);
@@ -388,7 +392,7 @@ public class TestBaseNew extends TestBase {
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
-    @Step
+    @Step("Get Dex Orders")
     public List<DexOrderDto> getDexOrders() {
         String path = "/rest/dex/offers";
         return   given().log().all()
@@ -400,7 +404,7 @@ public class TestBaseNew extends TestBase {
 
 
     @Override
-    @Step
+    @Step("Get Dex History with param: Account: {0}, Pair: {1} , Type: {2}")
     public List<DexOrderDto> getDexHistory(String account, String pair, String type) {
         HashMap<String, String> param = new HashMap();
         param.put("pair", pair);
@@ -417,7 +421,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Dex History")
     public List<DexOrderDto> getDexHistory(String account) {
         HashMap<String, String> param = new HashMap();
         param.put("accountId", account);
@@ -432,7 +436,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Eth Gas Info")
     public EthGasInfoResponse getEthGasInfo() {
         String path = "/rest/dex/ethInfo";
         return given().log().uri()
@@ -442,7 +446,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Dex Trade Info")
     public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
         HashMap<String, String> param = new HashMap();
         param.put("pairCurrency", pairCurrency);
@@ -625,7 +629,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Forging")
     public ForgingResponse getForging() {
         String path = "/rest/nodeinfo/forgers";
         return given().log().uri()
@@ -635,7 +639,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    @Step
+    @Step("Get Shards from peer")
     public List<ShardDTO> getShards(String ip) {
         String path = "/rest/shards";
         return given().log().uri()
