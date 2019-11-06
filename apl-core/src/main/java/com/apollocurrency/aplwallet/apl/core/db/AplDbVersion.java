@@ -663,7 +663,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS two_factor_auth ("
                         + "account BIGINT PRIMARY KEY,"
                         + "secret VARBINARY,"
-                        + "confirmed BOOLEAN NOT NULL DEFAULT FALSE,"
+                        + "confirmed BOOLEAN NOT NULL DEFAULT FALSE"
                         + ")"
                 );
 
@@ -801,7 +801,7 @@ public class AplDbVersion extends DbVersion {
             case 303:
                 apply("ALTER TABLE shard ADD COLUMN IF NOT EXISTS prunable_zip_hash VARBINARY DEFAULT NULL");
             case 304:
-                apply("ALTER TABLE dex_contract MODIFY secret_hash  BINARY(32) NULL DEFAULT NULL");
+                apply("ALTER TABLE dex_contract ALTER COLUMN secret_hash  BINARY(32) NULL DEFAULT NULL");
             case 305:
                 apply("ALTER TABLE dex_contract ADD COLUMN IF NOT EXISTS status TINYINT NOT NULL ");
             case 306:

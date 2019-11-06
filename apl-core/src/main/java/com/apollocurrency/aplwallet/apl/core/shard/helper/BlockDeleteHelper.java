@@ -153,7 +153,7 @@ public class BlockDeleteHelper extends AbstractHelper {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                    "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT TIMESTAMP from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+                    "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT \"TIMESTAMP\" from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
             log.trace(sqlSelectBottomBound);

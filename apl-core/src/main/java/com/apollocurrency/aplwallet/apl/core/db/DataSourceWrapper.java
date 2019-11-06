@@ -148,7 +148,7 @@ public class DataSourceWrapper implements DataSource {
             dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
         }
         if (!dbUrl.contains("MV_STORE=")) {
-            dbUrl += ";MV_STORE=FALSE";
+            dbUrl += ";MV_STORE=TRUE";
         }
         if (!dbUrl.contains("CACHE_SIZE=")) {
             dbUrl += ";CACHE_SIZE=" + maxCacheSize;
@@ -226,7 +226,7 @@ public class DataSourceWrapper implements DataSource {
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
-            Optional<Integer> result = handle.createQuery("select X from dual;")
+            Optional<Integer> result = handle.createQuery("select 1 from dual;")
                     .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {

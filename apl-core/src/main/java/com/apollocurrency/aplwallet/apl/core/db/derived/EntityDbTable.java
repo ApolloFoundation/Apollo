@@ -315,7 +315,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
                     ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                    + " WHERE " + table + ".db_id = ft.keys[0] "
+                    + " WHERE " + table + ".db_id = ft.keys[1] "
                     + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
                     + " AND " + dbClause.getClause() + sort
                     + DbUtils.limitsClause(from, to));
