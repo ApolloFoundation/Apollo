@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.eth.contracts;
 
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;
@@ -336,34 +337,17 @@ public class DexContract extends Contract {
                     contractAddress,
                     FunctionEncoder.encode(function),
                     weiValue);
-            return sendTransaction.getTransactionHash();
+
         } catch (IOException e) {
             throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
         }
-    }
 
-//  TODO Second variant, remove after success testing.
-//    public EthReply sendTx(Function function, BigInteger weiValue) throws ExecutionException, InterruptedException {
-//        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
-//                credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
-//        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-//
-//        RawTransaction rawTransaction = RawTransaction.createTransaction(
-//                nonce,
-//                gasProvider.getGasPrice(function.getName()),
-//                gasProvider.getGasLimit(function.getName()),
-//                contractAddress,
-//                weiValue,
-//                FunctionEncoder.encode(function));
-//
-//        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
-//        String transactionHash = Numeric.toHexString(Hash.sha3(signedMessage));
-//        String hexValue = Numeric.toHexString(signedMessage);
-//
-//        CompletableFuture<EthSendTransaction> ethSendTransaction = web3j.ethSendRawTransaction(hexValue).sendAsync();
-//
-//        return new EthReply(transactionHash, ethSendTransaction);
-//    }
+        if (sendTransaction.hasError()) {
+            throw new AplException.DEXProcessingException(sendTransaction.getError().getMessage());
+        }
+
+        return sendTransaction.getTransactionHash();
+    }
 
     public RemoteCall<Boolean> doesUserExist(String user) {
         final Function function = new Function(FUNC_DOESUSEREXIST, 

@@ -232,4 +232,18 @@ public abstract class AplException extends Exception {
         }
     }
 
+    public static final class DEXProcessingException extends RuntimeException {
+        public DEXProcessingException() {
+            super();
+        }
+
+        public DEXProcessingException(String message) {
+            super(message);
+        }
+
+        public DEXProcessingException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }
