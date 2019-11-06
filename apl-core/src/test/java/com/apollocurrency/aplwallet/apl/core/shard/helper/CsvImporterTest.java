@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -120,7 +121,8 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             AplAppStatus.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            ValueParserImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -135,6 +137,8 @@ class CsvImporterTest {
 
     @Inject
     private AplAppStatus aplAppStatus;
+    @Inject
+    private ValueParser valueParser;
     CsvImporter csvImporter;
 
     private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
@@ -159,7 +163,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -173,7 +177,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
             assertNotNull(csvImporter);
 
             for (String tableName : tables) {
@@ -210,7 +214,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), databaseManager, null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), databaseManager, null, valueParser);
 
             String tableName = "account_control_phasing";
             long result = 0;
@@ -256,7 +260,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
 
             String tableName = "shuffling_data";
 
@@ -307,7 +311,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
 
             String tableName = "goods";
             long result = 0;
@@ -357,7 +361,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             assertNotNull(csvImporter);
 
             String taskId = aplAppStatus.durableTaskStart("Shard data import", "data import", true);
@@ -406,7 +410,7 @@ class CsvImporterTest {
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
 
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             assertNotNull(csvImporter);
 
             String tableName = "shard";
@@ -453,7 +457,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             AtomicInteger counter = new AtomicInteger(0);
             long result = 0;
             try {
