@@ -69,7 +69,7 @@ class TrimServiceTest {
 
     @Test
     void testInitWithNullTrimEntry() {
-        trimService.init(2000);
+        trimService.init(2000, 0);
         verify(trimDao).save(new TrimEntry(null, 2000, true));
     }
 
@@ -85,7 +85,7 @@ class TrimServiceTest {
         doReturn(entry).when(trimDao).save(entry);
         doReturn(7300).when(timeService).getEpochTime();
 
-        trimService.init(5999);
+        trimService.init(5999, 0);
 
         verify(globalSync).readLock();
         verify(globalSync).readUnlock();
@@ -110,7 +110,7 @@ class TrimServiceTest {
         mockTrimEntries(8000, 10000, 1000);
         doReturn(8000).when(timeService).getEpochTime();
 
-        trimService.init(10500);
+        trimService.init(10500, 0);
 
         verify(globalSync, times(6)).readLock();
         verify(globalSync, times(6)).readUnlock();
@@ -137,7 +137,7 @@ class TrimServiceTest {
         doReturn(7199).when(timeService).getEpochTime();
         mockTrimEntries(10000, 11000, 1000);
 
-        trimService.init(11999);
+        trimService.init(11999, 0);
 
         verify(globalSync, times(2)).readLock();
         verify(globalSync, times(2)).readUnlock();

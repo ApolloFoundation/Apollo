@@ -176,6 +176,9 @@ public class ShardImporter {
                     rowsImported = csvImporter.importCsv(table, 100, true);
                 }
                 log.debug("Imported '{}' rows = {}", table, rowsImported);
+                if (rowsImported < 0 ){
+                    throw new RuntimeException("Imported -1 rows.");
+                }
             } catch (Exception e) {
                 log.error("CSV import error for '{}', RETURN.......", table, e);
                 aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");

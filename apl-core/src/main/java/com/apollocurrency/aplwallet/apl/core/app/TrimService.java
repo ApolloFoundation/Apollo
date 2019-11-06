@@ -72,8 +72,8 @@ public class TrimService {
     }
 
 
-    public void init(int height) {
-        log.debug("TRIM: init() at height = {}", height);
+    public void init(int height, int shardInitialBlockHeight) {
+        log.debug("TRIM: init() at height = {}, shard initial height={}", height, shardInitialBlockHeight);
         lock.lock();
         try {
             TrimEntry trimEntry = trimDao.get();
@@ -85,11 +85,16 @@ public class TrimService {
             int lastTrimHeight = trimEntry.getHeight();
             log.info("Last trim height '{}' was done? ='{}', supplied height {}",
                     lastTrimHeight, trimEntry.isDone(), height);
+            if( lastTrimHeight < shardInitialBlockHeight){
+                //we need to change the lastTrimHeight value according to the first block in the latest shard
+                lastTrimHeight = shardInitialBlockHeight;
+                log.info("Set last trim height to shard initial block height={}", lastTrimHeight);
+            }
             if (!trimEntry.isDone()) {
                 log.info("Finish trim at height {}", lastTrimHeight);
                 trimDerivedTables(lastTrimHeight, false);
             }
-            //TODO: Do we really need to do so many iterations or something about two-three would be enough?
+            //TODO: Do we really need to do so many iterations or something about two-three heights from tail would be enough?
             for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
                 log.info("Perform trim on height {}", i);
                 trimDerivedTables(i, false);

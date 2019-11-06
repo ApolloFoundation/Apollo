@@ -141,6 +141,9 @@ public class ShardsDownloadService {
         String shardFileId = shardNameHelper.getFullShardId(si.shardId, myChainId);
         if (!fileDownloadService.isFileDownloadedAlready(shardFileId, si.zipCrcHash)) {
             res.add(shardFileId);
+        } else {
+            log.debug("Shard {} already downloaded, fire SHARD_PRESENT event.", si);
+            fireShardPresentEvent(si.shardId);
         }
         for (int i = 0; i < si.additionalFiles.size(); i++) {
             if (!fileDownloadService.isFileDownloadedAlready(si.additionalFiles.get(i), si.additionalHashes.get(i))) {

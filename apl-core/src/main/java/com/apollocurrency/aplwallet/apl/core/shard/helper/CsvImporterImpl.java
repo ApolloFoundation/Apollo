@@ -194,7 +194,7 @@ public class CsvImporterImpl implements CsvImporter {
                         row.put(columnName.toLowerCase(), value);
                         preparedInsertStatement.setString(i + 1, value);
                     } else {
-                        row.put(columnName.toLowerCase(), object);
+                        row.put(columnName.toLowerCase(), parser.parseObject(object));
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                 }
