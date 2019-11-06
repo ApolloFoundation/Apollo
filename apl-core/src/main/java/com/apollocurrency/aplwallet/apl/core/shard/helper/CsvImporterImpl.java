@@ -91,6 +91,39 @@ public class CsvImporterImpl implements CsvImporter {
     }
 
     /**
+     * Return true if column type is binary.
+     * @param meta the result set meta
+     * @param columnIdx column index, the first column is at index 0
+     * @return true if column type is BINARY or VARBINARY
+     * @throws SQLException
+     */
+    private boolean isBinaryColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
+        return (meta.getColumnType(columnIdx + 1) == Types.BINARY || meta.getColumnType(columnIdx + 1) == Types.VARBINARY);
+    }
+
+    /**
+     * Return true if column type is array.
+     * @param meta the result set meta
+     * @param columnIdx column index, the first column is at index 0
+     * @return true if column type is ARRAY
+     * @throws SQLException
+     */
+    private boolean isArrayColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
+        return (meta.getColumnType(columnIdx + 1) == Types.ARRAY);
+    }
+
+    /**
+     * Return true if column type is varchar.
+     * @param meta the result set meta
+     * @param columnIdx column index, the first column is at index 0
+     * @return true if column type is VARCHAR or NVARCHAR
+     * @throws SQLException
+     */
+    private boolean isVarcharColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
+        return (meta.getColumnType(columnIdx + 1) == Types.VARCHAR || meta.getColumnType(columnIdx + 1) == Types.NVARCHAR);
+    }
+
+    /**
      * {@inheritDoc}
      */
     private long importCsv(String tableName, int batchLimit, boolean cleanTarget,
@@ -173,7 +206,7 @@ public class CsvImporterImpl implements CsvImporter {
                     String columnName = meta.getColumnName(i + 1);
                     log.trace("{}[{} : {}] = {}", columnName, i + 1, meta.getColumnTypeName(i + 1), object);
 
-                    if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
+                    if (object != null && isBinaryColumn(meta, i)) {
                         final byte[] decodedBytes = parser.parseBinaryObject(object);
                         try (InputStream is = new ByteArrayInputStream(decodedBytes)) {
                             // meta.getPrecision(i + 1) - is very IMPORTANT here for H2 db !!!
@@ -184,12 +217,12 @@ public class CsvImporterImpl implements CsvImporter {
                             throw e;
                         }
                         // ignore error here
-                    } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
+                    } else if (object != null && isArrayColumn(meta, i)) {
                         Object[] actualArray = parser.parseArrayObject(object);
                         SimpleResultSet.SimpleArray simpleArray = new SimpleResultSet.SimpleArray(actualArray);
                         preparedInsertStatement.setArray(i + 1, simpleArray);
                         row.put(columnName.toLowerCase(), actualArray);
-                    } else if (object != null && (meta.getColumnType(i + 1) == Types.VARCHAR || meta.getColumnType(i + 1) == Types.NVARCHAR)) {
+                    } else if (object != null && isVarcharColumn(meta, i)) {
                         String value = parser.parseStringObject(object);
                         row.put(columnName.toLowerCase(), value);
                         preparedInsertStatement.setString(i + 1, value);

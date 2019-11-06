@@ -6,25 +6,23 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import com.apollocurrency.aplwallet.apl.core.shard.helper.ValueParserImpl;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ValueParserTest {
     private ValueParser parser = new ValueParserImpl();
 
-    @Test
-    void parseQuotedStringObject() {
-        String o = "'APL-ZW95-E7B5-MVVP-CCBDT'";
-        String expected = o.substring(1, o.length()-1);
-        assertEquals(expected, parser.parseStringObject(o));
-    }
-
-    @Test
-    void parseStringObject() {
-        String o = "APL-ZW95-E7B5-MVVP-CCBDT";
-        assertEquals(o, parser.parseStringObject(o));
+    @ParameterizedTest
+    @ValueSource(strings = {"'APL-ZW95-E7B5-MVVP-CCBDT'", "APL-ZW95-E7B5-MVVP-CCBDT"})
+    void parseStringObject(String input) {
+        String expected = "APL-ZW95-E7B5-MVVP-CCBDT";
+        assertEquals(expected, parser.parseStringObject(input));
     }
 
     @Test
