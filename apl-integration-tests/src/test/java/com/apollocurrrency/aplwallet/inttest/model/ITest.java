@@ -142,4 +142,7 @@ public interface ITest {
     List<DexOrderDto> getDexHistory(String account);
     EthGasInfoResponse getEthGasInfo();
     List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime);
+    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
+    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
+    List<DexOrderDto> getDexOrders(String accountId);
 }

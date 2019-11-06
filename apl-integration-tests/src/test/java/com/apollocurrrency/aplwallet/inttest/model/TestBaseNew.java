@@ -63,6 +63,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBaseNew extends TestBase {
     @Override
@@ -385,7 +386,22 @@ public class TestBaseNew extends TestBase {
                 .spec(restHelper.getSpec())
                 .formParams(param)
                 .when()
-                //.get(path).as(DexOrderResponse.class);
+                .get(path)
+                .getBody().jsonPath().getList("", DexOrderDto.class);
+    }
+
+    //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
+    @Override
+    @Step
+    public List<DexOrderDto> getDexOrders(String accountId) {
+        HashMap<String, String> param = new HashMap();
+        param.put("accountId", accountId);
+
+        String path = "/rest/dex/offers";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
                 .get(path)
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
@@ -462,6 +478,55 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexTradeInfoDto.class);
     }
 
+    @Override
+    @Step
+    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet) {
+        HashMap<String, String> param = new HashMap();
+        param.put("orderId", orderId);
+        param.put("sender", wallet.getUser());
+        param.put("passphrase", wallet.getPass());
+        param.put("feeATM", "100000000");
+
+        String path = "/rest/dex/offer/cancel";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path).as(CreateTransactionResponse.class);
+    }
+
+    //TODO: edit when NEW DTO will be added
+    @Override
+    @Step
+    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
+        HashMap<String, String> param = new HashMap();
+        if (isBuyOrder){
+        param.put("offerType", "0");
+        } else {
+            param.put("offerType", "1");
+        }
+        if (isEth){
+            param.put("pairCurrency", "1");
+        } else {
+            param.put("pairCurrency", "2");
+        }
+        param.put("pairRate", pairRate);
+        param.put("offerAmount", offerAmount+"000000000");
+        param.put("sender", wallet.getUser());
+        param.put("passphrase", wallet.getPass());
+        param.put("walletAddress", wallet.getEthAddress());
+        param.put("amountOfTime", "86400");
+        param.put("feeATM", "200000000");
+
+        String path = "/rest/dex/offer";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path).body().asString();
+    }
 
     @Override
     public GetBlockIdResponse getBlockId(String height) {
@@ -480,7 +545,18 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public void verifyCreatingTransaction(CreateTransactionResponse transaction) {
-        throw new NotImplementedException("Not implemented");
+        assertNotNull(transaction);
+        assertNotNull(transaction.getTransaction(), transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON(),transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON().getSenderPublicKey());
+        assertNotNull(transaction.getTransactionJSON().getSignature());
+        assertNotNull(transaction.getTransactionJSON().getFullHash());
+        assertNotNull(transaction.getTransactionJSON().getAmountATM());
+        assertNotNull(transaction.getTransactionJSON().getEcBlockId());
+        assertNotNull(transaction.getTransactionJSON().getSenderRS());
+        assertNotNull(transaction.getTransactionJSON().getTransaction());
+        assertNotNull(transaction.getTransactionJSON().getFeeATM());
+        assertNotNull(transaction.getTransactionJSON().getType());
     }
 
     @Override

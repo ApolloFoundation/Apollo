@@ -408,6 +408,25 @@ public class TestBaseOld extends TestBase {
     public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
+
+    @Override
+    @Step
+    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet){
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    @Step
+    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth){
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    @Step
+    public List<DexOrderDto> getDexOrders(String accountId) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
     @Step
     public List<String> getPeers() {
         try {

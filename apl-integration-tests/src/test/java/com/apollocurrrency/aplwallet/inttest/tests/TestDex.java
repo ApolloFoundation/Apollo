@@ -2,14 +2,16 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
+import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Dex")
@@ -58,5 +60,39 @@ public class TestDex extends TestBaseNew {
         List<DexTradeInfoDto> dexTrades = getDexTradeInfo("2", 0, 999999999);
         assertNotNull(dexTrades);
     }
+
+    @DisplayName("Create 4 types of orders and cancel them and cancel them")
+    @Test
+    public void dexOrders(){
+        //Create Sell order ETH
+        String sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
+        assertEquals("{}", sellOrderEth, "dex offer wasn't created");
+        //Create Sell order PAX
+        String sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
+        assertEquals("{}", sellOrderPax, "dex offer wasn't created");
+
+        //Create Buy order PAX
+        String buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
+        assertNotNull(buyOrderPax);
+        //Create Buy order ETH
+        String buyOrderEth = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, true);
+        assertNotNull(buyOrderEth);
+
+        List<DexOrderDto> orders = getDexOrders(TestConfiguration.getTestConfiguration().getVaultWallet().getAccountId());
+        //TODO: add additional asserts for checking statuses after order was cancelled
+        for (DexOrderDto order : orders) {
+            if (order.status == 0){
+                 verifyCreatingTransaction(dexCancelOrder(order.id, TestConfiguration.getTestConfiguration().getVaultWallet()));
+            }
+
+        }
+
+
+    }
+
+
+
+
+
 
 }

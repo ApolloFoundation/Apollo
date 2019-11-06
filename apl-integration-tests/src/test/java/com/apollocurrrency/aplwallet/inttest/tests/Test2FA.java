@@ -33,7 +33,7 @@ public class Test2FA extends TestBaseNew {
     public void  deleteKey() throws JsonProcessingException {
 
         Account2FAResponse accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,true);
+        Wallet wallet = new Wallet(accountDTO.getAccount(),accountDTO.getPassphrase(), null,true, null, null);
         Account2FAResponse deletedAccount = deleteSecretFile(wallet);
         Assertions.assertEquals(Status2FA.OK,deletedAccount.getStatus());
 
@@ -44,7 +44,7 @@ public class Test2FA extends TestBaseNew {
     @Test
     public void  exportKey() throws JsonProcessingException {
         Account2FAResponse accountDTO = generateNewAccount();
-        Wallet wallet = new Wallet(accountDTO.getAccountRS(),accountDTO.getPassphrase(), null,true);
+        Wallet wallet = new Wallet(accountDTO.getAccountRS(),accountDTO.getPassphrase(), null,true, null, null);
         VaultWalletResponse secretFile = exportSecretFile(wallet);
         Assertions.assertTrue(secretFile.getFileName().contains(accountDTO.getAccountRS()));
         Assertions.assertNotNull(secretFile.getFileName());
