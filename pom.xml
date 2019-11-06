@@ -24,6 +24,17 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+
+        <repository>
+            <id>aplsys</id>
+            <name>Artifactory APLSYS</name>
+            <layout>default</layout>
+            <url>https://arti.firstbridge.work/artifactory/aplsys</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
         <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
         <repository>
             <id>apl</id>
