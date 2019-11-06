@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -24,16 +26,12 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-@Disabled // TEMPorary
 @EnableWeld
 class MandatoryTransactionDaoTest {
     @RegisterExtension
@@ -47,8 +45,9 @@ class MandatoryTransactionDaoTest {
 
 
     @WeldSetup
-    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class, JdbiHandleFactory.class), List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
+    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class), List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
                 .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+                .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
                 .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .build();
 
