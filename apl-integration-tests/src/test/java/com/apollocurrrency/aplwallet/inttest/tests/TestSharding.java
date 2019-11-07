@@ -10,6 +10,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+
 @DisplayName("Sharding")
 public class TestSharding extends TestBaseNew {
 
@@ -43,6 +45,13 @@ public class TestSharding extends TestBaseNew {
                 .filter(pair -> pair.getValue().size() > 0)
                 .forEach(pair -> assertEquals("Shards count on: "+pair.getKey(), finalMaxShardsList.size(), pair.getValue().size()));
 
+        for (Map.Entry<String, List<ShardDTO>> shard: shards.entrySet()) {
+            if (shard.getValue().size() >= finalMaxShardsList.size()){
+                assertIterableEquals(maxShardsList, shard.getValue());
+            }
+
+        }
+   /*
        //TODO: needed refactoring
         for (int i = 0; i < maxShardsList.size() ; i++) {
             int finalI = i;
@@ -53,6 +62,8 @@ public class TestSharding extends TestBaseNew {
                     .stream()
                     .allMatch(pair -> pair.get(finalI).getCoreZipHash().equals(finalMaxShardsList.get(finalI).getCoreZipHash())));
         }
+
+ */
     }
 
 }
