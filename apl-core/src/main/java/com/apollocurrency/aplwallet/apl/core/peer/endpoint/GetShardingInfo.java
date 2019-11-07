@@ -13,13 +13,13 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +41,7 @@ public class GetShardingInfo extends PeerRequestHandler{
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;
         this.peers = peers;
-        chainId= blockchainConfig.getChain().getChainId();
+        chainId = blockchainConfig.getChain().getChainId();
     }
 
     @Override
@@ -53,12 +53,12 @@ public class GetShardingInfo extends PeerRequestHandler{
         List<Shard> allShards = shardDao.getAllCompletedShards();
         log.debug("allShards = [{}] = \n{}", allShards.size(), Arrays.toString( allShards.toArray() )) ;
         for (Shard shard: allShards) {
-            List<String>adFileIDs = new ArrayList<>();
-            List<String>adFileHashes = new ArrayList<>();
+            List<String> adFileIDs = new ArrayList<>();
+            List<String> adFileHashes = new ArrayList<>();
             //at the moment we have one additional file with prunables
             //that could be absent
-            if(shard.getPrunableZipHash()!=null){
-                String prunablesFileId=snh.getFullShardPrunId(shard.getShardId(), chainId);
+            if (shard.getPrunableZipHash() != null) {
+                String prunablesFileId = snh.getFullShardPrunId(shard.getShardId(), chainId);
                 adFileIDs.add(prunablesFileId);
                 adFileHashes.add(Convert.toHexString(shard.getPrunableZipHash()));
             }

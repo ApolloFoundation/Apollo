@@ -1,13 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.util.ArrayList;
+import org.apache.commons.math3.distribution.TDistribution;
+
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.math3.distribution.TDistribution;
 
 /**
  * General statistics
@@ -20,8 +19,8 @@ public class PeerInfoStatistics {
     public static final double BETA=0.90;
             
     private final Map<String,PeerInfoGroup> sorted = new HashMap<>();
-    
-    public void add(PeerFileHashSum pi){
+
+    public void add(PeerFileHashSum pi) {
       if(pi!=null)  {
         String hash = Convert.toHexString(pi.getHash());
         PeerInfoGroup pg = sorted.get(hash);
@@ -65,8 +64,8 @@ public class PeerInfoStatistics {
         }
         return res;
     }
-    
-    boolean isAlreadyCounted(PeerFileHashSum pi){
+
+    boolean isAlreadyCounted(PeerFileHashSum pi) {
         boolean res = false;
         for(String hash: sorted.keySet()){
             PeerInfoGroup pg = sorted.get(hash);
@@ -79,8 +78,8 @@ public class PeerInfoStatistics {
         }
         return res;
     }
-    
-    public Set<PeerFileHashSum> getByHash(String hash){
+
+    public Set<PeerFileHashSum> getByHash(String hash) {
         Set<PeerFileHashSum> res = new HashSet<>();
         PeerInfoGroup pg = sorted.get(hash);
         if(pg!=null){

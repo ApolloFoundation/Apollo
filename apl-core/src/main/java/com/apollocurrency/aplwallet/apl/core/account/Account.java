@@ -576,11 +576,11 @@ public class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            if(LOG.isTraceEnabled()) {
+            if (LOG.isTraceEnabled()) {
                 LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
                         height,
-                        this.publicKey!=null?this.publicKey.getHeight():null,
-                        height - (this.publicKey!=null?this.publicKey.getHeight():0),
+                        this.publicKey != null ? this.publicKey.getHeight() : null,
+                        height - (this.publicKey != null ? this.publicKey.getHeight() : 0),
                         EFFECTIVE_BALANCE_CONFIRMATIONS);
             }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
@@ -670,8 +670,8 @@ public class Account {
                     || height > blockchain.getHeight()) {
                 LOG.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
                         height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
-                        height, blockchain.getHeight() );
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
+                        height, blockchain.getHeight());
+                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height=" + blockchain.getHeight());
             }
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();

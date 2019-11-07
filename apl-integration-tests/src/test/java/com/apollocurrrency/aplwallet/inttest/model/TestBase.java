@@ -19,16 +19,13 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.platform.runner.JUnitPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.io.File;
 import java.util.HashMap;
@@ -39,7 +36,11 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountId;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBalance;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getForging;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startForging;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -56,32 +57,31 @@ public abstract class TestBase implements ITest {
     static void initAll() {
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
-                     .retryWhen(false)
-                     .withMaxRetries(20)
-                     .withDelay(5, TimeUnit.SECONDS);
+                .retryWhen(false)
+                .withMaxRetries(20)
+                .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
         try {
-            importSecretFileSetUp(secretFilePath,"1");
+            importSecretFileSetUp(secretFilePath, "1");
             startForgingSetUp();
             setUpTestData();
-        }catch (Exception ex){
-            fail("Precondition FAILED: "+ex.getMessage(), ex);
+        } catch (Exception ex) {
+            fail("Precondition FAILED: " + ex.getMessage(), ex);
         }
-
 
 
     }
 
     @BeforeEach
-    void setUP(TestInfo testInfo){
+    void setUP(TestInfo testInfo) {
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
-    void testEnd(){
+    void testEnd() {
         this.testInfo = null;
     }
 
@@ -102,7 +102,7 @@ public abstract class TestBase implements ITest {
                 .post(path);
     }
 
-    public static void setUpTestData(){
+    public static void setUpTestData() {
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
@@ -127,25 +127,22 @@ public abstract class TestBase implements ITest {
 
 
     private static CreateTransactionResponse sendMoneySetUp(Wallet wallet, String recipient, int moneyAmount) {
-        addParameters(RequestType.requestType,RequestType.sendMoney);
+        addParameters(RequestType.requestType, RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
-        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.amountATM, moneyAmount + "00000000");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    private static boolean verifyTransactionInBlockSetUp(String transaction)
-    {
+    private static boolean verifyTransactionInBlockSetUp(String transaction) {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransactionSetUP(transaction).getConfirmations() >= 0);
             assertTrue(inBlock);
-        }
-        catch (Exception e)
-        {
-            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+        } catch (Exception e) {
+            assertTrue(inBlock, "Transaction does't add to block. Transaction " + transaction);
         }
         return inBlock;
     }
@@ -188,39 +185,39 @@ public abstract class TestBase implements ITest {
             } else {
                 peersIp = TestConfiguration.getTestConfiguration().getPeers();
             }
-      if (peersIp != null && peersIp.size() > 0){
+            if (peersIp != null && peersIp.size() > 0) {
 
-         boolean isForgingEnableOnGen = false;
+                boolean isForgingEnableOnGen = false;
 
-        for (String ip: peersIp) {
-            RequestSpecification spec = new RequestSpecBuilder()
-                    .setContentType(ContentType.JSON)
-                    .setBaseUri(String.format("http://%s:%s",ip,7876))
-                    .build();
+                for (String ip : peersIp) {
+                    RequestSpecification spec = new RequestSpecBuilder()
+                            .setContentType(ContentType.JSON)
+                            .setBaseUri(String.format("http://%s:%s", ip, 7876))
+                            .build();
 
-            HashMap<String, String> param = new HashMap();
-            param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
-            param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
+                    HashMap<String, String> param = new HashMap();
+                    param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
+                    param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
 
-            path = "/apl";
-            Response response =  given().log().all()
-                    .spec(spec)
-                    .contentType(ContentType.URLENC)
-                    .formParams(param)
-                    .when()
-                    .post(path);
+                    path = "/apl";
+                    Response response = given().log().all()
+                            .spec(spec)
+                            .contentType(ContentType.URLENC)
+                            .formParams(param)
+                            .when()
+                            .post(path);
 
-            ForgingResponse forgingResponse = null;
-            try {
-                forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            if (forgingResponse.getGenerators().size() > 0){
-                isForgingEnableOnGen = true;
-                break;
-            }
-            //need when  rest/nodeinfo/forgers will be worked
+                    ForgingResponse forgingResponse = null;
+                    try {
+                        forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    if (forgingResponse.getGenerators().size() > 0) {
+                        isForgingEnableOnGen = true;
+                        break;
+                    }
+                    //need when  rest/nodeinfo/forgers will be worked
          /*
 
 
@@ -234,15 +231,15 @@ public abstract class TestBase implements ITest {
             System.out.println(forgingResponse.getGenerators().size());
             System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
           */
-          }
+                }
 
-          if (!isForgingEnableOnGen){
-              addParameters(RequestType.requestType, startForging);
-              addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-              addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
-              getInstanse(ForgingDetails.class);
-          }
-      }
+                if (!isForgingEnableOnGen) {
+                    addParameters(RequestType.requestType, startForging);
+                    addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
+                    addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
+                    getInstanse(ForgingDetails.class);
+                }
+            }
 
         } else {
             addParameters(RequestType.requestType, getForging);
@@ -253,22 +250,22 @@ public abstract class TestBase implements ITest {
                 System.out.println("Start Forging on APL-NZKH-MZRE-2CTT-98NPZ");
                 addParameters(RequestType.requestType, startForging);
                 addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-                addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+                addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
                 getInstanse(ForgingDetails.class);
             }
         }
 
     }
 
-    private static void checkForgingAccountsBalance(){
-        for (int i = 1; i < 200 ; i++) {
+    private static void checkForgingAccountsBalance() {
+        for (int i = 1; i < 200; i++) {
             addParameters(RequestType.requestType, getAccountId);
-            addParameters(Parameters.secretPhrase,i);
-            AccountDTO accountID  = getInstanse(AccountDTO.class);
+            addParameters(Parameters.secretPhrase, i);
+            AccountDTO accountID = getInstanse(AccountDTO.class);
             addParameters(RequestType.requestType, getAccount);
-            addParameters(Parameters.account,accountID.getAccount());
+            addParameters(Parameters.account, accountID.getAccount());
             GetAccountResponse account = getInstanse(GetAccountResponse.class);
-            if (Long.valueOf(account.getBalanceATM()) < 10000000000000L){
+            if (Long.valueOf(account.getBalanceATM()) < 10000000000000L) {
                 sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(), account.getAccountRS(), 5000000);
             }
         }

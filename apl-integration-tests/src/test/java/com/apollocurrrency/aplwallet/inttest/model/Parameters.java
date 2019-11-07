@@ -1,6 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
-public enum  Parameters {
+public enum Parameters {
     wallet,
     includeTransactions,
     adminPassword,

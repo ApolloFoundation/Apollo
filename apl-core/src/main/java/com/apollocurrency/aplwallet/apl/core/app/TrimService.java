@@ -85,7 +85,7 @@ public class TrimService {
             int lastTrimHeight = trimEntry.getHeight();
             log.info("Last trim height '{}' was done? ='{}', supplied height {}",
                     lastTrimHeight, trimEntry.isDone(), height);
-            if( lastTrimHeight < shardInitialBlockHeight){
+            if (lastTrimHeight < shardInitialBlockHeight) {
                 //we need to change the lastTrimHeight value according to the first block in the latest shard
                 lastTrimHeight = shardInitialBlockHeight;
                 log.info("Set last trim height to shard initial block height={}", lastTrimHeight);
@@ -137,7 +137,7 @@ public class TrimService {
             if (trimHeight > 0) {
                 TrimEntry trimEntry = trimDao.get();
                 if (trimEntry == null || !trimEntry.isDone() || trimEntry.getHeight() < blockchainHeight) {
-                    if (trimEntry == null || trimEntry.getHeight() < blockchainHeight){
+                    if (trimEntry == null || trimEntry.getHeight() < blockchainHeight) {
                         trimEntry = new TrimEntry(null, blockchainHeight, false);
                     }
                     trimDao.clear();
@@ -156,7 +156,7 @@ public class TrimService {
                     trimEntry.setDone(true);
                     trimDao.save(trimEntry);
                     log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
-                }else{
+                } else {
                     log.debug("doTrimDerived skipped at blockchain height={} and trim height={}", blockchainHeight, trimHeight);
                 }
             }
@@ -186,12 +186,12 @@ public class TrimService {
                     log.debug("Reset Trim.");
                 }
                 dataSource.commit(!inTransaction);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.warn(e.toString(), e);
                 dataSource.rollback(!inTransaction);
                 throw e;
             }
-        }finally {
+        } finally {
             lock.unlock();
         }
     }
@@ -252,7 +252,7 @@ public class TrimService {
     }
 
     public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
-        log.debug("Send event to {} trim thread", enableTrim?"enable":"disable");
+        log.debug("Send event to {} trim thread", enableTrim ? "enable" : "disable");
         trimConfigEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(enableTrim, clearQueue));
     }
@@ -261,11 +261,11 @@ public class TrimService {
         return lock.isLocked();
     }
 
-    public void waitTrimming(){
+    public void waitTrimming() {
         log.debug("Waiting for the end of the latest trim");
-        while ( isTrimming() ) {
+        while (isTrimming()) {
             ThreadUtils.sleep(100);
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                 log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
                         lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
             }

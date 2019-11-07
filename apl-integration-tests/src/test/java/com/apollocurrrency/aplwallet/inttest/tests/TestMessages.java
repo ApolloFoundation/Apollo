@@ -14,7 +14,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @DisplayName("Messages")
 @Epic(value = "Messages")
 public class TestMessages extends TestBaseOld {
@@ -26,11 +27,11 @@ public class TestMessages extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void readMessage(Wallet wallet) throws IOException {
         String textMessage = "Test MSG";
-        CreateTransactionResponse response = sendMessage(wallet,wallet.getUser(),textMessage);
+        CreateTransactionResponse response = sendMessage(wallet, wallet.getUser(), textMessage);
         verifyCreatingTransaction(response);
         verifyTransactionInBlock(response.getTransaction());
-        AccountMessageDTO message =  readMessage(wallet,response.getTransaction());
-        assertEquals(textMessage,message.getMessage());
+        AccountMessageDTO message = readMessage(wallet, response.getTransaction());
+        assertEquals(textMessage, message.getMessage());
     }
 
     @DisplayName("Send Message Phasing")
@@ -40,10 +41,10 @@ public class TestMessages extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void readMessagePhasing(Wallet wallet) throws IOException {
         String textMessage = "Test MSG Phasing";
-        CreateTransactionResponse response = sendMessage(wallet,wallet.getUser(),textMessage);
+        CreateTransactionResponse response = sendMessage(wallet, wallet.getUser(), textMessage);
         verifyCreatingTransaction(response);
         verifyTransactionInBlock(response.getTransaction());
-        AccountMessageDTO message =  readMessage(wallet,response.getTransaction());
-        assertEquals(textMessage,message.getMessage());
+        AccountMessageDTO message = readMessage(wallet, response.getTransaction());
+        assertEquals(textMessage, message.getMessage());
     }
 }

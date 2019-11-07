@@ -8,7 +8,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.mapper;
 
@@ -26,7 +29,7 @@ public class TestConfiguration {
     private String env;
     private HashMap<String, NetConfig> testNetIp;
 
-    private TestConfiguration(){
+    private TestConfiguration() {
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             parser = new JSONParser();
@@ -35,30 +38,29 @@ public class TestConfiguration {
             host = (String) jsonObject.get("host");
             port = (String) jsonObject.get("port");
             adminPass = (String) jsonObject.get("adminPassword");
-            standartWallet = mapper.readValue( jsonObject.get("standartWallet").toString(), Wallet.class);
-            vaultWallet= mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
-            genesisWallet =  mapper.readValue(jsonObject.get("genesisWallet").toString(), Wallet.class);
-            TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {};
+            standartWallet = mapper.readValue(jsonObject.get("standartWallet").toString(), Wallet.class);
+            vaultWallet = mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
+            genesisWallet = mapper.readValue(jsonObject.get("genesisWallet").toString(), Wallet.class);
+            TypeReference<HashMap<String, NetConfig>> typeRef = new TypeReference<>() {
+            };
             testNetIp = mapper.readValue(jsonObject.get("net").toString(), typeRef);
             Random rand = new Random();
             env = System.getProperty("test.env");
-            if (!env.equals(host)){
+            if (!env.equals(host)) {
                 peers = testNetIp.get(env).getPeers();
                 host = peers.get(rand.nextInt(peers.size()));
-            }else {
+            } else {
                 peers = new ArrayList<>();
                 peers.add(host);
             }
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static TestConfiguration getTestConfiguration() {
-        if (testConfig == null){
+        if (testConfig == null) {
             testConfig = new TestConfiguration();
         }
         return testConfig;
@@ -67,26 +69,32 @@ public class TestConfiguration {
     public String getBaseURL() {
         return host;
     }
+
     public String getPort() {
         return port;
     }
+
     public String getAdminPass() {
         return adminPass;
     }
+
     public Wallet getStandartWallet() {
         return standartWallet;
     }
+
     public Wallet getVaultWallet() {
         return vaultWallet;
     }
+
     public List<String> getPeers() {
         return peers;
     }
+
     public List<String> getHostsByChainID(String chainId) {
         testNetIp.forEach((k, v) -> {
-            if (v.getChainId().equals(chainId)){
+            if (v.getChainId().equals(chainId)) {
                 this.peers = v.getPeers();
-        }
+            }
         });
         return this.peers;
     }
@@ -94,6 +102,7 @@ public class TestConfiguration {
     public Wallet getGenesisWallet() {
         return genesisWallet;
     }
+
     public void setGenesisWallet(Wallet genesisWallet) {
         this.genesisWallet = genesisWallet;
     }

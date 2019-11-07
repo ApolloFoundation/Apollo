@@ -22,21 +22,21 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PeerWebSocketClient extends PeerWebSocket{
 
-    private static WebSocketClient client=null;
+    private static WebSocketClient client = null;
     private Monitor startMonitor = new Monitor();
     private Session session = null;
-    
-    private static void init() throws Exception{
+
+    private static void init() throws Exception {
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         client.setStopAtShutdown(true);
-        client.start();        
+        client.start();
     }
-    
+
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
-        if(client==null){
+        if (client == null) {
             try {
                 init();
             } catch (Exception ex) {
@@ -50,13 +50,13 @@ public class PeerWebSocketClient extends PeerWebSocket{
         if (uri == null) {
             return false;
         }
-        if(isConnected()){ //we want just one session, not more
+        if (isConnected()) { //we want just one session, not more
             return true;
         }
         //synchronizing here
         startMonitor.enter();
         try {
- 
+
             Future<Session> conn = client.connect(this, uri);
             session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
@@ -85,7 +85,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             if (isClientConnected()) {
                 session.disconnect();
                 session.close();
-                session=null;
+                session = null;
             }
         } catch (IOException ex) {
             log.warn("Can not close websocket");
@@ -112,7 +112,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     }
 
     boolean isClientConnected() {
-        return session!=null && session.isOpen();
+        return session != null && session.isOpen();
     }
 
 }

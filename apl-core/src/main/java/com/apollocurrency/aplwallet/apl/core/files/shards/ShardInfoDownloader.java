@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
@@ -14,22 +15,19 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Getter;
 
 /**
- *
  * @author alukin@gmailk.com
  */
 @Slf4j
@@ -45,18 +43,18 @@ public class ShardInfoDownloader {
     @Getter
     private final Map<Long, Set<Peer>> shardsPeers;
     @Getter
-    private final Map<Long,FileDownloadDecision> shardsDesisons = new HashMap<>();
+    private final Map<Long, FileDownloadDecision> shardsDesisons = new HashMap<>();
     //peerId:alShards map
     @Getter
-    private final Map<String,ShardingInfo> shardInfoByPeers;
+    private final Map<String, ShardingInfo> shardInfoByPeers;
     @Getter
-    Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
-    Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
+    Map<Long, Set<PeerFileHashSum>> goodPeersMap = new HashMap<>();
+    Map<Long, Set<PeerFileHashSum>> badPeersMap = new HashMap<>();
 
 
     private final PeersService peers;
     private final UUID myChainId;
-       
+
     @Inject
 
     public ShardInfoDownloader(
@@ -109,8 +107,8 @@ public class ShardInfoDownloader {
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
         log.debug("Request ShardInfo from Peers...");
         int counterWinShardInfo = 0;
-        int counterTotal = 0;        
-    //   FileDownloader fileDownloader = fileDownloaders.get();        
+        int counterTotal = 0;
+        //   FileDownloader fileDownloader = fileDownloaders.get();
 
         Set<Peer> knownPeers = peers.getAllConnectedPeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
@@ -136,7 +134,7 @@ public class ShardInfoDownloader {
             for (String pa : additionalPeersCopy) {
                 //here we are trying to create peers
                 Peer p = peers.findOrCreatePeer(null, pa, true);
-                if(p!=null) {
+                if (p != null) {
                     if (processPeerShardInfo(p)) {
                         counterWinShardInfo++;
                     }
@@ -148,14 +146,14 @@ public class ShardInfoDownloader {
                     if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
                         break;
                     }
-                }else{
-                    log.debug("Can not create peer: {}",pa);
+                } else {
+                    log.debug("Can not create peer: {}", pa);
                 }
             }
         }
         log.debug("Request ShardInfo result {}", sortedShards);
         sortedShards.keySet().forEach((idx) -> {
-            shardsDesisons.put(idx,checkShard(idx));
+            shardsDesisons.put(idx, checkShard(idx));
         });
         return sortedShards;
     }
@@ -163,13 +161,12 @@ public class ShardInfoDownloader {
     private byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
         ShardingInfo psi = shardInfoByPeers.get(peerAddr);
-        if(psi!=null){
-            for(ShardInfo si: psi.shards){
-                if(myChainId.equals(UUID.fromString(si.chainId))
-                        && si.shardId==shardId)
-                {
-                   res = Convert.parseHexString(si.zipCrcHash);
-                   break;
+        if (psi != null) {
+            for (ShardInfo si : psi.shards) {
+                if (myChainId.equals(UUID.fromString(si.chainId))
+                        && si.shardId == shardId) {
+                    res = Convert.parseHexString(si.zipCrcHash);
+                    break;
                 }
             }
         }
@@ -184,7 +181,7 @@ public class ShardInfoDownloader {
             //FIRE event when shard is NOT PRESENT
             log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
             return result;
-        }        
+        }
         //do statistical analysys of shard's hashes
         PeersList shardPeerList = new PeersList();
         ShardNameHelper snh = new ShardNameHelper();
@@ -195,26 +192,26 @@ public class ShardInfoDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        goodPeersMap.put(shardId,pvdm.getValidPeers());
-        badPeersMap.put(shardId,pvdm.getInvalidPeers());
+        goodPeersMap.put(shardId, pvdm.getValidPeers());
+        badPeersMap.put(shardId, pvdm.getInvalidPeers());
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
         return res;
     }
+
     /**
-     * 
      * @param shardId
-     * @return 
+     * @return
      */
     public ShardInfo getShardInfo(Long shardId) {
         ShardInfo res = null;
         PeerFileHashSum pfhs = goodPeersMap.get(shardId).iterator().next();
-        if(pfhs==null){
+        if (pfhs == null) {
             return res;
         }
-        String peerId=pfhs.getPeerId();
+        String peerId = pfhs.getPeerId();
         ShardingInfo srdInfo = shardInfoByPeers.get(peerId);
-        res=srdInfo.getShards().get(0);
-        return res;        
+        res = srdInfo.getShards().get(0);
+        return res;
     }
 
 }

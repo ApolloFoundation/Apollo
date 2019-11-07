@@ -9,6 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class GetAccountBlockCountResponse extends ResponseBase{
+public class GetAccountBlockCountResponse extends ResponseBase {
     private Long numberOfBlocks;
 }

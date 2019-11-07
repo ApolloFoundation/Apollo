@@ -1067,7 +1067,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (commonBlock.getHeight() < shardInitialHeight) {
                 log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})", commonBlock.getHeight(), shardInitialHeight);
-            }else {
+            } else {
                 popOffWithRescan(commonBlock.getHeight() + 1);
             }
             return Collections.emptyList();
@@ -1099,7 +1099,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown
                 Block lastBlock = blockchain.findLastBlock();
-                if (lastBlock == null){
+                if (lastBlock == null) {
                     log.error("Error popping off, lastBlock is NULL.", e);
                 } else {
                     blockchain.setLastBlock(lastBlock);
@@ -1128,7 +1128,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             int scanHeight = 0;
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
-            if ( shardInitialHeight > 0 ) {
+            if (shardInitialHeight > 0) {
                 scanHeight = Math.max(height, shardInitialHeight);
             }
             log.debug("Set the height for Scan process to {}, shards' initialBlock height={}", scanHeight, shardInitialHeight);
@@ -1149,7 +1149,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 try {
                     scan(scanHeight, false);
-                }catch (BlockchainScanException e){
+                } catch (BlockchainScanException e) {
                     log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + e.toString(), e);
                 }
             }
@@ -1371,7 +1371,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == shardInitialHeight) {
-                    trimService.resetTrim(height+trimService.getMaxRollback());
+                    trimService.resetTrim(height + trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
@@ -1517,7 +1517,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //if (e.getErrorCode() != 90007) { //The error with code 90007 is thrown when trying to call a JDBC method on an object that has been closed.
                 try {
                     dataSource.rollback(false);
-                }catch (IllegalStateException ex){
+                } catch (IllegalStateException ex) {
                     log.error("Error during the Rollback caused by SQL Exception", e);
                 }
                 //}
@@ -1552,7 +1552,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public void waitUntilBlockchainDownloadingStops(){
+    public void waitUntilBlockchainDownloadingStops() {
         log.debug("Waiting until blockchain downloading stops.");
         globalSync.updateLock();
         globalSync.updateUnlock();

@@ -536,7 +536,7 @@ public class PeersService {
     public List<Peer> getOutboundPeers() {
         return getPeers(Peer::isOutbound);
     }
-    
+
     public Set<Peer> getAllConnectedPeers() {
         Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = getActivePeers();

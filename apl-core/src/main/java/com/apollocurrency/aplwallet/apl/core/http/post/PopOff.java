@@ -27,9 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class PopOff extends AbstractAPIRequestHandler {

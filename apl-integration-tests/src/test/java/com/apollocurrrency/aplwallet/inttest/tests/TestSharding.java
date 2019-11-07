@@ -6,28 +6,37 @@ import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 @DisplayName("Sharding")
 public class TestSharding extends TestBaseNew {
 
 
     @Test
-    void verifyShards(){
-     List<String> peers = TestConfiguration.getTestConfiguration().getPeers();
+    void verifyShards() {
+        List<String> peers = TestConfiguration.getTestConfiguration().getPeers();
         HashMap<String, List<ShardDTO>> shards = new HashMap<>();
         HashMap<String, Integer> heights = new HashMap<>();
         List<ShardDTO> maxShardsList = new ArrayList<>();
         int maxHeight = 0;
 
-        for (String ip: peers) {
+        for (String ip : peers) {
             try {
                 List<ShardDTO> shardDTOS = getShards(ip);
-                if (shardDTOS.size() > maxShardsList.size()){maxShardsList =shardDTOS;}
+                if (shardDTOS.size() > maxShardsList.size()) {
+                    maxShardsList = shardDTOS;
+                }
                 shards.put(ip, shardDTOS);
-                heights.put(ip,getLastBlock(ip).getHeight());
+                heights.put(ip, getLastBlock(ip).getHeight());
                 System.out.println(getLastBlock(ip));
             } catch (Exception e) {
                 fail(e.getMessage());
@@ -41,17 +50,17 @@ public class TestSharding extends TestBaseNew {
 
         shards.entrySet().stream().filter(pair -> peersOnCurrentHeight.contains(pair.getKey()))
                 .filter(pair -> pair.getValue().size() > 0)
-                .forEach(pair -> assertEquals("Shards count on: "+pair.getKey(), finalMaxShardsList.size(), pair.getValue().size()));
+                .forEach(pair -> assertEquals("Shards count on: " + pair.getKey(), finalMaxShardsList.size(), pair.getValue().size()));
 
-       //TODO: needed refactoring
-        for (int i = 0; i < maxShardsList.size() ; i++) {
+        //TODO: needed refactoring
+        for (int i = 0; i < maxShardsList.size(); i++) {
             int finalI = i;
             assertTrue("Assert CoreZip Hash",
-                     shards.values()
-                    .stream().filter(shardDTOS -> shardDTOS.size() >= finalMaxShardsList.size())
-                    .collect(Collectors.toList())
-                    .stream()
-                    .allMatch(pair -> pair.get(finalI).getCoreZipHash().equals(finalMaxShardsList.get(finalI).getCoreZipHash())));
+                    shards.values()
+                            .stream().filter(shardDTOS -> shardDTOS.size() >= finalMaxShardsList.size())
+                            .collect(Collectors.toList())
+                            .stream()
+                            .allMatch(pair -> pair.get(finalI).getCoreZipHash().equals(finalMaxShardsList.get(finalI).getCoreZipHash())));
         }
     }
 

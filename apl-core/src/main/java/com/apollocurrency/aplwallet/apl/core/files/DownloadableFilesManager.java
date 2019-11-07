@@ -4,19 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.files;
 
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
@@ -30,6 +17,19 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Downloadable files info
@@ -46,7 +46,7 @@ public class DownloadableFilesManager {
     public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
-    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun", 1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
@@ -156,8 +156,8 @@ public class DownloadableFilesManager {
         log.trace("<< ParsedFileId = {}", res);
         return res;
     }
-    
-    private UUID getChainId(ParsedFileId parsed){
+
+    private UUID getChainId(ParsedFileId parsed) {
         UUID chainId;
         if (parsed.modifiers.isEmpty()) {
             chainId = blockchainConfig.getChain().getChainId();
@@ -207,14 +207,15 @@ public class DownloadableFilesManager {
                 try {
                     shardId = Long.valueOf(parsed.fileId);
                     UUID chainId = getChainId(parsed);
-                    String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId,chainId);
+                    String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId, chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
                 } catch (NumberFormatException e) {
                     log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 }
-            };
-            break;    
+            }
+            ;
+            break;
             case 2: //attachment
             {
                  log.warn("Attachment downloading is not implemented yet");

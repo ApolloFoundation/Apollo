@@ -8,28 +8,26 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.FileEventData;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.UUID;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Any;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
-import javax.enterprise.event.ObservesAsync;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Service for background downloading of shard files and related files
@@ -51,10 +49,10 @@ public class ShardsDownloadService {
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
-            BlockchainConfig blockchainConfig,
-            javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
-            FileDownloadService fileDownloadService
+                                 BlockchainConfig blockchainConfig,
+                                 javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+                                 PropertiesHolder propertiesHolder,
+                                 FileDownloadService fileDownloadService
     ) {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
@@ -78,16 +76,16 @@ public class ShardsDownloadService {
 
     public void onAnyFileDownloadEvent(@ObservesAsync @FileDownloadEvent FileEventData fileData) {
         //TODO: process events carefully
-        for(Long shardId: shardDownloadStatuses.keySet()){
+        for (Long shardId : shardDownloadStatuses.keySet()) {
             ShardDownloadStatus status = shardDownloadStatuses.get(shardId);
-            if(fileData.fileOk){
-              status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
-            }else{
-              status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);                
+            if (fileData.fileOk) {
+                status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
+            } else {
+                status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);
             }
-            if(status.isDowloadedOK()){
-                fireShardPresentEvent(shardId);                
-            }else if(status.isDownloadCompleted()){                
+            if (status.isDowloadedOK()) {
+                fireShardPresentEvent(shardId);
+            } else if (status.isDownloadCompleted()) {
                 fireNoShardEvent("SHARDING: shard download failed");
             }
         }
@@ -159,7 +157,7 @@ public class ShardsDownloadService {
             log.warn("Shard {} can not be loaded from peers", shardId);
             return result;
         }
-        
+
         // check if shard files exist on local node
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
         List<String> filesToDownload = checkShardDownloadedAlready(si);
@@ -188,10 +186,10 @@ public class ShardsDownloadService {
             result = FileDownloadDecision.NoPeers;
             return result;
         }
-        if(!getShardingInfoFromPeers()){
+        if (!getShardingInfoFromPeers()) {
             fireNoShardEvent("SHARDING: no good shards foud in the network");
             result = FileDownloadDecision.NoPeers;
-            return result;            
+            return result;
         }
         if (shardInfoDownloader.getSortedShards().isEmpty()) {
             result = FileDownloadDecision.NoPeers;

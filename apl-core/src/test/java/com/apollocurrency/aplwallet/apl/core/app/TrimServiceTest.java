@@ -106,7 +106,8 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {
+        });
         doReturn(entry).when(trimDao).save(entry);
         doReturn(new TrimEntry(1L, 5500, false)).when(trimDao).save(new TrimEntry(null, 5500, false));
         doReturn(7300).when(timeService).getEpochTime();

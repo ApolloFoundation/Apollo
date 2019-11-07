@@ -280,7 +280,7 @@ class ShardImporterTest {
         assertNotNull(resourceAsStreamAccount);
         Files.copy(resourceAsStreamAccount, csvImporter.getDataExportPath().resolve("account.csv"));
 
-        DbUtils.inTransaction(dataSource, (con)-> {
+        DbUtils.inTransaction(dataSource, (con) -> {
             shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
             dataSource.commit(false);
         });

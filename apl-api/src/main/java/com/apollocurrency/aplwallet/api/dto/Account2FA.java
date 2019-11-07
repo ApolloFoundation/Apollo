@@ -4,13 +4,10 @@
 
 package com.apollocurrency.aplwallet.api.dto;
 
-import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 public class Account2FA extends BasicAccount {
     @JsonAlias("errorDescription")

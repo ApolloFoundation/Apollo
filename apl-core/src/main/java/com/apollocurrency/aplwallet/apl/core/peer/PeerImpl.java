@@ -58,8 +58,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -167,8 +165,8 @@ public final class PeerImpl implements Peer {
         lock.lock();
         try{
           if (newState != PeerState.CONNECTED) {
-             p2pTransport.disconnect(); 
-             // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
+              p2pTransport.disconnect();
+              // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
           }
 //        } catch (InterruptedException e) {
 //            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");

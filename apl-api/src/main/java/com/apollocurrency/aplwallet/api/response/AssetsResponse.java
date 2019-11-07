@@ -14,7 +14,8 @@ import lombok.Setter;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class AssetsResponse extends ResponseBase {
     private List<AccountAssetDTO> assets;

@@ -5,19 +5,18 @@ package com.apollocurrency.aplwallet.apl.core.files;
 
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- *
  * @author alukin@gmail.com
  */
 @Slf4j
@@ -28,12 +27,12 @@ public class FileDownloadService {
     private final Map<String, FileDownloadStatus> downloadStatus = new HashMap<>();
     private final DownloadableFilesManager downloadableFilesManager;
     private Event<FileEventData> fileEvent;
-    
+
     @Inject
     public FileDownloadService(Instance<FileDownloader> fileDownloaders,
-            Instance<FileInfoDownloader> fileInfoDownloaders,
-            Event<FileEventData> fileEvent,
-            DownloadableFilesManager downloadableFilesManager
+                               Instance<FileInfoDownloader> fileInfoDownloaders,
+                               Event<FileEventData> fileEvent,
+                               DownloadableFilesManager downloadableFilesManager
     ) {
         this.fileDownloaders = fileDownloaders;
         this.fileInfoDownloaders = fileInfoDownloaders;
@@ -58,11 +57,11 @@ public class FileDownloadService {
 
     public void startDownload(String fileId, Set<String> onlyPeers) {
         FileDownloadStatus fstatus = prepareForDownloading(fileId, onlyPeers);
-        if(fstatus.downloaderStarted){
+        if (fstatus.downloaderStarted) {
             log.warn("File {} is already in progress or downloaded. Status: {}", fileId, fstatus.toString());
             return;
         }
-        if (isAccaptable(fstatus.decision)) {            
+        if (isAccaptable(fstatus.decision)) {
             FileDownloader downloader = fileDownloaders.get();
             downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
         } else {
@@ -71,7 +70,8 @@ public class FileDownloadService {
                     false,
                     "File statistics is not acceptable: " + fstatus.decision.toString()
             );
-            fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
+            fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
+            }).fireAsync(data);
         }
     }
 
@@ -84,9 +84,9 @@ public class FileDownloadService {
         boolean res = (decision == FileDownloadDecision.AbsOK) || (decision == FileDownloadDecision.OK);
         return res;
     }
-    
-    public boolean isFileDownloadedAlready(String fileId, String hexHashString){
-        boolean res =  false;
+
+    public boolean isFileDownloadedAlready(String fileId, String hexHashString) {
+        boolean res = false;
         File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(fileId).toFile();
         log.debug("Checking existence zip = '{}', ? = {}", zipInExportedFolder, zipInExportedFolder.exists());
         if (zipInExportedFolder.exists()) {
@@ -104,7 +104,7 @@ public class FileDownloadService {
                         zipInExportedFolder.getAbsolutePath(), hexHashString, fileHashActual, deleteResult);
             }
         }
-        
+
         return res;
     }
 }

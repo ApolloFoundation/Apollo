@@ -7,11 +7,11 @@ public class DataProvider {
 
     }
 
-    public void saveAccount(AccountDTO accountDTO){
+    public void saveAccount(AccountDTO accountDTO) {
 
     }
 
-    public void getAccount(AccountDTO accountDTO){
+    public void getAccount(AccountDTO accountDTO) {
 
     }
 }

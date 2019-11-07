@@ -454,7 +454,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.ACCOUNT_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
-                            // this is en example how to export using specified columns + index on it
+                        // this is en example how to export using specified columns + index on it
 //                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
                         case ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, currency_id");

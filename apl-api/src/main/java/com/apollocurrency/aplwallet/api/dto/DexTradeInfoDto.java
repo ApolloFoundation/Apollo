@@ -35,7 +35,7 @@ public class DexTradeInfoDto {
     public long senderOfferAmount;
     @Schema(name="Type of pair currency", description="eth/pax/apl = 0/1/2")
     public byte pairCurrency;
-    @Schema(name="Exchange rate", description="parameter in gwei units")
+    @Schema(name = "Exchange rate", description = "parameter in gwei units")
     public BigDecimal pairRate;
     @Schema(name="Finish time", description="Order finish time")
     public Integer finishTime;

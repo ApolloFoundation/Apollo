@@ -158,18 +158,18 @@
                 <skipIntergationTests>true</skipIntergationTests>
             </properties>
         </profile>
-            <profile>
-                <id>integration-test</id>
-                <activation>
-                    <property>
-                        <name>integration-test</name>
-                    </property>
-                </activation>
-                <properties>
-                   <!-- <maven.test.skip>false</maven.test.skip>-->
-                    <skipIntergationTests>false</skipIntergationTests>
-                </properties>
-            </profile>
+        <profile>
+            <id>integration-test</id>
+            <activation>
+                <property>
+                    <name>integration-test</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- <maven.test.skip>false</maven.test.skip>-->
+                <skipIntergationTests>false</skipIntergationTests>
+            </properties>
+        </profile>
     </profiles>
 
     <dependencyManagement>

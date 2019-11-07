@@ -15,7 +15,7 @@ public class ValueParserImpl implements ValueParser {
     @Override
     public String parseStringObject(Object data) {
         String value = null;
-        if (data!=null) {
+        if (data != null) {
             String stringObject = (String) data;
             String stringValue = null;
             if (stringObject.charAt(0) == '\'') {
@@ -69,9 +69,9 @@ public class ValueParserImpl implements ValueParser {
 
     @Override
     public byte[] parseBinaryObject(Object data) {
-        if(data == null){
+        if (data == null) {
             return null;
-        }else {
+        } else {
             return Base64.getDecoder().decode(((String) data));
         }
     }
