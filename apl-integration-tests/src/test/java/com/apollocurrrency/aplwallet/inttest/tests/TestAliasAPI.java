@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Alias")
 public class TestAliasAPI extends TestBaseOld {
 
-    //Skrypchenko Serhii
+
     @DisplayName("setAlias + getAliasesCount + Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "setAliasAPI"+new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "ITest"+new Date().getTime(), 400000000, 1400);
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);

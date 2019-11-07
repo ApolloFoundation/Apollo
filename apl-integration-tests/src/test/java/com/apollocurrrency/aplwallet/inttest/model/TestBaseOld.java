@@ -69,6 +69,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
@@ -90,6 +91,7 @@ public class TestBaseOld extends TestBase {
         {
             Assertions.assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
         }
+        assertTrue(inBlock,String.format("Transaction %s in block: ",transaction));
         return inBlock;
     }
     @Step
