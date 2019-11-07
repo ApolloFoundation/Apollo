@@ -47,7 +47,7 @@ public class TestSharding extends TestBaseNew {
 
         for (Map.Entry<String, List<ShardDTO>> shard: shards.entrySet()) {
             if (shard.getValue().size() >= finalMaxShardsList.size()){
-                assertIterableEquals(maxShardsList, shard.getValue());
+                assertIterableEquals(maxShardsList, shard.getValue(),"Assert CoreZip Hash on "+shard.getKey());
             }
 
         }
