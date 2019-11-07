@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class H2DbInfoExtractorTest {
+class H2DbInfoExtractorTest {
     private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("sa", "sa");
-    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor");
+    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor" + DbProperties.DB_EXTENSION_WITH_DOT);
 
     @BeforeEach
     void setUp() throws IOException {
@@ -37,7 +37,7 @@ public class H2DbInfoExtractorTest {
     }
 
     @Test
-    public void testGetHeight() {
+    void testGetHeight() {
         int height = h2DbInfoExtractor.getHeight(path.toString());
         Assertions.assertEquals(BlockTestData.BLOCK_13_HEIGHT, height);
 
