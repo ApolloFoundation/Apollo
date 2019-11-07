@@ -96,8 +96,8 @@ class ShardPrunableZipHashCalculatorTest {
         doReturn(dataExportDir).when(dirProvider).getDataExportDir();
         doReturn(List.of(shard1, shard2, shard3)).when(shardDao).getAllCompletedShards();
         doReturn(List.of(prunableMessageTable, derivedTable)).when(registry).getDerivedTables();
-        Path secondZipPath = dataExportDir.resolve("apl-blockchain-shard-2-prunable-chain-" + chainId.toString() + ".zip");
-        Path thirdZipPath = dataExportDir.resolve("apl-blockchain-shard-3-prunable-chain-" + chainId.toString() + ".zip");
+        Path secondZipPath = dataExportDir.resolve("apl-blockchain-shardprun-2-chain-" + chainId.toString() + ".zip");
+        Path thirdZipPath = dataExportDir.resolve("apl-blockchain-shardprun-3-chain-" + chainId.toString() + ".zip");
         Files.createFile(secondZipPath);
         Files.createFile(thirdZipPath);
 

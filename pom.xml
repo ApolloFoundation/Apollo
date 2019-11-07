@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.38.8</version>
+    <version>1.39.0</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -49,6 +49,8 @@
         <module>apl-tools</module>
         <module>apl-exec</module>
         <module>apl-desktop</module>
+        <module>apl-integration-tests</module>
+        <module>apl-performance-tests</module>
     </modules>
 
     <properties>
@@ -61,7 +63,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-        <web-wallet.version>2.5.28</web-wallet.version>
+        <web-wallet.version>2.5.29</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
 
@@ -139,6 +141,7 @@
             </activation>
             <properties>
                 <zipExecutionPhase>none</zipExecutionPhase>
+                <skipIntergationTests>true</skipIntergationTests>
             </properties>
         </profile>
         <!-- The Configuration of the production profile -->
@@ -152,8 +155,21 @@
             </activation>
             <properties>
                 <zipExecutionPhase>package</zipExecutionPhase>
+                <skipIntergationTests>true</skipIntergationTests>
             </properties>
         </profile>
+            <profile>
+                <id>integration-test</id>
+                <activation>
+                    <property>
+                        <name>integration-test</name>
+                    </property>
+                </activation>
+                <properties>
+                   <!-- <maven.test.skip>false</maven.test.skip>-->
+                    <skipIntergationTests>false</skipIntergationTests>
+                </properties>
+            </profile>
     </profiles>
 
     <dependencyManagement>
@@ -495,6 +511,12 @@
                 <version>${junit5-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit5-bom.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>

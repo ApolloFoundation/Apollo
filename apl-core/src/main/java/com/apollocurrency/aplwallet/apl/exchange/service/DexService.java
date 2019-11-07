@@ -70,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
+import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -156,9 +157,11 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
-    @Transactional
     public void saveOrder(DexOrder order) {
         order.setHeight(this.blockchain.getHeight()); // new height value
+        if (log.isTraceEnabled()) {
+            log.trace("Save order {} at height {} : {} ", order.getId(), order.getHeight(), StackTraceUtils.lastNStacktrace(3));
+        }
         dexOrderTable.insert(order);
     }
 
@@ -278,8 +281,7 @@ public class DexService {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
             saveOrder(order);
-
-            refundFrozenAplForOrder(order);
+            refundFrozenAplForOrderIfWeCan(order);
 
             reopenIncomeOrders(order.getId());
 
@@ -309,7 +311,7 @@ public class DexService {
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
                 saveOrder(order);
-                refundFrozenAplForOrder(order);
+                refundFrozenAplForOrderIfWeCan(order);
                 reopenIncomeOrders(order.getId());
             }
 
@@ -318,13 +320,14 @@ public class DexService {
         }
     }
 
-    public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
+    public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             refundAPLFrozenMoney(order);
         }
     }
 
-    public void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
+
+    private void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
 
         //Return APL.
@@ -641,7 +644,7 @@ public class DexService {
                     pendingOrder.setStatus(OrderStatus.OPEN);
                 } else {
                     pendingOrder.setStatus(OrderStatus.EXPIRED);
-                    refundAPLFrozenMoney(pendingOrder);
+                    refundFrozenAplForOrderIfWeCan(pendingOrder);
                 }
                 saveOrder(pendingOrder);
             }

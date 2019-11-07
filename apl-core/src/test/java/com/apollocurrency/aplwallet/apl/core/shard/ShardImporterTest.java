@@ -15,9 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.ValueParserImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -91,7 +93,7 @@ class ShardImporterTest {
     @Mock
     private GenesisImporter genesisImporter;
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class)
+    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class, ValueParserImpl.class)
             .addBeans(
                     MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
                     MockBean.of(blockchainProcessor, BlockchainProcessor.class),
@@ -102,6 +104,8 @@ class ShardImporterTest {
 
     @Inject
     private DataTagDao dataTagDao;
+    @Inject
+    private ValueParser parser;
 
     private CsvImporter csvImporter;
     private ShardImporter shardImporter;
@@ -117,7 +121,7 @@ class ShardImporterTest {
 
     @BeforeEach
     void setUp() {
-        csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus);
+        csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus, parser);
         shardImporter = spy(new ShardImporter(shardDao, blockchainConfig, genesisImporter,
                 blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
     }
@@ -276,9 +280,10 @@ class ShardImporterTest {
         assertNotNull(resourceAsStreamAccount);
         Files.copy(resourceAsStreamAccount, csvImporter.getDataExportPath().resolve("account.csv"));
 
-//        DbUtils.inTransaction(dataSource, (con)-> {
-        shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
-//        });
+        DbUtils.inTransaction(dataSource, (con)-> {
+            shardImporter.importShard("fileId", List.of(ShardConstants.SHARD_TABLE_NAME));
+            dataSource.commit(false);
+        });
 
         List<DataTag> allTags = CollectionUtil.toList(dataTagDao.getAllTags(0, Integer.MAX_VALUE));
         assertEquals(6, allTags.size());

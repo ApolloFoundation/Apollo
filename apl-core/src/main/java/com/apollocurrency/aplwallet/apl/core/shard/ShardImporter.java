@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -160,7 +160,7 @@ public class ShardImporter {
                 log.debug("start importing '{}'...", table);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
-                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table)) {
+                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
                     rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
                             Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else if (ShardConstants.TAGGED_DATA_TABLE_NAME.equalsIgnoreCase(table)) {

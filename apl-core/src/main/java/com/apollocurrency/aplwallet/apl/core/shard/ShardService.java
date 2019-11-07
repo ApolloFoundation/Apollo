@@ -221,23 +221,24 @@ public class ShardService {
 
     public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
         MigrateState resultState = MigrateState.FAILED;
+        log.debug(">> performSharding '{}' at minRollbackHeight={}", shardId, minRollbackHeight);
         if (!shouldPerformSharding()) {
-            log.debug("Will skip sharding due to lack of memory or cmd/config properties");
+            log.debug("Will skip sharding due to lack of memory or cmd/config properties, shardId='{}'", shardId);
         } else {
             long start = System.currentTimeMillis();
-            log.info("Start sharding....");
+            log.info("Start sharding '{}'....", shardId);
 
             try {
                 shardMigrationExecutor.cleanCommands();
                 shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
             } catch (Exception t) {
-                log.error("Error occurred while trying create shard at height " + minRollbackHeight, t);
+                log.error("Error occurred while trying create shard " + shardId + " at height " + minRollbackHeight, t);
             }
             if (resultState != MigrateState.FAILED) {
-                log.info("Finished sharding successfully in {} secs", (System.currentTimeMillis() - start) / 1000);
+                log.info("Finished sharding successfully in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
             } else {
-                log.info("FAILED sharding in {} secs", (System.currentTimeMillis() - start) / 1000);
+                log.info("FAILED sharding in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
             }
         }
         return resultState;
@@ -246,6 +247,8 @@ public class ShardService {
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
+        log.debug(">> tryCreateShardAsync, scanning ? = {}, !isSharding={},\nCurrent config = {}",
+                !blockchainProcessor.isScanning(), !isSharding, blockchainConfig.getCurrentConfig());
         if (!blockchainProcessor.isScanning()) {
             if (!isSharding) {
                 Shard lastShard = shardDao.getLastShard();
@@ -273,7 +276,7 @@ public class ShardService {
                 log.warn("Unable to start sharding at height {}, previous sharding process was not finished", lastTrimBlockHeight);
             }
         } else {
-            log.warn("Will skip sharding at height {} due to blockchain scan ", lastTrimBlockHeight);
+            log.warn("Will skip sharding at height {} due to current blockchain scanning !", lastTrimBlockHeight);
         }
         return newShardingProcess;
     }
@@ -292,9 +295,10 @@ public class ShardService {
     private boolean shouldPerformSharding() {
         boolean performSharding = !propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
         if (!performSharding) {
-            log.warn("Sharding is prohibited by command line or properties");
+            log.warn("Sharding is prohibited by command line or properties 'apl.noshardcreate' value !");
         } else {
             performSharding = RuntimeUtils.isEnoughMemory(LOWER_SHARDING_MEMORY_LIMIT);
+            log.warn("Memory check for sharding: performSharding = {}", performSharding);
         }
         return performSharding;
     }

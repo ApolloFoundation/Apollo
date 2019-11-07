@@ -436,9 +436,10 @@ public class PeersService {
     }
 
     public void suspend() {
-        if(peerHttpServer!=null){
-           suspend = peerHttpServer.suspend();
-        }
+        LOG.debug("peerHttpServer suspend...");
+//        if(peerHttpServer!=null){
+//           suspend = peerHttpServer.suspend();
+//        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.suspend();
         getActivePeers().forEach((p) -> {
@@ -447,9 +448,10 @@ public class PeersService {
     }
 
     public void resume() {
-        if (suspend && peerHttpServer!=null) {
-            suspend = !peerHttpServer.resume();
-        }
+        LOG.debug("peerHttpServer resume...");
+//        if (suspend && peerHttpServer!=null) {
+//            suspend = !peerHttpServer.resume();
+//        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.resume();
     }
@@ -534,7 +536,14 @@ public class PeersService {
     public List<Peer> getOutboundPeers() {
         return getPeers(Peer::isOutbound);
     }
-
+    
+    public Set<Peer> getAllConnectedPeers() {
+        Set<Peer> res = new HashSet<>();
+        Collection<? extends Peer> knownPeers = getActivePeers();
+        res.addAll(knownPeers);
+        return res;
+    }
+    
     public boolean hasTooManyInboundPeers() {
         return getPeers(Peer::isInbound, maxNumberOfInboundConnections).size() >= maxNumberOfInboundConnections;
     }
