@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
 
-//@RunWith(JUnitPlatform.class)
+@DisplayName("Accounts")
 public class TestAccounts extends TestBaseOld {
 
 
@@ -75,7 +75,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Verify getAccountId endpoint")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testAccountId(Wallet wallet) throws IOException {
         AccountDTO account = getAccountId(wallet);
@@ -85,7 +85,7 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Verify getAccountLedger endpoint")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testAccountLedger(Wallet wallet) throws IOException {
         AccountLedgerResponse accountLedger = getAccountLedger(wallet);
@@ -122,7 +122,7 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Verify Unconfirmed Transactions endpoint")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testGetUnconfirmedTransactions(Wallet wallet) throws IOException {
         sendMoney(wallet, getTestConfiguration().getStandartWallet().getUser(),2);
@@ -152,7 +152,7 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Verify Get Balance endpoint")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testGetBalance(Wallet wallet) throws IOException {
         BalanceDTO balance = getBalance(wallet);
@@ -162,7 +162,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Get Account Ledger Entry")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountLedgerEntry(Wallet wallet) throws IOException {
         EntryDTO ledgerEntry = getAccountLedgerEntry(String.valueOf(getAccountLedger(wallet).getEntries().get(0).getLedgerId()));
@@ -177,7 +177,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Get Account Public Key")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountPublicKey(Wallet wallet) throws IOException {
         assertEquals(wallet.getPublicKey(), getAccountPublicKey(wallet).getPublicKey());
@@ -187,7 +187,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Get Account Blockchain Transactions")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testGetAccountTransaction(Wallet wallet)throws IOException {
         BlockchainTransactionsResponse blockchainTransactionsResponse =  getAccountTransaction(wallet);
@@ -196,7 +196,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Send Money")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {
         CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
@@ -205,7 +205,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Send Money Private")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
         CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
@@ -214,7 +214,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Set Account info")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void setAccountInfo(Wallet wallet) throws IOException {
         String accountName = "Account "+new Date().getTime();
@@ -235,7 +235,7 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Get Account Property")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void  getAccountPropertyTest(Wallet wallet) throws IOException {
         String property = "Property "+new Date().getTime();
@@ -246,7 +246,7 @@ public class TestAccounts extends TestBaseOld {
     }
 
     @DisplayName("Delete Account Property")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void  deleteAccountProperty(Wallet wallet) {
         String property = "Property "+new Date().getTime();

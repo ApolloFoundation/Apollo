@@ -18,22 +18,24 @@ import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 import java.util.Date;
+import java.util.UUID;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static org.junit.jupiter.api.Assertions.*;
 
-
+@DisplayName("Asset")
 public class TestAssetExchangeAPI extends TestBaseOld {
 
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAsset(Wallet wallet) throws IOException {
         CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER11", "issueAssettestAPI", 11);
@@ -42,7 +44,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
 
     @DisplayName("getAccountAssets")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountAssetsTest(Wallet wallet) throws IOException {
         String assetID;
@@ -56,7 +58,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("getAccountAssetCount")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountAssetCountTest(Wallet wallet) throws IOException {
         String assetID;
@@ -70,7 +72,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("getAsset")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAssetTest(Wallet wallet) throws IOException {
         String assetID;
@@ -90,7 +92,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
 
     @DisplayName("getAccountCurrentAskOrderIds")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountCurrentAskOrderIdsTest(Wallet wallet) throws IOException {
 
@@ -111,7 +113,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
 
     @DisplayName("getAccountCurrentBidOrderIds")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountCurrentBidOrderIdsTest(Wallet wallet) throws IOException {
 
@@ -132,7 +134,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //Creating Asset -> placeAskOrder -> getAccountCurrentAskOrders
     @DisplayName("getAccountCurrentAskOrders")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountCurrentAskOrdersTest(Wallet wallet) throws IOException {
         String assetID;
@@ -152,7 +154,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //Creating Asset -> placeBidOrder -> getAccountCurrentBidOrders
     @DisplayName("getAccountCurrentBidOrders")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountCurrentBidOrdersTest(Wallet wallet) throws IOException {
 
@@ -172,7 +174,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("getAllAssets")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAllAssetsTest(Wallet wallet) throws IOException {
         String assetID;
@@ -188,7 +190,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAllOpenAskOrders
     @DisplayName("getAllOpenAskOrders")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAllOpenAskOrdersTest (Wallet wallet) throws IOException {
         String assetID;
@@ -208,7 +210,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAllOpenBidOrders
     @DisplayName("getAllOpenBidOrders")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAllOpenBidOrdersTest (Wallet wallet) throws IOException {
         String assetID;
@@ -239,13 +241,13 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //Creating Asset -> place AskOrder -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares
     @DisplayName("getAskOrder + getAskOrderIds")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAskOrderTest (Wallet wallet) throws IOException {
         String assetID;
         String orderID;
         Integer quantityATU = 50;
-        String assetName = "Ask"+String.valueOf(new Date().getTime()).substring(7);
+        String assetName = "Ask"+ RandomStringUtils.randomAlphabetic(7);
         CreateTransactionResponse cancelorderID;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "issueAsset -> placeAskOrder -> getAskOrdersIds -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares", quantityATU);
         verifyCreatingTransaction(issueAsset);
@@ -292,15 +294,14 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
         AssetsResponse getAllAssets = getAllAssets();
-        System.out.println(getAllAssets);
-        assertTrue(getAllAssets.getAssets().stream().filter(assetDTO -> assetDTO.getAsset().equals(assetID)).findFirst().get().getQuantityATU() == 0);
+        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), "Asset was deleted");
 
     }
 
 
     //issueAsset + placeAskOrder + getAskOrders
     @DisplayName("issueAsset + placeAskOrder + getAskOrders")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAskOrders (Wallet wallet) throws IOException {
 
@@ -330,7 +331,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAssetAccountCount
     @DisplayName("getAssetAccountCount")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAssetAccountCount (Wallet wallet) throws IOException {
 
@@ -364,7 +365,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAssetAccounts
     @DisplayName("getAssetAccounts")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAssetAccounts (Wallet wallet) throws IOException {
         String assetID;
@@ -392,7 +393,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAssetDeletes
     @DisplayName("getAssetDeletes + getExpectedAssetDeletes")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAssetDeletesTest (Wallet wallet) throws IOException {
         String assetID;
@@ -430,7 +431,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //getAssetIds
     @DisplayName("getAssetAccounts")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void getAssetIdsTest () throws IOException {
 
@@ -441,7 +442,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //transferAsset
     @DisplayName("transferAsset")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public  void transferAsset (Wallet wallet) throws IOException {
 
@@ -479,7 +480,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
     //SMOKE API TESTING using standard TEST CASES
     @DisplayName("issueAsset + placeAskOrder")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceAskOrder(Wallet wallet) throws IOException {
         String assetID;
@@ -491,7 +492,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("issueAsset + placeAskOrder + cancelAskOrder")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceCancelAskOrder(Wallet wallet) throws IOException {
         String assetID;
@@ -509,7 +510,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
 
     @DisplayName("issueAsset + placeBidOrder")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceBidOrder(Wallet wallet) throws IOException {
         String assetID;
@@ -521,7 +522,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("issueAsset + placeBidOrder + cancelBidOrder")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceCancelBidOrder(Wallet wallet) throws IOException {
         String assetID;
@@ -538,7 +539,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
     @DisplayName("issueAsset + getAccountAssets + deleteAssetShares")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAccountAssetsDeleteTest(Wallet wallet) throws IOException {
 

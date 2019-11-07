@@ -60,7 +60,7 @@ public class FileInfoDownloader {
             FileDownloadInfo fdi = pc.getFileInfo(fileID);
             if(fdi!=null){
               byte[] hash = Convert.parseHexString(fdi.fileInfo.hash);
-              PeerFileHashSum pfhs = new PeerFileHashSum(hash, fileID, fileID);
+              PeerFileHashSum pfhs = new PeerFileHashSum(hash, p.getHostWithPort(), fileID);
               pl.add(pfhs);
               peersDownloadInfo.put(p.getHostWithPort(), fdi);
             }

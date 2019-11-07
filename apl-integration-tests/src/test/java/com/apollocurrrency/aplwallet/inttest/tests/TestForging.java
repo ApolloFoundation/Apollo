@@ -1,7 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.Account;
-import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -15,12 +14,12 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@DisplayName("Forging")
 public class TestForging extends TestBaseOld {
 
 
     @DisplayName("Start Get Stop Forging")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void  getAccountPropertyTest(Wallet wallet) throws IOException {
         GetAccountResponse accountDTO = getAccount(wallet.getUser());

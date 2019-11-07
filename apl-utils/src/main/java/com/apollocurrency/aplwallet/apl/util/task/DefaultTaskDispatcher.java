@@ -196,7 +196,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 /* Run INIT tasks */
                 jobs = tasks.get(TaskOrder.INIT);
                 log.debug("{}: run INIT tasks.", serviceName);
-                runAllAndWait(jobs);
+                try {
+                    runAllAndWait(jobs);
+                }catch (Throwable e){
+                    log.error("The INIT tasks can't be initialized properly.", e);
+                }
                 tasks.remove(TaskOrder.INIT);
 
                 /* Run BEFORE tasks */
@@ -217,7 +221,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
                 jobs = tasks.get(TaskOrder.AFTER);
                 log.info("{}: run AFTER tasks.", serviceName);
-                runAllAndWait(jobs);
+                try {
+                    runAllAndWait(jobs);
+                }catch (Throwable e){
+                    log.error("The AFTER tasks can't be initialized properly.", e);
+                }
                 tasks.remove(TaskOrder.AFTER);
 
                 //Shutdown onStartExecutor to release resources

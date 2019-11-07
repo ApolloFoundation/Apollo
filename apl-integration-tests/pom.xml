@@ -78,7 +78,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>5.4.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -97,6 +96,11 @@
             <artifactId>spring-web-test-client</artifactId>
             <version>4.1.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-rest-assured</artifactId>
+            <version>2.13.0</version>
         </dependency>
     </dependencies>
 

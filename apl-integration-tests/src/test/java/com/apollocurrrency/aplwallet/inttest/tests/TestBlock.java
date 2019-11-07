@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@DisplayName("Blocks")
 public class TestBlock extends TestBaseOld {
 
     @Test
