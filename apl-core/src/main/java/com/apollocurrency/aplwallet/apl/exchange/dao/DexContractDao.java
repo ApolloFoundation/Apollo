@@ -49,4 +49,11 @@ public interface DexContractDao {
     @RegisterRowMapper(ExchangeContractMapper.class)
     List<ExchangeContract> getAllForAccountOrder(@Bind("account") long account, @Bind("orderId") long orderId,@Bind("fromStatus") int fromStatus, @Bind("toStatus") int toStatus);
 
+    @SqlQuery("SELECT * FROM dex_contract AS contract " +
+            "WHERE (recipient = :account or sender = :account) " +
+            "AND (offer_id = :orderId or counter_offer_id=:orderId) "+
+            "AND status BETWEEN :fromStatus AND :toStatus")
+    @RegisterRowMapper(ExchangeContractMapper.class)
+    List<ExchangeContract> getAllVersionedForAccountOrder(@Bind("account") long account, @Bind("orderId") long orderId,@Bind("fromStatus") int fromStatus, @Bind("toStatus") int toStatus);
+
 }

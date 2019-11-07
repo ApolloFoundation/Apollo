@@ -733,4 +733,16 @@ public class DexService {
         return dexSmartContractService.getUserFilledOrders(user);
     }
 
+    public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
+        return dexContractDao.getAllForAccountOrder(accountId, orderId, status, status);
+    }
+    
+    public List<ExchangeContract> getContractsByAccountOrderFromStatus(long accountId, long orderId, byte fromStatus) {
+        return dexContractDao.getAllForAccountOrder(accountId, orderId, fromStatus, ExchangeContractStatus.values().length - 1);
+    }
+
+    public List<ExchangeContract> getVersionedContractsByAccountOrder(long accountId, long orderId) {
+        return dexContractDao.getAllVersionedForAccountOrder(accountId, orderId, 0, ExchangeContractStatus.values().length - 1);
+    }
+
 }
