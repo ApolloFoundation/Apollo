@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -59,8 +60,8 @@ public class ShardImporter {
 
     }
 
-    public void importShardByFileId(String fileId) {
-        importShard(fileId, List.of());
+    public void importShardByFileId(ShardPresentData shardPresentData) {
+        importShard(shardPresentData, List.of());
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get(); // prevent circular dependency, should be fixed later
@@ -73,10 +74,13 @@ public class ShardImporter {
             genesisImporter.importGenesisJson(false);
         } else {
             Shard completedShard = shardDao.getLastCompletedOrArchivedShard();
+            log.debug("Latest competed shard = {} for height = {}", completedShard, height);
             Long shardId = completedShard.getShardId();
             ShardNameHelper nameHelper = new ShardNameHelper();
-            String fileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());
-            importShard(fileId, List.of("block", "transaction"));
+            String shardFileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());
+            log.debug("Latest competed shard shardFileId = {}", shardFileId);
+            ShardPresentData shardPresentData = new ShardPresentData(shardId, shardFileId, List.of());
+            importShard(shardPresentData, List.of("block", "transaction"));
         }
     }
 
@@ -98,22 +102,34 @@ public class ShardImporter {
         genesisImporter.importGenesisJson(onlyKeys);
     }
 
-    public void importShard(String fileId, List<String> excludedTables) {
-        Objects.requireNonNull(fileId, "fileId is NULL");
+    public void importShard(ShardPresentData shardPresentData, List<String> excludedTables) {
+        Objects.requireNonNull(shardPresentData, "shardPresentData is NULL");
         Objects.requireNonNull(excludedTables, "excludedTables is NULL");
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
         String genesisTaskId = aplAppStatus.durableTaskStart("Shard data import", "Loading Genesis public accounts", true);
         log.debug("genesisTaskId = {}", genesisTaskId);
-        log.debug("Received shardFileId = '{}', lets map it to Location...", fileId);
-        Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(fileId).toAbsolutePath();
-        log.debug("Try unpack file name '{}'", zipInFolder);
+        log.debug("Received shardPresentData = '{}', lets map all data to Location(s)...", shardPresentData);
+        Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(shardPresentData.getShardFileId()).toAbsolutePath();
+        log.debug("Try unpack main shard file name '{}'", zipInFolder);
         boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
-        log.debug("Zip is unpacked = {}", unpackResult);
+        log.debug("Main shard Zip is unpacked = {}", unpackResult);
         if (!unpackResult) {
-            log.error("Node has encountered serious error and can't import ZIP with shard data. " +
-                    "Somethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
-            aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
-            throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
+            logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+            return;
+        }
+        // unzip additional files
+        if (shardPresentData.getAdditionalFileIDs() != null && shardPresentData.getAdditionalFileIDs().size() > 0) {
+            log.debug("Try unpack Optional files(s)=[{}]", shardPresentData.getAdditionalFileIDs().size());
+            for (String optionalFileId : shardPresentData.getAdditionalFileIDs()) {
+                log.debug("Try unpack Optional file by fileId '{}'", optionalFileId);
+                zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(optionalFileId).toAbsolutePath();
+                unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
+                log.debug("Zip for '{}' is unpacked = {}", optionalFileId, unpackResult);
+                if (!unpackResult) {
+                    logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+                    return;
+                }
+            }
         }
 
         genesisImporter.importGenesisJson(true); // import genesis public Keys ONLY (NO balances) - 049,842%
@@ -183,5 +199,12 @@ public class ShardImporter {
             }
         }
         aplAppStatus.durableTaskFinished(genesisTaskId, false, "Shard data import");
+    }
+
+    private void logErrorAndThrowException(ShardPresentData shardPresentData, String genesisTaskId, Path zipInFolder, boolean unpackResult) {
+        log.error("Node has encountered serious error and can't extract/import ZIP data by shard data = " + shardPresentData +
+                "\nSomethings wrong with zipped file =\n'{}'\n >>> STOPPING node process....", zipInFolder);
+        aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
+        throw new ShardArchiveProcessingException("Zip file can't be extracted, result = '" + unpackResult + "' : " + zipInFolder.toString());
     }
 }

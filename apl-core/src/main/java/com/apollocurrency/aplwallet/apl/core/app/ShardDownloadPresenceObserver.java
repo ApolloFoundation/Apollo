@@ -64,13 +64,12 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
-        String fileId = shardPresentData.getShardFileId();
         try {
-            shardImporter.importShardByFileId(fileId);
+            shardImporter.importShardByFileId(shardPresentData);
         } catch (Exception e) {
-            log.error("Error on Shard # {}. Zip/CSV importing...", fileId);
+            log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
             log.error("Node has encountered serious error and import CSV shard data. " +
-                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
             // truncate all partial data potentially imported into database
             cleanUpPreviouslyImportedData();
             // fall back to importing Genesis and starting from beginning
