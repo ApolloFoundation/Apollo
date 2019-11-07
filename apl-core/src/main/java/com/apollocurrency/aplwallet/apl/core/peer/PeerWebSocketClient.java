@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.Monitor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,32 +22,43 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PeerWebSocketClient extends PeerWebSocket{
 
-    private WebSocketClient client;
-    private volatile boolean connected = false;
-    private Monitor startMonitor;
+    private static WebSocketClient client=null;
+    private Monitor startMonitor = new Monitor();
+    private Session session = null;
     
-    public PeerWebSocketClient(Peer2PeerTransport peer) {
-        super(peer);
+    private static void init() throws Exception{
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
         client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         client.setStopAtShutdown(true);
-        startMonitor = new Monitor();
+        client.start();        
+    }
+    
+    public PeerWebSocketClient(Peer2PeerTransport peer) {
+        super(peer);
+        if(client==null){
+            try {
+                init();
+            } catch (Exception ex) {
+                log.error("Can not start wesocket client", ex);
+            }
+        }
     }
     
     public boolean startClient(URI uri) {
+        boolean connected = false;
         if (uri == null) {
             return false;
         }
-        if(connected){ //we want just one session, not more
+        if(isConnected()){ //we want just one session, not more
             return true;
         }
         //synchronizing here
         startMonitor.enter();
         try {
-            client.start();
+ 
             Future<Session> conn = client.connect(this, uri);
-            Session session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
+            session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
             log.trace("Interrupted while connecting as client to: {}", which());
@@ -70,21 +80,19 @@ public class PeerWebSocketClient extends PeerWebSocket{
 
     @Override
     public void close() {
-        super.close();
-        connected = false;
-        if (client != null) {
-            for(WebSocketSession wss: client.getOpenSessions()){
-                if(wss!=null){
-                    wss.disconnect();
-                    wss.close();
-                    wss.destroy();
-                }
+        try {
+            super.close();
+            if (isClientConnected()) {
+                session.disconnect();
+                session.close();
+                session=null;
             }
-            destroyClient();
+        } catch (IOException ex) {
+            log.warn("Can not close websocket");
         }
     }
 
-    private void destroyClient() {
+    public static void destroyClient() {
         if (client == null) {
             return;
         }
@@ -101,11 +109,10 @@ public class PeerWebSocketClient extends PeerWebSocket{
             client.destroy();
         }
         client = null;
-        log.trace("WebSocketClient: {} destroyed.", which());
     }
 
     boolean isClientConnected() {
-        return connected;
+        return session!=null && session.isOpen();
     }
 
 }

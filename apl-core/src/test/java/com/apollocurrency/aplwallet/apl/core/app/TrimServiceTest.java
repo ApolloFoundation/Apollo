@@ -69,7 +69,7 @@ class TrimServiceTest {
 
     @Test
     void testInitWithNullTrimEntry() {
-        trimService.init(2000);
+        trimService.init(2000, 0);
         verify(trimDao).save(new TrimEntry(null, 2000, true));
     }
 
@@ -85,18 +85,44 @@ class TrimServiceTest {
         doReturn(entry).when(trimDao).save(entry);
         doReturn(7300).when(timeService).getEpochTime();
 
-        trimService.init(5999);
+        trimService.init(5999, 0);
 
         verify(globalSync).readLock();
         verify(globalSync).readUnlock();
         verify(trimDao).clear();
-        //verify(trimDao).save(new TrimEntry(null, 5000, false));
         verify(trimDao, times(2)).save(new TrimEntry(1L, 5000, true));
         verify(dataSource).begin();
         verify(dataSource).commit(true);
         verify(firedEvent).fire(new TrimData(4000, 5000, 7200));
         verify(timeService).getEpochTime();
         verify(derivedTable).trim(4000);
+    }
+
+    @Test
+    void testInitWithExistingNotFinishedTrimEntryAndShardInitialBlock() {
+        TrimEntry entry = new TrimEntry(1L, 5000, false);
+        doReturn(entry).when(trimDao).get();
+        doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
+        TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
+        doReturn(dataSource).when(databaseManager).getDataSource();
+        Event firedEvent = mock(Event.class);
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(entry).when(trimDao).save(entry);
+        doReturn(new TrimEntry(1L, 5500, false)).when(trimDao).save(new TrimEntry(null, 5500, false));
+        doReturn(7300).when(timeService).getEpochTime();
+
+        trimService.init(5999, 5500);
+
+        verify(globalSync).readLock();
+        verify(globalSync).readUnlock();
+        verify(trimDao).clear();
+        verify(trimDao).save(new TrimEntry(null, 5500, false));
+        verify(trimDao).save(new TrimEntry(1L, 5500, true));
+        verify(dataSource).begin();
+        verify(dataSource).commit(true);
+        verify(firedEvent).fire(new TrimData(4500, 5500, 7200));
+        verify(timeService).getEpochTime();
+        verify(derivedTable).trim(4500);
     }
 
     @Test
@@ -110,7 +136,7 @@ class TrimServiceTest {
         mockTrimEntries(8000, 10000, 1000);
         doReturn(8000).when(timeService).getEpochTime();
 
-        trimService.init(10500);
+        trimService.init(10500, 0);
 
         verify(globalSync, times(6)).readLock();
         verify(globalSync, times(6)).readUnlock();
@@ -137,7 +163,7 @@ class TrimServiceTest {
         doReturn(7199).when(timeService).getEpochTime();
         mockTrimEntries(10000, 11000, 1000);
 
-        trimService.init(11999);
+        trimService.init(11999, 0);
 
         verify(globalSync, times(2)).readLock();
         verify(globalSync, times(2)).readUnlock();
