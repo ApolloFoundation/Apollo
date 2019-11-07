@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAliasesResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestAliasAPI extends TestBaseOld {
 
 
-    @DisplayName("setAlias + getAliasesCount + Get Aliases")
+    @DisplayName("SetAlias -> GetAliasesCount -> Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
@@ -53,7 +54,7 @@ public class TestAliasAPI extends TestBaseOld {
     }
 
 
-    @DisplayName("setAlias + Get Alias")
+    @DisplayName("Set Alias -> Get Alias")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAlias(Wallet wallet) throws IOException {

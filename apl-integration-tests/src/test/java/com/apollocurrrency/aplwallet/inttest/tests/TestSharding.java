@@ -51,19 +51,6 @@ public class TestSharding extends TestBaseNew {
             }
 
         }
-   /*
-       //TODO: needed refactoring
-        for (int i = 0; i < maxShardsList.size() ; i++) {
-            int finalI = i;
-            assertTrue("Assert CoreZip Hash",
-                     shards.values()
-                    .stream().filter(shardDTOS -> shardDTOS.size() >= finalMaxShardsList.size())
-                    .collect(Collectors.toList())
-                    .stream()
-                    .allMatch(pair -> pair.get(finalI).getCoreZipHash().equals(finalMaxShardsList.get(finalI).getCoreZipHash())));
-        }
-
- */
     }
 
 }
