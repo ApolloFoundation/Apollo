@@ -1,6 +1,16 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    maxDifficulty,
+    minDifficulty,
+    algorithm,
+    phasingVotingModel,
+    reserveSupply,
+    minReservePerUnitATM,
+    issuanceHeight,
+    initialSupply,
+    maxSupply,
+    decimals,
     wallet,
     includeTransactions,
     adminPassword,
@@ -67,5 +77,6 @@ public enum  Parameters {
     phasingMinBalance,
     phasingMinBalanceModel,
     phasingHolding,
-    sender
+    sender,
+    code
 }

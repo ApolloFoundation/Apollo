@@ -145,4 +145,5 @@ public interface ITest {
     public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
     public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
     List<DexOrderDto> getDexOrders(String accountId);
+    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
 }
