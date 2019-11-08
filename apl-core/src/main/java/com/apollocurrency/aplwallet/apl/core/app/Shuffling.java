@@ -344,7 +344,7 @@ public final class Shuffling {
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
                 List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-                LOG.trace("Got {} active shufflings", activeShufflings.size());
+                LOG.debug("Got {} active shufflings in {} ms", activeShufflings.size(), System.currentTimeMillis() - startTime);
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
