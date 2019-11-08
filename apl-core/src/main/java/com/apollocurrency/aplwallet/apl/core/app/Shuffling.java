@@ -234,6 +234,27 @@ public final class Shuffling {
 
     public static DbIterator<Shuffling> getActiveShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
+        /*return shufflingTable.getManyBy(
+                //new DbClause.IntClause("blocks_remaining", DbClause.Op.GTE, 0)
+                //        .and(new DbClause.IntClause("blocks_remaining", DbClause.Op.LTE, Integer.MAX_VALUE))
+                new DbClause.NotNullClause("blocks_remaining")
+                        .and(new DbClause.IntClause("height", DbClause.Op.GT, 0))
+                ,from, to, " ORDER BY blocks_remaining, height DESC ");*/
+    }
+
+    private static PreparedStatement psActiveShuffling = null;
+    public static List<Shuffling> getActiveShufflings() {
+        Connection con = null;
+        try {
+            con = lookupDataSource().getConnection();
+            if( psActiveShuffling == null ) {
+                psActiveShuffling = con.prepareStatement("SELECT * FROM shuffling WHERE blocks_remaining IS NOT NULL AND latest = TRUE ORDER BY blocks_remaining, height DESC");
+            }
+            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, true));
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     public static DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
@@ -313,7 +334,8 @@ public final class Shuffling {
     @Singleton
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-                long startTime = System.currentTimeMillis();
+            LOG.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            long startTime = System.currentTimeMillis();
                 LOG.trace("Shuffling observer call at {}", block.getHeight());
                 if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
                         || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
@@ -343,7 +365,7 @@ public final class Shuffling {
                         shufflingTable.insert(shuffling);
                     }
                 }
-                LOG.trace("Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
+                LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
         }
 

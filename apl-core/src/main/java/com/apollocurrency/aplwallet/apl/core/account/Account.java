@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -156,6 +157,7 @@ public class Account {
 
 
     @Singleton
+    @Slf4j
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
@@ -191,6 +193,7 @@ public class Account {
         }
 
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
             try (DbIterator<AccountLease> leases =accountLeaseTable.getLeaseChangingAccounts(height)) {
@@ -227,6 +230,7 @@ public class Account {
                 }
                 lessor.save();
             }
+            log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 
