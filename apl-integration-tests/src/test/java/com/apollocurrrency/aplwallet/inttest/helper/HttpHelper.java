@@ -101,6 +101,7 @@ public class HttpHelper {
                 reqestUrl.append("&");
             }
         }
+        System.out.println(reqestUrl);
         reqestParam.clear();
         return reqestUrl.toString();
     }

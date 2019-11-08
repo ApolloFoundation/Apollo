@@ -15,9 +15,11 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.Epic;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +36,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Accounts")
+@Epic(value = "Accounts")
 public class TestAccounts extends TestBaseOld {
 
 
@@ -115,7 +118,7 @@ public class TestAccounts extends TestBaseOld {
     @DisplayName("Verify Search Accounts  endpoint")
     public void testSearchAccounts() throws IOException {
         //Before set Account info Test1
-        SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
+        SearchAccountsResponse searchAccountsResponse = searchAccounts(TestConfiguration.getTestConfiguration().getGenesisWallet().getAccountId());
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
         assertTrue(searchAccountsResponse.getAccounts().size() > 0,"Account not found");

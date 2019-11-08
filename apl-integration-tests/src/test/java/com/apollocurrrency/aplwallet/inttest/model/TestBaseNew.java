@@ -793,4 +793,9 @@ public class TestBaseNew extends TestBase {
     public void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum, Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding) {
         throw new NotImplementedException("Not implemented");
     }
+
+    @Override
+    public CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals) {
+        throw new NotImplementedException("Not implemented");
+    }
 }

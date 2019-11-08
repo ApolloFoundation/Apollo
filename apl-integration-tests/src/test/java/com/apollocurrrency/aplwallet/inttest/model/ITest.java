@@ -148,4 +148,5 @@ public interface ITest {
     List<DexOrderDto> getDexOrders(String accountId);
     Account2FAResponse getDexBalances(String ethAddress);
     WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth);
+    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
 }

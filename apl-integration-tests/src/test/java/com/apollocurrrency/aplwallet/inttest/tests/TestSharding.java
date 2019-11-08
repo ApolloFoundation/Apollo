@@ -3,6 +3,7 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
+import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 @DisplayName("Sharding")
+@Epic(value = "Sharding")
 public class TestSharding extends TestBaseNew {
 
 
@@ -51,19 +53,6 @@ public class TestSharding extends TestBaseNew {
             }
 
         }
-   /*
-       //TODO: needed refactoring
-        for (int i = 0; i < maxShardsList.size() ; i++) {
-            int finalI = i;
-            assertTrue("Assert CoreZip Hash",
-                     shards.values()
-                    .stream().filter(shardDTOS -> shardDTOS.size() >= finalMaxShardsList.size())
-                    .collect(Collectors.toList())
-                    .stream()
-                    .allMatch(pair -> pair.get(finalI).getCoreZipHash().equals(finalMaxShardsList.get(finalI).getCoreZipHash())));
-        }
-
- */
     }
 
 }

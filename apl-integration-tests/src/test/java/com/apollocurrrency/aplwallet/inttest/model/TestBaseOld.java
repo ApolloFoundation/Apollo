@@ -54,6 +54,7 @@ import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -482,6 +483,13 @@ public class TestBaseOld extends TestBase {
         return getInstanse(BlockDTO.class);
 
     }
+
+    @Step
+    public BlockDTO getBlock() {
+        addParameters(RequestType.requestType, getBlock);
+        return getInstanse(BlockDTO.class);
+
+    }
     @Step
     public GetBlockIdResponse getBlockId(String height) {
         addParameters(RequestType.requestType, getBlockId);
@@ -856,6 +864,79 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.phasingHolding, phasingHolding);
     }
 
+
+    @Step("Get Dex History with param: Type: {2}")
+    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
+        int finishHeight = getBlock().getHeight()+ RandomUtils.nextInt(1000,5000);
+        System.out.println(finishHeight);
+        addParameters(RequestType.requestType,RequestType.issueCurrency);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.code ,code );
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.type, type);
+        addParameters(Parameters.initialSupply, initialSupply);
+        addParameters(Parameters.decimals, decimals);
+        addParameters(Parameters.feeATM, 10000000000L);
+        addParameters(Parameters.deadline, "1440");
+        addParameters(Parameters.wallet, wallet);
+
+        switch (type){
+            case 55:
+            case 53:
+            case 23:
+            case 21:
+                addParameters(Parameters.algorithm,  RandomUtils.nextInt(2,4));
+                addParameters(Parameters.minDifficulty, 1);
+                addParameters(Parameters.maxDifficulty, 255);
+                addParameters(Parameters.maxSupply, maxSupply+50);
+                addParameters(Parameters.reserveSupply, maxSupply+10);
+                addParameters(Parameters.issuanceHeight, 900000000);
+                addParameters(Parameters.phased,true);
+                addParameters(Parameters.phasingFinishHeight,finishHeight);
+                addParameters(Parameters.phasingVotingModel,0);
+                addParameters(Parameters.minReservePerUnitATM,1);
+                addParameters(Parameters.phasingQuorum,1);
+                break;
+            case 51:
+            case 19:
+            case 17:addParameters(Parameters.algorithm, 2);
+                    addParameters(Parameters.maxSupply, maxSupply);
+                    addParameters(Parameters.issuanceHeight, 0);
+                    addParameters(Parameters.reserveSupply, 0);
+                    addParameters(Parameters.minDifficulty, 1);
+                    addParameters(Parameters.maxDifficulty, 255);
+                    break;
+            case 47:
+            case 46:
+            case 45:
+            case 44:
+            case 15:
+            case 14:
+            case 13:
+            case 12:addParameters(Parameters.initialSupply, 0);
+            case 39:
+            case 38:
+            case 37:
+            case 31:
+            case 30:
+            case 29:
+            case 7:
+            case 5:
+                    addParameters(Parameters.maxSupply, maxSupply+50);
+                    addParameters(Parameters.reserveSupply, maxSupply+50);
+                    addParameters(Parameters.issuanceHeight, 900000000);
+                    addParameters(Parameters.phased,true);
+                    addParameters(Parameters.phasingFinishHeight,finishHeight);
+                    addParameters(Parameters.phasingVotingModel,0);
+                    addParameters(Parameters.minReservePerUnitATM,1);
+                    addParameters(Parameters.phasingQuorum,1);
+                break;
+            default: addParameters(Parameters.issuanceHeight, 0);
+                     addParameters(Parameters.maxSupply, maxSupply);
+
+        }
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
 
 

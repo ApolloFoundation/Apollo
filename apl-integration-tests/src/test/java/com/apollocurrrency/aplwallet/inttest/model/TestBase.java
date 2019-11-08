@@ -62,6 +62,7 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
+        /*
         try {
             importSecretFileSetUp(secretFilePath,"1");
             startForgingSetUp();
@@ -69,6 +70,8 @@ public abstract class TestBase implements ITest {
         }catch (Exception ex){
             fail("Precondition FAILED: "+ex.getMessage(), ex);
         }
+
+         */
 
 
 

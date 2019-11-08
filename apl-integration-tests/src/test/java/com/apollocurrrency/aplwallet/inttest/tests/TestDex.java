@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Dex")
+@Epic(value = "Dex")
 public class TestDex extends TestBaseNew {
 
     @DisplayName("Get dex orders")

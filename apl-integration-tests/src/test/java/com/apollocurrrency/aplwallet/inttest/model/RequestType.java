@@ -103,5 +103,6 @@ public enum RequestType {
     sendMoneyPrivate,
     dividendPayment,
     getAssetDividends,
-    getExpectedAssetTransfers
+    getExpectedAssetTransfers,
+    issueCurrency
 }

@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Asset")
+@Epic(value = "Asset")
 public class TestAssetExchangeAPI extends TestBaseOld {
 
     //SMOKE API TESTING (STATUS CODE 200)
@@ -67,7 +69,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
-        assertTrue(getAccountAssetCount.getNumberOfAssets().intValue() >= 1);
+        assertTrue(getAccountAssetCount.getNumberOfAssets() >= 1);
         log.trace("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
     }
 
