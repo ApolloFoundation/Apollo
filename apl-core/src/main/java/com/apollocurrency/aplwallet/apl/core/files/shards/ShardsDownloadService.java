@@ -180,7 +180,7 @@ public class ShardsDownloadService {
 
     public FileDownloadDecision tryDownloadLastGoodShard() {
         boolean goodShardFound = false;
-        log.debug("prepareAndStartDownload...");
+        log.debug("SHARDING: prepare and start downloading of last good shard in the network...");
         boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
         FileDownloadDecision result = FileDownloadDecision.NotReady;
         if (doNotShardImport) {
@@ -201,13 +201,16 @@ public class ShardsDownloadService {
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
-            List<Long> shardIds = new ArrayList(shardInfoDownloader.getSortedShards().keySet());
-            Collections.sort(shardIds, Collections.reverseOrder());
-            for (Long shardId : shardIds) {
-                result = tryDownloadShard(shardId);
-                goodShardFound = isAcceptable(result);
-                if (goodShardFound) {
-                    break;
+            Map<Long,Double> shardWeights = shardInfoDownloader.getShardWeights();
+            for (Long shardId : shardWeights.keySet()) {
+                double w = shardWeights.get(shardId);
+                //TODO: sort and decide
+                if(w>0){
+                    result = tryDownloadShard(shardId);
+                    goodShardFound = isAcceptable(result);
+                    if (goodShardFound) {
+                        break;
+                    }
                 }
             }
             if (!goodShardFound) {

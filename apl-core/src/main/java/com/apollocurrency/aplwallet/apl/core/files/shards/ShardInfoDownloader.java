@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,12 +44,15 @@ public class ShardInfoDownloader {
     @Getter
     private final Map<Long, Set<Peer>> shardsPeers;
     @Getter
+    //shardId:decision
     private final Map<Long,FileDownloadDecision> shardsDesisons = new HashMap<>();
     //peerId:alShards map
     @Getter
     private final Map<String,ShardingInfo> shardInfoByPeers;
     @Getter
+    //shardId:PeerFileHashSum
     Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
+    //shardId:PeerFileHashSum
     Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
 
 
@@ -107,7 +109,7 @@ public class ShardInfoDownloader {
     }
 
     public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
-        log.debug("Request ShardInfo from Peers...");
+        log.debug("Requesting ShardingInfo from Peers...");
         int counterWinShardInfo = 0;
         int counterTotal = 0;        
     //   FileDownloader fileDownloader = fileDownloaders.get();        
@@ -153,7 +155,7 @@ public class ShardInfoDownloader {
                 }
             }
         }
-        log.debug("Request ShardInfo result {}", sortedShards);
+        log.debug("ShardingInfo requesting result {}", sortedShards);
         sortedShards.keySet().forEach((idx) -> {
             shardsDesisons.put(idx,checkShard(idx));
         });
@@ -213,8 +215,35 @@ public class ShardInfoDownloader {
         }
         String peerId=pfhs.getPeerId();
         ShardingInfo srdInfo = shardInfoByPeers.get(peerId);
-        res=srdInfo.getShards().get(0);
+        res=srdInfo.getShards().get(shardId.intValue());
         return res;        
     }
-
+    
+    /**
+     * Shard weight is calculated using number of peers with good shards
+     * Algorithm is under development, changes are possible.
+     * Aim is to assign bigger weight to shards with more good peers and less bad peers
+     * @param shardId
+     * @return normed weight of shard from -1.0 to 1.0. +1.0 means that all peers
+     * have good shard. -1.0 means that all peers have no shard. Negative number means
+     * that count of bad shards and no shards is greater then good shard count
+     */
+    public double getShardWeight(Long shardId){
+        double res = 0.0D;
+        int allPeersNumber = shardInfoByPeers.size();
+        Set<PeerFileHashSum> goodPeers = goodPeersMap.get(shardId);
+        int goodPeersNumber = ( goodPeers == null ? 0 : goodPeers.size() );
+        Set<PeerFileHashSum> badPeers = badPeersMap.get(shardId);
+        int badPeersNumber = ( badPeers == null ? 0 : badPeers.size() );
+        int noShardPeersNumber = allPeersNumber - (goodPeersNumber+badPeersNumber);
+        res = (1.0*goodPeersNumber-1.0*badPeersNumber-1.0*noShardPeersNumber)/allPeersNumber;
+        return res;
+    }
+    
+    public Map<Long,Double> getShardWeights(){
+        Map<Long,Double> res = new HashMap<>();
+        //It is for A.B to catch phasing bug
+        res.put(6L,1.0);
+        return res;
+    }
 }
