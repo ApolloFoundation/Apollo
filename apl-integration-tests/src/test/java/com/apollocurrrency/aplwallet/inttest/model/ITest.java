@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;
@@ -142,8 +143,10 @@ public interface ITest {
     List<DexOrderDto> getDexHistory(String account);
     EthGasInfoResponse getEthGasInfo();
     List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime);
-    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
-    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
+    CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
+    String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
     List<DexOrderDto> getDexOrders(String accountId);
+    Account2FAResponse getDexBalances(String ethAddress);
+    WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth);
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
 }

@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import okhttp3.Response;
@@ -427,6 +428,18 @@ public class TestBaseOld extends TestBase {
     @Override
     @Step
     public List<DexOrderDto> getDexOrders(String accountId) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    @Step
+    public Account2FAResponse getDexBalances(String ethAddress) {
+        throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Override
+    @Step
+    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth){
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

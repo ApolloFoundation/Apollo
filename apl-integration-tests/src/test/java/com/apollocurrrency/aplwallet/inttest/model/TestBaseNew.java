@@ -49,6 +49,7 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
+import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Step;
@@ -373,7 +374,7 @@ public class TestBaseNew extends TestBase {
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
-    @Step("Get Dex Orders with param: Type {orderType}, Pair Currency {pairCurrency}")
+    @Step("Get Dex Orders with param: Type {orderType}, Pair Currency {pairCurrency}, Order Status {status}, AccountId {accountId}")
     public List<DexOrderDto> getDexOrders(String orderType, String pairCurrency, String status, String accountId) {
         HashMap<String, String> param = new HashMap();
         param.put("orderType", orderType);
@@ -390,7 +391,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
     @Step
     public List<DexOrderDto> getDexOrders(String accountId) {
@@ -406,7 +406,6 @@ public class TestBaseNew extends TestBase {
                 .getBody().jsonPath().getList("", DexOrderDto.class);
     }
 
-    //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
     @Override
     @Step("Get Dex Orders")
     public List<DexOrderDto> getDexOrders() {
@@ -476,6 +475,51 @@ public class TestBaseNew extends TestBase {
                 .when()
                 .get(path)
                 .getBody().jsonPath().getList("", DexTradeInfoDto.class);
+    }
+    //TODO: edit to new RESPONSEDTO, not STRING
+    @Override
+    @Step("dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
+    public Account2FAResponse getDexBalances(String ethAddress) {
+        HashMap<String, String> param = new HashMap();
+        param.put("eth", ethAddress);
+
+        String path = "/rest/dex/balance";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .formParams(param)
+                .when()
+                .get(path)
+                .getBody().as(Account2FAResponse.class);
+    }
+
+    @Override
+    @Step
+    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth) {
+        HashMap<String, String> param = new HashMap();
+        param.put("fromAddress", fromAddress);
+        param.put("sender", wallet.getAccountId());
+        param.put("passphrase", wallet.getPass());
+        param.put("toAddress", toAddress);
+        param.put("amount", amount);
+        param.put("transferFee", transferFee);
+        if (isEth){
+            param.put("cryptocurrency", "1");
+        } else {
+            param.put("cryptocurrency", "2");
+        }
+
+        String path = "/rest/dex/withdraw";
+        return given().log().all()
+                .spec(restHelper.getSpec())
+                .contentType(ContentType.URLENC)
+                .formParams(param)
+                .when()
+                .post(path)
+                .as(WithdrawResponse.class);
+
+
+                //.post(path).as(WithdrawResponse.class);
+        //.getBody().jsonPath().getList("", WithdrawResponse.class);
     }
 
     @Override
