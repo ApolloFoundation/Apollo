@@ -39,6 +39,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -228,5 +229,35 @@ class DexServiceTest {
         List<DexOrderWithFreezing> ordersWithFreezing = dexService.getOrdersWithFreezing(request1);
 
         assertEquals(List.of(new DexOrderWithFreezing(order1, false)), ordersWithFreezing);
+    }
+
+    @Test
+    void testGetAccountOrderContracts() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 0, 3);
+
+        List<ExchangeContract> result = dexService.getContractsByAccountOrderFromStatus(this.contract.getSender(), this.contract.getOrderId(), (byte) 0);
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void testGetAccountOrderContractWithStatus() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 1, 1);
+
+        List<ExchangeContract> result = dexService.getContractsByAccountOrderWithStatus(this.contract.getSender(), this.contract.getOrderId(), (byte) 1);
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void testGetAccountOrderVersionedContracts() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllVersionedForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 0, 3);
+
+        List<ExchangeContract> result = dexService.getVersionedContractsByAccountOrder(this.contract.getSender(), this.contract.getOrderId());
+
+        assertSame(expected, result);
     }
 }

@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
+import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryMinToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -28,6 +30,8 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -44,9 +48,10 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -78,7 +83,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
-@OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
+@OpenAPIDefinition(info = @Info(description = "Operations with exchange."))
 @Singleton
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
@@ -92,7 +97,7 @@ public class DexController {
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     private DexSmartContractService dexSmartContractService;
-
+    private ExchangeContractToDTOConverter contractConverter = new ExchangeContractToDTOConverter();
 
 
     @Inject
@@ -588,12 +593,41 @@ public class DexController {
             } else {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
             }
-                
+
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
-        
+    }
+
+    @GET
+    @Path("/contracts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Retrieve processable dex contract for order", description = "Lookup the database to get dex contract associated with specified account and order with status > STEP1",
+            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in exceptional(error) cases may contain more than 1 entries", responseCode = "200",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
+                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+        long accountId = Convert.parseAccountId(account);
+        long orderId = Convert.parseLong(order);
+        List<ExchangeContract> contracts = service.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) ExchangeContractStatus.STEP_2.ordinal());
+        if (contracts.size() > 1) {
+            log.warn("Found {} processable contracts for order {}, account - {} ", contracts, orderId, accountId);
+        }
+        return Response.ok(contractConverter.convert(contracts)).build();
     }
 
 
+    @GET
+    @Path("/all-contracts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Retrieve all versioned dex contracts for order", description = "Get all versions of dex contracts related to the specified order (including all contracts with STEP1 status and previous versions of processable contract) ",
+            responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
+                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+        long accountId = Convert.parseAccountId(account);
+        long orderId = Convert.parseLong(order);
+        List<ExchangeContract> contracts = service.getVersionedContractsByAccountOrder(accountId, orderId);
+        return Response.ok(contractConverter.convert(contracts)).build();
+    }
 }
