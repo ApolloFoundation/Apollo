@@ -855,7 +855,6 @@ public class TestBaseOld extends TestBase {
     @Step("Get Dex History with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int finishHeight = getBlock().getHeight()+ RandomUtils.nextInt(1000,5000);
-        System.out.println(finishHeight);
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
         addParameters(Parameters.code ,code );
@@ -925,7 +924,15 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
+    @Step
+    public  CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId) {
+        addParameters(RequestType.requestType, deleteCurrency);
+        addParameters(Parameters.currency, CurrencyId);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
 
 

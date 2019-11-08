@@ -42,4 +42,28 @@ public class TestCurrencies extends TestBaseOld {
         }
     }
 
+
+    @DisplayName("Delete currency")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 1,3,17,19,33,35,51})
+    public void deleteCurrency(int type){
+
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        int supply  = RandomUtils.nextInt(0,1000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    RandomUtils.nextInt(0,8));
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            deleteCurrency(wallet,currency.getTransaction());
+        }
+    }
+
 }
