@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.Currency;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
@@ -38,6 +39,8 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
+import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -148,5 +151,9 @@ public interface ITest {
     List<DexOrderDto> getDexOrders(String accountId);
     Account2FAResponse getDexBalances(String ethAddress);
     WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth);
-    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
+    CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
+    CurrenciesResponse getAllCurrencies();
+    Currency getCurrency(String CurrencyId);
+    CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId);
+    CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId);
 }

@@ -1,6 +1,11 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    currencyMint,
+    transferCurrency,
+    getAllCurrencies,
+    getCurrency,
+    getCurrencyAccounts,
     deleteCurrency,
     getForging,
     stopForging,

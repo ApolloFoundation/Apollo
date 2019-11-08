@@ -1,14 +1,19 @@
 package com.apollocurrency.aplwallet.api.dto;
 
 
+import com.apollocurrency.aplwallet.api.response.ResponseBase;
+
+import java.util.List;
 import java.util.Objects;
 
-public class Currency {
+public class Currency extends ResponseBase {
     private long accountId;
     private String name;
     private String code;
+    private String accountRS;
     private String description;
     private int type;
+    private List<CurrencyTypes> types;
     private long maxSupply;
     private long reserveSupply;
     private int creationHeight;
@@ -20,6 +25,12 @@ public class Currency {
     private byte algorithm;
     private byte decimals;
     private long initialSupply;
+    private long currentSupply;
+    private long units;
+    private long unconfirmedUnits;
+    private String account;
+    private long currentReservePerUnitATM;
+    private String currency;
 
     @Override
     public boolean equals(Object o) {
@@ -179,5 +190,69 @@ public class Currency {
 
     public void setInitialSupply(long initialSupply) {
         this.initialSupply = initialSupply;
+    }
+
+    public String getAccountRS() {
+        return accountRS;
+    }
+
+    public void setAccountRS(String accountRS) {
+        this.accountRS = accountRS;
+    }
+
+    public List<CurrencyTypes> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<CurrencyTypes> types) {
+        this.types = types;
+    }
+
+    public long getCurrentSupply() {
+        return currentSupply;
+    }
+
+    public void setCurrentSupply(long currentSupply) {
+        this.currentSupply = currentSupply;
+    }
+
+    public long getUnits() {
+        return units;
+    }
+
+    public void setUnits(long units) {
+        this.units = units;
+    }
+
+    public long getUnconfirmedUnits() {
+        return unconfirmedUnits;
+    }
+
+    public void setUnconfirmedUnits(long unconfirmedUnits) {
+        this.unconfirmedUnits = unconfirmedUnits;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
+    }
+
+    public long getCurrentReservePerUnitATM() {
+        return currentReservePerUnitATM;
+    }
+
+    public void setCurrentReservePerUnitATM(long currentReservePerUnitATM) {
+        this.currentReservePerUnitATM = currentReservePerUnitATM;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

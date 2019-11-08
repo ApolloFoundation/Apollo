@@ -1,6 +1,8 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    counter,
+    units,
     currency,
     maxDifficulty,
     minDifficulty,

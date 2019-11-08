@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.Currency;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
@@ -39,6 +40,8 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
+import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -884,9 +887,9 @@ public class TestBaseOld extends TestBase {
             case 53:
             case 23:
             case 21:
-                addParameters(Parameters.algorithm,  RandomUtils.nextInt(2,4));
+                addParameters(Parameters.algorithm,  2);
                 addParameters(Parameters.minDifficulty, 1);
-                addParameters(Parameters.maxDifficulty, 255);
+                addParameters(Parameters.maxDifficulty, 3);
                 addParameters(Parameters.maxSupply, maxSupply+50);
                 addParameters(Parameters.reserveSupply, maxSupply+10);
                 addParameters(Parameters.issuanceHeight, 900000000);
@@ -947,8 +950,51 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
+    @Step
+    public CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId) {
+        addParameters(RequestType.requestType, getCurrencyAccounts);
+        addParameters(Parameters.currency, CurrencyId);
+        return getInstanse(CurrencyAccountsResponse.class);
+    }
 
+    @Step
+    public Currency getCurrency(String CurrencyId) {
+        addParameters(RequestType.requestType, getCurrency);
+        addParameters(Parameters.currency, CurrencyId);
+        return getInstanse(Currency.class);
+    }
 
+    @Step
+    public CurrenciesResponse getAllCurrencies() {
+        addParameters(RequestType.requestType, getAllCurrencies);
+        return getInstanse(CurrenciesResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units) {
+        addParameters(RequestType.requestType, transferCurrency);
+        addParameters(Parameters.recipient, recipient);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse currencyMint(Long nonce, String currency, Wallet wallet, int units, int counter) {
+        addParameters(RequestType.requestType, currencyMint);
+        addParameters(Parameters.nonce, nonce);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.counter, counter);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
     @AfterEach
     void testEnd() {

@@ -8,13 +8,21 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
+import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
@@ -65,5 +73,97 @@ public class TestCurrencies extends TestBaseOld {
             deleteCurrency(wallet,currency.getTransaction());
         }
     }
+
+    @DisplayName("Get ( currency /  currency accounts / all) ")
+    @ParameterizedTest(name = "{displayName} {arguments}")
+    @ArgumentsSource(WalletProvider.class)
+    public void deleteCurrency(Wallet wallet){
+            int supply  = RandomUtils.nextInt(0,1000);
+            CreateTransactionResponse currency = issueCurrency(wallet,1,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    RandomUtils.nextInt(0,8));
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            assertEquals(wallet.getUser(),getCurrency(currency.getTransaction()).getAccountRS());
+            assertEquals(1,getCurrency(currency.getTransaction()).getType());
+            assertTrue(getCurrencyAccounts(currency.getTransaction()).getAccountCurrencies().size()>0);
+            assertTrue(getAllCurrencies().getCurrencies().size() > 0);
+    }
+
+    @DisplayName("Transfer currency")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 1,3,17,19,33,35,51})
+    public void transferCurrencyTest(int type){
+
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        int supply  = RandomUtils.nextInt(0,1000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    RandomUtils.nextInt(0,8));
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            CreateTransactionResponse transaction = transferCurrency(TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),currency.getTransaction(),wallet,1);
+            verifyTransactionInBlock(transaction.getTransaction());
+            assertTrue(getCurrencyAccounts(currency
+                    .getTransaction())
+                    .getAccountCurrencies().stream()
+                    .anyMatch(account -> account.getAccountRS().equals(TestConfiguration.getTestConfiguration().getGenesisWallet().getUser())));
+        }
+    }
+
+
+    @DisplayName("Mint Currencys")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = {17})
+    @Tag("NEGATIVE")
+    public void currencyMint(int type){
+
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+
+
+        int supply  = RandomUtils.nextInt(100000000,1000000000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    RandomUtils.nextInt(0,8));
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            System.out.println(currency.getTransaction());
+
+              for (long i = -999; i < 999 ; i++) {
+              CreateTransactionResponse transactionResponse = currencyMint(i,currency.getTransaction(),wallet,1,1);
+              if (transactionResponse.getTransaction() != null){
+                  System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                  System.out.println(i);
+                  System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                  break;
+              }else {
+                  System.out.println(i);
+              }
+            }
+
+          //  -9223372036854775808-9223372036854775807
+          //  verifyCreatingTransaction(currencyMint(new Date().getTime(),currency.getTransaction(),wallet,1,1));
+        }
+    }
+
+
 
 }

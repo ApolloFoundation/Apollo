@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.AccountMessageDTO;
 import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.Currency;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
@@ -39,6 +40,8 @@ import com.apollocurrency.aplwallet.api.response.AssetsResponse;
 import com.apollocurrency.aplwallet.api.response.BlockListInfoResponse;
 import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
+import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -796,6 +799,26 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CurrenciesResponse getAllCurrencies() {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public Currency getCurrency(String CurrencyId) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId) {
         throw new NotImplementedException("Not implemented");
     }
 }
