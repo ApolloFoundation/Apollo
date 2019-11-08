@@ -242,15 +242,12 @@ public final class Shuffling {
                 ,from, to, " ORDER BY blocks_remaining, height DESC ");*/
     }
 
-    private static PreparedStatement psActiveShuffling = null;
     public static List<Shuffling> getActiveShufflings() {
         Connection con = null;
         try {
             con = lookupDataSource().getConnection();
-            if( psActiveShuffling == null ) {
-                psActiveShuffling = con.prepareStatement("SELECT * FROM shuffling WHERE blocks_remaining IS NOT NULL AND latest = TRUE ORDER BY blocks_remaining, height DESC");
-            }
-            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, true));
+            PreparedStatement psActiveShuffling = con.prepareStatement("SELECT * FROM shuffling WHERE blocks_remaining IS NOT NULL AND latest = TRUE ORDER BY blocks_remaining, height DESC");
+            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, false));
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
@@ -343,7 +340,7 @@ public final class Shuffling {
                     return;
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
-                List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
+                List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
                 LOG.trace("Got {} active shufflings", activeShufflings.size());
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
