@@ -247,7 +247,7 @@ public final class Shuffling {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement psActiveShuffling = con.prepareStatement("SELECT * FROM shuffling WHERE blocks_remaining IS NOT NULL AND latest = TRUE ORDER BY blocks_remaining, height DESC");
-            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, false));
+            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, true));
         } catch (SQLException e) {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
