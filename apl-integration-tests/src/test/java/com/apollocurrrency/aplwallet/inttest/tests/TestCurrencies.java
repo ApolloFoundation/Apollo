@@ -208,6 +208,7 @@ public class TestCurrencies extends TestBaseOld {
                     verifyTransactionInBlock(reserveTransaction.getTransaction());
                     CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
                     verifyCreatingTransaction(offer);
+                    break;
                     default:
                         break;
             }
@@ -216,7 +217,7 @@ public class TestCurrencies extends TestBaseOld {
         }
     }
 
-    @DisplayName("Publish Exchange OfferTest")
+    @DisplayName("Publish Exchange Offer Test")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51 })
     public void publishExchangeOfferTest(int type){
