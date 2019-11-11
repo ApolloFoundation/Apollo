@@ -234,12 +234,6 @@ public final class Shuffling {
 
     public static DbIterator<Shuffling> getActiveShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
-        /*return shufflingTable.getManyBy(
-                //new DbClause.IntClause("blocks_remaining", DbClause.Op.GTE, 0)
-                //        .and(new DbClause.IntClause("blocks_remaining", DbClause.Op.LTE, Integer.MAX_VALUE))
-                new DbClause.NotNullClause("blocks_remaining")
-                        .and(new DbClause.IntClause("height", DbClause.Op.GT, 0))
-                ,from, to, " ORDER BY blocks_remaining, height DESC ");*/
     }
 
     public static List<Shuffling> getActiveShufflings() {
