@@ -314,13 +314,14 @@ public final class AplCore {
 
                 //TODO move to taskDispatchManager Andrii K
                 Runnable task = () -> {
+                    long start = System.currentTimeMillis();
                     log.info("DexOrderProcessor: start");
                     try {
                         dexOrderProcessor.processContracts();
                     } catch (Throwable e) {
                         log.warn("DexOrderProcessor error", e);
                     }
-                    log.info("DexOrderProcessor: finish");
+                    log.info("DexOrderProcessor: finish in {} ms",  System.currentTimeMillis() - start);
                 };
                 executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
 
