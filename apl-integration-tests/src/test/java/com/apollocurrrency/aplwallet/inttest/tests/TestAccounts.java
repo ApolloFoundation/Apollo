@@ -117,7 +117,6 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify Search Accounts  endpoint")
     public void testSearchAccounts() throws IOException {
-        //Before set Account info Test1
         SearchAccountsResponse searchAccountsResponse = searchAccounts(TestConfiguration.getTestConfiguration().getGenesisWallet().getAccountId());
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");

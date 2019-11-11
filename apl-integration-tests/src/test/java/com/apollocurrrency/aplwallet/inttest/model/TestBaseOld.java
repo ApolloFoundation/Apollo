@@ -889,7 +889,7 @@ public class TestBaseOld extends TestBase {
             case 21:
                 addParameters(Parameters.algorithm,  2);
                 addParameters(Parameters.minDifficulty, 1);
-                addParameters(Parameters.maxDifficulty, 3);
+                addParameters(Parameters.maxDifficulty, 2);
                 addParameters(Parameters.maxSupply, maxSupply+50);
                 addParameters(Parameters.reserveSupply, maxSupply+10);
                 addParameters(Parameters.issuanceHeight, 900000000);
@@ -906,7 +906,7 @@ public class TestBaseOld extends TestBase {
                     addParameters(Parameters.issuanceHeight, 0);
                     addParameters(Parameters.reserveSupply, 0);
                     addParameters(Parameters.minDifficulty, 1);
-                    addParameters(Parameters.maxDifficulty, 255);
+                    addParameters(Parameters.maxDifficulty, 2);
                     break;
             case 47:
             case 46:

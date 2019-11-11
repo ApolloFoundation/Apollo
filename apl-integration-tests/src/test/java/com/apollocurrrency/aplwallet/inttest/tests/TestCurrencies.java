@@ -126,7 +126,7 @@ public class TestCurrencies extends TestBaseOld {
     @DisplayName("Mint Currencys")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = {17})
-    @Tag("NEGATIVE")
+    @Disabled
     public void currencyMint(int type){
 
         ArrayList<Wallet> wallets = new ArrayList<>();
@@ -145,22 +145,8 @@ public class TestCurrencies extends TestBaseOld {
                     RandomUtils.nextInt(0,8));
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
-            System.out.println(currency.getTransaction());
+            //TODO: Need implement Mint Worker
 
-              for (long i = -999; i < 999 ; i++) {
-              CreateTransactionResponse transactionResponse = currencyMint(i,currency.getTransaction(),wallet,1,1);
-              if (transactionResponse.getTransaction() != null){
-                  System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                  System.out.println(i);
-                  System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                  break;
-              }else {
-                  System.out.println(i);
-              }
-            }
-
-          //  -9223372036854775808-9223372036854775807
-          //  verifyCreatingTransaction(currencyMint(new Date().getTime(),currency.getTransaction(),wallet,1,1));
         }
     }
 
