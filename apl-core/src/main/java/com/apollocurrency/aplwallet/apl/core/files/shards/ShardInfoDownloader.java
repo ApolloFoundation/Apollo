@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 
@@ -36,6 +37,10 @@ public class ShardInfoDownloader {
 
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
     private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
+    /**
+     * Older shards should have bigger weight
+     */
+    public final static double SHARD_WEIGHT_DECRASING_COEFFICIENT = 0.25;
     private final Set<String> additionalPeers;
     // shardId:shardInfo map
     @Getter
@@ -242,7 +247,12 @@ public class ShardInfoDownloader {
     
     public Map<Long,Double> getShardWeights(){
         Map<Long,Double> res = new HashMap<>();
-        //It is for A.B to catch phasing bug
+        for(Long shardId: sortedShards.keySet()){
+            //1.0 for last shard and then less
+            Double k = 1.0*shardId/sortedShards.keySet().size()+1;
+            Double weight = getShardWeight(shardId)/(SHARD_WEIGHT_DECRASING_COEFFICIENT*k);
+            res.put(shardId,weight);
+        }
         res.put(6L,1.0);
         return res;
     }
