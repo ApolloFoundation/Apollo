@@ -1,6 +1,14 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    expirationHeight,
+    initialSellSupply,
+    initialBuySupply,
+    totalSellLimit,
+    totalBuyLimit,
+    sellRateATM,
+    buyRateATM,
+    amountPerUnitATM,
     counter,
     units,
     currency,

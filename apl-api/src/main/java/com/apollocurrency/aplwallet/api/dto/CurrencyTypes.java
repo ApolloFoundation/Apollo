@@ -4,6 +4,7 @@ public enum  CurrencyTypes {
     EXCHANGEABLE,
     CONTROLLABLE,
     MINTABLE,
-    NON_SHUFFLEABLE
-
+    NON_SHUFFLEABLE,
+    RESERVABLE,
+    CLAIMABLE
 }

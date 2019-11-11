@@ -99,6 +99,22 @@ public class TestBaseOld extends TestBase {
         assertTrue(inBlock,String.format("Transaction %s in block: ",transaction));
         return inBlock;
     }
+
+    @Step
+    public boolean waitForHeight(int height)
+    {
+        boolean isHeight = false;
+        try {
+            isHeight = Failsafe.with(retryPolicy).get(() -> getBlock().getHeight() >= height);
+            Assertions.assertTrue(isHeight);
+        }
+        catch (Exception e)
+        {
+            Assertions.assertTrue(isHeight,String.format("Height not %s reached: ",height));
+        }
+        assertTrue(isHeight,String.format("Height not %s reached: ",height));
+        return isHeight;
+    }
     @Step
     public TransactionDTO getTransaction(String transaction) {
         addParameters(RequestType.requestType, RequestType.getTransaction);
@@ -870,7 +886,9 @@ public class TestBaseOld extends TestBase {
 
     @Step("Get Dex History with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
-        int finishHeight = getBlock().getHeight()+ RandomUtils.nextInt(1000,5000);
+        int currentHeight = getBlock().getHeight();
+        int finishHeight = currentHeight + 200;
+        int issuanceHeight = currentHeight + 4;
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
         addParameters(Parameters.code ,code );
@@ -892,12 +910,12 @@ public class TestBaseOld extends TestBase {
                 addParameters(Parameters.maxDifficulty, 2);
                 addParameters(Parameters.maxSupply, maxSupply+50);
                 addParameters(Parameters.reserveSupply, maxSupply+10);
-                addParameters(Parameters.issuanceHeight, 900000000);
+                addParameters(Parameters.issuanceHeight, finishHeight);
+                addParameters(Parameters.phasingQuorum,1);
                 addParameters(Parameters.phased,true);
                 addParameters(Parameters.phasingFinishHeight,finishHeight);
                 addParameters(Parameters.phasingVotingModel,0);
                 addParameters(Parameters.minReservePerUnitATM,1);
-                addParameters(Parameters.phasingQuorum,1);
                 break;
             case 51:
             case 19:
@@ -916,21 +934,22 @@ public class TestBaseOld extends TestBase {
             case 14:
             case 13:
             case 12:addParameters(Parameters.initialSupply, 0);
+                    addParameters(Parameters.maxSupply, maxSupply+50);
+                    addParameters(Parameters.reserveSupply, maxSupply+50);
+                    addParameters(Parameters.issuanceHeight, issuanceHeight);
+                    addParameters(Parameters.minReservePerUnitATM,1);
+                    break;
             case 39:
-            case 38:
             case 37:
-            case 31:
-            case 30:
-            case 29:
             case 7:
             case 5:
                     addParameters(Parameters.maxSupply, maxSupply+50);
                     addParameters(Parameters.reserveSupply, maxSupply+50);
-                    addParameters(Parameters.issuanceHeight, 900000000);
+                    addParameters(Parameters.issuanceHeight, finishHeight);
+                    addParameters(Parameters.minReservePerUnitATM,1);
                     addParameters(Parameters.phased,true);
                     addParameters(Parameters.phasingFinishHeight,finishHeight);
                     addParameters(Parameters.phasingVotingModel,0);
-                    addParameters(Parameters.minReservePerUnitATM,1);
                     addParameters(Parameters.phasingQuorum,1);
                 break;
             default: addParameters(Parameters.issuanceHeight, 0);
@@ -990,11 +1009,53 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.units, units);
         addParameters(Parameters.counter, counter);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units) {
+        addParameters(RequestType.requestType, currencyReserveClaim);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.units, units);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
+    @Step
+    public CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM) {
+        addParameters(RequestType.requestType, currencyReserveIncrease);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.amountPerUnitATM, amountPerUnitATM);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply) {
+        addParameters(RequestType.requestType, publishExchangeOffer);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.buyRateATM, buyRateATM);
+        addParameters(Parameters.sellRateATM, sellRateATM);
+        addParameters(Parameters.totalBuyLimit, 1000);
+        addParameters(Parameters.totalSellLimit, 1000);
+        addParameters(Parameters.initialBuySupply, initialBuySupply);
+        addParameters(Parameters.initialSellSupply, initialSellSupply);
+        addParameters(Parameters.expirationHeight, 999999999);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+
+    }
+
+
+
 
     @AfterEach
     void testEnd() {

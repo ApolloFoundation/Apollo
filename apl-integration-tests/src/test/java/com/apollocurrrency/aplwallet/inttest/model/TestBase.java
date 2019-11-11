@@ -57,8 +57,8 @@ public abstract class TestBase implements ITest {
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
                      .retryWhen(false)
-                     .withMaxRetries(20)
-                     .withDelay(5, TimeUnit.SECONDS);
+                     .withMaxRetries(30)
+                     .withDelay(2, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();

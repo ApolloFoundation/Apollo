@@ -156,4 +156,9 @@ public interface ITest {
     Currency getCurrency(String CurrencyId);
     CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId);
     CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId);
+    CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units);
+    CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units);
+    CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM);
+
+
 }

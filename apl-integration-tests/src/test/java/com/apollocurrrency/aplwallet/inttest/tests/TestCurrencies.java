@@ -150,6 +150,93 @@ public class TestCurrencies extends TestBaseOld {
         }
     }
 
+    @DisplayName("Reserve Claim Currencys")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
+    public void currencyReserveClaimTest(int type){
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        int supply  = RandomUtils.nextInt(10,1000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    0);
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+10);
+            verifyTransactionInBlock(reserveTransaction.getTransaction());
+            waitForHeight(getBlock().getHeight()+4);
+            CreateTransactionResponse  reserveClaimTransaction =  currencyReserveClaim(currency.getTransaction(),wallet,1);
+            verifyCreatingTransaction(reserveClaimTransaction);
+            verifyTransactionInBlock(reserveClaimTransaction.getTransaction());
+            CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
+            verifyCreatingTransaction(offer);
+        }
+    }
 
+
+    @DisplayName("Currency Reserve Increase")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
+    public void currencyReserveIncreaseTest(int type){
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        int supply  = RandomUtils.nextInt(1,1000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    0);
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,1);
+            verifyCreatingTransaction(reserveTransaction);
+            switch (type){
+                case 13:
+                case 15:
+                case 45:
+                case 47:
+                    verifyTransactionInBlock(reserveTransaction.getTransaction());
+                    CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
+                    verifyCreatingTransaction(offer);
+                    default:
+                        break;
+            }
+
+
+        }
+    }
+
+    @DisplayName("Publish Exchange OfferTest")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 1,3,17,19,33,35,51 })
+    public void publishExchangeOfferTest(int type){
+        ArrayList<Wallet> wallets = new ArrayList<>();
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        int supply  = RandomUtils.nextInt(1,1000);
+        for (Wallet wallet: wallets) {
+            CreateTransactionResponse currency = issueCurrency(wallet,type,
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5),
+                    RandomStringUtils.randomAlphabetic(5).toUpperCase(),
+                    supply,
+                    supply,
+                    0);
+            verifyCreatingTransaction(currency);
+            verifyTransactionInBlock(currency.getTransaction());
+            CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
+            verifyTransactionInBlock(offer.getTransaction());
+        }
+    }
 
 }

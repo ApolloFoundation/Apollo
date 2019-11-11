@@ -821,4 +821,19 @@ public class TestBaseNew extends TestBase {
     public CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId) {
         throw new NotImplementedException("Not implemented");
     }
+
+    @Override
+    public CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM) {
+        throw new NotImplementedException("Not implemented");
+    }
 }

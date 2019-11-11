@@ -4,6 +4,7 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Attachment;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -102,6 +103,7 @@ public class HttpHelper {
             }
         }
         reqestParam.clear();
+        attachLog("ReqestUrl",reqestUrl.toString());
         return reqestUrl.toString();
     }
 
@@ -149,6 +151,7 @@ public class HttpHelper {
         //System.out.println(responseBody);
         if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
             Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
+            attachLog("ResponseBody",responseBody);
         }
         return (T) mapper.readValue(responseBody, clazz);
         }
@@ -156,5 +159,10 @@ public class HttpHelper {
         {
                 throw new UnknownFormatConversionException(responseBody+" : \n"+ e.getMessage());
         }
+    }
+
+    @Attachment(value = "{name}", type = "text/plain")
+    public static String attachLog(final String name, final String data) {
+        return data;
     }
 }
