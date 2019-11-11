@@ -291,7 +291,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 tasks.forEach(task -> {
                     onStartExecutor.submit(() -> {
                         try {
-                            log.debug("Task = {}, Current thread={}", task.getDelay(), Thread.currentThread().getName());
+                            log.debug("Task = {}, Current thread={}", task.getName(), Thread.currentThread().getName());
                             task.getTask().run();
                         } catch (Throwable t) {
                             errors.append(" Task=" + task.getName() + ", " + t.getMessage()).append('\n');
