@@ -43,7 +43,7 @@ public class ShardsDownloadService {
     private final ShardInfoDownloader shardInfoDownloader;
     private final UUID myChainId;
 
-    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private final Event<ShardPresentData> presentDataEvent;
     private final FileDownloadService fileDownloadService;
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
@@ -52,7 +52,7 @@ public class ShardsDownloadService {
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
             BlockchainConfig blockchainConfig,
-            javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
+            Event<ShardPresentData> presentDataEvent,
             PropertiesHolder propertiesHolder,
             FileDownloadService fileDownloadService
     ) {
@@ -201,7 +201,7 @@ public class ShardsDownloadService {
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
-            Map<Long,Double> shardWeights = shardInfoDownloader.getShardWeights();
+            Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
             for (Long shardId : shardWeights.keySet()) {
                 double w = shardWeights.get(shardId);
                 //TODO: sort and decide
