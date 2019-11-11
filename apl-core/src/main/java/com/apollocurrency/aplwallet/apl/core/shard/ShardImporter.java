@@ -98,10 +98,6 @@ public class ShardImporter {
         return true;
     }
 
-    protected void importGenesis(boolean onlyKeys) {
-        genesisImporter.importGenesisJson(onlyKeys);
-    }
-
     public void importShard(ShardPresentData shardPresentData, List<String> excludedTables) {
         Objects.requireNonNull(shardPresentData, "shardPresentData is NULL");
         Objects.requireNonNull(excludedTables, "excludedTables is NULL");
@@ -109,27 +105,12 @@ public class ShardImporter {
         String genesisTaskId = aplAppStatus.durableTaskStart("Shard data import", "Loading Genesis public accounts", true);
         log.debug("genesisTaskId = {}", genesisTaskId);
         log.debug("Received shardPresentData = '{}', lets map all data to Location(s)...", shardPresentData);
-        Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(shardPresentData.getShardFileId()).toAbsolutePath();
-        log.debug("Try unpack main shard file name '{}'", zipInFolder);
-        boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
-        log.debug("Main shard Zip is unpacked = {}", unpackResult);
-        if (!unpackResult) {
-            logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+
+        // try to unzip data and throw ShardArchiveProcessingException in any kind of error or zip inconsistency
+        Path zipInFolder = unzipMainOptionalArchives(shardPresentData, genesisTaskId);
+        if (zipInFolder == null) {
+            // ShardArchiveProcessingException was thrown before due to incorrect Zip processing
             return;
-        }
-        // unzip additional files
-        if (shardPresentData.getAdditionalFileIDs() != null && shardPresentData.getAdditionalFileIDs().size() > 0) {
-            log.debug("Try unpack Optional files(s)=[{}]", shardPresentData.getAdditionalFileIDs().size());
-            for (String optionalFileId : shardPresentData.getAdditionalFileIDs()) {
-                log.debug("Try unpack Optional file by fileId '{}'", optionalFileId);
-                zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(optionalFileId).toAbsolutePath();
-                unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
-                log.debug("Zip for '{}' is unpacked = {}", optionalFileId, unpackResult);
-                if (!unpackResult) {
-                    logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
-                    return;
-                }
-            }
         }
 
         genesisImporter.importGenesisJson(true); // import genesis public Keys ONLY (NO balances) - 049,842%
@@ -199,6 +180,32 @@ public class ShardImporter {
             }
         }
         aplAppStatus.durableTaskFinished(genesisTaskId, false, "Shard data import");
+    }
+
+    private Path unzipMainOptionalArchives(ShardPresentData shardPresentData, String genesisTaskId) {
+        Path zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(shardPresentData.getShardFileId()).toAbsolutePath();
+        log.debug("Try unpack main shard file name '{}'", zipInFolder);
+        boolean unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
+        log.debug("Main shard Zip is unpacked = {}", unpackResult);
+        if (!unpackResult) {
+            logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+            return null;
+        }
+        // unzip additional files
+        if (shardPresentData.getAdditionalFileIDs() != null && shardPresentData.getAdditionalFileIDs().size() > 0) {
+            log.debug("Try unpack Optional files(s)=[{}]", shardPresentData.getAdditionalFileIDs().size());
+            for (String optionalFileId : shardPresentData.getAdditionalFileIDs()) {
+                log.debug("Try unpack Optional file by fileId '{}'", optionalFileId);
+                zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(optionalFileId).toAbsolutePath();
+                unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
+                log.debug("Zip for '{}' is unpacked = {}", optionalFileId, unpackResult);
+                if (!unpackResult) {
+                    logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+                    return null;
+                }
+            }
+        }
+        return zipInFolder;
     }
 
     private void logErrorAndThrowException(ShardPresentData shardPresentData, String genesisTaskId, Path zipInFolder, boolean unpackResult) {
