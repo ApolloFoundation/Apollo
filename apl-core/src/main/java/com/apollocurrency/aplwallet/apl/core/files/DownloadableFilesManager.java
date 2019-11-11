@@ -191,7 +191,7 @@ public class DownloadableFilesManager {
             {
                 long shardId = 0;
                 try {
-                    shardId = Long.valueOf(parsed.fileId);
+                    shardId = Long.parseLong(parsed.fileId);
                     UUID chainId = getChainId(parsed);
                     String fileName = shardNameHelper.getCoreShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
@@ -205,7 +205,7 @@ public class DownloadableFilesManager {
             {
                 long shardId = 0;
                 try {
-                    shardId = Long.valueOf(parsed.fileId);
+                    shardId = Long.parseLong(parsed.fileId);
                     UUID chainId = getChainId(parsed);
                     String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId,chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
