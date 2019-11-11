@@ -331,7 +331,7 @@ public final class Shuffling {
     @Singleton
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            LOG.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            LOG.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
             long startTime = System.currentTimeMillis();
                 LOG.trace("Shuffling observer call at {}", block.getHeight());
                 if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
@@ -356,7 +356,7 @@ public final class Shuffling {
                         cancelled++;
                         shuffling.cancel(block);
                     } else {
-                        LOG.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
+                        LOG.trace("Insert shuffling {} - height - {} remaining - {}",
                                 shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining());
                         inserted++;
                         shufflingTable.insert(shuffling);

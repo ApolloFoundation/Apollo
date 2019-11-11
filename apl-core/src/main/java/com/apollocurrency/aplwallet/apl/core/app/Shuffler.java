@@ -293,13 +293,13 @@ public final class Shuffler {
     @Slf4j
     public static class ShufflerObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            log.trace(":accept:ShufflerObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            log.trace(":accept:ShufflerObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
             Set<String> expired = expirations.get(block.getHeight());
             if (expired != null) {
                 expired.forEach(shufflingsMap::remove);
                 expirations.remove(block.getHeight());
             }
-            log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         }
         public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
 
