@@ -288,9 +288,11 @@ public class Apollo {
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
-//                .devMode() // enable for dev only
+                // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
+                // run with ./bin/apl-run-jmx.sh
+                //.devMode() 
                 .build();
-
+        log.debug("Weld CDI container build done");
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
