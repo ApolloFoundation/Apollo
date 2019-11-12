@@ -887,8 +887,8 @@ public class TestBaseOld extends TestBase {
     @Step("Get Dex History with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int finishHeight = currentHeight + 200;
         int issuanceHeight = currentHeight + 4;
+
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
         addParameters(Parameters.code ,code );
@@ -899,63 +899,41 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, 10000000000L);
         addParameters(Parameters.deadline, "1440");
         addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.issuanceHeight, 0);
+        addParameters(Parameters.maxSupply, maxSupply);
+        addParameters(Parameters.reserveSupply, 0);
+/*      EXCHANGEABLE - 1
+        CONTROLLABLE - 2
+        RESERVABLE - 4
+        CLAIMABLE - 8
+        MINTABLE - 16
+        NON_SHUFFLEABLE - 32
+*/
 
-        switch (type){
-            case 55:
-            case 53:
-            case 23:
-            case 21:
-                addParameters(Parameters.algorithm,  2);
-                addParameters(Parameters.minDifficulty, 1);
-                addParameters(Parameters.maxDifficulty, 2);
-                addParameters(Parameters.maxSupply, maxSupply+50);
-                addParameters(Parameters.reserveSupply, maxSupply+10);
-                addParameters(Parameters.issuanceHeight, finishHeight);
-                addParameters(Parameters.phasingQuorum,1);
-                addParameters(Parameters.phased,true);
-                addParameters(Parameters.phasingFinishHeight,finishHeight);
-                addParameters(Parameters.phasingVotingModel,0);
-                addParameters(Parameters.minReservePerUnitATM,1);
-                break;
-            case 51:
-            case 19:
-            case 17:addParameters(Parameters.algorithm, 2);
-                    addParameters(Parameters.maxSupply, maxSupply);
-                    addParameters(Parameters.issuanceHeight, 0);
-                    addParameters(Parameters.reserveSupply, 0);
-                    addParameters(Parameters.minDifficulty, 1);
-                    addParameters(Parameters.maxDifficulty, 2);
-                    break;
-            case 47:
-            case 46:
-            case 45:
-            case 44:
-            case 15:
-            case 14:
-            case 13:
-            case 12:addParameters(Parameters.initialSupply, 0);
-                    addParameters(Parameters.maxSupply, maxSupply+50);
-                    addParameters(Parameters.reserveSupply, maxSupply+50);
-                    addParameters(Parameters.issuanceHeight, issuanceHeight);
-                    addParameters(Parameters.minReservePerUnitATM,1);
-                    break;
-            case 39:
-            case 37:
-            case 7:
-            case 5:
-                    addParameters(Parameters.maxSupply, maxSupply+50);
-                    addParameters(Parameters.reserveSupply, maxSupply+50);
-                    addParameters(Parameters.issuanceHeight, finishHeight);
-                    addParameters(Parameters.minReservePerUnitATM,1);
-                    addParameters(Parameters.phased,true);
-                    addParameters(Parameters.phasingFinishHeight,finishHeight);
-                    addParameters(Parameters.phasingVotingModel,0);
-                    addParameters(Parameters.phasingQuorum,1);
-                break;
-            default: addParameters(Parameters.issuanceHeight, 0);
-                     addParameters(Parameters.maxSupply, maxSupply);
-
+        if ((type&4) == 4){
+            addParameters(Parameters.maxSupply, maxSupply+50);
+            addParameters(Parameters.reserveSupply, maxSupply+50);
+            addParameters(Parameters.issuanceHeight, issuanceHeight);
+            addParameters(Parameters.minReservePerUnitATM,1);
         }
+        if ((type&8) == 8){
+            addParameters(Parameters.initialSupply, 0);
+        }
+        if ((type&16) == 16 && (type&4) == 4){
+            addParameters(Parameters.algorithm,  2);
+            addParameters(Parameters.minDifficulty, 1);
+            addParameters(Parameters.maxDifficulty, 2);
+            addParameters(Parameters.maxSupply, maxSupply+50);
+            addParameters(Parameters.reserveSupply, maxSupply+10);
+        }
+
+        if ((type&16) == 16 && (type&4) != 4){
+            addParameters(Parameters.algorithm,  2);
+            addParameters(Parameters.minDifficulty, 1);
+            addParameters(Parameters.maxDifficulty, 2);
+            addParameters(Parameters.reserveSupply, 0);
+        }
+        
         return getInstanse(CreateTransactionResponse.class);
     }
 

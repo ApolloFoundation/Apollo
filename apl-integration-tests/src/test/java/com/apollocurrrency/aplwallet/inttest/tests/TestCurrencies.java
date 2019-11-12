@@ -33,7 +33,7 @@ public class TestCurrencies extends TestBaseOld {
         CLAIMABLE - 8
         MINTABLE - 16
         NON_SHUFFLEABLE - 32
-        */
+      */
 
     @DisplayName("Issue Currencys")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
@@ -235,16 +235,5 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(offer.getTransaction());
         }
     }
-
-
-    @DisplayName("Issue Currencys")
-    @ParameterizedTest(name = "{displayName} Currency type: {0}")
-    @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
-    public void t1(int type){
-
-
-        System.out.println(type&1);
-    }
-
 
 }
