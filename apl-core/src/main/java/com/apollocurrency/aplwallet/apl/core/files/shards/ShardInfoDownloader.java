@@ -39,7 +39,7 @@ public class ShardInfoDownloader {
     private final Set<String> additionalPeers;
     // shardId:shardInfo map
     @Getter
-    private final Map<Long, Set<ShardInfo>> sortedShards;
+    private final Map<Long, Set<ShardInfo>> sortedByIdShards;
     //shardId:peerId map
     @Getter
     private final Map<Long, Set<String>> shardsPeers;
@@ -68,7 +68,7 @@ public class ShardInfoDownloader {
         Objects.requireNonNull(blockchainConfig, "chainId is NULL");
 
         this.additionalPeers = ConcurrentHashMap.newKeySet();
-        this.sortedShards = new ConcurrentHashMap();
+        this.sortedByIdShards = new ConcurrentHashMap();
         this.shardsPeers = new ConcurrentHashMap();
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = peers;
@@ -79,8 +79,8 @@ public class ShardInfoDownloader {
         for(String pa: shardInfoByPeers.keySet()){
             processPeerShardingInfo(pa, shardInfoByPeers.get(pa));
         }
-        log.debug("ShardingInfo requesting result {}", sortedShards);
-        sortedShards.keySet().forEach((idx) -> {
+        log.debug("ShardingInfo requesting result {}", sortedByIdShards);
+        sortedByIdShards.keySet().forEach((idx) -> {
             shardsDesisons.put(idx,checkShard(idx));
         });       
     }
@@ -89,7 +89,6 @@ public class ShardInfoDownloader {
         boolean haveShard = false;
         log.trace("shardInfo = {}", si);
         if (si != null) {
-            si.source = pa;
             for (ShardInfo s : si.shards) {
                 if (myChainId.equals(UUID.fromString(s.chainId))) {
                     haveShard = true;
@@ -100,10 +99,10 @@ public class ShardInfoDownloader {
                             shardsPeers.put(s.shardId, ps);
                         }
                         ps.add(pa);
-                        Set<ShardInfo> rs = sortedShards.get(s.shardId);
+                        Set<ShardInfo> rs = sortedByIdShards.get(s.shardId);
                         if (rs == null) {
                             rs = new HashSet<>();
-                            sortedShards.putIfAbsent(s.shardId, rs);
+                            sortedByIdShards.putIfAbsent(s.shardId, rs);
                         }
                         rs.add(s);
                     }
@@ -260,9 +259,9 @@ public class ShardInfoDownloader {
   */   
     public Map<Long,Double> getShardRelativeWeights(){
         Map<Long,Double> res = new HashMap<>();
-        for(Long shardId: sortedShards.keySet()){
+        for(Long shardId: sortedByIdShards.keySet()){
             //1.0 for last shard and then less
-            Double k = 1.0*shardId/sortedShards.keySet().size()+1;
+            Double k = 1.0*shardId/sortedByIdShards.keySet().size()+1;
             Double weight = getShardWeight(shardId)*k;
             res.put(shardId,weight);
         }

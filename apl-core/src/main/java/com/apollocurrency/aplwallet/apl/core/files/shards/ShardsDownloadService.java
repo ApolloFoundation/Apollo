@@ -68,7 +68,7 @@ public class ShardsDownloadService {
             return false;
         }
         shardInfoDownloader.processAllPeersShardingInfo();
-        shardInfoDownloader.getSortedShards().keySet().forEach((sId) -> 
+        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId) -> 
         {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
             Set<String> shardFiles = new HashSet<>();
@@ -197,7 +197,7 @@ public class ShardsDownloadService {
             result = FileDownloadDecision.NoPeers;
             return result;            
         }
-        if (shardInfoDownloader.getSortedShards().isEmpty()) {
+        if (shardInfoDownloader.getSortedByIdShards().isEmpty()) {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
