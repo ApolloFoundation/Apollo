@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.APL;
-import com.apollocurrency.aplwallet.api.dto.Eth;
+import com.apollocurrency.aplwallet.api.dto.EthWalletInfo;
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
@@ -19,7 +19,7 @@ public class Account2FAResponse extends ResponseBase {
     private String accountRS;
     private String account;
     private String secretBytes;
-    private List<Eth> eth;
+    private List<EthWalletInfo> eth;
     private APL apl;
     private String passphrase;
     private Status2FA status;
