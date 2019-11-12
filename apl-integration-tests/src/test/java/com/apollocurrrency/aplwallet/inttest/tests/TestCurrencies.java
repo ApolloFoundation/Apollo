@@ -27,7 +27,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
 public class TestCurrencies extends TestBaseOld {
-
+    /*   EXCHANGEABLE - 1
+        CONTROLLABLE - 2
+        RESERVABLE - 4
+        CLAIMABLE - 8
+        MINTABLE - 16
+        NON_SHUFFLEABLE - 32
+        */
 
     @DisplayName("Issue Currencys")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
@@ -173,9 +179,12 @@ public class TestCurrencies extends TestBaseOld {
             waitForHeight(getBlock().getHeight()+4);
             CreateTransactionResponse  reserveClaimTransaction =  currencyReserveClaim(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveClaimTransaction);
+            //EXCHANGEABLE - 1
+            if((type&1) == 1 ){
             verifyTransactionInBlock(reserveClaimTransaction.getTransaction());
             CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
             verifyCreatingTransaction(offer);
+            }
         }
     }
 
@@ -200,17 +209,6 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveTransaction);
-            switch (type){
-                case 13:
-                case 15:
-                case 45:
-                case 47:
-                    verifyTransactionInBlock(reserveTransaction.getTransaction());
-                    CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
-                    verifyCreatingTransaction(offer);
-                    break;
-            }
-
 
         }
     }
@@ -237,5 +235,16 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(offer.getTransaction());
         }
     }
+
+
+    @DisplayName("Issue Currencys")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
+    public void t1(int type){
+
+
+        System.out.println(type&1);
+    }
+
 
 }
