@@ -159,6 +159,10 @@ public interface ITest {
     CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units);
     CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units);
     CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM);
+    CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply);
+    CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate);
+    CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
+    CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
 
 
 }

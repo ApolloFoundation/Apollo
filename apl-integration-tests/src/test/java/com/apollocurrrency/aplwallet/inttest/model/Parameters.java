@@ -1,6 +1,9 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    prunableAttachmentJSON,
+    offerIssuer,
+    rateATM,
     expirationHeight,
     initialSellSupply,
     initialBuySupply,

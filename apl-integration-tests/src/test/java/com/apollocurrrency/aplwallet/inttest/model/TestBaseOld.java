@@ -1029,6 +1029,45 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate) {
+        addParameters(RequestType.requestType, currencySell);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.rateATM, rate);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate) {
+        addParameters(RequestType.requestType, currencyBuy);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.rateATM, rate);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer) {
+        addParameters(RequestType.requestType, scheduleCurrencyBuy);
+        addParameters(Parameters.currency, currency);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.units, units);
+        addParameters(Parameters.offerIssuer, offerIssuer);
+        addParameters(Parameters.rateATM, rate);
+        addParameters(Parameters.prunableAttachmentJSON, "{Invalid JSON Itegration Test}");
+        addParameters(Parameters.broadcast, false);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
 
     }
 

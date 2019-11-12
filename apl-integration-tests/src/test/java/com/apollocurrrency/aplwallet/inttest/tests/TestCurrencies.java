@@ -6,6 +6,7 @@ import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
@@ -182,14 +183,14 @@ public class TestCurrencies extends TestBaseOld {
             //EXCHANGEABLE - 1
             if((type&1) == 1 ){
             verifyTransactionInBlock(reserveClaimTransaction.getTransaction());
-            CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
-            verifyCreatingTransaction(offer);
+            exchange(currency,wallet);
+
             }
         }
     }
 
 
-    @DisplayName("Currency Reserve Increase")
+    @DisplayName("Currency Reserve Increase ")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
     public void currencyReserveIncreaseTest(int type){
@@ -209,11 +210,10 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveTransaction);
-
         }
     }
 
-    @DisplayName("Publish Exchange Offer Test")
+    @DisplayName("Exchange Offer")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51 })
     public void publishExchangeOfferTest(int type){
@@ -228,12 +228,26 @@ public class TestCurrencies extends TestBaseOld {
                     RandomStringUtils.randomAlphabetic(5).toUpperCase(),
                     supply,
                     supply,
-                    0);
+                    RandomUtils.nextInt(0,8));
             verifyCreatingTransaction(currency);
-            verifyTransactionInBlock(currency.getTransaction());
-            CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
-            verifyTransactionInBlock(offer.getTransaction());
+            exchange(currency,wallet);
+
         }
+    }
+
+    @Step
+    //TODO: Need implement amount verification after exchange
+    private void exchange(CreateTransactionResponse currency, Wallet wallet){
+        verifyTransactionInBlock(currency.getTransaction());
+        CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
+        verifyTransactionInBlock(offer.getTransaction());
+        Wallet gen_wallet = TestConfiguration.getTestConfiguration().getGenesisWallet();
+        CreateTransactionResponse sellTransaction =  currencySell(currency.getTransaction(),wallet,1,1);
+        verifyCreatingTransaction(sellTransaction);
+        CreateTransactionResponse buyTransaction =  currencyBuy(currency.getTransaction(),gen_wallet,1,1);
+        verifyCreatingTransaction(buyTransaction);
+        CreateTransactionResponse scheduledbuyTransaction = scheduleCurrencyBuy(currency.getTransaction(),gen_wallet,1,1,wallet.getUser());
+        verifyCreatingTransaction(scheduledbuyTransaction);
     }
 
 }

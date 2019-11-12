@@ -296,7 +296,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
         AssetsResponse getAllAssets = getAllAssets();
-        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), "Asset was deleted");
+        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), String.format("Asset: %s wasn't deleted",assetID));
 
     }
 
@@ -452,7 +452,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         Integer quantityATU = 50;
         String assetName = "TR"+String.valueOf(new Date().getTime()).substring(7);
 
-        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "transferAsset API test", quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "TransferAsset API test", quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -481,25 +481,25 @@ public class TestAssetExchangeAPI extends TestBaseOld {
 
 
     //SMOKE API TESTING using standard TEST CASES
-    @DisplayName("issueAsset + placeAskOrder")
+    @DisplayName("IssueAsset -> Place Ask Order")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceAskOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER9", "issueAssettestAPI", 100);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER9", "Integration Test Asset", 100);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         verifyCreatingTransaction(placeAskOrder(wallet,assetID, "99",10));
     }
 
-    @DisplayName("issueAsset + placeAskOrder + cancelAskOrder")
+    @DisplayName("Issue Asset -> Place Ask Order -> Cancel Ask Order")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceCancelAskOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIASK0", "Creating Asset -> placeAskOrder -> cancelAskOrder", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIASK0", "Integration Test Asset", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -511,25 +511,25 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
 
-    @DisplayName("issueAsset + placeBidOrder")
+    @DisplayName("Issue Asset -> Place Bid Order")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceBidOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID", "issueAsset -> placeBidOrder", 60);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID", "Integration Test Asset", 60);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
         verifyCreatingTransaction(placeBidOrder(wallet,assetID, "99",10));
     }
 
-    @DisplayName("issueAsset + placeBidOrder + cancelBidOrder")
+    @DisplayName("Issue Asset -> Place Bid Order -> Cancel Bid Order")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceCancelBidOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID0", "Creating Asset -> placeBidOrder -> cancelBidOrder", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID0", "Integration Test Asset", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -549,7 +549,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
          String assetName = "AS"+String.valueOf(new Date().getTime()).substring(7);
        // String assetName = "assetName0";
         Integer quantityATU = 50;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, "Creating Asset -> getAccountAssetCount + getAccountAssets -> Delete created asset", quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, "Integration Test", quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -571,54 +571,4 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         log.trace("Number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount1.getNumberOfAssets());
 
     }
-
-    // NEED to be reviewed and refactored
-    /*@DisplayName("placeBidOrder")
-    @Test
-    public void placeBidOrder() throws IOException {
-        CreateTransactionResponse placeBidOrder = placeBidOrder("16277556351674600694", "99", 100);
-        verifyCreatingTransaction(placeBidOrder);
-    }
-
-    @DisplayName("placeAskOrder")
-    @Test
-    public void placeAskOrder() throws IOException {
-        CreateTransactionResponse placeAskOrder = placeAskOrder("16277556351674600694", "99",100);
-        verifyCreatingTransaction(placeAskOrder);
-    }
-
-
-    @DisplayName("cancelBidOrder")
-    @Test
-    public void cancelBidOrder() throws IOException {
-        CreateTransactionResponse cancelBidOrder = cancelBidOrder("10274755394091494068");
-        verifyCreatingTransaction(cancelBidOrder);
-    }
-
-    @DisplayName("cancelAskOrder")
-    @Test
-    public void cancelAskOrder() throws IOException {
-        CreateTransactionResponse cancelAskOrder = cancelAskOrder("10274755394091494068");
-        verifyCreatingTransaction(cancelAskOrder);
-    }*/
-
-    /*@DisplayName("deleteAssetShares")
-    @Test
-    public void deleteAssetShares() throws IOException {
-        CreateTransactionResponse deleteAssetShares = deleteAssetShares("13850145991084991260", "10");
-        verifyCreatingTransaction(deleteAssetShares);
-    }*/
-
-    /*@DisplayName("dividendPayment")
-    @Test
-    public void dividendPayment() throws IOException {
-        CreateTransactionResponse dividendPayment = dividendPayment("9065918785929852826", 100, 61449);
-        verifyCreatingTransaction(dividendPayment);
-    }*/
-
-
-
-
-
-
 }

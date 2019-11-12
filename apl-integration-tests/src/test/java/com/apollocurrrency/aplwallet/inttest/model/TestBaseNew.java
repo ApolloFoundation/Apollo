@@ -836,4 +836,24 @@ public class TestBaseNew extends TestBase {
     public CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM) {
         throw new NotImplementedException("Not implemented");
     }
+
+    @Override
+    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
+        throw new NotImplementedException("Not implemented");
+    }
 }

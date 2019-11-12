@@ -1,6 +1,9 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    scheduleCurrencyBuy,
+    currencyBuy,
+    currencySell,
     publishExchangeOffer,
     currencyReserveIncrease,
     currencyReserveClaim,
