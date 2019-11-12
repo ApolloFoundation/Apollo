@@ -209,8 +209,6 @@ public class TestCurrencies extends TestBaseOld {
                     CreateTransactionResponse  offer = publishExchangeOffer(currency.getTransaction(),wallet,1,1,1,1);
                     verifyCreatingTransaction(offer);
                     break;
-                    default:
-                        break;
             }
 
 
