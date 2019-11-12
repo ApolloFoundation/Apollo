@@ -59,9 +59,6 @@ public class ShardInfoDownloader {
     Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
     //shardId:PeerFileHashSum
     Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
-    
-    private final ExecutorService executor;
-    private final Map<String,Future<FileDownloadInfo>> runningDownloaders = new HashMap<>();
 
     private final PeersService peers;
     private final UUID myChainId;
@@ -80,7 +77,6 @@ public class ShardInfoDownloader {
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
-        this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
     }
 
     public void processAllPeersShardingInfo(){
