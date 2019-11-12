@@ -4,43 +4,41 @@
 
  package com.apollocurrency.aplwallet.apl.core.app;
 
- import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
- import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
- import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
- import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
- import com.apollocurrency.aplwallet.apl.crypto.Convert;
- import com.apollocurrency.aplwallet.apl.crypto.Crypto;
- import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
- import com.apollocurrency.aplwallet.apl.util.JSON;
- import com.apollocurrency.aplwallet.apl.util.NtpTime;
- import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
- import com.fasterxml.jackson.databind.ObjectMapper;
- import com.fasterxml.jackson.databind.ObjectWriter;
- import io.firstbridge.cryptolib.CryptoNotValidException;
- import io.firstbridge.cryptolib.container.FbWallet;
- import org.apache.commons.collections4.CollectionUtils;
- import org.slf4j.Logger;
+import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
+import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
+import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import io.firstbridge.cryptolib.CryptoNotValidException;
+import io.firstbridge.cryptolib.container.FbWallet;
+import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
 
- import javax.enterprise.inject.spi.CDI;
- import javax.inject.Inject;
- import javax.inject.Named;
- import javax.inject.Singleton;
- import java.io.File;
- import java.io.IOException;
- import java.nio.file.Files;
- import java.nio.file.Path;
- import java.time.Instant;
- import java.time.OffsetDateTime;
- import java.time.ZoneOffset;
- import java.time.format.DateTimeFormatter;
- import java.util.ArrayList;
- import java.util.Comparator;
- import java.util.List;
- import java.util.Objects;
- import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
- import static org.slf4j.LoggerFactory.getLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
  public class VaultKeyStoreServiceImpl implements KeyStoreService {
      private static final Logger LOG = getLogger(VaultKeyStoreServiceImpl.class);
@@ -238,7 +236,6 @@
     @Override
     public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
         Objects.requireNonNull(passphrase);
-        Objects.requireNonNull(accountId);
 
         Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 

@@ -426,10 +426,10 @@ public class DexController {
 
         DexCurrencies currencies = null;
         String passphrase;
-        Account sender;
+        long sender;
         try{
             passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-            sender = ParameterParser.getSenderAccount(req);
+            sender = ParameterParser.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrencies.getType(cryptocurrency);
@@ -471,7 +471,7 @@ public class DexController {
 
         String transaction;
         try {
-            transaction = service.withdraw(sender.getId(), passphrase, fromAddress, toAddress, amount, currencies, transferFee);
+            transaction = service.withdraw(sender, passphrase, fromAddress, toAddress, amount, currencies, transferFee);
         } catch (AplException.ExecutiveProcessException e){
             return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
         }
