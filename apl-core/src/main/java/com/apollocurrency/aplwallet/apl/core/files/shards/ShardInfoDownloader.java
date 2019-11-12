@@ -26,7 +26,6 @@ import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  *
@@ -49,7 +48,6 @@ public class ShardInfoDownloader {
     private final Map<Long,FileDownloadDecision> shardsDesisons = new HashMap<>();
     //peerId:alShards map
     @Getter
-    @Setter
     private Map<String,ShardingInfo> shardInfoByPeers;
     @Getter
     //shardId:PeerFileHashSum
@@ -62,7 +60,6 @@ public class ShardInfoDownloader {
     private final UUID myChainId;
        
     @Inject
-
     public ShardInfoDownloader(
             BlockchainConfig blockchainConfig,
             PeersService peers) {
@@ -77,10 +74,24 @@ public class ShardInfoDownloader {
         this.myChainId = blockchainConfig.getChain().getChainId();
     }
     
+    /**
+     * This is for unit tests only
+     * @param testData 
+     */
+    public void setShardInfoByPeers(Map<String,ShardingInfo> testData){
+        additionalPeers.clear();
+        sortedByIdShards.clear();
+        shardsPeers.clear();
+        shardInfoByPeers.clear();
+        shardsDesisons.clear();
+        shardInfoByPeers=testData;
+        
+    }
+    
     public void processAllPeersShardingInfo(){
-        for(String pa: shardInfoByPeers.keySet()){
+        shardInfoByPeers.keySet().forEach((pa) -> {
             processPeerShardingInfo(pa, shardInfoByPeers.get(pa));
-        }
+        });
         log.debug("ShardingInfo requesting result {}", sortedByIdShards);
         sortedByIdShards.keySet().forEach((idx) -> {
             shardsDesisons.put(idx,checkShard(idx));
