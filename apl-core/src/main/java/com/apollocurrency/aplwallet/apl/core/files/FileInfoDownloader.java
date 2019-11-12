@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.files;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import static com.apollocurrency.aplwallet.apl.core.files.FileDownloader.DOWNLOAD_THREADS;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
@@ -11,14 +12,19 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.Getter;
 
 /**
@@ -27,7 +33,7 @@ import lombok.Getter;
  */
 @Slf4j
 public class FileInfoDownloader {
-    private final PeersService peers;
+    private final PeersService peersService;
     @Getter
     private Set<PeerFileHashSum> goodPeers;
     @Getter
@@ -35,43 +41,111 @@ public class FileInfoDownloader {
     private final Map<String,FileDownloadInfo> peersDownloadInfo  = new HashMap<>();
     @Getter
     private FileDownloadInfo fileDownloadInfo; 
+    private final ExecutorService executor;
+    private final Map<String,Future<FileDownloadInfo>> runningDownloaders = new HashMap<>(); 
     
     @Inject
-    public FileInfoDownloader(PeersService peers) {
-        this.peers = peers;
+    public FileInfoDownloader(PeersService peersService) {
+        this.peersService = peersService;
+        this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
     }
-      
-    public FileDownloadDecision prepareForDownloading(String fileID, Set<String> onlyPeers) {
-        log.debug("prepareForDownloading()...");
-        FileDownloadDecision res;
-        Set<Peer> allPeers;
-        if(onlyPeers==null || onlyPeers.isEmpty()){
-           allPeers = peers.getAllConnectedPeers();
-        }else{
-           allPeers=new HashSet<>();
-           onlyPeers.stream().map((peerAddr) -> peers.findOrCreatePeer(null, peerAddr, true)).forEachOrdered((p) -> {
-               allPeers.add(p);
-            });
+    
+    public FileDownloadInfo getFileDownloadInfoFromPeer(String pa, String fileId){
+        FileDownloadInfo res = null;
+        PeerAddress peerAddr = new PeerAddress(pa);
+        Peer p = peersService.findOrCreatePeer(peerAddr, null, true);
+        if(p!=null){
+           PeerClient pc = new PeerClient(p);
+           res = pc.getFileInfo(fileId);
+           if(res!=null){
+               peersDownloadInfo.put(pa, res);
+           }
         }
-        log.debug("prepareForDownloading(), allPeers = {}", allPeers);
+        return res;
+    }
+    
+    public Map<String,FileDownloadInfo> getFileDownloadInfo(String fileID, Set<String> peers) throws ExecutionException{
+        for(String pa: peers){
+           Future<FileDownloadInfo> dn_res = executor.submit(new Callable<FileDownloadInfo>(){
+               @Override
+               public FileDownloadInfo call() throws Exception {
+                   return getFileDownloadInfoFromPeer(pa, fileID);
+               }
+               
+           });
+           runningDownloaders.put(pa,dn_res);
+        }
+        for( String df: runningDownloaders.keySet()){
+            FileDownloadInfo fdi;
+            try {
+                fdi = runningDownloaders.get(df).get(); //get future
+                if(fdi!=null){
+                  peersDownloadInfo.put(df,fdi); 
+                }                
+            } catch (InterruptedException ex) {
+                log.info("FileInfoDownloader was interrupted", ex);
+                Thread.currentThread().interrupt();
+            }   
+        }
+        return peersDownloadInfo;
+    }
+    
+    public FileDownloadDecision processFileDownloadInfo(){
+        FileDownloadDecision res;
         PeersList pl = new PeersList();
-        allPeers.forEach((p) -> {
-            PeerClient pc = new PeerClient(p);
-            FileDownloadInfo fdi = pc.getFileInfo(fileID);
-            if(fdi!=null){
+        for(String pa: peersDownloadInfo.keySet()){
+            FileDownloadInfo fdi = peersDownloadInfo.get(pa);
               byte[] hash = Convert.parseHexString(fdi.fileInfo.hash);
-              PeerFileHashSum pfhs = new PeerFileHashSum(hash, p.getHostWithPort(), fileID);
+              PeerFileHashSum pfhs = new PeerFileHashSum(hash, pa, fdi.fileInfo.fileId);
               pl.add(pfhs);
-              peersDownloadInfo.put(p.getHostWithPort(), fdi);
-            }
-        });
-        log.debug("prepareForDownloading(), pl = {}", pl);
+        }
+        log.debug("perr list = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res = pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
-        badPeers = pvdm.getInvalidPeers();
+        badPeers = pvdm.getInvalidPeers();        
+        return res;
+    }
+      /**
+     * Calculates network statistics and tells
+     * can we use it or can not
+     * @param d
+     * @return true is network is usable;
+     */
+    public boolean isNetworkUsable(FileDownloadDecision d){
+        boolean usable = false;
+        switch(d){
+            case AbsOK: usable = true;
+            break;
+            case OK: usable = true;
+            break;
+            case Risky: usable = true;
+            break;             
+        }
+        return usable;
+    } 
+    
+    public FileDownloadDecision prepareForDownloading(String fileID, Set<String> onlyPeers) {
+        log.debug("prepareForDownloading()...");
+        FileDownloadDecision res;
+        Set<String> allPeers = new HashSet<>();
+        if(onlyPeers==null || onlyPeers.isEmpty()){
+           for(Peer p: peersService.getAllConnectedPeers()){
+               allPeers.add(p.getHostWithPort());
+           }
+        }else{
+           allPeers=onlyPeers;
+        }
+        log.debug("prepareForDownloading(), allPeers = {}", allPeers);
+        try {
+            getFileDownloadInfo(fileID,allPeers);
+        } catch (ExecutionException ex) {
+            log.info("Can not execute file info download thread", ex);
+        }
+        res = processFileDownloadInfo();
+
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeers, badPeers);
-        if(pvdm.isNetworkUsable()){ // we have nough good peers and can start downloadinig
+        if(isNetworkUsable(res)){ // we have nough good peers and can start downloadinig
             PeerFileHashSum pfi = goodPeers.iterator().next();
             fileDownloadInfo = peersDownloadInfo.get(pfi.getPeerId());            
         }

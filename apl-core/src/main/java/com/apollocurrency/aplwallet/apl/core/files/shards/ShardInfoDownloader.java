@@ -3,9 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import static com.apollocurrency.aplwallet.apl.core.files.FileDownloader.DOWNLOAD_THREADS;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
@@ -25,6 +27,9 @@ import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.Getter;
 
 /**
@@ -54,7 +59,9 @@ public class ShardInfoDownloader {
     Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
     //shardId:PeerFileHashSum
     Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
-
+    
+    private final ExecutorService executor;
+    private final Map<String,Future<FileDownloadInfo>> runningDownloaders = new HashMap<>();
 
     private final PeersService peers;
     private final UUID myChainId;
@@ -73,6 +80,7 @@ public class ShardInfoDownloader {
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
+        this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
     }
 
     public void processAllPeersShardingInfo(){
