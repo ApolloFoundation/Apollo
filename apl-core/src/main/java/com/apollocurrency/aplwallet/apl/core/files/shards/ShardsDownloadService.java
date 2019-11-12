@@ -14,14 +14,12 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecisio
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import java.util.ArrayList;
-import java.util.Collections;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.UUID;
 import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Any;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,6 +46,7 @@ public class ShardsDownloadService {
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
+    private static final int MIN_SHARDING_PEERS=2;
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
@@ -64,16 +63,21 @@ public class ShardsDownloadService {
     }
 
     public boolean getShardingInfoFromPeers() {
-        Map<Long, Set<ShardInfo>> shards = shardInfoDownloader.getShardInfoFromPeers();
-        shards.keySet().forEach((sId) -> {
+        Map<String,ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
+        if(shardInfoByPeers.size()<MIN_SHARDING_PEERS){
+            return false;
+        }
+        shardInfoDownloader.processAllPeersShardingInfo();
+        shardInfoDownloader.getSortedShards().keySet().forEach((sId) -> 
+        {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
-            List<String> shardFiles = new ArrayList<>();
+            Set<String> shardFiles = new HashSet<>();
             shardFiles.add(shardNameHelper.getFullShardId(sId, myChainId));
             shardFiles.addAll(si.additionalFiles);
             ShardDownloadStatus st = new ShardDownloadStatus(shardFiles);
             shardDownloadStatuses.put(sId, st);
         });
-        return !shards.isEmpty();
+        return shardInfoByPeers.size() >= MIN_SHARDING_PEERS;
     }
 
     public void onAnyFileDownloadEvent(@ObservesAsync @FileDownloadEvent FileEventData fileData) {

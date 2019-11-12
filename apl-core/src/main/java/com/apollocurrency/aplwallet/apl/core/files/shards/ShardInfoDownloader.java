@@ -74,26 +74,22 @@ public class ShardInfoDownloader {
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
     }
-    
-    public ShardingInfo getShardingInfoFromPeer(String addr){
-         ShardingInfo res = null;
-        //here we are trying to create peers and trying to connect
-         Peer p = peers.findOrCreatePeer(null, addr, true);
-         if(p!=null){
-             PeerClient pc = new PeerClient(p);
-             res = pc.getShardingInfo();
-         }  
-         return res;
+
+    public void processAllPeersShardingInfo(){
+        for(String pa: shardInfoByPeers.keySet()){
+            processPeerShardingInfo(pa, shardInfoByPeers.get(pa));
+        }
+        log.debug("ShardingInfo requesting result {}", sortedShards);
+        sortedShards.keySet().forEach((idx) -> {
+            shardsDesisons.put(idx,checkShard(idx));
+        });       
     }
     
-    public boolean processPeerShardInfo(String pa) {
+    public boolean processPeerShardingInfo(String pa, ShardingInfo si) {
         boolean haveShard = false;
-        ShardingInfo si = getShardingInfoFromPeer(pa);
         log.trace("shardInfo = {}", si);
         if (si != null) {
-            shardInfoByPeers.put(pa, si);
             si.source = pa;
-            additionalPeers.addAll(si.knownPeers);
             for (ShardInfo s : si.shards) {
                 if (myChainId.equals(UUID.fromString(s.chainId))) {
                     haveShard = true;
@@ -116,31 +112,43 @@ public class ShardInfoDownloader {
         }
         return haveShard;
     }
-
-    public Map<Long, Set<ShardInfo>> getShardInfoFromPeers() {
+    
+    public ShardingInfo getShardingInfoFromPeer(String addr){
+         ShardingInfo res = null;
+        //here we are trying to create peers and trying to connect
+         Peer p = peers.findOrCreatePeer(null, addr, true);
+         if(p!=null){
+             PeerClient pc = new PeerClient(p);
+             res = pc.getShardingInfo();
+         }  
+         return res;
+    }
+    
+    public Map<String,ShardingInfo> getShardInfoFromPeers() {
         log.debug("Requesting ShardingInfo from Peers...");
-        int counterWithShardInfo = 0;
         int counterTotal = 0;        
-    //   FileDownloader fileDownloader = fileDownloaders.get();        
 
         Set<Peer> knownPeers = peers.getAllConnectedPeers();
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
         for (Peer p : knownPeers) {
-            if (processPeerShardInfo(p.getHostWithPort())) {
-                counterWithShardInfo++;
+            String pa = p.getHostWithPort();
+            ShardingInfo si = getShardingInfoFromPeer(pa);
+            if(si!=null){
+                shardInfoByPeers.put(pa, si);
+                additionalPeers.addAll(si.knownPeers);
             }
-            if (counterWithShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
-                log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
+            if (shardInfoByPeers.size() >= ENOUGH_PEERS_FOR_SHARD_INFO) {
+                log.debug("counter >= ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
                 break;
             }
             counterTotal++;
-            if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
+            if (counterTotal >= ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
                 break;
             }
         }
         //we have not enough known peers, connect to additional
-        if (counterWithShardInfo < ENOUGH_PEERS_FOR_SHARD_INFO) {
+        if (shardInfoByPeers.size() < ENOUGH_PEERS_FOR_SHARD_INFO) {
             Set<String> additionalPeersCopy = new HashSet<>();
             additionalPeersCopy.addAll(additionalPeers);
             //avoid modification while iterating
@@ -148,10 +156,8 @@ public class ShardInfoDownloader {
                 //here we are trying to create peers
                 Peer p = peers.findOrCreatePeer(null, pa, true);
                 if(p!=null) {
-                    if (processPeerShardInfo(pa)) {
-                        counterWithShardInfo++;
-                    }
-                    if (counterWithShardInfo > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                    ShardingInfo si = getShardingInfoFromPeer(pa);                    
+                    if (shardInfoByPeers.size() > ENOUGH_PEERS_FOR_SHARD_INFO) {
                         log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
                         break;
                     }
@@ -164,11 +170,8 @@ public class ShardInfoDownloader {
                 }
             }
         }
-        log.debug("ShardingInfo requesting result {}", sortedShards);
-        sortedShards.keySet().forEach((idx) -> {
-            shardsDesisons.put(idx,checkShard(idx));
-        });
-        return sortedShards;
+
+        return shardInfoByPeers;
     }
 
     private byte[] getHash(long shardId, String peerAddr) {
