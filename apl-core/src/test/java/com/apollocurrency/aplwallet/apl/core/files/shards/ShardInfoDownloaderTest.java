@@ -5,13 +5,16 @@ package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
+import javax.inject.Inject;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,35 +25,64 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ShardInfoDownloaderTest {
     
+    private static final Map<String,ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
+    private static final Map<String,ShardingInfo> shardInfoByPeers_80 = new HashMap<>();
+    private static final Map<String,ShardingInfo> shardInfoByPeers_50 = new HashMap<>();
+    private static final Map<String,ShardingInfo> shardInfoByPeers_GOOD_PREV_SHARD = new HashMap<>();
+    
     public ShardInfoDownloaderTest() {
     }
     
     @BeforeAll
     public static void setUpClass() {
-    }
-    
-    @AfterAll
-    public static void tearDownClass() {
-    }
-    
-    @BeforeEach
-    public void setUp() {
-    }
-    
-    @AfterEach
-    public void tearDown() {
-    }
+        ShardingInfo si1 = new ShardingInfo();
+        ShardingInfo si2 = new ShardingInfo();
+        ShardingInfo si3 = new ShardingInfo();
+        ShardingInfo si4 = new ShardingInfo();
+        ShardingInfo si5 = new ShardingInfo();
+        ShardingInfo si6 = new ShardingInfo();
+        ShardingInfo si7 = new ShardingInfo();
 
+        ShardInfo s1 = new ShardInfo();
+        ShardInfo s2 = new ShardInfo();
+        ShardInfo s3 = new ShardInfo();
+        ShardInfo s1_b = new ShardInfo();
+        ShardInfo s2_b = new ShardInfo();
+        ShardInfo s3_b = new ShardInfo();
+ 
+//si 1 - all 3 good shards
+        si1.shards.add(s1);
+        si1.shards.add(s2);
+        si1.shards.add(s3);
+        si1.isShardingOff=false;
+        
+        //prepare 6 hosts with all 3 good shards
+        shardInfoByPeers_ALL_GOOD.put("1", si1);
+        shardInfoByPeers_ALL_GOOD.put("2", si1);
+        shardInfoByPeers_ALL_GOOD.put("3", si1);
+        shardInfoByPeers_ALL_GOOD.put("4", si1);
+        shardInfoByPeers_ALL_GOOD.put("5", si1);
+        shardInfoByPeers_ALL_GOOD.put("6", si1);
+        
+    }
+    
+    @WeldSetup
+    public WeldInitiator weld = WeldInitiator.from(
+                           PeersService.class,
+                           BlockchainConfig.class
+                         ).build();
+    
+    @Inject
+    ShardInfoDownloader instance;
     /**
      * Test of processAllPeersShardingInfo method, of class ShardInfoDownloader.
      */
     @Test
     public void testProcessAllPeersShardingInfo() {
         System.out.println("processAllPeersShardingInfo");
-        ShardInfoDownloader instance = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         instance.processAllPeersShardingInfo();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(instance.getGoodPeersMap().size(),3);
     }
 
     /**
@@ -59,14 +91,13 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testProcessPeerShardingInfo() {
         System.out.println("processPeerShardingInfo");
-        String pa = "";
-        ShardingInfo si = null;
-        ShardInfoDownloader instance = null;
-        boolean expResult = false;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();        
+        String pa = "1";
+        ShardingInfo si = shardInfoByPeers_ALL_GOOD.get(pa);
+        boolean expResult = true;
         boolean result = instance.processPeerShardingInfo(pa, si);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -74,6 +105,7 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardingInfoFromPeer() {
+        //should be nothing here, data are prepared
     }
 
     /**
@@ -81,6 +113,7 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardInfoFromPeers() {
+        //should be nothing here, data are prepared        
     }
 
     /**
@@ -89,13 +122,12 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardInfo() {
         System.out.println("getShardInfo");
-        Long shardId = null;
-        ShardInfoDownloader instance = null;
-        ShardInfo expResult = null;
+        Long shardId = 1L;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();
+        ShardInfo expResult = shardInfoByPeers_ALL_GOOD.get("1").getShards().get(0);
         ShardInfo result = instance.getShardInfo(shardId);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -104,13 +136,13 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardWeight() {
         System.out.println("getShardWeight");
-        Long shardId = null;
-        ShardInfoDownloader instance = null;
+        Long shardId = 3L;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();        
+
         double expResult = 0.0;
         double result = instance.getShardWeight(shardId);
-        assertEquals(expResult, result, 0.0);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertTrue(expResult==result);
     }
 
     /**
@@ -119,12 +151,10 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardRelativeWeights() {
         System.out.println("getShardRelativeWeights");
-        ShardInfoDownloader instance = null;
-        Map<Long, Double> expResult = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();        
         Map<Long, Double> result = instance.getShardRelativeWeights();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+
     }
 
 
@@ -134,12 +164,10 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardsPeers() {
         System.out.println("getShardsPeers");
-        ShardInfoDownloader instance = null;
-        Map<Long, Set<String>> expResult = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();         
+
         Map<Long, Set<String>> result = instance.getShardsPeers();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -148,12 +176,9 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardsDesisons() {
         System.out.println("getShardsDesisons");
-        ShardInfoDownloader instance = null;
-        Map<Long, FileDownloadDecision> expResult = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();         
         Map<Long, FileDownloadDecision> result = instance.getShardsDesisons();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -162,12 +187,9 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetShardInfoByPeers() {
         System.out.println("getShardInfoByPeers");
-        ShardInfoDownloader instance = null;
-        Map<String, ShardingInfo> expResult = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo(); 
         Map<String, ShardingInfo> result = instance.getShardInfoByPeers();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -176,12 +198,9 @@ public class ShardInfoDownloaderTest {
     @Test
     public void testGetGoodPeersMap() {
         System.out.println("getGoodPeersMap");
-        ShardInfoDownloader instance = null;
-        Map<Long, Set<PeerFileHashSum>> expResult = null;
+        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        instance.processAllPeersShardingInfo();         
         Map<Long, Set<PeerFileHashSum>> result = instance.getGoodPeersMap();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
     
 }

@@ -3,11 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import static com.apollocurrency.aplwallet.apl.core.files.FileDownloader.DOWNLOAD_THREADS;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
@@ -27,10 +25,8 @@ import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -53,12 +49,14 @@ public class ShardInfoDownloader {
     private final Map<Long,FileDownloadDecision> shardsDesisons = new HashMap<>();
     //peerId:alShards map
     @Getter
-    private final Map<String,ShardingInfo> shardInfoByPeers;
+    @Setter
+    private Map<String,ShardingInfo> shardInfoByPeers;
     @Getter
     //shardId:PeerFileHashSum
-    Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
+    private final Map<Long,Set<PeerFileHashSum>> goodPeersMap=new HashMap<>();
     //shardId:PeerFileHashSum
-    Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
+    @Getter
+    private final Map<Long,Set<PeerFileHashSum>> badPeersMap=new HashMap<>();
 
     private final PeersService peers;
     private final UUID myChainId;
@@ -78,7 +76,7 @@ public class ShardInfoDownloader {
         this.peers = peers;
         this.myChainId = blockchainConfig.getChain().getChainId();
     }
-
+    
     public void processAllPeersShardingInfo(){
         for(String pa: shardInfoByPeers.keySet()){
             processPeerShardingInfo(pa, shardInfoByPeers.get(pa));
@@ -212,8 +210,8 @@ public class ShardInfoDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        goodPeersMap.put(shardId,pvdm.getValidPeers());
-        badPeersMap.put(shardId,pvdm.getInvalidPeers());
+        goodPeersMap.putIfAbsent(shardId,pvdm.getValidPeers());
+        badPeersMap.putIfAbsent(shardId,pvdm.getInvalidPeers());
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
         return res;
     }
