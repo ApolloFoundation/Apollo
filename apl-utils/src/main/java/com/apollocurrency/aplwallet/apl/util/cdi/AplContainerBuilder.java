@@ -47,6 +47,7 @@ public class AplContainerBuilder {
     
     public AplContainerBuilder devMode(){
         devMode=true;
+        System.setProperty("org.jboss.weld.probe.jmxSupport","true");
         return this;
     }
         
