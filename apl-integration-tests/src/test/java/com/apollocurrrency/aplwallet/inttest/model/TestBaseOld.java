@@ -887,7 +887,7 @@ public class TestBaseOld extends TestBase {
     @Step("Get Dex History with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int issuanceHeight = currentHeight + 4;
+        int issuanceHeight = currentHeight + 6;
 
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
