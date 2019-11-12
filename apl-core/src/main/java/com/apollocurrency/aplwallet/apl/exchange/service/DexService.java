@@ -239,7 +239,10 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
+        long start = System.currentTimeMillis();
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
+        log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
+                orders.size(), System.currentTimeMillis() - start, time);
 
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
@@ -250,6 +253,7 @@ public class DexService {
             reopenIncomeOrders(order.getId());
 
         }
+        log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
 
     public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {

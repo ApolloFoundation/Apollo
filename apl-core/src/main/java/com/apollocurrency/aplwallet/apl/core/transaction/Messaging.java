@@ -3,8 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
@@ -16,8 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.Vote;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
@@ -37,11 +36,13 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  *
@@ -673,6 +674,10 @@ public abstract class Messaging extends TransactionType {
                 long phasedTransactionId = Convert.fullHashToId(hash);
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
+                }
+                PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
+                if (result != null) {
+                    throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
                 }
                 PhasingPoll poll = phasingPollService.getPoll(phasedTransactionId);
                 if (poll == null) {

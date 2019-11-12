@@ -199,7 +199,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 try {
                     runAllAndWait(jobs);
                 }catch (Throwable e){
-                    log.error("The INIT tasks can't be initialized properly.", e);
+                    log.error("The INIT tasks can't be initialized properly. Jobs = " + jobs, e);
                 }
                 tasks.remove(TaskOrder.INIT);
 
@@ -291,10 +291,10 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 tasks.forEach(task -> {
                     onStartExecutor.submit(() -> {
                         try {
-                            log.trace("Current thread={}", Thread.currentThread().getName());
+                            log.debug("Task = {}, Current thread={}", task.getName(), Thread.currentThread().getName());
                             task.getTask().run();
                         } catch (Throwable t) {
-                            errors.append(t.getMessage()).append('\n');
+                            errors.append(" Task=" + task.getName() + ", " + t.getMessage()).append('\n');
                             throw t;
                         } finally {
                             latch.countDown();
