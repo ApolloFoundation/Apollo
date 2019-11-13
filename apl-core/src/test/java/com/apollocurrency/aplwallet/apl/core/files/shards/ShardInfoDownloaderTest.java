@@ -5,72 +5,129 @@ package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.task.limiter.TimeLimiterService;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.inject.Inject;
+import org.jboss.weld.junit.MockBean;
+import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 /**
  *
  * @author al
  */
+@EnableWeld
 public class ShardInfoDownloaderTest {
     
     private static final Map<String,ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
-    private static final Map<String,ShardingInfo> shardInfoByPeers_80 = new HashMap<>();
-    private static final Map<String,ShardingInfo> shardInfoByPeers_50 = new HashMap<>();
+    private static final Map<String,ShardingInfo> shardInfoByPeers_less3rd = new HashMap<>();
+    private static final Map<String,ShardingInfo> shardInfoByPeers_3rd50on50 = new HashMap<>();
     private static final Map<String,ShardingInfo> shardInfoByPeers_GOOD_PREV_SHARD = new HashMap<>();
+    
+    Blockchain blockchain;
     
     public ShardInfoDownloaderTest() {
     }
     
+    private static ShardingInfo readData(String fileName){
+        String fn = "conf/data/"+fileName;
+        ObjectMapper mapper = new ObjectMapper();
+        InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
+        ShardingInfo res = null;
+        try {
+            res = mapper.readValue(is, ShardingInfo.class);
+        } catch (IOException ex) {
+            System.out.println("Can not read file from resources: "+fn);
+        }
+        return res;
+    }
+    
     @BeforeAll
     public static void setUpClass() {
-        ShardingInfo si1 = new ShardingInfo();
-        ShardingInfo si2 = new ShardingInfo();
-        ShardingInfo si3 = new ShardingInfo();
-        ShardingInfo si4 = new ShardingInfo();
-        ShardingInfo si5 = new ShardingInfo();
-        ShardingInfo si6 = new ShardingInfo();
+        //all 3 shards are OK
+        ShardingInfo si1 = readData("shardingTestData1_1.json");
+        //3rd shard is bad
+        ShardingInfo si2 = readData("shardingTestData1_2.json");
+        //3rd and 2nd shards are bad
+        ShardingInfo si3 = readData("shardingTestData1_3.json");
+        //all 3 shards are bad
+        ShardingInfo si4 = readData("shardingTestData1_4.json");
+        //no 3rd shard
+        ShardingInfo si5 = readData("shardingTestData1_5.json");
+        //no 2nd and 3rd shards
+        ShardingInfo si6 = readData("shardingTestData1_6.json");
+        //not sharding, no shards
         ShardingInfo si7 = new ShardingInfo();
+        si7.isShardingOff=true;
 
-        ShardInfo s1 = new ShardInfo();
-        ShardInfo s2 = new ShardInfo();
-        ShardInfo s3 = new ShardInfo();
-        ShardInfo s1_b = new ShardInfo();
-        ShardInfo s2_b = new ShardInfo();
-        ShardInfo s3_b = new ShardInfo();
- 
-//si 1 - all 3 good shards
-        si1.shards.add(s1);
-        si1.shards.add(s2);
-        si1.shards.add(s3);
-        si1.isShardingOff=false;
+
         
-        //prepare 6 hosts with all 3 good shards
+        //prepare 6 hosts with all 3 good shards and 1 not sharding
         shardInfoByPeers_ALL_GOOD.put("1", si1);
         shardInfoByPeers_ALL_GOOD.put("2", si1);
         shardInfoByPeers_ALL_GOOD.put("3", si1);
         shardInfoByPeers_ALL_GOOD.put("4", si1);
         shardInfoByPeers_ALL_GOOD.put("5", si1);
         shardInfoByPeers_ALL_GOOD.put("6", si1);
+        shardInfoByPeers_ALL_GOOD.put("7", si7);
+        //prepare 3 hosts with all 3 good shards and 3 with aabsent 3rd and 1 not sharding
+        shardInfoByPeers_less3rd.put("1", si1);
+        shardInfoByPeers_less3rd.put("2", si1);
+        shardInfoByPeers_less3rd.put("3", si1);
+        shardInfoByPeers_less3rd.put("4", si5);
+        shardInfoByPeers_less3rd.put("5", si5);
+        shardInfoByPeers_less3rd.put("6", si5);
+        shardInfoByPeers_less3rd.put("7", si7);
+        //prepare 3 hosts with all 3 good shards and 3 with bad 2rd and 1 not sharding
+        shardInfoByPeers_less3rd.put("1", si1);
+        shardInfoByPeers_less3rd.put("2", si1);
+        shardInfoByPeers_less3rd.put("3", si1);
+        shardInfoByPeers_less3rd.put("4", si2);
+        shardInfoByPeers_less3rd.put("5", si2);
+        shardInfoByPeers_less3rd.put("6", si2);
+        shardInfoByPeers_less3rd.put("7", si7);
         
     }
     
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-                           PeersService.class,
-                           BlockchainConfig.class
-                         ).build();
+                           BlockchainConfig.class,
+                           PropertiesHolder.class
+                         )
+            .addBeans(MockBean.of(blockchain, Blockchain.class))
+            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+            .addBeans(MockBean.of(mock(PeerHttpServer.class), PeerHttpServer.class))
+            .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
+            .addBeans(MockBean.of(mock(TimeLimiterService.class), TimeLimiterService.class))            
+            .addBeans(MockBean.of(mock(UPnP.class), UPnP.class))            
+            .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))            
+            .addBeans(MockBean.of(mock(JettyConnectorCreator.class), JettyConnectorCreator.class))            
+            .build();
     
     @Inject
     ShardInfoDownloader instance;
