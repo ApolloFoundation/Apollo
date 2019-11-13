@@ -177,7 +177,7 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+10);
             verifyTransactionInBlock(reserveTransaction.getTransaction());
-            waitForHeight(getBlock().getHeight()+6);
+            waitForHeight(getCurrency(currency.getTransaction()).getIssuanceHeight());
             CreateTransactionResponse  reserveClaimTransaction =  currencyReserveClaim(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveClaimTransaction);
             //EXCHANGEABLE - 1

@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.RandomUtils;
@@ -68,6 +69,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
@@ -89,11 +91,10 @@ public class TestBaseOld extends TestBase {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
-            Assertions.assertTrue(inBlock);
         }
         catch (Exception e)
         {
-            Assertions.assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+            fail("Transaction does't add to block. Transaction "+ transaction+" Exception: "+e.getMessage());
         }
         assertTrue(inBlock,String.format("Transaction %s in block: ",transaction));
         return inBlock;
@@ -102,15 +103,20 @@ public class TestBaseOld extends TestBase {
     @Step
     public boolean waitForHeight(int height)
     {
+      RetryPolicy retry = new RetryPolicy()
+                .retryWhen(false)
+                .withMaxRetries(15)
+                .withDelay(5, TimeUnit.SECONDS);
         boolean isHeight = false;
+
         try {
-            isHeight = Failsafe.with(retryPolicy).get(() -> getBlock().getHeight() >= height);
+            isHeight = Failsafe.with(retry).get(() -> getBlock().getHeight() >= height);
         }
         catch (Exception e)
         {
-            assertEquals(isHeight,getBlock().getHeight(),String.format("Height not %s reached: %s",height,getBlock().getHeight()));
+            assertTrue(isHeight,String.format("Height %s  not reached: %s",height,getBlock().getHeight()));
         }
-        assertEquals(isHeight,getBlock().getHeight(),String.format("Height not %s reached: %s",height,getBlock().getHeight()));
+        assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         return isHeight;
     }
     @Step
@@ -885,7 +891,7 @@ public class TestBaseOld extends TestBase {
     @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int issuanceHeight = currentHeight + 6;
+        int issuanceHeight = currentHeight + 8;
 
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
@@ -934,6 +940,7 @@ public class TestBaseOld extends TestBase {
         
         return getInstanse(CreateTransactionResponse.class);
     }
+
 
     @Step
     public  CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId) {

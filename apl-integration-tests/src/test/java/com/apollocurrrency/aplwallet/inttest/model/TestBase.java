@@ -58,7 +58,7 @@ public abstract class TestBase implements ITest {
         retryPolicy = new RetryPolicy()
                      .retryWhen(false)
                      .withMaxRetries(30)
-                     .withDelay(2, TimeUnit.SECONDS);
+                     .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
@@ -142,8 +142,9 @@ public abstract class TestBase implements ITest {
         }
         catch (Exception e)
         {
-            assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
+            fail("Transaction does't add to block. Transaction "+ transaction);
         }
+        assertTrue(inBlock,"Transaction does't add to block. Transaction "+transaction);
         return inBlock;
     }
 
