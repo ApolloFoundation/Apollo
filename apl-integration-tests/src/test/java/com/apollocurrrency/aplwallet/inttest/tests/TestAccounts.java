@@ -30,6 +30,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -117,7 +119,12 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify Search Accounts  endpoint")
     public void testSearchAccounts() throws IOException {
-        SearchAccountsResponse searchAccountsResponse = searchAccounts(TestConfiguration.getTestConfiguration().getGenesisWallet().getAccountId());
+        String accountName = "Account "+new Date().getTime();
+        String accountDesc= "Decription "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(),accountName,accountDesc);
+        verifyCreatingTransaction(setAccountInfo);
+        verifyTransactionInBlock(setAccountInfo.getTransaction());
+        SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
         assertTrue(searchAccountsResponse.getAccounts().size() > 0,"Account not found");
@@ -201,16 +208,27 @@ public class TestAccounts extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {
-        CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
-        verifyCreatingTransaction(sendMoneyResponse);
+        Set<String> transactions = new HashSet<>();
+        int countOfTransactions = 50;
+        for (int i = 0; i <countOfTransactions ; i++) {
+            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,wallet.getUser(),10);
+            verifyCreatingTransaction(sendMoneyResponse);
+            transactions.add(sendMoneyResponse.getTransaction());
+        }
+        waitForHeight(getBlock().getHeight()+10);
+        for (String trx: transactions) {
+            verifyTransactionInBlock(trx);
+        }
     }
+
+
 
 
     @DisplayName("Send Money Private")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
-        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,"APL-KL45-8GRF-BKPM-E58NH",100);
+        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,wallet.getUser(),100);
         verifyCreatingTransaction(sendMoneyResponse);
     }
 
