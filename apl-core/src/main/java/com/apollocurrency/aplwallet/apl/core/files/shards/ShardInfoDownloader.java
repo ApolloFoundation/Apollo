@@ -244,7 +244,13 @@ public class ShardInfoDownloader {
         }
         String peerId=pfhs.getPeerId();
         ShardingInfo srdInfo = shardInfoByPeers.get(peerId);
-        res=srdInfo.getShards().get(shardId.intValue());
+        //in our case we have just reverted array, but it could be in any order. So we should find by iteration
+        for(ShardInfo si:srdInfo.getShards()){
+            if(si.shardId.longValue()==shardId.longValue()){
+                res=si;
+                break;
+            }
+        }
         return res;        
     }
     

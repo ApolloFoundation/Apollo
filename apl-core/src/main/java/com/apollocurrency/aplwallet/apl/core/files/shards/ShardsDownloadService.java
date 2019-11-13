@@ -26,7 +26,9 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
+import java.util.stream.Collectors;
 import javax.enterprise.event.ObservesAsync;
 
 /**
@@ -176,12 +178,19 @@ public class ShardsDownloadService {
         shardInfoDownloader.getGoodPeersMap().get(shardId).forEach((pfhs) -> {
             peers.add(pfhs.getPeerId());
         });
-        for (String fileId : filesToDownload) {
+        filesToDownload.forEach((fileId) -> {
             fileDownloadService.startDownload(fileId, peers);
-        }
+        });
         return result;
     }
-
+    
+    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
+        return w.entrySet()
+                .stream()
+                .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+    
     public FileDownloadDecision tryDownloadLastGoodShard() {
         boolean goodShardFound = false;
         log.debug("SHARDING: prepare and start downloading of last good shard in the network...");
@@ -206,9 +215,8 @@ public class ShardsDownloadService {
         } else {
             //we have some shards available on the networks, let's decide what to do
             Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
-            for (Long shardId : shardWeights.keySet()) {
+            for (Long shardId : sortByValue(shardWeights).keySet()) {
                 double w = shardWeights.get(shardId);
-                //TODO: sort and decide
                 if(w>0){
                     result = tryDownloadShard(shardId);
                     goodShardFound = isAcceptable(result);
