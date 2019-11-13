@@ -2,6 +2,7 @@
 "shardingInfo": [
   {
     "shardId": 3,
+    "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
     "shardHash": "f16d31a977b276299b9c2d8e57647b569740bf5cfad40859b78f880784918690",
     "shardState": 100,
     "shardHeight": 150000,
@@ -13,6 +14,7 @@
   },
   {
     "shardId": 2,
+    "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
     "shardHash": "03d64ee61ee81635fadad31ed61879779fff55a4e1c1c66b1cef5deae0d87970",
     "shardState": 100,
     "shardHeight": 100000,
@@ -24,6 +26,7 @@
   },
   {
     "shardId": 1,
+    "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
     "shardHash": "1efcc1f06de13c3175f35e72bde045c68382569153661e1dc6caf2d1e3ccbd60",
     "shardState": 100,
     "shardHeight": 50000,

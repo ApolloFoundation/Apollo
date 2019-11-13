@@ -5,65 +5,59 @@ package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
-import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerHttpServer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.task.limiter.TimeLimiterService;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.UPnP;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 /**
  *
  * @author al
  */
-@EnableWeld
+
 public class ShardInfoDownloaderTest {
     
     private static final Map<String,ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
     private static final Map<String,ShardingInfo> shardInfoByPeers_less3rd = new HashMap<>();
     private static final Map<String,ShardingInfo> shardInfoByPeers_3rd50on50 = new HashMap<>();
     private static final Map<String,ShardingInfo> shardInfoByPeers_GOOD_PREV_SHARD = new HashMap<>();
-    
-    Blockchain blockchain;
-    
-    public ShardInfoDownloaderTest() {
+
+    private final PeersService peersService = mock(PeersService.class);
+
+    private final Chain chain = mock(Chain.class);
+    private final BlockchainConfig blockchainConfig = spy(new BlockchainConfig());
+
+    private ShardInfoDownloader downloader;
+
+    @BeforeEach
+    void setUp() {
+        doReturn(UUID.fromString("d5c22b16-935e-495d-aa3f-bb26ef2115d3")).when(chain).getChainId();
+        doReturn(chain).when(blockchainConfig).getChain();
+
+        doReturn(null).when(peersService).getAllConnectablePeers();
+        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR1", true);
+        doReturn(null).when(peersService).findOrCreatePeer(null, "ADR2", true);
+        doReturn(blockchainConfig).when(peersService).getBlockchainConfig();
+        downloader = new ShardInfoDownloader(peersService);
     }
-    
-    private static ShardingInfo readData(String fileName){
-        String fn = "conf/data/"+fileName;
-        ObjectMapper mapper = new ObjectMapper();
-        InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
-        ShardingInfo res = null;
-        try {
-            res = mapper.readValue(is, ShardingInfo.class);
-        } catch (IOException ex) {
-            System.out.println("Can not read file from resources: "+fn);
-        }
-        return res;
-    }
-    
+
     @BeforeAll
     public static void setUpClass() {
         //all 3 shards are OK
@@ -110,34 +104,15 @@ public class ShardInfoDownloaderTest {
         shardInfoByPeers_less3rd.put("7", si7);
         
     }
-    
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-                           BlockchainConfig.class,
-                           PropertiesHolder.class
-                         )
-            .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
-            .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
-            .addBeans(MockBean.of(mock(PeerHttpServer.class), PeerHttpServer.class))
-            .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
-            .addBeans(MockBean.of(mock(TimeLimiterService.class), TimeLimiterService.class))            
-            .addBeans(MockBean.of(mock(UPnP.class), UPnP.class))            
-            .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))            
-            .addBeans(MockBean.of(mock(JettyConnectorCreator.class), JettyConnectorCreator.class))            
-            .build();
-    
-    @Inject
-    ShardInfoDownloader instance;
+
     /**
      * Test of processAllPeersShardingInfo method, of class ShardInfoDownloader.
      */
     @Test
     public void testProcessAllPeersShardingInfo() {
-        System.out.println("processAllPeersShardingInfo");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();
-        assertEquals(instance.getGoodPeersMap().size(),3);
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
+        assertEquals(3, downloader.getGoodPeersMap().size());
     }
 
     /**
@@ -145,13 +120,12 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testProcessPeerShardingInfo() {
-        System.out.println("processPeerShardingInfo");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();        
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
         String pa = "1";
         ShardingInfo si = shardInfoByPeers_ALL_GOOD.get(pa);
         boolean expResult = true;
-        boolean result = instance.processPeerShardingInfo(pa, si);
+        boolean result = downloader.processPeerShardingInfo(pa, si);
         assertEquals(expResult, result);
     }
 
@@ -176,12 +150,11 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardInfo() {
-        System.out.println("getShardInfo");
         Long shardId = 1L;
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
         ShardInfo expResult = shardInfoByPeers_ALL_GOOD.get("1").getShards().get(0);
-        ShardInfo result = instance.getShardInfo(shardId);
+        ShardInfo result = downloader.getShardInfo(shardId);
         assertEquals(expResult, result);
     }
 
@@ -190,14 +163,13 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardWeight() {
-        System.out.println("getShardWeight");
         Long shardId = 3L;
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();        
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
 
         double expResult = 0.0;
-        double result = instance.getShardWeight(shardId);
-        assertTrue(expResult==result);
+        double result = downloader.getShardWeight(shardId);
+        assertEquals(expResult, result);
     }
 
     /**
@@ -205,10 +177,9 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardRelativeWeights() {
-        System.out.println("getShardRelativeWeights");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();        
-        Map<Long, Double> result = instance.getShardRelativeWeights();
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
+        Map<Long, Double> result = downloader.getShardRelativeWeights();
 
     }
 
@@ -218,11 +189,10 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardsPeers() {
-        System.out.println("getShardsPeers");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();         
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
 
-        Map<Long, Set<String>> result = instance.getShardsPeers();
+        Map<Long, Set<String>> result = downloader.getShardsPeers();
     }
 
     /**
@@ -230,10 +200,9 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardsDesisons() {
-        System.out.println("getShardsDesisons");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();         
-        Map<Long, FileDownloadDecision> result = instance.getShardsDesisons();
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
+        Map<Long, FileDownloadDecision> result = downloader.getShardsDesisons();
     }
 
     /**
@@ -241,10 +210,9 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardInfoByPeers() {
-        System.out.println("getShardInfoByPeers");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo(); 
-        Map<String, ShardingInfo> result = instance.getShardInfoByPeers();
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
+        Map<String, ShardingInfo> result = downloader.getShardInfoByPeers();
     }
 
     /**
@@ -252,10 +220,21 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetGoodPeersMap() {
-        System.out.println("getGoodPeersMap");
-        instance.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
-        instance.processAllPeersShardingInfo();         
-        Map<Long, Set<PeerFileHashSum>> result = instance.getGoodPeersMap();
+        downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
+        downloader.processAllPeersShardingInfo();
+        Map<Long, Set<PeerFileHashSum>> result = downloader.getGoodPeersMap();
     }
-    
+
+    private static ShardingInfo readData(String fileName){
+        String fn = "conf/data/"+fileName;
+        ObjectMapper mapper = new ObjectMapper();
+        InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
+        ShardingInfo res = null;
+        try {
+            res = mapper.readValue(is, ShardingInfo.class);
+        } catch (IOException ex) {
+            System.out.println("Can not read file from resources: "+fn);
+        }
+        return res;
+    }
 }

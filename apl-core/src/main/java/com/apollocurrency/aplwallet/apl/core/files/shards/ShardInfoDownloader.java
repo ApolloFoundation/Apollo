@@ -5,7 +5,6 @@ package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
 import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerValidityDecisionMaker;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeersList;
@@ -20,7 +19,6 @@ import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
@@ -63,18 +61,13 @@ public class ShardInfoDownloader {
     private final UUID myChainId;
        
     @Inject
-    public ShardInfoDownloader(
-            BlockchainConfig blockchainConfig,
-            PeersService peers) {
-
-        Objects.requireNonNull(blockchainConfig, "chainId is NULL");
-
+    public ShardInfoDownloader( PeersService peers) {
         this.additionalPeers = ConcurrentHashMap.newKeySet();
         this.sortedByIdShards = new ConcurrentHashMap();
         this.shardsPeers = new ConcurrentHashMap();
         this.shardInfoByPeers = new ConcurrentHashMap();
         this.peers = peers;
-        this.myChainId = blockchainConfig.getChain().getChainId();
+        this.myChainId = peers.getBlockchainConfig().getChain().getChainId();
     }
     
     /**

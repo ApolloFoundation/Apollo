@@ -2,6 +2,7 @@
 "shardingInfo": [
   {
     "shardId": 1,
+    "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
     "shardHash": "1efcc1f06de13c3175f35e72bde045c68382569153661e1dc6caf2d1e3ccbd65",
     "shardState": 100,
     "shardHeight": 50000,

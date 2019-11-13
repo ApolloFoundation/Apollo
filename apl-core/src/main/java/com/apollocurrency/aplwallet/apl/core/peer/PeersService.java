@@ -72,6 +72,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import lombok.Getter;
 
 @Singleton
 public class PeersService {
@@ -162,8 +163,8 @@ public class PeersService {
     private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
     private final TimeLimiterService timeLimiterService;
 
-    // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
+    @Getter
     final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
