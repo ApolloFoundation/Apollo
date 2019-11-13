@@ -29,7 +29,7 @@ import static org.mockito.Mockito.spy;
 
 /**
  *
- * @author al
+ * @author alukin@gmailcom
  */
 
 public class ShardInfoDownloaderTest {
@@ -104,7 +104,10 @@ public class ShardInfoDownloaderTest {
         shardInfoByPeers_less3rd.put("7", si7);
         
     }
-
+/*
+ *  TODO: finish tests, there is a lot to test yet
+ *   
+ */
     /**
      * Test of processAllPeersShardingInfo method, of class ShardInfoDownloader.
      */
@@ -112,7 +115,8 @@ public class ShardInfoDownloaderTest {
     public void testProcessAllPeersShardingInfo() {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
-        assertEquals(3, downloader.getGoodPeersMap().size());
+        int  size = downloader.getGoodPeersMap().size();
+        assertEquals(3, size);
     }
 
     /**
@@ -153,7 +157,7 @@ public class ShardInfoDownloaderTest {
         Long shardId = 1L;
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
-        ShardInfo expResult = shardInfoByPeers_ALL_GOOD.get("1").getShards().get(0);
+        ShardInfo expResult = shardInfoByPeers_ALL_GOOD.get("1").getShards().get(2);
         ShardInfo result = downloader.getShardInfo(shardId);
         assertEquals(expResult, result);
     }
@@ -167,9 +171,9 @@ public class ShardInfoDownloaderTest {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
 
-        double expResult = 0.0;
+        double expResult = 0.7;
         double result = downloader.getShardWeight(shardId);
-        assertEquals(expResult, result);
+        assertEquals(result>expResult,true);
     }
 
     /**
