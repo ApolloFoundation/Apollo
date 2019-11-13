@@ -101,7 +101,7 @@ public abstract class TestBase implements ITest {
 
     public static void setUpTestData(){
         CreateTransactionResponse transactionResponse;
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
@@ -111,7 +111,7 @@ public abstract class TestBase implements ITest {
                 TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 9000000000000L) {
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());

@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -81,7 +82,7 @@ public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
 
     @BeforeEach
-    void setUP(TestInfo testInfo) {
+    public void setUP(TestInfo testInfo) {
         this.testInfo = testInfo;
     }
 
@@ -1073,10 +1074,34 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
-
     }
 
+    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
+        addParameters(RequestType.requestType, getAccountCurrencies);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(AccountCurrencyResponse.class);
+    }
 
+    @Step
+    public CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType ) {
+        addParameters(RequestType.requestType, shufflingCreate);
+        addParameters(Parameters.wallet, wallet);
+        if (holdingType > 0) {
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.holdingType, holdingType);
+            addParameters(Parameters.amount, amount);
+        }else{
+            addParameters(Parameters.amount, amount+"00000000");
+        }
+        addParameters(Parameters.registrationPeriod, registrationPeriod);
+        addParameters(Parameters.participantCount, participantCount);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+
+    }
 
 
     @AfterEach

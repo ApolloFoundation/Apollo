@@ -1,6 +1,10 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    holdingType,
+    holding,
+    registrationPeriod,
+    participantCount,
     prunableAttachmentJSON,
     offerIssuer,
     rateATM,

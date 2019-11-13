@@ -1,6 +1,8 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    getAccountCurrencies,
+    shufflingCreate,
     scheduleCurrencyBuy,
     currencyBuy,
     currencySell,
