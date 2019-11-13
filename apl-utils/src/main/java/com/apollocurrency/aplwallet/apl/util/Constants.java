@@ -164,21 +164,26 @@ public final class Constants {
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
-    //24 h
-    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
-    //24 h TODO CHANGe time
-    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2 = 24 * 60 * 60;
+
+    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP = 2 * 60 * 60;
+    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP = 48 * 60 * 60;
+
+    public static final int DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP = 10;
+
+    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MIN_TIME_OF_ATOMIC_SWAP - (DEX_MIN_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
+    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MAX_TIME_OF_ATOMIC_SWAP + (DEX_MAX_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
+
     //minutes
-    public static Integer DEX_OFFER_PROCESSOR_DELAY = 10;
+    public static final int DEX_OFFER_PROCESSOR_DELAY = 10;
 
     //24 h
-    public static Integer DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = 24 * 60 * 60;
+    public static final int DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
     //168h
-    public static Integer DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
+    public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
 
-    public static int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
-    public static int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
-    public static int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
+    public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
+    public static final int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
+    public static final int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 
     private Constants() {} // never
 

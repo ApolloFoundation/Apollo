@@ -77,15 +77,15 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -304,7 +304,7 @@ public class DexService {
     }
 
     public void closeOverdueContract(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
-        if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
+        if (!order.getStatus().isClosedOrExpiredOrCancel()) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
                 saveOrder(order);
@@ -403,7 +403,7 @@ public class DexService {
      *
      * @return Tx hash id/link and non-broadcasted apl transaction if created
      */
-    public TransferTransactionInfo transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, long contractId, byte[] secretHash, ExchangeContractStatus contractStatus) throws AplException.ExecutiveProcessException {
+    public TransferTransactionInfo transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, long contractId, byte[] secretHash, int transferWithApprovalDuration) throws AplException.ExecutiveProcessException {
         TransferTransactionInfo result = new TransferTransactionInfo();
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
@@ -413,7 +413,7 @@ public class DexService {
 
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+                        order.getFromAddress(), order.getId(), secretHash, toAddress, transferWithApprovalDuration / 60, null);
                 result.setTxId(txHash);
             } else {
                 throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + order.getId());
@@ -428,7 +428,7 @@ public class DexService {
 
             createTransactionRequest.setFeeATM(Constants.ONE_APL * 3);
             PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
-            PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + contractStatus.timeOfWaiting(), phasingParams, null, secretHash, (byte) 2);
+            PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + transferWithApprovalDuration, phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
             createTransactionRequest.setPhasing(phasing);
             createTransactionRequest.setAttachment(new DexControlOfFrozenMoneyAttachment(contractId, order.getOrderAmount()));
@@ -545,9 +545,7 @@ public class DexService {
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
-//  ??      transactionProcessor.broadcastWhenConfirmed(contractTx, offerTx);
-            // will be broadcasted by DexOrderProcessor when offer will be confirmed
-            //            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
+            transactionProcessor.broadcastWhenConfirmed(contractTx, offerTx);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
