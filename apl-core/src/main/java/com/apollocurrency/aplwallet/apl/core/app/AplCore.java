@@ -303,7 +303,7 @@ public final class AplCore {
                 recoverSharding();
 
                 if(!dexOrderProcessor.isInitialized()){
-                    throw new RuntimeException("DexOrder is not initialized.");
+                    LOG.warn("DexOrder processor is not initialized.");
                 }
 
                 //start all background tasks

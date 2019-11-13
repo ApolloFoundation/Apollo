@@ -45,12 +45,6 @@ public abstract class AbstractAPIRequestHandler {
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected TrimService trimService;
     private PeersService peers;
-    protected DexOrderProcessor dexOrderProcessor;
-
-    protected DexOrderProcessor lookupDexOrderProcessor() {
-        if (dexOrderProcessor == null) dexOrderProcessor = CDI.current().select(DexOrderProcessor.class).get();
-        return dexOrderProcessor;
-    }
 
     protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();

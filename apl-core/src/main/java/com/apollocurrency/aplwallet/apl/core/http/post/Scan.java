@@ -52,9 +52,7 @@ public final class Scan extends AbstractAPIRequestHandler {
             } catch (NumberFormatException ignore) {}
             long start = System.currentTimeMillis();
             lookupBlockchainProcessor();
-            lookupDexOrderProcessor();
             try {
-                dexOrderProcessor.suspendContractProcessor();
                 blockchainProcessor.suspendBlockchainDownloading();
                 if (numBlocks > 0) {
                     blockchainProcessor.scan(lookupBlockchain().getHeight() - numBlocks + 1, validate);
@@ -64,7 +62,6 @@ public final class Scan extends AbstractAPIRequestHandler {
                     return JSONResponses.missing("numBlocks", "height");
                 }
             } finally {
-                dexOrderProcessor.resumeContractProcessor();
                 blockchainProcessor.resumeBlockchainDownloading();
             }
             long end = System.currentTimeMillis();

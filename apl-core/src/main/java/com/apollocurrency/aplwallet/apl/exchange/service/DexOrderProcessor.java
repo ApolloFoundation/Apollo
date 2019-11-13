@@ -6,7 +6,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -39,6 +42,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
@@ -101,13 +105,13 @@ public class DexOrderProcessor {
         Runnable task = () -> {
             if (processorEnabled) {
                 long start = System.currentTimeMillis();
-                log.info("DexOrderProcessor: start");
+                log.info("{}: start", BACKGROUND_SERVICE_NAME);
                 try {
                     processContracts();
                 } catch (Throwable e) {
                     log.warn("DexOrderProcessor error", e);
                 }
-                log.info("DexOrderProcessor: finish in {} ms", System.currentTimeMillis() - start);
+                log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
             }else{
                 log.debug("Contracts processor is suspended.");
             }
@@ -120,13 +124,22 @@ public class DexOrderProcessor {
                 .task(task)
                 .build();
 
-        log.debug("{} periodicaly task configuration, initDelay={} milliseconds, delay={} milliseconds",
+        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
+
+        log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
                 dexOrderProcessorTask.getName(),
                 dexOrderProcessorTask.getInitialDelay(),
                 dexOrderProcessorTask.getDelay());
 
-        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
         initialized = true;
+    }
+
+    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg){
+        resumeContractProcessor();
+    }
+
+    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg){
+        suspendContractProcessor();
     }
 
     public void suspendContractProcessor(){
