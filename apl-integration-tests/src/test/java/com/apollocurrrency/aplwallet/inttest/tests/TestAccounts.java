@@ -80,9 +80,9 @@ public class TestAccounts extends TestBaseOld {
 
 
     @DisplayName("Verify getAccountId endpoint")
-    @ParameterizedTest(name = "{displayName} {arguments}")
-    @ArgumentsSource(WalletProvider.class)
-    public void testAccountId(Wallet wallet) throws IOException {
+    @Test
+    public void testAccountId() {
+        Wallet wallet = TestConfiguration.getTestConfiguration().getStandartWallet();
         AccountDTO account = getAccountId(wallet);
         assertEquals(getTestConfiguration().getStandartWallet().getUser(),account.getAccountRS());
         assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(),account.getPublicKey());
