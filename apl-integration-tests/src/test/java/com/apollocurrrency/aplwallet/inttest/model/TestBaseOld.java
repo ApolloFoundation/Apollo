@@ -893,6 +893,13 @@ public class TestBaseOld extends TestBase {
         int currentHeight = getBlock().getHeight();
         int issuanceHeight = currentHeight + 8;
 
+        final int EXCHANGEABLE = 1;
+        final int CONTROLLABLE = 2;
+        final int RESERVABLE = 4;
+        final int CLAIMABLE = 8;
+        final int MINTABLE = 16;
+        final int NON_SHUFFLEABLE = 32;
+
         addParameters(RequestType.requestType,RequestType.issueCurrency);
         addParameters(Parameters.name, name);
         addParameters(Parameters.code ,code );
@@ -906,24 +913,17 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.issuanceHeight, 0);
         addParameters(Parameters.maxSupply, maxSupply);
         addParameters(Parameters.reserveSupply, 0);
-/*      EXCHANGEABLE - 1
-        CONTROLLABLE - 2
-        RESERVABLE - 4
-        CLAIMABLE - 8
-        MINTABLE - 16
-        NON_SHUFFLEABLE - 32
-*/
 
-        if ((type&4) == 4){
+        if ((type&RESERVABLE) == RESERVABLE){
             addParameters(Parameters.maxSupply, maxSupply+50);
             addParameters(Parameters.reserveSupply, maxSupply+50);
             addParameters(Parameters.issuanceHeight, issuanceHeight);
             addParameters(Parameters.minReservePerUnitATM,1);
         }
-        if ((type&8) == 8){
+        if ((type&CLAIMABLE) == CLAIMABLE){
             addParameters(Parameters.initialSupply, 0);
         }
-        if ((type&16) == 16 && (type&4) == 4){
+        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) == RESERVABLE){
             addParameters(Parameters.algorithm,  2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
@@ -931,7 +931,7 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.reserveSupply, maxSupply+10);
         }
 
-        if ((type&16) == 16 && (type&4) != 4){
+        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) != RESERVABLE){
             addParameters(Parameters.algorithm,  2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
