@@ -611,6 +611,7 @@ public class PeersService {
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
                 this, timeLimiterService.acquireLimiter("P2PTransport"));
+        listeners.notify(peer, Event.NEW_PEER);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{
@@ -696,12 +697,20 @@ public class PeersService {
         return p;
     }
 
-    public void connectPeer(Peer peer) {
-        peer.unBlacklist();
-        PeerAddress pa= resolveAnnouncedAddress(peer.getAnnouncedAddress());
-        if(pa!=null && !isMyAddress(pa)){
-           peer.handshake(blockchainConfig.getChain().getChainId());
+    public boolean connectPeer(Peer peer) {
+        boolean res = false;
+        if(peer.getState()==PeerState.CONNECTED){
+            return true;
         }
+        peer.unBlacklist();
+        PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
+        if(pa!=null && !isMyAddress(pa)){
+           res = ((PeerImpl)peer).handshake();
+        }
+        if(res){
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
+        }
+        return res;
     }
 
     public void sendToSomePeers(Block block) {

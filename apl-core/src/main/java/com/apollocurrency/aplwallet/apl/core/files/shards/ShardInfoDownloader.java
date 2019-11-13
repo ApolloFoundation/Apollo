@@ -24,6 +24,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 
@@ -34,8 +37,8 @@ import lombok.Getter;
 @Slf4j
 public class ShardInfoDownloader {
 
-    private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 6; //6 threads is enough for downloading
-    private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 20; // question 20 peers and surrender
+    private final static int ENOUGH_PEERS_FOR_SHARD_INFO = 15; //15 elements is enough for decision
+    private final static int ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL = 40; // question 30 peers and surrender
     private final Set<String> additionalPeers;
     // shardId:shardInfo map
     @Getter
@@ -130,21 +133,36 @@ public class ShardInfoDownloader {
         //here we are trying to create peers and trying to connect
          Peer p = peers.findOrCreatePeer(null, addr, true);
          if(p!=null){
-             PeerClient pc = new PeerClient(p);
-             res = pc.getShardingInfo();
+             if( peers.connectPeer(p)){
+                PeerClient pc = new PeerClient(p);
+                res = pc.getShardingInfo();
+             }else{
+                 log.debug("Can not connect to peer: {}",addr);
+             }
+         }else{
+             log.debug("Can not create peer: {}",addr);
          }  
          return res;
+    }
+    
+    private List<String> randomizeOrder(Set<String> ss){
+      List<String> sl = new ArrayList<>(ss); 
+      Collections.shuffle(sl);
+      return sl;
     }
     
     public Map<String,ShardingInfo> getShardInfoFromPeers() {
         log.debug("Requesting ShardingInfo from Peers...");
         int counterTotal = 0;        
 
-        Set<Peer> knownPeers = peers.getAllConnectedPeers();
+        Set<Peer> kp = peers.getAllConnectedPeers();
+        Set<String> knownPeers = new HashSet<>();
+        kp.forEach((p) -> {
+                knownPeers.add(p.getHostWithPort());
+        });
         log.trace("ShardInfo knownPeers {}", knownPeers);
         //get sharding info from known peers
-        for (Peer p : knownPeers) {
-            String pa = p.getHostWithPort();
+        for (String pa : randomizeOrder(knownPeers)) {
             ShardingInfo si = getShardingInfoFromPeer(pa);
             if(si!=null){
                 shardInfoByPeers.put(pa, si);
@@ -161,24 +179,18 @@ public class ShardInfoDownloader {
         }
         //we have not enough known peers, connect to additional
         if (shardInfoByPeers.size() < ENOUGH_PEERS_FOR_SHARD_INFO) {
-            Set<String> additionalPeersCopy = new HashSet<>();
-            additionalPeersCopy.addAll(additionalPeers);
-            //avoid modification while iterating
-            for (String pa : additionalPeersCopy) {
-                //here we are trying to create peers
-                Peer p = peers.findOrCreatePeer(null, pa, true);
-                if(p!=null) {
-                    ShardingInfo si = getShardingInfoFromPeer(pa);                    
-                    if (shardInfoByPeers.size() > ENOUGH_PEERS_FOR_SHARD_INFO) {
-                        log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
-                        break;
-                    }
-                    counterTotal++;
-                    if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
-                        break;
-                    }
-                }else{
-                    log.debug("Can not create peer: {}",pa);
+            //we need new ones only here 
+            additionalPeers.removeAll(knownPeers);
+            for (String pa : randomizeOrder(additionalPeers)) {
+                ShardingInfo si = getShardingInfoFromPeer(pa);
+                shardInfoByPeers.put(pa, si);
+                if (shardInfoByPeers.size() > ENOUGH_PEERS_FOR_SHARD_INFO) {
+                    log.debug("counter > ENOUGH_PEERS_FOR_SHARD_INFO {}", true);
+                    break;
+                }
+                counterTotal++;
+                if (counterTotal > ENOUGH_PEERS_FOR_SHARD_INFO_TOTAL) {
+                    break;
                 }
             }
         }
