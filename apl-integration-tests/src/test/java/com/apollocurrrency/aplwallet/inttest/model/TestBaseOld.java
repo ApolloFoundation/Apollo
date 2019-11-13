@@ -891,7 +891,7 @@ public class TestBaseOld extends TestBase {
     @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int issuanceHeight = currentHeight + 8;
+        int issuanceHeight = currentHeight + 10;
 
         final int EXCHANGEABLE = 1;
         final int CONTROLLABLE = 2;

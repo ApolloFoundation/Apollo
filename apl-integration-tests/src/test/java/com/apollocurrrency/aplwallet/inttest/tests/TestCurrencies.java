@@ -208,7 +208,7 @@ public class TestCurrencies extends TestBaseOld {
                     0);
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
-            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,1);
+            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+1);
             verifyCreatingTransaction(reserveTransaction);
         }
     }
