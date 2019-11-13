@@ -1,8 +1,18 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -27,14 +37,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,12 +52,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -63,6 +68,7 @@ public class DexOrderProcessor {
     private IDexValidator dexValidator;
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
+    private TimeService timeService;
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
@@ -153,7 +159,7 @@ public class DexOrderProcessor {
 
                 log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
-                TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, STEP_2);
+                TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, DEX_MAX_TIME_OF_ATOMIC_SWAP);
 
                 log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, transferTxInfo);
 
@@ -166,7 +172,7 @@ public class DexOrderProcessor {
                 contractAttachment.setCounterTransferTxId(transferTxInfo.getTxId());
                 contractAttachment.setSecretHash(secretHash);
                 contractAttachment.setEncryptedSecret(encryptedSecretX);
-                contractAttachment.setTimeToReply(Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+                contractAttachment.setTimeToReply(DEX_MAX_TIME_OF_ATOMIC_SWAP);
 
                 //TODO move it to some util
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
@@ -317,13 +323,27 @@ public class DexOrderProcessor {
                     continue;
                 }
 
+                SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
+                Long swapDeadline = swapData.getTimeDeadLine();
+                int currentTime = timeService.getEpochTime();
+                long timeLeft = swapDeadline - currentTime;
+                if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60);
+                    continue;
+                }
+                if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60);
+                    continue;
+                }
+                long transferWithApprovalDuration = timeLeft / 2;
+
                 String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
                 log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
 
-                TransferTransactionInfo transferTransactionInfo = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getId(), contract.getSecretHash(), STEP_2);
+                TransferTransactionInfo transferTransactionInfo = dexService.transferMoneyWithApproval(transferMoneyReq, order, counterOrder.getToAddress(), contract.getId(), contract.getSecretHash(), (int) transferWithApprovalDuration);
 
                 log.debug("DexOfferProcessor Step-2. User transferred money accountId: {} , txId: {}.", accountId, transferTransactionInfo.getTxId());
 
@@ -332,7 +352,7 @@ public class DexOrderProcessor {
                 }
 
 
-                DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTransactionInfo.getTxId(), null, null, STEP_3, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+                DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTransactionInfo.getTxId(), null, null, STEP_3, (int) transferWithApprovalDuration);
 
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
                 createTransactionRequest.setBroadcast(false);
