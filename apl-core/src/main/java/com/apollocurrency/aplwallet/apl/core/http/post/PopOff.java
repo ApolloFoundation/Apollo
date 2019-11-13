@@ -54,7 +54,9 @@ public final class PopOff extends AbstractAPIRequestHandler {
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
         lookupBlockchainProcessor();
+        lookupDexOrderProcessor();
         try {
+            dexOrderProcessor.suspendContractProcessor();
             blockchainProcessor.suspendBlockchainDownloading();
             //TODO: It's a temporary approach to prevent hanging on calling the waitTrimming method.
             // It needs to look for the thread that keeps the readLock so long time.
@@ -68,6 +70,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
                 return JSONResponses.missing("numBlocks", "height");
             }
         } finally {
+            dexOrderProcessor.resumeContractProcessor();
             blockchainProcessor.resumeBlockchainDownloading();
         }
         //usually we do not need those blocks in output

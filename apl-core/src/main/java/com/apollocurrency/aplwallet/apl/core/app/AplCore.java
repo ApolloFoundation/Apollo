@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
@@ -77,12 +76,8 @@ import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PEER_PORT;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
@@ -123,8 +118,6 @@ public final class AplCore {
     @Setter
     PeersService peers;
     private String initCoreTaskID;
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
@@ -301,7 +294,7 @@ public final class AplCore {
                 AddOns.init();
                 Helper2FA.init(databaseManager);
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  70.1, "Apollo core classes initialization done");
-//signal to API that core is reaqdy to serve requests. Should be removed as soon as all API will be on RestEasy                
+                //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
                 ApiSplitFilter.isCoreReady = true;
 
                 PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
@@ -309,21 +302,12 @@ public final class AplCore {
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
 
+                if(!dexOrderProcessor.isInitialized()){
+                    throw new RuntimeException("DexOrder is not initialized.");
+                }
+
                 //start all background tasks
                 taskDispatchManager.dispatch();
-
-                //TODO move to taskDispatchManager Andrii K
-                Runnable task = () -> {
-                    long start = System.currentTimeMillis();
-                    log.info("DexOrderProcessor: start");
-                    try {
-                        dexOrderProcessor.processContracts();
-                    } catch (Throwable e) {
-                        log.warn("DexOrderProcessor error", e);
-                    }
-                    log.info("DexOrderProcessor: finish in {} ms",  System.currentTimeMillis() - start);
-                };
-                executor.scheduleWithFixedDelay(task, DEX_OFFER_PROCESSOR_DELAY, DEX_OFFER_PROCESSOR_DELAY, TimeUnit.MINUTES);
 
                 try {
                     secureRandomInitThread.join(10000);

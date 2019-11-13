@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONStreamAware;
@@ -44,6 +45,12 @@ public abstract class AbstractAPIRequestHandler {
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected TrimService trimService;
     private PeersService peers;
+    protected DexOrderProcessor dexOrderProcessor;
+
+    protected DexOrderProcessor lookupDexOrderProcessor() {
+        if (dexOrderProcessor == null) dexOrderProcessor = CDI.current().select(DexOrderProcessor.class).get();
+        return dexOrderProcessor;
+    }
 
     protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();

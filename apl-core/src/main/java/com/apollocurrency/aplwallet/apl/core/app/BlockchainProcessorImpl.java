@@ -62,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -167,6 +168,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile boolean isDownloading;
     private volatile boolean isProcessingBlock;
     private volatile boolean isRestoring;
+
+    private DexOrderProcessor dexOrderProcessor;
+    private DexOrderProcessor lookupDexOrderProcessor() {
+        if (dexOrderProcessor == null) dexOrderProcessor = CDI.current().select(DexOrderProcessor.class).get();
+        return dexOrderProcessor;
+    }
 
     private TransactionProcessor lookupTransactionProcessor() {
         if (transactionProcessor == null) transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
@@ -480,6 +487,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void fullReset() {
         globalSync.writeLock();
         try {
+            lookupDexOrderProcessor().suspendContractProcessor();
             suspendBlockchainDownloading();
             try {
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -505,6 +513,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
             } finally {
+                lookupDexOrderProcessor().resumeContractProcessor();
                 resumeBlockchainDownloading();
             }
         } finally {

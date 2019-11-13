@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -28,9 +29,10 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private PeersService peers = CDI.current().select(PeersService.class).get(); 
+    private PeersService peers = CDI.current().select(PeersService.class).get();
+    private DexOrderProcessor dexOrderProcessor;
 
-//    @Inject
+    //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
         this.blockchain = blockchain;
@@ -52,6 +54,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public void suspendBlockchain() {
+        lookupDexOrderProcessor().suspendContractProcessor();
         lookupBlockchainProcessor().suspendBlockchainDownloading();
         Generator.suspendForging();
         peers.suspend();
@@ -59,6 +62,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
 
     @Override
     public void resumeBlockchain() {
+        lookupDexOrderProcessor().resumeContractProcessor();
         LOG.debug("Restarting peer server, blockchain processor and forging");
         lookupBlockchainProcessor().resumeBlockchainDownloading();
         peers.resume();
@@ -85,6 +89,11 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
             blockchain = CDI.current().select(BlockchainImpl.class).get();
         }
         return blockchain;
+    }
+
+    private DexOrderProcessor lookupDexOrderProcessor() {
+        if (dexOrderProcessor == null) dexOrderProcessor = CDI.current().select(DexOrderProcessor.class).get();
+        return dexOrderProcessor;
     }
 
     @Override

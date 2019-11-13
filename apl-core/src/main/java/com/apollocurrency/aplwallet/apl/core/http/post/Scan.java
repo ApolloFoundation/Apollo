@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -52,8 +51,10 @@ public final class Scan extends AbstractAPIRequestHandler {
                 height = Integer.parseInt(req.getParameter("height"));
             } catch (NumberFormatException ignore) {}
             long start = System.currentTimeMillis();
-            BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
+            lookupBlockchainProcessor();
+            lookupDexOrderProcessor();
             try {
+                dexOrderProcessor.suspendContractProcessor();
                 blockchainProcessor.suspendBlockchainDownloading();
                 if (numBlocks > 0) {
                     blockchainProcessor.scan(lookupBlockchain().getHeight() - numBlocks + 1, validate);
@@ -63,6 +64,7 @@ public final class Scan extends AbstractAPIRequestHandler {
                     return JSONResponses.missing("numBlocks", "height");
                 }
             } finally {
+                dexOrderProcessor.resumeContractProcessor();
                 blockchainProcessor.resumeBlockchainDownloading();
             }
             long end = System.currentTimeMillis();
