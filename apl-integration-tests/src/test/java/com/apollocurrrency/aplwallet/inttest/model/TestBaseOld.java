@@ -73,8 +73,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.get
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
 import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
@@ -106,13 +105,12 @@ public class TestBaseOld extends TestBase {
         boolean isHeight = false;
         try {
             isHeight = Failsafe.with(retryPolicy).get(() -> getBlock().getHeight() >= height);
-            Assertions.assertTrue(isHeight);
         }
         catch (Exception e)
         {
-            Assertions.assertTrue(isHeight,String.format("Height not %s reached: ",height));
+            assertEquals(isHeight,getBlock().getHeight(),String.format("Height not %s reached: %s",height,getBlock().getHeight()));
         }
-        assertTrue(isHeight,String.format("Height not %s reached: ",height));
+        assertEquals(isHeight,getBlock().getHeight(),String.format("Height not %s reached: %s",height,getBlock().getHeight()));
         return isHeight;
     }
     @Step
@@ -884,7 +882,7 @@ public class TestBaseOld extends TestBase {
     }
 
 
-    @Step("Get Dex History with param: Type: {2}")
+    @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
         int issuanceHeight = currentHeight + 6;
