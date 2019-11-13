@@ -4,6 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -90,6 +99,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -97,7 +107,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -112,16 +121,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Disabled;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Inject;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -148,10 +148,11 @@ class CsvExporterTest {
     private List<String> blockIndexExportContent = List.of("BLOCK_ID(-5|19|0),BLOCK_HEIGHT(4|10|0)", "1,1", "2,2", "3,30");
     private List<String> transactionIndexExportContent = List.of(
             "TRANSACTION_ID(-5|19|0),PARTIAL_TRANSACTION_HASH(-3|2147483647|0),TRANSACTION_INDEX(5|5|0),HEIGHT(4|10|0)",
+            "100,zG8XGTR3IJylgh0305HnCuZo3RwR3XmO,0,30",
             "101,InCisA4/cPtdXY4No8eRnt1NM2gXbm8t,0,1",
             "102,uW1en2TlHFl1E3F2ke7urxiiaoZANPYs,1,1",
-            "103,zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY,2,1",
-            "100,zG8XGTR3IJylgh0305HnCuZo3RwR3XmO,0,30");
+            "103,zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY,2,1"
+          );
     private List<String> transactionExportContent = List.of(
             "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
             "3444674909301056677,1440,null,0,0,2500000000000,pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,1000,-468651855371775066,N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==,35073712,5,0,9211698109297098287,vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=,9200,ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,FALSE,AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB,1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
@@ -337,6 +338,7 @@ class CsvExporterTest {
         assertEquals(3, lines.size());
         assertTrue(lines.get(0).contains("BLOCK_TIMEOUTS"));
         assertTrue(lines.get(0).contains("BLOCK_TIMESTAMPS"));
+        assertFalse(lines.get(0).contains("PRUNABLE_ZIP_HASH"));
         log.debug("Processed Table = [{}]", filesInFolder.size());
     }
 
@@ -353,7 +355,7 @@ class CsvExporterTest {
         long exported = csvExporter.exportTransactionIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
         assertEquals(3, exported);
         List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
-        assertEquals(transactionIndexExportContent.subList(0, 4), transactionIndexCsv);
+        assertEquals(List.of(transactionIndexExportContent.get(0), transactionIndexExportContent.get(2), transactionIndexExportContent.get(3), transactionIndexExportContent.get(4)), transactionIndexCsv);
     }
 
     @Test
