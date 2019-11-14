@@ -146,7 +146,7 @@ public class DexService {
     }
 
     @Transactional
-    public List<DexTradeEntry> getTradeInfoForPeriod(Integer start, Integer finish,
+    public List<DexTradeEntry> getTradeInfoForPeriod(long start, long finish,
                                                      Byte pairCurrency, Integer offset, Integer limit) {
         return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
     }
@@ -160,18 +160,29 @@ public class DexService {
         
         DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
         
-        BigDecimal hi = cnv.apply( tradeEntries.get(0) ).pairRate;//,low=t,open,close; 
-        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;
-        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;
+        BigDecimal hi = cnv.apply( tradeEntries.get(0) ).pairRate;//,low=t,open,close;         
+        // log.debug("hi: {}", hi );
+        
+        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;        
+        // log.debug("low: {}", low );
+        
+        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;        
+        // log.debug("open: {}", open );
+        
         BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
+        // log.debug("close: {}", close );
         
         BigDecimal volumefrom = BigDecimal.ZERO;
         BigDecimal volumeto = BigDecimal.ZERO;
         
+        // log.debug("entries num: {}", tradeEntries.size());
         
         // iterate list to find the highest or the lowest values
         for (DexTradeEntry currEl : tradeEntries) {    
             DexTradeInfoDto currElDto = cnv.apply(currEl);
+            
+            // log.debug("amount: {}, rate: {} ", currElDto.senderOfferAmount, currElDto.pairRate);
+            
             if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
             if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
             

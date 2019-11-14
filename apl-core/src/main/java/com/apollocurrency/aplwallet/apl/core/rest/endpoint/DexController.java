@@ -78,6 +78,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -565,7 +566,7 @@ public class DexController {
             int width=200;
             Random r = new Random();
             
-            double prevClose=50;
+            BigDecimal prevClose= BigDecimal.TEN;
             
             for (int i=0; i< 2000; i++) {
                                                                     
@@ -579,23 +580,23 @@ public class DexController {
                 if (sign) rWidth = -rWidth;
                                 
                 randomEntry.open =  prevClose;
-                randomEntry.close =  randomEntry.open + rWidth;
+                randomEntry.close =  randomEntry.open.add( BigDecimal.valueOf(rWidth));
                 
                 int rHigh = 50;// 15+ r.nextInt(25);
                 int rLow = 50;// 15+r.nextInt(25);
                 
                 if (rWidth>0) {                    
-                    randomEntry.high = randomEntry.close + rHigh;
-                    randomEntry.low = randomEntry.open - rLow;
+                    randomEntry.high = randomEntry.close.add (BigDecimal.valueOf(rHigh));
+                    randomEntry.low = randomEntry.open.subtract(BigDecimal.valueOf(rLow));
                 } else {
-                    randomEntry.high = randomEntry.open + rHigh;
-                    randomEntry.low = randomEntry.close - rLow;
+                    randomEntry.high = randomEntry.open.add(BigDecimal.valueOf(rHigh));
+                    randomEntry.low = randomEntry.close.subtract(BigDecimal.valueOf(rLow));
                 }
                 
                 prevClose = randomEntry.close;
                                 
-                randomEntry.volumefrom = r.nextInt(10);
-                randomEntry.volumeto = r.nextInt(50);
+                randomEntry.volumefrom = BigDecimal.valueOf( r.nextInt(10) );
+                randomEntry.volumeto =  BigDecimal.valueOf( r.nextInt(50) );
 
                 initialTime += 60;
                 acc += 10;
@@ -643,9 +644,9 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+        log.debug("getHistominute1:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
 
-            int initialTime = toTs - (60*2000);
+            int initialTime = toTs - (60*limit);
             int startGraph = initialTime;
 
 
@@ -663,22 +664,88 @@ public class DexController {
             int width=200;
             Random r = new Random();
             
-            double prevClose=50;
+            BigDecimal prevClose= BigDecimal.TEN;
+            
+            long startTS = (long)initialTime * 1000L;
+            long endTS = (long)toTs * 1000L;             
+
+            log.debug("start: {}, finish: {}", startTS, endTS );
+            
+            List<DexTradeEntry> dexTradeEntries = service.getTradeInfoForPeriod(startTS, endTS, (byte)1, 0, Integer.MAX_VALUE);
+
+            log.debug("extracted: {} values", dexTradeEntries.size() );
+            
             
             for (int i=0; i< 2000; i++) {
-                                                                    
+                log.debug("i : {}",i);
+                                
+                // SimpleTradingEntry randomEntry = new SimpleTradingEntry();
+                //randomEntry.time = initialTime;
+                long start = (long)initialTime * 1000;
+                long finish = 60000 + start ;
+                
+                SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriod(dexTradeEntries, start, finish); // service.getTradeInfoMinForPeriod(start, finish, (byte)1, offset, limitx);  
+            
+                entryForPeriod.time = initialTime;
+                entryForPeriod.open =  prevClose;
+//                randomEntry.close =  entryForPeriod.getClose(); // randomEntry.open + rWidth;
+//                randomEntry.high = entryForPeriod.getHigh();
+//                randomEntry.low = entryForPeriod.getLow();
+//                randomEntry.volumefrom = entryForPeriod.getVolumefrom();                        
+//                randomEntry.volumeto = entryForPeriod.getVolumeto().longValue();
+                
+                
+                
+                prevClose = entryForPeriod.close;
+                                
+                // randomEntry.volumefrom = r.nextInt(10);
+                // randomEntry.volumeto = r.nextInt(50);
+
+                initialTime += 60;
+                
+                data.add(entryForPeriod);
+            }
+                
+                
+            
+            /*
+            for (int i=0; i< 2000; i++) {
+                log.debug("i : {}",i);
+                
+                
+                
                 SimpleTradingEntry randomEntry = new SimpleTradingEntry();
                 randomEntry.time = initialTime;
                 
-                boolean sign = (r.nextInt(2) == 1);
                 
-                double rWidth = r.nextInt(50) + r.nextDouble();
                 
-                if (sign) rWidth = -rWidth;
-                                
+                // boolean sign = (r.nextInt(2) == 1);                
+                // double rWidth = r.nextInt(50) + r.nextDouble();
+                
+                // if (sign) rWidth = -rWidth;
+                
+                int firstIndex = 0; 
+                int lastIndex = Integer.MAX_VALUE;
+                
+                long start = (long)randomEntry.time * 1000;
+                long finish = 60000 + start ;
+                
+                Integer limitx = 10; //Integer.MAX_VALUE;        
+                Integer offset = 0;
+           
+                // log.debug("getting dexTradeInfoMin, start: {}, finish: {}, offset: {}, limit: {}", start, finish, offset, limitx);
+                long startTS = System.currentTimeMillis();
+                DexTradeEntryMin dexTradeEntryMin = service.getTradeInfoMinForPeriod(start, finish, (byte)1, offset, limitx);  
+                long end = System.currentTimeMillis();
+                
+                float sec = (end - start) / 1000F; 
+                log.debug("it took {} sec", sec );
+                
+                // log.debug("got dexTradeInfoMin:");
+
+                
                 randomEntry.open =  prevClose;
-                randomEntry.close =  randomEntry.open + rWidth;
-                
+                randomEntry.close =  dexTradeEntryMin.getClose().longValue(); // randomEntry.open + rWidth;
                 int rHigh = 50;// 15+ r.nextInt(25);
                 int rLow = 50;// 15+r.nextInt(25);
                 
@@ -689,17 +756,26 @@ public class DexController {
                     randomEntry.high = randomEntry.open + rHigh;
                     randomEntry.low = randomEntry.close - rLow;
                 }
+
+                randomEntry.high = dexTradeEntryMin.getHi().longValue();
+                randomEntry.low = dexTradeEntryMin.getLow().longValue();
+                randomEntry.volumefrom = dexTradeEntryMin.getVolumefrom().longValue();
+                randomEntry.volumeto = dexTradeEntryMin.getVolumeto().longValue();
+                
+                
                 
                 prevClose = randomEntry.close;
                                 
-                randomEntry.volumefrom = r.nextInt(10);
-                randomEntry.volumeto = r.nextInt(50);
+                // randomEntry.volumefrom = r.nextInt(10);
+                // randomEntry.volumeto = r.nextInt(50);
 
                 initialTime += 60;
-                acc += 10;
+                
                 data.add(randomEntry);
+
                 }
-            
+  */
+
             // Collections.reverse(data);
             tradingDataOutput.setData(data);
             
@@ -720,7 +796,7 @@ public class DexController {
             // tradingDataOutput.setRateLimit(rateLimit);
             tradingDataOutput.setHasWarning(false);
             
-            
+          
             return Response.ok( tradingDataOutput.toDTO() ) .build();
     }
     

@@ -33,7 +33,7 @@ public class TradingViewServiceImpl implements TradingViewService{
     @Setter
     private volatile boolean done;    
     private DexService dexService;
-    
+                                                 
     private static final long initialTimestamp = 1569888000000L; // GMT: Tuesday, 1 October 2019 г., 0:00:00   
     private static final long endTimestemp =  1574208000000L; // Date and time (GMT): Wednesday, 20 November 2019 г., 0:00:00
     private static final long discreteInterval = 60; // sec for histominute
@@ -70,7 +70,8 @@ public class TradingViewServiceImpl implements TradingViewService{
             dexTradeEntryWrite.setSenderOfferCurrency((byte)0);        
             dexTradeEntryWrite.setSenderOfferAmount( ThreadLocalRandom.current().nextLong(10000) );
             dexTradeEntryWrite.setPairCurrency((byte)1);
-            dexTradeEntryWrite.setPairRate(BigDecimal.valueOf(ThreadLocalRandom.current().nextLong(1000)));           
+            dexTradeEntryWrite.setPairRate(BigDecimal.valueOf(random.nextInt(1000))); 
+            //log.debug("pair rate: {}" , dexTradeEntryWrite.getPairRate());
             Long randomTransactionID = random.nextLong();
             dexTradeEntryWrite.setTransactionID(randomTransactionID);
             dexTradeEntryWrite.setFinishTime(i);            
