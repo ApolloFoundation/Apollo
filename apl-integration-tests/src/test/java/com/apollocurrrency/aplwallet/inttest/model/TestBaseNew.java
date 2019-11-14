@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
@@ -809,6 +810,16 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public Currency getCurrency(String CurrencyId) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public PollDTO getPoll(String poll) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse createPoll(Wallet wallet,int votingModel, String name, int plusFinishHeight, String holding) {
         throw new NotImplementedException("Not implemented");
     }
 

@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -163,6 +164,8 @@ public interface ITest {
     CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate);
     CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
     CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
+    PollDTO getPoll(String poll);
+    CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding);
 
 
 }

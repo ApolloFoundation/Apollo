@@ -96,5 +96,19 @@ public enum  Parameters {
     phasingMinBalanceModel,
     phasingHolding,
     sender,
-    code
+    code,
+    poll,
+    minBalance,
+    finishHeight,
+    maxNumberOfOptions,
+    minNumberOfOptions,
+    minRangeValue,
+    maxRangeValue,
+    isCustomFee,
+    answers,
+    create_poll_answers,
+    minBalanceModel,
+    option00,
+    option01,
+    option02
 }
