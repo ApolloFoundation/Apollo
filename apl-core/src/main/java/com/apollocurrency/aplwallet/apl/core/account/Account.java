@@ -71,6 +71,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -1064,16 +1065,6 @@ public class Account {
            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
        }
        addToBalanceATM(event, eventId, amountATM, 0);
-    }
-
-    private String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    private String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
