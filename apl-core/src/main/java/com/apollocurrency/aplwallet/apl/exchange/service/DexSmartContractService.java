@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
@@ -37,6 +38,8 @@ import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.utils.Numeric;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,8 +48,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -144,6 +145,21 @@ public class DexSmartContractService {
         boolean isApproved = approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
 
         return isApproved;
+    }
+
+    public boolean refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+
+        String params = Convert.toHexString(secretHash);
+        String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.DexOperation.REFUND));
+        if (txHash == null) {
+            ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND,params, fromAddress) ,ethWalletKey.getCredentials());
+            txHash = dexContract.refund(secretHash, waitConfirmation);
+        }
+
+        return txHash != null;
+
     }
 
     public boolean hasFrozenMoney(DexOrder order) {
@@ -294,7 +310,7 @@ public class DexSmartContractService {
                         if (receiptOptional.isPresent()) {
                             TransactionReceipt receipt = receiptOptional.get();
                             String status = receipt.getStatus();
-                            if (Numeric.decodeQuantity(status).longValue() == 0) { // transaction was reverted
+                            if (Numeric.decodeQuantity(status).longValue() != 1) { // transaction was reverted
                                 dexTransactionDao.delete(tx.getDbId());
                                 txHash = null;
                             }

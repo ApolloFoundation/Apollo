@@ -1,14 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
@@ -42,18 +33,29 @@ import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
 @Slf4j
 @Singleton
@@ -75,7 +77,7 @@ public class DexOrderProcessor {
 
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao, TimeService timeService) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -84,6 +86,7 @@ public class DexOrderProcessor {
         this.dexSmartContractService = dexSmartContractService;
         this.ethereumWalletService = ethereumWalletService;
         this.validator = validator;
+        this.timeService = timeService;
     }
 
 
@@ -605,6 +608,45 @@ public class DexOrderProcessor {
             }
         }
 
+    }
+
+    public void refundExpiredAtomicSwaps(long accountId) {
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+
+        List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+
+        for (String address : addresses) {
+            try {
+                List<UserEthDepositInfo> deposits = dexSmartContractService.getUserFilledOrders(address);
+
+                for (UserEthDepositInfo deposit : deposits) {
+                    List<ExchangeContract> contracts = dexService.getContractsByAccountOrderFromStatus(accountId, deposit.getOrderId(), (byte) 1); // do not check contracts without atomic swap hash
+
+                    for (ExchangeContract contract: contracts) {
+                         byte[] swapHash = contract.getSecretHash();
+                         Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
+                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
+                         Long timeDeadLine = swapData.getTimeDeadLine();
+                         if (timeDeadLine > timeService.getEpochTime()) {
+                             boolean success = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
+                             if (!success) {
+                                 log.warn("Unable to send refund tx for order {}, contract {}", deposit.getOrderId(), contract.getId());
+                             } else {
+                                 log.debug("Refund initiated for order {}, contract {}", deposit.getOrderId(), contract.getId());
+                                 String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
+                                 if (StringUtils.isNotBlank(hash)) {
+                                     log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), deposit.getOrderId());
+                                 } else {
+                                     log.warn("Refund was not finished, unable to withdraw: order - {} ",deposit.getOrderId());
+                                 }
+                             }
+                         }
+                     }
+                }
+            } catch (AplException.ExecutiveProcessException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
     }
 
     public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
