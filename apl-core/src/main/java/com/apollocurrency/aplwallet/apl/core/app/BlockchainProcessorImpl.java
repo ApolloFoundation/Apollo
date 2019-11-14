@@ -339,7 +339,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .name("BlockchainInit")
                 .task(() -> {
                     continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
-                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
+                        trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    } else {
+                        trimService.resetTrim();
+                    }
                     if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                         scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
                     } else {
