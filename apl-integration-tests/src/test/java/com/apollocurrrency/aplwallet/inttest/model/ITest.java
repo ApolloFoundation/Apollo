@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -65,7 +66,7 @@ public interface ITest {
     GetAccountResponse getAccount(String account);
     GetAccountBlockCountResponse getAccountBlockCount(String account);
     AccountBlockIdsResponse getAccountBlockIds(String account);
-    AccountDTO getAccountId(Wallet wallet);
+    AccountDTO getAccountId(String secretPhrase);
     AccountLedgerResponse getAccountLedger(Wallet wallet);
     AccountPropertiesResponse getAccountProperties(String account);
     SearchAccountsResponse  searchAccounts(String searchQuery);
@@ -163,6 +164,9 @@ public interface ITest {
     CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate);
     CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
     CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
+    AccountCurrencyResponse getAccountCurrencies(Wallet wallet);
+    CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType );
+
 
 
 }

@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -59,7 +60,6 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -153,9 +153,9 @@ public class TestBaseOld extends TestBase {
         return getInstanse(AccountBlockIdsResponse.class);
     }
     @Step
-    public AccountDTO getAccountId(Wallet wallet) {
+    public AccountDTO getAccountId(String secretPhrase) {
         addParameters(RequestType.requestType, getAccountId);
-        addParameters(Parameters.wallet,wallet);
+        addParameters(Parameters.secretPhrase,secretPhrase);
         return getInstanse(AccountDTO.class);
     }
     @Step
@@ -892,7 +892,7 @@ public class TestBaseOld extends TestBase {
     @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int issuanceHeight = currentHeight + 15;
+        int issuanceHeight = currentHeight + 11;
 
         final int EXCHANGEABLE = 1;
         final int CONTROLLABLE = 2;
@@ -937,6 +937,10 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
             addParameters(Parameters.reserveSupply, 0);
+        }
+
+        if ((type&NON_SHUFFLEABLE) != NON_SHUFFLEABLE){
+            System.out.println(type);
         }
         
         return getInstanse(CreateTransactionResponse.class);
@@ -1079,6 +1083,7 @@ public class TestBaseOld extends TestBase {
     public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
         addParameters(RequestType.requestType, getAccountCurrencies);
         addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.includeCurrencyInfo, true);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(AccountCurrencyResponse.class);
@@ -1102,6 +1107,39 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
 
     }
+    @Step
+    public CreateTransactionResponse shufflingCancel( Wallet wallet, String shuffling,String cancellingAccount, String shufflingStateHash) {
+        addParameters(RequestType.requestType, shufflingCancel);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.cancellingAccount, cancellingAccount);
+        addParameters(Parameters.shufflingStateHash, shufflingStateHash);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+
+    }
+
+    @Step
+    public ShufflingDTO getShuffling(String shuffling) {
+        addParameters(RequestType.requestType, getShuffling);;
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.includeHoldingInfo, false);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(ShufflingDTO.class);
+    }
+
+    @Step
+    public CreateTransactionResponse shufflingRegister(Wallet wallet,String shufflingFullHash) {
+        addParameters(RequestType.requestType, shufflingRegister);;
+        addParameters(Parameters.shufflingFullHash, shufflingFullHash);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
 
 
     @AfterEach

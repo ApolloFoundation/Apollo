@@ -1,6 +1,12 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    includeCurrencyInfo,
+    shufflingFullHash,
+    shufflingStateHash,
+    includeHoldingInfo,
+    cancellingAccount,
+    shuffling,
     holdingType,
     holding,
     registrationPeriod,

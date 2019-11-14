@@ -61,7 +61,7 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51})
     public void deleteCurrency(int type){
-        int supply  = RandomUtils.nextInt(0,1000);
+        int supply  = RandomUtils.nextInt(1,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
                     RandomStringUtils.randomAlphabetic(5),

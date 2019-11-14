@@ -24,6 +24,12 @@ public class Wallet {
         this.pass = pass;
     }
 
+    public Wallet(String user, String pass, boolean vault) {
+        this.user = user;
+        this.pass = pass;
+        this.vault = vault;
+    }
+
     @Override
     public String toString() {
         if(!vault) return "Standart Wallet";
