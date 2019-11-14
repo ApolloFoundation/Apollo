@@ -24,7 +24,8 @@
     "user":"APL-NZKH-MZRE-2CTT-98NPZ",
     "pass":"0",
     "publicKey":"226361039b9906728c21b3a43b9b2cbc746b0cf06d97bbca6b6054805edf131c",
-    "vault":false
+    "vault":false,
+    "accountId": "9211698109297098287"
   },
   "net":{
     "n1": {

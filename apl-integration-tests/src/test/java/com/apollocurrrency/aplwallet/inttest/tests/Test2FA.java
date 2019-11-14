@@ -25,6 +25,7 @@ import java.util.Objects;
 import io.qameta.allure.Description;
 
 @DisplayName("Secret File")
+@Epic(value = "Secret File")
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")

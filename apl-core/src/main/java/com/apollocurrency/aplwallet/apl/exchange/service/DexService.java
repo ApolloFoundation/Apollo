@@ -75,15 +75,15 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -403,7 +403,7 @@ public class DexService {
 
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting() / 60, null);
                 result.setTxId(txHash);
             } else {
                 throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + order.getId());
@@ -512,6 +512,8 @@ public class DexService {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
+        Transaction orderTx;
+        Transaction contractTx = null;
 
         if (counterOffer != null) {
             if (counterOffer.getAccountId().equals(order.getAccountId())) {
@@ -522,33 +524,35 @@ public class DexService {
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
 
             // 2. Create contract.
             DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
             TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
-            response = transactionResponse.getJson();
-            Transaction contractTx = transactionResponse.getTx();
-            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
+            contractTx = transactionResponse.getTx();
+
+            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(orderTx, null, null);
             MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
-//  ??      transactionProcessor.broadcastWhenConfirmed(contractTx, offerTx);
-            // will be broadcasted by DexOrderProcessor when offer will be confirmed
-            //            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
         }
 
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
             log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
+        }
+
+        ((JSONObject) response).put("order", orderTx.getJSONObject());
+        if (contractTx != null) {
+            ((JSONObject) response).put("contract", contractTx.getJSONObject());
         }
         if (freezeTx != null) {
             ((JSONObject) response).put("frozenTx", freezeTx);
