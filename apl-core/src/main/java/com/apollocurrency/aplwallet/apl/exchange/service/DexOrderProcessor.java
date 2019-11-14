@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -13,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -29,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
+import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -63,13 +66,17 @@ public class DexOrderProcessor {
     private IDexValidator dexValidator;
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
+    private Blockchain blockchain;
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
 
 
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
+                             DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl,
+                             DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService,
+                             MandatoryTransactionDao mandatoryTransactionDao, Blockchain blockchain) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -78,6 +85,7 @@ public class DexOrderProcessor {
         this.dexSmartContractService = dexSmartContractService;
         this.ethereumWalletService = ethereumWalletService;
         this.validator = validator;
+        this.blockchain = blockchain;
     }
 
 
@@ -291,6 +299,7 @@ public class DexOrderProcessor {
      *
      * @param accountId
      */
+    @Transactional
     private void processContractsForUserStep2(Long accountId) {
         Set<Long> processedOrders = new HashSet<>();
         List<ExchangeContract> contracts = dexService.getDexContracts(DexContractDBRequest.builder()
@@ -374,6 +383,7 @@ public class DexOrderProcessor {
      *
      * @param accountId
      */
+    @Transactional
     private void processIncomeContractsForUserStep3(Long accountId) {
 
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
@@ -405,6 +415,7 @@ public class DexOrderProcessor {
     }
 
 
+    @Transactional
     private void processOutcomeContractsForUserStep3(Long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
@@ -436,6 +447,18 @@ public class DexOrderProcessor {
                 //Check if contract was approved, and we can get shared secret.
                 if (!dexService.isTxApproved(contract.getSecretHash(), contract.getTransferTxId())) {
                     continue;
+                }
+
+                //Check that Phasing tx is not finished.
+                if (!DexCurrencyValidator.isEthOrPaxAddress(contract.getCounterTransferTxId())) {
+                    Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(contract.getCounterTransferTxId()));
+
+                    Integer finishTime = ((PhasingAppendixV2) transaction.getPhasing()).getFinishTime();
+                    if (finishTime < blockchain.getLastBlockTimestamp()) {
+                        log.error("Phasing transaction is finished. TrId: {}, OrderId:{} ", transaction.getId(), outcomeOrder.getId());
+                        continue;
+//                        dexService.onPhasedTxReject(transaction);
+                    }
                 }
 
                 log.debug("DexOfferProcessor Step-2(part-2). Approving money transfer. accountId: {}", accountId);

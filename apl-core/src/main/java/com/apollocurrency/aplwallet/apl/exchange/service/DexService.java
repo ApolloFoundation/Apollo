@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -83,6 +84,7 @@ import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -110,12 +112,14 @@ public class DexService {
     private Blockchain blockchain;
     private PhasingPollService phasingPollService;
     private IDexMatcherInterface dexMatcherService;
+    private BlockchainConfig blockchainConfig;
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
                       IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
+                      BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
         this.ethereumWalletService = ethereumWalletService;
@@ -135,6 +139,7 @@ public class DexService {
         this.phasingApprovedResultTable = phasingApprovedResultTable;
         this.mandatoryTransactionDao = mandatoryTransactionDao;
         this.orderFreezingCache = (LoadingCache<Long, OrderFreezing>) cache;
+        this.blockchainConfig = blockchainConfig;
     }
 
 
@@ -243,9 +248,17 @@ public class DexService {
     }
 
 
+    /**
+     * Sorted by height. It's important for a cash.
+     *
+     * @param dexOrderDBRequest
+     */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
-        return dexOrderDao.getOrders(dexOrderDBRequest);
+        return dexOrderDao.getOrders(dexOrderDBRequest)
+                .stream()
+                .sorted(Comparator.comparingInt(DexOrder::getHeight))
+                .collect(Collectors.toList());
     }
 
 
@@ -292,16 +305,22 @@ public class DexService {
         List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time);
 
         for (ExchangeContract contract : contracts) {
-            DexOrder order = getOrder(contract.getOrderId());
-            DexOrder counterOrder = getOrder(contract.getCounterOrderId());
-
-            closeOverdueContract(order, time);
-            closeOverdueContract(counterOrder, time);
-            contract.setContractStatus(ExchangeContractStatus.STEP_4);
-            order.setHeight(this.blockchain.getHeight()); // new height value
-            dexContractTable.insert(contract);
+            closeOverdueContracts(contract, time);
         }
     }
+
+    public void closeOverdueContracts(ExchangeContract contract, Integer time) throws AplException.ExecutiveProcessException {
+        DexOrder order = getOrder(contract.getOrderId());
+        DexOrder counterOrder = getOrder(contract.getCounterOrderId());
+
+        closeOverdueContract(order, time);
+        closeOverdueContract(counterOrder, time);
+        contract.setContractStatus(ExchangeContractStatus.STEP_4);
+        order.setHeight(this.blockchain.getHeight()); // new height value
+        dexContractTable.insert(contract);
+
+    }
+
 
     public void closeOverdueContract(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
         if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
@@ -322,7 +341,21 @@ public class DexService {
 
     public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
-            refundAPLFrozenMoney(order);
+            Long phasingTx;
+            ExchangeContract contract = getDexContractByOrderId(order.getId());
+
+            if (contract == null) {
+                contract = getDexContractByCounterOrderId(order.getId());
+                phasingTx = Long.parseUnsignedLong(contract.getCounterTransferTxId());
+            } else {
+                phasingTx = Long.parseUnsignedLong(contract.getTransferTxId());
+            }
+
+            PhasingPollResult phasingPollResult = phasingPollService.getResult(phasingTx);
+
+            if (!phasingPollResult.isApproved()) {
+                refundAPLFrozenMoney(order);
+            }
         }
     }
 
@@ -498,8 +531,13 @@ public class DexService {
                 log.debug("Order:" + userOffer.getId() + " was closed. TxId:" + respCloseOffer.getId() + " (Eth/Pax)");
 
             } else {
-
                 Transaction transaction = blockchain.getTransaction(Long.parseUnsignedLong(txId));
+                Integer finishTime = ((PhasingAppendixV2) transaction.getPhasing()).getFinishTime();
+                if (finishTime < blockchain.getLastBlockTimestamp()) {
+                    log.error("Phasing transaction is finished. TrId: {}, OrderId:{} ", transaction.getId(), userOffer.getId());
+                    return false;
+                }
+
                 List<byte[]> txHash = new ArrayList<>();
                 txHash.add(transaction.getFullHash());
 
@@ -720,6 +758,19 @@ public class DexService {
             List<PhasingVote> votes = phasingPollService.getVotes(transaction.getId());
             log.debug("Found {} votes, pick latest", votes.size());
             phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
+        }
+    }
+
+    public void onPhasedTxReject(@Observes @TxEvent(TxEventType.REJECT_PHASED_TRANSACTION) Transaction transaction) throws AplException.ExecutiveProcessException {
+        if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+
+            if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
+                Long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
+                ExchangeContract exchangeContract = getDexContractById(contractId);
+
+                closeOverdueContracts(exchangeContract, blockchain.getLastBlockTimestamp());
+            }
         }
     }
 
