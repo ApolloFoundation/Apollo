@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,9 @@ public class FileInfoDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
     }
     
-    public FileDownloadInfo getFileDownloadInfoFromPeer(String pa, String fileId){
+    public FileDownloadInfo getFileDownloadInfoFromPeer(String pa, String fileId) {
+        Objects.requireNonNull(pa, "pa is NULL");
+        Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo res = null;
         PeerAddress peerAddr = new PeerAddress(pa);
         Peer p = peersService.findOrCreatePeer(peerAddr, null, true);
@@ -64,7 +67,9 @@ public class FileInfoDownloader {
         return res;
     }
     
-    public Map<String,FileDownloadInfo> getFileDownloadInfo(String fileID, Set<String> peers) throws ExecutionException{
+    public Map<String,FileDownloadInfo> getFileDownloadInfo(String fileID, Set<String> peers) throws ExecutionException {
+        Objects.requireNonNull(fileID, "fileId is NULL");
+        Objects.requireNonNull(peers, "peers is NULL");
         for(String pa: peers){
            Future<FileDownloadInfo> dn_res = executor.submit(new Callable<FileDownloadInfo>(){
                @Override
@@ -90,7 +95,7 @@ public class FileInfoDownloader {
         return peersDownloadInfo;
     }
     
-    public FileDownloadDecision processFileDownloadInfo(){
+    public FileDownloadDecision processFileDownloadInfo() {
         FileDownloadDecision res;
         PeersList pl = new PeersList();
         for(String pa: peersDownloadInfo.keySet()){
@@ -112,7 +117,8 @@ public class FileInfoDownloader {
      * @param d
      * @return true is network is usable;
      */
-    public boolean isNetworkUsable(FileDownloadDecision d){
+    public boolean isNetworkUsable(FileDownloadDecision d) {
+        Objects.requireNonNull(d, "decision is NULL");
         boolean usable = false;
         switch(d){
             case AbsOK: usable = true;
@@ -127,6 +133,8 @@ public class FileInfoDownloader {
     
     public FileDownloadDecision prepareForDownloading(String fileID, Set<String> onlyPeers) {
         log.debug("prepareForDownloading()...");
+        Objects.requireNonNull(fileID, "fileId is NULL");
+        Objects.requireNonNull(onlyPeers, "onlyPeers is NULL");
         FileDownloadDecision res;
         Set<String> allPeers = new HashSet<>();
         if(onlyPeers==null || onlyPeers.isEmpty()){

@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -699,16 +700,17 @@ public class PeersService {
     }
 
     public boolean connectPeer(Peer peer) {
+        Objects.requireNonNull(peer, "peer is NULL");
         boolean res = false;
-        if(peer.getState()==PeerState.CONNECTED){
+        if(peer.getState() == PeerState.CONNECTED){
             return true;
         }
         peer.unBlacklist();
         PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
-        if(pa!=null && !isMyAddress(pa)){
+        if (pa != null && !isMyAddress(pa)) {
            res = ((PeerImpl)peer).handshake();
         }
-        if(res){
+        if (res) {
             connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
         }
         return res;
