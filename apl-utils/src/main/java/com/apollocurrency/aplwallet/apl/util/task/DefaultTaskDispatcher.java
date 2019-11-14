@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.lastStacktrace;
 import static com.apollocurrency.aplwallet.apl.util.task.Tasks.shutdownExecutor;
 
 /**
@@ -294,7 +295,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                             log.debug("Task = {}, Current thread={}", task.getName(), Thread.currentThread().getName());
                             task.getTask().run();
                         } catch (Throwable t) {
-                            errors.append(" Task=" + task.getName() + ", " + t.getMessage()).append('\n');
+                            errors.append(" Task=").append(task.getName()).append(", ").append(t.getMessage()).append('\n');
+                            errors.append(lastStacktrace(t.getStackTrace())).append('\n');
                             throw t;
                         } finally {
                             latch.countDown();
@@ -318,6 +320,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             }
         }
     }
+
 
     @Override
     public String info(){

@@ -4,8 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -19,7 +19,7 @@ public class ShardDownloadStatus {
     public final static int FAILED=4;
     private final Map<String,Integer> status;
 
-    public ShardDownloadStatus(List<String> fileIds) {
+    public ShardDownloadStatus(Set<String> fileIds) {
       status = new HashMap<>();
       fileIds.forEach((s) -> {
           status.put(s, NONE);
