@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,6 +73,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import lombok.Getter;
 
 @Singleton
 public class PeersService {
@@ -162,8 +164,8 @@ public class PeersService {
     private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
     private final TimeLimiterService timeLimiterService;
 
-    // TODO: YL remove static instance later
     private final PropertiesHolder propertiesHolder;
+    @Getter
     final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
@@ -611,6 +613,7 @@ public class PeersService {
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
                 this, timeLimiterService.acquireLimiter("P2PTransport"));
+        listeners.notify(peer, Event.NEW_PEER);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{
@@ -696,12 +699,21 @@ public class PeersService {
         return p;
     }
 
-    public void connectPeer(Peer peer) {
-        peer.unBlacklist();
-        PeerAddress pa= resolveAnnouncedAddress(peer.getAnnouncedAddress());
-        if(pa!=null && !isMyAddress(pa)){
-           peer.handshake(blockchainConfig.getChain().getChainId());
+    public boolean connectPeer(Peer peer) {
+        Objects.requireNonNull(peer, "peer is NULL");
+        boolean res = false;
+        if(peer.getState() == PeerState.CONNECTED){
+            return true;
         }
+        peer.unBlacklist();
+        PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
+        if (pa != null && !isMyAddress(pa)) {
+           res = ((PeerImpl)peer).handshake();
+        }
+        if (res) {
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
+        }
+        return res;
     }
 
     public void sendToSomePeers(Block block) {

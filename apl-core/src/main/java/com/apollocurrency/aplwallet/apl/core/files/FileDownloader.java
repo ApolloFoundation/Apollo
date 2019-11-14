@@ -69,6 +69,7 @@ public class FileDownloader {
     private FileDownloadStatus status;
     private final Set<Peer> peers=new HashSet<>();
     private final PeersService peersService;
+
     @Inject
     public FileDownloader(DownloadableFilesManager manager,
                           Event<FileEventData> fileEvent,
@@ -82,8 +83,9 @@ public class FileDownloader {
     }
     
     public void startDownload(FileDownloadInfo downloadInfo, FileDownloadStatus status, Set<PeerFileHashSum> goodPeers) {
-        this.downloadInfo = downloadInfo;
-        this.status=status;
+        this.downloadInfo = Objects.requireNonNull(downloadInfo, "downloadInfo is NULL");
+        this.status = Objects.requireNonNull(status, "status is NULL");
+        Objects.requireNonNull(goodPeers, "goodPeers is NULL");
         peers.clear();
         for(PeerFileHashSum ps: goodPeers){
            PeerAddress actualAddr = new PeerAddress(ps.getPeerId());
@@ -91,7 +93,7 @@ public class FileDownloader {
         }
         fileID = downloadInfo.fileInfo.fileId;
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
-        log.debug("startDownload()...");
+        log.debug("startDownload() : {} , fileID={} ...", downloadInfo, fileID);
         downloadTask = CompletableFuture.supplyAsync(() -> {
                 status.chunksTotal.set(downloadInfo.chunks.size());
                 status.chunksReady.set(0);
@@ -240,7 +242,7 @@ public class FileDownloader {
     
     @PreDestroy
     public void preDestroy(){
-        if(executor!=null){
+        if(executor != null){
             //TODO: do we need to cancel tasks and threads?
             executor.shutdown();
         }
