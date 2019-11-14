@@ -80,6 +80,8 @@ public class ShardInfoDownloader {
         shardsPeers.clear();
         shardInfoByPeers.clear();
         shardsDesisons.clear();
+        goodPeersMap.clear();
+        badPeersMap.clear();
         shardInfoByPeers=testData;
         
     }
@@ -289,7 +291,6 @@ public class ShardInfoDownloader {
             Double weight = getShardWeight(shardId)*k;
             res.put(shardId,weight);
         }
-        res.put(6L,1.0);
         return res;
     }
 }

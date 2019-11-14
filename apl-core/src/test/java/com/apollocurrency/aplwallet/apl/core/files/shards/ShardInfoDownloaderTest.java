@@ -184,7 +184,8 @@ public class ShardInfoDownloaderTest {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
         Map<Long, Double> result = downloader.getShardRelativeWeights();
-
+        int size = result.size();
+        assertEquals(size,3);
     }
 
 
@@ -195,8 +196,9 @@ public class ShardInfoDownloaderTest {
     public void testGetShardsPeers() {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
-
         Map<Long, Set<String>> result = downloader.getShardsPeers();
+        int size = result.get(3L).size();
+        assertEquals(size,6);
     }
 
     /**
@@ -207,6 +209,8 @@ public class ShardInfoDownloaderTest {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
         Map<Long, FileDownloadDecision> result = downloader.getShardsDesisons();
+        int size = result.size();
+        assertEquals(size,3);        
     }
 
     /**
@@ -217,6 +221,8 @@ public class ShardInfoDownloaderTest {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
         Map<String, ShardingInfo> result = downloader.getShardInfoByPeers();
+        int size = result.size();
+        assertEquals(size,7);        
     }
 
     /**
@@ -227,6 +233,8 @@ public class ShardInfoDownloaderTest {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
         Map<Long, Set<PeerFileHashSum>> result = downloader.getGoodPeersMap();
+        int size = result.get(3L).size();
+        assertEquals(size,6);        
     }
 
     private static ShardingInfo readData(String fileName){
