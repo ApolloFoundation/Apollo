@@ -21,6 +21,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.spy;
  *
  * @author alukin@gmailcom
  */
-
+@Slf4j
 public class ShardInfoDownloaderTest {
     
     private static final Map<String,ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
@@ -167,13 +168,16 @@ public class ShardInfoDownloaderTest {
      */
     @Test
     public void testGetShardWeight() {
-        Long shardId = 3L;
+
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
 
         double expResult = 0.7;
-        double result = downloader.getShardWeight(shardId);
-        assertEquals(result>expResult,true);
+        for(long i=1; i<=downloader.getShardsDesisons().size(); i++){
+           double result = downloader.getShardWeight(i);
+           assertEquals(result>expResult,true);
+           log.debug("Shard: {} weight: {}",i,result);
+        }
     }
 
     /**
@@ -185,6 +189,9 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<Long, Double> result = downloader.getShardRelativeWeights();
         int size = result.size();
+        result.keySet().forEach((id)->{
+            log.debug("Shard: {} RelWeight: {}",id,result.get(id));
+        });
         assertEquals(size,3);
     }
 
