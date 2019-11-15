@@ -113,7 +113,7 @@ public class PeerClient {
        }else{
            fc=null;
        }
-        log.trace("downloadChunk() result = {}", fc.info);
+        log.trace("downloadChunk() result = {}", fc==null?"null":fc.info.toString());
         return fc;
     }
     

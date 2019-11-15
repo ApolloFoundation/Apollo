@@ -61,8 +61,9 @@ class ZipTest {
         log.debug("Create zip full name = '{}'", zipFileInPath);
         // start creating zip for all CSV
         FilenameFilter CSV_FILE_FILTER = new SuffixFileFilter(".csv"); // CSV files only
-        byte[] zipCrc = zipComponent.compressAndHash(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
+        ChunkedFileOps chunkedFileOps = zipComponent.compressAndHash(zipFileInPath, csvResourcesPath.toAbsolutePath().toString(),
                 null, CSV_FILE_FILTER, false);
+        byte[] zipCrc = chunkedFileOps.getFileHash();
         assertTrue(zipCrc != null && zipCrc.length > 0, "CSV files were NOT compressed into ZIP!!");
 
         String[] zipExtension = new String[]{"zip"};
@@ -118,7 +119,8 @@ class ZipTest {
     void testCalculateHash() throws URISyntaxException {
 
         URL zipUrl = getClass().getClassLoader().getResource("another-archive-1.zip");
-        byte[] hash = zipComponent.calculateHash(Paths.get(zipUrl.toURI()).toAbsolutePath().toString());
+        ChunkedFileOps ops = new ChunkedFileOps(Paths.get(zipUrl.toURI()).toAbsolutePath().toString());
+        byte[] hash = ops.getFileHash();
 
         String hexHash = Convert.toHexString(hash);
 
