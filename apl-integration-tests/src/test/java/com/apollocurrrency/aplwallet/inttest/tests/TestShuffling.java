@@ -121,8 +121,7 @@ public class TestShuffling extends TestBaseOld {
             log.debug("Shuffling created "+shuffling.getTransaction());
             System.out.println("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
-            verifyTransactionInBlock(shuffling.getTransaction());
-            shufflingDTO = getShuffling(shuffling.getTransaction());
+            verifyTransactionInBlock(shuffling.getTransaction());;
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
             shufflingRegister(randomStandart,shuffling.getFullHash());
@@ -150,7 +149,7 @@ public class TestShuffling extends TestBaseOld {
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
 
-
+            shufflingDTO = getShuffling(shuffling.getTransaction());
             shufflingVerify(wallet,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
             shufflingVerify(randomStandart,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
 
@@ -249,7 +248,7 @@ public class TestShuffling extends TestBaseOld {
      private Wallet getRandomStandartWallet(){
         String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
          Wallet wallet =  new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
-         System.out.println(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
+         log.debug(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
         return wallet;
     }
 
@@ -257,7 +256,6 @@ public class TestShuffling extends TestBaseOld {
     private Wallet getRandomRecipientWallet(){
         String randomPass = RandomStringUtils.randomAlphabetic(10);
         log.debug("Recipient SecretPhrase: "+randomPass);
-        System.out.println("Recipient SecretPhrase: "+randomPass);
         return new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
     }
 
@@ -266,7 +264,6 @@ public class TestShuffling extends TestBaseOld {
         Account2FAResponse account = generateNewAccount();
         Wallet vaultWallet = new Wallet(account.getAccountRS(),account.getPassphrase(),true);
         log.debug(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
-        System.out.println(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
 
         verifyTransactionInBlock(
                 sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(),vaultWallet.getUser(),10000).getTransaction()
@@ -291,7 +288,6 @@ public class TestShuffling extends TestBaseOld {
     @Step
     private void waitForChangeShufflingStage(String shuffling, int stage){
             boolean isStage = Failsafe.with(retry).get(() -> getShuffling(shuffling).getStage() == stage);
-           System.out.println(getShuffling(shuffling).getStage());
            assertTrue(isStage,String.format("Stage isn't %s - > : %s",stage, getShuffling(shuffling).getStage()));
     }
 
