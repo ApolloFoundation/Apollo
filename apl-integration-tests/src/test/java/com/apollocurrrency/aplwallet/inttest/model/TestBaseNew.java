@@ -819,7 +819,12 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public CreateTransactionResponse createPoll(Wallet wallet,int votingModel, String name, int plusFinishHeight, String holding) {
+    public CreateTransactionResponse createPoll(Wallet wallet,int votingModel, String name, int plusFinishHeight, String holding, int minBalance) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse castVote(Wallet wallet, String poll) {
         throw new NotImplementedException("Not implemented");
     }
 

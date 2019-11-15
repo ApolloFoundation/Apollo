@@ -120,5 +120,6 @@ public enum RequestType {
     getExpectedAssetTransfers,
     issueCurrency,
     getPoll,
-    createPoll
+    createPoll,
+    castVote
 }

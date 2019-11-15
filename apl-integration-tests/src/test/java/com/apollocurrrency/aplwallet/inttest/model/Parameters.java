@@ -110,5 +110,8 @@ public enum  Parameters {
     minBalanceModel,
     option00,
     option01,
-    option02
+    option02,
+    vote00,
+    vote01,
+    vote02
 }

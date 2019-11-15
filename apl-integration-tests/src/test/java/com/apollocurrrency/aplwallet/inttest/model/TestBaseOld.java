@@ -476,7 +476,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step("Create Poll with param: votingModel: {2}")
-    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding){
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance){
         int currentHeight = getBlock().getHeight();
         int finishHeight = currentHeight + plusFinishHeight;
 
@@ -510,7 +510,7 @@ public class TestBaseOld extends TestBase {
         if (votingModel==1) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 1);
-            addParameters(Parameters.minBalance ,10000000 );
+            addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.description, "poll by account balance");
             addParameters(Parameters.holding, "");
         }
@@ -518,7 +518,7 @@ public class TestBaseOld extends TestBase {
         if (votingModel==2) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 2);
-            addParameters(Parameters.minBalance ,1 );
+            addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.holding, holding);
             addParameters(Parameters.description, "poll by asset");
         }
@@ -526,10 +526,24 @@ public class TestBaseOld extends TestBase {
         if (votingModel==3) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 3);
-            addParameters(Parameters.minBalance ,1 );
+            addParameters(Parameters.minBalance, minBalance);
             addParameters(Parameters.holding, holding);
             addParameters(Parameters.description, "poll by currency");
         }
+
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse castVote(Wallet wallet, String poll){
+
+        addParameters(RequestType.requestType, RequestType.castVote);
+        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.vote00, 1);
+        addParameters(Parameters.vote01, "");
+        addParameters(Parameters.vote02, "");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.poll, poll);
 
         return getInstanse(CreateTransactionResponse.class);
     }
@@ -975,7 +989,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.type, type);
         addParameters(Parameters.initialSupply, initialSupply);
         addParameters(Parameters.decimals, decimals);
-        addParameters(Parameters.feeATM, 10000000000L);
+        addParameters(Parameters.feeATM, 100000000000L);
         addParameters(Parameters.deadline, "1440");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.issuanceHeight, 0);
@@ -1008,6 +1022,8 @@ public class TestBaseOld extends TestBase {
         
         return getInstanse(CreateTransactionResponse.class);
     }
+
+
 
 
     @Step
