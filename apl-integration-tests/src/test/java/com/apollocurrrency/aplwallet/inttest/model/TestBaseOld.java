@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
@@ -468,6 +469,86 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
+    public PollDTO getPoll(String poll) {
+        addParameters(RequestType.requestType, getPoll);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(PollDTO.class);
+    }
+
+    @Step("Create Poll with param: votingModel: {2}")
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance){
+        int currentHeight = getBlock().getHeight();
+        int finishHeight = currentHeight + plusFinishHeight;
+
+        addParameters(RequestType.requestType, RequestType.createPoll);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.finishHeight, finishHeight);
+        addParameters(Parameters.minNumberOfOptions, 1);
+        addParameters(Parameters.maxNumberOfOptions, 1);
+        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.isCustomFee, true);
+        addParameters(Parameters.minRangeValue, 0);
+        addParameters(Parameters.maxRangeValue, 1);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.answers, "YES");
+        addParameters(Parameters.answers, "NO");
+        addParameters(Parameters.answers, "MAYBE");
+        addParameters(Parameters.create_poll_answers, 1);
+        addParameters(Parameters.option00, "YES");
+        addParameters(Parameters.option01, "NO");
+        addParameters(Parameters.option02, "MAYBE");
+        addParameters(Parameters.deadline, 1440);
+
+        if (votingModel==0) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 0);
+            addParameters(Parameters.minBalance ,0 );
+            addParameters(Parameters.description, "poll by account");
+            addParameters(Parameters.holding, "");
+        }
+
+        if (votingModel==1) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 1);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.description, "poll by account balance");
+            addParameters(Parameters.holding, "");
+        }
+
+        if (votingModel==2) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 2);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.description, "poll by asset");
+        }
+
+        if (votingModel==3) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 3);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.description, "poll by currency");
+        }
+
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse castVote(Wallet wallet, String poll){
+
+        addParameters(RequestType.requestType, RequestType.castVote);
+        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.vote00, 1);
+        addParameters(Parameters.vote01, "");
+        addParameters(Parameters.vote02, "");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.poll, poll);
+
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
     public List<String> getPeers() {
         try {
         addParameters(RequestType.requestType, RequestType.getPeers);
@@ -908,7 +989,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.type, type);
         addParameters(Parameters.initialSupply, initialSupply);
         addParameters(Parameters.decimals, decimals);
-        addParameters(Parameters.feeATM, 10000000000L);
+        addParameters(Parameters.feeATM, 100000000000L);
         addParameters(Parameters.deadline, "1440");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.issuanceHeight, 0);
@@ -941,6 +1022,8 @@ public class TestBaseOld extends TestBase {
 
         return getInstanse(CreateTransactionResponse.class);
     }
+
+
 
 
     @Step
@@ -1159,6 +1242,24 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
+    public CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType ) {
+        addParameters(RequestType.requestType, shufflingCreate);
+        addParameters(Parameters.wallet, wallet);
+        if (holdingType > 0) {
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.holdingType, holdingType);
+            addParameters(Parameters.amount, amount);
+        }else{
+            addParameters(Parameters.amount, amount+"00000000");
+        }
+        addParameters(Parameters.registrationPeriod, registrationPeriod);
+        addParameters(Parameters.participantCount, participantCount);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+
+    }
+
     public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingVerify);
         addParameters(Parameters.shuffling, shuffling);
@@ -1167,6 +1268,12 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+    @AfterEach
+    void testEnd() {
+        this.testInfo = null;
     }
 
 

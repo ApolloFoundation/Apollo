@@ -160,6 +160,7 @@ public class HttpHelper {
         }
         catch (Exception e)
         {
+            Allure.addAttachment("Response Body", responseBody);
            return fail(responseBody +"\n"+e.getMessage());
         }
     }

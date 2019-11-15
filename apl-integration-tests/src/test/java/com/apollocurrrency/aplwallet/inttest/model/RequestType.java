@@ -124,5 +124,8 @@ public enum RequestType {
     dividendPayment,
     getAssetDividends,
     getExpectedAssetTransfers,
-    issueCurrency
+    issueCurrency,
+    getPoll,
+    createPoll,
+    castVote
 }
