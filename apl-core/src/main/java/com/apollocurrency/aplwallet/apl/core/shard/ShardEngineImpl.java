@@ -639,7 +639,7 @@ public class ShardEngineImpl implements ShardEngine {
             ChunkedFileOps fops = zipComponent.compressAndHash(
                     zipPath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
-            byte[] zipCrcHash = fops.getFileHash();
+              byte[] zipCrcHash = fops.getFileHash();
             //inform DownladableFileManager
             postCompressTask.accept(requireLastNotFinishedShard(), zipCrcHash);
             updateRecovery(recovery, zipName);

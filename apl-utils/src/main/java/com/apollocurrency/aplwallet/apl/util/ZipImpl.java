@@ -119,7 +119,8 @@ public class ZipImpl implements Zip {
                     fileList.size(), (System.currentTimeMillis() - start) / 1000);
             return chunkedFileOps;
         } else {
-            return null;
+            ChunkedFileOps res = new ChunkedFileOps("");
+            return res;
         }
     }
 

@@ -129,7 +129,7 @@ public class ChunkedFileOps {
      * @return Crypto hash sum of entire file
      */
     public byte[] getFileHashSums(int chunkSize){
-        byte[] hash = null;
+        byte[] hash = {}; //do not return null
         byte[] buf = new byte[chunkSize];
         fileCRCs.clear();
         if(absPath==null){
