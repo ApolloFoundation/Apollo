@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
+import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +39,8 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 @Epic(value = "Shuffling")
 @Execution(SAME_THREAD)
 public class TestShuffling extends TestBaseOld {
+    public static final Logger log = LoggerFactory.getLogger(TestShuffling.class);
+
     RetryPolicy retry = new RetryPolicy()
             .retryWhen(false)
             .withMaxRetries(15)
@@ -118,8 +123,7 @@ public class TestShuffling extends TestBaseOld {
                      break;
             }
 
-            log.debug("Shuffling created "+shuffling.getTransaction());
-            System.out.println("Shuffling created "+shuffling.getTransaction());
+            log.info("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());;
 
@@ -248,14 +252,14 @@ public class TestShuffling extends TestBaseOld {
      private Wallet getRandomStandartWallet(){
         String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
          Wallet wallet =  new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
-         log.debug(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
+         log.info(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
         return wallet;
     }
 
     @Step
     private Wallet getRandomRecipientWallet(){
         String randomPass = RandomStringUtils.randomAlphabetic(10);
-        log.debug("Recipient SecretPhrase: "+randomPass);
+        log.info("Recipient SecretPhrase: "+randomPass);
         return new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
     }
 
@@ -263,7 +267,7 @@ public class TestShuffling extends TestBaseOld {
     private Wallet getRandomVaultWallet(){
         Account2FAResponse account = generateNewAccount();
         Wallet vaultWallet = new Wallet(account.getAccountRS(),account.getPassphrase(),true);
-        log.debug(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
+        log.info(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
 
         verifyTransactionInBlock(
                 sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(),vaultWallet.getUser(),10000).getTransaction()
