@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.enterprise.event.Event;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -64,6 +65,7 @@ class PrunableArchiveMigratorTest {
     @Mock DerivedTablesRegistry registry;
     @Mock CsvExporter csvExporter;
     @Mock DatabaseManager databaseManager;
+    @Mock Event event;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
     @WeldSetup
@@ -75,7 +77,7 @@ class PrunableArchiveMigratorTest {
 
     @BeforeEach
     void setUp() {
-        migrator = spy(new PrunableArchiveMigrator(shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
+        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
     }
 
 

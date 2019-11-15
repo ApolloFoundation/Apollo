@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import javax.enterprise.event.ObservesAsync;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,7 +70,14 @@ public class DownloadableFilesManager {
         this.shardNameHelper = shardNameHelper;
         this.blockchainConfig = blockchainConfig;
     }
-
+    
+    public void onAnyFileDownloadEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
+        fdiCache.remove(fileData.getFileId());
+        FileDownloadInfo downloadInfo = new FileDownloadInfo();
+        
+        fdiCache.put(fileData.getFileId(), downloadInfo);
+    }
+    
     public FileInfo getFileInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
@@ -93,40 +101,51 @@ public class DownloadableFilesManager {
         }
         return fdi;
     }
-
-    private FileDownloadInfo createFileDownloadInfo(String fileId) {
-        log.debug("createFileDownloadInfo( '{}' )", fileId);
-        Objects.requireNonNull(fileId, "fileId is NULL");
+    
+    private FileDownloadInfo fillFileDownloadInfo(ChunkedFileOps fops){
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
-        Path fpath = mapFileIdToLocalPath(fileId);
-        log.debug("createFileDownloadInfo() fpath = '{}'", fpath);
-        downloadInfo.fileInfo.fileId = fileId;
+        Path fpath = fops.getAbsPath();
         if (fpath != null && Files.isReadable(fpath)) {
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.created = Instant.now(); // in UTC
-            ChunkedFileOps fops = new ChunkedFileOps(fpath);
             downloadInfo.fileInfo.size = fops.getFileSize();
             downloadInfo.fileInfo.fileDate = fops.getFileDate();
-            downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(ChunkedFileOps.FILE_CHUNK_SIZE));
+            downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHash());
             downloadInfo.fileInfo.chunkSize = ChunkedFileOps.FILE_CHUNK_SIZE;
             downloadInfo.fileInfo.originHostSignature = "";
+            downloadInfo.fileInfo.fileId = fops.getFileId();
             List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
             for (int i = 0; i < crcs.size(); i++) {
                 FileChunkInfo fci = new FileChunkInfo();
                 ChunkedFileOps.ChunkInfo ci = crcs.get(i);
                 fci.crc = ci.crc;
-                fci.fileId = fileId;
+                fci.fileId = fops.getFileId();
                 fci.offset = ci.offset;
                 fci.present = FileChunkState.PRESENT_IN_PEER;
                 fci.size = ci.size;
                 fci.chunkId = i;
                 downloadInfo.chunks.add(fci);
             }
-            log.warn("createFileDownloadInfo STORE = '{}'", downloadInfo);
-            fdiCache.put(fileId, downloadInfo);
         } else {
             log.warn("createFileDownloadInfo = '{}'", downloadInfo.fileInfo.isPresent);
             downloadInfo.fileInfo.isPresent = false;
+        }
+        return downloadInfo;
+    }
+    
+    private FileDownloadInfo createFileDownloadInfo(String fileId) {
+        log.debug("createFileDownloadInfo( '{}' )", fileId);
+        Objects.requireNonNull(fileId, "fileId is NULL");
+        Path fpath = mapFileIdToLocalPath(fileId);
+        log.debug("createFileDownloadInfo() fpath = '{}'", fpath);
+        ChunkedFileOps fops = new ChunkedFileOps(fpath);
+        fops.setFileId(fileId);
+        //actually reads file and calculates hashes
+        fops.getFileHashSums(ChunkedFileOps.FILE_CHUNK_SIZE);
+        FileDownloadInfo downloadInfo = fillFileDownloadInfo(fops);
+        if(downloadInfo.fileInfo.isPresent){
+            log.info("createFileDownloadInfo STORE = '{}'", downloadInfo);
+            fdiCache.put(fileId, downloadInfo);
         }
         return downloadInfo;
     }

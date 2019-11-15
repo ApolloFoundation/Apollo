@@ -14,6 +14,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 public class ChunkedFileOps {
     public final static int FILE_CHUNK_SIZE = 32768;
+
     
     public class ChunkInfo{
         public Long offset;
@@ -31,6 +34,10 @@ public class ChunkedFileOps {
         public Long crc;
     }
     
+    @Getter
+    @Setter
+    private String fileId;
+    @Getter
     private final Path absPath;
     private Long lastRDChunkCrc;
     private Long lastWRChunkCrc;
