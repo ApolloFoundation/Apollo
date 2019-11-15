@@ -15,7 +15,10 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Eth {
+public class EthWalletInfo {
     private String address;
     private String publicKey;
+    private DexBalanceDTO balances;
+    private Double eth;
+    private Double pax;
 }

@@ -32,7 +32,7 @@ import java.util.UUID;
 public class PeerClient {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private Peer peer;
+    private final Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
 
     public PeerClient(Peer peer) {

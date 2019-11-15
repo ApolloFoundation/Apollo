@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
@@ -52,7 +51,7 @@ public final class Scan extends AbstractAPIRequestHandler {
                 height = Integer.parseInt(req.getParameter("height"));
             } catch (NumberFormatException ignore) {}
             long start = System.currentTimeMillis();
-            BlockchainProcessor blockchainProcessor = lookupBlockchainProcessor();
+            lookupBlockchainProcessor();
             try {
                 blockchainProcessor.suspendBlockchainDownloading();
                 if (numBlocks > 0) {

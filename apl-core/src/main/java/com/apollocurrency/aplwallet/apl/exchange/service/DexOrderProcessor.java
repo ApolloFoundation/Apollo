@@ -7,10 +7,14 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
@@ -33,9 +37,17 @@ import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
+import lombok.Getter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
@@ -57,10 +69,22 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_AT
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+
 @Slf4j
 @Singleton
 public class DexOrderProcessor {
     private static final int ORDERS_SELECT_SIZE = 30;
+
+    private static final String BACKGROUND_SERVICE_NAME = "DexOrderProcessor";
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
@@ -71,13 +95,17 @@ public class DexOrderProcessor {
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     private TimeService timeService;
+    private TaskDispatchManager taskDispatchManager;
+
+    private volatile boolean processorEnabled = true;
+    @Getter
+    private boolean initialized = false;
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
 
-
     @Inject
-    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao, TimeService timeService) {
+    public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -87,10 +115,61 @@ public class DexOrderProcessor {
         this.ethereumWalletService = ethereumWalletService;
         this.validator = validator;
         this.timeService = timeService;
+        this.taskDispatchManager = Objects.requireNonNull(taskDispatchManager, "Task dispatch manager is NULL.");
     }
 
+    @PostConstruct
+    public void init(){
+        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+        Runnable task = () -> {
+            if (processorEnabled) {
+                long start = System.currentTimeMillis();
+                log.info("{}: start", BACKGROUND_SERVICE_NAME);
+                try {
+                    processContracts();
+                } catch (Throwable e) {
+                    log.warn("DexOrderProcessor error", e);
+                }
+                log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
+            }else{
+                log.debug("Contracts processor is suspended.");
+            }
+        };
 
-    public void processContracts() {
+        Task dexOrderProcessorTask = Task.builder()
+                .name(BACKGROUND_SERVICE_NAME)
+                .delay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .initialDelay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .task(task)
+                .build();
+
+        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
+
+        log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
+                dexOrderProcessorTask.getName(),
+                dexOrderProcessorTask.getInitialDelay(),
+                dexOrderProcessorTask.getDelay());
+
+        initialized = true;
+    }
+
+    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg){
+        resumeContractProcessor();
+    }
+
+    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg){
+        suspendContractProcessor();
+    }
+
+    public void suspendContractProcessor(){
+        processorEnabled = false;
+    }
+
+    public void resumeContractProcessor(){
+        processorEnabled = true;
+    }
+
+    private void processContracts() {
         if (secureStorageService.isEnabled()) {
 
             List<Long> accounts = secureStorageService.getAccounts();

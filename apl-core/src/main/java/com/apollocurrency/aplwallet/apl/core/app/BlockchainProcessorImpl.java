@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -62,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -148,6 +150,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final javax.enterprise.event.Event<List<Transaction>> txEvent;
+    private final javax.enterprise.event.Event<BlockchainConfig> blockchainEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -305,6 +308,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
+                                   Event<BlockchainConfig> blockchainEvent,
                                    ShardDao shardDao) {
         this.validator = validator;
         this.blockEvent = blockEvent;
@@ -325,6 +329,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
         this.shardDao = shardDao;
+        this.blockchainEvent = blockchainEvent;
 
         configureBackgroundTasks();
 
@@ -338,7 +343,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .name("BlockchainInit")
                 .task(() -> {
                     continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
-                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
+                        trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    } else {
+                        trimService.resetTrim();
+                    }
                     if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                         scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
                     } else {
@@ -647,6 +656,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void shutdown() {
         log.info("BlchProcImpl shutdown started...");
         try {
+            //blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.SHUTDOWN)).fire(blockchainConfig);//TODO: Is this event necessary at this point?
             suspendBlockchainDownloading();
             Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
             log.info("BlchProcImpl shutdown finished");
@@ -684,7 +694,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
                     "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
             // try make delay before PeersService are up and running
-            Thread.currentThread().sleep(timeDelay); // milli-seconds to wait for PeersService initialization
+            Thread.sleep(timeDelay); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.tryDownloadLastGoodShard();
             disableScheduleOneScan();
@@ -730,6 +740,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void disableScheduleOneScan() {
+        log.debug("disableScheduleOneScan...");
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         optionDAO.set("require-scan", "false");
     }
@@ -925,19 +936,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         Map<TransactionType, Map<String, Integer>> duplicates) throws TransactionNotAcceptedException {
         long start = System.currentTimeMillis();
         try {
-            log.debug("Accepting block: {} height: {}", block.getId(), block.getHeight());
+            log.debug(":accept: Accepting block: {} height: {}", block.getId(), block.getHeight());
             isProcessingBlock = true;
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 if (! transactionApplier.applyUnconfirmed(transaction)) {
                     throw new TransactionNotAcceptedException("Double spending", transaction);
                 }
             }
+            log.trace(":accept: apply(block) block: {} height: {}", block.getId(), block.getHeight());
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);
-
+            log.trace(":accept: validPhasedTransaction ctx count={}", validPhasedTransactions.size());
             validPhasedTransactions.forEach(phasingPollService::countVotesAndRelease);
+            log.trace(":accept: invalidPhasedTransaction ctx count={}", invalidPhasedTransactions.size());
             invalidPhasedTransactions.forEach(phasingPollService::reject);
             int fromTimestamp = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
+            log.trace(":accept: load transactions fromTimestamp={}", fromTimestamp);
             for (Transaction transaction : block.getOrLoadTransactions()) {
                 try {
                     transactionApplier.apply(transaction);
@@ -959,6 +973,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
             }
             SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            log.trace(":accept: validate all block transactions");
             block.getOrLoadTransactions().forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if ((phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()
@@ -982,6 +997,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     });
                 }
             });
+            log.trace(":accept: validate Valid phasing transactions");
             validPhasedTransactions.forEach(phasedTransaction -> {
                 if (phasedTransaction.getType() == Messaging.PHASING_VOTE_CASTING) {
                     PhasingPollResult result = phasingPollService.getResult(phasedTransaction.getId());
@@ -999,6 +1015,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             });
+            log.trace(":accept: validate Approved transactions");
             possiblyApprovedTransactions.forEach(transaction -> {
                 // checked before
                 //                if (phasingPollService.getResult(transaction.getId()) == null) {
@@ -1011,7 +1028,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
 //                }
             });
-
+            log.trace(":accept: dex service block.");
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
                 dexService.closeOverdueContracts(block.getTimestamp());
@@ -1022,13 +1039,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 log.error(e.toString(), e);
                 throw new RuntimeException(e.getMessage(), e);
             }
-
+            log.trace(":accept: fire AFTER_BLOCK_APPLY.");
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_APPLY)).fire(block);
-
+            log.trace(":accept: fire for All block transactions ADDED_CONFIRMED_TRANSACTIONS.");
             if (block.getOrLoadTransactions().size() > 0) {
                 txEvent.select(TxEventType.literal(TxEventType.ADDED_CONFIRMED_TRANSACTIONS)).fire(block.getOrLoadTransactions());
             }
+            log.trace(":accept: Account ledger commit.");
             AccountLedger.commitEntries();
+            log.trace(":accept: that's it.");
         } finally {
             isProcessingBlock = false;
             AccountLedger.clearEntries();
@@ -1544,11 +1563,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public void suspendBlockchainDownloading() {
         setGetMoreBlocks(false);
+        blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.SUSPEND_DOWNLOADING)).fire(blockchainConfig);
     }
 
     @Override
     public void resumeBlockchainDownloading() {
         setGetMoreBlocks(true);
+        blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.RESUME_DOWNLOADING)).fire(blockchainConfig);
     }
 
     @Override

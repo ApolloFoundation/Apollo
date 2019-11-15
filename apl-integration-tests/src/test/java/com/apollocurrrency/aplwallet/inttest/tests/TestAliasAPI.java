@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.Epic;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,15 +22,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Alias")
+@Epic(value = "Alias")
 public class TestAliasAPI extends TestBaseOld {
 
-    //Skrypchenko Serhii
-    @DisplayName("setAlias + getAliasesCount + Get Aliases")
+
+    @DisplayName("SetAlias -> GetAliasesCount -> Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "setAliasAPI" + new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "ITest"+new Date().getTime(), 400000000, 1400);
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
@@ -53,7 +56,7 @@ public class TestAliasAPI extends TestBaseOld {
     }
 
 
-    @DisplayName("setAlias + Get Alias")
+    @DisplayName("Set Alias -> Get Alias")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void getAlias(Wallet wallet) throws IOException {

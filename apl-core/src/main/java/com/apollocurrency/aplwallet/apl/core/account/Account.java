@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -70,6 +71,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -156,6 +158,7 @@ public class Account {
 
 
     @Singleton
+    @Slf4j
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
@@ -191,6 +194,7 @@ public class Account {
         }
 
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
             try (DbIterator<AccountLease> leases =accountLeaseTable.getLeaseChangingAccounts(height)) {
@@ -227,6 +231,7 @@ public class Account {
                 }
                 lessor.save();
             }
+            log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 
@@ -1060,16 +1065,6 @@ public class Account {
            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
        }
        addToBalanceATM(event, eventId, amountATM, 0);
-    }
-
-    private String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    private String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
