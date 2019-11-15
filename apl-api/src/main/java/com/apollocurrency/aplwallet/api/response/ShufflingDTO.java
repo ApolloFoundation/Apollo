@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
@@ -30,4 +32,5 @@ public class ShufflingDTO extends ResponseBase {
     private String assignee;
     private String issuerRS;
     private String shufflingFullHash;
+    private List<String> recipientPublicKeys;
 }

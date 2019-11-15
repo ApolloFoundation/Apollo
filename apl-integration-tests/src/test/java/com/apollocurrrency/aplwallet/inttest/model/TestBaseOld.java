@@ -112,12 +112,12 @@ public class TestBaseOld extends TestBase {
 
         try {
             isHeight = Failsafe.with(retry).get(() -> getBlock().getHeight() >= height);
+            assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         }
         catch (Exception e)
         {
-            assertTrue(isHeight,String.format("Height %s  not reached: %s",height,getBlock().getHeight()));
+            fail(String.format("Height %s  not reached. Exception msg: %s",height,e.getMessage()));
         }
-        assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         return isHeight;
     }
     @Step
@@ -939,10 +939,6 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.reserveSupply, 0);
         }
 
-        if ((type&NON_SHUFFLEABLE) != NON_SHUFFLEABLE){
-            System.out.println(type);
-        }
-        
         return getInstanse(CreateTransactionResponse.class);
     }
 
@@ -1131,7 +1127,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse shufflingRegister(Wallet wallet,String shufflingFullHash) {
+    public CreateTransactionResponse shufflingRegister(Wallet wallet, String shufflingFullHash) {
         addParameters(RequestType.requestType, shufflingRegister);;
         addParameters(Parameters.shufflingFullHash, shufflingFullHash);
         addParameters(Parameters.wallet, wallet);
@@ -1139,6 +1135,32 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
+    @Step
+    public CreateTransactionResponse shufflingProcess(Wallet wallet,String shuffling, String recipientSecretPhrase) {
+        System.out.println("recipientSecretPhrase: "+recipientSecretPhrase);
+        addParameters(RequestType.requestType, shufflingProcess);
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse startShuffler(Wallet wallet,String shufflingFullHash, String recipientSecretPhrase) {
+        addParameters(RequestType.requestType, startShuffler);
+        addParameters(Parameters.shufflingFullHash, shufflingFullHash);
+        addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+
 
 
 
