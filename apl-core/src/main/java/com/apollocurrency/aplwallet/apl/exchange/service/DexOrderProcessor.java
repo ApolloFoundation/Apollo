@@ -37,17 +37,15 @@ import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import lombok.Getter;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
@@ -57,17 +55,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
@@ -84,7 +75,9 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 public class DexOrderProcessor {
     private static final int ORDERS_SELECT_SIZE = 30;
 
-    private static final String BACKGROUND_SERVICE_NAME = "DexOrderProcessor";
+    private static final String SERVICE_NAME = "DexOrderProcessor";
+    private static final String BACKGROUND_SERVICE_NAME = SERVICE_NAME + "-background";
+    private static final int BACKGROUND_THREADS_NUMBER = 10;
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
@@ -96,6 +89,7 @@ public class DexOrderProcessor {
     private EthereumWalletService ethereumWalletService;
     private TimeService timeService;
     private TaskDispatchManager taskDispatchManager;
+    private ExecutorService backgroundExecutor;
 
     private volatile boolean processorEnabled = true;
     @Getter
@@ -120,36 +114,35 @@ public class DexOrderProcessor {
 
     @PostConstruct
     public void init(){
-        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(SERVICE_NAME);
         Runnable task = () -> {
             if (processorEnabled) {
                 long start = System.currentTimeMillis();
-                log.info("{}: start", BACKGROUND_SERVICE_NAME);
+                log.info("{}: start", SERVICE_NAME);
                 try {
                     processContracts();
                 } catch (Throwable e) {
                     log.warn("DexOrderProcessor error", e);
                 }
-                log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
+                log.info("{}: finish in {} ms", SERVICE_NAME, System.currentTimeMillis() - start);
             }else{
                 log.debug("Contracts processor is suspended.");
             }
         };
 
         Task dexOrderProcessorTask = Task.builder()
-                .name(BACKGROUND_SERVICE_NAME)
+                .name(SERVICE_NAME)
                 .delay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
                 .initialDelay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
                 .task(task)
                 .build();
 
-        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
-
+        dispatcher.schedule(dexOrderProcessorTask);
         log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
                 dexOrderProcessorTask.getName(),
                 dexOrderProcessorTask.getInitialDelay(),
                 dexOrderProcessorTask.getDelay());
-
+        backgroundExecutor = Executors.newFixedThreadPool(BACKGROUND_THREADS_NUMBER, new NamedThreadFactory(BACKGROUND_SERVICE_NAME));
         initialized = true;
     }
 
@@ -701,30 +694,38 @@ public class DexOrderProcessor {
                 for (UserEthDepositInfo deposit : deposits) {
                     List<ExchangeContract> contracts = dexService.getContractsByAccountOrderFromStatus(accountId, deposit.getOrderId(), (byte) 1); // do not check contracts without atomic swap hash
 
-                    for (ExchangeContract contract: contracts) {
-                         byte[] swapHash = contract.getSecretHash();
-                         Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
-                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
-                         Long timeDeadLine = swapData.getTimeDeadLine();
-                         if (timeDeadLine > timeService.getEpochTime()) {
-                             boolean success = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
-                             if (!success) {
-                                 log.warn("Unable to send refund tx for order {}, contract {}", deposit.getOrderId(), contract.getId());
-                             } else {
-                                 log.debug("Refund initiated for order {}, contract {}", deposit.getOrderId(), contract.getId());
-                                 String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
-                                 if (StringUtils.isNotBlank(hash)) {
-                                     log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), deposit.getOrderId());
-                                 } else {
-                                     log.warn("Refund was not finished, unable to withdraw: order - {} ",deposit.getOrderId());
-                                 }
-                             }
-                         }
-                     }
+                    for (ExchangeContract contract : contracts) {
+                        byte[] swapHash = contract.getSecretHash();
+                        Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
+                        SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
+                        Long timeDeadLine = swapData.getTimeDeadLine();
+                        if (timeDeadLine > timeService.getEpochTime()) {
+                            backgroundExecutor.execute(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, deposit.getOrderId(), contract.getId()));
+                        }
+                    }
                 }
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.getMessage(), e);
             }
+        }
+    }
+
+    private void performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
+        try {
+            boolean success = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
+            if (!success) {
+                log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
+            } else {
+                log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
+                String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, orderId, address);
+                if (StringUtils.isNotBlank(hash)) {
+                    log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), orderId);
+                } else {
+                    log.warn("Refund was not finished, unable to withdraw: order - {} ", orderId);
+                }
+            }
+        } catch (AplException.ExecutiveProcessException e) {
+            log.error(e.toString(), e);
         }
     }
 
