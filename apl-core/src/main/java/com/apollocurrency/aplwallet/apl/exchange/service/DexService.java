@@ -86,6 +86,9 @@ import java.util.stream.Collectors;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -275,7 +278,10 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
+        long start = System.currentTimeMillis();
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
+        log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
+                orders.size(), System.currentTimeMillis() - start, time);
 
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
@@ -286,6 +292,7 @@ public class DexService {
             reopenIncomeOrders(order.getId());
 
         }
+        log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
 
     public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {
@@ -522,6 +529,8 @@ public class DexService {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
+        Transaction orderTx;
+        Transaction contractTx = null;
 
         if (counterOffer != null) {
             if (counterOffer.getAccountId().equals(order.getAccountId())) {
@@ -532,15 +541,15 @@ public class DexService {
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
 
             // 2. Create contract.
             DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
             TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
-            response = transactionResponse.getJson();
-            Transaction contractTx = transactionResponse.getTx();
-            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
+            contractTx = transactionResponse.getTx();
+
+            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(orderTx, null, null);
             MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
@@ -549,14 +558,19 @@ public class DexService {
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
         }
 
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
             log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
+        }
+
+        ((JSONObject) response).put("order", orderTx.getJSONObject());
+        if (contractTx != null) {
+            ((JSONObject) response).put("contract", contractTx.getJSONObject());
         }
         if (freezeTx != null) {
             ((JSONObject) response).put("frozenTx", freezeTx);
@@ -737,7 +751,7 @@ public class DexService {
     public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
         return dexContractDao.getAllForAccountOrder(accountId, orderId, status, status);
     }
-    
+
     public List<ExchangeContract> getContractsByAccountOrderFromStatus(long accountId, long orderId, byte fromStatus) {
         return dexContractDao.getAllForAccountOrder(accountId, orderId, fromStatus, ExchangeContractStatus.values().length - 1);
     }

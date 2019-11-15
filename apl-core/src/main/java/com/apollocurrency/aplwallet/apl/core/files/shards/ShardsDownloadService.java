@@ -21,13 +21,22 @@ import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
+import java.util.stream.Collectors;
+import javax.enterprise.event.ObservesAsync;
 
 /**
  * Service for background downloading of shard files and related files
@@ -41,18 +50,19 @@ public class ShardsDownloadService {
     private final ShardInfoDownloader shardInfoDownloader;
     private final UUID myChainId;
 
-    private final javax.enterprise.event.Event<ShardPresentData> presentDataEvent;
+    private final Event<ShardPresentData> presentDataEvent;
     private final FileDownloadService fileDownloadService;
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
+    private static final int MIN_SHARDING_PEERS=2;
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
-                                 BlockchainConfig blockchainConfig,
-                                 javax.enterprise.event.Event<ShardPresentData> presentDataEvent,
-                                 PropertiesHolder propertiesHolder,
-                                 FileDownloadService fileDownloadService
+            BlockchainConfig blockchainConfig,
+            Event<ShardPresentData> presentDataEvent,
+            PropertiesHolder propertiesHolder,
+            FileDownloadService fileDownloadService
     ) {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
@@ -62,16 +72,21 @@ public class ShardsDownloadService {
     }
 
     public boolean getShardingInfoFromPeers() {
-        Map<Long, Set<ShardInfo>> shards = shardInfoDownloader.getShardInfoFromPeers();
-        shards.keySet().forEach((sId) -> {
+        Map<String,ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
+        if(shardInfoByPeers.size()<MIN_SHARDING_PEERS){
+            return false;
+        }
+        shardInfoDownloader.processAllPeersShardingInfo();
+        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId) ->
+        {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
-            List<String> shardFiles = new ArrayList<>();
+            Set<String> shardFiles = new HashSet<>();
             shardFiles.add(shardNameHelper.getFullShardId(sId, myChainId));
             shardFiles.addAll(si.additionalFiles);
             ShardDownloadStatus st = new ShardDownloadStatus(shardFiles);
             shardDownloadStatuses.put(sId, st);
         });
-        return !shards.isEmpty();
+        return shardInfoByPeers.size() >= MIN_SHARDING_PEERS;
     }
 
     public void onAnyFileDownloadEvent(@ObservesAsync @FileDownloadEvent FileEventData fileData) {
@@ -170,15 +185,22 @@ public class ShardsDownloadService {
         shardInfoDownloader.getGoodPeersMap().get(shardId).forEach((pfhs) -> {
             peers.add(pfhs.getPeerId());
         });
-        for (String fileId : filesToDownload) {
+        filesToDownload.forEach((fileId) -> {
             fileDownloadService.startDownload(fileId, peers);
-        }
+        });
         return result;
+    }
+
+    public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
+        return w.entrySet()
+                .stream()
+                .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     public FileDownloadDecision tryDownloadLastGoodShard() {
         boolean goodShardFound = false;
-        log.debug("prepareAndStartDownload...");
+        log.debug("SHARDING: prepare and start downloading of last good shard in the network...");
         boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
         FileDownloadDecision result = FileDownloadDecision.NotReady;
         if (doNotShardImport) {
@@ -191,7 +213,7 @@ public class ShardsDownloadService {
             result = FileDownloadDecision.NoPeers;
             return result;
         }
-        if (shardInfoDownloader.getSortedShards().isEmpty()) {
+        if (shardInfoDownloader.getSortedByIdShards().isEmpty()) {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
@@ -199,13 +221,15 @@ public class ShardsDownloadService {
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
-            List<Long> shardIds = new ArrayList(shardInfoDownloader.getSortedShards().keySet());
-            Collections.sort(shardIds, Collections.reverseOrder());
-            for (Long shardId : shardIds) {
-                result = tryDownloadShard(shardId);
-                goodShardFound = isAcceptable(result);
-                if (goodShardFound) {
-                    break;
+            Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
+            for (Long shardId : sortByValue(shardWeights).keySet()) {
+                double w = shardWeights.get(shardId);
+                if(w>0){
+                    result = tryDownloadShard(shardId);
+                    goodShardFound = isAcceptable(result);
+                    if (goodShardFound) {
+                        break;
+                    }
                 }
             }
             if (!goodShardFound) {

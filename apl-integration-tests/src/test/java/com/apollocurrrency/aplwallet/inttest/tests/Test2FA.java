@@ -22,6 +22,7 @@ import java.util.Objects;
 ;
 
 @DisplayName("Secret File")
+@Epic(value = "Secret File")
 public class Test2FA extends TestBaseNew {
 
     @DisplayName("Delete Secret Key")

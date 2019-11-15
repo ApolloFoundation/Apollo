@@ -172,6 +172,7 @@ public class CsvImporterImpl implements CsvImporter {
         StringBuilder columnNames = new StringBuilder(200);
         StringBuilder columnsValues = new StringBuilder(100);
 
+        int rsCounter=1; //start from 1 for "a%b==0" operations
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
              ResultSet rs = csvReader.read(
@@ -200,7 +201,7 @@ public class CsvImporterImpl implements CsvImporter {
             log.debug("SQL = {}", sqlInsert.toString()); // composed insert
             // precompile insert SQL
             preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
-            int rsCounter=1; //start from 1 for "a%b==0" operations
+
             // loop over CSV data reading line by line, column by column
             while (rs.next()) {
                 Map<String, Object> row = new HashMap<>();
@@ -258,6 +259,7 @@ public class CsvImporterImpl implements CsvImporter {
         } catch (Exception e) {
             log.error("Error during importing '" + tableName + "'", e);
             dataSource.rollback(false);
+            log.error("Imported so far = {}, rsCounter = {}", importedCount, rsCounter);
             throw new RuntimeException(e);
         } finally {
             if (preparedInsertStatement != null) {

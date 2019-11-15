@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryMinToDt
 import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -108,7 +109,6 @@ public class DexController {
         this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
-        this.dexSmartContractService = dexSmartContractService;
     }
 
     //For DI
@@ -420,10 +420,10 @@ public class DexController {
 
         DexCurrencies currencies = null;
         String passphrase;
-        Account sender;
+        long sender;
         try{
             passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-            sender = ParameterParser.getSenderAccount(req);
+            sender = ParameterParser.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrencies.getType(cryptocurrency);
@@ -561,7 +561,7 @@ public class DexController {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();
         } catch (Exception ex){
-            return Response.ok().build();
+            return Response.ok(incorrect("Gas service is not available now.")).build();
         }
     }
     
@@ -589,7 +589,7 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
             if ( service.flushSecureStorage(accountId, xpassphrase) ) {
-               return Response.ok().build(); 
+                return ResponseBuilder.done().build();
             } else {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
             }

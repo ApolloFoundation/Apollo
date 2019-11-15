@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
+import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,11 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Blocks")
+@Epic(value = "Blocks")
 public class TestBlock extends TestBaseOld {
 
     @Test
     @DisplayName("Get Block")
-    public void getBlock() throws IOException {
+    public void getBlockTest() throws IOException {
         GetBlockIdResponse blockID = getBlockId("0");
         BlockDTO block = getBlock(blockID.getBlock());
         assertNotNull(block.getHeight());
