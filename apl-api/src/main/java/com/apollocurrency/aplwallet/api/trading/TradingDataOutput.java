@@ -42,18 +42,4 @@ public class TradingDataOutput {
     
     boolean HasWarning;
     
-    public TradingDataOutputDTO toDTO() {        
-        TradingDataOutputDTO result = new TradingDataOutputDTO();  
-        result.Response = this.Response;
-        result.Type = this.Type;
-        result.Aggregated = this.Aggregated;
-        result.Data = this.Data;
-        result.TimeTo = this.TimeTo;
-        result.TimeFrom = this.TimeFrom;
-        result.ConversionType = this.ConversionType;
-        result.FirstValueInArray = this.FirstValueInArray;
-        result.RateLimit = this.RateLimit;
-        result.HasWarning = this.HasWarning;        
-        return result;        
-    }
 }

@@ -74,7 +74,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;

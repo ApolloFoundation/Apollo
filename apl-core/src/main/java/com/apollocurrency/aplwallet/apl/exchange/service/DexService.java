@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
