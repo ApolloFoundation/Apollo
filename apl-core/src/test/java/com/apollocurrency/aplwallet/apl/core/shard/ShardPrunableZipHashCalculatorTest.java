@@ -92,7 +92,7 @@ class ShardPrunableZipHashCalculatorTest {
         trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
 
         verify(shardDao).getAllCompletedShards();
-      //  verifyZeroInteractions(zip, dirProvider, blockchainConfig);
+        verifyZeroInteractions(zip, dirProvider);
     }
 
     @Test

@@ -257,7 +257,6 @@ class ShardImporterTest {
         doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
-        doReturn(new byte[32]).when(fopsComponent).getFileHash();
         Shard lastShard = new Shard();
         lastShard.setShardState(ShardState.INIT);
         lastShard.setShardId(1L);
@@ -268,7 +267,8 @@ class ShardImporterTest {
 
         verify(shardDao).updateShard(lastShard);
         assertEquals(ShardState.CREATED_BY_ARCHIVE, lastShard.getShardState());
-        assertArrayEquals(new byte[32], lastShard.getCoreZipHash());
+        byte[] hash = lastShard.getCoreZipHash();
+        assertEquals(null, hash);
         verify(aplAppStatus, times(4)).durableTaskUpdate(any(), anyString(), anyDouble());
         verify(aplAppStatus).durableTaskFinished(null, false, "Shard data import"); //success
     }
