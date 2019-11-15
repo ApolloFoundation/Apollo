@@ -86,10 +86,9 @@ class PrunableArchiveMigratorTest {
     @Test
     void testMigrateAlreadyMigrated() {
         doReturn("false").when(optionDAO).get(anyString());
-
+        mockChain();
         migrator.migrate();
-
-        verifyZeroInteractions(shardDao, dirProvider, blockchainConfig, zip, registry);
+        verifyZeroInteractions(shardDao, dirProvider, zip, registry);
     }
 
     @Test

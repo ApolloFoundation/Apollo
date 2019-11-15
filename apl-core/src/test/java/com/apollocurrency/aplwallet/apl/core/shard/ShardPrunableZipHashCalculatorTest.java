@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 
@@ -58,7 +59,11 @@ class ShardPrunableZipHashCalculatorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class, ShardPrunableZipHashCalculator.class, PropertiesHolder.class, FullTextConfigImpl.class)
+    WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
+            Event.class,
+            ShardPrunableZipHashCalculator.class, 
+            PropertiesHolder.class, 
+            FullTextConfigImpl.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(registry, DerivedTablesRegistry.class))
             .addBeans(MockBean.of(zip, Zip.class))
@@ -69,7 +74,9 @@ class ShardPrunableZipHashCalculatorTest {
     @Inject
     PrunableMessageTable prunableMessageTable;
     @Inject
-    javax.enterprise.event.Event<TrimData> trimDataEvent;
+    Event<TrimData> trimDataEvent;
+    @Inject
+    Event<ChunkedFileOps> fileChangedEvent;    
     @Inject
     ShardPrunableZipHashCalculator prunableZipHashCalculator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
@@ -81,11 +88,11 @@ class ShardPrunableZipHashCalculatorTest {
     @Test
     void testTriggerAsyncTrimDoneEvent() {
         doReturn(List.of()).when(shardDao).getAllCompletedShards();
-
+        mockChain();
         trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
 
         verify(shardDao).getAllCompletedShards();
-        verifyZeroInteractions(zip, dirProvider, blockchainConfig);
+      //  verifyZeroInteractions(zip, dirProvider, blockchainConfig);
     }
 
     @Test
