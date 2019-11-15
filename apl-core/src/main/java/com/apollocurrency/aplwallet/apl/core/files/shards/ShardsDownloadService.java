@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
@@ -16,27 +17,20 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
 import java.util.stream.Collectors;
-import javax.enterprise.event.ObservesAsync;
 
 /**
  * Service for background downloading of shard files and related files

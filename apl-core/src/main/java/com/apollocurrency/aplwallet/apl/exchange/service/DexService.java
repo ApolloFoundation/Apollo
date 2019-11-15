@@ -77,18 +77,15 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -554,7 +551,7 @@ public class DexService {
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
-            transactionProcessor.broadcastWhenConfirmed(contractTx, offerTx);
+            transactionProcessor.broadcastWhenConfirmed(contractTx, orderTx);
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
