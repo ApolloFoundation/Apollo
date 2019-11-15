@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -57,7 +58,6 @@ import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.qameta.allure.Step;
-import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
@@ -102,7 +102,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountDTO getAccountId(Wallet wallet) {
+    public AccountDTO getAccountId(String secretPhrase) {
         throw new NotImplementedException("Not implemented");
     }
 
@@ -870,6 +870,16 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse shufflingCreate(Wallet wallet, int registrationPeriod, int participantCount, int amount, String holding, int holdingType) {
         throw new NotImplementedException("Not implemented");
     }
 }
