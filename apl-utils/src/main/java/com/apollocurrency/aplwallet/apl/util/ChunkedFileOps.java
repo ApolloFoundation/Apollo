@@ -23,25 +23,33 @@ import org.slf4j.LoggerFactory;
  */
 
 public class ChunkedFileOps {
-    private final Path absPath;
-    private Long lastRDChunkCrc;
-    private Long lastWRChunkCrc;
-    public static final String DIGESTER="SHA-256";
-    private static final Logger log = LoggerFactory.getLogger(ChunkedFileOps.class);
-    public ChunkedFileOps(String absPath) {
-        this.absPath = Paths.get(absPath);        
-    }
-    public ChunkedFileOps(Path path) {
-        this.absPath = path;        
-    }
+    public final static int FILE_CHUNK_SIZE = 32768;
     
     public class ChunkInfo{
         public Long offset;
         public Long size;
         public Long crc;
     }
-    private final List<ChunkInfo> fileCRCs = new ArrayList<>();
     
+    private final Path absPath;
+    private Long lastRDChunkCrc;
+    private Long lastWRChunkCrc;
+    public static final String DIGESTER="SHA-256";
+    private static final Logger log = LoggerFactory.getLogger(ChunkedFileOps.class);
+    private byte[] fileHash = null;
+    private final List<ChunkInfo> fileCRCs = new ArrayList<>();
+      
+    public ChunkedFileOps(String absPath) {
+        this.absPath = Paths.get(absPath);        
+    }
+
+    public byte[] getFileHash() {
+        if(fileHash==null){
+            getFileHashSums(FILE_CHUNK_SIZE);
+        }
+        return fileHash;
+    }
+
     public synchronized void writeChunk(Long offset, byte[] data, long crc) throws IOException{
         int res=0;
         CheckSum cs = new CheckSum();
@@ -101,6 +109,9 @@ public class ChunkedFileOps {
       return res;   
     }   
     
+    public byte[] getFileHashSums(){
+        return getFileHashSums(FILE_CHUNK_SIZE);
+    }
     /**
      * Calculates file hash and partial CRCss
      * Should depends on crypto settings, but at the time it is SHA-256
@@ -127,13 +138,16 @@ public class ChunkedFileOps {
                 fileCRCs.add(ci);
                 offset=offset+rd;
             }
-            hash=dgst.digest();
+            fileHash=dgst.digest();
         } catch (IOException | NoSuchAlgorithmException ex) {
         }
-       return hash;    
+       return fileHash;    
     }
     
     public List<ChunkInfo> getChunksCRC(){
+        if(fileCRCs.size()==0){
+            getFileHashSums();
+        }
         return fileCRCs;
     }
 

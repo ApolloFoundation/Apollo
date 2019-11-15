@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -31,12 +32,12 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class ShardPrunableZipHashCalculator {
-    private DerivedTablesRegistry registry;
-    private Zip zip;
-    private DatabaseManager databaseManager;
-    private ShardDao shardDao;
-    private BlockchainConfig blockchainConfig;
-    private DirProvider dirProvider;
+    private final DerivedTablesRegistry registry;
+    private final Zip zip;
+    private final DatabaseManager databaseManager;
+    private final ShardDao shardDao;
+    private final BlockchainConfig blockchainConfig;
+    private final DirProvider dirProvider;
     private int lastPruningTime = 0;
 
     @Inject
@@ -83,7 +84,8 @@ public class ShardPrunableZipHashCalculator {
                     Files.deleteIfExists(prunableArchivePath);
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
-                    byte[] hash = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    ChunkedFileOps ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    byte[] hash = ops.getFileHash();
                     Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);

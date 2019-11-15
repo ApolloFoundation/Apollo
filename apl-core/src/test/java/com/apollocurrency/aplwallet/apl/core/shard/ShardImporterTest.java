@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.jboss.weld.junit.MockBean;
@@ -91,6 +92,8 @@ class ShardImporterTest {
     private AplAppStatus aplAppStatus;
     @Mock
     private Zip zipComponent;
+    @Mock
+    private ChunkedFileOps fopsComponent;    
     @Mock
     private GenesisImporter genesisImporter;
     @WeldSetup
@@ -254,7 +257,7 @@ class ShardImporterTest {
         doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString());
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
-        doReturn(new byte[32]).when(zipComponent).calculateHash(Paths.get("").toAbsolutePath().toString());
+        doReturn(new byte[32]).when(fopsComponent).getFileHash();
         Shard lastShard = new Shard();
         lastShard.setShardState(ShardState.INIT);
         lastShard.setShardId(1L);
