@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 // {"time":1571643660,"close":8222.11,"high":8226,"low":8222.11,"open":8226,"volumefrom":0.08722,"volumeto":717.32},
 
 @NoArgsConstructor
-// @AllArgsConstructor
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "SimpleTradingEntry", description = "Simple trading entry for graph data.")

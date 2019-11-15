@@ -54,7 +54,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
@@ -151,65 +150,6 @@ public class DexService {
         return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
     }
     
-    @Transactional
-    public DexTradeEntryMin getTradeInfoMinForPeriod(long start, long finish,
-                                                     Byte pairCurrency, Integer offset, Integer limit) {
-        
-        List<DexTradeEntry> tradeEntries =  dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
-        DexTradeEntryMin dexTradeEntryMin = new DexTradeEntryMin();
-        
-        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();
-        
-        BigDecimal hi = cnv.apply( tradeEntries.get(0) ).pairRate;//,low=t,open,close;         
-        // log.debug("hi: {}", hi );
-        
-        BigDecimal low = cnv.apply( tradeEntries.get(0)).pairRate;        
-        // log.debug("low: {}", low );
-        
-        BigDecimal open = cnv.apply( tradeEntries.get(0) ).pairRate;        
-        // log.debug("open: {}", open );
-        
-        BigDecimal close = cnv.apply( tradeEntries.get( tradeEntries.size()-1 )).pairRate;
-        // log.debug("close: {}", close );
-        
-        BigDecimal volumefrom = BigDecimal.ZERO;
-        BigDecimal volumeto = BigDecimal.ZERO;
-        
-        // log.debug("entries num: {}", tradeEntries.size());
-        
-        // iterate list to find the highest or the lowest values
-        for (DexTradeEntry currEl : tradeEntries) {    
-            DexTradeInfoDto currElDto = cnv.apply(currEl);
-            
-            // log.debug("amount: {}, rate: {} ", currElDto.senderOfferAmount, currElDto.pairRate);
-            
-            if ( currElDto.pairRate.compareTo( hi ) == 1 ) hi = currElDto.pairRate;
-            if ( currElDto.pairRate.compareTo( low ) == -1 ) low = currElDto.pairRate;
-            
-            // pairCurrency is either ETH or PAX
-            // if eth
-            
-            BigDecimal amount = BigDecimal.valueOf( currElDto.senderOfferAmount );
-            
-            BigDecimal vx = BigDecimal.valueOf(currElDto.senderOfferAmount).multiply(currElDto.pairRate);
-            
-            volumefrom = volumefrom.add(amount);
-            volumeto = volumeto.add(vx);
-            
-            
-        }
-        
-        dexTradeEntryMin.setHi(hi);
-        dexTradeEntryMin.setLow(low);
-        dexTradeEntryMin.setOpen(open);
-        dexTradeEntryMin.setClose(close);
-        dexTradeEntryMin.setVolumefrom(volumefrom);
-        dexTradeEntryMin.setVolumeto(volumeto);
-        return dexTradeEntryMin;
-    }
-
-    
-
     @Transactional
     public void saveDexTradeEntry(DexTradeEntry dexTradeEntry) {
         dexTradeDao.saveDexTradeEntry(dexTradeEntry);

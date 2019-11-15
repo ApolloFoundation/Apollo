@@ -4,13 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -46,13 +42,6 @@ public class TradingViewServiceImpl implements TradingViewService{
     TradingViewServiceImpl( DexService  dexService)  {
         this.dexService =  Objects.requireNonNull( dexService, "dexService is null");
     }
-    
-    @Override
-    public List<DexTradeEntryMin> getTradeInfoForInterval(DexCurrencies pairCurrency, Integer start, Integer end) {
-        List<DexTradeEntryMin> result = new ArrayList<>();
-        return result;
-    }
-    
     
     
     void createTestEntry() {

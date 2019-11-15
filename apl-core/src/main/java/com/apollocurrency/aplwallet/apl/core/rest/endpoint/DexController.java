@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.api.trading.ConversionType;
-import com.apollocurrency.aplwallet.api.trading.RateLimit;
+
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -18,8 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryMinToDtoConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -30,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntryMin;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -81,9 +78,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
-import org.checkerframework.checker.units.qual.C;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -659,11 +654,6 @@ public class DexController {
             
             List<SimpleTradingEntry> data = new ArrayList<>();
             
-            int acc = 0;
-            
-            int width=200;
-            Random r = new Random();
-            
             BigDecimal prevClose= BigDecimal.TEN;
             
             long startTS = (long)initialTime * 1000L;
@@ -675,154 +665,30 @@ public class DexController {
 
             log.debug("extracted: {} values", dexTradeEntries.size() );
             
-            
-            for (int i=0; i< 2000; i++) {
+            for (int i=0; i< limit; i++) {
                 log.debug("i : {}",i);
-                                
-                // SimpleTradingEntry randomEntry = new SimpleTradingEntry();
-                //randomEntry.time = initialTime;
                 long start = (long)initialTime * 1000;
                 long finish = 60000 + start ;
-                
-                SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriod(dexTradeEntries, start, finish); // service.getTradeInfoMinForPeriod(start, finish, (byte)1, offset, limitx);  
-            
+                SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriod(dexTradeEntries, start, finish); 
                 entryForPeriod.time = initialTime;
                 entryForPeriod.open =  prevClose;
-//                randomEntry.close =  entryForPeriod.getClose(); // randomEntry.open + rWidth;
-//                randomEntry.high = entryForPeriod.getHigh();
-//                randomEntry.low = entryForPeriod.getLow();
-//                randomEntry.volumefrom = entryForPeriod.getVolumefrom();                        
-//                randomEntry.volumeto = entryForPeriod.getVolumeto().longValue();
-                
-                
-                
-                prevClose = entryForPeriod.close;
-                                
-                // randomEntry.volumefrom = r.nextInt(10);
-                // randomEntry.volumeto = r.nextInt(50);
-
-                initialTime += 60;
-                
+                prevClose = entryForPeriod.close;                                
+                initialTime += 60;                
                 data.add(entryForPeriod);
             }
                 
-                
-            
-            /*
-            for (int i=0; i< 2000; i++) {
-                log.debug("i : {}",i);
-                
-                
-                
-                SimpleTradingEntry randomEntry = new SimpleTradingEntry();
-                randomEntry.time = initialTime;
-                
-                
-                
-                // boolean sign = (r.nextInt(2) == 1);                
-                // double rWidth = r.nextInt(50) + r.nextDouble();
-                
-                // if (sign) rWidth = -rWidth;
-                
-                int firstIndex = 0; 
-                int lastIndex = Integer.MAX_VALUE;
-                
-                long start = (long)randomEntry.time * 1000;
-                long finish = 60000 + start ;
-                
-                Integer limitx = 10; //Integer.MAX_VALUE;        
-                Integer offset = 0;
-           
-                // log.debug("getting dexTradeInfoMin, start: {}, finish: {}, offset: {}, limit: {}", start, finish, offset, limitx);
-                long startTS = System.currentTimeMillis();
-                DexTradeEntryMin dexTradeEntryMin = service.getTradeInfoMinForPeriod(start, finish, (byte)1, offset, limitx);  
-                long end = System.currentTimeMillis();
-                
-                float sec = (end - start) / 1000F; 
-                log.debug("it took {} sec", sec );
-                
-                // log.debug("got dexTradeInfoMin:");
-
-                
-                randomEntry.open =  prevClose;
-                randomEntry.close =  dexTradeEntryMin.getClose().longValue(); // randomEntry.open + rWidth;
-                int rHigh = 50;// 15+ r.nextInt(25);
-                int rLow = 50;// 15+r.nextInt(25);
-                
-                if (rWidth>0) {                    
-                    randomEntry.high = randomEntry.close + rHigh;
-                    randomEntry.low = randomEntry.open - rLow;
-                } else {
-                    randomEntry.high = randomEntry.open + rHigh;
-                    randomEntry.low = randomEntry.close - rLow;
-                }
-
-                randomEntry.high = dexTradeEntryMin.getHi().longValue();
-                randomEntry.low = dexTradeEntryMin.getLow().longValue();
-                randomEntry.volumefrom = dexTradeEntryMin.getVolumefrom().longValue();
-                randomEntry.volumeto = dexTradeEntryMin.getVolumeto().longValue();
-                
-                
-                
-                prevClose = randomEntry.close;
-                                
-                // randomEntry.volumefrom = r.nextInt(10);
-                // randomEntry.volumeto = r.nextInt(50);
-
-                initialTime += 60;
-                
-                data.add(randomEntry);
-
-                }
-  */
-
-            // Collections.reverse(data);
             tradingDataOutput.setData(data);
-            
             tradingDataOutput.setTimeTo(toTs);
-            
             tradingDataOutput.setTimeFrom(startGraph);
-            
-            
             tradingDataOutput.setFirstValueInArray(true);
-           
             ConversionType conversionType = new ConversionType();
             conversionType.type = "force_direct";
             conversionType.conversionSymbol = "";
-            
             tradingDataOutput.setConversionType(conversionType);
            
-            // Object rateLimit = new Object();
-            // tradingDataOutput.setRateLimit(rateLimit);
             tradingDataOutput.setHasWarning(false);
-            
-          
             return Response.ok( tradingDataOutput.toDTO() ) .build();
-    }
-    
-    
-    @GET
-    @Path("/tradeInfoMin")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get trade data", description = "obtaining trading information for the given period")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getTradeInfoForPeriodMin(  
-                                @Parameter(description = "period start time", required = true) @QueryParam("start") long start,
-                                @Parameter(description = "period finish time", required = true) @QueryParam("finish") long finish,
-                                @Parameter(description = "Paired currency. (APL=0, ETH=1, PAX=2)", required = true) @QueryParam("pairCurrency") Byte pairCurrency,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getTradeInfoForPeriod:  start: {}, finish: {} ", start, finish );
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
-        int offset = firstIndex > 0 ? firstIndex : 0;
-        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);        
-        DexTradeEntryMin dexTradeEntryMin = service.getTradeInfoMinForPeriod(start, finish, pairCurrency, offset, limit);                        
-        DexTradeEntryToDtoConverter cnv = new DexTradeEntryToDtoConverter();                
-        return Response.ok( ( new DexTradeEntryMinToDtoConverter().apply(dexTradeEntryMin))).build();
-                
+                        
     }
     
     
