@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 
 public class ChunkedFileOps {
     public final static int FILE_CHUNK_SIZE = 32768;
-
-
     
     public class ChunkInfo{
         public Long offset;

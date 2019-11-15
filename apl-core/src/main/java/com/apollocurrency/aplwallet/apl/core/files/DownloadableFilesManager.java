@@ -43,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 public class DownloadableFilesManager {
 
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
-    public final static int FILE_CHUNK_SIZE = 32768; //32K because 64K is maximum for WebSocket
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
     public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
@@ -108,8 +107,8 @@ public class DownloadableFilesManager {
             ChunkedFileOps fops = new ChunkedFileOps(fpath);
             downloadInfo.fileInfo.size = fops.getFileSize();
             downloadInfo.fileInfo.fileDate = fops.getFileDate();
-            downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(FILE_CHUNK_SIZE));
-            downloadInfo.fileInfo.chunkSize = FILE_CHUNK_SIZE;
+            downloadInfo.fileInfo.hash = Convert.toHexString(fops.getFileHashSums(ChunkedFileOps.FILE_CHUNK_SIZE));
+            downloadInfo.fileInfo.chunkSize = ChunkedFileOps.FILE_CHUNK_SIZE;
             downloadInfo.fileInfo.originHostSignature = "";
             List<ChunkedFileOps.ChunkInfo> crcs = fops.getChunksCRC();
             for (int i = 0; i < crcs.size(); i++) {
