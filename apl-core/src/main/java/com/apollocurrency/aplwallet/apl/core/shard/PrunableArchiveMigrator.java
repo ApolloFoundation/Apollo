@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -28,13 +29,13 @@ import javax.inject.Singleton;
 public class PrunableArchiveMigrator {
     private static final String MIGRATE_OPTION = "prunable-shard-migration-finished";
     private static final String CURRENT_SHARD_OPTION = "current-shard-for-migration";
-    private ShardDao shardDao;
-    private DatabaseManager databaseManager;
-    private OptionDAO optionDAO;
-    private DirProvider dirProvider;
-    private BlockchainConfig blockchainConfig;
-    private Zip zip;
-    private DerivedTablesRegistry registry;
+    private final ShardDao shardDao;
+    private final DatabaseManager databaseManager;
+    private final OptionDAO optionDAO;
+    private final DirProvider dirProvider;
+    private final BlockchainConfig blockchainConfig;
+    private final Zip zip;
+    private final DerivedTablesRegistry registry;
 
     @Inject
     public PrunableArchiveMigrator(ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
@@ -72,7 +73,10 @@ public class PrunableArchiveMigrator {
                     csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
-                    byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    byte[] hash = fops.getFileHash();
+                    //inform DownloadableFileManafer about file change
+                    
                     Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
                     shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation

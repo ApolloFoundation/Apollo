@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -106,7 +107,8 @@ class PrunableArchiveMigratorTest {
 
     void checkContent(Path path, Shard shard, byte[] hash) throws IOException {
         assertTrue(Files.exists(path));
-        byte[] newHash = zip.calculateHash(path.toAbsolutePath().toString());
+        ChunkedFileOps fops = new ChunkedFileOps(path.toAbsolutePath().toString());
+        byte[] newHash = fops.getFileHash();
         assertFalse(Arrays.equals(newHash, hash));
         assertArrayEquals(newHash, shard.getCoreZipHash());
         assertArrayEquals(new byte[32], shard.getPrunableZipHash());
@@ -146,8 +148,10 @@ class PrunableArchiveMigratorTest {
         Files.createFile(dataExportFolder.resolve("shard.csv"));
         Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
-        byte[] hash1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        byte[] hash1 = ops1.getFileHash();
+        ChunkedFileOps ops2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        byte[] hash2 = ops2.getFileHash();
         doReturn(dataExportFolder).when(dirProvider).getDataExportDir();
         AtomicReference<Path> tempDirPath = new AtomicReference<>();
         doAnswer(invocation -> {

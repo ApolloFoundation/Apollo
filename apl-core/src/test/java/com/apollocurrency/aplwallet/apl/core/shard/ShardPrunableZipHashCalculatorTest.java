@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -109,7 +110,8 @@ class ShardPrunableZipHashCalculatorTest {
         assertEquals(2, Files.list(dataExportDir).count());
         assertTrue(Files.exists(dataExportDir.resolve("prunable_message.csv")));
         assertNull(shard2.getPrunableZipHash());
-        assertArrayEquals(zip.calculateHash(thirdZipPath.toAbsolutePath().toString()), shard3.getPrunableZipHash());
+        ChunkedFileOps ops = new ChunkedFileOps(thirdZipPath.toAbsolutePath().toString());
+        assertArrayEquals(ops.getFileHash(), shard3.getPrunableZipHash());
         assertEquals(250, prunableZipHashCalculator.getLastPruningTime());
     }
 
