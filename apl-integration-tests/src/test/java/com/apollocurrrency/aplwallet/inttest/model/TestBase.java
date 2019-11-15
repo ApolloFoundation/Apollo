@@ -25,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.platform.runner.JUnitPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,7 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
+        /*
         try {
             importSecretFileSetUp(secretFilePath,"1");
             startForgingSetUp();
@@ -69,6 +71,8 @@ public abstract class TestBase implements ITest {
         }catch (Exception ex){
             fail("Precondition FAILED: "+ex.getMessage(), ex);
         }
+        /
+         */
     }
 
     @BeforeEach
@@ -78,7 +82,7 @@ public abstract class TestBase implements ITest {
 
 
     @AfterEach
-    void testEnd(){
+   public void testEnd(){
         this.testInfo = null;
     }
 

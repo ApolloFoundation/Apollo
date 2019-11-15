@@ -6,10 +6,12 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Wallet {
     private String user;

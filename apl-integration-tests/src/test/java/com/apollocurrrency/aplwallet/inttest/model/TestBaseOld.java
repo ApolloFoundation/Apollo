@@ -1138,7 +1138,6 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public CreateTransactionResponse shufflingProcess(Wallet wallet,String shuffling, String recipientSecretPhrase) {
-        System.out.println("recipientSecretPhrase: "+recipientSecretPhrase);
         addParameters(RequestType.requestType, shufflingProcess);
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
@@ -1159,14 +1158,15 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
-
-
-
-
-    @AfterEach
-    void testEnd() {
-        this.testInfo = null;
+    @Step
+    public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
+        addParameters(RequestType.requestType, shufflingVerify);
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.shufflingStateHash, shufflingStateHash);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
     }
 
 

@@ -5,17 +5,21 @@ import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
+import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
+import io.qameta.allure.Step;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -24,14 +28,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingVerify;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Shuffling")
 @Epic(value = "Shuffling")
+@Execution(SAME_THREAD)
 public class TestShuffling extends TestBaseOld {
+    RetryPolicy retry = new RetryPolicy()
+            .retryWhen(false)
+            .withMaxRetries(15)
+            .withDelay(10, TimeUnit.SECONDS);
     private final int NON_SHUFFLEABLE = 32;
 
+    private final int STAGE_REGISTRATION = 0;
     private final int STAGE_PROCESSING = 1;
+    private final int STAGE_VERIFICATION = 2;
+    private final int STAGE_BLAME = 3;
+    private final int STAGE_CANCELLED = 4;
     private final int STAGE_DONE = 5;
 
     private final int PARTICIPANT_COUNT = 3;
@@ -44,13 +59,17 @@ public class TestShuffling extends TestBaseOld {
     private final int SHUFFLING_TYPE_CURRENCY = 2;
 
 
+    private List<Wallet> recipients;
+    private Wallet randomStandart;
+    private Wallet randomVault;
+
+
 
     private final ArrayList<Wallet> wallets = new ArrayList<>();
     @BeforeEach
     @Override
     public void setUP(TestInfo testInfo) {
                 super.setUP(testInfo);
-
                 wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
 
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
@@ -65,10 +84,11 @@ public class TestShuffling extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = {0,1,2})
     public void shufflingCreateTest(int type){
+        ShufflingDTO shufflingDTO;
         int  registrationPeriod  = RandomUtils.nextInt(500,10080);
         CreateTransactionResponse shuffling = null;
-        Wallet randomStandart = getRandomStandartWallet();
-        Wallet randomVault =  getRandomVaultWallet();
+        randomStandart = getRandomStandartWallet();
+        randomVault =  getRandomVaultWallet();
 
         for (Wallet wallet: wallets) {
             switch (type){
@@ -97,27 +117,49 @@ public class TestShuffling extends TestBaseOld {
                      shuffling =  shufflingCreate(wallet, registrationPeriod,PARTICIPANT_COUNT,CURRENCY_AMOUNT,currencyDTO.getCurrency(),type);;
                      break;
             }
-            System.out.println("Shuffling "+shuffling.getTransaction());
+
+            log.debug("Shuffling created "+shuffling.getTransaction());
+            System.out.println("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
 
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
             shufflingRegister(randomStandart,shuffling.getFullHash());
             shufflingRegister(randomVault,shuffling.getFullHash());
 
+
+
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_PROCESSING);
+           recipients = Arrays.asList(
+                    getRandomRecipientWallet(),
+                    getRandomRecipientWallet(),
+                    getRandomRecipientWallet());
+
 
             verifyCreatingTransaction(
-                    shufflingProcess(wallet,shuffling.getTransaction(), RandomStringUtils.randomAlphabetic(10)));
-            verifyCreatingTransaction(
-                    shufflingProcess(randomStandart,shuffling.getTransaction(), RandomStringUtils.randomAlphabetic(10)));
-            verifyCreatingTransaction(
-                    shufflingProcess(randomVault,shuffling.getTransaction(), RandomStringUtils.randomAlphabetic(10)));
+                    shufflingProcess(wallet,shuffling.getTransaction(), recipients.get(2).getPass()));
+                    waitForChangeShufflingAssign(shuffling.getTransaction(),randomStandart.getUser());
 
-            /*
-            ShufflingDTO shufflingDTO = getShuffling(shuffling.getTransaction());
-            CreateTransactionResponse cancelTrx = shufflingCancel(wallet,shufflingDTO.getShuffling(),wallet.getUser(),shufflingDTO.getShufflingStateHash());
-            verifyCreatingTransaction(cancelTrx);
-             */
+            verifyCreatingTransaction(
+                    shufflingProcess(randomStandart,shuffling.getTransaction(), recipients.get(1).getPass()));
+                    waitForChangeShufflingAssign(shuffling.getTransaction(),randomVault.getUser());
+
+            verifyCreatingTransaction(
+                    shufflingProcess(randomVault,shuffling.getTransaction(), recipients.get(0).getPass()));
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
+
+            shufflingDTO = getShuffling(shuffling.getTransaction());
+            shufflingVerify(wallet,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
+            shufflingVerify(randomStandart,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
+            assertShufflingDone(type,recipients);
+
+           // CreateTransactionResponse cancelTrx = shufflingCancel(wallet,shufflingDTO.getShuffling(),wallet.getUser(),shufflingDTO.getShufflingStateHash());
+           // verifyCreatingTransaction(cancelTrx);
+            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_CANCELLED);
+
         }
     }
 
@@ -127,8 +169,8 @@ public class TestShuffling extends TestBaseOld {
     public void shufflingCreateAutomationTest(int type){
         int  registrationPeriod  = RandomUtils.nextInt(500,10080);
         CreateTransactionResponse shuffling = null;
-        Wallet randomStandart = getRandomStandartWallet();
-        Wallet randomVault =  getRandomVaultWallet();
+        randomStandart = getRandomStandartWallet();
+        randomVault =  getRandomVaultWallet();
 
         for (Wallet wallet: wallets) {
             switch (type){
@@ -160,7 +202,7 @@ public class TestShuffling extends TestBaseOld {
             log.debug("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
-            List<Wallet> recipients = Arrays.asList(
+            recipients = Arrays.asList(
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
@@ -171,52 +213,62 @@ public class TestShuffling extends TestBaseOld {
             startShuffler(randomVault,shuffling.getFullHash(),recipients.get(2).getPass());
 
             waitForChangeShufflingStage(shuffling.getTransaction(),STAGE_DONE);
+            assertShufflingDone(type,recipients);
 
-            switch (type){
-
-                case SHUFFLING_TYPE_APL:
-                    for (Wallet recipient:recipients) {
-                        assertEquals(APL_AMOUNT,getBalance(recipient).getBalanceATM()/100000000);
-                    }
-                    break;
-
-                case SHUFFLING_TYPE_ASSET:
-                    for (Wallet recipient:recipients) {
-                        assertEquals(1,getAccountAssets(recipient).getAccountAssets().size());
-                    }
-                    break;
-
-                case SHUFFLING_TYPE_CURRENCY:
-                    for (Wallet recipient:recipients) {
-                        assertEquals(1, getAccountCurrencies(recipient).getAccountCurrencies().size());
-                    }
-                    break;
-
-            }
 
         }
     }
 
+    @Step
+    private void assertShufflingDone(int type, List<Wallet> recipients){
+        switch (type){
 
-     private Wallet getRandomStandartWallet(){
-        String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
-        return new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
+            case SHUFFLING_TYPE_APL:
+                for (Wallet recipient:recipients) {
+                    assertEquals(APL_AMOUNT,getBalance(recipient).getBalanceATM()/100000000);
+                }
+                break;
+
+            case SHUFFLING_TYPE_ASSET:
+                for (Wallet recipient:recipients) {
+                    assertEquals(1,getAccountAssets(recipient).getAccountAssets().size());
+                }
+                break;
+
+            case SHUFFLING_TYPE_CURRENCY:
+                for (Wallet recipient:recipients) {
+                    assertEquals(1, getAccountCurrencies(recipient).getAccountCurrencies().size());
+                }
+                break;
+
+        }
     }
 
+    @Step
+     private Wallet getRandomStandartWallet(){
+        String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
+         Wallet wallet =  new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
+         System.out.println(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
+        return wallet;
+    }
+
+    @Step
     private Wallet getRandomRecipientWallet(){
         String randomPass = RandomStringUtils.randomAlphabetic(10);
         log.debug("Recipient SecretPhrase: "+randomPass);
+        System.out.println("Recipient SecretPhrase: "+randomPass);
         return new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
     }
 
+    @Step
     private Wallet getRandomVaultWallet(){
         Account2FAResponse account = generateNewAccount();
         Wallet vaultWallet = new Wallet(account.getAccountRS(),account.getPassphrase(),true);
         log.debug(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
-        System.out.println(vaultWallet.getUser());
-        System.out.println(vaultWallet.getPass());
+        System.out.println(String.format("Vault Wallet: %s pass: %s",vaultWallet.getUser(),vaultWallet.getPass()));
+
         verifyTransactionInBlock(
-                sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(),vaultWallet.getUser(),5000).getTransaction()
+                sendMoney(TestConfiguration.getTestConfiguration().getGenesisWallet(),vaultWallet.getUser(),10000).getTransaction()
         );
         verifyTransactionInBlock(
                 sendMoney(vaultWallet,vaultWallet.getUser(),10).getTransaction()
@@ -224,6 +276,7 @@ public class TestShuffling extends TestBaseOld {
         return vaultWallet;
     }
 
+    @Step
     private void setUpCurrency(Wallet wallet){
        issueCurrency(wallet,1,
                 RandomStringUtils.randomAlphabetic(5),
@@ -234,14 +287,25 @@ public class TestShuffling extends TestBaseOld {
                 0);
     }
 
+    @Step
     private void waitForChangeShufflingStage(String shuffling, int stage){
-        RetryPolicy retry = new RetryPolicy()
-                .retryWhen(false)
-                .withMaxRetries(15)
-                .withDelay(10, TimeUnit.SECONDS);
             boolean isStage = Failsafe.with(retry).get(() -> getShuffling(shuffling).getStage() == stage);
+           System.out.println(getShuffling(shuffling).getStage());
            assertTrue(isStage,String.format("Stage isn't %s - > : %s",stage, getShuffling(shuffling).getStage()));
     }
 
+    @Step
+    private void waitForChangeShufflingAssign(String shuffling, String account){
+        boolean isAssigned = Failsafe.with(retry).get(() -> getShuffling(shuffling).getAssigneeRS().equals(account));
+        assertTrue(isAssigned,String.format("Account isn't assigned %s - > : %s",account, getShuffling(shuffling).getAssigneeRS()));
+    }
 
+
+    @AfterEach
+    @Override
+    public void testEnd() {
+        super.testEnd();
+        //TODO: Return all fund on genesis
+
+    }
 }
