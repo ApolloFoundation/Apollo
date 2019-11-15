@@ -145,6 +145,10 @@ public class FileDownloader {
         fileChunksLock.writeLock().lock();
         try {
             fci.present=state;
+            //setting this state means download of chunk failed
+            if(state==FileChunkState.PRESENT_IN_PEER){
+                fci.failedAttempts++;
+            }
         } finally {
             fileChunksLock.writeLock().unlock();
         }
@@ -168,7 +172,12 @@ public class FileDownloader {
                 setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci); // may be next time we'll get it right
             }
         } else {
+            log.debug("Failed to download or save chunk: {}",fci.chunkId);
             setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci);  //well, it exists anyway on some peer
+        }
+        if(fci.failedAttempts>DOWNLOAD_THREADS){
+           //Seems that no peer has this chunk, we should finish
+            isLast=true;
         }
         return isLast;
     }
