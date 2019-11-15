@@ -113,12 +113,12 @@ public class TestBaseOld extends TestBase {
 
         try {
             isHeight = Failsafe.with(retry).get(() -> getBlock().getHeight() >= height);
-            assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         }
         catch (Exception e)
         {
             fail(String.format("Height %s  not reached. Exception msg: %s",height,e.getMessage()));
         }
+        assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         return isHeight;
     }
     @Step

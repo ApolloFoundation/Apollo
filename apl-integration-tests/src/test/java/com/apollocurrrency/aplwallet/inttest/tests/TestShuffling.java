@@ -122,6 +122,7 @@ public class TestShuffling extends TestBaseOld {
             System.out.println("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
+            shufflingDTO = getShuffling(shuffling.getTransaction());
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
             shufflingRegister(randomStandart,shuffling.getFullHash());
@@ -149,7 +150,7 @@ public class TestShuffling extends TestBaseOld {
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
 
-            shufflingDTO = getShuffling(shuffling.getTransaction());
+
             shufflingVerify(wallet,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
             shufflingVerify(randomStandart,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
 
