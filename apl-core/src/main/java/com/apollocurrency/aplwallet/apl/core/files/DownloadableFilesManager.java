@@ -78,7 +78,12 @@ public class DownloadableFilesManager {
         fi = fdi.fileInfo;
         return fi;
     }
-
+    
+    public FileDownloadInfo updateFileDownloadInfo(String fileId){
+        fdiCache.remove(fileId);
+        return  getFileDownloadInfo(fileId);
+    }
+    
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
         log.debug("getFileDownloadInfo( '{}' }", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");

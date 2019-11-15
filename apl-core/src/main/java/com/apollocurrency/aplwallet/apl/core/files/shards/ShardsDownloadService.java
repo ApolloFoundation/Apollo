@@ -89,12 +89,19 @@ public class ShardsDownloadService {
             if(fileData.fileOk){
               status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
             }else{
-              status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);                
+              status.setStatus(fileData.fileId, ShardDownloadStatus.FAILED);
+              log.debug("File {} download failed. reason: {}",fileData.fileId, fileData.reason);
             }
             if(status.isDowloadedOK()){
-                fireShardPresentEvent(shardId);                
-            }else if(status.isDownloadCompleted()){                
-                fireNoShardEvent("SHARDING: shard download failed");
+                if(!status.isSigalFired()){
+                    fireShardPresentEvent(shardId);
+                    status.setSigalFired(true);
+                }
+            }else if(status.isDownloadCompleted()) {                
+                if(!status.isSigalFired()){
+                    fireNoShardEvent(shardId,"SHARDING: shard download failed");
+                    status.setSigalFired(true);
+                }
             }
         }
     }
@@ -113,10 +120,9 @@ public class ShardsDownloadService {
         };
     }
 
-    private void fireNoShardEvent(String reason) {
+    private void fireNoShardEvent(Long shardId, String reason) {
         ShardPresentData shardPresentData = new ShardPresentData();
-        log.warn(reason);
-        log.debug("Firing 'NO_SHARD' event...");
+        log.warn("Firing 'NO_SHARD' event. shard: {} reason: {}",shardId, reason);
         presentDataEvent.select(literal(ShardPresentEventType.NO_SHARD)).fire(shardPresentData); // data is ignored
     }
 
@@ -197,12 +203,12 @@ public class ShardsDownloadService {
         boolean doNotShardImport = propertiesHolder.getBooleanProperty("apl.noshardimport", false);
         FileDownloadDecision result = FileDownloadDecision.NotReady;
         if (doNotShardImport) {
-            fireNoShardEvent("SHARDING: skipping shard import due to config/command-line option");
+            fireNoShardEvent(-1L, "SHARDING: skipping shard import due to config/command-line option");
             result = FileDownloadDecision.NoPeers;
             return result;
         }
         if(!getShardingInfoFromPeers()){
-            fireNoShardEvent("SHARDING: no good shards foud in the network");
+            fireNoShardEvent(-1L, "SHARDING: no good shards foud in the network");
             result = FileDownloadDecision.NoPeers;
             return result;            
         }
@@ -210,7 +216,7 @@ public class ShardsDownloadService {
             result = FileDownloadDecision.NoPeers;
             //FIRE event when shard is NOT PRESENT
             log.debug("result = {}, Fire = {}", result, "NO_SHARD");
-            fireNoShardEvent("SHARDING: No good shards peers found");
+            fireNoShardEvent(-1L, "SHARDING: No good shards peers found");
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
@@ -226,7 +232,7 @@ public class ShardsDownloadService {
                 }
             }
             if (!goodShardFound) {
-                fireNoShardEvent("SHARDING: No good shards found");
+                fireNoShardEvent(-1L, "SHARDING: No good shards found");
             }
         }
         return result;
