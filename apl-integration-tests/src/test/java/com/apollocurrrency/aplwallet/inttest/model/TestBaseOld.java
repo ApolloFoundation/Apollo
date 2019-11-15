@@ -108,7 +108,7 @@ public class TestBaseOld extends TestBase {
       RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)
-                .withDelay(5, TimeUnit.SECONDS);
+                .withDelay(10, TimeUnit.SECONDS);
         boolean isHeight = false;
 
         try {
@@ -1241,25 +1241,6 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    @Step
-    public CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType ) {
-        addParameters(RequestType.requestType, shufflingCreate);
-        addParameters(Parameters.wallet, wallet);
-        if (holdingType > 0) {
-            addParameters(Parameters.holding, holding);
-            addParameters(Parameters.holdingType, holdingType);
-            addParameters(Parameters.amount, amount);
-        }else{
-            addParameters(Parameters.amount, amount+"00000000");
-        }
-        addParameters(Parameters.registrationPeriod, registrationPeriod);
-        addParameters(Parameters.participantCount, participantCount);
-        addParameters(Parameters.feeATM, "100000000000");
-        addParameters(Parameters.deadline, 1440);
-        return getInstanse(CreateTransactionResponse.class);
-
-    }
-
     public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingVerify);
         addParameters(Parameters.shuffling, shuffling);
@@ -1268,12 +1249,6 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
-    }
-
-
-    @AfterEach
-    void testEnd() {
-        this.testInfo = null;
     }
 
 
