@@ -132,6 +132,9 @@ public class ChunkedFileOps {
         byte[] hash = null;
         byte[] buf = new byte[chunkSize];
         fileCRCs.clear();
+        if(absPath==null){
+           return hash;   
+        }        
         try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r")) {
             //TODO: use FBCryptoDigest after FBCrypto update for stream operations
             MessageDigest dgst = MessageDigest.getInstance(DIGESTER);

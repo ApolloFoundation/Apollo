@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -65,15 +66,16 @@ class PrunableArchiveMigratorTest {
     @Mock DerivedTablesRegistry registry;
     @Mock CsvExporter csvExporter;
     @Mock DatabaseManager databaseManager;
-    @Mock Event event;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
+    WeldInitiator weld = WeldInitiator.from(Event.class, PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
     PrunableArchiveMigrator migrator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     Shard shard1 = new Shard(1L, new byte[32], ShardState.FULL, 2000, null, new long[3], new int[3], new int[3], new byte[32]);
     Shard shard2 = new Shard(2L, new byte[32], ShardState.FULL, 4000, null, new long[3], new int[3], new int[3], new byte[32]);
+    @Inject
+    Event<ChunkedFileOps> event;
 
     @BeforeEach
     void setUp() {
