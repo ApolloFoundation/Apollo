@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.api.trading.ConversionType;
@@ -75,6 +74,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.DexTradeEntryToDtoConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import java.util.ArrayList;
@@ -556,9 +557,6 @@ public class DexController {
             
             List<SimpleTradingEntry> data = new ArrayList<>();
             
-            int acc = 0;
-            
-            int width=200;
             Random r = new Random();
             
             BigDecimal prevClose= BigDecimal.TEN;
@@ -586,42 +584,24 @@ public class DexController {
                 } else {
                     randomEntry.high = randomEntry.open.add(BigDecimal.valueOf(rHigh));
                     randomEntry.low = randomEntry.close.subtract(BigDecimal.valueOf(rLow));
-                }
-                
-                prevClose = randomEntry.close;
-                                
+                }                
+                prevClose = randomEntry.close;                                
                 randomEntry.volumefrom = BigDecimal.valueOf( r.nextInt(10) );
                 randomEntry.volumeto =  BigDecimal.valueOf( r.nextInt(50) );
-
-                initialTime += 60;
-                acc += 10;
+                initialTime += 60;                
                 data.add(randomEntry);
                 }
-            
-            // Collections.reverse(data);
+                        
             tradingDataOutput.setData(data);
-            
             tradingDataOutput.setTimeTo(toTs);
-            
             tradingDataOutput.setTimeFrom(startGraph);
-            
-            
             tradingDataOutput.setFirstValueInArray(true);
-           
             ConversionType conversionType = new ConversionType();
             conversionType.type = "force_direct";
             conversionType.conversionSymbol = "";
-            
-            tradingDataOutput.setConversionType(conversionType);
-           
-            // Object rateLimit = new Object();
-            // tradingDataOutput.setRateLimit(rateLimit);
+            tradingDataOutput.setConversionType(conversionType);           
             tradingDataOutput.setHasWarning(false);
-            
-            
-            return Response.ok( tradingDataOutput.toDTO() ) .build();
-
-
+            return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 
 
@@ -665,8 +645,7 @@ public class DexController {
 
             log.debug("extracted: {} values", dexTradeEntries.size() );
             
-            for (int i=0; i< limit; i++) {
-                log.debug("i : {}",i);
+            for (int i=0; i< limit; i++) {                
                 long start = (long)initialTime * 1000;
                 long finish = 60000 + start ;
                 SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriod(dexTradeEntries, start, finish); 
@@ -685,10 +664,8 @@ public class DexController {
             conversionType.type = "force_direct";
             conversionType.conversionSymbol = "";
             tradingDataOutput.setConversionType(conversionType);
-           
             tradingDataOutput.setHasWarning(false);
-            return Response.ok( tradingDataOutput.toDTO() ) .build();
-                        
+            return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
     
     
