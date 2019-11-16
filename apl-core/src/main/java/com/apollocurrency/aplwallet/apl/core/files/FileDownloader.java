@@ -139,6 +139,7 @@ public class FileDownloader {
                 reason
         );      
         fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
+        this.aplAppStatus.durableTaskFinished(this.taskId, true, "File downloading failed: " + fileID);
     } 
       
     private void setFileChunkState(FileChunkState state, FileChunkInfo fci){
