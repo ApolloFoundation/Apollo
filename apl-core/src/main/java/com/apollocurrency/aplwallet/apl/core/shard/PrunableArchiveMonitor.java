@@ -48,7 +48,7 @@ public class PrunableArchiveMonitor {
                         .initialDelay(PRUNABLE_MONITOR_INITIAL_DELAY)
                         .task(this::processPrunableDataArchive)
                         .delay(PRUNABLE_MONITOR_DELAY)
-                        .build(), TaskOrder.AFTER);
+                        .build(), TaskOrder.TASK);
         log.info("PrunableArchiveMonitor initialized, initial delay={} ms, delay={} ms.",
                 PRUNABLE_MONITOR_INITIAL_DELAY,
                 PRUNABLE_MONITOR_DELAY );
