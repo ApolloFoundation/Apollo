@@ -122,7 +122,7 @@ public class APIProxy {
                             .name("APIProxyPeersUpdate")
                             .delay(60000)
                             .task(peersUpdateThread)
-                            .build(), TaskOrder.TASK);
+                            .build());
         }
     }
 

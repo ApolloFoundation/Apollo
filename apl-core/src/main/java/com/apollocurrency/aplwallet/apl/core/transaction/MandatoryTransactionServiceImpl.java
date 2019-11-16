@@ -47,7 +47,7 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
                         .initialDelay(INITIAL_DELAY)
                         .task(this::processMandatoryTransactions)
                         .delay(REPEAT_DELAY)
-                        .build(), TaskOrder.TASK);
+                        .build());
     }
 
     @Transactional

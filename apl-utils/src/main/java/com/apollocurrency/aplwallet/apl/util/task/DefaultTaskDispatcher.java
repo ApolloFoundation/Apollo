@@ -147,8 +147,14 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         return createMainExecutor().executor();
     }
 
-    @Override
-    public boolean schedule(Task task, TaskOrder position) {
+    /**
+     * Submit a background task for execution. This task is put in queue and will be executed in the specified order
+     * @param task the task to execute
+     * @param position the task order
+     * @return {@code true} if the task is put into a queue
+     * @throws RejectedExecutionException if this dispatcher has been shut down
+     */
+    private boolean enqueueTask(Task task, TaskOrder position) {
         Objects.requireNonNull(task, "Task is NULL.");
         Objects.requireNonNull(position, "Task position is NULL.");
         if (isStarted()) {
@@ -163,6 +169,26 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 throw new IllegalArgumentException(String.format("The task contains the wrong field values, task=%s", task.toString()));
             }
         }
+    }
+
+    @Override
+    public boolean schedule(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.TASK);
+    }
+
+    @Override
+    public boolean invokeInit(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.INIT);
+    }
+
+    @Override
+    public boolean invokeAfter(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.AFTER);
+    }
+
+    @Override
+    public boolean invokeBefore(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.BEFORE);
     }
 
     /**
