@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -41,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 
@@ -57,7 +59,11 @@ class ShardPrunableZipHashCalculatorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class, ShardPrunableZipHashCalculator.class, PropertiesHolder.class, FullTextConfigImpl.class)
+    WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
+            Event.class,
+            ShardPrunableZipHashCalculator.class, 
+            PropertiesHolder.class, 
+            FullTextConfigImpl.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(registry, DerivedTablesRegistry.class))
             .addBeans(MockBean.of(zip, Zip.class))
@@ -68,7 +74,9 @@ class ShardPrunableZipHashCalculatorTest {
     @Inject
     PrunableMessageTable prunableMessageTable;
     @Inject
-    javax.enterprise.event.Event<TrimData> trimDataEvent;
+    Event<TrimData> trimDataEvent;
+    @Inject
+    Event<ChunkedFileOps> fileChangedEvent;    
     @Inject
     ShardPrunableZipHashCalculator prunableZipHashCalculator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
@@ -80,11 +88,11 @@ class ShardPrunableZipHashCalculatorTest {
     @Test
     void testTriggerAsyncTrimDoneEvent() {
         doReturn(List.of()).when(shardDao).getAllCompletedShards();
-
+        mockChain();
         trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
 
         verify(shardDao).getAllCompletedShards();
-        verifyZeroInteractions(zip, dirProvider, blockchainConfig);
+        verifyZeroInteractions(zip, dirProvider);
     }
 
     @Test
@@ -109,7 +117,8 @@ class ShardPrunableZipHashCalculatorTest {
         assertEquals(2, Files.list(dataExportDir).count());
         assertTrue(Files.exists(dataExportDir.resolve("prunable_message.csv")));
         assertNull(shard2.getPrunableZipHash());
-        assertArrayEquals(zip.calculateHash(thirdZipPath.toAbsolutePath().toString()), shard3.getPrunableZipHash());
+        ChunkedFileOps ops = new ChunkedFileOps(thirdZipPath.toAbsolutePath().toString());
+        assertArrayEquals(ops.getFileHash(), shard3.getPrunableZipHash());
         assertEquals(250, prunableZipHashCalculator.getLastPruningTime());
     }
 

@@ -73,6 +73,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -635,9 +636,11 @@ public class ShardEngineImpl implements ShardEngine {
             boolean isRemoved = FileUtils.deleteFileIfExists(zipPath);
             log.debug("Previous Zip in '{}' was '{}'", zipName, isRemoved ? "REMOVED" : "NOT FOUND");
             // compute ZIP crc hash
-            byte[] zipCrcHash = zipComponent.compressAndHash(
+            ChunkedFileOps fops = zipComponent.compressAndHash(
                     zipPath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
+              byte[] zipCrcHash = fops.getFileHash();
+            //inform DownladableFileManager
             postCompressTask.accept(requireLastNotFinishedShard(), zipCrcHash);
             updateRecovery(recovery, zipName);
         }
