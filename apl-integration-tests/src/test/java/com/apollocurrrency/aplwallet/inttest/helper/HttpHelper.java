@@ -106,7 +106,10 @@ public class HttpHelper {
             }
         }
         reqestParam.clear();
-        Allure.addAttachment("Request URL", requestUrl.toString());
+        if (TestBase.testInfo != null) {
+            System.out.println(TestBase.testInfo);
+           // Allure.addAttachment("Request URL", requestUrl.toString());
+        }
         return requestUrl.toString();
     }
 
@@ -155,7 +158,9 @@ public class HttpHelper {
         if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
             Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
         }
-        Allure.addAttachment("Response Body", responseBody);
+        if (TestBase.testInfo != null) {
+            Allure.addAttachment("Response Body", responseBody);
+        }
         return (T) mapper.readValue(responseBody, clazz);
         }
         catch (Exception e)
