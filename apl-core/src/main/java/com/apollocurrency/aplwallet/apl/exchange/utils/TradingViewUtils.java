@@ -3,12 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.utils;
 
+import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,5 +64,80 @@ public class TradingViewUtils {
         }
         return result;         
     }
+    
+    
+    
+//        @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
+//        @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
+//        @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
+//        @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+//        @Context HttpServletRequest req) throws NotFoundException {
+
+    
+        
+    static public TradingDataOutput getTestDataForInterval( String fsym, String tsym, Integer toTs, Integer limit, Integer interval) {
+            
+        log.debug("getTestDataForInterval:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+
+            int initialTime = toTs - (interval*2000);
+            int startGraph = initialTime;
+
+
+            TradingDataOutput tradingDataOutput = new TradingDataOutput();
+            
+            tradingDataOutput.setResponse("Success");
+            tradingDataOutput.setType(100);
+            tradingDataOutput.setAggregated(false);
+            
+            
+            List<SimpleTradingEntry> data = new ArrayList<>();
+            
+            Random r = new Random();
+            
+            BigDecimal prevClose= BigDecimal.TEN;
+            
+            for (int i=0; i< limit; i++) {
+                                                                    
+                SimpleTradingEntry randomEntry = new SimpleTradingEntry();
+                randomEntry.time = initialTime;
+                
+                boolean sign = (r.nextInt(2) == 1);
+                
+                double rWidth = r.nextInt(50) + r.nextDouble();
+                
+                if (sign) rWidth = -rWidth;
+                                
+                randomEntry.open =  prevClose;
+                randomEntry.close =  randomEntry.open.add( BigDecimal.valueOf(rWidth));
+                
+                int rHigh = 50;// 15+ r.nextInt(25);
+                int rLow = 50;// 15+r.nextInt(25);
+                
+                if (rWidth>0) {                    
+                    randomEntry.high = randomEntry.close.add (BigDecimal.valueOf(rHigh));
+                    randomEntry.low = randomEntry.open.subtract(BigDecimal.valueOf(rLow));
+                } else {
+                    randomEntry.high = randomEntry.open.add(BigDecimal.valueOf(rHigh));
+                    randomEntry.low = randomEntry.close.subtract(BigDecimal.valueOf(rLow));
+                }                
+                prevClose = randomEntry.close;                                
+                randomEntry.volumefrom = BigDecimal.valueOf( r.nextInt(10) );
+                randomEntry.volumeto =  BigDecimal.valueOf( r.nextInt(50) );
+                initialTime += interval;                
+                data.add(randomEntry);
+                }
+                        
+            tradingDataOutput.setData(data);
+            tradingDataOutput.setTimeTo(toTs);
+            tradingDataOutput.setTimeFrom(startGraph);
+            tradingDataOutput.setFirstValueInArray(true);
+            ConversionType conversionType = new ConversionType();
+            conversionType.type = "force_direct";
+            conversionType.conversionSymbol = "";
+            tradingDataOutput.setConversionType(conversionType);           
+            tradingDataOutput.setHasWarning(false);
+            return tradingDataOutput;
+    }
+    
     
 }

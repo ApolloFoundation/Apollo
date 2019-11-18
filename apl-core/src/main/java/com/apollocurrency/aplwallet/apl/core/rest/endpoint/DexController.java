@@ -76,6 +76,7 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getTestDataForInterval;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import java.util.ArrayList;
 import java.util.Random;
@@ -541,70 +542,52 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
-
-            int initialTime = toTs - (60*2000);
-            int startGraph = initialTime;
-
-
-            TradingDataOutput tradingDataOutput = new TradingDataOutput();
-            
-            tradingDataOutput.setResponse("Success");
-            tradingDataOutput.setType(100);
-            tradingDataOutput.setAggregated(false);
-            
-            
-            List<SimpleTradingEntry> data = new ArrayList<>();
-            
-            Random r = new Random();
-            
-            BigDecimal prevClose= BigDecimal.TEN;
-            
-            for (int i=0; i< 2000; i++) {
-                                                                    
-                SimpleTradingEntry randomEntry = new SimpleTradingEntry();
-                randomEntry.time = initialTime;
-                
-                boolean sign = (r.nextInt(2) == 1);
-                
-                double rWidth = r.nextInt(50) + r.nextDouble();
-                
-                if (sign) rWidth = -rWidth;
-                                
-                randomEntry.open =  prevClose;
-                randomEntry.close =  randomEntry.open.add( BigDecimal.valueOf(rWidth));
-                
-                int rHigh = 50;// 15+ r.nextInt(25);
-                int rLow = 50;// 15+r.nextInt(25);
-                
-                if (rWidth>0) {                    
-                    randomEntry.high = randomEntry.close.add (BigDecimal.valueOf(rHigh));
-                    randomEntry.low = randomEntry.open.subtract(BigDecimal.valueOf(rLow));
-                } else {
-                    randomEntry.high = randomEntry.open.add(BigDecimal.valueOf(rHigh));
-                    randomEntry.low = randomEntry.close.subtract(BigDecimal.valueOf(rLow));
-                }                
-                prevClose = randomEntry.close;                                
-                randomEntry.volumefrom = BigDecimal.valueOf( r.nextInt(10) );
-                randomEntry.volumeto =  BigDecimal.valueOf( r.nextInt(50) );
-                initialTime += 60;                
-                data.add(randomEntry);
-                }
-                        
-            tradingDataOutput.setData(data);
-            tradingDataOutput.setTimeTo(toTs);
-            tradingDataOutput.setTimeFrom(startGraph);
-            tradingDataOutput.setFirstValueInArray(true);
-            ConversionType conversionType = new ConversionType();
-            conversionType.type = "force_direct";
-            conversionType.conversionSymbol = "";
-            tradingDataOutput.setConversionType(conversionType);           
-            tradingDataOutput.setHasWarning(false);
-            return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);        
+        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60); 
+        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 
+    @GET
+    @Path("/histohour")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get histohour", description = "getting histohour")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getHistohour(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
+                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
+                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
+                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
+                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+                                @Context HttpServletRequest req) throws NotFoundException {
 
-   @GET
+        log.debug("getHistohour:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
+        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60*60);
+        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+    }
+    
+        @GET
+    @Path("/histoday")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get histoday", description = "getting histoday")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getHistoday(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
+                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
+                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
+                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
+                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+            
+        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60*60*24 );
+        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+    }
+    
+
+    @GET
     @Path("/histominute1")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get histominute", description = "getting histominute")
@@ -666,6 +649,8 @@ public class DexController {
             tradingDataOutput.setHasWarning(false);
             return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
+
+
     
     
 }
