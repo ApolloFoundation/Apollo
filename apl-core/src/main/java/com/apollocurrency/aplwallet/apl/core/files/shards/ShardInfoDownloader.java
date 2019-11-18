@@ -315,9 +315,9 @@ public class ShardInfoDownloader {
             //1.0 for last shard and then less
             Double k = 1.0*shardId/sortedByIdShards.keySet().size();
             // make 11 shard biggest for debugging
-            if(shardId==11L){
-                k=20.0;
-            }
+//            if(shardId==11L){
+//                k=20.0;
+//            }
             Double weight = getShardWeight(shardId)*k;
             res.put(shardId,weight);
         }
