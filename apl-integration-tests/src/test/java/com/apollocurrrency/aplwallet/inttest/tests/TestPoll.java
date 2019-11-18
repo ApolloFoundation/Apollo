@@ -1,6 +1,7 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
+import com.apollocurrency.aplwallet.api.dto.VoteDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
@@ -39,7 +40,7 @@ public class TestPoll extends TestBaseOld {
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
     }
 
-    @DisplayName("Creating Poll")
+    @DisplayName("Poll flow")
     @ParameterizedTest(name = "{displayName} votingModel: {0}")
     @ValueSource(ints = { 0,1,2,3 })
     public void createPollTest(int votingModel) {
@@ -87,6 +88,11 @@ public class TestPoll extends TestBaseOld {
             verifyTransactionInBlock(vote.getTransaction());
             waitForHeight(currentHeight + plusFinishHeight + 1);
             assertEquals(true, getPoll(pollId).getFinished(), "status of finished poll is different");
+            assertEquals(vote.getTransaction(), getPollVotes(pollId).getVotes().get(0).getTransaction(), "verification is failed on transaction Id");
+            assertEquals("1", getPollVotes(pollId).getVotes().get(0).getVotes().get(0), "votes are different");
+            assertEquals("", getPollVotes(pollId).getVotes().get(0).getVotes().get(1), "votes are different");
+            assertEquals("", getPollVotes(pollId).getVotes().get(0).getVotes().get(2), "votes are different");
+            assertEquals(wallet.getUser(), getPollVotes(pollId).getVotes().get(0).getVoterRS(), "account ID's of voters are different");
         }
 
     }

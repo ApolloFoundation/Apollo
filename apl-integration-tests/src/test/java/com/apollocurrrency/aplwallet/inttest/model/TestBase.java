@@ -75,7 +75,7 @@ public abstract class TestBase implements ITest {
     }
 
     @BeforeEach
-    void setUP(TestInfo testInfo){
+    public void setUP(TestInfo testInfo){
         this.testInfo = testInfo;
     }
 

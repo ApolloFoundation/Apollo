@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
+import com.apollocurrency.aplwallet.api.response.GetPollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
@@ -81,11 +82,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
-
-    @BeforeEach
-    public void setUP(TestInfo testInfo) {
-        this.testInfo = testInfo;
-    }
 
     @Step
     public boolean verifyTransactionInBlock(String transaction)
@@ -1251,14 +1247,11 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
-    @AfterAll
-    static void afterAll() {
-        try {
-        //    deleteKey(getTestConfiguration().getVaultWallet());
-        } catch (Exception e) { }
-
+    //get all Votes in Poll
+    @Step
+    public GetPollVotesResponse getPollVotes (String poll) {
+        addParameters(RequestType.requestType, getPollVotes);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(GetPollVotesResponse.class);
     }
-
-
 }
