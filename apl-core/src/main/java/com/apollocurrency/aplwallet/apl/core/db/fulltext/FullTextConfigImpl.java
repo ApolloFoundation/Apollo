@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import io.netty.util.internal.ConcurrentSet;
 
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 @Singleton
 public class FullTextConfigImpl implements FullTextConfig {
 
-    private Set<String> tableNames = new HashSet<>();
+    private Set<String> tableNames = new ConcurrentSet<>();
     private String schema = "PUBLIC";
     private Path ftlIndexPath;
 
