@@ -1,6 +1,18 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    scheduleCurrencyBuy,
+    currencyBuy,
+    currencySell,
+    publishExchangeOffer,
+    currencyReserveIncrease,
+    currencyReserveClaim,
+    currencyMint,
+    transferCurrency,
+    getAllCurrencies,
+    getCurrency,
+    getCurrencyAccounts,
+    deleteCurrency,
     getForging,
     stopForging,
     startForging,
@@ -103,5 +115,6 @@ public enum RequestType {
     sendMoneyPrivate,
     dividendPayment,
     getAssetDividends,
-    getExpectedAssetTransfers
+    getExpectedAssetTransfers,
+    issueCurrency
 }

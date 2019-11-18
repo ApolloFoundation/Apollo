@@ -15,9 +15,11 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
+import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
+import io.qameta.allure.Epic;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +29,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -35,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Accounts")
+@Epic(value = "Accounts")
 public class TestAccounts extends TestBaseOld {
 
 
@@ -115,8 +120,12 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify Search Accounts  endpoint")
     public void testSearchAccounts() throws IOException {
-        //Before set Account info Test1
-        SearchAccountsResponse searchAccountsResponse = searchAccounts("Test1");
+        String accountName = "Account "+new Date().getTime();
+        String accountDesc= "Decription "+new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(),accountName,accountDesc);
+        verifyCreatingTransaction(setAccountInfo);
+        verifyTransactionInBlock(setAccountInfo.getTransaction());
+        SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
         assertNotNull(searchAccountsResponse, "Response - null");
         assertNotNull(searchAccountsResponse.getAccounts(), "Response accountDTOS - null");
         assertTrue(searchAccountsResponse.getAccounts().size() > 0, "Account not found");
@@ -198,16 +207,27 @@ public class TestAccounts extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoney(Wallet wallet) throws Exception {
-        CreateTransactionResponse sendMoneyResponse = sendMoney(wallet, "APL-KL45-8GRF-BKPM-E58NH", 100);
-        verifyCreatingTransaction(sendMoneyResponse);
+        Set<String> transactions = new HashSet<>();
+        int countOfTransactions = 50;
+        for (int i = 0; i <countOfTransactions ; i++) {
+            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,wallet.getUser(),10);
+            verifyCreatingTransaction(sendMoneyResponse);
+            transactions.add(sendMoneyResponse.getTransaction());
+        }
+        waitForHeight(getBlock().getHeight()+10);
+        for (String trx: transactions) {
+            verifyTransactionInBlock(trx);
+        }
     }
+
+
 
 
     @DisplayName("Send Money Private")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
-        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet, "APL-KL45-8GRF-BKPM-E58NH", 100);
+        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,wallet.getUser(),100);
         verifyCreatingTransaction(sendMoneyResponse);
     }
 

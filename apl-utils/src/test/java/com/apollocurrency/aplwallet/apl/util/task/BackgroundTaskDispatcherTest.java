@@ -208,4 +208,46 @@ class BackgroundTaskDispatcherTest {
         }
 
     }
+
+    @Test
+    void scheduleBeforeAndAfterScheduleTasksWithExceptions() {
+        taskDispatcher = TaskDispatcherFactory.newBackgroundDispatcher("TestServiceWithInitException");
+
+        Task task0 = Task.builder()
+                .name("task-INIT")
+                .task(new SimpleTask())
+                .initialDelay(1)
+                .build();
+
+        Task taskMain = Task.builder()
+                .name("MainTask-sleep-main")
+                .task(()->{
+                    log.debug("main task is called.");
+                })
+                .delay(10)
+                .build();
+
+        taskDispatcher.schedule(taskMain, TaskOrder.TASK);
+        taskDispatcher.schedule(task0, TaskOrder.INIT);
+
+        taskDispatcher.dispatch();
+        log.debug("Thread dispatch");
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {}
+
+    }
+
+    static class SimpleTask implements Runnable{
+        @Override
+        public void run() {
+            Task exceptionGenerator = new Task(() -> {
+                throw new RuntimeException("Special exception to check the stack trace logging.");
+            }, "exceptionGenerator", 0, 10);
+
+            exceptionGenerator.run();
+        }
+    }
+
 }

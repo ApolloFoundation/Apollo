@@ -557,9 +557,9 @@ public final class PeerImpl implements Peer {
         }
         return failedConnectAttempts;
     }
-    
-    @Override   
-    public synchronized boolean handshake(UUID targetChainId) {
+ 
+    public synchronized boolean handshake() {
+        UUID targetChainId = peers.blockchainConfig.getChain().getChainId();
         if(getState()==PeerState.CONNECTED){
             LOG.trace("Peers {} is already connected.",getHostWithPort());
             return true;

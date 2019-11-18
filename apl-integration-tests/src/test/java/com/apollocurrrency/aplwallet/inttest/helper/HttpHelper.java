@@ -4,6 +4,8 @@ package com.apollocurrrency.aplwallet.inttest.helper;
 import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Allure;
+import io.qameta.allure.Attachment;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -15,6 +17,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UnknownFormatConversionException;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class HttpHelper {
@@ -71,32 +75,39 @@ public class HttpHelper {
     }
 
 
-    private static String buildGetReqestUrl() {
-        StringBuilder reqestUrl = new StringBuilder();
-        reqestUrl.append(baseURL_API);
-        for (Map.Entry<String, Object> pair : reqestParam.entrySet()) {
-            if (pair.getKey().equals("wallet")) {
+    private static String buildGetReqestUrl(){
+        StringBuilder requestUrl =  new StringBuilder();
+        requestUrl.append(baseURL_API);
+        for(Map.Entry<String,Object> pair: reqestParam.entrySet()) {
+            if (pair.getKey().equals("wallet"))
+            {
                 Wallet wallet = (Wallet) pair.getValue();
-                reqestUrl.append("account=" + wallet.getUser());
-                reqestUrl.append("&");
-                if (!wallet.isVault()) {
-                    reqestUrl.append("secretPhrase=" + wallet.getPass());
-                    reqestUrl.append("&");
-                } else {
-                    reqestUrl.append("secretBytes=" + wallet.isVault());
-                    reqestUrl.append("&");
-                    reqestUrl.append("sender=" + wallet.getUser());
-                    reqestUrl.append("&");
-                    reqestUrl.append("passphrase=" + wallet.getPass());
-                    reqestUrl.append("&");
+                requestUrl.append("account="+wallet.getUser());
+                requestUrl.append("&");
+                if (!wallet.isVault())
+                {
+                    requestUrl.append("secretPhrase="+wallet.getPass());
+                    requestUrl.append("&");
                 }
-            } else {
-                reqestUrl.append(pair.getKey() + "=" + pair.getValue().toString());
-                reqestUrl.append("&");
+                else
+                {
+                    requestUrl.append("secretBytes="+wallet.isVault());
+                    requestUrl.append("&");
+                    requestUrl.append("sender="+wallet.getUser());
+                    requestUrl.append("&");
+                    requestUrl.append("passphrase="+wallet.getPass());
+                    requestUrl.append("&");
+                }
+            }
+            else
+            {
+                requestUrl.append(pair.getKey()+"="+pair.getValue().toString());
+                requestUrl.append("&");
             }
         }
         reqestParam.clear();
-        return reqestUrl.toString();
+        Allure.addAttachment("Request URL", requestUrl.toString());
+        return requestUrl.toString();
     }
 
     private static String buildGetReqestUrl(String peerURL_API) {
@@ -131,16 +142,21 @@ public class HttpHelper {
         Response response;
         String responseBody = "";
         try {
-            response = httpCallPost();
-            responseBody = response.body().string();
-            Assert.assertEquals(200, response.code());
-            // System.out.println(responseBody);
-            if (TestBase.testInfo != null && TestBase.testInfo.getTags() != null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
-                Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
-            }
-            return (T) mapper.readValue(responseBody, clazz);
-        } catch (Exception e) {
-            throw new UnknownFormatConversionException(responseBody + " : \n" + e.getMessage());
+        response =  httpCallPost();
+        responseBody = response.body().string();
+        Assert.assertEquals(200, response.code());
+        //System.out.println(responseBody);
+        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
+            Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
+            Allure.addAttachment("Response Body", responseBody);
+        }
+        return (T) mapper.readValue(responseBody, clazz);
+        }
+        catch (Exception e)
+        {
+           return fail(responseBody +"\n"+e.getMessage());
         }
     }
+
+
 }
