@@ -167,8 +167,8 @@ public interface ITest {
     CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
     CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
     PollDTO getPoll(String poll);
-    CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance);
-    CreateTransactionResponse castVote(Wallet wallet, String poll);
+    CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue);
+    CreateTransactionResponse castVote(Wallet wallet, String poll, int vote);
     AccountCurrencyResponse getAccountCurrencies(Wallet wallet);
     CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType );
     GetPollVotesResponse getPollVotes (String poll);

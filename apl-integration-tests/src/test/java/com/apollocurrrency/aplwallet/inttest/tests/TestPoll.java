@@ -9,6 +9,7 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.bouncycastle.crypto.prng.RandomGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,29 +52,30 @@ public class TestPoll extends TestBaseOld {
         CreateTransactionResponse vote = null;
         int currentHeight;
         String pollId;
+        int maxRangeValue = 10;
 
         for (Wallet wallet: wallets) {
             switch (votingModel) {
                 case POLL_BY_ACCOUNT:
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 0);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 0, maxRangeValue);
                     break;
                 case POLL_BY_ACCOUNT_BALANCE:
                     //TODO: add balance verification
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 10000);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 10000, maxRangeValue);
                     break;
                 case POLL_BY_ASSET:
                     CreateTransactionResponse asset = issueAsset(wallet, RandomStringUtils.randomAlphabetic(5), "description of asset for poll", 100);
                     verifyCreatingTransaction(asset);
                     verifyTransactionInBlock(asset.getTransaction());
                     String assetId = asset.getTransaction();
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, assetId, 1);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, assetId, 1, maxRangeValue);
                     break;
                 case POLL_BY_CURRENCY:
                     CreateTransactionResponse currency = issueCurrency(wallet, 1, RandomStringUtils.randomAlphabetic(5), "description of currency for poll", RandomStringUtils.randomAlphabetic(4).toUpperCase(), 100, 100,1);
                     verifyCreatingTransaction(currency);
                     verifyTransactionInBlock(currency.getTransaction());
                     String currencyId = currency.getTransaction();
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, currencyId, 1);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, currencyId, 1, maxRangeValue);
                     break;
             }
             assertNotNull(poll);
@@ -83,13 +85,14 @@ public class TestPoll extends TestBaseOld {
             pollId = poll.getTransaction();
             assertEquals(name, getPoll(pollId).getName(), "Names of poll are different");
             assertEquals(false, getPoll(pollId).getFinished(), "status of poll is different");
-            vote = castVote(wallet, pollId);
+            int voteNumber = RandomUtils.nextInt(1, maxRangeValue);
+            vote = castVote(wallet, pollId, voteNumber);
             verifyCreatingTransaction(vote);
             verifyTransactionInBlock(vote.getTransaction());
             waitForHeight(currentHeight + plusFinishHeight + 1);
             assertEquals(true, getPoll(pollId).getFinished(), "status of finished poll is different");
             assertEquals(vote.getTransaction(), getPollVotes(pollId).getVotes().get(0).getTransaction(), "verification is failed on transaction Id");
-            assertEquals("1", getPollVotes(pollId).getVotes().get(0).getVotes().get(0), "votes are different");
+            assertEquals(String.valueOf(voteNumber), getPollVotes(pollId).getVotes().get(0).getVotes().get(0), "votes are different");
             assertEquals("", getPollVotes(pollId).getVotes().get(0).getVotes().get(1), "votes are different");
             assertEquals("", getPollVotes(pollId).getVotes().get(0).getVotes().get(2), "votes are different");
             assertEquals(wallet.getUser(), getPollVotes(pollId).getVotes().get(0).getVoterRS(), "account ID's of voters are different");

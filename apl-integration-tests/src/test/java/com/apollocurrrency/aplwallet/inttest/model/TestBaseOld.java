@@ -472,7 +472,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step("Create Poll with param: votingModel: {2}")
-    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance){
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue){
         int currentHeight = getBlock().getHeight();
         int finishHeight = currentHeight + plusFinishHeight;
 
@@ -484,7 +484,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, 1000000000);
         addParameters(Parameters.isCustomFee, true);
         addParameters(Parameters.minRangeValue, 0);
-        addParameters(Parameters.maxRangeValue, 1);
+        addParameters(Parameters.maxRangeValue, maxRangeValue);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.answers, "YES");
         addParameters(Parameters.answers, "NO");
@@ -530,12 +530,12 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    public CreateTransactionResponse castVote(Wallet wallet, String poll){
+    public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote){
 
         addParameters(RequestType.requestType, RequestType.castVote);
         addParameters(Parameters.feeATM, 1000000000);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.vote00, 1);
+        addParameters(Parameters.vote00, vote);
         addParameters(Parameters.vote01, "");
         addParameters(Parameters.vote02, "");
         addParameters(Parameters.deadline, 1440);
