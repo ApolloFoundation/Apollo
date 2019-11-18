@@ -116,7 +116,7 @@ public class DexOrderProcessor {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
         Runnable task = () -> {
             if (processorEnabled) {
@@ -128,15 +128,15 @@ public class DexOrderProcessor {
                     log.warn("DexOrderProcessor error", e);
                 }
                 log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
-            }else{
+            } else {
                 log.debug("Contracts processor is suspended.");
             }
         };
 
         Task dexOrderProcessorTask = Task.builder()
                 .name(BACKGROUND_SERVICE_NAME)
-                .delay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
-                .initialDelay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .delay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .initialDelay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
                 .task(task)
                 .build();
 
@@ -150,19 +150,19 @@ public class DexOrderProcessor {
         initialized = true;
     }
 
-    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg){
+    public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg) {
         resumeContractProcessor();
     }
 
-    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg){
+    public void onSuspendBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.SUSPEND_DOWNLOADING) BlockchainConfig cfg) {
         suspendContractProcessor();
     }
 
-    public void suspendContractProcessor(){
+    public void suspendContractProcessor() {
         processorEnabled = false;
     }
 
-    public void resumeContractProcessor(){
+    public void resumeContractProcessor() {
         processorEnabled = true;
     }
 

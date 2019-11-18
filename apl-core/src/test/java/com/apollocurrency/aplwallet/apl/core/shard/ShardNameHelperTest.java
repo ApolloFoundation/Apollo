@@ -51,14 +51,14 @@ class ShardNameHelperTest {
         result = shardNameHelper.getPrunableShardArchiveNameByShardId(2001L, chainId);
         assertEquals("apl-blockchain-shardprun-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
     }
-    
+
     @Test
     void getFullPrunableShardId() {
         ShardNameHelper shardNameHelper = new ShardNameHelper();
-        String result = shardNameHelper.getFullShardPrunId(001L,chainId);
+        String result = shardNameHelper.getFullShardPrunId(001L, chainId);
         assertEquals("shardprun::1;chain::b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
 
-        result = shardNameHelper.getFullShardPrunId(2001L,chainId);
+        result = shardNameHelper.getFullShardPrunId(2001L, chainId);
         assertEquals("shardprun::2001;chain::b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
     }
 

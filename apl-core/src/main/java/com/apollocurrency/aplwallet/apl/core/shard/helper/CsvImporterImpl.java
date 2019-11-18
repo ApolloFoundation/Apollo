@@ -172,7 +172,7 @@ public class CsvImporterImpl implements CsvImporter {
         StringBuilder columnNames = new StringBuilder(200);
         StringBuilder columnsValues = new StringBuilder(100);
 
-        int rsCounter=1; //start from 1 for "a%b==0" operations
+        int rsCounter = 1; //start from 1 for "a%b==0" operations
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
              ResultSet rs = csvReader.read(

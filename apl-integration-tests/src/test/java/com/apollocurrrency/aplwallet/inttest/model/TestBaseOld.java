@@ -149,19 +149,16 @@ public class TestBaseOld extends TestBase {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
+        } catch (Exception e) {
+            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
         }
-        catch (Exception e)
-        {
-            fail("Transaction does't add to block. Transaction "+ transaction+" Exception: "+e.getMessage());
-        }
-        assertTrue(inBlock,String.format("Transaction %s in block: ",transaction));
+        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
         return inBlock;
     }
 
     @Step
-    public boolean waitForHeight(int height)
-    {
-      RetryPolicy retry = new RetryPolicy()
+    public boolean waitForHeight(int height) {
+        RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)
                 .withDelay(5, TimeUnit.SECONDS);
@@ -169,12 +166,10 @@ public class TestBaseOld extends TestBase {
 
         try {
             isHeight = Failsafe.with(retry).get(() -> getBlock().getHeight() >= height);
+        } catch (Exception e) {
+            assertTrue(isHeight, String.format("Height %s  not reached: %s", height, getBlock().getHeight()));
         }
-        catch (Exception e)
-        {
-            assertTrue(isHeight,String.format("Height %s  not reached: %s",height,getBlock().getHeight()));
-        }
-        assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
+        assertTrue(isHeight, String.format("Height %s not reached: %s", height, getBlock().getHeight()));
         return isHeight;
     }
     @Step
@@ -543,7 +538,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth){
+    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -982,7 +977,7 @@ public class TestBaseOld extends TestBase {
 
 
     @Step("Issue Currency with param: Type: {2}")
-    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
+    public CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals) {
         int currentHeight = getBlock().getHeight();
         int issuanceHeight = currentHeight + 8;
 
@@ -993,9 +988,9 @@ public class TestBaseOld extends TestBase {
         final int MINTABLE = 16;
         final int NON_SHUFFLEABLE = 32;
 
-        addParameters(RequestType.requestType,RequestType.issueCurrency);
+        addParameters(RequestType.requestType, RequestType.issueCurrency);
         addParameters(Parameters.name, name);
-        addParameters(Parameters.code ,code );
+        addParameters(Parameters.code, code);
         addParameters(Parameters.description, description);
         addParameters(Parameters.type, type);
         addParameters(Parameters.initialSupply, initialSupply);
@@ -1007,25 +1002,25 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.maxSupply, maxSupply);
         addParameters(Parameters.reserveSupply, 0);
 
-        if ((type&RESERVABLE) == RESERVABLE){
-            addParameters(Parameters.maxSupply, maxSupply+50);
-            addParameters(Parameters.reserveSupply, maxSupply+50);
+        if ((type & RESERVABLE) == RESERVABLE) {
+            addParameters(Parameters.maxSupply, maxSupply + 50);
+            addParameters(Parameters.reserveSupply, maxSupply + 50);
             addParameters(Parameters.issuanceHeight, issuanceHeight);
-            addParameters(Parameters.minReservePerUnitATM,1);
+            addParameters(Parameters.minReservePerUnitATM, 1);
         }
-        if ((type&CLAIMABLE) == CLAIMABLE){
+        if ((type & CLAIMABLE) == CLAIMABLE) {
             addParameters(Parameters.initialSupply, 0);
         }
-        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) == RESERVABLE){
-            addParameters(Parameters.algorithm,  2);
+        if ((type & MINTABLE) == MINTABLE && (type & RESERVABLE) == RESERVABLE) {
+            addParameters(Parameters.algorithm, 2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
-            addParameters(Parameters.maxSupply, maxSupply+50);
-            addParameters(Parameters.reserveSupply, maxSupply+10);
+            addParameters(Parameters.maxSupply, maxSupply + 50);
+            addParameters(Parameters.reserveSupply, maxSupply + 10);
         }
 
-        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) != RESERVABLE){
-            addParameters(Parameters.algorithm,  2);
+        if ((type & MINTABLE) == MINTABLE && (type & RESERVABLE) != RESERVABLE) {
+            addParameters(Parameters.algorithm, 2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
             addParameters(Parameters.reserveSupply, 0);
@@ -1036,7 +1031,7 @@ public class TestBaseOld extends TestBase {
 
 
     @Step
-    public  CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId) {
+    public CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId) {
         addParameters(RequestType.requestType, deleteCurrency);
         addParameters(Parameters.currency, CurrencyId);
         addParameters(Parameters.wallet, wallet);
@@ -1113,7 +1108,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply) {
+    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply) {
         addParameters(RequestType.requestType, publishExchangeOffer);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.buyRateATM, buyRateATM);
@@ -1130,7 +1125,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate) {
+    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate) {
         addParameters(RequestType.requestType, currencySell);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);
@@ -1142,7 +1137,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate) {
+    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate) {
         addParameters(RequestType.requestType, currencyBuy);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);
@@ -1154,7 +1149,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer) {
+    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
         addParameters(RequestType.requestType, scheduleCurrencyBuy);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);

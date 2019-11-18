@@ -557,7 +557,7 @@ public final class PeerImpl implements Peer {
         }
         return failedConnectAttempts;
     }
- 
+
     public synchronized boolean handshake() {
         UUID targetChainId = peers.blockchainConfig.getChain().getChainId();
         if(getState()==PeerState.CONNECTED){

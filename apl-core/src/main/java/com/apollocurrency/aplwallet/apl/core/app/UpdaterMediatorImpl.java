@@ -29,6 +29,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
     private PeersService peers = CDI.current().select(PeersService.class).get();
+
     //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {

@@ -11,17 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -29,16 +29,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 /**
- *
  * @author alukin@gmailcom
  */
 @Slf4j
 public class ShardInfoDownloaderTest {
-    
-    private static final Map<String,ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
-    private static final Map<String,ShardingInfo> shardInfoByPeers_less3rd = new HashMap<>();
-    private static final Map<String,ShardingInfo> shardInfoByPeers_3rd50on50 = new HashMap<>();
-    private static final Map<String,ShardingInfo> shardInfoByPeers_GOOD_PREV_SHARD = new HashMap<>();
+
+    private static final Map<String, ShardingInfo> shardInfoByPeers_ALL_GOOD = new HashMap<>();
+    private static final Map<String, ShardingInfo> shardInfoByPeers_less3rd = new HashMap<>();
+    private static final Map<String, ShardingInfo> shardInfoByPeers_3rd50on50 = new HashMap<>();
+    private static final Map<String, ShardingInfo> shardInfoByPeers_GOOD_PREV_SHARD = new HashMap<>();
 
     private final PeersService peersService = mock(PeersService.class);
 
@@ -75,10 +74,9 @@ public class ShardInfoDownloaderTest {
         ShardingInfo si6 = readData("shardingTestData1_6.json");
         //not sharding, no shards
         ShardingInfo si7 = new ShardingInfo();
-        si7.isShardingOff=true;
+        si7.isShardingOff = true;
 
 
-        
         //prepare 6 hosts with all 3 good shards and 1 not sharding
         shardInfoByPeers_ALL_GOOD.put("1", si1);
         shardInfoByPeers_ALL_GOOD.put("2", si1);
@@ -103,12 +101,13 @@ public class ShardInfoDownloaderTest {
         shardInfoByPeers_less3rd.put("5", si2);
         shardInfoByPeers_less3rd.put("6", si2);
         shardInfoByPeers_less3rd.put("7", si7);
-        
+
     }
-/*
- *  TODO: finish tests, there is a lot to test yet
- *   
- */
+    /*
+     *  TODO: finish tests, there is a lot to test yet
+     *
+     */
+
     /**
      * Test of processAllPeersShardingInfo method, of class ShardInfoDownloader.
      */
@@ -116,7 +115,7 @@ public class ShardInfoDownloaderTest {
     public void testProcessAllPeersShardingInfo() {
         downloader.setShardInfoByPeers(shardInfoByPeers_ALL_GOOD);
         downloader.processAllPeersShardingInfo();
-        int  size = downloader.getGoodPeersMap().size();
+        int size = downloader.getGoodPeersMap().size();
         assertEquals(3, size);
     }
 
@@ -173,10 +172,10 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
 
         double expResult = 0.7;
-        for(long i=1; i<=downloader.getShardsDesisons().size(); i++){
-           double result = downloader.getShardWeight(i);
-           assertEquals(result>expResult,true);
-           log.debug("Shard: {} weight: {}",i,result);
+        for (long i = 1; i <= downloader.getShardsDesisons().size(); i++) {
+            double result = downloader.getShardWeight(i);
+            assertEquals(result > expResult, true);
+            log.debug("Shard: {} weight: {}", i, result);
         }
     }
 
@@ -189,10 +188,10 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<Long, Double> result = downloader.getShardRelativeWeights();
         int size = result.size();
-        result.keySet().forEach((id)->{
-            log.debug("Shard: {} RelWeight: {}",id,result.get(id));
+        result.keySet().forEach((id) -> {
+            log.debug("Shard: {} RelWeight: {}", id, result.get(id));
         });
-        assertEquals(size,3);
+        assertEquals(size, 3);
     }
 
 
@@ -205,7 +204,7 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<Long, Set<String>> result = downloader.getShardsPeers();
         int size = result.get(3L).size();
-        assertEquals(size,6);
+        assertEquals(size, 6);
     }
 
     /**
@@ -217,7 +216,7 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<Long, FileDownloadDecision> result = downloader.getShardsDesisons();
         int size = result.size();
-        assertEquals(size,3);        
+        assertEquals(size, 3);
     }
 
     /**
@@ -229,7 +228,7 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<String, ShardingInfo> result = downloader.getShardInfoByPeers();
         int size = result.size();
-        assertEquals(size,7);        
+        assertEquals(size, 7);
     }
 
     /**
@@ -241,18 +240,18 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<Long, Set<PeerFileHashSum>> result = downloader.getGoodPeersMap();
         int size = result.get(3L).size();
-        assertEquals(size,6);        
+        assertEquals(size, 6);
     }
 
-    private static ShardingInfo readData(String fileName){
-        String fn = "conf/data/"+fileName;
+    private static ShardingInfo readData(String fileName) {
+        String fn = "conf/data/" + fileName;
         ObjectMapper mapper = new ObjectMapper();
         InputStream is = ShardInfoDownloaderTest.class.getClassLoader().getResourceAsStream(fn);
         ShardingInfo res = null;
         try {
             res = mapper.readValue(is, ShardingInfo.class);
         } catch (IOException ex) {
-            System.out.println("Can not read file from resources: "+fn);
+            System.out.println("Can not read file from resources: " + fn);
         }
         return res;
     }

@@ -49,14 +49,14 @@ public class ShardsDownloadService {
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
-    private static final int MIN_SHARDING_PEERS=2;
+    private static final int MIN_SHARDING_PEERS = 2;
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
-            BlockchainConfig blockchainConfig,
-            Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
-            FileDownloadService fileDownloadService
+                                 BlockchainConfig blockchainConfig,
+                                 Event<ShardPresentData> presentDataEvent,
+                                 PropertiesHolder propertiesHolder,
+                                 FileDownloadService fileDownloadService
     ) {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
@@ -66,8 +66,8 @@ public class ShardsDownloadService {
     }
 
     public boolean getShardingInfoFromPeers() {
-        Map<String,ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
-        if(shardInfoByPeers.size()<MIN_SHARDING_PEERS){
+        Map<String, ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
+        if (shardInfoByPeers.size() < MIN_SHARDING_PEERS) {
             return false;
         }
         shardInfoDownloader.processAllPeersShardingInfo();
@@ -215,10 +215,10 @@ public class ShardsDownloadService {
             return result;
         } else {
             //we have some shards available on the networks, let's decide what to do
-            Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
+            Map<Long, Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
             for (Long shardId : sortByValue(shardWeights).keySet()) {
                 double w = shardWeights.get(shardId);
-                if(w>0){
+                if (w > 0) {
                     result = tryDownloadShard(shardId);
                     goodShardFound = isAcceptable(result);
                     if (goodShardFound) {

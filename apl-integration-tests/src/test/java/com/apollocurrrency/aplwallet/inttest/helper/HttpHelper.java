@@ -5,7 +5,6 @@ import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
-import io.qameta.allure.Attachment;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Assertions;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UnknownFormatConversionException;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -75,33 +73,27 @@ public class HttpHelper {
     }
 
 
-    private static String buildGetReqestUrl(){
-        StringBuilder requestUrl =  new StringBuilder();
+    private static String buildGetReqestUrl() {
+        StringBuilder requestUrl = new StringBuilder();
         requestUrl.append(baseURL_API);
-        for(Map.Entry<String,Object> pair: reqestParam.entrySet()) {
-            if (pair.getKey().equals("wallet"))
-            {
+        for (Map.Entry<String, Object> pair : reqestParam.entrySet()) {
+            if (pair.getKey().equals("wallet")) {
                 Wallet wallet = (Wallet) pair.getValue();
-                requestUrl.append("account="+wallet.getUser());
+                requestUrl.append("account=" + wallet.getUser());
                 requestUrl.append("&");
-                if (!wallet.isVault())
-                {
-                    requestUrl.append("secretPhrase="+wallet.getPass());
+                if (!wallet.isVault()) {
+                    requestUrl.append("secretPhrase=" + wallet.getPass());
+                    requestUrl.append("&");
+                } else {
+                    requestUrl.append("secretBytes=" + wallet.isVault());
+                    requestUrl.append("&");
+                    requestUrl.append("sender=" + wallet.getUser());
+                    requestUrl.append("&");
+                    requestUrl.append("passphrase=" + wallet.getPass());
                     requestUrl.append("&");
                 }
-                else
-                {
-                    requestUrl.append("secretBytes="+wallet.isVault());
-                    requestUrl.append("&");
-                    requestUrl.append("sender="+wallet.getUser());
-                    requestUrl.append("&");
-                    requestUrl.append("passphrase="+wallet.getPass());
-                    requestUrl.append("&");
-                }
-            }
-            else
-            {
-                requestUrl.append(pair.getKey()+"="+pair.getValue().toString());
+            } else {
+                requestUrl.append(pair.getKey() + "=" + pair.getValue().toString());
                 requestUrl.append("&");
             }
         }
@@ -142,19 +134,17 @@ public class HttpHelper {
         Response response;
         String responseBody = "";
         try {
-        response =  httpCallPost();
-        responseBody = response.body().string();
-        Assert.assertEquals(200, response.code());
-        //System.out.println(responseBody);
-        if (TestBase.testInfo != null && TestBase.testInfo.getTags()!=null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
-            Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
-            Allure.addAttachment("Response Body", responseBody);
-        }
-        return (T) mapper.readValue(responseBody, clazz);
-        }
-        catch (Exception e)
-        {
-           return fail(responseBody +"\n"+e.getMessage());
+            response = httpCallPost();
+            responseBody = response.body().string();
+            Assert.assertEquals(200, response.code());
+            //System.out.println(responseBody);
+            if (TestBase.testInfo != null && TestBase.testInfo.getTags() != null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
+                Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
+                Allure.addAttachment("Response Body", responseBody);
+            }
+            return (T) mapper.readValue(responseBody, clazz);
+        } catch (Exception e) {
+            return fail(responseBody + "\n" + e.getMessage());
         }
     }
 

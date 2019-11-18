@@ -199,7 +199,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 log.debug("{}: run INIT tasks.", serviceName);
                 try {
                     runAllAndWait(jobs);
-                }catch (Throwable e){
+                } catch (Throwable e) {
                     log.error("The INIT tasks can't be initialized properly. Jobs = " + jobs, e);
                 }
                 tasks.remove(TaskOrder.INIT);

@@ -19,9 +19,9 @@ public class ShardDownloadStatus {
     private final Map<String, Integer> status;
 
     public ShardDownloadStatus(Set<String> fileIds) {
-      status = new HashMap<>();
-      fileIds.forEach((s) -> {
-          status.put(s, NONE);
+        status = new HashMap<>();
+        fileIds.forEach((s) -> {
+            status.put(s, NONE);
         });
     }
 

@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -73,7 +74,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import lombok.Getter;
 
 @Singleton
 public class PeersService {
@@ -702,16 +702,16 @@ public class PeersService {
     public boolean connectPeer(Peer peer) {
         Objects.requireNonNull(peer, "peer is NULL");
         boolean res = false;
-        if(peer.getState() == PeerState.CONNECTED){
+        if (peer.getState() == PeerState.CONNECTED) {
             return true;
         }
         peer.unBlacklist();
         PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
         if (pa != null && !isMyAddress(pa)) {
-           res = ((PeerImpl)peer).handshake();
+            res = ((PeerImpl) peer).handshake();
         }
         if (res) {
-            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl) peer);
         }
         return res;
     }

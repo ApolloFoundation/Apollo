@@ -8,7 +8,6 @@ import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +30,7 @@ public class TestAliasAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void getAliasesTest(Wallet wallet) throws IOException {
         String alias;
-        CreateTransactionResponse setAlias = setAlias(wallet,"testapi.com", "ITest"+new Date().getTime(), 400000000, 1400);
+        CreateTransactionResponse setAlias = setAlias(wallet, "testapi.com", "ITest" + new Date().getTime(), 400000000, 1400);
         verifyCreatingTransaction(setAlias);
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
