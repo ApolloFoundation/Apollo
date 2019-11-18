@@ -8,14 +8,12 @@ import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
 import static com.apollocurrency.aplwallet.apl.util.Constants.PRUNABLE_MONITOR_DELAY;
@@ -29,7 +27,7 @@ public class PrunableArchiveMonitor {
     private ShardPrunableZipHashCalculator hashCalculator;
     private TaskDispatchManager taskManager;
     private TrimService trimService;
-    private final ReentrantLock lock = new ReentrantLock();
+    private volatile boolean processing = false;
 
     @Inject
     public PrunableArchiveMonitor(ShardPrunableZipHashCalculator hashCalculator, TaskDispatchManager taskManager,
@@ -59,18 +57,18 @@ public class PrunableArchiveMonitor {
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
         log.debug("processPrunableDataArchive started pruningTime={} ", pruningTime);
         trimService.waitTrimming();
-        lock.lock();
+        processing = true;
         try {
 
             hashCalculator.tryRecalculatePrunableArchiveHashes(pruningTime);
         }finally {
-            lock.unlock();
+            processing = false;
         }
         log.debug("processPrunableDataArchive finished");
     }
 
     public boolean isProcessing() {
-        return lock.isLocked();
+        return processing;
     }
 
 }
