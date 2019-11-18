@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,7 @@ public class DexOrderProcessor {
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
+    private final Map<Long, byte[]> expiredSwaps = new ConcurrentHashMap<>();
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService, DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl, DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService) {
@@ -172,6 +174,7 @@ public class DexOrderProcessor {
                 processCancelOrders(account);
                 processExpiredOrders(account);
                 refundDepositsForLostOrders(account);
+                refundExpiredAtomicSwaps(account);
 
 
                 processContractsForUserStep1(account);
@@ -400,7 +403,7 @@ public class DexOrderProcessor {
 
                 SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
                 Long swapDeadline = swapData.getTimeDeadLine();
-                int currentTime = timeService.getEpochTime();
+                long currentTime = timeService.systemTime();
                 long timeLeft = swapDeadline - currentTime;
                 if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
                     log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60);
@@ -692,15 +695,27 @@ public class DexOrderProcessor {
                 List<UserEthDepositInfo> deposits = dexSmartContractService.getUserFilledOrders(address);
 
                 for (UserEthDepositInfo deposit : deposits) {
-                    List<ExchangeContract> contracts = dexService.getContractsByAccountOrderFromStatus(accountId, deposit.getOrderId(), (byte) 1); // do not check contracts without atomic swap hash
+                    Long orderId = deposit.getOrderId();
+                    List<ExchangeContract> contracts = dexService.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) 1); // do not check contracts without atomic swap hash
 
                     for (ExchangeContract contract : contracts) {
                         byte[] swapHash = contract.getSecretHash();
                         Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
                         Long timeDeadLine = swapData.getTimeDeadLine();
-                        if (timeDeadLine > timeService.getEpochTime()) {
-                            backgroundExecutor.execute(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, deposit.getOrderId(), contract.getId()));
+                        if (timeDeadLine < timeService.systemTime()) {
+                            if (expiredSwaps.get(orderId) == null) { // skip swaps under processing
+                                expiredSwaps.put(orderId, swapData.getSecretHash());
+                                CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
+                                        .handle((r, e) -> {
+                                            expiredSwaps.remove(orderId);
+                                            log.debug("Refund for swap {}, success - {}", Convert.toHexString(swapData.getSecretHash()), r);
+                                            if (e != null) {
+                                                log.error("Unknown error occurred during refund", e);
+                                            }
+                                            return r;
+                                        });
+                            }
                         }
                     }
                 }
@@ -710,23 +725,32 @@ public class DexOrderProcessor {
         }
     }
 
-    private void performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
+    private boolean performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
+        boolean success = true;
         try {
-            boolean success = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
-            if (!success) {
-                log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
-            } else {
+            boolean depositExist = dexSmartContractService.isDepositForOrderExist(address, orderId);
+            boolean refundCompleted = true;
+            if (!depositExist) { // withdraw if refund was performed earlier
                 log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
+                refundCompleted = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
+                if (!refundCompleted) {
+                    log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
+                    success = false;
+                }
+            }
+            if (refundCompleted && depositExist) {
                 String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, orderId, address);
                 if (StringUtils.isNotBlank(hash)) {
                     log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), orderId);
                 } else {
+                    success = false;
                     log.warn("Refund was not finished, unable to withdraw: order - {} ", orderId);
                 }
             }
         } catch (AplException.ExecutiveProcessException e) {
             log.error(e.toString(), e);
         }
+        return success;
     }
 
     public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
