@@ -221,6 +221,9 @@ public class ShardsDownloadService {
         } else {
             //we have some shards available on the networks, let's decide what to do
             Map<Long,Double> shardWeights = shardInfoDownloader.getShardRelativeWeights();
+            shardWeights.keySet().forEach((k) -> {
+                log.debug("Shard: {} Weight: {}",k,shardWeights.get(k));
+            });
             for (Long shardId : sortByValue(shardWeights).keySet()) {
                 double w = shardWeights.get(shardId);
                 if(w>0){
