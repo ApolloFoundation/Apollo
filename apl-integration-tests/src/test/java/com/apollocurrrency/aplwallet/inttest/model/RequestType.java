@@ -127,5 +127,6 @@ public enum RequestType {
     issueCurrency,
     getPoll,
     createPoll,
-    castVote
+    castVote,
+    getPollVotes
 }
