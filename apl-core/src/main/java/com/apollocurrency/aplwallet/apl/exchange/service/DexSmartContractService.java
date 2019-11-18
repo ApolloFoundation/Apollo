@@ -209,7 +209,7 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn()) {
+        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn() || depositedOrderDetails.getAmount().equals(BigInteger.ZERO)) {
             return false;
         }
 
