@@ -551,7 +551,6 @@ public class DexOrderProcessor {
                     Integer finishTime = ((PhasingAppendixV2) transaction.getPhasing()).getFinishTime();
                     if (finishTime < blockchain.getLastBlockTimestamp()) {
                         log.error("Phasing transaction is finished. TrId: {}, OrderId:{} ", transaction.getId(), outcomeOrder.getId());
-                        dexService.onPhasedTxReject(transaction);
                         continue;
                     }
                 }
