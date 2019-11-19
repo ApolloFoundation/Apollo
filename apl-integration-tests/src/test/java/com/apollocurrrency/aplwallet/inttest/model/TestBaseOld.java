@@ -1187,11 +1187,13 @@ public class TestBaseOld extends TestBase {
 
     }
     @Step
-    public CreateTransactionResponse shufflingCancel( Wallet wallet, String shuffling,String cancellingAccount, String shufflingStateHash) {
+    public CreateTransactionResponse shufflingCancel( Wallet wallet, String shuffling, String cancellingAccount, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingCancel);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.shuffling, shuffling);
-        addParameters(Parameters.cancellingAccount, cancellingAccount);
+        if (cancellingAccount !=null) {
+            addParameters(Parameters.cancellingAccount, cancellingAccount);
+        }
         addParameters(Parameters.shufflingStateHash, shufflingStateHash);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);

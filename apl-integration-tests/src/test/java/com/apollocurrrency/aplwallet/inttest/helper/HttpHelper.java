@@ -107,8 +107,7 @@ public class HttpHelper {
         }
         reqestParam.clear();
         if (TestBase.testInfo != null) {
-            System.out.println(TestBase.testInfo);
-           // Allure.addAttachment("Request URL", requestUrl.toString());
+             Allure.addAttachment("Request URL", requestUrl.toString());
         }
         return requestUrl.toString();
     }

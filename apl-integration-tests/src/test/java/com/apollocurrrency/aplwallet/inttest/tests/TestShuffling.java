@@ -67,6 +67,7 @@ public class TestShuffling extends TestBaseOld {
     private List<Wallet> recipients;
     private Wallet randomStandart;
     private Wallet randomVault;
+    private CreateTransactionResponse shuffling = null;
 
 
 
@@ -91,7 +92,6 @@ public class TestShuffling extends TestBaseOld {
     public void shufflingCreateTest(int type){
         ShufflingDTO shufflingDTO;
         int  registrationPeriod  = RandomUtils.nextInt(500,10080);
-        CreateTransactionResponse shuffling = null;
         randomStandart = getRandomStandartWallet();
         randomVault =  getRandomVaultWallet();
 
@@ -128,17 +128,16 @@ public class TestShuffling extends TestBaseOld {
             verifyTransactionInBlock(shuffling.getTransaction());;
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
+
             shufflingRegister(randomStandart,shuffling.getFullHash());
             shufflingRegister(randomVault,shuffling.getFullHash());
 
-
-
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_PROCESSING);
-           recipients = Arrays.asList(
+
+            recipients = Arrays.asList(
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
-
 
             verifyCreatingTransaction(
                     shufflingProcess(wallet,shuffling.getTransaction(), recipients.get(2).getPass()));
@@ -153,17 +152,13 @@ public class TestShuffling extends TestBaseOld {
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
 
+
             shufflingDTO = getShuffling(shuffling.getTransaction());
             shufflingVerify(wallet,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
             shufflingVerify(randomStandart,shufflingDTO.getShuffling(),shufflingDTO.getShufflingStateHash());
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
             assertShufflingDone(type,recipients);
-
-           // CreateTransactionResponse cancelTrx = shufflingCancel(wallet,shufflingDTO.getShuffling(),wallet.getUser(),shufflingDTO.getShufflingStateHash());
-           // verifyCreatingTransaction(cancelTrx);
-            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_CANCELLED);
-
         }
     }
 
@@ -172,7 +167,6 @@ public class TestShuffling extends TestBaseOld {
     @ValueSource(ints = {0,1,2})
     public void shufflingCreateAutomationTest(int type){
         int  registrationPeriod  = RandomUtils.nextInt(500,10080);
-        CreateTransactionResponse shuffling = null;
         randomStandart = getRandomStandartWallet();
         randomVault =  getRandomVaultWallet();
 
@@ -203,7 +197,7 @@ public class TestShuffling extends TestBaseOld {
                     shuffling =  shufflingCreate(wallet, registrationPeriod,PARTICIPANT_COUNT,CURRENCY_AMOUNT,currencyDTO.getCurrency(),type);
                     break;
             }
-            log.debug("Shuffling created "+shuffling.getTransaction());
+            log.info("Shuffling created "+shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
             recipients = Arrays.asList(
@@ -222,6 +216,93 @@ public class TestShuffling extends TestBaseOld {
 
         }
     }
+
+
+    @DisplayName("Blame shuffling")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = {0,1,2})
+    public void shufflingCancelTest(int type){
+        ShufflingDTO shufflingDTO;
+        int  registrationPeriod  = RandomUtils.nextInt(500,10080);
+
+        randomStandart = getRandomStandartWallet();
+        randomVault =  getRandomVaultWallet();
+
+        for (Wallet wallet: wallets) {
+            switch (type){
+                case SHUFFLING_TYPE_APL:
+                    shuffling = shufflingCreate(wallet, registrationPeriod,PARTICIPANT_COUNT,APL_AMOUNT,null,type);
+                    break;
+
+                case SHUFFLING_TYPE_ASSET:
+                    AccountAssetsResponse assets  =  getAccountAssets(wallet);
+                    String assetID =  assets.getAccountAssets().stream()
+                            .filter(asset -> asset.getQuantityATU() > 10).findFirst().get().getAsset();
+                    assertNotNull(assets.getAccountAssets());
+                    verifyTransactionInBlock(transferAsset(wallet,assetID,3,randomStandart.getUser()).getTransaction());
+                    verifyTransactionInBlock(transferAsset(wallet,assetID,3,randomVault.getUser()).getTransaction());
+                    shuffling = shufflingCreate(wallet, registrationPeriod,PARTICIPANT_COUNT,ASSET_AMOUNT,assetID,type);
+                    break;
+
+                case SHUFFLING_TYPE_CURRENCY:
+                    AccountCurrencyResponse currencies  = getAccountCurrencies(wallet);
+                    assertNotNull(currencies.getAccountCurrencies());
+                    AccountCurrencyDTO currencyDTO = currencies.getAccountCurrencies().stream()
+                            .filter(currencie -> (currencie.getType()&NON_SHUFFLEABLE) != NON_SHUFFLEABLE)
+                            .findFirst().get();
+                    verifyTransactionInBlock(transferCurrency(randomStandart.getUser(),currencyDTO.getCurrency(),wallet,3).getTransaction());
+                    verifyTransactionInBlock(transferCurrency(randomVault.getUser(),currencyDTO.getCurrency(),wallet,3).getTransaction());
+                    shuffling =  shufflingCreate(wallet, registrationPeriod,PARTICIPANT_COUNT,CURRENCY_AMOUNT,currencyDTO.getCurrency(),type);;
+                    break;
+            }
+
+            log.info("Shuffling created "+shuffling.getTransaction());
+            verifyCreatingTransaction(shuffling);
+            verifyTransactionInBlock(shuffling.getTransaction());;
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
+
+            shufflingRegister(randomStandart,shuffling.getFullHash());
+            shufflingRegister(randomVault,shuffling.getFullHash());
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_PROCESSING);
+
+            recipients = Arrays.asList(
+                    getRandomRecipientWallet(),
+                    getRandomRecipientWallet(),
+                    getRandomRecipientWallet());
+
+
+            verifyCreatingTransaction(
+                    shufflingProcess(wallet,shuffling.getTransaction(), recipients.get(2).getPass())
+            );
+
+            waitForChangeShufflingAssign(shuffling.getTransaction(),randomStandart.getUser());
+
+            verifyCreatingTransaction(
+                    shufflingProcess(randomStandart,shuffling.getTransaction(), recipients.get(1).getPass())
+            );
+
+            waitForChangeShufflingAssign(shuffling.getTransaction(),randomVault.getUser());
+
+            verifyTransactionInBlock(
+                    shufflingProcess(randomVault,shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction()
+            );
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
+
+            shufflingDTO = getShuffling(shuffling.getTransaction());
+            shufflingCancel(randomStandart,shufflingDTO.getShuffling(), null,shufflingDTO.getShufflingStateHash());
+
+            shufflingDTO = getShuffling(shuffling.getTransaction());
+            shufflingCancel(wallet,shufflingDTO.getShuffling(),null,shufflingDTO.getShufflingStateHash());
+
+            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_BLAME);
+            //TODO: Need implement assert STAGE_CANCELLED after 100 blocks
+
+        }
+    }
+
 
     @Step
     private void assertShufflingDone(int type, List<Wallet> recipients){
@@ -306,7 +387,11 @@ public class TestShuffling extends TestBaseOld {
     @Override
     public void testEnd() {
         super.testEnd();
-        //TODO: Return all fund on genesis
-
+         sendMoney(randomVault,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
+         if (getShuffling(shuffling.getTransaction()).getStage() == STAGE_DONE){
+             for (Wallet wallet: recipients) {
+                 sendMoney(wallet,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
+             }
+         }
     }
 }
