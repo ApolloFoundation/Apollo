@@ -44,14 +44,6 @@ public class ShardObserver {
     public void onTrimDone(@Observes @Sync TrimData trimData) {
 //do it async anyway because we have to exit from trim and unlock it       
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
-//        try {
-//            CompletableFuture<MigrateState> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
-//            if (future != null) {
-//                future.get();
-//            }
-//        } catch (InterruptedException | ExecutionException e) {
-//            log.error(e.toString(), e);
-//        }
     }
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
