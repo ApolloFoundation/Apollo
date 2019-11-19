@@ -196,15 +196,26 @@ public class TrimService {
             lock.unlock();
         }
     }
-
+    
+    public int doTrimDerivedTablesOnHeightLocked(int height) {
+        int res = 0;
+        lock.lock();
+        try {
+            res = doTrimDerivedTablesOnHeight(height);
+        } finally {
+            lock.unlock();
+        }
+        return res;
+    }
+    
     @Transactional
-    public int doTrimDerivedTablesOnHeight(int height) {
+    private int doTrimDerivedTablesOnHeight(int height) {
         log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height);
         long start = System.currentTimeMillis();
+
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
-        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",
-                height, inTransaction);
+        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",  height, inTransaction);
         if (!inTransaction) {
             dataSource.begin();
         }
@@ -212,22 +223,23 @@ public class TrimService {
         int epochTime = timeService.getEpochTime();
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
 
-        for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
-            log.trace("Try to acquire lock...");
-            globalSync.readLock();
-            log.trace("Got it.");
-            try {
-                long startTime = System.currentTimeMillis();
-                table.prune(pruningTime);
-                table.trim(height);
-                dataSource.commit(false);
-                long duration = System.currentTimeMillis() - startTime;
-                log.debug("Trim of {} took {} ms", table.getName(), duration);
-                onlyTrimTime += duration;
-            } finally {
-                globalSync.readUnlock();
+            for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
+                log.trace("Try to acquire lock...");
+                globalSync.readLock();
+                log.trace("Got it.");
+                try {
+                    long startTime = System.currentTimeMillis();
+                    table.prune(pruningTime);
+                    table.trim(height);
+                    dataSource.commit(false);
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.debug("Trim of {} took {} ms", table.getName(), duration);
+                    onlyTrimTime += duration;
+                } finally {
+                    globalSync.readUnlock();
+                }
             }
-        }
+
         log.info("Trim time onlyTrim/full: {} / {} ms, pruning='{}' on height='{}'",
                 onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
         return pruningTime;
@@ -245,12 +257,14 @@ public class TrimService {
 
     public void waitTrimming(){
         log.debug("Waiting for the end of the latest trim");
+        int count =0;
         while ( isTrimming() ) {
             ThreadUtils.sleep(100);
-            if(log.isTraceEnabled()) {
-                log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+            if(count%10==0){
+              log.debug("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
                         lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
             }
+            count++;
         }
     }
 }
