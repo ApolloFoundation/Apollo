@@ -332,7 +332,7 @@ public class CsvExporterImpl implements CsvExporter {
             }
             CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, txPstm.executeQuery());
             processCount = txExportData.getRowCount() + blockExportData.getRowCount(); // tx + block
-            log.debug("Exported: totalCount = {}, count 'block' = {} / 'transaction' = {}",
+            log.trace("Exported: totalCount = {}, count 'block' = {} / 'transaction' = {}",
                     processCount, blockExportData.getRowCount(), txExportData.getRowCount());
         } catch (SQLException | IOException e) {
             throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
