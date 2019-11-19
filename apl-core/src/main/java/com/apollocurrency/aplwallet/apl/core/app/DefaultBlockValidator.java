@@ -6,11 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+@Slf4j
 @Singleton
 public class DefaultBlockValidator extends AbstractBlockValidator {
 
@@ -23,6 +25,12 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         if (!Arrays.equals(Crypto.sha256().digest(((BlockImpl)previousBlock).bytes()),
                 block.getPreviousBlockHash())) {
+            if ( log.isTraceEnabled()) {
+                log.trace("Pervious block={} height={}", previousBlock.getStringId(), previousBlock.getHeight());
+                log.trace("Current block={} prev={} prevHash={}", block.getStringId(), Long.toUnsignedString(block.getPreviousBlockId()), block.getPreviousBlockHash());
+                log.trace("PrevBlock={}", previousBlock.toJsonString());
+                log.trace("Current block={}", block.toJsonString());
+            }
             throw new BlockchainProcessor.BlockNotAcceptedException("Previous block hash doesn't match", block);
         }
     }

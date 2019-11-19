@@ -132,13 +132,13 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     @Override
     public void suspend() {
-        log.debug("Suspend dispatcher={}", serviceName);
+        log.debug("Suspend task executor, dispatcher={}", serviceName);
         createMainExecutor().suspend();
     }
 
     @Override
     public void resume() {
-        log.debug("Resume dispatcher={}", serviceName);
+        log.debug("Resume task executor, dispatcher={}", serviceName);
         createMainExecutor().resume();
     }
 
