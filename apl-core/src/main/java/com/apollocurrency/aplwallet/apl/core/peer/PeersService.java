@@ -299,31 +299,31 @@ public class PeersService {
                     .task(new PeerLoaderThread(defaultPeers, unresolvedPeers, timeService, this))
                     .build();
 
-            dispatcher.schedule(peerLoaderTask, TaskOrder.INIT);
+            dispatcher.invokeInit(peerLoaderTask);
         }
-        dispatcher.schedule(Task.builder()
+        dispatcher.invokeAfter(Task.builder()
                 .name("UnresolvedPeersAnalyzer")
                 .task(new UnresolvedPeersAnalyzer(unresolvedPeers))
-                .build(), TaskOrder.AFTER);
+                .build());
         if (!propertiesHolder.isOffline()) {
             dispatcher.schedule(Task.builder()
                     .name("PeerConnecting")
                     .delay(20000)
                     .task(new PeerConnectingThread(timeService, this))
-                    .build(),TaskOrder.TASK);
+                    .build());
 
             dispatcher.schedule(Task.builder()
                     .name("PeerUnBlacklisting")
                     .delay(60000)
                     .task(new PeerUnBlacklistingThread(timeService, this))
-                    .build(), TaskOrder.TASK);
+                    .build());
 
             if (getMorePeers) {
                 dispatcher.schedule(Task.builder()
                         .name("GetMorePeers")
                         .delay(20000)
                         .task(new GetMorePeersThread(timeService, this))
-                        .build(), TaskOrder.TASK);
+                        .build());
             }
         }
     }

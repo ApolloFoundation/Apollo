@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -13,13 +12,16 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,11 +29,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -44,7 +41,7 @@ public class ShardPrunableZipHashCalculator {
     private final DirProvider dirProvider;
     private int lastPruningTime = 0;
     private final Event<ChunkedFileOps> fileChangedEvent;
-    
+
     @Inject
     public ShardPrunableZipHashCalculator(Event<ChunkedFileOps> fileChangedEvent, DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider) {
         this.registry = registry;
@@ -54,10 +51,6 @@ public class ShardPrunableZipHashCalculator {
         this.blockchainConfig = blockchainConfig;
         this.dirProvider = dirProvider;
         this.fileChangedEvent = fileChangedEvent;
-    }
-
-    public void onTrimDone(@Observes @Async TrimData trimData) {
-        tryRecalculatePrunableArchiveHashes(trimData.getPruningTime());
     }
 
     public void tryRecalculatePrunableArchiveHashes(int time) {
@@ -92,7 +85,7 @@ public class ShardPrunableZipHashCalculator {
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     ChunkedFileOps ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
-                    fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);        
+                    fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
                     log.debug("Firing 'FILE_CHANDED' event {}", ops.getFileId());
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
