@@ -128,5 +128,6 @@ public enum RequestType {
     getPoll,
     createPoll,
     castVote,
-    getPollVotes
+    getPollVotes,
+    getPollResult
 }

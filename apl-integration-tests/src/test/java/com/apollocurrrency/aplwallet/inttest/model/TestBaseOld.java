@@ -51,7 +51,8 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
-import com.apollocurrency.aplwallet.api.response.GetPollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
@@ -62,11 +63,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -533,7 +530,7 @@ public class TestBaseOld extends TestBase {
     public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote){
 
         addParameters(RequestType.requestType, RequestType.castVote);
-        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.feeATM, 2000000000);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.vote00, vote);
         addParameters(Parameters.vote01, "");
@@ -1249,9 +1246,18 @@ public class TestBaseOld extends TestBase {
 
     //get all Votes in Poll
     @Step
-    public GetPollVotesResponse getPollVotes (String poll) {
+    public PollVotesResponse getPollVotes (String poll) {
         addParameters(RequestType.requestType, getPollVotes);
         addParameters(Parameters.poll, poll);
-        return getInstanse(GetPollVotesResponse.class);
+        return getInstanse(PollVotesResponse.class);
     }
+
+    //get poll results
+    @Step
+    public PollResultResponse getPollResult (String poll) {
+        addParameters(RequestType.requestType, getPollResult);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(PollResultResponse.class);
+    }
+
 }
