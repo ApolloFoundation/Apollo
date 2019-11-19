@@ -235,13 +235,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.generateAccount.toString());
         String path = "/apl";
-        Response response =  given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-       return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",Account2FAResponse.class);
     }
 
     @Override
@@ -253,13 +256,16 @@ public class TestBaseNew extends TestBase {
         param.put(Parameters.account.toString(), wallet.getUser());
         param.put(Parameters.passphrase.toString(), wallet.getPass());
         String path = "/apl";
-        Response response =  given().log().all()
+        return  given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",Account2FAResponse.class);
     }
 
     @Override
@@ -301,13 +307,16 @@ public class TestBaseNew extends TestBase {
         param = restHelper.addWalletParameters(param,wallet);
 
         String path = "/apl";
-        Response response =  given().log().all()
+        return  given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), AccountDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",AccountDTO.class);
     }
 
     @Override
@@ -355,13 +364,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
-        Response response = given().log().all()
+        return   given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",BlockDTO.class);
     }
     @Step("Get Last Block")
     public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
@@ -369,13 +381,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
-        Response response = given()
+        return given()
                 .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",BlockDTO.class);
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
