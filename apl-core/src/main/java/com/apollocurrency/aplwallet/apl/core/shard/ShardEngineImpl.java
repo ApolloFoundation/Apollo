@@ -385,7 +385,8 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
         }
         durableTaskUpdateByState(state, 13.0, "Secondary indexes creation...");
-        try (Connection sourceConnect = sourceDataSource.begin()) {
+        try {
+            Connection sourceConnect = sourceDataSource.isInTransaction()?sourceDataSource.getConnection():sourceDataSource.begin();
             for (TableInfo tableInfo : paramInfo.getTableInfoList()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableInfo.getName();

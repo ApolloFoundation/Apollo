@@ -8,12 +8,14 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+@Slf4j
 @Singleton
 public class ExcludedTransactionDbIdExtractor {
     private final PhasingPollService phasingPollService;
@@ -26,6 +28,7 @@ public class ExcludedTransactionDbIdExtractor {
     }
 
     public ExcludeInfo getExcludeInfo(int startHeight, int finishHeight) {
+        log.trace("ExcludeInfo ==== startHeight={} finishHeight={}", startHeight, finishHeight);
         if (startHeight >= finishHeight) {
             throw new IllegalArgumentException("startHeight should be less than finish height but got start=" + startHeight + " and finish" + finishHeight);
         }
