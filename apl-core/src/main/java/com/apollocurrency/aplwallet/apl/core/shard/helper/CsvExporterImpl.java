@@ -137,7 +137,7 @@ public class CsvExporterImpl implements CsvExporter {
             ResultSet countRs = countPstmt.executeQuery();
             countRs.next();
             int count = countRs.getInt(1);
-            log.debug("Table = {},count - {} at height = {}", SHARD_TABLE_NAME, count, targetHeight);
+            log.debug("Table = {}, count - {} at height = {}", SHARD_TABLE_NAME, count, targetHeight);
 
             // process non empty tables only
             if (count > 0) {
@@ -276,6 +276,12 @@ public class CsvExporterImpl implements CsvExporter {
         int totalCount = 0;
         // prepare connection + statement + writer
         List<Long> sortedDbIds = dbIds.stream().distinct().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+        if (sortedDbIds.size() <= 0) {
+            // skipped empty table
+            log.debug("Skipped exporting Table = {}, because dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
+            return -1;
+        }
+
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement txPstm = con.prepareStatement(
@@ -285,19 +291,14 @@ public class CsvExporterImpl implements CsvExporter {
             txWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
             // process non empty tables only
-            if (sortedDbIds.size() > 0) {
-                for (Long dbId : sortedDbIds) {
-                    txPstm.setLong(1, dbId);
-                    CsvExportData csvExportData = txWriter.append(TRANSACTION_TABLE_NAME,
-                            txPstm.executeQuery());
-                    processCount = csvExportData.getProcessCount();
-                    totalCount += processCount;
-                }
-                log.trace("Table = {}, exported rows = {}", TRANSACTION_TABLE_NAME, totalCount);
-            } else {
-                // skipped empty table
-                log.debug("Skipped exporting Table = {}", TRANSACTION_TABLE_NAME);
+            for (Long dbId : sortedDbIds) {
+                txPstm.setLong(1, dbId);
+                CsvExportData csvExportData = txWriter.append(TRANSACTION_TABLE_NAME,
+                        txPstm.executeQuery());
+                processCount = csvExportData.getProcessCount();
+                totalCount += processCount;
             }
+            log.trace("Table = {}, exported rows = {}", TRANSACTION_TABLE_NAME, totalCount);
         } catch (Exception e) {
             throw new RuntimeException("Exporting table exception " + TRANSACTION_TABLE_NAME, e);
         }
@@ -309,6 +310,7 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportBlock(int height) throws IllegalStateException {
+        log.debug("Exporting 'block + transaction' on height = {}", height);
         int processCount;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -329,9 +331,10 @@ public class CsvExporterImpl implements CsvExporter {
                 throw new IllegalStateException("Expected one exported block, got " + blockExportData.getProcessCount());
             }
             CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, txPstm.executeQuery());
-            processCount = txExportData.getProcessCount() + blockExportData.getProcessCount(); // tx + block
-        }
-        catch (SQLException | IOException e) {
+            processCount = txExportData.getRowCount() + blockExportData.getRowCount(); // tx + block
+            log.trace("Exported: totalCount = {}, count 'block' = {} / 'transaction' = {}",
+                    processCount, blockExportData.getRowCount(), txExportData.getRowCount());
+        } catch (SQLException | IOException e) {
             throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
         }
         return processCount;
@@ -378,8 +381,7 @@ public class CsvExporterImpl implements CsvExporter {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", table);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Exporting derived table exception " + table, e);
         }
 
