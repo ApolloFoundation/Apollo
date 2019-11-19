@@ -36,20 +36,22 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-
+//no matter how we get signal sync or async, do it async
     public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
     }
 
     public void onTrimDone(@Observes @Sync TrimData trimData) {
-        try {
-            CompletableFuture<MigrateState> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
-            if (future != null) {
-                future.get();
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.toString(), e);
-        }
+//do it async anyway because we have to exit from trim and unlock it       
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+//        try {
+//            CompletableFuture<MigrateState> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+//            if (future != null) {
+//                future.get();
+//            }
+//        } catch (InterruptedException | ExecutionException e) {
+//            log.error(e.toString(), e);
+//        }
     }
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
