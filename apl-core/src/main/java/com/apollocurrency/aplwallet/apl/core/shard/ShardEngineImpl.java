@@ -500,7 +500,8 @@ public class ShardEngineImpl implements ShardEngine {
             dataSource.begin();
         }
         try {
-            return trimService.doTrimDerivedTablesOnHeight(height, true);
+            trimService.waitTrimming();
+            return trimService.doTrimDerivedTablesOnHeightLocked(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
