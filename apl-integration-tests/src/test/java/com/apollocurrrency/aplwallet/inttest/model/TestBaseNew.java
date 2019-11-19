@@ -481,11 +481,11 @@ public class TestBaseNew extends TestBase {
 
     @Override
     @Step("Get Dex Trade Info")
-    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
-        HashMap<String, String> param = new HashMap();
+    public List<DexTradeInfoDto> getDexTradeInfo(int pairCurrency, Integer startTime, Integer finishTime) {
+        HashMap<String, Integer> param = new HashMap();
         param.put("pairCurrency", pairCurrency);
-        param.put("start", String.valueOf(startTime));
-        param.put("finish", String.valueOf(finishTime));
+        param.put("start", startTime);
+        param.put("finish", finishTime);
 
         String path = "/rest/dex/tradeInfo";
         return given().log().all()

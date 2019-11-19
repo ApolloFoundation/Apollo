@@ -434,7 +434,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime) {
+    public List<DexTradeInfoDto> getDexTradeInfo(int pairCurrency, Integer startTime, Integer finishTime) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 

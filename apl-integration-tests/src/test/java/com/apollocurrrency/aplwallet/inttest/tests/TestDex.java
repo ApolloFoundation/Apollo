@@ -12,6 +12,8 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,29 +53,24 @@ public class TestDex extends TestBaseNew {
         assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
     }
 
-    @DisplayName("Obtaining trading information for the given period")
-    @Test
-    public void getDexTradeInfoETH() {
-        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("1", 0, 999999999);
+    @DisplayName("Get Dex Trade Info")
+    @ParameterizedTest(name = "{displayName} Currency type: {0}")
+    @ValueSource(ints = {0,1,2})
+    public void getDexTradeInfo(int type) {
+        List<DexTradeInfoDto> dexTrades = getDexTradeInfo(type, 0, 999999999);
         assertNotNull(dexTrades);
     }
 
-    @DisplayName("Obtaining trading information for the given period")
-    @Test
-    public void getDexTradeInfoPAX() {
-        List<DexTradeInfoDto> dexTrades = getDexTradeInfo("2", 0, 999999999);
-        assertNotNull(dexTrades);
-    }
 
     @DisplayName("Create 4 types of orders and cancel them")
     @Test
     public void dexOrders(){
         //Create Sell order ETH
         String sellOrderEth = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, true);
-        assertEquals("{}", sellOrderEth, "dex offer wasn't created");
+        assertNotNull(sellOrderEth, "dex offer wasn't created");
         //Create Sell order PAX
         String sellOrderPax = createDexOrder("40000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), false, false);
-        assertEquals("{}", sellOrderPax, "dex offer wasn't created");
+        assertNotNull(sellOrderPax, "dex offer wasn't created");
 
         //Create Buy order PAX
         String buyOrderPax = createDexOrder("15000", "1000", TestConfiguration.getTestConfiguration().getVaultWallet(), true, false);
