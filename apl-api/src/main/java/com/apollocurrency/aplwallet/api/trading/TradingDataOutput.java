@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.api.trading;
 
-import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,21 +26,28 @@ import lombok.NoArgsConstructor;
 // ....
 
 @NoArgsConstructor
-// @AllArgsConstructor
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-// @Schema(name = "CacheStatsResponse", description = "The cache stats response.")
+@Schema(name = "TradingDataOutput", description = "Trading data output")
 public class TradingDataOutput {
-    String Response;
-    Integer Type;
-    boolean Aggregated;
-    List<SimpleTradingEntry> Data;
-    Integer TimeTo;
-    Integer TimeFrom;
-    boolean FirstValueInArray;
-    Object RateLimit;
-    ConversionType ConversionType;
-    
-    boolean HasWarning;
-    
+    @JsonProperty("Response")
+    String response;
+    @JsonProperty("Type")
+    Integer type;    
+    @JsonProperty("Aggregated")
+    boolean aggregated;
+    @JsonProperty("Data")
+    List<SimpleTradingEntry> data;
+    @JsonProperty("TimeTo")
+    Integer timeTo;
+    @JsonProperty("TimeFrom")
+    Integer timeFrom;
+    @JsonProperty("FirstValueInArray")
+    boolean firstValueInArray;
+    @JsonProperty("RateLimit")
+    Object rateLimit;
+    @JsonProperty("ConversionType")
+    ConversionType conversionType;
+    @JsonProperty("HasWarning")
+    boolean hasWarning;    
 }

@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "ConversionType", description = "Conversion type")
-
 public class ConversionType {
     public String type;
     public String conversionSymbol;
