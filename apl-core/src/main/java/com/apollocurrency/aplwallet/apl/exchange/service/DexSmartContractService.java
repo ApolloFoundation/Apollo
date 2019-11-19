@@ -29,9 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
+import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.ChainId;
 import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
@@ -204,8 +206,9 @@ public class DexSmartContractService {
     public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            List<UserEthDepositInfo> userDeposit = new ArrayList<>(UserEthDepositInfoMapper.map(dexContract.getUserFilledDeposits(user).sendAsync().get()));
-            return userDeposit;
+            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserFilledDeposits(user);
+            Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> callResponse = call.send();
+            return new ArrayList<>(UserEthDepositInfoMapper.map(callResponse));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());

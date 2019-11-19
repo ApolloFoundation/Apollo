@@ -196,10 +196,11 @@ public class DexContract extends Contract {
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }));
+                Arrays.<TypeReference<?>>asList(
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {}
+                        ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
                 new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
                     @Override

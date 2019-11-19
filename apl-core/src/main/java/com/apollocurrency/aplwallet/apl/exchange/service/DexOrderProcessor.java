@@ -405,12 +405,13 @@ public class DexOrderProcessor {
                 Long swapDeadline = swapData.getTimeDeadLine();
                 long currentTime = timeService.systemTime();
                 long timeLeft = swapDeadline - currentTime;
+                String hexHash = Convert.toHexString(swapData.getSecretHash());
                 if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60);
+                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. Hash - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hexHash);
                     continue;
                 }
                 if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60);
+                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. Hash - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hexHash);
                     continue;
                 }
                 long transferWithApprovalDuration = timeLeft / 2;
