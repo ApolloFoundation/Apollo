@@ -418,8 +418,10 @@ public class ShardEngineImpl implements ShardEngine {
 
     private Connection beginOrOpenConnection(TransactionalDataSource sourceDataSource) throws SQLException {
         if (!sourceDataSource.isInTransaction()) {
+            log.debug("===UpdateSecondaryIndex: Called BEGIN, as usual.");
             return sourceDataSource.begin();
         } else {
+            log.debug("===UpdateSecondaryIndex: Called getConnection() to prevent the Exception.");
             return sourceDataSource.getConnection();
         }
     }
