@@ -27,9 +27,10 @@ import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
+
 @Singleton
 public class TrimService {
-    private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     @Getter
     private final int maxRollback;

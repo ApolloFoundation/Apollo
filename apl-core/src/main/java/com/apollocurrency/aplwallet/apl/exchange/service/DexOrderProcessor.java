@@ -124,7 +124,7 @@ public class DexOrderProcessor {
                 .task(task)
                 .build();
 
-        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
+        dispatcher.schedule(dexOrderProcessorTask);
 
         log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
                 dexOrderProcessorTask.getName(),

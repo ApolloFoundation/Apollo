@@ -43,7 +43,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardInfoDownloader;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
@@ -63,7 +62,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -366,7 +364,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }).build();
 
-        dispatcher.schedule(blockChainInitTask, TaskOrder.INIT);
+        dispatcher.invokeInit(blockChainInitTask);
 
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
@@ -377,7 +375,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     .task(new GetMoreBlocksThread())
                     .build();
 
-            dispatcher.schedule(moreBlocksTask, TaskOrder.TASK);
+            dispatcher.schedule(moreBlocksTask);
         }
     }
 

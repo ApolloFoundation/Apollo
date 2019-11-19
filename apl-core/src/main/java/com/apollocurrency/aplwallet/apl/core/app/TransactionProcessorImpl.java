@@ -368,28 +368,28 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         .name("ProcessTransactions")
                         .delay(5000)
                         .task(processTransactionsThread)
-                        .build(), TaskOrder.TASK);
-                dispatcher.schedule(Task.builder()
+                        .build());
+                dispatcher.invokeAfter(Task.builder()
                         .name("InitialUnconfirmedTxsRebroadcasting")
                         .task(this::rebroadcastAllUnconfirmedTransactions)
-                        .build(), TaskOrder.AFTER);
+                        .build());
 
                 dispatcher.schedule(Task.builder()
                         .name("RebroadcastTransactions")
                         .delay(23000)
                         .task(rebroadcastTransactionsThread)
-                        .build(), TaskOrder.TASK);
+                        .build());
             }
             dispatcher.schedule(Task.builder()
                     .name("RemoveUnconfirmedTransactions")
                     .delay(20000)
                     .task(createRemoveUnconfirmedTransactionsThread())
-                    .build(), TaskOrder.TASK);
+                    .build());
             dispatcher.schedule(Task.builder()
                     .name("ProcessWaitingTransactions")
                     .delay(1000)
                     .task(processWaitingTransactionsThread)
-                    .build(), TaskOrder.TASK);
+                    .build());
             dispatcher.schedule(Task.builder()
                     .name("ProcessTransactionsToBroadcastWhenConfirmed")
                     .delay(10000)
