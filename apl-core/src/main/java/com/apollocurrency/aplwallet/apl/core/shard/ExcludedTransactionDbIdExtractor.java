@@ -28,15 +28,20 @@ public class ExcludedTransactionDbIdExtractor {
     }
 
     public ExcludeInfo getExcludeInfo(int startHeight, int finishHeight) {
-        log.trace("ExcludeInfo ==== startHeight={} finishHeight={}", startHeight, finishHeight);
+        log.debug("get Info: start={}, finish={}", startHeight, finishHeight);
         if (startHeight >= finishHeight) {
             throw new IllegalArgumentException("startHeight should be less than finish height but got start=" + startHeight + " and finish" + finishHeight);
         }
         List<TransactionDbInfo> activePhasedTransactions = phasingPollService.getActivePhasedTransactionDbInfoAtHeight(finishHeight);
+        log.trace("get activePhasedTransactions: {}", activePhasedTransactions);
         List<TransactionDbInfo> transactionsBeforeHeight = blockchain.getTransactionsBeforeHeight(startHeight);
+        log.trace("get transactionsBeforeHeight: {}", transactionsBeforeHeight);
         List<TransactionDbInfo> deleteNotExportNotCopy = transactionsBeforeHeight.stream().filter(tdi->!activePhasedTransactions.contains(tdi)).collect(Collectors.toList());
+        log.trace("get deleteNotExportNotCopy: {}", deleteNotExportNotCopy);
         List<TransactionDbInfo> notDeleteExportNotCopy = transactionsBeforeHeight.stream().filter(activePhasedTransactions::contains).collect(Collectors.toList());
+        log.trace("get notDeleteExportNotCopy: {}", notDeleteExportNotCopy);
         List<TransactionDbInfo> notDeleteExportCopy = activePhasedTransactions.stream().filter(e -> !notDeleteExportNotCopy.contains(e)).collect(Collectors.toList());
+        log.trace("get notDeleteExportCopy: {}", notDeleteExportCopy);
         return new ExcludeInfo(deleteNotExportNotCopy, notDeleteExportNotCopy, notDeleteExportCopy);
     }
 }

@@ -581,7 +581,9 @@ class ShardEngineTest {
         assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_INDEX_TABLE_NAME))));
         assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME)))                  );
         assertFalse(Files.exists(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME))));
-        assertEquals(3, Files.readAllLines(transactionPath)             .size());
+
+        /* now transaction can be exported two times, so previous Tx data is not removed, now 9 lines instead of 3 */
+        assertEquals(9, Files.readAllLines(transactionPath)             .size());
         assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_INDEX_TABLE_NAME)))            .size());
 //        assertEquals(3, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(PHASING_POLL_TABLE_NAME)))            .size());
         verify(csvExporter, never()).exportBlock(snaphotBlockHeight);
@@ -779,6 +781,7 @@ class ShardEngineTest {
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, recovery.getState());
     }
+
     @Test
     void testArchiveWithoutPrunableData() throws IOException {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));

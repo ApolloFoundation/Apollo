@@ -73,6 +73,7 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -385,8 +386,7 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
         }
         durableTaskUpdateByState(state, 13.0, "Secondary indexes creation...");
-        try {
-            Connection sourceConnect = sourceDataSource.isInTransaction()?sourceDataSource.getConnection():sourceDataSource.begin();
+        try (Connection sourceConnect = beginOrOpenConnection(sourceDataSource) ) {
             for (TableInfo tableInfo : paramInfo.getTableInfoList()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableInfo.getName();
@@ -414,6 +414,14 @@ public class ShardEngineImpl implements ShardEngine {
         log.debug("UPDATE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables)/1000);
 
         return state;
+    }
+
+    private Connection beginOrOpenConnection(TransactionalDataSource sourceDataSource) throws SQLException {
+        if (!sourceDataSource.isInTransaction()) {
+            return sourceDataSource.begin();
+        } else {
+            return sourceDataSource.getConnection();
+        }
     }
 
     /**
@@ -561,14 +569,19 @@ public class ShardEngineImpl implements ShardEngine {
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
         if (AbstractHelper.isContain(recovery.getProcessedObject(), tableName)) {
-            log.debug("Skip already exported table: " + tableName);
+            log.debug("Skip already exported table: {}", tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
-            log.trace("Exporting '{}'...", tableCsvPath);
-            FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e)-> {
-                durableTaskUpdateByState(state, null, null);
-                throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
-            });
+            log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
+            // skip deleting 'transaction.csv' in one special case, when it was exported previously
+            if (!tableName.equalsIgnoreCase(TRANSACTION_TABLE_NAME)) {
+                // 'transaction' table might be exported previously with BLOCK table
+                // so we should not remove it on explicit export on second time
+                FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
+                    durableTaskUpdateByState(state, null, null);
+                    throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
+                });
+            }
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
             log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath,
