@@ -390,7 +390,7 @@ public class TestShuffling extends TestBaseOld {
          sendMoney(randomVault,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
          if (getShuffling(shuffling.getTransaction()).getStage() == STAGE_DONE){
              for (Wallet wallet: recipients) {
-                 sendMoney(wallet,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
+                 sendMoney(wallet,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(wallet).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
              }
          }
     }
