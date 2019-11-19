@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
+import com.apollocurrency.aplwallet.api.dto.PollResultDTO;
 import com.apollocurrency.aplwallet.api.dto.VoteDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetPollVotesResponse extends ResponseBase{
-    private List<VoteDTO> votes;
+public class PollResultResponse extends PollDTO{
+    private List<PollResultDTO> results;
 }

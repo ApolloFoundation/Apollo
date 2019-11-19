@@ -49,7 +49,8 @@ import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
-import com.apollocurrency.aplwallet.api.response.GetPollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
@@ -171,6 +172,7 @@ public interface ITest {
     CreateTransactionResponse castVote(Wallet wallet, String poll, int vote);
     AccountCurrencyResponse getAccountCurrencies(Wallet wallet);
     CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType );
-    GetPollVotesResponse getPollVotes (String poll);
+    PollVotesResponse getPollVotes (String poll);
+    PollResultResponse getPollResult (String poll);
 
 }

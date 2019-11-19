@@ -1,5 +1,6 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
+import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.VoteDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
@@ -41,10 +42,10 @@ public class TestPoll extends TestBaseOld {
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
     }
 
-    @DisplayName("Poll flow")
+    @DisplayName("Poll flow. Creating. Voting.")
     @ParameterizedTest(name = "{displayName} votingModel: {0}")
     @ValueSource(ints = { 0,1,2,3 })
-    public void createPollTest(int votingModel) {
+    public void pollTest(int votingModel) {
 
         String name = RandomStringUtils.randomAlphabetic(7);
         int plusFinishHeight = 9;
@@ -53,6 +54,9 @@ public class TestPoll extends TestBaseOld {
         int currentHeight;
         String pollId;
         int maxRangeValue = 10;
+        int voteNumber = RandomUtils.nextInt(1, maxRangeValue);
+        long weight = 1;
+        long result = 0;
 
         for (Wallet wallet: wallets) {
             switch (votingModel) {
@@ -60,37 +64,51 @@ public class TestPoll extends TestBaseOld {
                     poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 0, maxRangeValue);
                     break;
                 case POLL_BY_ACCOUNT_BALANCE:
-                    //TODO: add balance verification
                     poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 10000, maxRangeValue);
                     break;
                 case POLL_BY_ASSET:
-                    CreateTransactionResponse asset = issueAsset(wallet, RandomStringUtils.randomAlphabetic(5), "description of asset for poll", 100);
+                    int quantityATU = 100;
+                    weight = quantityATU;
+                    CreateTransactionResponse asset = issueAsset(wallet, RandomStringUtils.randomAlphabetic(5), "description of asset for poll", quantityATU);
                     verifyCreatingTransaction(asset);
                     verifyTransactionInBlock(asset.getTransaction());
-                    String assetId = asset.getTransaction();
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, assetId, 1, maxRangeValue);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, asset.getTransaction(), 1, maxRangeValue);
                     break;
                 case POLL_BY_CURRENCY:
-                    CreateTransactionResponse currency = issueCurrency(wallet, 1, RandomStringUtils.randomAlphabetic(5), "description of currency for poll", RandomStringUtils.randomAlphabetic(4).toUpperCase(), 100, 100,1);
+                    int initialSupply = 100;
+                    weight = initialSupply;
+                    CreateTransactionResponse currency = issueCurrency(wallet, 1, RandomStringUtils.randomAlphabetic(5), "description of currency for poll", RandomStringUtils.randomAlphabetic(4).toUpperCase(), initialSupply, 100,1);
                     verifyCreatingTransaction(currency);
                     verifyTransactionInBlock(currency.getTransaction());
-                    String currencyId = currency.getTransaction();
-                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, currencyId, 1, maxRangeValue);
+                    poll = createPoll(wallet, votingModel, name, plusFinishHeight, currency.getTransaction(), 1, maxRangeValue);
                     break;
             }
-            assertNotNull(poll);
             verifyCreatingTransaction(poll);
             verifyTransactionInBlock(poll.getTransaction());
             currentHeight = getBlock().getHeight();
             pollId = poll.getTransaction();
+
             assertEquals(name, getPoll(pollId).getName(), "Names of poll are different");
             assertEquals(false, getPoll(pollId).getFinished(), "status of poll is different");
-            int voteNumber = RandomUtils.nextInt(1, maxRangeValue);
+
             vote = castVote(wallet, pollId, voteNumber);
             verifyCreatingTransaction(vote);
             verifyTransactionInBlock(vote.getTransaction());
+
+            if (votingModel == POLL_BY_ACCOUNT_BALANCE) {
+                weight = getBalance(wallet).getBalanceATM();
+            }
+
+            result = weight * voteNumber;
+            log.info("result = " + result);
+            log.info("weight = " + weight);
+            log.info("voteNumber = " + voteNumber);
             waitForHeight(currentHeight + plusFinishHeight + 1);
+
+            //getResults().get(INDEX) INDEX: YES = 0, No = 1, MAYBE = 2
             assertEquals(true, getPoll(pollId).getFinished(), "status of finished poll is different");
+            assertEquals(Long.toString(weight), getPollResult(pollId).getResults().get(0).getWeight(), "amount of weights are different");
+            assertEquals(Long.toString(result), getPollResult(pollId).getResults().get(0).getResult(), "amount of results are different");
             assertEquals(vote.getTransaction(), getPollVotes(pollId).getVotes().get(0).getTransaction(), "verification is failed on transaction Id");
             assertEquals(String.valueOf(voteNumber), getPollVotes(pollId).getVotes().get(0).getVotes().get(0), "votes are different");
             assertEquals("", getPollVotes(pollId).getVotes().get(0).getVotes().get(1), "votes are different");

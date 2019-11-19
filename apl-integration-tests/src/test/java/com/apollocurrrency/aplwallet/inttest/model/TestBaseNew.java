@@ -51,7 +51,8 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
-import com.apollocurrency.aplwallet.api.response.GetPollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
@@ -885,7 +886,10 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public GetPollVotesResponse getPollVotes (String poll) {
+    public PollVotesResponse getPollVotes (String poll) {
         throw new NotImplementedException("Not implemented");
     }
+
+    @Override
+    public PollResultResponse getPollResult (String poll) { throw new NotImplementedException("Not implemented"); }
 }
