@@ -64,25 +64,14 @@ public class TradingViewUtils {
         }
         return result;         
     }
-    
-    
-    
-//        @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-//        @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-//        @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-//        @Parameter(description = "limit") @QueryParam("limit") Integer limit,
-//        @Context HttpServletRequest req) throws NotFoundException {
-
-    
-        
+            
     static public TradingDataOutput getTestDataForInterval( String fsym, String tsym, Integer toTs, Integer limit, Integer interval) {
             
         log.debug("getTestDataForInterval:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
 
             int initialTime = toTs - (interval*2000);
             int startGraph = initialTime;
-
-
+            
             TradingDataOutput tradingDataOutput = new TradingDataOutput();
             
             tradingDataOutput.setResponse("Success");
@@ -140,4 +129,61 @@ public class TradingViewUtils {
     }
     
     
+    static public TradingDataOutput getDataForInterval( String fsym, String tsym, Integer toTs, Integer limit, Integer interval, DexService service) {
+            int initialTime = toTs - (interval*limit);
+            int startGraph = initialTime;
+
+            
+            long startTS = (long)initialTime * 1000L;
+            long endTS = (long)toTs * 1000L;    
+            
+            byte currencyType = 0;
+            
+            if (tsym.equals("ETH")) {                
+                currencyType = 1;
+                } else if (tsym.equals("PAX")) {                
+                currencyType = 0;
+                }
+                            
+            log.debug("start: {}, finish: {}, currencyType: {}", startTS, endTS, currencyType ); 
+            
+            List<DexTradeEntry> dexTradeEntries = service.getTradeInfoForPeriod(startTS, endTS, (byte)currencyType, 0, Integer.MAX_VALUE);
+            
+            TradingDataOutput tradingDataOutput = new TradingDataOutput();
+            
+            tradingDataOutput.setResponse("Success");
+            tradingDataOutput.setType(100);
+            tradingDataOutput.setAggregated(false);
+            
+            List<SimpleTradingEntry> data = new ArrayList<>();
+            
+            BigDecimal prevClose= BigDecimal.TEN;
+            
+            log.debug("extracted: {} values", dexTradeEntries.size() );
+            
+            for (int i=0; i< limit; i++) {                
+                long start = (long)initialTime * 1000;
+                long finish = 60000 + start ;
+                SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriod(dexTradeEntries, start, finish); 
+                entryForPeriod.time = initialTime;
+                entryForPeriod.open =  prevClose;
+                prevClose = entryForPeriod.close;                                
+                initialTime += interval;                
+                data.add(entryForPeriod);
+            }
+                
+            tradingDataOutput.setData(data);
+            tradingDataOutput.setTimeTo(toTs);
+            tradingDataOutput.setTimeFrom(startGraph);
+            tradingDataOutput.setFirstValueInArray(true);
+            ConversionType conversionType = new ConversionType();
+            conversionType.type = "force_direct";
+            conversionType.conversionSymbol = "";
+            tradingDataOutput.setConversionType(conversionType);
+            tradingDataOutput.setHasWarning(false);
+            
+            return tradingDataOutput;
+        }
+    
+
 }

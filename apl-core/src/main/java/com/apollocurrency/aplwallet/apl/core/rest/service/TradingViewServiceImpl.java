@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class TradingViewServiceImpl implements TradingViewService{
     
-    private static final Logger log = LoggerFactory.getLogger(TransportInteractionServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(TradingViewServiceImpl.class);
 
     @Setter
     private volatile boolean done;    
@@ -58,7 +58,7 @@ public class TradingViewServiceImpl implements TradingViewService{
             dexTradeEntryWrite.setSenderOfferType((byte)0);        
             dexTradeEntryWrite.setSenderOfferCurrency((byte)0);        
             dexTradeEntryWrite.setSenderOfferAmount( ThreadLocalRandom.current().nextLong(10000) );
-            dexTradeEntryWrite.setPairCurrency((byte)1);
+            dexTradeEntryWrite.setPairCurrency((byte)0);
             dexTradeEntryWrite.setPairRate(BigDecimal.valueOf(random.nextInt(1000))); 
             //log.debug("pair rate: {}" , dexTradeEntryWrite.getPairRate());
             Long randomTransactionID = random.nextLong();
