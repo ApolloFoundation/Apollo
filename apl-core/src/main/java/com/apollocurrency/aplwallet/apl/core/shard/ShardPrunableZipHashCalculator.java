@@ -53,10 +53,6 @@ public class ShardPrunableZipHashCalculator {
         this.fileChangedEvent = fileChangedEvent;
     }
 
-/*    public void onTrimDone(@Observes @Async TrimData trimData) {
-        tryRecalculatePrunableArchiveHashes(trimData.getPruningTime());
-    }*/
-
     public void tryRecalculatePrunableArchiveHashes(int time) {
         if (time > lastPruningTime) {
             log.debug("Recalculate prunable archive hashes at {}", time);

@@ -23,10 +23,10 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.PRUNABLE_MONITOR_I
 @Singleton
 public class PrunableArchiveMonitor {
 
-    private TimeService timeService;
-    private ShardPrunableZipHashCalculator hashCalculator;
-    private TaskDispatchManager taskManager;
-    private TrimService trimService;
+    private final TimeService timeService;
+    private final ShardPrunableZipHashCalculator hashCalculator;
+    private final TaskDispatchManager taskManager;
+    private final TrimService trimService;
     private volatile boolean processing = false;
 
     @Inject
