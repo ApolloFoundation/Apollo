@@ -166,7 +166,7 @@ public final class Generator implements Comparable<Generator> {
                             .name("GenerateBlocks")
                             .delay(500)
                             .task(generateBlocksThread)
-                            .build(), TaskOrder.TASK);
+                            .build());
         }        
     }
 

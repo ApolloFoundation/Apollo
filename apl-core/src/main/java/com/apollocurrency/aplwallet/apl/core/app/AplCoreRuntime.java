@@ -80,7 +80,6 @@ public class AplCoreRuntime {
                     aplAppStatus.clearFinished(1 * 60L); //10 min
                 })
                 .build());
-        taskDispatcher.dispatch();
     }
 
     private void findDeadLocks(StringBuilder sb) {

@@ -117,7 +117,7 @@ public class FileInfoDownloader {
      * @param d
      * @return true is network is usable;
      */
-    public boolean isNetworkUsable(FileDownloadDecision d) {
+    public static boolean isNetworkUsable(FileDownloadDecision d) {
         Objects.requireNonNull(d, "decision is NULL");
         boolean usable = false;
         switch(d){

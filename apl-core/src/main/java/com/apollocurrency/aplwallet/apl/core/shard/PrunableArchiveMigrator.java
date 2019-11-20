@@ -8,8 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -20,24 +22,30 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Slf4j
 public class PrunableArchiveMigrator {
     private static final String MIGRATE_OPTION = "prunable-shard-migration-finished";
     private static final String CURRENT_SHARD_OPTION = "current-shard-for-migration";
-    private ShardDao shardDao;
-    private DatabaseManager databaseManager;
-    private OptionDAO optionDAO;
-    private DirProvider dirProvider;
-    private BlockchainConfig blockchainConfig;
-    private Zip zip;
-    private DerivedTablesRegistry registry;
+    private final ShardDao shardDao;
+    private final DatabaseManager databaseManager;
+    private final OptionDAO optionDAO;
+    private final DirProvider dirProvider;
+    private final BlockchainConfig blockchainConfig;
+    private final Zip zip;
+    private final DerivedTablesRegistry registry;
+    private final Event<ChunkedFileOps> fileChangedEvent;
 
     @Inject
-    public PrunableArchiveMigrator(ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
+    public PrunableArchiveMigrator(Event<ChunkedFileOps> fileChangedEvent, ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
         this.shardDao = shardDao;
         this.optionDAO = optionDAO;
         this.dirProvider = dirProvider;
@@ -45,9 +53,11 @@ public class PrunableArchiveMigrator {
         this.zip = zip;
         this.databaseManager = databaseManager;
         this.registry = registry;
+        this.fileChangedEvent=fileChangedEvent;
     }
 
     public void migrate() {
+        UUID chainId = blockchainConfig.getChain().getChainId();
         String migrateOption = optionDAO.get(MIGRATE_OPTION);
         if (migrateOption == null) {
             String currentShard = optionDAO.get(CURRENT_SHARD_OPTION);
@@ -64,7 +74,7 @@ public class PrunableArchiveMigrator {
                     optionDAO.set(CURRENT_SHARD_OPTION, String.valueOf(shard.getShardId()));
                     Path tempDirectory = Files.createTempDirectory("prunable-shard-migration-" + shard.getShardId());
                     ShardNameHelper shardNameHelper = new ShardNameHelper();
-                    Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), blockchainConfig.getChain().getChainId()));
+                    Path shardArchivePath = dirProvider.getDataExportDir().resolve(shardNameHelper.getCoreShardArchiveNameByShardId(shard.getShardId(), chainId));
 
                     String tempDirectoryString = tempDirectory.toAbsolutePath().toString();
                     zip.extract(shardArchivePath.toAbsolutePath().toString(), tempDirectoryString);
@@ -72,7 +82,13 @@ public class PrunableArchiveMigrator {
                     csvExporter.exportShardTableIgnoringLastZipHashes(shard.getShardHeight(), 100);
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
-                    byte[] hash = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
+                    byte[] hash = fops.getFileHash();
+                    //inform DownloadableFileManafer about file change
+                    fops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
+                    fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(fops);        
+                    log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());
+                    
                     Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setCoreZipHash(hash);
                     shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation
