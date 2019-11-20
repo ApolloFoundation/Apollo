@@ -845,7 +845,11 @@ public class AplDbVersion extends DbVersion {
                 apply("ALTER TABLE dex_trade MODIFY FINISH_TIME BIGINT NOT NULL");
             
             case 321:    
-                return 321;
+                apply("INSERT INTO TRADING_TRACK VALUES (0)");
+                
+            case 322: 
+                return 322;
+                
                 
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate

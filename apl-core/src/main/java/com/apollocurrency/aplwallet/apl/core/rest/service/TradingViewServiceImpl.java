@@ -73,16 +73,17 @@ public class TradingViewServiceImpl implements TradingViewService{
     }
     
     void tick() {
+        log.debug("ticking...");
         
     }
     
     @Override
     public void start() {
         
-            log.debug("Creating test : ");
-            dao.hardDeleteAllDexTrade();            
-            createTestEntry();            
-            log.debug("Trading view service startup point: ");
+//            log.debug("Creating test : ");
+//            dao.hardDeleteAllDexTrade();            
+//            createTestEntry();            
+//            log.debug("Trading view service startup point: ");
             
             done = false;
             
@@ -98,6 +99,8 @@ public class TradingViewServiceImpl implements TradingViewService{
                     
                     try {                        
                         Thread.sleep(1000);
+                        this.tick();
+                        
                     } catch (InterruptedException ex) {
                         log.error( "Runnable exception: {} ", ex.toString() );
                     }                    
