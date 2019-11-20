@@ -1,5 +1,15 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
@@ -44,10 +54,6 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,16 +66,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+import javax.annotation.PostConstruct;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -406,6 +406,10 @@ public class DexOrderProcessor {
                 long currentTime = timeService.systemTime();
                 long timeLeft = swapDeadline - currentTime;
                 String hexHash = Convert.toHexString(swapData.getSecretHash());
+                if (timeLeft < 0) {
+                    log.debug("Atomic swap {} expired, unable to proceed with exchange process, order - {}, counterOrder - {}, contract - {}", hexHash, order.getId(), counterOrder.getId(), contract.getId());
+                    continue;
+                }
                 if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
                     log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. Hash - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hexHash);
                     continue;
@@ -728,10 +732,11 @@ public class DexOrderProcessor {
 
     private boolean performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
         boolean success = true;
+        // refund + withdraw or just withdraw
         try {
             boolean depositExist = dexSmartContractService.isDepositForOrderExist(address, orderId);
             boolean refundCompleted = true;
-            if (!depositExist) { // withdraw if refund was performed earlier
+            if (!depositExist) {
                 log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
                 refundCompleted = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
                 if (!refundCompleted) {
@@ -739,7 +744,7 @@ public class DexOrderProcessor {
                     success = false;
                 }
             }
-            if (refundCompleted && depositExist) {
+            if (refundCompleted) {
                 String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, orderId, address);
                 if (StringUtils.isNotBlank(hash)) {
                     log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), orderId);

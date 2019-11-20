@@ -41,8 +41,6 @@ import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.response.TransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,6 +49,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -197,7 +197,6 @@ public class DexSmartContractService {
             SwapDataInfo swapDataInfo = SwapDataInfoMapper.map(dexContract.getSwapData(secretHash).sendAsync().get());
             return swapDataInfo;
         } catch (Exception e){
-            log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
     }
@@ -210,7 +209,6 @@ public class DexSmartContractService {
             Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> callResponse = call.send();
             return new ArrayList<>(UserEthDepositInfoMapper.map(callResponse));
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
     }
