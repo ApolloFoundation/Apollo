@@ -67,6 +67,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -79,6 +80,7 @@ public class DexOrderProcessor {
     private static final String SERVICE_NAME = "DexOrderProcessor";
     private static final String BACKGROUND_SERVICE_NAME = SERVICE_NAME + "-background";
     private static final int BACKGROUND_THREADS_NUMBER = 10;
+    private static final int SWAP_EXPIRATION_OFFSET = 60; // in seconds
 
     private SecureStorageService secureStorageService;
     private DexService dexService;
@@ -160,6 +162,10 @@ public class DexOrderProcessor {
         processorEnabled = false;
     }
 
+    @PreDestroy
+    public void shutdown() {
+        backgroundExecutor.shutdown();
+    }
     public void resumeContractProcessor(){
         processorEnabled = true;
     }
@@ -708,13 +714,15 @@ public class DexOrderProcessor {
                         Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
                         Long timeDeadLine = swapData.getTimeDeadLine();
-                        if (timeDeadLine < timeService.systemTime()) {
+                        if (timeDeadLine + SWAP_EXPIRATION_OFFSET  < timeService.systemTime()) {
                             if (expiredSwaps.get(orderId) == null) { // skip swaps under processing
                                 expiredSwaps.put(orderId, swapData.getSecretHash());
                                 CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
                                         .handle((r, e) -> {
                                             expiredSwaps.remove(orderId);
-                                            log.debug("Refund for swap {}, success - {}", Convert.toHexString(swapData.getSecretHash()), r);
+                                            if (r != null) {
+                                                log.debug("Swap {} have got refunding status {}", Convert.toHexString(swapData.getSecretHash()), r);
+                                            }
                                             if (e != null) {
                                                 log.error("Unknown error occurred during refund", e);
                                             }
