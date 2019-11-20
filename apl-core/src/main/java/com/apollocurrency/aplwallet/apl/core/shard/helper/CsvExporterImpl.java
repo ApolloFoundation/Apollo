@@ -299,7 +299,7 @@ public class CsvExporterImpl implements CsvExporter {
 
             // process non empty tables only
             if (sortedDbIds.size() > 0) {
-                log.debug("Nothing to export in Table = {} by dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
+                log.debug("Additional Export from Table = {} by dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
                 for (Long dbId : sortedDbIds) {
                     txPstm.setLong(1, dbId);
                     CsvExportData csvExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME,
@@ -311,7 +311,8 @@ public class CsvExporterImpl implements CsvExporter {
                 // skipped empty table
                 log.debug("Nothing to export in Table = {} by sortedDbIds = [{}]", TRANSACTION_TABLE_NAME, sortedDbIds.size());
             }
-            log.debug("Exported {}: totalCount = {}, count 'transaction' = {}", TRANSACTION_TABLE_NAME, totalCount, processCount);
+            log.debug("Exported {}: totalCount = {}, count = {} by height = {}",
+                    TRANSACTION_TABLE_NAME, totalCount, processCount, height);
         } catch (Exception e) {
             throw new RuntimeException("Exporting table exception " + TRANSACTION_TABLE_NAME, e);
         }
@@ -340,7 +341,7 @@ public class CsvExporterImpl implements CsvExporter {
                 throw new IllegalStateException("Expected one exported block, got " + blockExportData.getProcessCount());
             }
             processCount = blockExportData.getProcessCount(); // block
-            log.debug("Exported {}: count 'block' = {} by height = {}", BLOCK_TABLE_NAME, processCount, height);
+            log.debug("Exported {}: count = {} by height = {}", BLOCK_TABLE_NAME, processCount, height);
         } catch (SQLException | IOException e) {
             throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
         }
