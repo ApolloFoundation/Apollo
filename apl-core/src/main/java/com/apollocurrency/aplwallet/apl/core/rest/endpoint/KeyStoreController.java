@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
+
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
@@ -10,6 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -23,6 +28,9 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -33,11 +41,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-
-import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
 @Path("/keyStore")
 @Singleton
@@ -77,6 +80,9 @@ public class KeyStoreController {
         }
 
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
+        if (keyStore == null) {
+            return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "passphrase", "account: " + Convert.defaultRsAccount(accountId)).build();
+        }
         keyStore.setPassphrase(null);
 
         secureStorageService.addUserPassPhrase(accountId, passphraseStr);
