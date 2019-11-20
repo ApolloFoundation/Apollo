@@ -36,13 +36,13 @@ public class ResponseBuilder {
 
     public static ResponseBuilder apiError(ErrorInfo error, Object ... args){
         ResponseBuilder instance = new ResponseBuilder(200);
-        instance.error(error, null, args);
+        instance.error(error, args);
         return instance;
     }
 
     public static ResponseBuilder detailedApiError(ErrorInfo error, String errorDetails, Object ... args){
         ResponseBuilder instance = new ResponseBuilder(200);
-        instance.error(error, errorDetails, args);
+        instance.detailedError(error, errorDetails, args);
         return instance;
     }
 
@@ -58,7 +58,8 @@ public class ResponseBuilder {
         return instance;
     }
 
-    public ResponseBuilder error(ErrorInfo error, String errorDetails, Object ... args){
+
+    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object ... args){
         this.status = 200;
 
         String reasonPhrase = Messages.format(error.getErrorDescription(), args);
@@ -70,7 +71,7 @@ public class ResponseBuilder {
 
 
     public ResponseBuilder error(ErrorInfo error, Object ... args){
-        return error(error, null, args);
+        return detailedError(error, null, args);
     }
 
     public ResponseBuilder status(int status){
