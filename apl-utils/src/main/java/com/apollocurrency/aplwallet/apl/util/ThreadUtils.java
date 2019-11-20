@@ -40,10 +40,10 @@ public class ThreadUtils {
 
     public static String lastStacktrace(StackTraceElement[] stackTraceElements, int elementNumber) {
         StringBuilder stackTrace = new StringBuilder("Trace=");
-        int first = Math.min(elementNumber, stackTraceElements.length-1);
+        int first = Math.min(elementNumber, stackTraceElements.length - 1);
         int last = 0;
-        for(int i=first; i>=last; i--) {
-            if( i!=first ){
+        for (int i = first; i >= last; i--) {
+            if (i != first) {
                 stackTrace.append("->");
             }
             stackTrace.append(getStacktraceSpec(stackTraceElements[i]));
@@ -53,7 +53,7 @@ public class ThreadUtils {
 
     public static String getStacktraceSpec(StackTraceElement element) {
         String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName()+":"+element.getLineNumber();
+        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName() + ":" + element.getLineNumber();
     }
 
     private ThreadUtils() {

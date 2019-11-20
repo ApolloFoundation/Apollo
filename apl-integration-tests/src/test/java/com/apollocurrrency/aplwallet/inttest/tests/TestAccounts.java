@@ -120,9 +120,9 @@ public class TestAccounts extends TestBaseOld {
     @Test
     @DisplayName("Verify Search Accounts  endpoint")
     public void testSearchAccounts() throws IOException {
-        String accountName = "Account "+new Date().getTime();
-        String accountDesc= "Decription "+new Date().getTime();
-        CreateTransactionResponse setAccountInfo = setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(),accountName,accountDesc);
+        String accountName = "Account " + new Date().getTime();
+        String accountDesc = "Decription " + new Date().getTime();
+        CreateTransactionResponse setAccountInfo = setAccountInfo(TestConfiguration.getTestConfiguration().getGenesisWallet(), accountName, accountDesc);
         verifyCreatingTransaction(setAccountInfo);
         verifyTransactionInBlock(setAccountInfo.getTransaction());
         SearchAccountsResponse searchAccountsResponse = searchAccounts(accountName);
@@ -209,13 +209,13 @@ public class TestAccounts extends TestBaseOld {
     public void testSendMoney(Wallet wallet) throws Exception {
         Set<String> transactions = new HashSet<>();
         int countOfTransactions = 50;
-        for (int i = 0; i <countOfTransactions ; i++) {
-            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet,wallet.getUser(),10);
+        for (int i = 0; i < countOfTransactions; i++) {
+            CreateTransactionResponse sendMoneyResponse = sendMoney(wallet, wallet.getUser(), 10);
             verifyCreatingTransaction(sendMoneyResponse);
             transactions.add(sendMoneyResponse.getTransaction());
         }
-        waitForHeight(getBlock().getHeight()+10);
-        for (String trx: transactions) {
+        waitForHeight(getBlock().getHeight() + 10);
+        for (String trx : transactions) {
             verifyTransactionInBlock(trx);
         }
     }
@@ -227,7 +227,7 @@ public class TestAccounts extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     public void testSendMoneyPrivate(Wallet wallet) throws IOException {
-        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet,wallet.getUser(),100);
+        CreateTransactionResponse sendMoneyResponse = sendMoneyPrivate(wallet, wallet.getUser(), 100);
         verifyCreatingTransaction(sendMoneyResponse);
     }
 

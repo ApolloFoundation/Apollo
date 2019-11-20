@@ -231,23 +231,39 @@ public interface ITest {
     EthGasInfoResponse getEthGasInfo();
 
     List<DexTradeInfoDto> getDexTradeInfo(String pairCurrency, Integer startTime, Integer finishTime);
+
     CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet);
+
     String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth);
     List<DexOrderDto> getDexOrders(String accountId);
+
     Account2FAResponse getDexBalances(String ethAddress);
+
     WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth);
-    CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals);
+
+    CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals);
+
     CurrenciesResponse getAllCurrencies();
+
     Currency getCurrency(String CurrencyId);
+
     CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId);
-    CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId);
+
+    CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId);
+
     CreateTransactionResponse transferCurrency(String recipient, String currency, Wallet wallet, int units);
+
     CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units);
+
     CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM);
-    CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply);
-    CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate);
-    CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
-    CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
+
+    CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply);
+
+    CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate);
+
+    CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate);
+
+    CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer);
 
 
 }

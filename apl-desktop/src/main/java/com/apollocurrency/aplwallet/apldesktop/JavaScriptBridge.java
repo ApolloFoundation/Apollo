@@ -22,8 +22,6 @@ package com.apollocurrency.aplwallet.apldesktop;
 
 //import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -42,6 +40,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * The class itself and methods in this class are invoked from JavaScript therefore has to be public
@@ -106,7 +106,7 @@ public class JavaScriptBridge {
 
 
     public void downloadFile(String content, String fileName) {
-        Platform.runLater(()-> {
+        Platform.runLater(() -> {
             String home = System.getProperty("user.home");
             Path downloadDir = Paths.get(home).resolve("Downloads");
             FileChooser fileChooser = new FileChooser();
@@ -122,8 +122,7 @@ public class JavaScriptBridge {
                     alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
 
                     Platform.runLater(alert::show);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     LOG.error("Unable to write file to " + chosenFile, e);
                     Alert alert = new Alert(Alert.AlertType.ERROR, "I/O error occurred during saving file: " + e.getMessage(), ButtonType.OK);
                     alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);

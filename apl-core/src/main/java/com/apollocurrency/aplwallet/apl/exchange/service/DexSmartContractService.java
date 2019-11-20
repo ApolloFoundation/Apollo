@@ -37,6 +37,8 @@ import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.utils.Numeric;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,8 +47,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -209,7 +209,7 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn()) {
+        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn() || depositedOrderDetails.getAmount().equals(BigInteger.ZERO)) {
             return false;
         }
 

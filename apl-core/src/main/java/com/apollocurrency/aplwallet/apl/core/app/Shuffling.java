@@ -325,8 +325,8 @@ public final class Shuffling {
                     return;
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
-                List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
-                LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
+            List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
+            LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
@@ -347,7 +347,7 @@ public final class Shuffling {
                         shufflingTable.insert(shuffling);
                     }
                 }
-                LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
+            LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
         }
 

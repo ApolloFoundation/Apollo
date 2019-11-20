@@ -243,7 +243,7 @@ public class FileDownloader {
 
     @PreDestroy
     public void preDestroy(){
-        if(executor != null){
+        if (executor != null) {
             //TODO: do we need to cancel tasks and threads?
             executor.shutdown();
         }
