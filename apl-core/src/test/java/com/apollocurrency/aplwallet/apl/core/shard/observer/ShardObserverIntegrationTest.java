@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -26,6 +27,10 @@ import javax.inject.Inject;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @EnableWeld
 public class ShardObserverIntegrationTest {
@@ -56,15 +61,20 @@ public class ShardObserverIntegrationTest {
     }
 
     @Test
-    void testDoShardBySyncEvent() {
+    void testDoShardBySyncEvent() throws ExecutionException, InterruptedException {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         Mockito.doReturn(true).when(blockchainConfig).isEnablePruning();
         doReturn(true).when(heightConfig).isShardingEnabled();
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
+
+        CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
+        when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
+        doReturn(completableFuture).when(shardService).tryCreateShardAsync(100, 100);
+
         trimEvent.select(new AnnotationLiteral<Sync>() {
-        }).fire(new TrimData(100, 100, 0));
+            }).fire(new TrimData(100, 100, 0));
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }
