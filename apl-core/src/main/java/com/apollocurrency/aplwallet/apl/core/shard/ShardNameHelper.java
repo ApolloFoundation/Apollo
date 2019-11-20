@@ -43,9 +43,10 @@ public class ShardNameHelper {
        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
        return result;
     }
-    public String getFullShardPrunId(Long shardId, UUID chainId){
-       String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
-       return result;
+
+    public String getFullShardPrunId(Long shardId, UUID chainId) {
+        String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
+        return result;
     }
     public String getCoreShardArchiveNameByShardId(Long shardId, UUID chainId) {
         return getShardArchiveNameByShardId(SHARD_CORE_ARCHIVE_NAME_PATTERN, shardId, chainId);

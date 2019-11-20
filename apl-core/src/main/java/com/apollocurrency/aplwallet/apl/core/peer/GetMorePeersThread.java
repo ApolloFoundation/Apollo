@@ -98,7 +98,7 @@ class GetMorePeersThread implements Runnable {
                     request.put("peers", myPeers);
                     request.put("services", myServices); // Separate array for backwards compatibility
                     request.put("chainId", peers.blockchainConfig.getChain().getChainId());
-                    if(peer.getState()!=PeerState.CONNECTED){
+                    if (peer.getState() != PeerState.CONNECTED) {
                         peers.connectPeer(peer);
                     }
                     if (peer.getState() == PeerState.CONNECTED) {

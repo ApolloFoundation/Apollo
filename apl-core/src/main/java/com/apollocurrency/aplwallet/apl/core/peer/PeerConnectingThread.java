@@ -42,9 +42,9 @@ class PeerConnectingThread implements Runnable {
                 //connect to configured peers first
                 for (String wellKnownPeer : peers.wellKnownPeers) {
                     PeerImpl peer = peers.findOrCreatePeer(null, wellKnownPeer, true);
-                    if ( peer != null 
-                        // && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
-                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
+                    if (peer != null
+                            // && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL
+                            && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
 
                         peers.peersExecutorService.submit(() -> {
                             peers.addPeer(peer);
@@ -104,13 +104,13 @@ class PeerConnectingThread implements Runnable {
                     }
                 }
                 peers.getPeers(peer ->
-                           peer.getState() != PeerState.CONNECTED
+                        peer.getState() != PeerState.CONNECTED
                         && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
                 ).forEach((peer) -> {
                         PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
                     if (!peers.isMyAddress(pa)) {
-                          peers.peersExecutorService.submit(() -> peers.connectPeer(peer));
+                        peers.peersExecutorService.submit(() -> peers.connectPeer(peer));
                         }
                 });
                 if (peers.hasTooManyKnownPeers() && peers.hasEnoughConnectedPublicPeers(peers.maxNumberOfConnectedPublicPeers)) {

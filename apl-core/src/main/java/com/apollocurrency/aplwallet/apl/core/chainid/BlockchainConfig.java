@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
@@ -133,6 +133,14 @@ public class BlockchainConfig {
     public Integer getDexPendingOrdersReopeningHeight() {
         if (chain.getFeaturesHeightRequirement() != null) {
             return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
+        } else {
+            return null;
+        }
+    }
+
+    public Integer getDexExpiredContractWithFinishedPhasingHeight() {
+        if (chain.getFeaturesHeightRequirement() != null) {
+            return chain.getFeaturesHeightRequirement().getDexExpiredContractWithFinishedPhasingHeight();
         } else {
             return null;
         }

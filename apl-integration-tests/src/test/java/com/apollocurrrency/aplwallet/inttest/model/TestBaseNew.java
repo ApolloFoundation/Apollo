@@ -479,6 +479,7 @@ public class TestBaseNew extends TestBase {
                 .get(path)
                 .getBody().jsonPath().getList("", DexTradeInfoDto.class);
     }
+
     //TODO: edit to new RESPONSEDTO, not STRING
     @Override
     @Step("dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
@@ -505,7 +506,7 @@ public class TestBaseNew extends TestBase {
         param.put("toAddress", toAddress);
         param.put("amount", amount);
         param.put("transferFee", transferFee);
-        if (isEth){
+        if (isEth) {
             param.put("cryptocurrency", "1");
         } else {
             param.put("cryptocurrency", "2");
@@ -521,7 +522,7 @@ public class TestBaseNew extends TestBase {
                 .as(WithdrawResponse.class);
 
 
-                //.post(path).as(WithdrawResponse.class);
+        //.post(path).as(WithdrawResponse.class);
         //.getBody().jsonPath().getList("", WithdrawResponse.class);
     }
 

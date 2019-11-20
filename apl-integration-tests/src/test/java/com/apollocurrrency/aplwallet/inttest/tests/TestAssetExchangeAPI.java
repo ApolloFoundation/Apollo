@@ -71,7 +71,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(assetID);
         AccountAssetsCountResponse getAccountAssetCount = getAccountAssetCount(wallet);
         assertTrue(getAccountAssetCount.getNumberOfAssets() >= 1);
-        log.trace("number of Assets on " + wallet.getUser()+ " = " + getAccountAssetCount.getNumberOfAssets());
+        log.trace("number of Assets on " + wallet.getUser() + " = " + getAccountAssetCount.getNumberOfAssets());
     }
 
     @DisplayName("getAsset")
@@ -297,7 +297,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
 
         AssetsResponse getAllAssets = getAllAssets();
-        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), String.format("Asset: %s wasn't deleted",assetID));
+        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), String.format("Asset: %s wasn't deleted", assetID));
 
     }
 
@@ -484,7 +484,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceAskOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIORDER9", "Integration Test Asset", 100);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, "APIORDER9", "Integration Test Asset", 100);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -497,7 +497,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     public void issueAssetPlaceCancelAskOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIASK0", "Integration Test Asset", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, "APIASK0", "Integration Test Asset", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -514,7 +514,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     public void issueAssetPlaceBidOrder(Wallet wallet) throws IOException {
         String assetID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID", "Integration Test Asset", 60);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, "APIBID", "Integration Test Asset", 60);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -527,7 +527,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     public void issueAssetPlaceCancelBidOrder(Wallet wallet) throws IOException {
         String assetID;
         String orderID;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,"APIBID0", "Integration Test Asset", 50);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, "APIBID0", "Integration Test Asset", 50);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -547,7 +547,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         String assetName = "AS" + String.valueOf(new Date().getTime()).substring(7);
         // String assetName = "assetName0";
         Integer quantityATU = 50;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, "Integration Test", quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, "Integration Test", quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);

@@ -3,12 +3,10 @@ package com.apollocurrrency.aplwallet.inttest.tests;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
-import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseNew;
-import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -95,7 +93,7 @@ public class TestDex extends TestBaseNew {
 
     @DisplayName("withdraw ETH/PAX + validation of ETH/PAX balances")
     @Test
-    public void dexWithdrawTransactions(){
+    public void dexWithdrawTransactions() {
         Account2FAResponse balance = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         assertNotNull(balance.getEth().get(0).getBalances().getEth());
         double ethBalance = balance.getEth().get(0).getBalances().getEth();
@@ -103,9 +101,9 @@ public class TestDex extends TestBaseNew {
         double paxBalance = balance.getEth().get(0).getBalances().getPax();
 
         EthGasInfoResponse gasPrice = getEthGasInfo();
-        assertTrue(Float.valueOf(gasPrice.getFast())>=Float.valueOf(gasPrice.getAverage()));
-        assertTrue(Float.valueOf(gasPrice.getAverage())>= Float.valueOf(gasPrice.getSafeLow()));
-        assertTrue(Float.valueOf(gasPrice.getSafeLow())>0);
+        assertTrue(Float.valueOf(gasPrice.getFast()) >= Float.valueOf(gasPrice.getAverage()));
+        assertTrue(Float.valueOf(gasPrice.getAverage()) >= Float.valueOf(gasPrice.getSafeLow()));
+        assertTrue(Float.valueOf(gasPrice.getSafeLow()) > 0);
         Integer fastGas = Math.round(Float.valueOf(gasPrice.getFast()));
         Integer averageGas = Math.round(Float.valueOf(gasPrice.getAverage()));
         Integer safeLowGas = Math.round(Float.valueOf(gasPrice.getSafeLow()));
@@ -119,7 +117,7 @@ public class TestDex extends TestBaseNew {
                 true);
         assertNotNull(withdrawEth.transactionAddress);
         //TODO: add transaction validation is accepted in ETH blockchain
-        double newEthBalance = ethBalance-(21000*0.000000001*averageGas);
+        double newEthBalance = ethBalance - (21000 * 0.000000001 * averageGas);
         //System.out.println(newEthBalance);
         //Account2FAResponse balanceValidationEth = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         //assertEquals(newEthBalance, balanceValidationEth.getEth().get(0).getBalances().getEth(), "balances are different");
@@ -134,7 +132,7 @@ public class TestDex extends TestBaseNew {
         Account2FAResponse balanceValidationPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         //PAX balances are the same. All transaction fee is in ETH
         assertEquals(paxBalance, balanceValidationPax.getEth().get(0).getBalances().getPax(), "balances are different");
-        double newEthBalanceAfterPax = newEthBalance-(300000*0.000000001*fastGas);
+        double newEthBalanceAfterPax = newEthBalance - (300000 * 0.000000001 * fastGas);
         //System.out.println(newEthBalance);
         //Account2FAResponse balanceValidationEthAfterPax = getDexBalances(TestConfiguration.getTestConfiguration().getVaultWallet().getEthAddress());
         //assertEquals(newEthBalanceAfterPax, balanceValidationEthAfterPax.getEth().get(0).getBalances().getEth(), "balances are different");

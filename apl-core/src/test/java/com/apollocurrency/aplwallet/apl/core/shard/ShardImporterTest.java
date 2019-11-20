@@ -130,7 +130,7 @@ class ShardImporterTest {
     @Test
     void importShardByFileIdFaile() {
         assertThrows(NullPointerException.class, () -> shardImporter.importShardByFileId(
-                new ShardPresentData(null, "fileId", List.of()) )
+                new ShardPresentData(null, "fileId", List.of()))
         );
     }
 
@@ -203,7 +203,7 @@ class ShardImporterTest {
     void testImportShardWhenZipCorrupted() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
         assertThrows(ShardArchiveProcessingException.class, () -> shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()) , List.of() )
+                new ShardPresentData(null, "fileId", List.of()), List.of())
         );
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
     }
@@ -292,7 +292,7 @@ class ShardImporterTest {
         assertNotNull(resourceAsStreamAccount);
         Files.copy(resourceAsStreamAccount, csvImporter.getDataExportPath().resolve("account.csv"));
 
-        DbUtils.inTransaction(dataSource, (con)-> {
+        DbUtils.inTransaction(dataSource, (con) -> {
             shardImporter.importShard(
                     new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME));
             dataSource.commit(false);
@@ -342,7 +342,7 @@ class ShardImporterTest {
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTableNames();
         doReturn(mock(Shard.class)).when(shardDao).getLastShard();
 
-        shardImporter.importShardByFileId(new ShardPresentData(null, "fileId", List.of()) );
+        shardImporter.importShardByFileId(new ShardPresentData(null, "fileId", List.of()));
 
         verify(blockchain).update();
         verify(blockchainProcessor).resumeBlockchainDownloading();

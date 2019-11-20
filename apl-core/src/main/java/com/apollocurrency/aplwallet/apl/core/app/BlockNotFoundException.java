@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-public class BlockNotFoundException extends RuntimeException{
+public class BlockNotFoundException extends RuntimeException {
     public BlockNotFoundException() {
     }
 
