@@ -208,7 +208,7 @@ public class TrimService {
         return res;
     }
     
-    public int doTrimDerivedTablesOnHeightIgnorigLock(int height) {
+    public int doTrimDerivedTablesOnHeightIgnoringLock(int height) {
        return doTrimDerivedTablesOnHeight(height);
     }  
     
