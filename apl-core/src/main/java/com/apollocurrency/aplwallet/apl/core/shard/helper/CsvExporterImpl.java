@@ -291,6 +291,12 @@ public class CsvExporterImpl implements CsvExporter {
         ) {
             txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
+            // transactions by snapshot block
+            blockTxPstm.setInt(1, height);
+            CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, blockTxPstm.executeQuery());
+            processCount = txExportData.getProcessCount(); // tx
+            totalCount += processCount;
+
             // process non empty tables only
             if (sortedDbIds.size() > 0) {
                 log.debug("Nothing to export in Table = {} by dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
@@ -305,11 +311,6 @@ public class CsvExporterImpl implements CsvExporter {
                 // skipped empty table
                 log.debug("Nothing to export in Table = {} by sortedDbIds = [{}]", TRANSACTION_TABLE_NAME, sortedDbIds.size());
             }
-            // transactions by snapshot block
-            blockTxPstm.setInt(1, height);
-            CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, blockTxPstm.executeQuery());
-            processCount = txExportData.getProcessCount(); // tx
-            totalCount += processCount;
             log.debug("Exported {}: totalCount = {}, count 'transaction' = {}", TRANSACTION_TABLE_NAME, totalCount, processCount);
         } catch (Exception e) {
             throw new RuntimeException("Exporting table exception " + TRANSACTION_TABLE_NAME, e);
