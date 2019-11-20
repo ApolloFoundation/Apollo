@@ -271,34 +271,46 @@ public class CsvExporterImpl implements CsvExporter {
      * {@inheritDoc}
      */
     @Override
-    public long exportTransactions(Collection<Long> dbIds) {
+    public long exportTransactions(Collection<Long> dbIds, int height) {
+        log.debug("Exporting 'transaction' by dbIds=[{}] on height = {}", dbIds != null ? dbIds.size() : -1, height);
         int processCount;
         int totalCount = 0;
+        Objects.requireNonNull(dbIds, "dbIds list is NULL");
         // prepare connection + statement + writer
         List<Long> sortedDbIds = dbIds.stream().distinct().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-        if (sortedDbIds.size() <= 0) {
-            // skipped empty table
-            log.debug("Skipped exporting Table = {}, because dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
-            return -1;
-        }
 
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
+             // block related Txs
+             PreparedStatement blockTxPstm = con.prepareStatement("select * from "
+                     + TRANSACTION_TABLE_NAME + " where height = ? order by transaction_index");
+             // phasing related Txs for inclusion
              PreparedStatement txPstm = con.prepareStatement(
                      "select * from " + TRANSACTION_TABLE_NAME + " where db_id = ?");
-             CsvWriter txWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
+             CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
         ) {
-            txWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+            txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
             // process non empty tables only
-            for (Long dbId : sortedDbIds) {
-                txPstm.setLong(1, dbId);
-                CsvExportData csvExportData = txWriter.append(TRANSACTION_TABLE_NAME,
-                        txPstm.executeQuery());
-                processCount = csvExportData.getProcessCount();
-                totalCount += processCount;
+            if (sortedDbIds.size() > 0) {
+                log.debug("Nothing to export in Table = {} by dbIds = [{}]", TRANSACTION_TABLE_NAME, dbIds.size());
+                for (Long dbId : sortedDbIds) {
+                    txPstm.setLong(1, dbId);
+                    CsvExportData csvExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME,
+                            txPstm.executeQuery());
+                    processCount = csvExportData.getProcessCount();
+                    totalCount += processCount;
+                }
+            } else {
+                // skipped empty table
+                log.debug("Nothing to export in Table = {} by sortedDbIds = [{}]", TRANSACTION_TABLE_NAME, sortedDbIds.size());
             }
-            log.trace("Table = {}, exported rows = {}", TRANSACTION_TABLE_NAME, totalCount);
+            // transactions by snapshot block
+            blockTxPstm.setInt(1, height);
+            CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, blockTxPstm.executeQuery());
+            processCount = txExportData.getProcessCount(); // tx
+            totalCount += processCount;
+            log.debug("Exported {}: totalCount = {}, count 'transaction' = {}", TRANSACTION_TABLE_NAME, totalCount, processCount);
         } catch (Exception e) {
             throw new RuntimeException("Exporting table exception " + TRANSACTION_TABLE_NAME, e);
         }
@@ -310,30 +322,24 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportBlock(int height) throws IllegalStateException {
-        log.debug("Exporting 'block + transaction' on height = {}", height);
+        log.debug("Exporting '{}' on height = {}", BLOCK_TABLE_NAME, height);
         int processCount;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement txPstm = con.prepareStatement("select * from "
-                     + TRANSACTION_TABLE_NAME + " where height = ? order by transaction_index");
              PreparedStatement blockPstm = con.prepareStatement(
                      "select * from " + BLOCK_TABLE_NAME + " where height = ?");
              CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"));
-             CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
         ) {
-            txPstm.setInt(1, height);
-            blockPstm.setInt(1, height);
-            txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
+
+            blockPstm.setInt(1, height);
             CsvExportData blockExportData = blockCsvWriter.append(BLOCK_TABLE_NAME, blockPstm.executeQuery());
             if (blockExportData.getProcessCount() != 1) {
                 Files.deleteIfExists(dataExportPath.resolve(BLOCK_TABLE_NAME + ".csv"));
                 throw new IllegalStateException("Expected one exported block, got " + blockExportData.getProcessCount());
             }
-            CsvExportData txExportData = txCsvWriter.append(TRANSACTION_TABLE_NAME, txPstm.executeQuery());
-            processCount = txExportData.getRowCount() + blockExportData.getRowCount(); // tx + block
-            log.trace("Exported: totalCount = {}, count 'block' = {} / 'transaction' = {}",
-                    processCount, blockExportData.getRowCount(), txExportData.getRowCount());
+            processCount = blockExportData.getProcessCount(); // block
+            log.debug("Exported {}: count 'block' = {} by height = {}", BLOCK_TABLE_NAME, processCount, height);
         } catch (SQLException | IOException e) {
             throw new RuntimeException("Exporting table exception " + BLOCK_TABLE_NAME, e);
         }

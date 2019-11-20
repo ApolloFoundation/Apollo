@@ -459,10 +459,10 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                         case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
                             return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                        case ShardConstants.TRANSACTION_TABLE_NAME:
-                            return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.TRANSACTION_TABLE_NAME:
+                            return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
@@ -576,18 +576,13 @@ public class ShardEngineImpl implements ShardEngine {
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
             log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
-            // skip deleting 'transaction.csv' in one special case, when it was exported previously
-            if (!tableName.equalsIgnoreCase(TRANSACTION_TABLE_NAME)) {
-                // 'transaction' table might be exported previously with BLOCK table
-                // so we should not remove it on explicit export on second time
-                FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
-                    durableTaskUpdateByState(state, null, null);
-                    throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
-                });
-            }
+            FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
+                durableTaskUpdateByState(state, null, null);
+                throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
+            });
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
-            log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath,
+            log.debug("Exported '{}', count {} to {} in {} secs", tableName, exported, tableCsvPath,
                     (System.currentTimeMillis() - startTableExportTime)/1000);
             updateRecovery(recovery, tableName);
         }
