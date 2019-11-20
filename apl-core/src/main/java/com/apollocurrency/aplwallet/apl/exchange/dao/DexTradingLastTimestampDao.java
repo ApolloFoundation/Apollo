@@ -19,27 +19,21 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
  * @author Serhiy Lymar
  */
 public interface DexTradingLastTimestampDao {
- // SELECT LAST_TIMESTAMP FROM "PUBLIC".TRADING_TRACK LIMIT 100;
     
     @Transactional(readOnly = true)
     @SqlQuery("SELECT LAST_TIMESTAMP FROM TRADING_TRACK")
-    // @RegisterRowMapper(long)
-    long getLast();
+    long getLastTimestamp();
     
     @Transactional
-    @SqlUpdate("INSERT INTO LAST_TIMESTAMP( LAST_TIMESTAMP ) " +
-            "VALUES ( :lastTimestamp)")
-    int saveBlockIndex(@BindBean long lastTimestamp);
+    @SqlUpdate("INSERT INTO TRADING_TRACK VALUES ( :lastTimestamp )")
+    int saveLastTimestamp(@BindBean long lastTimestamp);
     
     @Transactional
-    @SqlUpdate("UPDATE TRADING_TRACK SET block_height =:blockHeight where block_id =:blockId")
-            
-    // UPDATE TRADING_TRACK SET LAST_TIMESTAMP= :lastTimestamp WHERE LAST_TIMESTAMP =(SELECT LAST_TIMESTAMP FROM TRADING_TRACK LIMIT 1) 
-    int updateBlockIndex(@BindBean long lastTimestamp);
+    @SqlUpdate("UPDATE TRADING_TRACK SET LAST_TIMESTAMP =:lastTimestamp")
+    int updateLastTimestamp(@BindBean long lastTimestamp);
     
     @Transactional
     @SqlUpdate("DELETE FROM TRADING_TRACK")
-    int hardDeleteLast();
-
+    int hardDeleteLastTimestamp();
 
 }

@@ -850,7 +850,6 @@ public class AplDbVersion extends DbVersion {
             case 322: 
                 return 322;
                 
-                
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
