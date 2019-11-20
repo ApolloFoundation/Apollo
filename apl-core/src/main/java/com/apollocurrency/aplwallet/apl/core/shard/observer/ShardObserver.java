@@ -27,7 +27,7 @@ public class ShardObserver {
 
     private final BlockchainConfig blockchainConfig;
     private final ShardService shardService;
-    private PropertiesHolder propertiesHolder;
+    private final PropertiesHolder propertiesHolder;
 
     @Inject
     public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
@@ -36,14 +36,21 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-//no matter how we get signal sync or async, do it async
     public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
     }
 
     public void onTrimDone(@Observes @Sync TrimData trimData) {
-//do it async anyway because we have to exit from trim and unlock it       
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+//do it sync and wait result to block other trims
+       CompletableFuture<MigrateState> shardingDone = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+        try {
+            shardingDone.get();
+        } catch (InterruptedException ex) {
+            log.info("Sharding interrupted",ex);
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException ex) {
+            log.error("Shatding execution failed",ex);            
+        }
     }
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {

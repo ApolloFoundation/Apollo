@@ -297,6 +297,13 @@ public class ShardInfoDownloader {
         int badPeersNumber = ( badPeers == null ? 0 : badPeers.size() );
         int noShardPeersNumber = allPeersNumber - (goodPeersNumber+badPeersNumber);
         res = (1.0*goodPeersNumber-1.0*badPeersNumber-1.0*noShardPeersNumber)/allPeersNumber;
+        log.debug("Shard: {} good: {} bad: {} no shard: {} weight: {}",shardId,goodPeersNumber,badPeersNumber,noShardPeersNumber,res);
+        if(goodPeers!=null){
+          log.debug("Good peers: {}",goodPeers.stream().map(e->e.getPeerId()+" ").reduce(String::concat));
+        }
+        if(badPeers!=null){
+          log.debug("Bad peers: {}",badPeers.stream().map(e->e.getPeerId()+" ").reduce(String::concat));            
+        }
         return res;
     }
     

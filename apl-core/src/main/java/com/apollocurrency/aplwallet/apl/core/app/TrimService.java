@@ -208,6 +208,10 @@ public class TrimService {
         return res;
     }
     
+    public int doTrimDerivedTablesOnHeightIgnorigLock(int height) {
+       return doTrimDerivedTablesOnHeight(height);
+    }  
+    
     @Transactional
     private int doTrimDerivedTablesOnHeight(int height) {
         log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height);

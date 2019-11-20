@@ -500,9 +500,11 @@ public class ShardEngineImpl implements ShardEngine {
             dataSource.begin();
         }
         try {
-            trimService.waitTrimming();
-            return trimService.doTrimDerivedTablesOnHeightLocked(height);
+            //we ignore trim lock here to awoid dead-locking on cycklic trim execution
+            //because we can get called from trimService by sync event
+            return trimService.doTrimDerivedTablesOnHeightIgnorigLock(height);
         } catch (Exception e) {
+            log.error("Triming error in sharding: ",e);
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
         } finally {
