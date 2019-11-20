@@ -377,7 +377,7 @@ class CsvExporterTest {
     @Test
     void testExportTransactions() throws IOException {
         TransactionTestData td = new TransactionTestData();
-        long exported = csvExporter.exportTransactions(List.of(td.DB_ID_2, td.DB_ID_0));
+        long exported = csvExporter.exportTransactions(List.of(td.DB_ID_2, td.DB_ID_0), 0);
         assertEquals(2, exported);
         List<String> transactionCsv = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
         assertEquals(transactionExportContent, transactionCsv);
