@@ -41,10 +41,13 @@ public class ShardObserver {
     }
 
     public void onTrimDone(@Observes @Sync TrimData trimData) {
-//do it sync and wait result to block other trims
-       CompletableFuture<MigrateState> shardingDone = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+        //do it sync and wait result to block other trims
+        CompletableFuture<MigrateState> shardingDone = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
         try {
-            shardingDone.get();
+            if (shardingDone != null) {
+                // sometimes there is no completebleFuture
+                shardingDone.get();
+            }
         } catch (InterruptedException ex) {
             log.info("Sharding interrupted", ex);
             Thread.currentThread().interrupt();
