@@ -46,10 +46,10 @@ public class ShardObserver {
         try {
             shardingDone.get();
         } catch (InterruptedException ex) {
-            log.info("Sharding interrupted",ex);
+            log.info("Sharding interrupted", ex);
             Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
-            log.error("Shatding execution failed",ex);            
+            log.error("Sharding execution failed", ex);
         }
     }
 
