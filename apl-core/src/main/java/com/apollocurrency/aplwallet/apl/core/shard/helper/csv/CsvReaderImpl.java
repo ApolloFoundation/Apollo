@@ -199,16 +199,98 @@ public class CsvReaderImpl extends CsvAbstractBase
     private boolean isWhiteSpace(int ch){
         return (ch == ' ' || ch == '\t');
     }
-
-    private void skipWhiteSpaces() throws IOException {
+    private String readDelimitedValue() throws IOException {
         int ch;
+        boolean containsEscape = false;
+        inputBufferStart = inputBufferPos;
+        int sep;
         while (true) {
             ch = readChar();
-            if (!isWhiteSpace(ch)){
-                pushBack();
+            if (ch == fieldDelimiter) {
+                ch = readChar();
+                if (ch != fieldDelimiter) {
+                    sep = 2;
+                    break;
+                }
+                containsEscape = true;
+            } else if (ch == escapeCharacter) {
+                ch = readChar();
+                if (ch < 0) {
+                    sep = 1;
+                    break;
+                }
+                containsEscape = true;
+            } else if (ch < 0) {
+                sep = 1;
                 break;
             }
         }
+        String s = new String(inputBuffer,
+                inputBufferStart, inputBufferPos - inputBufferStart - sep);
+        if (containsEscape) {
+            s = unEscape(s);
+        }
+        inputBufferStart = -1;
+        while (true) {
+            if (ch == fieldSeparatorRead) {
+                break;
+            } else if (isEOL(ch)) {
+                endOfLine = true;
+                break;
+            } else if (isWhiteSpace(ch)) {
+                // ignore
+            } else {
+                pushBack();
+                break;
+            }
+            ch = readChar();
+        }
+        return s;
+    }
+    private String readQuotedTextValue() throws IOException {
+        int ch;
+        int state=1;
+        boolean endLex=false;
+        while (!endLex) {
+            ch = readChar();
+            switch (state) {
+                case 0: //Error state
+                    break;
+                case 1:
+                    if (ch == textFieldCharacter) {
+                        state = 2;
+                    } else if (isEOL(ch)) {
+                        state = 0;//error state
+                        endLex = true;
+                        endOfLine = true;
+                    }
+                    break;
+                case 2:
+                    if (ch == textFieldCharacter) {
+                        state = 1;
+                    } else if (ch == fieldSeparatorRead) {
+                        state=3;//end state
+                        endLex = true;
+                    } else if (endOfFile=isEOL(ch)) {
+                        state=3;//end state
+                        endLex = true;
+                        endOfLine = true;
+                    } else if (isWhiteSpace(ch)) {
+                        //ignore
+                    } else {
+                        state = 0;
+                        endLex = true;
+                    }
+                    break;
+            }
+        }
+        String s = new String(inputBuffer,
+                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        inputBufferStart = -1;
+        return s;
     }
 
     /**
@@ -225,94 +307,9 @@ public class CsvReaderImpl extends CsvAbstractBase
             int ch = readChar();
             if (ch == fieldDelimiter) {
                 // delimited value
-                boolean containsEscape = false;
-                inputBufferStart = inputBufferPos;
-                int sep;
-                while (true) {
-                    ch = readChar();
-                    if (ch == fieldDelimiter) {
-                        ch = readChar();
-                        if (ch != fieldDelimiter) {
-                            sep = 2;
-                            break;
-                        }
-                        containsEscape = true;
-                    } else if (ch == escapeCharacter) {
-                        ch = readChar();
-                        if (ch < 0) {
-                            sep = 1;
-                            break;
-                        }
-                        containsEscape = true;
-                    } else if (ch < 0) {
-                        sep = 1;
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - sep);
-                if (containsEscape) {
-                    s = unEscape(s);
-                }
-                inputBufferStart = -1;
-                while (true) {
-                    if (ch == fieldSeparatorRead) {
-                        break;
-                    } else if (isEOL(ch)) {
-                        endOfLine = true;
-                        break;
-                    } else if (isWhiteSpace(ch)) {
-                        // ignore
-                    } else {
-                        pushBack();
-                        break;
-                    }
-                    ch = readChar();
-                }
-                return s;
+                return readDelimitedValue();
             } else if (ch == textFieldCharacter) {
-                int state=1;
-                boolean endLex=false;
-                while (!endLex) {
-                    ch = readChar();
-                    switch (state) {
-                        case 0: //Error state
-                            break;
-                        case 1:
-                            if (ch == textFieldCharacter) {
-                                state = 2;
-                            } else if (isEOL(ch)) {
-                                state = 0;//error state
-                                endLex = true;
-                                endOfLine = true;
-                            }
-                            break;
-                        case 2:
-                            if (ch == textFieldCharacter) {
-                                state = 1;
-                            } else if (ch == fieldSeparatorRead) {
-                                state=3;//end state
-                                endLex = true;
-                            } else if (endOfFile=isEOL(ch)) {
-                                state=3;//end state
-                                endLex = true;
-                                endOfLine = true;
-                            } else if (isWhiteSpace(ch)) {
-                                //ignore
-                            } else {
-                                state = 0;
-                                endLex = true;
-                            }
-                            break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                inputBufferStart = -1;
-                return s;
+                return readQuotedTextValue();
             } else if (isEOL(ch)) {
                 endOfLine = true;
                 return null;
