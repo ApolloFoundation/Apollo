@@ -90,12 +90,13 @@ public interface CsvExporter {
     long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn);
 
     /**
-     * Export transactions specified by db_id list and return number of exported transactions
+     * Export transactions specified by db_id list and block height then return number of exported transactions
      * @param dbIds collection of transaction db_ids
+     * @param height transactions for snapshot block height
      * @return number of exported transactions
 
      */
-    long exportTransactions(Collection<Long> dbIds);
+    long exportTransactions(Collection<Long> dbIds, int height);
 
     /**
      * Export block with transactions at given height
