@@ -25,7 +25,7 @@ public class ModWatcher {
  * @param tooLate we're trying not to miss  x % modulos == 0 event. How late we can be to
  * still be in time?
  */    
-    ModWatcher(int modulos, long tooLate) {
+    public ModWatcher(int modulos, long tooLate) {
         this.modulos_m=modulos;
         this.late_m = tooLate % modulos; // just to be sure it less
     }

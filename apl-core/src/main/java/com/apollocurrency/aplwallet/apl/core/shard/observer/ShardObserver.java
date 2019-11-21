@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.util.ModWatcher;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,10 @@ public class ShardObserver {
                             lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
                     lastTrimBlockHeight, blockchainHeight,
                     shardingFrequency, blockchainConfig.isJustUpdated());
-            if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % shardingFrequency == 0) {
+            
+            //Q. how much blocks we ould be late? 1/4 of frequiency is OK?
+            ModWatcher watch = new ModWatcher(shardingFrequency, shardingFrequency/4);
+            if (lastTrimBlockHeight != 0 && !watch.isTooLate(lastTrimBlockHeight)) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
                 log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
