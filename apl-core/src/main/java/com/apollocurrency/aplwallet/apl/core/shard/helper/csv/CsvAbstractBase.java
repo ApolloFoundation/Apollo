@@ -63,6 +63,7 @@ public abstract class CsvAbstractBase {
     protected char lineComment;
     protected char arrayStartToken = '('; // start sql array
     protected char arrayEndToken = ')'; // finish sql array
+    protected char textFieldCharacter = '\'';
 
     // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
