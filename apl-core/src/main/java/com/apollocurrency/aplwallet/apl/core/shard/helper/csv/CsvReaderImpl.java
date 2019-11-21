@@ -192,6 +192,25 @@ public class CsvReaderImpl extends CsvAbstractBase
         list.toArray(columnNames);
     }
 
+    private boolean isEOL(int ch){
+        return (ch == '\n' || ch < 0 || ch == '\r');
+    }
+
+    private boolean isWhiteSpace(int ch){
+        return (ch == ' ' || ch == '\t');
+    }
+
+    private void skipWhiteSpaces() throws IOException {
+        int ch;
+        while (true) {
+            ch = readChar();
+            if (!isWhiteSpace(ch)){
+                pushBack();
+                break;
+            }
+        }
+    }
+
     /**
      * Key method for reading one column value as string.
      * It reads HEADER column first and data column in row.
@@ -239,10 +258,10 @@ public class CsvReaderImpl extends CsvAbstractBase
                 while (true) {
                     if (ch == fieldSeparatorRead) {
                         break;
-                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                    } else if (isEOL(ch)) {
                         endOfLine = true;
                         break;
-                    } else if (ch == ' ' || ch == '\t') {
+                    } else if (isWhiteSpace(ch)) {
                         // ignore
                     } else {
                         pushBack();
@@ -251,7 +270,50 @@ public class CsvReaderImpl extends CsvAbstractBase
                     ch = readChar();
                 }
                 return s;
-            } else if (ch == '\n' || ch < 0 || ch == '\r') {
+            } else if (ch == textFieldCharacter) {
+                int state=1;
+                boolean endLex=false;
+                while (!endLex) {
+                    ch = readChar();
+                    switch (state) {
+                        case 0: //Error state
+                            break;
+                        case 1:
+                            if (ch == textFieldCharacter) {
+                                state = 2;
+                            } else if (isEOL(ch)) {
+                                state = 0;//error state
+                                endLex = true;
+                                endOfLine = true;
+                            }
+                            break;
+                        case 2:
+                            if (ch == textFieldCharacter) {
+                                state = 1;
+                            } else if (ch == fieldSeparatorRead) {
+                                state=3;//end state
+                                endLex = true;
+                            } else if (endOfFile=isEOL(ch)) {
+                                state=3;//end state
+                                endLex = true;
+                                endOfLine = true;
+                            } else if (isWhiteSpace(ch)) {
+                                //ignore
+                            } else {
+                                state = 0;
+                                endLex = true;
+                            }
+                            break;
+                    }
+                }
+                String s = new String(inputBuffer,
+                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
+                if (!preserveWhitespace) {
+                    s = s.trim();
+                }
+                inputBufferStart = -1;
+                return s;
+            } else if (isEOL(ch)) {
                 endOfLine = true;
                 return null;
             } else if (ch == fieldSeparatorRead) {
@@ -265,7 +327,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                 inputBufferStart = -1;
                 while (true) {
                     ch = readChar();
-                    if (ch == '\n' || ch < 0 || ch == '\r') {
+                    if (isEOL(ch)) {
                         break;
                     }
                 }
@@ -277,7 +339,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                 inputBufferStart = inputBufferPos;
                 while (true) {
                     ch = readChar();
-                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayEndToken) {
+                    if (isEOL(ch) || ch == arrayEndToken) {
                         break;
                     }
                 }
@@ -299,7 +361,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                     ch = readChar();
                     if (ch == fieldSeparatorRead) {
                         break;
-                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                    } else if (isEOL(ch)) {
                         endOfLine = true;
                         break;
                     }
