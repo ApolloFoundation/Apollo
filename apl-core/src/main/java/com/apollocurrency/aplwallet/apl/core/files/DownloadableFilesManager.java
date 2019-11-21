@@ -71,10 +71,9 @@ public class DownloadableFilesManager {
         this.blockchainConfig = blockchainConfig;
     }
     
-    public void onAnyFileDownloadEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
+    public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
+        FileDownloadInfo downloadInfo =  fillFileDownloadInfo(fileData);
         fdiCache.remove(fileData.getFileId());
-        FileDownloadInfo downloadInfo = new FileDownloadInfo();
-        
         fdiCache.put(fileData.getFileId(), downloadInfo);
     }
     
