@@ -103,6 +103,8 @@ public class ShardObserver {
             if (blockchainConfig.isJustUpdated()) {
                 blockchainConfig.resetJustUpdated(); // reset flag
             }
+        }else{
+            log.debug("Sharding is disabled by config");
         }
         return completableFuture;
     }
