@@ -67,6 +67,11 @@ import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -1241,6 +1246,23 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.shufflingStateHash, shufflingStateHash);
         addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+    public CreateTransactionResponse dgsListing(Wallet wallet, String name, String description, String tags, int quantity, int priceATM, File file) {
+        addParameters(RequestType.requestType, dgsListing);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.messageFile, file);
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.tags, tags);
+        addParameters(Parameters.quantity, quantity);
+        addParameters(Parameters.messageIsText, false);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.priceATM, priceATM +"00000000");
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
