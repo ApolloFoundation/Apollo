@@ -157,7 +157,7 @@ public abstract class TestBase implements ITest {
     }
 
 
-    private static void startForgingSetUp() throws JsonProcessingException {
+    private static void startForgingSetUp() {
         List<String> peersIp;
         String path;
         if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")) {
@@ -189,9 +189,10 @@ public abstract class TestBase implements ITest {
             } else {
                 peersIp = TestConfiguration.getTestConfiguration().getPeers();
             }
-      if (peersIp != null && peersIp.size() > 0){
+        if (peersIp != null && peersIp.size() > 0){
 
-         boolean isForgingEnableOnGen = false;
+        boolean isForgingEnableOnGen = false;
+        try {
 
         for (String ip: peersIp) {
 
@@ -200,8 +201,8 @@ public abstract class TestBase implements ITest {
             param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
 
             path = "/apl";
-            ForgingResponse forgingResponse =  given().log().all()
-                    .baseUri(String.format("http://%s:%s",ip,7876))
+            ForgingResponse forgingResponse = given().log().all()
+                    .baseUri(String.format("http://%s:%s", ip, 7876))
                     .contentType(ContentType.URLENC)
                     .formParams(param)
                     .when()
@@ -211,24 +212,11 @@ public abstract class TestBase implements ITest {
                     .extract().body().jsonPath()
                     .getObject("", ForgingResponse.class);
 
-            if (forgingResponse.getGenerators().size() > 0){
+            if (forgingResponse.getGenerators().size() > 0) {
                 isForgingEnableOnGen = true;
                 break;
             }
-            //need when  rest/nodeinfo/forgers will be worked
-         /*
 
-
-            path = "/rest/nodeinfo/forgers";
-            ForgingResponse forgingResponse = given()
-                    .spec(spec)
-                    .when()
-                    .get(path).as(ForgingResponse.class);
-
-            System.out.println("+++++++++++++++++++++"+ip+"++++++++++++++++++++++++");
-            System.out.println(forgingResponse.getGenerators().size());
-            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-          */
           }
 
           if (!isForgingEnableOnGen){
@@ -237,6 +225,9 @@ public abstract class TestBase implements ITest {
               addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
               getInstanse(ForgingDetails.class);
           }
+        }catch (Exception ex){
+                log.error("FAILED: Get Forging. "+ex.getMessage());
+            }
       }
 
         } else {

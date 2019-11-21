@@ -6,6 +6,8 @@ import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -13,11 +15,14 @@ import okhttp3.Response;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UnknownFormatConversionException;
 
+import static com.apollocurrrency.aplwallet.inttest.model.Parameters.file;
+import static com.apollocurrrency.aplwallet.inttest.model.Parameters.messageFile;
 import static org.junit.jupiter.api.Assertions.fail;
 
 
@@ -55,6 +60,18 @@ public class HttpHelper {
 
     public static Response httpCallPost() throws IOException {
         RequestBody body = RequestBody.create(null, new byte[]{});
+
+        if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())){
+            String param = reqestParam.containsKey(messageFile.toString()) ? messageFile.toString() : file.toString();
+            body = uploadImage(param);
+          /*  File file = (File) reqestParam.get(messageFile.toString());
+            final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
+                    MediaType.parse("image/png") : MediaType.parse("image/jpeg");
+             body = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("messageFile", file.getName(), RequestBody.create(MEDIA_TYPE, file))
+                    .build();*/
+        }
         Request request = new Request.Builder()
                 .url(buildGetReqestUrl())
                 .post(body)
@@ -64,14 +81,14 @@ public class HttpHelper {
 
 
     public static void addParameters(Enum parameter, Object value){
-        if (value instanceof String)
-            reqestParam.put(parameter.toString(), (String) value);
-        else if (value instanceof Integer || value instanceof Boolean)
-            reqestParam.put(parameter.toString(), String.valueOf(value));
-        else if (value instanceof Enum)
-            reqestParam.put(parameter.toString(), value.toString());
-        else
-            reqestParam.put(parameter.toString(), value);
+           if (value instanceof String)
+                reqestParam.put(parameter.toString(), value);
+            else if (value instanceof Integer || value instanceof Boolean)
+                reqestParam.put(parameter.toString(), String.valueOf(value));
+            else if (value instanceof Enum)
+                reqestParam.put(parameter.toString(), value.toString());
+            else
+                reqestParam.put(parameter.toString(), value);
     }
 
 
@@ -169,5 +186,15 @@ public class HttpHelper {
         }
     }
 
+    private static RequestBody uploadImage(String param){
+        File file = (File) reqestParam.get(param);
+        final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
+                MediaType.parse("image/png") : MediaType.parse("image/jpeg");
+        return   new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(param, file.getName(), RequestBody.create(MEDIA_TYPE, file))
+                .build();
+
+    }
 
 }

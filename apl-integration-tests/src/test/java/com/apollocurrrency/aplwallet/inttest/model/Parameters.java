@@ -1,6 +1,11 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    file,
+    messageIsText,
+    messageFile,
+    quantity,
+    tags,
     recipientSecretPhrase,
     includeCurrencyInfo,
     shufflingFullHash,
