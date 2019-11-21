@@ -55,6 +55,10 @@ public class ModWatcherTest {
         assertEquals(false, result);        
         result = instance.isTooLate(115);
         assertEquals(false, result);        
+        result = instance.isTooLate(100);
+        assertEquals(false, result);        
+        result = instance.isTooLate(2200);
+        assertEquals(false, result);        
         result = instance.isTooLate(116);
         assertEquals(true, result);        
     }
