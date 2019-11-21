@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.ModWatcher;
@@ -46,6 +47,7 @@ public class ShardObserver {
 //do it async anyway because we have to exit from trim and unlock it       
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
+    
     private boolean isShardingEnabled(HeightConfig currentConfig){
         boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
         boolean shardingEnabled = currentConfig.isShardingEnabled();
@@ -53,8 +55,17 @@ public class ShardObserver {
         return shardingEnabled && !isShardingOff;
     }
     
-    private boolean isShardAlreadyCreated(){
-        //TODO: check
+    //TODO: check and debug
+    private boolean isShardAlreadyCreatedOrInProgress(int  lastTrimBlockHeight, HeightConfig currentConfig){
+        Shard shard = shardService.getLastShard();
+        if(shard==null){
+            return false;
+        }        
+        int lastShardHeight = shard.getShardHeight();
+        int nextShardHeight = lastShardHeight+currentConfig.getShardingFrequency();
+        if(lastTrimBlockHeight >=lastShardHeight && lastTrimBlockHeight <nextShardHeight){
+            return true;
+        }
         return false;
     }
     
@@ -83,7 +94,7 @@ public class ShardObserver {
         long howLateWeCanBe = shardingFrequency / 4;
         ModWatcher watch = new ModWatcher(shardingFrequency, howLateWeCanBe);
         boolean res = lastTrimBlockHeight != 0 && !watch.isTooLate(lastTrimBlockHeight);
-        res = res && !isShardAlreadyCreated();
+        res = res && !isShardAlreadyCreatedOrInProgress(lastTrimBlockHeight, currentConfig);
         return res;
     }
     
