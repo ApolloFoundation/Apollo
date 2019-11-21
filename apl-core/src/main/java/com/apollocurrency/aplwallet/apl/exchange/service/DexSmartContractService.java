@@ -162,7 +162,6 @@ public class DexSmartContractService {
             DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND,params, fromAddress) ,ethWalletKey.getCredentials());
             txHash = dexContract.refund(secretHash, waitConfirmation);
         }
-
         return txHash != null;
 
     }

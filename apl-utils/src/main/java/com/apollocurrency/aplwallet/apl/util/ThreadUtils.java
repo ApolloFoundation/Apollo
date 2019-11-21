@@ -5,6 +5,9 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import javax.enterprise.inject.Vetoed;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.concurrent.TimeUnit;
 
 @Vetoed
@@ -54,6 +57,29 @@ public class ThreadUtils {
     public static String getStacktraceSpec(StackTraceElement element) {
         String className = element.getClassName();
         return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName() + ":" + element.getLineNumber();
+    }
+
+    public static String getStackTrace(Throwable exception) throws IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+                PrintWriter printWriter = new PrintWriter(out)) {
+            exception.printStackTrace(printWriter);
+            printWriter.flush();
+            byte[] bytes = out.toByteArray();
+            return new String(bytes);
+        }
+    }
+
+
+    public static String getStackTraceSilently(Throwable exception) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             PrintWriter printWriter = new PrintWriter(out)) {
+            exception.printStackTrace(printWriter);
+            printWriter.flush();
+            byte[] bytes = out.toByteArray();
+            return new String(bytes);
+        } catch (IOException e) {
+            return e.getMessage() + "(unable to extract stacktrace)";
+        }
     }
 
     private ThreadUtils() {
