@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -37,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
@@ -45,6 +47,7 @@ import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -70,6 +73,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -1321,7 +1325,7 @@ public class TestBaseOld extends TestBase {
     }
 
     public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
-        addParameters(RequestType.requestType, dgsFeedback );
+        addParameters(RequestType.requestType, dgsFeedback);
         addParameters(Parameters.purchase, purchase);
         addParameters(Parameters.messageIsText, true);
         addParameters(Parameters.message, message);
@@ -1333,6 +1337,22 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
+    public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
+        addParameters(RequestType.requestType, uploadTaggedData);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.file, file);
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.tags, tags);
+        addParameters(Parameters.channel, channel);
+        addParameters(Parameters.messageIsText, false);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
 
     public CreateTransactionResponse dgsRefund(Wallet wallet, String purchase, int refundATM, String message) {
         addParameters(RequestType.requestType, dgsRefund );
@@ -1348,12 +1368,26 @@ public class TestBaseOld extends TestBase {
 
 
     public DGSGoodsDTO getDGSGood(String goods) {
-        addParameters(RequestType.requestType, getDGSGood );
-        addParameters(Parameters.goods, goods);;
+        addParameters(RequestType.requestType, getDGSGood);
+        addParameters(Parameters.goods, goods);
         return getInstanse(DGSGoodsDTO.class);
     }
 
+    public AllTaggedDataResponse getAllTaggedData() {
+        addParameters(RequestType.requestType, getAllTaggedData);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
 
+    public TaggedDataDTO getTaggedData(String transaction) {
+        addParameters(RequestType.requestType, getTaggedData);
+        addParameters(Parameters.transaction, transaction);
+        return getInstanse(TaggedDataDTO.class);
+    }
+
+    public DataTagCountResponse getDataTagCount() {
+        addParameters(RequestType.requestType, getDataTagCount);
+        return getInstanse(DataTagCountResponse.class);
+    }
 
     @Step
     public PollVotesResponse getPollVotes (String poll) {

@@ -135,5 +135,7 @@ public enum  Parameters {
     option02,
     vote00,
     vote01,
-    vote02
+    vote02,
+    channel,
+    amountOfTime
 }

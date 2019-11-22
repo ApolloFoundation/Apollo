@@ -138,5 +138,10 @@ public enum RequestType {
     createPoll,
     castVote,
     getPollVotes,
-    getPollResult
+    getPollResult,
+    uploadTaggedData,
+    downloadTaggedData,
+    getAllTaggedData,
+    getTaggedData,
+    getDataTagCount
 }
