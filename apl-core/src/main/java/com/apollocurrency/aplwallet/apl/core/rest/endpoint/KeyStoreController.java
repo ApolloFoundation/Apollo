@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
-
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
@@ -15,10 +13,14 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,20 +29,27 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.Wallet;
+import org.web3j.crypto.WalletFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
+import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
 @Path("/keyStore")
 @Singleton
@@ -220,4 +229,42 @@ public class KeyStoreController {
         }
     }
 
+    @POST
+    @Path("/eth")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"keyStore"}, summary = "Export eth keystore",
+            description = "Generate eth keystore for specified account in json format fully compatible with original geth keystore. Required 2fa code for accounts with enabled 2fa.",
+            responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = WalletFile.class))))
+    public Response downloadEthKeyStore(@Parameter(description = "Apl account id or rs", required = true) @QueryParam("account") String account,
+                                        @Parameter(description = "Eth account address", required = true) @QueryParam("ethAddress") String ethAccountAddress,
+                                        @Parameter(description = "Passphrase for apl vault account", required = true) @QueryParam("passphrase") String passphrase,
+                                        @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @QueryParam("ethKeystorePassword") String ethKeystorePassword,
+                                        @Parameter(description = "2fa code for account if enabled") @QueryParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
+        String aplVaultPassphrase = ParameterParser.getPassphrase(passphrase, true);
+        long accountId = ParameterParser.getAccountId(account, "account", true);
+
+        Helper2FA.verifyVault2FA(accountId, code);
+        if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
+            return Response.status(Response.Status.OK)
+                    .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
+                            "get account information", "Key for this account is not exist."))
+                    ).build();
+        }
+
+        WalletKeysInfo keysInfo = keyStoreService.getWalletKeysInfo(aplVaultPassphrase, accountId);
+
+        if (keysInfo == null) {
+            throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
+        }
+
+        String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
+        EthWalletKey ethKeyToExport = keysInfo.getEthWalletForAddress(ethAccountAddress);
+        try {
+            WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethKeyToExport.getCredentials().getEcKeyPair());
+            return Response.ok(walletFile).build();
+        } catch (CipherException e) {
+            return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
+        }
+    }
 }

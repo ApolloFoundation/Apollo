@@ -4,9 +4,7 @@
 
  package com.apollocurrency.aplwallet.apl.core.app;
 
- import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
@@ -23,6 +21,9 @@ import io.firstbridge.cryptolib.container.FbWallet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,9 +37,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
  public class VaultKeyStoreServiceImpl implements KeyStoreService {
      private static final Logger LOG = getLogger(VaultKeyStoreServiceImpl.class);
