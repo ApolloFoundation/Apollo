@@ -66,7 +66,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class EthereumWalletService {
     private static final Logger log = getLogger(EthereumWalletService.class);
 
-    private BigInteger MAX_POS_INT = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+    private BigInteger MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     private Web3j web3j;
     private KeyStoreService keyStoreService;
