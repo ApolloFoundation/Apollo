@@ -62,6 +62,7 @@
     </logger>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
     <logger name="com.zaxxer" level="warn"/>
+    <logger name="p6spy" level="trace"/>
     <root level="warn">
         <appender-ref ref="console" />
         <appender-ref ref="file" />

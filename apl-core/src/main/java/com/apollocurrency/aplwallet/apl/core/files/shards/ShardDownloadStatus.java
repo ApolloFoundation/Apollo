@@ -4,8 +4,10 @@
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -17,9 +19,12 @@ public class ShardDownloadStatus {
     public final static int DNLD_STARTED = 2;
     public final static int OK = 3;
     public final static int FAILED=4;
+    //fileId::state
     private final Map<String,Integer> status;
-
-    public ShardDownloadStatus(List<String> fileIds) {
+    @Getter
+    @Setter
+    private boolean sigalFired = false;
+    public ShardDownloadStatus(Set<String> fileIds) {
       status = new HashMap<>();
       fileIds.forEach((s) -> {
           status.put(s, NONE);

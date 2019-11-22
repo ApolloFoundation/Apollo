@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import lombok.extern.slf4j.Slf4j;
 
@@ -144,7 +145,8 @@ public class ShardImporter {
             }
         } else {
             lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
-            lastShard.setCoreZipHash(zipComponent.calculateHash(zipInFolder.toAbsolutePath().toString()));
+            ChunkedFileOps ops = new ChunkedFileOps(zipInFolder.toAbsolutePath().toString());
+            lastShard.setCoreZipHash(ops.getFileHash());
             shardDao.updateShard(lastShard);
         }
 

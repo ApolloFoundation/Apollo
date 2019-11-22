@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.lastStacktrace;
 import static com.apollocurrency.aplwallet.apl.util.task.Tasks.shutdownExecutor;
 
 /**
@@ -131,13 +132,13 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     @Override
     public void suspend() {
-        log.debug("Suspend dispatcher={}", serviceName);
+        log.debug("Suspend task executor, dispatcher={}", serviceName);
         createMainExecutor().suspend();
     }
 
     @Override
     public void resume() {
-        log.debug("Resume dispatcher={}", serviceName);
+        log.debug("Resume task executor, dispatcher={}", serviceName);
         createMainExecutor().resume();
     }
 
@@ -146,8 +147,14 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
         return createMainExecutor().executor();
     }
 
-    @Override
-    public boolean schedule(Task task, TaskOrder position) {
+    /**
+     * Submit a background task for execution. This task is put in queue and will be executed in the specified order
+     * @param task the task to execute
+     * @param position the task order
+     * @return {@code true} if the task is put into a queue
+     * @throws RejectedExecutionException if this dispatcher has been shut down
+     */
+    private boolean enqueueTask(Task task, TaskOrder position) {
         Objects.requireNonNull(task, "Task is NULL.");
         Objects.requireNonNull(position, "Task position is NULL.");
         if (isStarted()) {
@@ -162,6 +169,26 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 throw new IllegalArgumentException(String.format("The task contains the wrong field values, task=%s", task.toString()));
             }
         }
+    }
+
+    @Override
+    public boolean schedule(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.TASK);
+    }
+
+    @Override
+    public boolean invokeInit(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.INIT);
+    }
+
+    @Override
+    public boolean invokeAfter(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.AFTER);
+    }
+
+    @Override
+    public boolean invokeBefore(Task task) throws RejectedExecutionException {
+        return enqueueTask(task, TaskOrder.BEFORE);
     }
 
     /**
@@ -294,7 +321,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                             log.debug("Task = {}, Current thread={}", task.getName(), Thread.currentThread().getName());
                             task.getTask().run();
                         } catch (Throwable t) {
-                            errors.append(" Task=" + task.getName() + ", " + t.getMessage()).append('\n');
+                            errors.append(" Task=").append(task.getName()).append(", ").append(t.getMessage()).append('\n');
+                            errors.append(lastStacktrace(t.getStackTrace())).append('\n');
                             throw t;
                         } finally {
                             latch.countDown();
@@ -318,6 +346,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             }
         }
     }
+
 
     @Override
     public String info(){

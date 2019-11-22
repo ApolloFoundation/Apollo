@@ -73,6 +73,8 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
+import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -384,7 +386,7 @@ public class ShardEngineImpl implements ShardEngine {
             recovery = new ShardRecovery(SECONDARY_INDEX_STARTED);
         }
         durableTaskUpdateByState(state, 13.0, "Secondary indexes creation...");
-        try (Connection sourceConnect = sourceDataSource.begin()) {
+        try (Connection sourceConnect = beginOrOpenConnection(sourceDataSource) ) {
             for (TableInfo tableInfo : paramInfo.getTableInfoList()) {
                 long start = System.currentTimeMillis();
                 currentTable = tableInfo.getName();
@@ -412,6 +414,16 @@ public class ShardEngineImpl implements ShardEngine {
         log.debug("UPDATE Processed table(s)=[{}] in {} sec", paramInfo.getTableInfoList().size(), (System.currentTimeMillis() - startAllTables)/1000);
 
         return state;
+    }
+
+    private Connection beginOrOpenConnection(TransactionalDataSource sourceDataSource) throws SQLException {
+        if (!sourceDataSource.isInTransaction()) {
+            log.debug("===UpdateSecondaryIndex: Called BEGIN, as usual.");
+            return sourceDataSource.begin();
+        } else {
+            log.debug("===UpdateSecondaryIndex: Called getConnection() to prevent the Exception.");
+            return sourceDataSource.getConnection();
+        }
     }
 
     /**
@@ -447,10 +459,10 @@ public class ShardEngineImpl implements ShardEngine {
                             return csvExporter.exportBlockIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
                         case ShardConstants.TRANSACTION_INDEX_TABLE_NAME:
                             return csvExporter.exportTransactionIndex(paramInfo.getSnapshotBlockHeight(), paramInfo.getCommitBatchSize());
-                        case ShardConstants.TRANSACTION_TABLE_NAME:
-                            return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds());
                         case ShardConstants.BLOCK_TABLE_NAME:
                             return csvExporter.exportBlock(paramInfo.getSnapshotBlockHeight());
+                        case ShardConstants.TRANSACTION_TABLE_NAME:
+                            return csvExporter.exportTransactions(paramInfo.getExcludeInfo().getExportDbIds(), paramInfo.getSnapshotBlockHeight());
                         case ShardConstants.ACCOUNT_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
@@ -488,7 +500,8 @@ public class ShardEngineImpl implements ShardEngine {
             dataSource.begin();
         }
         try {
-            return trimService.doTrimDerivedTablesOnHeight(height, true);
+            trimService.waitTrimming();
+            return trimService.doTrimDerivedTablesOnHeightLocked(height);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);
@@ -559,17 +572,17 @@ public class ShardEngineImpl implements ShardEngine {
 
     private void exportTableWithRecovery(ShardRecovery recovery, String tableName, Supplier<Long> exportPerformer) {
         if (AbstractHelper.isContain(recovery.getProcessedObject(), tableName)) {
-            log.debug("Skip already exported table: " + tableName);
+            log.debug("Skip already exported table: {}", tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
-            log.trace("Exporting '{}'...", tableCsvPath);
-            FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e)-> {
+            log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
+            FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
                 durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());
             });
             long startTableExportTime = System.currentTimeMillis();
             Long exported = exportPerformer.get();
-            log.debug("Exported - {}, from {} to {} in {} secs", exported, tableName, tableCsvPath,
+            log.debug("Exported '{}', count {} to {} in {} secs", tableName, exported, tableCsvPath,
                     (System.currentTimeMillis() - startTableExportTime)/1000);
             updateRecovery(recovery, tableName);
         }
@@ -635,9 +648,11 @@ public class ShardEngineImpl implements ShardEngine {
             boolean isRemoved = FileUtils.deleteFileIfExists(zipPath);
             log.debug("Previous Zip in '{}' was '{}'", zipName, isRemoved ? "REMOVED" : "NOT FOUND");
             // compute ZIP crc hash
-            byte[] zipCrcHash = zipComponent.compressAndHash(
+            ChunkedFileOps fops = zipComponent.compressAndHash(
                     zipPath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
+              byte[] zipCrcHash = fops.getFileHash();
+            //inform DownladableFileManager
             postCompressTask.accept(requireLastNotFinishedShard(), zipCrcHash);
             updateRecovery(recovery, zipName);
         }

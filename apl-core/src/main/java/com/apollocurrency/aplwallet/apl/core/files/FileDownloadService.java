@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files;
 
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -62,7 +63,7 @@ public class FileDownloadService {
             log.warn("File {} is already in progress or downloaded. Status: {}", fileId, fstatus.toString());
             return;
         }
-        if (isAccaptable(fstatus.decision)) {            
+        if (FileInfoDownloader.isNetworkUsable(fstatus.decision)) {            
             FileDownloader downloader = fileDownloaders.get();
             downloader.startDownload(fstatus.getFileDownloadInfo(), fstatus, fstatus.getGoodPeers());
         } else {
@@ -80,11 +81,7 @@ public class FileDownloadService {
         return res;
     }
 
-    public static boolean isAccaptable(FileDownloadDecision decision) {
-        boolean res = (decision == FileDownloadDecision.AbsOK) || (decision == FileDownloadDecision.OK);
-        return res;
-    }
-    
+   
     public boolean isFileDownloadedAlready(String fileId, String hexHashString){
         boolean res =  false;
         File zipInExportedFolder = downloadableFilesManager.mapFileIdToLocalPath(fileId).toFile();
@@ -92,8 +89,8 @@ public class FileDownloadService {
         if (zipInExportedFolder.exists()) {
             log.info("No need to download '{}'  as it is found in path = '{}'", fileId, zipInExportedFolder.toString());
             //check integrity
-            FileInfo fi = downloadableFilesManager.getFileInfo(fileId);
-            String fileHashActual = fi.hash;
+            FileDownloadInfo fdi = downloadableFilesManager.updateFileDownloadInfo(fileId);
+            String fileHashActual = fdi.fileInfo.hash;
             if (fileHashActual.equalsIgnoreCase(hexHashString)) {
                 res = true;
                 log.debug("Good zip hash was computed return '{}'...", res);

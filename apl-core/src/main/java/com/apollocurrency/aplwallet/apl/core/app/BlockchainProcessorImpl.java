@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.AccountLedger;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -148,6 +149,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private volatile Peer lastBlockchainFeeder;
     private final javax.enterprise.event.Event<Block> blockEvent;
     private final javax.enterprise.event.Event<List<Transaction>> txEvent;
+    private final javax.enterprise.event.Event<BlockchainConfig> blockchainEvent;
     private final GlobalSync globalSync;
     private final DerivedTablesRegistry dbTables;
     private final ReferencedTransactionService referencedTransactionService;
@@ -303,7 +305,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent) {
+                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent, Event<BlockchainConfig> blockchainEvent) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -322,6 +324,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
+        this.blockchainEvent = blockchainEvent;
 
         configureBackgroundTasks();
 
@@ -335,7 +338,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .name("BlockchainInit")
                 .task(() -> {
                     continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
-                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
+                        trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    } else {
+                        trimService.resetTrim();
+                    }
                     if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                         scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
                     } else {
@@ -358,7 +365,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }).build();
 
-        dispatcher.schedule(blockChainInitTask, TaskOrder.INIT);
+        dispatcher.invokeInit(blockChainInitTask);
 
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
@@ -369,7 +376,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     .task(new GetMoreBlocksThread())
                     .build();
 
-            dispatcher.schedule(moreBlocksTask, TaskOrder.TASK);
+            dispatcher.schedule(moreBlocksTask);
         }
     }
 
@@ -644,6 +651,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void shutdown() {
         log.info("BlchProcImpl shutdown started...");
         try {
+            //blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.SHUTDOWN)).fire(blockchainConfig);//TODO: Is this event necessary at this point?
             suspendBlockchainDownloading();
             Tasks.shutdownExecutor("BlockchainProcessorNetworkService", networkService, 5);
             log.info("BlchProcImpl shutdown finished");
@@ -1351,11 +1359,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
 
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
+            isScanning = true;
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
                          + " db_id >= ? ORDER BY db_id ASC LIMIT 50000");
                  PreparedStatement pstmtDone = con.prepareStatement("UPDATE scan SET rescan = FALSE, height = 0, validate = FALSE")) {
-                isScanning = true;
                 initialScanHeight = blockchain.getHeight();
                 if (height > blockchain.getHeight() + 1) {
                     pstmtDone.executeUpdate();
@@ -1538,11 +1546,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public void suspendBlockchainDownloading() {
         setGetMoreBlocks(false);
+        blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.SUSPEND_DOWNLOADING)).fire(blockchainConfig);
     }
 
     @Override
     public void resumeBlockchainDownloading() {
         setGetMoreBlocks(true);
+        blockchainEvent.select(BlockchainEventType.literal(BlockchainEventType.RESUME_DOWNLOADING)).fire(blockchainConfig);
     }
 
     @Override

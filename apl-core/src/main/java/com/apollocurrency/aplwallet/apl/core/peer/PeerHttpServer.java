@@ -189,7 +189,7 @@ public class PeerHttpServer {
                 .build();
 
         taskDispatchManager.newBackgroundDispatcher("PeerUPnPService")
-                .schedule(peerUPnPInitTask, TaskOrder.BEFORE);
+                .invokeBefore(peerUPnPInitTask);
     }
     
     public void shutdown(){

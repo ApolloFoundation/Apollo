@@ -262,7 +262,7 @@
         <dependency>
             <groupId>com.apollocurrency.antifraud</groupId>
             <artifactId>antifraud</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
 
         <!-- Ethereum API -->
@@ -313,7 +313,11 @@
             <version>1.5.21</version>
             <type>jar</type>
         </dependency>
-                
+
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
