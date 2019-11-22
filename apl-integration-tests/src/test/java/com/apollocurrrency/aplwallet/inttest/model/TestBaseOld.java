@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.Currency;
+import com.apollocurrency.aplwallet.api.dto.DGSGoodsDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
@@ -1272,6 +1273,71 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
+    public CreateTransactionResponse dgsDelisting(Wallet wallet, String goods) {
+        addParameters(RequestType.requestType, dgsDelisting );
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    public CreateTransactionResponse dgsQuantityChange(Wallet wallet, String goods, int deltaQuantity) {
+        addParameters(RequestType.requestType, dgsQuantityChange );
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.deltaQuantity, deltaQuantity);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse dgsPriceChange(Wallet wallet, String goods, int priceATM) {
+        addParameters(RequestType.requestType, dgsPriceChange );
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse dgsPurchase(Wallet wallet, String goods, long priceATM, int quantity, int deliveryDeadlineTimeInHours) {
+        addParameters(RequestType.requestType, dgsPurchase );
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.quantity, quantity);
+        addParameters(Parameters.deliveryDeadlineTimestamp, deliveryDeadlineTimeInHours * 3600000);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse dgsDelivery(Wallet wallet, String purchase, String delivery, int discountATM) {
+        addParameters(RequestType.requestType, dgsDelivery );
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.discountATM, discountATM);
+        addParameters(Parameters.goodsToEncrypt, delivery);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
+        addParameters(RequestType.requestType, dgsFeedback);
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.message, message);
+        addParameters(Parameters.messageToEncrypt, message);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
     public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
         addParameters(RequestType.requestType, uploadTaggedData);
         addParameters(Parameters.name, name);
@@ -1285,6 +1351,26 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+    public CreateTransactionResponse dgsRefund(Wallet wallet, String purchase, int refundATM, String message) {
+        addParameters(RequestType.requestType, dgsRefund );
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.refundATM, refundATM);
+        addParameters(Parameters.message, message);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+
+
+    public DGSGoodsDTO getDGSGood(String goods) {
+        addParameters(RequestType.requestType, getDGSGood);
+        addParameters(Parameters.goods, goods);
+        return getInstanse(DGSGoodsDTO.class);
     }
 
     public AllTaggedDataResponse getAllTaggedData() {
@@ -1303,9 +1389,6 @@ public class TestBaseOld extends TestBase {
         return getInstanse(DataTagCountResponse.class);
     }
 
-
-
-    //get all Votes in Poll
     @Step
     public PollVotesResponse getPollVotes (String poll) {
         addParameters(RequestType.requestType, getPollVotes);

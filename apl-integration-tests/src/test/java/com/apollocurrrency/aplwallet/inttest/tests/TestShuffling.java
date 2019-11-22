@@ -331,7 +331,7 @@ public class TestShuffling extends TestBaseOld {
 
     @Step
      private Wallet getRandomStandartWallet(){
-        String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
+         String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
          Wallet wallet =  new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
          log.info(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
         return wallet;
