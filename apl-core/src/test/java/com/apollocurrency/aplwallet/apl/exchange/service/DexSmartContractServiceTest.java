@@ -167,7 +167,7 @@ class DexSmartContractServiceTest {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.DexOperation.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
         doReturn(BigInteger.ZERO).when(ethereumWalletService).getAllowance(SWAP_ETH_ADDRESS, ALICE_ETH_ADDRESS, PAX_ETH_ADDRESS);
-        doReturn("approve-hash").when(ethereumWalletService).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, amount);
+        doReturn("approve-hash").when(ethereumWalletService).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), amount, PAX_ETH_ADDRESS);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrencies.PAX);
@@ -187,7 +187,7 @@ class DexSmartContractServiceTest {
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrencies.PAX);
 
         assertEquals("hash", hash);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, amount);
+        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS);
     }
 
     @Test
@@ -212,7 +212,7 @@ class DexSmartContractServiceTest {
         assertThrows(RuntimeException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 10L, DexCurrencies.PAX));
 
         verifyZeroInteractions(dexContract);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, amount);
+        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS);
     }
 
     @Test
@@ -222,7 +222,7 @@ class DexSmartContractServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrencies.APL));
 
         verifyZeroInteractions(dexContract);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, BigInteger.TEN);
+        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS);
     }
 
     @Test
