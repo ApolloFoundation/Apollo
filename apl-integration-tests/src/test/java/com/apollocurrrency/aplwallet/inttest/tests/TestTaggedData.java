@@ -58,15 +58,17 @@ public class TestTaggedData extends TestBaseOld {
     @ArgumentsSource(WalletProvider.class)
     void uploadTaggedDataTest(Wallet wallet){
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
-        log.info("Tags quantity: {} before creating uploading new TaggedData", tagsQuantity);
+        log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
         CreateTransactionResponse uploadData =  uploadTaggedData(wallet, Name, description, tag, channel, image);
         verifyCreatingTransaction(uploadData);
         verifyTransactionInBlock(uploadData.getTransaction());
+        int parsedTags = getTaggedData(uploadData.getTransaction()).getParsedTags().size();
+        log.info("Tags quantity which is created after uploading new TaggedData equals {} ", parsedTags);
         assertEquals(Name, getTaggedData(uploadData.getTransaction()).getName(), "names are not the same");
         //assertEquals(tag, getTaggedData(uploadData.getTransaction()).getTags(), "tags are not the same");
         assertEquals(description, getTaggedData(uploadData.getTransaction()).getDescription(), "descriptions are not the same");
         assertEquals(channel, getTaggedData(uploadData.getTransaction()).getChannel(), "channels are not the same");
-        assertTrue(getDataTagCount().getNumberOfDataTags() >= tagsQuantity, "tags quantity validation is failed/ new quantity is not >= old quantity");
+        assertEquals(tagsQuantity+parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
     }
 
 
