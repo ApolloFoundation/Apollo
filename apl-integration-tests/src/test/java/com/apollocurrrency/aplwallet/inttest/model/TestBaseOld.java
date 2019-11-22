@@ -114,6 +114,7 @@ public class TestBaseOld extends TestBase {
     @Step
     public boolean waitForHeight(int height)
     {
+      log.info("Wait For Height: {}",height);
       RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)

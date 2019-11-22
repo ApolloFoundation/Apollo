@@ -58,13 +58,13 @@ public abstract class TestBase implements ITest {
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
         String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
-        try {
+/*        try {
             importSecretFileSetUp(secretFilePath,"1");
             startForgingSetUp();
             setUpTestData();
         }catch (Exception ex){
             fail("Precondition FAILED: "+ex.getMessage(), ex);
-        }
+        }*/
         log.info("Preconditions finished");
     }
 
