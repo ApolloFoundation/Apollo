@@ -67,6 +67,8 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +80,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -1402,6 +1408,17 @@ public class TestBaseOld extends TestBase {
         addParameters(RequestType.requestType, getPollResult);
         addParameters(Parameters.poll, poll);
         return getInstanse(PollResultResponse.class);
+    }
+
+    public void messagePrunable(){
+        String message = RandomStringUtils.randomAlphabetic(3,5);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.messageToEncrypt, message);
+        addParameters(Parameters.encryptedMessageIsPrunable, true);
+        addParameters(Parameters.compressMessageToEncrypt, message);
+        addParameters(Parameters.messageToEncryptToSelf, message);
+        addParameters(Parameters.messageToEncryptToSelfIsText, true);
     }
 
 }
