@@ -355,7 +355,7 @@ public class ShardInfoDownloader {
     }
     private Long readManuallyDefinedShardId(){
         Long res = null;
-        String envVal = System.getenv().get(SHARD_ID_ENV);
+        String envVal = System.getProperty(SHARD_ID_ENV);
         if(envVal!=null){
            try{
              res = Long.parseLong(envVal);

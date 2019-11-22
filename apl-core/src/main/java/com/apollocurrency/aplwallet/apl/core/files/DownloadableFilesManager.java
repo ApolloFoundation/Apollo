@@ -74,7 +74,9 @@ public class DownloadableFilesManager {
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
         FileDownloadInfo downloadInfo =  fillFileDownloadInfo(fileData);
         fdiCache.remove(fileData.getFileId());
-        fdiCache.put(fileData.getFileId(), downloadInfo);
+        if(fileData.isHashedOK()){
+           fdiCache.put(fileData.getFileId(), downloadInfo);
+        }
     }
     
     public FileInfo getFileInfo(String fileId) {
@@ -104,7 +106,7 @@ public class DownloadableFilesManager {
     private FileDownloadInfo fillFileDownloadInfo(ChunkedFileOps fops){
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = fops.getAbsPath();
-        if (fpath != null && Files.isReadable(fpath)) {
+        if (fpath != null && Files.isReadable(fpath) && fops.isHashedOK()) {
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.created = Instant.now(); // in UTC
             downloadInfo.fileInfo.size = fops.getFileSize();
