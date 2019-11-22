@@ -14,7 +14,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 
-public class TaggedDataDTO {
+public class TaggedDataDTO extends BaseDTO {
+    private String data;
     private String channel;
     private String description;
     private String type;
