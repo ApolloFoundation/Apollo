@@ -36,8 +36,8 @@ public class PeerInfoStatistics {
     /**
      * Student's t-distribution function
      * @param p desired confidentiality probability
-     * @param n numver of samples, defree of freedom is v=n-1
-     * @return t as in tables in all mathstat books
+     * @param n number of samples, degree of freedom is v=n-1
+     * @return t as in tables in all math stat books
      */
     public static double StudentsT(double p, long n){
         TDistribution td = new TDistribution(n-1);
