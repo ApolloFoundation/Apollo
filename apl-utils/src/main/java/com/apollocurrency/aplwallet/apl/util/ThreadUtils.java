@@ -71,12 +71,8 @@ public class ThreadUtils {
 
 
     public static String getStackTraceSilently(Throwable exception) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             PrintWriter printWriter = new PrintWriter(out)) {
-            exception.printStackTrace(printWriter);
-            printWriter.flush();
-            byte[] bytes = out.toByteArray();
-            return new String(bytes);
+        try {
+            return getStackTrace(exception);
         } catch (IOException e) {
             return e.getMessage() + "(unable to extract stacktrace)";
         }

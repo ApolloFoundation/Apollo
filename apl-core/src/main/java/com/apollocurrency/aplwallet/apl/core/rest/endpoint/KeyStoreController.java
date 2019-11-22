@@ -232,7 +232,7 @@ public class KeyStoreController {
     @POST
     @Path("/eth")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"keystore"}, summary = "Export eth keystore",
+    @Operation(tags = {"keyStore"}, summary = "Export eth keystore",
             description = "Generate eth keystore for specified account in json format fully compatible with original geth keystore. Required 2fa code for accounts with enabled 2fa.",
             responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = WalletFile.class))))
