@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,12 +69,14 @@ public abstract class TestBase implements ITest {
     }
 
     @BeforeEach
+    @DisplayName("Before test")
     public void setUP(TestInfo testInfo){
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
+    @DisplayName("After test")
    public void testEnd(){
         this.testInfo = null;
     }

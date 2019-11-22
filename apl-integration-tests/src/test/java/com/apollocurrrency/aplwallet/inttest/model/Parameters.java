@@ -1,6 +1,16 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    refundATM,
+    goodsToEncrypt,
+    goodsIsText,
+    goodsData,
+    discountATM,
+    goodsNonce,
+    purchase,
+    deliveryDeadlineTimestamp,
+    deltaQuantity,
+    goods,
     file,
     messageIsText,
     messageFile,
