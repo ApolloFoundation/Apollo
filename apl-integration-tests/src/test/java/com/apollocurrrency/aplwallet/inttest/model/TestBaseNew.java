@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -36,6 +37,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
@@ -44,6 +46,7 @@ import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -66,6 +69,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.DisplayName;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -907,4 +911,19 @@ public class TestBaseNew extends TestBase {
 
     @Override
     public PollResultResponse getPollResult (String poll) { throw new NotImplementedException("Not implemented"); }
+
+    @Override
+    public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public AllTaggedDataResponse getAllTaggedData() {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public TaggedDataDTO getTaggedData(String transaction) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public DataTagCountResponse getDataTagCount() {throw new NotImplementedException("Not implemented");}
+
 }
