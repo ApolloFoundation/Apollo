@@ -57,16 +57,23 @@ public class ShardObserver {
     
     //TODO: check and debug
     private boolean isShardAlreadyCreatedOrInProgress(int  lastTrimBlockHeight, HeightConfig currentConfig){
-        Shard shard = shardService.getLastShard();
+        boolean res = false;
+        Shard shard = shardService.getLastShard();        
         if(shard==null){
-            return false;
-        }        
-        int lastShardHeight = shard.getShardHeight();
-        int nextShardHeight = lastShardHeight+currentConfig.getShardingFrequency();
-        if(lastTrimBlockHeight >=lastShardHeight && lastTrimBlockHeight <nextShardHeight){
-            return true;
+            log.debug("No last shard yet");
+        }else{        
+            int lastShardHeight = shard.getShardHeight();
+            int nextShardHeight = lastShardHeight+currentConfig.getShardingFrequency();
+            if(lastTrimBlockHeight >= lastShardHeight && lastTrimBlockHeight < nextShardHeight){
+                log.debug("Shard exists. Last shard at height: {}. trim height: {}, next shard height: {}",
+                    lastShardHeight,lastTrimBlockHeight,nextShardHeight);
+                res= true;
+            }else{
+                log.debug("No shard yet. Last shard at height: {}. trim height: {}, next shard height: {}",
+                    lastShardHeight,lastTrimBlockHeight,nextShardHeight);
+            }
         }
-        return false;
+        return res;
     }
     
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
@@ -93,8 +100,12 @@ public class ShardObserver {
         //Q. Do we count on some other parameters?
         long howLateWeCanBe = shardingFrequency / 4;
         ModWatcher watch = new ModWatcher(shardingFrequency, howLateWeCanBe);
-        boolean res = lastTrimBlockHeight != 0 && !watch.isTooLate(lastTrimBlockHeight);
-        res = res && !isShardAlreadyCreatedOrInProgress(lastTrimBlockHeight, currentConfig);
+        boolean res = lastTrimBlockHeight != 0 
+                   && ! watch.isTooLate(lastTrimBlockHeight) 
+                   && watch.fullCircles(lastTrimBlockHeight) > 0;
+        if(res){
+          res = res && !isShardAlreadyCreatedOrInProgress(lastTrimBlockHeight, currentConfig);
+        }
         return res;
     }
     
