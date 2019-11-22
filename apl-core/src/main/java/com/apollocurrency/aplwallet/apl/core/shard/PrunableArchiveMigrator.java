@@ -83,7 +83,7 @@ public class PrunableArchiveMigrator {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
                     ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
-                    if(fops.isHashedOK()){
+                    if(fops!=null && fops.isHashedOK()){
                        byte[] hash = fops.getFileHash();
                        Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                        shard.setCoreZipHash(hash);

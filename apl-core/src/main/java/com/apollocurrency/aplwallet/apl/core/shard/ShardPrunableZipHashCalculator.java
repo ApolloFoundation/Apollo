@@ -87,7 +87,7 @@ public class ShardPrunableZipHashCalculator {
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
-                    if( ! ops.isHashedOK()){
+                    if( ops==null || ! ops.isHashedOK()){
                         log.error("Can not zip file: {}", zipName);
                     }
                     byte[] hash = ops.getFileHash();
