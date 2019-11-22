@@ -13,7 +13,6 @@ import java.util.List;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-
 public class VoteDTO extends BaseDTO{
     private String voterRS;
     private List<String> votes;

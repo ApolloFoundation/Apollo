@@ -1,6 +1,14 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    dgsRefund,
+    dgsFeedback,
+    dgsDelivery,
+    dgsPurchase,
+    dgsPriceChange,
+    getDGSGood,
+    dgsQuantityChange,
+    dgsDelisting,
     dgsListing,
     shufflingVerify,
     startShuffler,
