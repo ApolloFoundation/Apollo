@@ -293,6 +293,68 @@ public class CsvReaderImpl extends CsvAbstractBase
         return s;
     }
 
+    private String readArrayValue() throws IOException {
+        // start SQL ARRAY processing written as = (x, y, z)
+        // read until of 'arrayEndToken' symbol
+        int ch;
+        inputBufferStart = inputBufferPos;
+        while (true) {
+            ch = readChar();
+            if (ch == arrayEndToken) {
+                break;
+            }else if (isEOL(ch)){
+                endOfLine = true;
+                break;
+            }
+        }
+        String s = new String(inputBuffer,
+                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        if(!endOfLine) {
+            ch = readChar();
+            endOfLine=isEOL(ch);
+        }
+        inputBufferStart = -1; // reset
+        return readNull(s);
+    }
+
+    private String readUndelimitedValue() throws IOException {
+        // un-delimited value
+        int ch;
+        while (true) {
+            ch = readChar();
+            if (ch == fieldSeparatorRead) {
+                break;
+            } else if (isEOL(ch)) {
+                endOfLine = true;
+                break;
+            }
+        }
+        String s = new String(inputBuffer,
+                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        inputBufferStart = -1;
+        // check un-delimited value for nullString
+        return readNull(s);
+    }
+
+    private void skipComments() throws IOException {
+        // comment until end of line
+        int ch;
+        inputBufferStart = -1;
+        while (true) {
+            ch = readChar();
+            if (isEOL(ch)) {
+                break;
+            }
+        }
+        endOfLine = true;
+    }
+
     /**
      * Key method for reading one column value as string.
      * It reads HEADER column first and data column in row.
@@ -318,59 +380,13 @@ public class CsvReaderImpl extends CsvAbstractBase
                 return null;
             } else if (ch <= ' ') {
                 // ignore spaces
-                continue;
             } else if (lineComment != 0 && ch == lineComment) {
-                // comment until end of line
-                inputBufferStart = -1;
-                while (true) {
-                    ch = readChar();
-                    if (isEOL(ch)) {
-                        break;
-                    }
-                }
-                endOfLine = true;
+                skipComments();
                 return null;
             } else if (arrayStartToken != 0 && ch == arrayStartToken) { // ARRAY processing stuff - first check '('
-                // start SQL ARRAY processing written as = (x, y, z)
-                // read until of 'arrayEndToken' symbol
-                inputBufferStart = inputBufferPos;
-                while (true) {
-                    ch = readChar();
-                    if (isEOL(ch) || ch == arrayEndToken) {
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                ch = inputBuffer[inputBufferPos]; // lookup one char ahead (we don't want to miss EoL)
-                if (ch == '\n' || ch == '\r') {
-                    endOfLine = true; // EoL - stop line processing in outer method
-                }
-                inputBufferPos++; // skip closing ')' inside long line (no EoL present)
-                inputBufferStart = -1; // reset
-                return readNull(s);
+                return readArrayValue();
             } else {
-                // un-delimited value
-                while (true) {
-                    ch = readChar();
-                    if (ch == fieldSeparatorRead) {
-                        break;
-                    } else if (isEOL(ch)) {
-                        endOfLine = true;
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                inputBufferStart = -1;
-                // check un-delimited value for nullString
-                return readNull(s);
+                return readUndelimitedValue();
             }
         }
     }
