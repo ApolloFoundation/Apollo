@@ -296,15 +296,70 @@ public class CsvReaderImpl extends CsvAbstractBase
     private String readArrayValue() throws IOException {
         // start SQL ARRAY processing written as = (x, y, z)
         // read until of 'arrayEndToken' symbol
-        int ch;
         inputBufferStart = inputBufferPos;
-        while (true) {
+        int ch;
+        int state=1;
+        boolean endLex=false;
+        while (!endLex) {
             ch = readChar();
-            if (ch == arrayEndToken) {
-                break;
-            }else if (isEOL(ch)){
-                endOfLine = true;
-                break;
+            switch (state){
+                case 1:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 2;
+                    }else if(ch == fieldSeparatorRead){
+                        replaceChar(eotCharacter);
+                    }else{
+                        state = 3;
+                    }
+                    break;
+                case 2:
+                    if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 4;
+                    }
+                    break;
+                case 3:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == fieldSeparatorRead){
+                        replaceChar(eotCharacter);
+                    }
+                    break;
+                case 4:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 2;
+                    }else if(ch == fieldSeparatorRead) {
+                        replaceChar(eotCharacter);
+                        state = 1;
+                    }else if (isWhiteSpace(ch)){
+                        //ignore
+                    }else{
+                        endLex = true;
+                        state = 0;
+                    }
+                    break;
             }
         }
         String s = new String(inputBuffer,
@@ -388,6 +443,12 @@ public class CsvReaderImpl extends CsvAbstractBase
             } else {
                 return readUndelimitedValue();
             }
+        }
+    }
+
+    private void replaceChar(char r){
+        if(inputBufferPos>=1) {
+            inputBuffer[inputBufferPos - 1] = r;
         }
     }
 
