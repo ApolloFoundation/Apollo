@@ -287,23 +287,25 @@ public class ShardInfoDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        if(!pvdm.isNetworkUsable()){
-            log.debug("Decision based on main shard file");
-            return res;
+        log.debug("Decision based on main shard file: {}",res);
+        if (pvdm.isNetworkUsable()) {
+            //do statistical analysys of shard's composite hashes
+            shardPeerList = new PeersList();
+            for (String pa : shardPeers) {
+                PeerFileHashSum psi = new PeerFileHashSum(pa, snh.getFullShardId(shardId, myChainId));
+                psi.setHash(getFullHash(shardId, pa));
+                shardPeerList.add(psi);
+            }
+            PeerValidityDecisionMaker pvdm2 = new PeerValidityDecisionMaker(shardPeerList);
+            res = pvdm2.calcualteNetworkState();
+            log.debug("Decision based on main shard file and additional files: {}",res);
+            goodPeersMap.put(shardId,pvdm2.getValidPeers());
+            badPeersMap.put(shardId,pvdm2.getInvalidPeers());            
+        }else{
+            goodPeersMap.put(shardId,pvdm.getValidPeers());
+            badPeersMap.put(shardId,pvdm.getInvalidPeers());                        
         }
-          //do statistical analysys of shard's composite hashes
-        shardPeerList = new PeersList();
-        for (String pa : shardPeers) {
-            PeerFileHashSum psi = new PeerFileHashSum(pa, snh.getFullShardId(shardId, myChainId));
-            psi.setHash(getFullHash(shardId, pa));
-            shardPeerList.add(psi);
-        }
-        PeerValidityDecisionMaker pvdm2 = new PeerValidityDecisionMaker(shardPeerList);
-        res = pvdm2.calcualteNetworkState();
-        log.debug("Decision based on main shard file");
 
-        goodPeersMap.put(shardId,pvdm2.getValidPeers());
-        badPeersMap.put(shardId,pvdm2.getInvalidPeers());
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
         return res;
     }
