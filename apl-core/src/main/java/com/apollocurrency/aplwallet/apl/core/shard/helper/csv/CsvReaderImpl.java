@@ -271,7 +271,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                     } else if (ch == fieldSeparatorRead) {
                         state=3;//end state
                         endLex = true;
-                    } else if (endOfFile=isEOL(ch)) {
+                    } else if (isEOL(ch)) {
                         state=3;//end state
                         endLex = true;
                         endOfLine = true;
