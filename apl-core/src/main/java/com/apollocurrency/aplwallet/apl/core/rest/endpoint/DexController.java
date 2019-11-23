@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -24,6 +26,8 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
@@ -40,9 +44,10 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -70,6 +75,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForInterval;
@@ -80,7 +86,7 @@ import java.util.Random;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
-@OpenAPIDefinition(tags = {@Tag(name = "/dex")}, info = @Info(description = "Operations with exchange."))
+@OpenAPIDefinition(info = @Info(description = "Operations with exchange."))
 @Singleton
 public class DexController {
     private static final Logger log = getLogger(DexController.class);
@@ -94,7 +100,7 @@ public class DexController {
     private String TX_DEADLINE = "1440";
     private ObjectMapper mapper = new ObjectMapper();
     private DexSmartContractService dexSmartContractService;
-
+    private ExchangeContractToDTOConverter contractConverter = new ExchangeContractToDTOConverter();
 
 
     @Inject
@@ -105,7 +111,6 @@ public class DexController {
         this.timeService = Objects.requireNonNull(timeService, "EpochTime is null");
         this.dexEthService = Objects.requireNonNull(dexEthService, "DexEthService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "Ethereum Wallet Service");
-        this.dexSmartContractService = dexSmartContractService;
     }
 
     //For DI
@@ -251,23 +256,21 @@ public class DexController {
             } catch (AplException.ValidationException e) {
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
-            } catch (AplException.ExecutiveProcessException e) {
+            } catch (AplException.ThirdServiceIsNotAvailable e) {
+                log.error(e.getMessage(), e);
+                return Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
+            } catch (ExecutionException e) {
+                log.error(e.getMessage(), e);
+                return Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
+            } catch (Exception e) { // should catch NotSufficientFundsException and NotValidTransactionException, etc
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
-            } catch (AplException.ThirdServiceIsNotAvailable e){
-                log.error(e.getMessage(), e);
-                Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
-            } catch (ExecutionException e){
-                log.error(e.getMessage(), e);
-                Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             }
 
         } catch (ParameterException e) {
             log.error(e.getMessage(), e);
             return Response.ok(JSON.toString(e.getErrorResponse())).build();
         }
-
-        return Response.ok().build();
     }
 
     @GET
@@ -419,10 +422,10 @@ public class DexController {
 
         DexCurrencies currencies = null;
         String passphrase;
-        Account sender;
+        long sender;
         try{
             passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, true));
-            sender = ParameterParser.getSenderAccount(req);
+            sender = ParameterParser.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
                 currencies = DexCurrencies.getType(cryptocurrency);
@@ -464,8 +467,8 @@ public class DexController {
 
         String transaction;
         try {
-            transaction = service.withdraw(sender.getId(), passphrase, fromAddress, toAddress, amount, currencies, transferFee);
-        } catch (AplException.ExecutiveProcessException e){
+            transaction = service.withdraw(sender, passphrase, fromAddress, toAddress, amount, currencies, transferFee);
+        } catch (Exception e){
             return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
         }
 
@@ -481,12 +484,12 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Eth gas info", description = "get gas prices for different tx speed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Eth gas info")})
-    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException, AplException.ExecutiveProcessException {
+    public Response dexEthInfo(@Context SecurityContext securityContext) throws NotFoundException {
         try {
             EthGasInfo ethGasInfo = dexEthService.getEthPriceInfo();
             return Response.ok(ethGasInfo.toDto()).build();
         } catch (Exception ex){
-            return Response.ok().build();
+            return Response.ok(incorrect("Gas service is not available now.")).build();
         }
     }
     
@@ -514,15 +517,31 @@ public class DexController {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("passphrase", "Can't be null."))).build();
             }
             if ( service.flushSecureStorage(accountId, xpassphrase) ) {
-               return Response.ok().build(); 
+                return ResponseBuilder.done().build();
             } else {
                 return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("keyData", "Key does not exist or has already been wiped"))).build();
             }
-                
+
         } catch (Exception ex){
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
-        
+    }
+
+    @GET
+    @Path("/contracts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Retrieve processable dex contract for order", description = "Lookup the database to get dex contract associated with specified account and order with status > STEP1",
+            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in exceptional(error) cases may contain more than 1 entries", responseCode = "200",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
+                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+        long accountId = Convert.parseAccountId(account);
+        long orderId = Convert.parseLong(order);
+        List<ExchangeContract> contracts = service.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) ExchangeContractStatus.STEP_2.ordinal());
+        if (contracts.size() > 1) {
+            log.warn("Found {} processable contracts for order {}, account - {} ", contracts, orderId, accountId);
+        }
+        return Response.ok(contractConverter.convert(contracts)).build();
     }
     
     @GET
@@ -641,5 +660,18 @@ public class DexController {
         return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 
-    
+    @GET
+    @Path("/all-contracts")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Retrieve all versioned dex contracts for order", description = "Get all versions of dex contracts related to the specified order (including all contracts with STEP1 status and previous versions of processable contract) ",
+            responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
+                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+        long accountId = Convert.parseAccountId(account);
+        long orderId = Convert.parseLong(order);
+        List<ExchangeContract> contracts = service.getVersionedContractsByAccountOrder(accountId, orderId);
+        return Response.ok(contractConverter.convert(contracts)).build();
+    }
+
 }

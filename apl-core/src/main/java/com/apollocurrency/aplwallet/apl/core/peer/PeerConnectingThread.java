@@ -39,6 +39,19 @@ class PeerConnectingThread implements Runnable {
         try {
             try {
                 final int now = timeService.getEpochTime();
+                //connect to configured peers first
+                for (String wellKnownPeer : peers.wellKnownPeers) {
+                    PeerImpl peer = peers.findOrCreatePeer(null, wellKnownPeer, true);
+                    if (peer != null
+                            // && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL
+                            && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
+
+                        peers.peersExecutorService.submit(() -> {
+                            peers.addPeer(peer);
+                            peers.connectPeer(peer);
+                        });
+                    }
+                }                
                 if (!peers.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers)) 
                 {
                     List<Future<?>> futures = new ArrayList<>();
@@ -74,7 +87,7 @@ class PeerConnectingThread implements Runnable {
                             if (peers.isMyAddress(pa)) {
                                 return null;
                             }
-                            peer.handshake(peers.blockchainConfig.getChain().getChainId());
+                            peers.connectPeer(peer);
                             if (peer.getState() == PeerState.CONNECTED
                                     && PeersService.enableHallmarkProtection
                                     && peer.getWeight() == 0
@@ -91,13 +104,13 @@ class PeerConnectingThread implements Runnable {
                     }
                 }
                 peers.getPeers(peer ->
-                           peer.getState() == PeerState.CONNECTED
+                        peer.getState() != PeerState.CONNECTED
                         && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY
                 ).forEach((peer) -> {
                         PeerAddress pa = new PeerAddress(peer.getPort(), peer.getHost());
                     if (!peers.isMyAddress(pa)) {
-                        peers.peersExecutorService.submit(() -> peer.handshake(peers.blockchainConfig.getChain().getChainId()));
+                        peers.peersExecutorService.submit(() -> peers.connectPeer(peer));
                         }
                 });
                 if (peers.hasTooManyKnownPeers() && peers.hasEnoughConnectedPublicPeers(peers.maxNumberOfConnectedPublicPeers)) {
@@ -121,18 +134,7 @@ class PeerConnectingThread implements Runnable {
                         }
                     }
                 }
-                for (String wellKnownPeer : peers.wellKnownPeers) {
-                    PeerImpl peer = peers.findOrCreatePeer(null, wellKnownPeer, true);
-                    if ( peer != null 
-                         && now - peer.getLastUpdated() > Constants.PEER_UPDATE_INTERVAL 
-                         && now - peer.getLastConnectAttempt() > Constants.PEER_RECONNECT_ATTMEPT_DELAY) {
 
-                        peers.peersExecutorService.submit(() -> {
-                            peers.addPeer(peer);
-                            peers.connectPeer(peer);
-                        });
-                    }
-                }
             } catch (Exception e) {
                 LOG.debug("Error connecting to some peer", e);
             }

@@ -20,10 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
@@ -31,24 +32,21 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.inject.spi.CDI;
-
+@Slf4j
 public final class ShufflingParticipant {
-    private static final Logger LOG = getLogger(ShufflingParticipant.class);
 
-    private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+    private BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    private volatile TimeService timeService = CDI.current().select(TimeService.class).get();
 
 
     public enum State {
@@ -87,50 +85,6 @@ public final class ShufflingParticipant {
         PARTICIPANT_REGISTERED, PARTICIPANT_PROCESSED, PARTICIPANT_VERIFIED, PARTICIPANT_CANCELLED
     }
 
-    private final static class ShufflingData {
-
-        private final long shufflingId;
-        private final long accountId;
-        private final DbKey dbKey;
-        private final byte[][] data;
-        private final int transactionTimestamp;
-        private final int height;
-
-        private ShufflingData(long shufflingId, long accountId, byte[][] data, int transactionTimestamp, int height) {
-            this.shufflingId = shufflingId;
-            this.accountId = accountId;
-            this.dbKey = shufflingDataDbKeyFactory.newKey(shufflingId, accountId);
-            this.data = data;
-            this.transactionTimestamp = transactionTimestamp;
-
-            this.height = height;
-        }
-
-        private ShufflingData(ResultSet rs, DbKey dbKey) throws SQLException {
-            this.shufflingId = rs.getLong("shuffling_id");
-            this.accountId = rs.getLong("account_id");
-            this.dbKey = dbKey;
-            this.data = DbUtils.getArray(rs, "data", byte[][].class, Convert.EMPTY_BYTES);
-            this.transactionTimestamp = rs.getInt("transaction_timestamp");
-            this.height = rs.getInt("height");
-        }
-
-        private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling_data (shuffling_id, account_id, data, "
-                    + "transaction_timestamp, height) "
-                    + "VALUES (?, ?, ?, ?, ?)")) {
-                int i = 0;
-                pstmt.setLong(++i, this.shufflingId);
-                pstmt.setLong(++i, this.accountId);
-                DbUtils.setArrayEmptyToNull(pstmt, ++i, this.data);
-                pstmt.setInt(++i, this.transactionTimestamp);
-                pstmt.setInt(++i, this.height);
-                pstmt.executeUpdate();
-            }
-        }
-
-    }
-
     private static final Listeners<ShufflingParticipant, Event> listeners = new Listeners<>();
 
     private static final LinkKeyFactory<ShufflingParticipant> shufflingParticipantDbKeyFactory = new LinkKeyFactory<ShufflingParticipant>("shuffling_id", "account_id") {
@@ -156,11 +110,11 @@ public final class ShufflingParticipant {
 
     };
 
-    private static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
+    public static final LinkKeyFactory<ShufflingData> shufflingDataDbKeyFactory = new LinkKeyFactory<ShufflingData>("shuffling_id", "account_id") {
 
         @Override
         public DbKey newKey(ShufflingData shufflingData) {
-            return shufflingData.dbKey;
+            return shufflingData.getDbKey();
         }
 
     };
@@ -178,7 +132,18 @@ public final class ShufflingParticipant {
 
         @Override
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
-            shufflingData.save(con);
+            try (PreparedStatement pstmt = con.prepareStatement(
+                    "INSERT INTO shuffling_data (shuffling_id, account_id, data, "
+                            + "transaction_timestamp, height) "
+                            + "VALUES (?, ?, ?, ?, ?)")) {
+                int i = 0;
+                pstmt.setLong(++i, shufflingData.getShufflingId());
+                pstmt.setLong(++i, shufflingData.getAccountId());
+                DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData());
+                pstmt.setInt(++i, shufflingData.getTransactionTimestamp());
+                pstmt.setInt(++i, shufflingData.getHeight());
+                pstmt.executeUpdate();
+            }
         }
 
     };
@@ -305,7 +270,7 @@ public final class ShufflingParticipant {
             throw new IllegalStateException(String.format("Shuffling participant in state %s cannot go to state %s", this.state, state));
         }
         this.state = state;
-        LOG.debug("Shuffling participant {} changed state to {}", Long.toUnsignedString(accountId), this.state);
+        log.debug("Shuffling participant {} changed state to {}", Long.toUnsignedString(accountId), this.state);
     }
 
     public byte[][] getData() {
@@ -314,7 +279,7 @@ public final class ShufflingParticipant {
 
     public static byte[][] getData(long shufflingId, long accountId) {
         ShufflingData shufflingData = shufflingDataTable.get(shufflingDataDbKeyFactory.newKey(shufflingId, accountId));
-        return shufflingData != null ? shufflingData.data : null;
+        return shufflingData != null ? shufflingData.getData() : null;
     }
 
     void setData(byte[][] data, int timestamp) {

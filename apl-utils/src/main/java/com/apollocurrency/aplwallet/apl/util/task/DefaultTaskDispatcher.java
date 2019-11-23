@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.lastStacktrace;
 import static com.apollocurrency.aplwallet.apl.util.task.Tasks.shutdownExecutor;
 
 /**
@@ -196,7 +197,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 /* Run INIT tasks */
                 jobs = tasks.get(TaskOrder.INIT);
                 log.debug("{}: run INIT tasks.", serviceName);
-                runAllAndWait(jobs);
+                try {
+                    runAllAndWait(jobs);
+                } catch (Throwable e) {
+                    log.error("The INIT tasks can't be initialized properly. Jobs = " + jobs, e);
+                }
                 tasks.remove(TaskOrder.INIT);
 
                 /* Run BEFORE tasks */
@@ -217,7 +222,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
                 jobs = tasks.get(TaskOrder.AFTER);
                 log.info("{}: run AFTER tasks.", serviceName);
-                runAllAndWait(jobs);
+                try {
+                    runAllAndWait(jobs);
+                } catch (Throwable e) {
+                    log.error("The AFTER tasks can't be initialized properly.", e);
+                }
                 tasks.remove(TaskOrder.AFTER);
 
                 //Shutdown onStartExecutor to release resources
@@ -283,10 +292,11 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
                 tasks.forEach(task -> {
                     onStartExecutor.submit(() -> {
                         try {
-                            log.trace("Current thread={}", Thread.currentThread().getName());
+                            log.debug("Task = {}, Current thread={}", task.getName(), Thread.currentThread().getName());
                             task.getTask().run();
                         } catch (Throwable t) {
-                            errors.append(t.getMessage()).append('\n');
+                            errors.append(" Task=").append(task.getName()).append(", ").append(t.getMessage()).append('\n');
+                            errors.append(lastStacktrace(t.getStackTrace())).append('\n');
                             throw t;
                         } finally {
                             latch.countDown();
@@ -310,6 +320,7 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
             }
         }
     }
+
 
     @Override
     public String info(){

@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Info about shard
  * @author alukin@gmail.com
@@ -29,4 +32,6 @@ public class ShardInfo {
     public String hash=null;
     public String zipCrcHash=null;
     public Long height;
+    public List<String> additionalFiles = new ArrayList<>();
+    public List<String> additionalHashes = new ArrayList<>();
 }

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -14,6 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TrimService {
     private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
+    @Getter
     private final int maxRollback;
     private final int trimFrequency;
     private final DatabaseManager dbManager;
@@ -38,6 +42,7 @@ public class TrimService {
     private final ReentrantLock lock = new ReentrantLock();
 
     private Event<TrimData> trimEvent;
+    private Event<TrimConfig> trimConfigEvent;
 
 
     @Inject
@@ -46,6 +51,7 @@ public class TrimService {
                        GlobalSync globalSync,
                        TimeService timeService,
                        Event<TrimData> trimEvent,
+                       Event<TrimConfig> trimConfigEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
     ) {
@@ -57,6 +63,7 @@ public class TrimService {
         this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
+        this.trimConfigEvent = Objects.requireNonNull(trimConfigEvent, "TrimConfig event should not be null");
     }
 
     public int getLastTrimHeight() {
@@ -65,8 +72,8 @@ public class TrimService {
     }
 
 
-    public void init(int height) {
-        log.debug("init() at height = {}", height);
+    public void init(int height, int shardInitialBlockHeight) {
+        log.debug("TRIM: init() at height = {}, shard initial height={}", height, shardInitialBlockHeight);
         lock.lock();
         try {
             TrimEntry trimEntry = trimDao.get();
@@ -78,10 +85,16 @@ public class TrimService {
             int lastTrimHeight = trimEntry.getHeight();
             log.info("Last trim height '{}' was done? ='{}', supplied height {}",
                     lastTrimHeight, trimEntry.isDone(), height);
+            if (lastTrimHeight < shardInitialBlockHeight) {
+                //we need to change the lastTrimHeight value according to the first block in the latest shard
+                lastTrimHeight = shardInitialBlockHeight;
+                log.info("Set last trim height to shard initial block height={}", lastTrimHeight);
+            }
             if (!trimEntry.isDone()) {
                 log.info("Finish trim at height {}", lastTrimHeight);
                 trimDerivedTables(lastTrimHeight, false);
             }
+            //TODO: Do we really need to do so many iterations or something about two-three heights from tail would be enough?
             for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
                 log.info("Perform trim on height {}", i);
                 trimDerivedTables(i, false);
@@ -92,6 +105,7 @@ public class TrimService {
     }
 
     public void trimDerivedTables(int height, boolean async) {
+        log.debug("TRIM: trimDerivedTables on height={}, async={}", height, async);
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         lock.lock();
@@ -116,27 +130,35 @@ public class TrimService {
     }
 
     public void doTrimDerivedTablesOnBlockchainHeight(int blockchainHeight, boolean async) {
-        log.debug("doTrimDerived on height {} as async operation (? = {})", blockchainHeight, async);
+        log.debug("TRIM: doTrimDerivedTablesOnBlockchainHeight on height {} as async operation (? = {})", blockchainHeight, async);
         lock.lock();
         try {
             int trimHeight = Math.max(blockchainHeight - maxRollback, 0);
             if (trimHeight > 0) {
-
-                TrimEntry trimEntry = new TrimEntry(null, blockchainHeight, false);
-                trimDao.clear();
-                trimEntry = trimDao.save(trimEntry);
-                dbManager.getDataSource().commit(false);
-                int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
-                if (async) {
-                    log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
-                    trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                TrimEntry trimEntry = trimDao.get();
+                if (trimEntry == null || !trimEntry.isDone() || trimEntry.getHeight() < blockchainHeight) {
+                    if (trimEntry == null || trimEntry.getHeight() < blockchainHeight) {
+                        trimEntry = new TrimEntry(null, blockchainHeight, false);
+                    }
+                    trimDao.clear();
+                    trimEntry = trimDao.save(trimEntry);
+                    dbManager.getDataSource().commit(false);
+                    int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
+                    if (async) {
+                        log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
+                        trimEvent.select(new AnnotationLiteral<Async>() {
+                        }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                    } else {
+                        log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
+                        trimEvent.select(new AnnotationLiteral<Sync>() {
+                        }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                    }
+                    trimEntry.setDone(true);
+                    trimDao.save(trimEntry);
+                    log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
                 } else {
-                    log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
-                    trimEvent.select(new AnnotationLiteral<Sync>() {}).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
+                    log.debug("doTrimDerived skipped at blockchain height={} and trim height={}", blockchainHeight, trimHeight);
                 }
-                trimEntry.setDone(true);
-                trimDao.save(trimEntry);
-                log.debug("doTrimDerived saved {} at height '{}'", trimEntry, blockchainHeight);
             }
         } finally {
             lock.unlock();
@@ -144,11 +166,39 @@ public class TrimService {
     }
 
     public void resetTrim() {
-        trimDao.clear();
+        resetTrim(0);
+    }
+
+    public void resetTrim(int height) {
+        TransactionalDataSource dataSource = dbManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
+        lock.lock();
+        try {
+            try {
+                if (!inTransaction) {
+                    dataSource.begin();
+                }
+                trimDao.clear();
+                if (height > 0) {
+                    trimDao.save(new TrimEntry(null, height, true));
+                    log.debug("Reset Trim to height={}", height);
+                } else {
+                    log.debug("Reset Trim.");
+                }
+                dataSource.commit(!inTransaction);
+            } catch (Exception e) {
+                log.warn(e.toString(), e);
+                dataSource.rollback(!inTransaction);
+                throw e;
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Transactional
     public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height, oneLock);
         long start = System.currentTimeMillis();
         lock.lock();
         try {
@@ -168,7 +218,9 @@ public class TrimService {
             try {
                 for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
                     if (!oneLock) {
+                        log.trace("Try to acquire lock...");
                         globalSync.readLock();
+                        log.trace("Got it.");
                     }
                     try {
                         long startTime = System.currentTimeMillis();
@@ -199,7 +251,24 @@ public class TrimService {
 //        return pruningTime;
     }
 
+    public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
+        log.debug("Send event to {} trim thread", enableTrim ? "enable" : "disable");
+        trimConfigEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+        }).fire(new TrimConfig(enableTrim, clearQueue));
+    }
+
     public boolean isTrimming() {
         return lock.isLocked();
+    }
+
+    public void waitTrimming() {
+        log.debug("Waiting for the end of the latest trim");
+        while (isTrimming()) {
+            ThreadUtils.sleep(100);
+            if (log.isTraceEnabled()) {
+                log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+                        lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
+            }
+        }
     }
 }

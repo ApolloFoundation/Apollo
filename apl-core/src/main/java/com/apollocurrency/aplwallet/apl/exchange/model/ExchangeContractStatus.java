@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
-
 public enum ExchangeContractStatus {
     /**
      * The first user sent a contract and he is waiting for review and approval. (On this step user doesn't transfer money.)
@@ -37,10 +35,5 @@ public enum ExchangeContractStatus {
 
     public boolean isStep3() {
         return this == ExchangeContractStatus.STEP_3;
-    }
-
-
-    public Integer timeOfWaiting(){
-        return this.isStep1() ? Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 : Constants.DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2;
     }
 }

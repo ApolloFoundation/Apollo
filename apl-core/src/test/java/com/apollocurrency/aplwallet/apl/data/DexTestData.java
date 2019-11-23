@@ -100,7 +100,7 @@ public class DexTestData {
         DEX_CONTRACT_ATTACHMENT_2 = new DexContractAttachment(4066034979755747272L, 6794334481055229134L,
                 Convert.parseHexString("8e0f875179dd784241babdc56e1380370620db1c8aa1b7f765e2b98cd3fc2840"), "12380311258696115355", "0xe50bd6b4c62d8fb167de66c11a7a57cbcc97a2e945ddd3829d7cf0f09fda7b14",
                 Convert.parseHexString("e670c46452e18fe2224edf5fba888affef6060e0efeeb10862bcfdebfcfcf997dc37443b1ff44c79977f484e4b4e2e94404620145ebeee5bce7a2f609b453e13"),
-                ExchangeContractStatus.STEP_2, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+                ExchangeContractStatus.STEP_3, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
         DEX_CONTRACT_ATTACHMENT_3 = new DexContractAttachment(5339180579805180746L, -5842203753269117069L,
                 Convert.parseHexString("509520c8d27b08b9208b38f6ab1735c043263c18d2579a44f2210135ca92b480"), "0x8540339763b19265f394140544fe060711b1e0623860d8b99e21ffc769574f50", "4340657620930323843",
                 Convert.parseHexString("d6e6c72256548595c331c66d0d3fb5b1141b26e2d15946092acb3e3e46b781f7f52148408a9f0d845333cccab9c822f13149eae2ab5b963c921e4a7e97dabd7f"),

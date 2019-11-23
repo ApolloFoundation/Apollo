@@ -3,20 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import java.io.IOException;
-import java.util.Base64;
-
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
-import com.apollocurrency.aplwallet.apl.core.peer.DownloadableFilesManager;
+import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import java.nio.file.Path;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Base64;
 
 /**
  *

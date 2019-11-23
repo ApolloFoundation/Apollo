@@ -16,7 +16,6 @@ import java.util.List;
 
 /**
  * Response that contains node forgers
- *
  * @author alukin@gmail.com
  */
 @Getter

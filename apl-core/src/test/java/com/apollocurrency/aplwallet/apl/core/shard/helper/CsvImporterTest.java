@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -120,7 +121,8 @@ class CsvImporterTest {
             FullTextConfigImpl.class,
             DerivedDbTablesRegistryImpl.class,
             AplAppStatus.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            ValueParserImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -135,6 +137,8 @@ class CsvImporterTest {
 
     @Inject
     private AplAppStatus aplAppStatus;
+    @Inject
+    private ValueParser valueParser;
     CsvImporter csvImporter;
 
     private Set<String> tables = Set.of("account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
@@ -159,7 +163,7 @@ class CsvImporterTest {
     @Test
     void notFoundFile() throws Exception {
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+        csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
         assertNotNull(csvImporter);
         long result = csvImporter.importCsv("unknown_table_file", 10, true);
         assertEquals(-1, result);
@@ -173,15 +177,17 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
             assertNotNull(csvImporter);
 
             for (String tableName : tables) {
                 long result = 0;
                 try {
                     result = csvImporter.importCsv(tableName, 1, true);
+                    dataSource.commit(false);
                 } catch (Exception e) {
                     log.error("Import error " + tableName, e);
+                    throw new RuntimeException(e);
                 }
                 assertTrue(result > 0, "incorrect '" + tableName + "'");
                 log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -208,18 +214,20 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), databaseManager, null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), databaseManager, null, valueParser);
 
             String tableName = "account_control_phasing";
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(4, result);
 
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = con.createStatement().executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -252,18 +260,20 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
 
             String tableName = "shuffling_data";
 
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(2, result);
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -301,17 +311,19 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), null, valueParser);
 
             String tableName = "goods";
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 1, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertEquals(14, result);
-            try (Connection con = dataSource.begin();
+            try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
@@ -349,7 +361,7 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             assertNotNull(csvImporter);
 
             String taskId = aplAppStatus.durableTaskStart("Shard data import", "data import", true);
@@ -358,9 +370,10 @@ class CsvImporterTest {
             long result = 0;
             try {
                 result = csvImporter.importCsvWithDefaultParams(tableName, 10, true, Map.of("height", 100));
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
-
+                throw new RuntimeException(e);
             }
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -397,15 +410,17 @@ class CsvImporterTest {
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
 
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             assertNotNull(csvImporter);
 
             String tableName = "shard";
             long result = 0;
             try {
                 result = csvImporter.importCsv(tableName, 10, true);
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
             }
             assertTrue(result > 0, "incorrect '" + tableName + "'");
             log.debug("Imported '{}' rows for table '{}'", result, tableName);
@@ -442,15 +457,17 @@ class CsvImporterTest {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
 
         DbUtils.inTransaction(dataSource, (conOuter) -> {
-            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus);
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
             AtomicInteger counter = new AtomicInteger(0);
             long result = 0;
             try {
                 result = csvImporter.importCsvWithRowHook(ShardConstants.PHASING_POLL_TABLE_NAME, 10, true, (row) -> {
                     counter.incrementAndGet();
                 });
+                dataSource.commit(false);
             } catch (Exception e) {
                 log.error("Import error " + ShardConstants.PHASING_POLL_TABLE_NAME, e);
+                throw new RuntimeException(e);
             }
             assertEquals(3, counter.get());
             assertEquals(result, counter.get());
@@ -459,6 +476,7 @@ class CsvImporterTest {
                 phasingPollCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve("phasing_poll.csv"));
             } catch (IOException e) {
                 log.error("Load all lines error", e);
+                throw new RuntimeException(e);
             }
             assertEquals(phasingPollCsv.size() - 1, result);
             verifyCount(dataSource, ShardConstants.PHASING_POLL_TABLE_NAME, 3);
@@ -466,7 +484,7 @@ class CsvImporterTest {
     }
 
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
-        try (Connection con = dataSource.begin();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
         ) {
             long result = -1;

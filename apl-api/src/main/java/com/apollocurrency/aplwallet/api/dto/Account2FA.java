@@ -36,7 +36,7 @@ public class Account2FA extends BasicAccount {
     public String toString() {
         return "Account2FA{" +
                 "status=" + status +
-                ", id=" + Crypto.rsEncode(id) +
+                ", id=" + Crypto.rsEncode(getId()) +
                 '}';
     }
 }

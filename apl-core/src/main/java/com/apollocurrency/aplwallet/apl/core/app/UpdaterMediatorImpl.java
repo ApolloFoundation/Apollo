@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -16,10 +14,12 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.slf4j.Logger;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.ResultSet;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class UpdaterMediatorImpl implements UpdaterMediator {
@@ -28,9 +28,9 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private PeersService peers = CDI.current().select(PeersService.class).get(); 
+    private PeersService peers = CDI.current().select(PeersService.class).get();
 
-//    @Inject
+    //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
         this.blockchain = blockchain;

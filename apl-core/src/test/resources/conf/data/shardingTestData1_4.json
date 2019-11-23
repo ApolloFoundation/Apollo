@@ -1,0 +1,28 @@
+{
+  "shards": [
+    {
+      "shardId": 3,
+      "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
+      "hash": "f16d31a977b276299b9c2d8e57647b569740bf5cfad40859b78f880784918690",
+      "height": 150000,
+      "zipCrcHash": "c04bbd4e87f971cca841819bd5e516bc2893cd9e4b681726a11ce0b35d9c4660",
+      "prunableZipHash": null
+    },
+    {
+      "shardId": 2,
+      "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
+      "hash": "03d64ee61ee81635fadad31ed61879779fff55a4e1c1c66b1cef5deae0d87970",
+      "height": 100000,
+      "zipCrcHash": "34a2566bf4f09a22276eb0fa321b992716fd2ad352ee62d1902d2f365e81dcb0",
+      "prunableZipHash": null
+    },
+    {
+      "shardId": 1,
+      "chainId": "d5c22b16-935e-495d-aa3f-bb26ef2115d3",
+      "hash": "1efcc1f06de13c3175f35e72bde045c68382569153661e1dc6caf2d1e3ccbd60",
+      "height": 50000,
+      "ziCrcpHash": "f38c7c40e32e893ca6c7671cab967535fa85020d9b57216148b27d5ba3ee0860",
+      "prunableZipHash": null
+    }
+  ]
+}

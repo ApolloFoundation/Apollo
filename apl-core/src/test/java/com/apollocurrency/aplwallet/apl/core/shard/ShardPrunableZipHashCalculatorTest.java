@@ -1,16 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -36,13 +25,24 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 @EnableWeld
 class ShardPrunableZipHashCalculatorTest {
@@ -96,8 +96,8 @@ class ShardPrunableZipHashCalculatorTest {
         doReturn(dataExportDir).when(dirProvider).getDataExportDir();
         doReturn(List.of(shard1, shard2, shard3)).when(shardDao).getAllCompletedShards();
         doReturn(List.of(prunableMessageTable, derivedTable)).when(registry).getDerivedTables();
-        Path secondZipPath = dataExportDir.resolve("apl-blockchain-shard-2-prunable-chain-" + chainId.toString() + ".zip");
-        Path thirdZipPath = dataExportDir.resolve("apl-blockchain-shard-3-prunable-chain-" + chainId.toString() + ".zip");
+        Path secondZipPath = dataExportDir.resolve("apl-blockchain-shardprun-2-chain-" + chainId.toString() + ".zip");
+        Path thirdZipPath = dataExportDir.resolve("apl-blockchain-shardprun-3-chain-" + chainId.toString() + ".zip");
         Files.createFile(secondZipPath);
         Files.createFile(thirdZipPath);
 

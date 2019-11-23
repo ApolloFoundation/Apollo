@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -77,6 +78,11 @@ public class DaoConfig {
     @Produces
     private DexTransactionDao dexTransactionDao() {
         return createDaoInterfaceProxy(DexTransactionDao.class);
+    }
+
+    @Produces
+    private UserErrorMessageDao userErrorMessage() {
+        return createDaoInterfaceProxy(UserErrorMessageDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {

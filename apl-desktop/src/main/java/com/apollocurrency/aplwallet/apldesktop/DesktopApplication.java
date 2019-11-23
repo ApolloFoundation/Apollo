@@ -20,9 +20,6 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import javafx.application.Application;
@@ -48,7 +45,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
-//import netscape.javascript.JSObject;
+import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -68,11 +65,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-//import netscape.javascript.JSObject;
-
-//import com.apollocurrency.aplwallet.apl.core.app.Db;
-//import com.apollocurrency.aplwallet.apl.core.db.FullTextTrigger;
-//import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import static com.apollocurrency.aplwallet.apldesktop.DesktopApplication.MainApplication.showStage;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopApplication extends Application {
     private static final Logger LOG = getLogger(DesktopApplication.class);
@@ -82,7 +76,7 @@ public class DesktopApplication extends Application {
     private static final DbRecoveringUI DB_RECOVERING_UI = DbRecoveringUI.getInstance();
     private static final boolean ENABLE_JAVASCRIPT_DEBUGGER = false;
     private static volatile boolean isSplashScreenLaunched = false;
-    private static volatile Stage mainStage;
+    static volatile Stage mainStage;
     //private static OptionDAO optionDAO = new OptionDAO();
     private static volatile Stage screenStage;
     private static volatile Stage changelogStage;
@@ -364,7 +358,6 @@ public class DesktopApplication extends Application {
         }
 
         public void startDesktopApplication() {
-            mainStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
             browser = new WebView();
 
@@ -394,14 +387,14 @@ public class DesktopApplication extends Application {
                             LOG.debug("loadWorker state change ignored");
                             return;
                         }
-/*
+
                         JSObject window = (JSObject) webEngine.executeScript("window");
                         javaScriptBridge = new JavaScriptBridge(this); // Must be a member variable to prevent gc
                         window.setMember("java", javaScriptBridge);
-                        Locale locale = Locale.getDefault();
-                        String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
-                        window.setMember("javaFxLanguage", language);
-*/
+//                        Locale locale = Locale.getDefault();
+//                        String language = locale.getLanguage().toLowerCase() + "-" + locale.getCountry().toUpperCase();
+//                        window.setMember("javaFxLanguage", language);
+
                         webEngine.executeScript("console.log = function(msg) { java.log(msg); };");
 //TODO: Get Blockchain config from API
 //                        mainStage.setTitle(blockchainConfig.getProjectName() + " Desktop - " + webEngine.getLocation());
@@ -454,7 +447,7 @@ public class DesktopApplication extends Application {
             mainStage.show();
             Platform.setImplicitExit(false); // So that we can reopen the application in case the user closed it
         }
-        
+
         public void startChangelogWindow() {
             changelogStage = new Stage();
             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();

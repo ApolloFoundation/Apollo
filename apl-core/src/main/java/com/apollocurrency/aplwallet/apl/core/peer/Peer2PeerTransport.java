@@ -288,8 +288,10 @@ public class Peer2PeerTransport {
 
                     if (!sendOK) {
                         log.trace("Peer: {} Using inbound web socket. failed. Closing", getHostWithPort());
-                        inboundWebSocket.close();
-                        inboundWebSocket = null;
+                        if (inboundWebSocket != null) {
+                            inboundWebSocket.close();
+                            inboundWebSocket = null;
+                        }
                     } else {
                         log.trace("Peer: {} Send using inbound web socket failed", getHostWithPort());
                     }

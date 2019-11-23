@@ -5,8 +5,12 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -16,6 +20,7 @@ import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -33,6 +38,7 @@ import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
@@ -52,6 +58,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -62,14 +69,16 @@ public class EthereumWalletService {
     private Web3j web3j;
     private KeyStoreService keyStoreService;
     private DexEthService dexEthService;
+    private UserErrorMessageDao userErrorMessageDao;
 
     public String PAX_CONTRACT_ADDRESS;
 
     @Inject
-    public EthereumWalletService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService) {
+    public EthereumWalletService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
         this.dexEthService = dexEthService;
+        this.userErrorMessageDao = userErrorMessageDao;
 
         this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
     }
@@ -316,7 +325,6 @@ public class EthereumWalletService {
             log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage(),e);
         }
-
         log.info("Nonce for sending address (coinbase): " + nonce);
 
         RawTransaction rawTransaction  = RawTransaction
@@ -383,14 +391,15 @@ public class EthereumWalletService {
     }
 
     private String execute(Credentials credentials, Function function, String contractToAddress, Long gasPrice) throws ExecutionException, InterruptedException {
+        BigInteger gasPriceWei = EthUtil.gweiToWei(gasPrice);
+        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function,BigInteger.ZERO, gasPriceWei);
         BigInteger nonce = getNonce(credentials.getAddress());
-
         String encodedFunction = FunctionEncoder.encode(function);
 
         RawTransaction rawTransaction = RawTransaction.createTransaction(
                 nonce,
-                EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI),
-                Constants.GAS_LIMIT_FOR_ERC20,
+                gasPriceWei,
+                gasLimitWei,
                 contractToAddress,
                 encodedFunction);
 
@@ -401,10 +410,36 @@ public class EthereumWalletService {
 
         return transactionResponse.getTransactionHash();
     }
+    public BigInteger estimateGasLimit(String fromAddress, String toAddress, Function function, BigInteger weiValue) {
+        try {
+            EthEstimateGas ethEstimateGas  = web3j.ethEstimateGas(new Transaction(fromAddress, null, null, null
+                    , toAddress, weiValue, FunctionEncoder.encode(function))).send();
+            if (ethEstimateGas.getError() != null) {
+                String parameters = function.getInputParameters().stream().map(TypeEncoder::encode).collect(Collectors.joining(","));
+                userErrorMessageDao.add(new UserErrorMessage(null, fromAddress, ethEstimateGas.getError().getMessage(),function.getName(), parameters, System.currentTimeMillis()));
+                throw new NotValidTransactionException(String.format("Unable to send eth transaction from %s to %s : %s, error - %s", fromAddress, toAddress, function.getName() , ethEstimateGas.getError().getMessage()));
+            }
+            BigInteger amountUsed = ethEstimateGas.getAmountUsed();
+            return amountUsed.add(amountUsed.divide(BigInteger.TEN)); //+10%
+        } catch (IOException e) {
+            throw new RuntimeException("I/O error occurred, maybe eth node is down");
+        }
+    }
+
+    public BigInteger validateBalanceAndReturnGasLimit(String fromAddress, String toAddress, Function function, BigInteger weiValue, BigInteger gasPrice) {
+        BigInteger gasLimit = estimateGasLimit(fromAddress, toAddress, function, weiValue);
+        BigInteger balance = getEthBalanceWei(fromAddress);
+        BigInteger fee = gasLimit.multiply(gasPrice);
+        BigInteger requiredAmount = fee.add(weiValue);
+        if (balance.compareTo(requiredAmount) < 0) {
+            throw new NotSufficientFundsException("Not enough eth to pay fee + amount. Current balance -  " + balance + ", required " + requiredAmount);
+        }
+        return gasLimit;
+    }
 
     private BigInteger getNonce(String address) throws ExecutionException, InterruptedException {
         EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
-                address, DefaultBlockParameterName.LATEST).sendAsync().get();
+                address, DefaultBlockParameterName.PENDING).sendAsync().get();
 
         return ethGetTransactionCount.getTransactionCount();
     }

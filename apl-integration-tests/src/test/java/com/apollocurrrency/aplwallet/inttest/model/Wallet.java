@@ -1,0 +1,31 @@
+package com.apollocurrrency.aplwallet.inttest.model;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Wallet {
+    private String user;
+    private String pass;
+    private String publicKey;
+    private boolean vault;
+    private String ethAddress;
+    private String accountId;
+
+    public Wallet(String user, String pass) {
+        this.user = user;
+        this.pass = pass;
+    }
+
+    @Override
+    public String toString() {
+        if (!vault) return "Standart Wallet";
+        else return "Vault Wallet";
+
+    }
+}

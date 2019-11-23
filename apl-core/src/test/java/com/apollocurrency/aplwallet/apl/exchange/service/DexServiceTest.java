@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -39,6 +40,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -68,6 +70,8 @@ class DexServiceTest {
     @Mock
     MandatoryTransactionDao mandatoryTransactionDao;
     @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
     LoadingCache<Long, OrderFreezing> cache;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 127_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
@@ -85,7 +89,9 @@ class DexServiceTest {
 
     @BeforeEach
     void setUp() {
-        dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService, dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService, dexTradeDao, approvedResultTable, mandatoryTransactionDao, cache);
+        dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
+                dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService, dexTradeDao,
+                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache);
     }
 
     @Test
@@ -228,5 +234,35 @@ class DexServiceTest {
         List<DexOrderWithFreezing> ordersWithFreezing = dexService.getOrdersWithFreezing(request1);
 
         assertEquals(List.of(new DexOrderWithFreezing(order1, false)), ordersWithFreezing);
+    }
+
+    @Test
+    void testGetAccountOrderContracts() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 0, 3);
+
+        List<ExchangeContract> result = dexService.getContractsByAccountOrderFromStatus(this.contract.getSender(), this.contract.getOrderId(), (byte) 0);
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void testGetAccountOrderContractWithStatus() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 1, 1);
+
+        List<ExchangeContract> result = dexService.getContractsByAccountOrderWithStatus(this.contract.getSender(), this.contract.getOrderId(), (byte) 1);
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void testGetAccountOrderVersionedContracts() {
+        List<ExchangeContract> expected = List.of(this.contract);
+        doReturn(expected).when(dexContractDao).getAllVersionedForAccountOrder(this.contract.getSender(), this.contract.getOrderId(), 0, 3);
+
+        List<ExchangeContract> result = dexService.getVersionedContractsByAccountOrder(this.contract.getSender(), this.contract.getOrderId());
+
+        assertSame(expected, result);
     }
 }

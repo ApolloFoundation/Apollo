@@ -58,8 +58,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -167,13 +165,14 @@ public final class PeerImpl implements Peer {
         lock.lock();
         try{
           if (newState != PeerState.CONNECTED) {
-              limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
+              p2pTransport.disconnect();
+              // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
           }
-        } catch (InterruptedException e) {
-            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
-            Thread.currentThread().interrupt();
-        } catch (TimeoutException e) {
-            LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
+//        } catch (InterruptedException e) {
+//            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
+//            Thread.currentThread().interrupt();
+//        } catch (TimeoutException e) {
+//            LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
         } finally{
             //we have to change state anyway
             this.state = newState;
@@ -558,9 +557,9 @@ public final class PeerImpl implements Peer {
         }
         return failedConnectAttempts;
     }
-    
-    @Override   
-    public synchronized boolean handshake(UUID targetChainId) {
+
+    public synchronized boolean handshake() {
+        UUID targetChainId = peers.blockchainConfig.getChain().getChainId();
         if(getState()==PeerState.CONNECTED){
             LOG.trace("Peers {} is already connected.",getHostWithPort());
             return true;

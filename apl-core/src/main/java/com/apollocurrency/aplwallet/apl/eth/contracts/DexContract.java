@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.eth.contracts;
 
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;
@@ -21,6 +23,7 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
@@ -86,6 +89,7 @@ public class DexContract extends Contract {
     public static final String FUNC_GETSWAPDATA = "getSwapData";
 
     private Credentials credentials;
+    private EthereumWalletService ethereumWalletService;
 
     public static final Event INITIATED_EVENT = new Event("Initiated",
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {
@@ -144,8 +148,9 @@ public class DexContract extends Contract {
         super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
     }
 
-    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
         super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
+        this.ethereumWalletService = ethereumWalletService;
     }
 
     public RemoteCall<BigInteger> getSwapType(byte[] secretHash) {
@@ -191,10 +196,11 @@ public class DexContract extends Contract {
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }));
+                Arrays.<TypeReference<?>>asList(
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {}
+                        ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
                 new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
                     @Override
@@ -254,12 +260,12 @@ public class DexContract extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public String refund(byte[] secretHash) {
+    public String refund(byte[] secretHash, boolean waitConfirmation) {
         final Function function = new Function(
                 FUNC_REFUND,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)), 
                 Collections.<TypeReference<?>>emptyList());
-        return sendTx(function, BigInteger.ZERO);
+        return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
     public RemoteCall<BigInteger> getUserDepositsAmount(String user) {
@@ -323,44 +329,43 @@ public class DexContract extends Contract {
 
         return sendTx(function, weiValue);
     }
-
     public String sendTx(Function function, BigInteger weiValue) {
-        EthSendTransaction sendTransaction;
-        try {
-            sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
-                    gasProvider.getGasLimit(function.getName()),
-                    contractAddress,
-                    FunctionEncoder.encode(function),
-                    weiValue);
-        } catch (IOException e) {
-            return null;
-        }
-
-        return sendTransaction.getTransactionHash();
+        return sendTx(function, weiValue, false);
     }
 
-//  TODO Second variant, remove after success testing.
-//    public EthReply sendTx(Function function, BigInteger weiValue) throws ExecutionException, InterruptedException {
-//        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
-//                credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
-//        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-//
-//        RawTransaction rawTransaction = RawTransaction.createTransaction(
-//                nonce,
-//                gasProvider.getGasPrice(function.getName()),
-//                gasProvider.getGasLimit(function.getName()),
-//                contractAddress,
-//                weiValue,
-//                FunctionEncoder.encode(function));
-//
-//        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
-//        String transactionHash = Numeric.toHexString(Hash.sha3(signedMessage));
-//        String hexValue = Numeric.toHexString(signedMessage);
-//
-//        CompletableFuture<EthSendTransaction> ethSendTransaction = web3j.ethSendRawTransaction(hexValue).sendAsync();
-//
-//        return new EthReply(transactionHash, ethSendTransaction);
-//    }
+    public String sendTx(Function function, BigInteger weiValue, boolean waitConfirmation) {
+        BigInteger gasLimit = ethereumWalletService.validateBalanceAndReturnGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue, gasProvider.getGasPrice(function.getName()));
+        String hash;
+        if (waitConfirmation) {
+            TransactionReceipt receipt;
+            try {
+                receipt = send(contractAddress, FunctionEncoder.encode(function), weiValue, gasProvider.getGasPrice(function.getName()), gasLimit);
+            } catch (IOException | TransactionException e) {
+                throw new RuntimeException("Unable to send eth transaction or retrieve tx receipt", e);
+            }
+            if (!receipt.isStatusOK()) {
+                throw new AplException.DEXProcessingException(String.format("Transaction was failed. Gas used - %d, status - %s", receipt.getGasUsed(), receipt.getStatus()));
+            }
+            hash = receipt.getTransactionHash();
+        } else {
+            EthSendTransaction sendTransaction;
+            try {
+                sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
+                        gasLimit,
+                        contractAddress,
+                        FunctionEncoder.encode(function),
+                        weiValue);
+                hash = sendTransaction.getTransactionHash();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
+            }
+            if (sendTransaction.hasError()) {
+                throw new AplException.DEXProcessingException(sendTransaction.getError().getMessage());
+            }
+        }
+
+        return hash;
+    }
 
     public RemoteCall<Boolean> doesUserExist(String user) {
         final Function function = new Function(FUNC_DOESUSEREXIST, 
@@ -657,8 +662,8 @@ public class DexContract extends Contract {
         return new DexContract(contractAddress, web3j, credentials, contractGasProvider);
     }
 
-    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
-        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider);
+    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
+        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider, ethereumWalletService);
     }
 
     public static RemoteCall<DexContract> deploy(Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {

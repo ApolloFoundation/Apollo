@@ -1,25 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.UUID;
-
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
@@ -35,6 +18,24 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 class DownloadableFilesManagerTest {
@@ -127,8 +128,11 @@ class DownloadableFilesManagerTest {
         
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
-        
-//        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
+
+        pathToShardArchive = filesManager.mapFileIdToLocalPath("shardprun::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
+        assertEquals("apl-blockchain-shardprun-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+
+        //        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
 //        assertEquals("123", fpath);
         
 //        fpath = filesManager.mapFileIdToLocalPath("debug::123").toString();
