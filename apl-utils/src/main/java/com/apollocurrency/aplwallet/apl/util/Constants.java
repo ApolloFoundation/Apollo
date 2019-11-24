@@ -165,6 +165,9 @@ public final class Constants {
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
 
+    public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
+
     public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP = 2 * 60 * 60;
     public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP = 48 * 60 * 60;
 

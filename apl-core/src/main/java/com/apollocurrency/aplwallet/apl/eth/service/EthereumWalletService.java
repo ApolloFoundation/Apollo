@@ -66,8 +66,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class EthereumWalletService {
     private static final Logger log = getLogger(EthereumWalletService.class);
 
-    private BigInteger MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-
     private Web3j web3j;
     private KeyStoreService keyStoreService;
     private DexEthService dexEthService;
@@ -221,7 +219,7 @@ public class EthereumWalletService {
         }
     }
 
-    public String sendApproveTransaction(EthWalletKey ethWalletKey, String spenderAddress) throws AplException.ExecutiveProcessException {
+    public String sendApproveTransaction(EthWalletKey ethWalletKey, String spenderAddress, BigInteger value) throws AplException.ExecutiveProcessException {
         EthGasInfo ethGasInfo;
         try {
             ethGasInfo = dexEthService.getEthPriceInfo();
@@ -229,7 +227,7 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Third service is not available.");
         }
 
-        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, ethGasInfo.getAverageSpeedPrice());
+        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, ethGasInfo.getAverageSpeedPrice(), value);
     }
 
 
@@ -244,12 +242,13 @@ public class EthereumWalletService {
     /**
      * Send Approve Transaction
      * @param spenderAddress sender address
+     * @param value amount
      * @return tx transaction id
      */
-    private String sendApproveTransaction(Credentials credentials, String spenderAddress, Long gasPrice) {
+    private String sendApproveTransaction(Credentials credentials, String spenderAddress, Long gasPrice, BigInteger value) {
         String tx = null;
         try {
-            Function function = approve(spenderAddress, MAX_POS_INT);
+            Function function = approve(spenderAddress, value);
             tx = execute(credentials, function, PAX_CONTRACT_ADDRESS, gasPrice);
         } catch (Exception e){
             log.error(e.getMessage());

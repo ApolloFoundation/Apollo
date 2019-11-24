@@ -99,7 +99,7 @@ public class DexSmartContractService {
                 throw new RuntimeException(e);
             }
             if (allowance.compareTo(weiValue) < 0) {
-                String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress);
+                String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
 
                 if (approvedTx == null) {
                     log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
