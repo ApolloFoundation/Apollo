@@ -1,15 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -58,6 +48,11 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,11 +65,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
 @Slf4j
 @Singleton
@@ -97,7 +97,6 @@ public class DexOrderProcessor {
     private final TaskDispatchManager taskDispatchManager;
     private TaskDispatcher taskDispatcher;
     private TimeService timeService;
-    private TaskDispatchManager taskDispatchManager;
     private ExecutorService backgroundExecutor;
 
     private volatile boolean processorEnabled = true;
@@ -148,8 +147,8 @@ public class DexOrderProcessor {
 
         Task dexOrderProcessorTask = Task.builder()
                 .name(SERVICE_NAME)
-                .delay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
-                .initialDelay((int)TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .delay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .initialDelay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
                 .task(task)
                 .build();
 
@@ -192,11 +191,11 @@ public class DexOrderProcessor {
 
             for (Long account : accounts) {
                 try {
-                //TODO run this 3 functions not every time. (improve performance)
-                processCancelOrders(account);
-                processExpiredOrders(account);
-                refundDepositsForLostOrders(account);
-                refundExpiredAtomicSwaps(account);
+                    //TODO run this 3 functions not every time. (improve performance)
+                    processCancelOrders(account);
+                    processExpiredOrders(account);
+                    refundDepositsForLostOrders(account);
+                    refundExpiredAtomicSwaps(account);
 
                     processContractsForUserStep1(account);
                     processContractsForUserStep2(account);
@@ -757,7 +756,7 @@ public class DexOrderProcessor {
                         Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
                         Long timeDeadLine = swapData.getTimeDeadLine();
-                        if (timeDeadLine + SWAP_EXPIRATION_OFFSET  < timeService.systemTime()) {
+                        if (timeDeadLine + SWAP_EXPIRATION_OFFSET < timeService.systemTime()) {
                             if (expiredSwaps.get(orderId) == null) { // skip swaps under processing
                                 expiredSwaps.put(orderId, swapData.getSecretHash());
                                 CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)

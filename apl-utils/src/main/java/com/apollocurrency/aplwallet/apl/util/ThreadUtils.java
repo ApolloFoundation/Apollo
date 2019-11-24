@@ -61,7 +61,7 @@ public class ThreadUtils {
 
     public static String getStackTrace(Throwable exception) throws IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-                PrintWriter printWriter = new PrintWriter(out)) {
+             PrintWriter printWriter = new PrintWriter(out)) {
             exception.printStackTrace(printWriter);
             printWriter.flush();
             byte[] bytes = out.toByteArray();

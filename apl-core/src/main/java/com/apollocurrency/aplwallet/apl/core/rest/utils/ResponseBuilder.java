@@ -40,7 +40,7 @@ public class ResponseBuilder {
         return instance;
     }
 
-    public static ResponseBuilder detailedApiError(ErrorInfo error, String errorDetails, Object ... args){
+    public static ResponseBuilder detailedApiError(ErrorInfo error, String errorDetails, Object... args) {
         ResponseBuilder instance = new ResponseBuilder(200);
         instance.detailedError(error, errorDetails, args);
         return instance;
@@ -59,18 +59,18 @@ public class ResponseBuilder {
     }
 
 
-    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object ... args){
+    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object... args) {
         this.status = 200;
 
         String reasonPhrase = Messages.format(error.getErrorDescription(), args);
-        this.response = new ResponseBase(error.getErrorCode(), reasonPhrase, errorDetails, (long)error.getOldErrorCode());
+        this.response = new ResponseBase(error.getErrorCode(), reasonPhrase, errorDetails, (long) error.getOldErrorCode());
         this.dto = null;
 
         return this;
     }
 
 
-    public ResponseBuilder error(ErrorInfo error, Object ... args){
+    public ResponseBuilder error(ErrorInfo error, Object... args) {
         return detailedError(error, null, args);
     }
 

@@ -159,7 +159,7 @@ public class DexSmartContractService {
         String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.DexOperation.REFUND), true);
         if (txHash == null) {
             ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND,params, fromAddress) ,ethWalletKey.getCredentials());
+            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND, params, fromAddress), ethWalletKey.getCredentials());
             txHash = dexContract.refund(secretHash, waitConfirmation);
         }
         return txHash != null;
@@ -304,6 +304,7 @@ public class DexSmartContractService {
     private String checkExistingTx(DexTransaction tx) {
         return checkExistingTx(tx, false);
     }
+
     private String checkExistingTx(DexTransaction tx, boolean waitConfirmation) {
         String txHash = null;
         if (tx != null) {

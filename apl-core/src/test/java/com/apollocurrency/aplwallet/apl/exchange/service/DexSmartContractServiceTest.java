@@ -400,6 +400,7 @@ class DexSmartContractServiceTest {
         doReturn(Optional.empty()).when(service).getTxByHash(Numeric.toHexString(new byte[32]));
         mockEthSendTransaction(empty32EncodedBytes, hash);
     }
+
     private void mockExistingTransactionSendingWithReceipt(String hash) throws IOException, TransactionException {
         mockExistingTransactionSendingWithoutReceipt(hash);
         TransactionReceipt receipt = mock(TransactionReceipt.class);
