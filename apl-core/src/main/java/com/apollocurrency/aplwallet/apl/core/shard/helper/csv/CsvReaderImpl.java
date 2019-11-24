@@ -255,6 +255,7 @@ public class CsvReaderImpl extends CsvAbstractBase
             ch = readChar();
             switch (state) {
                 case 0: //Error state
+                    endLex = true;
                     break;
                 case 1:
                     if (ch == textFieldCharacter) {
@@ -303,6 +304,9 @@ public class CsvReaderImpl extends CsvAbstractBase
         while (!endLex) {
             ch = readChar();
             switch (state){
+                case 0: //error state
+                    endLex = true;
+                    break;
                 case 1:
                     if (ch == arrayEndToken) {
                         endLex = true;
@@ -368,7 +372,7 @@ public class CsvReaderImpl extends CsvAbstractBase
             s = s.trim();
         }
         if(!endOfLine) {
-            ch = readChar();
+            ch = readChar();//read an eventual field separator ','
             endOfLine=isEOL(ch);
         }
         inputBufferStart = -1; // reset
