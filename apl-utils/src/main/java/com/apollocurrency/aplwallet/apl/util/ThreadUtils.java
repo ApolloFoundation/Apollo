@@ -13,7 +13,7 @@ public class ThreadUtils {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -21,7 +21,7 @@ public class ThreadUtils {
         try {
             timeUnit.sleep(time);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 

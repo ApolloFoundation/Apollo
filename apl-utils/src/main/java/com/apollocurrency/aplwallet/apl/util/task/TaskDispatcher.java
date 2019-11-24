@@ -20,23 +20,36 @@ public interface TaskDispatcher extends TaskExecutorService, TaskDispatcherConfi
     void dispatch();
 
     /**
-     * Submit a background task for execution as a background TASK.
+     * Submit a background task for execution as a background TASK (with fixed delay or at fixed rate).
      * @param task the task to execute
      * @return {@code true} if this task was put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
      */
-    default boolean schedule(Task task) throws RejectedExecutionException {
-        return schedule(task, TaskOrder.TASK);
-    }
+    boolean schedule(Task task) throws RejectedExecutionException;
 
     /**
-     * Submit a background task for execution. This task is put in queue and will be executed in specified order
+     * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} INIT
      * @param task the task to execute
-     * @param order the task order
      * @return {@code true} if the task is put into a queue
      * @throws RejectedExecutionException if this dispatcher has been shut down
      */
-    boolean schedule(Task task, TaskOrder order) throws RejectedExecutionException;
+    boolean invokeInit(Task task) throws RejectedExecutionException;
+
+    /**
+     * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} AFTER
+     * @param task the task to execute
+     * @return {@code true} if the task is put into a queue
+     * @throws RejectedExecutionException if this dispatcher has been shut down
+     */
+    boolean invokeAfter(Task task) throws RejectedExecutionException;
+
+    /**
+     * Submit a background task for execution. This task is put in queue and will be executed only once in order {@link TaskOrder} BEFORE
+     * @param task the task to execute
+     * @return {@code true} if the task is put into a queue
+     * @throws RejectedExecutionException if this dispatcher has been shut down
+     */
+    boolean invokeBefore(Task task) throws RejectedExecutionException;
 
     /**
      * Initiates an orderly shutdown in which previously submitted tasks are executed,

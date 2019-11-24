@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -66,25 +69,26 @@ class PrunableArchiveMigratorTest {
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
+    WeldInitiator weld = WeldInitiator.from(Event.class, PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
     PrunableArchiveMigrator migrator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     Shard shard1 = new Shard(1L, new byte[32], ShardState.FULL, 2000, null, new long[3], new int[3], new int[3], new byte[32]);
     Shard shard2 = new Shard(2L, new byte[32], ShardState.FULL, 4000, null, new long[3], new int[3], new int[3], new byte[32]);
+    @Inject
+    Event<ChunkedFileOps> event;
 
     @BeforeEach
     void setUp() {
-        migrator = spy(new PrunableArchiveMigrator(shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
+        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
     }
 
 
     @Test
     void testMigrateAlreadyMigrated() {
         doReturn("false").when(optionDAO).get(anyString());
-
+        mockChain();
         migrator.migrate();
-
-        verifyZeroInteractions(shardDao, dirProvider, blockchainConfig, zip, registry);
+        verifyZeroInteractions(shardDao, dirProvider, zip, registry);
     }
 
     @Test
@@ -106,7 +110,8 @@ class PrunableArchiveMigratorTest {
 
     void checkContent(Path path, Shard shard, byte[] hash) throws IOException {
         assertTrue(Files.exists(path));
-        byte[] newHash = zip.calculateHash(path.toAbsolutePath().toString());
+        ChunkedFileOps fops = new ChunkedFileOps(path.toAbsolutePath().toString());
+        byte[] newHash = fops.getFileHash();
         assertFalse(Arrays.equals(newHash, hash));
         assertArrayEquals(newHash, shard.getCoreZipHash());
         assertArrayEquals(new byte[32], shard.getPrunableZipHash());
@@ -146,8 +151,10 @@ class PrunableArchiveMigratorTest {
         Files.createFile(dataExportFolder.resolve("shard.csv"));
         Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
-        byte[] hash1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        byte[] hash1 = ops1.getFileHash();
+        ChunkedFileOps ops2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
+        byte[] hash2 = ops2.getFileHash();
         doReturn(dataExportFolder).when(dirProvider).getDataExportDir();
         AtomicReference<Path> tempDirPath = new AtomicReference<>();
         doAnswer(invocation -> {

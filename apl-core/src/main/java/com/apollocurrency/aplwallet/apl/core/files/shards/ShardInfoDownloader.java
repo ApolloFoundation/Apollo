@@ -88,8 +88,12 @@ public class ShardInfoDownloader {
         shardInfoByPeers = testData;
 
     }
-
-    public void processAllPeersShardingInfo() {
+    
+    public void processAllPeersShardingInfo(){
+        //remove not-sharding peers
+        shardInfoByPeers.entrySet().removeIf(
+                entry -> (entry.getValue().isShardingOff==true)
+        );
         shardInfoByPeers.keySet().forEach((pa) -> {
             processPeerShardingInfo(pa, shardInfoByPeers.get(pa));
         });
@@ -169,7 +173,7 @@ public class ShardInfoDownloader {
         //get sharding info from known peers
         for (String pa : randomizeOrder(knownPeers)) {
             ShardingInfo si = getShardingInfoFromPeer(pa);
-            if (si != null) {
+            if(si != null){
                 shardInfoByPeers.put(pa, si);
                 additionalPeers.addAll(si.knownPeers);
             }
@@ -188,7 +192,7 @@ public class ShardInfoDownloader {
             additionalPeers.removeAll(knownPeers);
             for (String pa : randomizeOrder(additionalPeers)) {
                 ShardingInfo si = getShardingInfoFromPeer(pa);
-                if (si != null) {
+                if (si != null && si.isShardingOff == false) {
                     shardInfoByPeers.put(pa, si);
                 } else {
                     log.warn("No shardInfo '{}' from peerAddress = {}", si, pa);
@@ -302,12 +306,19 @@ public class ShardInfoDownloader {
      * @return map of relative weight of each shard.
      */
     public Map<Long, Double> getShardRelativeWeights() {
-        Map<Long, Double> res = new HashMap<>();
-        for (Long shardId : sortedByIdShards.keySet()) {
+        Map<Long,Double> res = new HashMap<>();
+        if(sortedByIdShards.isEmpty()){
+            return res;
+        }
+        for(Long shardId: sortedByIdShards.keySet()){
             //1.0 for last shard and then less
-            Double k = 1.0 * shardId / sortedByIdShards.keySet().size() + 1;
-            Double weight = getShardWeight(shardId) * k;
-            res.put(shardId, weight);
+            Double k = 1.0*shardId/sortedByIdShards.keySet().size();
+            // make 11 shard biggest for debugging
+            //if(shardId==10L){
+            //    k=20.0;
+            //}
+            Double weight = getShardWeight(shardId)*k;
+            res.put(shardId,weight);
         }
         return res;
     }

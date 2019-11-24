@@ -27,9 +27,10 @@ import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_UPDATE_PERIOD;
+
 @Singleton
 public class TrimService {
-    private static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
     private static final Logger log = LoggerFactory.getLogger(TrimService.class);
     @Getter
     private final int maxRollback;
@@ -143,7 +144,7 @@ public class TrimService {
                     trimDao.clear();
                     trimEntry = trimDao.save(trimEntry);
                     dbManager.getDataSource().commit(false);
-                    int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
+                    int pruningTime = doTrimDerivedTablesOnHeight(trimHeight);
                     if (async) {
                         log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
                         trimEvent.select(new AnnotationLiteral<Async>() {
@@ -196,59 +197,52 @@ public class TrimService {
         }
     }
 
-    @Transactional
-    public int doTrimDerivedTablesOnHeight(int height, boolean oneLock) {
-        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height, oneLock);
-        long start = System.currentTimeMillis();
+    public int doTrimDerivedTablesOnHeightLocked(int height) {
+        int res = 0;
         lock.lock();
         try {
-            if (oneLock) {
-                globalSync.readLock();
-            }
-            TransactionalDataSource dataSource = dbManager.getDataSource();
-            boolean inTransaction = dataSource.isInTransaction();
-            log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",
-                    height, inTransaction);
-            if (!inTransaction) {
-                dataSource.begin();
-            }
-            long onlyTrimTime = 0;
-            int epochTime = timeService.getEpochTime();
-            int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
-            try {
-                for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
-                    if (!oneLock) {
-                        log.trace("Try to acquire lock...");
-                        globalSync.readLock();
-                        log.trace("Got it.");
-                    }
-                    try {
-                        long startTime = System.currentTimeMillis();
-                        table.prune(pruningTime);
-                        table.trim(height);
-                        dataSource.commit(false);
-                        long duration = System.currentTimeMillis() - startTime;
-                        log.debug("Trim of {} took {} ms", table.getName(), duration);
-                        onlyTrimTime += duration;
-                    } finally {
-                        if (!oneLock) {
-                            globalSync.readUnlock();
-                        }
-                    }
-                }
-            } finally {
-                if (oneLock) {
-                    globalSync.readUnlock();
-                }
-            }
-            log.info("Trim time onlyTrim/full: {} / {} ms, pruning='{}' on height='{}'",
-                    onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
-            return pruningTime;
-
+            res = doTrimDerivedTablesOnHeight(height);
         } finally {
             lock.unlock();
         }
-//        return pruningTime;
+        return res;
+    }
+
+    @Transactional
+    private int doTrimDerivedTablesOnHeight(int height) {
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height);
+        long start = System.currentTimeMillis();
+
+        TransactionalDataSource dataSource = dbManager.getDataSource();
+        boolean inTransaction = dataSource.isInTransaction();
+        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'",  height, inTransaction);
+        if (!inTransaction) {
+            dataSource.begin();
+        }
+        long onlyTrimTime = 0;
+        int epochTime = timeService.getEpochTime();
+        int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
+
+            for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
+                log.trace("Try to acquire lock...");
+                globalSync.readLock();
+                log.trace("Got it.");
+                try {
+                    long startTime = System.currentTimeMillis();
+                    table.prune(pruningTime);
+                    table.trim(height);
+                    dataSource.commit(false);
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.debug("Trim of {} took {} ms", table.getName(), duration);
+                    onlyTrimTime += duration;
+                } finally {
+                    globalSync.readUnlock();
+                }
+            }
+
+        log.info("Trim time onlyTrim/full: {} / {} ms, pruning='{}' on height='{}'",
+                onlyTrimTime, System.currentTimeMillis() - start, pruningTime, height);
+        return pruningTime;
     }
 
     public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
@@ -263,12 +257,14 @@ public class TrimService {
 
     public void waitTrimming() {
         log.debug("Waiting for the end of the latest trim");
-        while (isTrimming()) {
+        int count =0;
+        while ( isTrimming() ) {
             ThreadUtils.sleep(100);
-            if (log.isTraceEnabled()) {
-                log.trace("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
+            if(count%10==0){
+              log.debug("--- Waiting . . . Lock: isLocked={}, isFair={}, isHeldByCurrentThread={}, holdCount={}",
                         lock.isLocked(), lock.isFair(), lock.isHeldByCurrentThread(), lock.getHoldCount());
             }
+            count++;
         }
     }
 }

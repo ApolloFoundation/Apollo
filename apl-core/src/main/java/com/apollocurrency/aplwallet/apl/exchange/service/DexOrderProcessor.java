@@ -78,18 +78,18 @@ public class DexOrderProcessor {
 
     private static final String BACKGROUND_SERVICE_NAME = "DexOrderProcessor";
 
-    private SecureStorageService secureStorageService;
-    private DexService dexService;
-    private TransactionValidator validator;
-    private DexOrderTransactionCreator dexOrderTransactionCreator;
-    private MandatoryTransactionDao mandatoryTransactionDao;
-    private IDexValidator dexValidator;
-    private DexSmartContractService dexSmartContractService;
-    private EthereumWalletService ethereumWalletService;
+    private final SecureStorageService secureStorageService;
+    private final DexService dexService;
+    private final TransactionValidator validator;
+    private final DexOrderTransactionCreator dexOrderTransactionCreator;
+    private final MandatoryTransactionDao mandatoryTransactionDao;
+    private final IDexValidator dexValidator;
+    private final DexSmartContractService dexSmartContractService;
+    private final EthereumWalletService ethereumWalletService;
+    private final TaskDispatchManager taskDispatchManager;
+    private TaskDispatcher taskDispatcher;
     private TimeService timeService;
-    private TaskDispatchManager taskDispatchManager;
 
-    private volatile boolean processorEnabled = true;
     @Getter
     private boolean initialized = false;
     private Blockchain blockchain;
@@ -117,21 +117,17 @@ public class DexOrderProcessor {
     }
 
     @PostConstruct
-    public void init() {
-        TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+    public void init(){
+        taskDispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
         Runnable task = () -> {
-            if (processorEnabled) {
-                long start = System.currentTimeMillis();
-                log.info("{}: start", BACKGROUND_SERVICE_NAME);
-                try {
-                    processContracts();
-                } catch (Throwable e) {
-                    log.warn("DexOrderProcessor error", e);
-                }
-                log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
-            } else {
-                log.debug("Contracts processor is suspended.");
+            long start = System.currentTimeMillis();
+            log.info("{}: start", BACKGROUND_SERVICE_NAME);
+            try {
+                processContracts();
+            } catch (Throwable e) {
+                log.warn("DexOrderProcessor error", e);
             }
+            log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
         };
 
         Task dexOrderProcessorTask = Task.builder()
@@ -141,7 +137,7 @@ public class DexOrderProcessor {
                 .task(task)
                 .build();
 
-        dispatcher.schedule(dexOrderProcessorTask, TaskOrder.TASK);
+        taskDispatcher.schedule(dexOrderProcessorTask);
 
         log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
                 dexOrderProcessorTask.getName(),
@@ -159,12 +155,12 @@ public class DexOrderProcessor {
         suspendContractProcessor();
     }
 
-    public void suspendContractProcessor() {
-        processorEnabled = false;
+    public void suspendContractProcessor(){
+        taskDispatcher.suspend();
     }
 
-    public void resumeContractProcessor() {
-        processorEnabled = true;
+    public void resumeContractProcessor(){
+        taskDispatcher.resume();
     }
 
     private void processContracts() {

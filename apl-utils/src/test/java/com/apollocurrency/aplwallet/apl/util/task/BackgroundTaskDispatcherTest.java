@@ -145,12 +145,12 @@ class BackgroundTaskDispatcherTest {
                 .delay(20)
                 .build();
 
-        taskDispatcher.schedule(taskMain, TaskOrder.TASK);
-        taskDispatcher.schedule(task0, TaskOrder.INIT);
-        taskDispatcher.schedule(task1, TaskOrder.BEFORE);
-        taskDispatcher.schedule(task12, TaskOrder.BEFORE);
-        taskDispatcher.schedule(task2, TaskOrder.AFTER);
-        taskDispatcher.schedule(task22, TaskOrder.AFTER);
+        taskDispatcher.schedule(taskMain);
+        taskDispatcher.invokeInit(task0);
+        taskDispatcher.invokeBefore(task1);
+        taskDispatcher.invokeBefore(task12);
+        taskDispatcher.invokeAfter(task2);
+        taskDispatcher.invokeAfter(task22);
 
         taskDispatcher.dispatch();
         log.debug("Thread dispatch");
@@ -227,8 +227,8 @@ class BackgroundTaskDispatcherTest {
                 .delay(10)
                 .build();
 
-        taskDispatcher.schedule(taskMain, TaskOrder.TASK);
-        taskDispatcher.schedule(task0, TaskOrder.INIT);
+        taskDispatcher.schedule(taskMain);
+        taskDispatcher.invokeInit(task0);
 
         taskDispatcher.dispatch();
         log.debug("Thread dispatch");

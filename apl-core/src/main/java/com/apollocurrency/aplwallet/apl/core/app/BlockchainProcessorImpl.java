@@ -46,6 +46,8 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -369,7 +371,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }).build();
 
-        dispatcher.schedule(blockChainInitTask, TaskOrder.INIT);
+        dispatcher.invokeInit(blockChainInitTask);
 
 
         if (!propertiesHolder.isLightClient() && !propertiesHolder.isOffline()) {
@@ -380,7 +382,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     .task(new GetMoreBlocksThread())
                     .build();
 
-            dispatcher.schedule(moreBlocksTask, TaskOrder.TASK);
+            dispatcher.schedule(moreBlocksTask);
         }
     }
 
@@ -1375,11 +1377,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
 
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
+            isScanning = true;
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
                          + " db_id >= ? ORDER BY db_id ASC LIMIT 50000");
                  PreparedStatement pstmtDone = con.prepareStatement("UPDATE scan SET rescan = FALSE, height = 0, validate = FALSE")) {
-                isScanning = true;
                 initialScanHeight = blockchain.getHeight();
                 if (height > blockchain.getHeight() + 1) {
                     pstmtDone.executeUpdate();

@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 @Singleton
 public class FullTextConfigImpl implements FullTextConfig {
 
-    private Set<String> tableNames = new HashSet<>();
+    private Set<String> tableNames = ConcurrentHashMap.newKeySet();
     private String schema = "PUBLIC";
     private Path ftlIndexPath;
 

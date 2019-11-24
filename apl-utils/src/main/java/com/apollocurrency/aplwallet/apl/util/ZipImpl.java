@@ -32,7 +32,7 @@ package com.apollocurrency.aplwallet.apl.util;
 public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 
-    public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
+    // magic constant copied from DownloadableFilesManager class
     private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
     private List<File> fileList = new ArrayList<>();
@@ -105,29 +105,24 @@ public class ZipImpl implements Zip {
      * {@inheritDoc}
      */
     @Override
-    public byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+    public ChunkedFileOps compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter, boolean recursive) {
         long start = System.currentTimeMillis();
         boolean compressed = compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
         if (compressed) {
             // compute CRC/hash sum on zip file
-            byte[] zipCrcHash = calculateHash(zipFile);
+            ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+            byte[] zipCrcHash = chunkedFileOps.getFileHashSums();
 
             log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
                     zipFile, zipCrcHash.length,
                     fileList.size(), (System.currentTimeMillis() - start) / 1000);
-            return zipCrcHash;
+            return chunkedFileOps;
         } else {
-            return null;
+            ChunkedFileOps res = new ChunkedFileOps("");
+            return res;
         }
     }
-
-    @Override
-    public byte[] calculateHash(String zipFile) {
-        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
-        return chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
-    }
-
 
     /**
      * {@inheritDoc}
