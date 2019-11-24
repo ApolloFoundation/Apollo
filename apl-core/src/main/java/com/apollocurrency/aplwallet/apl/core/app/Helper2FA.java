@@ -96,6 +96,14 @@ public class Helper2FA {
         }
     }
 
+    public static void verifyVault2FA(long accountId,  int code2FA) throws ParameterException {
+
+        if (isEnabled2FA(accountId)) {
+            Status2FA status2FA = service2FA.tryAuth(accountId, code2FA);
+            validate2FAStatus(status2FA, accountId);
+        }
+    }
+
     public static byte[] findAplSecretBytes(long accountId, String passphrase) throws ParameterException {
         ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
 

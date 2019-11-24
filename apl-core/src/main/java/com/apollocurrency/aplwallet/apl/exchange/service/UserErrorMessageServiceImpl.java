@@ -5,7 +5,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -38,7 +37,7 @@ public class UserErrorMessageServiceImpl implements UserErrorMessageService {
                             .name("Expired errors removing")
                             .delay(DELAY)
                             .task(() -> deleteByTimestamp(System.currentTimeMillis() - offset))
-                            .build(), TaskOrder.AFTER);
+                            .build());
         } else {
             log.warn("Will not delete expired user error messages");
         }

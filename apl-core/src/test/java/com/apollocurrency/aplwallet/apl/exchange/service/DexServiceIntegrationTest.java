@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -35,16 +40,11 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
-
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 @EnableWeld
 class DexServiceIntegrationTest {
@@ -101,10 +101,10 @@ static class CacheProducer {
 }
 
     @Test
-    void testTriggerPhasingTxRejectedEvent() {
+    void testTriggerPhasingForDifferentEvent() {
         Transaction phasedTx = mock(Transaction.class);
 
-        txEvent.select(TxEventType.literal(TxEventType.REJECT_PHASED_TRANSACTION)).fire(phasedTx);
+        txEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(phasedTx);
 
         verifyZeroInteractions(phasingPollService, approvedResultTable, phasedTx);
     }

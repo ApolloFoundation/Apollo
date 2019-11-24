@@ -1,5 +1,5 @@
 /**
- *Submitted for verification at Etherscan.io on 2019-08-23
+ *Submitted for verification at Etherscan.io on 2019-10-02
 */
 
 pragma solidity 0.5.10;
@@ -339,9 +339,9 @@ contract AssetsValue {
     ) external {
         // validation of the user existion
         require(_doesUserExist(msg.sender) == true, "withdraw: the user is not active");
-
         // storing the order information (asset and amount)
         OrderDetails memory order = _getDepositedOrderDetails(orderId, msg.sender);
+        require(order.created == true, "withdraw: order does not exist");
         address asset = order.asset;
         uint256 amount = order.amount;
 
@@ -407,6 +407,15 @@ contract AssetsValue {
     ) internal returns (bool) {
         _users[user].orderIdByIndex[_users[user].index] = orderId;
         _users[user].orders[orderId] = OrderDetails(true, asset, amount, false, block.timestamp);
+        return true;
+    }
+
+    function _reopenExistingOrder(
+        uint256 orderId,
+        address user
+    ) internal returns (bool) {
+        _users[user].orders[orderId].withdrawn = false;
+        _users[user].orders[orderId].initTimestamp = block.timestamp;
         return true;
     }
 
@@ -538,8 +547,8 @@ contract CrossBlockchainSwap is AssetsValue, Ownable {
     }
 
     // By default, the contract has limits for swap orders lifetime
-    // The swap order can be active from 10 minutes until 6 months
-    SwapTimeLimits private _swapTimeLimits = SwapTimeLimits(10 minutes, 180 days);
+    // The swap order can be active from 2 minutes until 6 months
+    SwapTimeLimits private _swapTimeLimits = SwapTimeLimits(2 minutes, 180 days);
 
     // -----------------------------------------
     // EVENTS
@@ -720,7 +729,7 @@ contract CrossBlockchainSwap is AssetsValue, Ownable {
         bytes32 secretHash
     ) public isRefundable(secretHash, msg.sender) {
         _swaps[secretHash].state = State.Refunded;
-        _depositOrderBalance(_swaps[secretHash].orderId, msg.sender, _swaps[secretHash].asset, _swaps[secretHash].amount);
+        _reopenExistingOrder(_swaps[secretHash].orderId, msg.sender);
 
         // decrease the filled swapss amount
         _initiators[msg.sender].filledSwaps--;

@@ -23,6 +23,7 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
@@ -195,10 +196,11 @@ public class DexContract extends Contract {
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }));
+                Arrays.<TypeReference<?>>asList(
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {},
+                        new TypeReference<DynamicArray<Uint256>>() {}
+                        ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
                 new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
                     @Override
@@ -258,12 +260,12 @@ public class DexContract extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public String refund(byte[] secretHash) {
+    public String refund(byte[] secretHash, boolean waitConfirmation) {
         final Function function = new Function(
                 FUNC_REFUND,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)), 
                 Collections.<TypeReference<?>>emptyList());
-        return sendTx(function, BigInteger.ZERO);
+        return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
     public RemoteCall<BigInteger> getUserDepositsAmount(String user) {
@@ -327,26 +329,42 @@ public class DexContract extends Contract {
 
         return sendTx(function, weiValue);
     }
-
     public String sendTx(Function function, BigInteger weiValue) {
-        EthSendTransaction sendTransaction;
+        return sendTx(function, weiValue, false);
+    }
+
+    public String sendTx(Function function, BigInteger weiValue, boolean waitConfirmation) {
         BigInteger gasLimit = ethereumWalletService.validateBalanceAndReturnGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue, gasProvider.getGasPrice(function.getName()));
-        try {
-            sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
-                    gasLimit,
-                    contractAddress,
-                    FunctionEncoder.encode(function),
-                    weiValue);
-
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
+        String hash;
+        if (waitConfirmation) {
+            TransactionReceipt receipt;
+            try {
+                receipt = send(contractAddress, FunctionEncoder.encode(function), weiValue, gasProvider.getGasPrice(function.getName()), gasLimit);
+            } catch (IOException | TransactionException e) {
+                throw new RuntimeException("Unable to send eth transaction or retrieve tx receipt", e);
+            }
+            if (!receipt.isStatusOK()) {
+                throw new AplException.DEXProcessingException(String.format("Transaction was failed. Gas used - %d, status - %s", receipt.getGasUsed(), receipt.getStatus()));
+            }
+            hash = receipt.getTransactionHash();
+        } else {
+            EthSendTransaction sendTransaction;
+            try {
+                sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
+                        gasLimit,
+                        contractAddress,
+                        FunctionEncoder.encode(function),
+                        weiValue);
+                hash = sendTransaction.getTransactionHash();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
+            }
+            if (sendTransaction.hasError()) {
+                throw new AplException.DEXProcessingException(sendTransaction.getError().getMessage());
+            }
         }
 
-        if (sendTransaction.hasError()) {
-            throw new AplException.DEXProcessingException(sendTransaction.getError().getMessage());
-        }
-
-        return sendTransaction.getTransactionHash();
+        return hash;
     }
 
     public RemoteCall<Boolean> doesUserExist(String user) {
