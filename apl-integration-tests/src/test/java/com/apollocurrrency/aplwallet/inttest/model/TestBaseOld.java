@@ -67,6 +67,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.tika.config.Param;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1338,6 +1339,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
+    @Step
     public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
         addParameters(RequestType.requestType, uploadTaggedData);
         addParameters(Parameters.name, name);
@@ -1353,7 +1355,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
+    @Step
     public CreateTransactionResponse dgsRefund(Wallet wallet, String purchase, int refundATM, String message) {
         addParameters(RequestType.requestType, dgsRefund );
         addParameters(Parameters.purchase, purchase);
@@ -1366,27 +1368,53 @@ public class TestBaseOld extends TestBase {
     }
 
 
-
+    @Step
     public DGSGoodsDTO getDGSGood(String goods) {
         addParameters(RequestType.requestType, getDGSGood);
         addParameters(Parameters.goods, goods);
         return getInstanse(DGSGoodsDTO.class);
     }
 
+    @Step
     public AllTaggedDataResponse getAllTaggedData() {
         addParameters(RequestType.requestType, getAllTaggedData);
         return getInstanse(AllTaggedDataResponse.class);
     }
 
+    @Step
     public TaggedDataDTO getTaggedData(String transaction) {
         addParameters(RequestType.requestType, getTaggedData);
         addParameters(Parameters.transaction, transaction);
         return getInstanse(TaggedDataDTO.class);
     }
 
+    @Step
     public DataTagCountResponse getDataTagCount() {
         addParameters(RequestType.requestType, getDataTagCount);
         return getInstanse(DataTagCountResponse.class);
+    }
+
+    @Step
+    public AllTaggedDataResponse searchTaggedDataByName(String query) {
+        addParameters(RequestType.requestType, searchTaggedData);
+        addParameters(Parameters.query, query);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
+
+    @Step
+    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {
+        addParameters(RequestType.requestType, searchTaggedData);
+        addParameters(Parameters.tag, tag);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {
+        addParameters(RequestType.requestType, extendTaggedData);
+        addParameters(Parameters.transaction, transaction);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
     }
 
     @Step
