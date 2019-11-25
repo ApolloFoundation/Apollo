@@ -67,7 +67,7 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.tika.config.Param;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +79,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -109,6 +113,7 @@ public class TestBaseOld extends TestBase {
     @Step
     public boolean waitForHeight(int height)
     {
+      log.info("Wait For Height: {}",height);
       RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)
@@ -1162,7 +1167,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
         addParameters(RequestType.requestType, getAccountCurrencies);
         addParameters(Parameters.wallet, wallet);
@@ -1246,7 +1251,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingVerify);
         addParameters(Parameters.shuffling, shuffling);
@@ -1257,7 +1262,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
+    @Step
     public CreateTransactionResponse dgsListing(Wallet wallet, String name, String description, String tags, int quantity, int priceATM, File file) {
         addParameters(RequestType.requestType, dgsListing);
         addParameters(Parameters.name, name);
@@ -1273,7 +1278,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsDelisting(Wallet wallet, String goods) {
         addParameters(RequestType.requestType, dgsDelisting );
         addParameters(Parameters.wallet, wallet);
@@ -1282,6 +1287,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+    @Step
     public CreateTransactionResponse dgsQuantityChange(Wallet wallet, String goods, int deltaQuantity) {
         addParameters(RequestType.requestType, dgsQuantityChange );
         addParameters(Parameters.wallet, wallet);
@@ -1291,7 +1297,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deltaQuantity, deltaQuantity);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsPriceChange(Wallet wallet, String goods, int priceATM) {
         addParameters(RequestType.requestType, dgsPriceChange );
         addParameters(Parameters.priceATM, priceATM);
@@ -1301,7 +1307,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsPurchase(Wallet wallet, String goods, long priceATM, int quantity, int deliveryDeadlineTimeInHours) {
         addParameters(RequestType.requestType, dgsPurchase );
         addParameters(Parameters.priceATM, priceATM);
@@ -1313,7 +1319,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsDelivery(Wallet wallet, String purchase, String delivery, int discountATM) {
         addParameters(RequestType.requestType, dgsDelivery );
         addParameters(Parameters.purchase, purchase);
@@ -1324,7 +1330,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
         addParameters(RequestType.requestType, dgsFeedback);
         addParameters(Parameters.purchase, purchase);
@@ -1430,6 +1436,17 @@ public class TestBaseOld extends TestBase {
         addParameters(RequestType.requestType, getPollResult);
         addParameters(Parameters.poll, poll);
         return getInstanse(PollResultResponse.class);
+    }
+    @Step
+    public void messagePrunable(){
+        String message = RandomStringUtils.randomAlphabetic(3,5);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.messageToEncrypt, message);
+        addParameters(Parameters.encryptedMessageIsPrunable, true);
+        addParameters(Parameters.compressMessageToEncrypt, message);
+        addParameters(Parameters.messageToEncryptToSelf, message);
+        addParameters(Parameters.messageToEncryptToSelfIsText, true);
     }
 
 }

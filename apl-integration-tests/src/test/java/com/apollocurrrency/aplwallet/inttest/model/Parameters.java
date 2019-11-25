@@ -1,6 +1,16 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum  Parameters {
+    compressMessageToEncryptToSelf,
+    encryptToSelfMessageNonce,
+    encryptToSelfMessageData,
+    messageToEncryptToSelfIsText,
+    messageToEncryptToSelf,
+    compressMessageToEncrypt,
+    encryptedMessageIsPrunable,
+    encryptedMessageNonce,
+    encryptedMessageData,
+    messageToEncryptIsText,
     refundATM,
     goodsToEncrypt,
     goodsIsText,

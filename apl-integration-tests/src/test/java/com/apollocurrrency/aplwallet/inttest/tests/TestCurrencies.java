@@ -46,6 +46,7 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,5,7,12,13,14,15,17,19,21,23,33,35,37,39,44,45,46,47,51,53,55 })
     public void issueCurrencys(int type){
+        log.info("Issue Currencies type: {}",type);
         int supply  = RandomUtils.nextInt(0,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
@@ -154,6 +155,7 @@ public class TestCurrencies extends TestBaseOld {
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
         int supply  = RandomUtils.nextInt(10,1000);
         for (Wallet wallet: wallets) {
+            log.info("Issue Currencies type: {}",type);
             CreateTransactionResponse currency = issueCurrency(wallet,type,
                     RandomStringUtils.randomAlphabetic(5),
                     RandomStringUtils.randomAlphabetic(5),
@@ -165,6 +167,7 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+10);
             verifyTransactionInBlock(reserveTransaction.getTransaction());
+            log.info("Reserve Currencys: {}",reserveTransaction.getTransaction());
             waitForHeight(getCurrency(currency.getTransaction()).getIssuanceHeight());
             CreateTransactionResponse  reserveClaimTransaction =  currencyReserveClaim(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveClaimTransaction);
