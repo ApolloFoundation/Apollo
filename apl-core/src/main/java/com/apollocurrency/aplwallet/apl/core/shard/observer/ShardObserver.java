@@ -55,25 +55,16 @@ public class ShardObserver {
         return shardingEnabled && !isShardingOff;
     }
     
-    //TODO: check and debug
-    private boolean isShardAlreadyCreatedOrInProgress(int  lastTrimBlockHeight, HeightConfig currentConfig){
-        boolean res = false;
-        Shard shard = shardService.getLastShard();        
+    private Long getLastShardHeight(){
+        long lastShardHeight;
+          Shard shard = shardService.getLastShard();        
         if(shard==null){
             log.debug("No last shard yet");
+            lastShardHeight=0;
         }else{        
-            int lastShardHeight = shard.getShardHeight();
-            int nextShardHeight = lastShardHeight+getShardingFrequency(currentConfig);
-            if(lastTrimBlockHeight >= lastShardHeight && lastTrimBlockHeight < nextShardHeight){
-                log.debug("Shard exists. Last shard at height: {}. trim height: {}, next shard height: {}",
-                    lastShardHeight,lastTrimBlockHeight,nextShardHeight);
-                res= true;
-            }else{
-                log.debug("No shard yet. Last shard at height: {}. trim height: {}, next shard height: {}",
-                    lastShardHeight,lastTrimBlockHeight,nextShardHeight);
-            }
+             lastShardHeight = shard.getShardHeight();
         }
-        return res;
+        return lastShardHeight;
     }
     
     private int getShardingFrequency(HeightConfig currentConfig){
@@ -91,6 +82,16 @@ public class ShardObserver {
         }
         return shardingFrequency;
     }
+    
+    /**
+     * Well, it is subject of discussion yet what parameter should trigger sharding
+     * At the moment sharding is bound to trims and we do not count on blockchainHeight
+     * at all
+     * @param lastTrimBlockHeight
+     * @param blockchainHeight
+     * @param currentConfig
+     * @return 
+     */
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
         
         int shardingFrequency = getShardingFrequency(currentConfig);
@@ -102,15 +103,20 @@ public class ShardObserver {
                 lastTrimBlockHeight, blockchainHeight,
                 shardingFrequency, blockchainConfig.isJustUpdated());
 
-        //Q. how much blocks we ould be late? 1/4 of frequiency is OK?
+        //Q. how much blocks we ould be late? 1/2 of frequiency - 1 is OK?
         //Q. Do we count on some other parameters?
-        long howLateWeCanBe = shardingFrequency / 4;
-        ModWatcher watch = new ModWatcher(shardingFrequency, howLateWeCanBe);
-        boolean res = lastTrimBlockHeight != 0 
-                   && ! watch.isTooLate(lastTrimBlockHeight) 
-                   && watch.fullCircles(lastTrimBlockHeight) > 0;
-        if(res){
-          res = res && !isShardAlreadyCreatedOrInProgress(lastTrimBlockHeight, currentConfig);
+        long lastShardHeight = getLastShardHeight();
+        long howLateWeCanBe = shardingFrequency / 2 - 1;
+        long nextShardHeight = lastShardHeight+shardingFrequency;
+        long howLateWeAre = lastTrimBlockHeight-nextShardHeight;
+        boolean res=false;
+        if(howLateWeAre >= 0){
+          if(howLateWeAre > howLateWeCanBe){
+              log.warn("We have missed shard for {} blocks!",howLateWeAre);
+          }else{
+            res=true;
+            log.debug("Time for sharding is OK");
+          }
         }
         return res;
     }

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -99,9 +100,13 @@ public class ShardObserverTest {
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
         CompletableFuture<MigrateState> completableFuture = Mockito.mock(CompletableFuture.class);
         when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
-        doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
+        int height = DEFAULT_TRIM_HEIGHT+DEFAULT_SHARDING_FREQUENCY/3;
+        Shard lastShard=new Shard();
+        lastShard.setShardHeight(DEFAULT_TRIM_HEIGHT-DEFAULT_SHARDING_FREQUENCY);
+        when(shardService.getLastShard()).thenReturn(lastShard);
+        doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT,height);
 
-        CompletableFuture<MigrateState> state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
+        CompletableFuture<MigrateState> state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, height);
 
         assertNotNull(state);
         assertNotNull(state.get());
