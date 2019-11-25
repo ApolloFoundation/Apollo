@@ -1167,7 +1167,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
         addParameters(RequestType.requestType, getAccountCurrencies);
         addParameters(Parameters.wallet, wallet);
@@ -1251,7 +1251,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingVerify);
         addParameters(Parameters.shuffling, shuffling);
@@ -1262,7 +1262,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-
+    @Step
     public CreateTransactionResponse dgsListing(Wallet wallet, String name, String description, String tags, int quantity, int priceATM, File file) {
         addParameters(RequestType.requestType, dgsListing);
         addParameters(Parameters.name, name);
@@ -1278,7 +1278,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsDelisting(Wallet wallet, String goods) {
         addParameters(RequestType.requestType, dgsDelisting );
         addParameters(Parameters.wallet, wallet);
@@ -1287,6 +1287,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+    @Step
     public CreateTransactionResponse dgsQuantityChange(Wallet wallet, String goods, int deltaQuantity) {
         addParameters(RequestType.requestType, dgsQuantityChange );
         addParameters(Parameters.wallet, wallet);
@@ -1296,7 +1297,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deltaQuantity, deltaQuantity);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsPriceChange(Wallet wallet, String goods, int priceATM) {
         addParameters(RequestType.requestType, dgsPriceChange );
         addParameters(Parameters.priceATM, priceATM);
@@ -1306,7 +1307,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsPurchase(Wallet wallet, String goods, long priceATM, int quantity, int deliveryDeadlineTimeInHours) {
         addParameters(RequestType.requestType, dgsPurchase );
         addParameters(Parameters.priceATM, priceATM);
@@ -1318,7 +1319,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsDelivery(Wallet wallet, String purchase, String delivery, int discountATM) {
         addParameters(RequestType.requestType, dgsDelivery );
         addParameters(Parameters.purchase, purchase);
@@ -1329,7 +1330,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
-
+    @Step
     public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
         addParameters(RequestType.requestType, dgsFeedback);
         addParameters(Parameters.purchase, purchase);
@@ -1436,7 +1437,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.poll, poll);
         return getInstanse(PollResultResponse.class);
     }
-
+    @Step
     public void messagePrunable(){
         String message = RandomStringUtils.randomAlphabetic(3,5);
         addParameters(Parameters.messageIsPrunable, true);
