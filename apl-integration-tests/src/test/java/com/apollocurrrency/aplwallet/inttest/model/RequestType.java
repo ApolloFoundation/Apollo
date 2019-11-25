@@ -143,5 +143,7 @@ public enum RequestType {
     downloadTaggedData,
     getAllTaggedData,
     getTaggedData,
-    getDataTagCount
+    getDataTagCount,
+    searchTaggedData,
+    extendTaggedData
 }

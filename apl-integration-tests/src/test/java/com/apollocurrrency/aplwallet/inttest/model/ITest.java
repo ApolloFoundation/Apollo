@@ -183,5 +183,8 @@ public interface ITest {
     AllTaggedDataResponse getAllTaggedData();
     TaggedDataDTO getTaggedData(String transaction);
     DataTagCountResponse getDataTagCount();
+    AllTaggedDataResponse searchTaggedDataByName(String query);
+    AllTaggedDataResponse searchTaggedDataByTag(String tag);
+    CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction);
 
 }

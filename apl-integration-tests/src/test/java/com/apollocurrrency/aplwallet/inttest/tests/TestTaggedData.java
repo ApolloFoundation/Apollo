@@ -10,7 +10,9 @@ import io.qameta.allure.Epic;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -56,7 +58,7 @@ public class TestTaggedData extends TestBaseOld {
     @DisplayName("upload TaggedData")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    void uploadTaggedDataTest(Wallet wallet){
+    void TaggedDataTest(Wallet wallet){
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
         log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
         CreateTransactionResponse uploadData =  uploadTaggedData(wallet, Name, description, tag, channel, image);
@@ -65,10 +67,38 @@ public class TestTaggedData extends TestBaseOld {
         int parsedTags = getTaggedData(uploadData.getTransaction()).getParsedTags().size();
         log.info("Tags quantity which is created after uploading new TaggedData equals {} ", parsedTags);
         assertEquals(Name, getTaggedData(uploadData.getTransaction()).getName(), "names are not the same");
-        //assertEquals(tag, getTaggedData(uploadData.getTransaction()).getTags(), "tags are not the same");
         assertEquals(description, getTaggedData(uploadData.getTransaction()).getDescription(), "descriptions are not the same");
         assertEquals(channel, getTaggedData(uploadData.getTransaction()).getChannel(), "channels are not the same");
         assertEquals(tagsQuantity+parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
+        assertEquals(Name, searchTaggedDataByName(Name).getData().get(0).getName(), "search by name doesn't work");
+        log.info(" Tag from getTaggedData =  {} ", getTaggedData(uploadData.getTransaction()).getParsedTags().get(0));
+        assertEquals(getTaggedData(uploadData.getTransaction()).getParsedTags().get(0), searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0), "search by tag doesn't work");
+        log.info(" Tag from searchTaggedData =  {} ", searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0));
+    }
+
+    @DisplayName("upload TaggedData Test with extend TaggedData request")
+    @ParameterizedTest(name = "{displayName} {arguments}")
+    @ArgumentsSource(WalletProvider.class)
+    @Disabled
+    void extendTaggedDataTest(Wallet wallet){
+        Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
+        log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
+        CreateTransactionResponse uploadData =  uploadTaggedData(wallet, Name, description, tag, channel, image);
+        verifyCreatingTransaction(uploadData);
+        verifyTransactionInBlock(uploadData.getTransaction());
+        int parsedTags = getTaggedData(uploadData.getTransaction()).getParsedTags().size();
+        log.info("Tags quantity which is created after uploading new TaggedData equals {} ", parsedTags);
+        assertEquals(Name, getTaggedData(uploadData.getTransaction()).getName(), "names are not the same");
+        assertEquals(description, getTaggedData(uploadData.getTransaction()).getDescription(), "descriptions are not the same");
+        assertEquals(channel, getTaggedData(uploadData.getTransaction()).getChannel(), "channels are not the same");
+        assertEquals(tagsQuantity+parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
+        assertEquals(Name, searchTaggedDataByName(Name).getData().get(0).getName(), "search by name doesn't work");
+        log.info(" Tag from getTaggedData =  {} ", getTaggedData(uploadData.getTransaction()).getParsedTags().get(0));
+        log.info(" Tag from searchTaggedData =  {} ", searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0));
+        assertEquals(getTaggedData(uploadData.getTransaction()).getParsedTags().get(0), searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0), "search by tag doesn't work");
+        CreateTransactionResponse extendData = extendTaggedData(wallet, uploadData.getTransaction());
+        verifyCreatingTransaction(extendData);
+        verifyTransactionInBlock(extendData.getTransaction());
     }
 
 
