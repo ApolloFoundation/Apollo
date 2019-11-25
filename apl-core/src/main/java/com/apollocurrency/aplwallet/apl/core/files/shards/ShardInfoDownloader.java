@@ -24,6 +24,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +63,7 @@ public class ShardInfoDownloader {
 
     private final PeersService peers;
     private final UUID myChainId;
+    public static final String SHARD_ID_ENV="APOLLO_DOWNLOAD_SHARD_ID";
        
     @Inject
     public ShardInfoDownloader( PeersService peers) {
@@ -212,7 +215,13 @@ public class ShardInfoDownloader {
         return shardInfoByPeers;
     }
 
-    private byte[] getHash(long shardId, String peerAddr) {
+/**
+ * Hash of main archive only
+ * @param shardId id of shard
+ * @param peerAddr address of peer that provided this shard
+ * @return Hash of main archive as in ShardInfo.zipCrcHash
+ */
+    byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
         ShardingInfo psi = shardInfoByPeers.get(peerAddr);
         if(psi!=null){
@@ -227,6 +236,36 @@ public class ShardInfoDownloader {
         }
         return res;
     }
+    
+    /**
+     * Composite hash of main archive and all additional files
+     * @param shardId id of shard
+     * @param peerAddraddress of peer that provided this shard
+     * @return hash of hashes of archive and all additional files
+     */
+    byte[] getFullHash(long shardId, String peerAddr) {
+        byte[] res = null;
+        MessageDigest md = Crypto.sha256();
+        ShardingInfo psi = shardInfoByPeers.get(peerAddr);
+        if(psi!=null){
+            for(ShardInfo si: psi.shards){
+                if(myChainId.equals(UUID.fromString(si.chainId))
+                        && si.shardId==shardId)
+                {
+                   byte[] mhb = Convert.parseHexString(si.zipCrcHash);
+                   md.update(mhb);
+                   for(String h: si.additionalHashes){
+                       byte[] hb = Convert.parseHexString(h);
+                       md.update(hb);
+                   }
+                   break;
+                }
+            }
+            res = md.digest();
+        }
+        return res;
+    }
+
 
     private FileDownloadDecision checkShard(Long shardId) {
         Objects.requireNonNull(shardId, "shardId is NULL");
@@ -238,7 +277,7 @@ public class ShardInfoDownloader {
             log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
             return result;
         }        
-        //do statistical analysys of shard's hashes
+        //do statistical analysys of shard's main zip hashes only
         PeersList shardPeerList = new PeersList();
         ShardNameHelper snh = new ShardNameHelper();
         for (String pa : shardPeers) {
@@ -248,8 +287,25 @@ public class ShardInfoDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        goodPeersMap.putIfAbsent(shardId,pvdm.getValidPeers());
-        badPeersMap.putIfAbsent(shardId,pvdm.getInvalidPeers());
+        log.debug("Decision based on main shard file: {}",res);
+        if (pvdm.isNetworkUsable()) {
+            //do statistical analysys of shard's composite hashes
+            shardPeerList = new PeersList();
+            for (String pa : shardPeers) {
+                PeerFileHashSum psi = new PeerFileHashSum(pa, snh.getFullShardId(shardId, myChainId));
+                psi.setHash(getFullHash(shardId, pa));
+                shardPeerList.add(psi);
+            }
+            PeerValidityDecisionMaker pvdm2 = new PeerValidityDecisionMaker(shardPeerList);
+            res = pvdm2.calcualteNetworkState();
+            log.debug("Decision based on main shard file and additional files: {}",res);
+            goodPeersMap.put(shardId,pvdm2.getValidPeers());
+            badPeersMap.put(shardId,pvdm2.getInvalidPeers());            
+        }else{
+            goodPeersMap.put(shardId,pvdm.getValidPeers());
+            badPeersMap.put(shardId,pvdm.getInvalidPeers());                        
+        }
+
         log.debug("prepareForDownloading(), res = {}, goodPeers = {}, badPeers = {}", res, goodPeersMap.get(shardId), badPeersMap.get(shardId));
         return res;
     }
@@ -299,7 +355,18 @@ public class ShardInfoDownloader {
         res = (1.0*goodPeersNumber-1.0*badPeersNumber-1.0*noShardPeersNumber)/allPeersNumber;
         return res;
     }
-    
+    private Long readManuallyDefinedShardId(){
+        Long res = null;
+        String envVal = System.getProperty(SHARD_ID_ENV);
+        if(envVal!=null){
+           try{
+             res = Long.parseLong(envVal);
+           }catch(NumberFormatException ex){
+               log.debug("Invalid shard ID:{}",envVal);
+           }
+        }
+        return res;
+    }
  /**
   * Calculates relative weight of each available shard
   * Weight is less for older shard
@@ -314,12 +381,19 @@ public class ShardInfoDownloader {
         for(Long shardId: sortedByIdShards.keySet()){
             //1.0 for last shard and then less
             Double k = 1.0*shardId/sortedByIdShards.keySet().size();
-            // make 11 shard biggest for debugging
-            //if(shardId==10L){
-            //    k=20.0;
-            //}
             Double weight = getShardWeight(shardId)*k;
             res.put(shardId,weight);
+        }
+        //we can use environment variable to fore download of some shard
+        Long predefined = readManuallyDefinedShardId();
+        if(predefined!=null){
+            boolean exists = res.get(predefined)!=null;
+            if(exists){
+                res.replace(predefined, 20.0D);
+                log.info("Downloading of shard {} is forced by enviromnent variable",predefined);
+            }else{
+                log.info("Shard ID {} predefined in environment variable is not usable or does not exist",predefined);
+            }
         }
         return res;
     }
