@@ -4,13 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -24,15 +22,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * {@inheritDoc}
  */
-public class CsvReaderImpl extends CsvAbstractBase
-        implements CsvReader, SimpleRowSource, AutoCloseable {
-    private static final Logger log = getLogger(CsvReaderImpl.class);
+@Slf4j
+//@NotThreadSafe
+public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource, AutoCloseable {
 
     private Reader input;
     private char[] inputBuffer;
@@ -199,6 +196,7 @@ public class CsvReaderImpl extends CsvAbstractBase
     private boolean isWhiteSpace(int ch){
         return (ch == ' ' || ch == '\t');
     }
+
     private String readDelimitedValue() throws IOException {
         int ch;
         boolean containsEscape = false;
@@ -225,8 +223,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                 break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - sep);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - sep);
         if (containsEscape) {
             s = unEscape(s);
         }
@@ -247,6 +244,7 @@ public class CsvReaderImpl extends CsvAbstractBase
         }
         return s;
     }
+
     private String readQuotedTextValue() throws IOException {
         int ch;
         int state=1;
@@ -285,8 +283,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                     break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
         if (!preserveWhitespace) {
             s = s.trim();
         }
@@ -366,8 +363,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                     break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
         if (!preserveWhitespace) {
             s = s.trim();
         }
@@ -391,8 +387,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                 break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
         if (!preserveWhitespace) {
             s = s.trim();
         }
