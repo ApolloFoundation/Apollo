@@ -926,4 +926,13 @@ public class TestBaseNew extends TestBase {
     @Override
     public DataTagCountResponse getDataTagCount() {throw new NotImplementedException("Not implemented");}
 
+    @Override
+    public AllTaggedDataResponse searchTaggedDataByName(String query) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {throw new NotImplementedException("Not implemented");}
+
 }
