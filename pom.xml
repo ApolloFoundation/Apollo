@@ -102,7 +102,7 @@
         <lucene.version>7.5.0</lucene.version>
 
         <!--Db-->
-        <h2.version>1.4.200</h2.version>
+        <postgresql.version>42.2.8</postgresql.version>
 
         <!--Logging-->
         <slf4j.version>1.7.22</slf4j.version>
@@ -127,8 +127,9 @@
         <mockito.version>3.0.0</mockito.version>
         <hikari.version>3.4.1</hikari.version>
         <jcommander.version>1.72</jcommander.version>
-        <jdbi3-core.version>3.9.1</jdbi3-core.version>
-        <jdbi3-sqlobject.version>3.9.1</jdbi3-sqlobject.version>
+        <jdbi3-core.version>3.11.1</jdbi3-core.version>
+        <jdbi3-sqlobject.version>3.11.1</jdbi3-sqlobject.version>
+        <jdbi3-postgres.version>3.11.1</jdbi3-postgres.version>
         <lombok.version>1.18.8</lombok.version>
         <surefire-plugin.version>2.22.2</surefire-plugin.version>
         <compile-plugin.version>3.8.1</compile-plugin.version>
@@ -413,9 +414,9 @@
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${h2.version}</version>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
             </dependency>
 
             <!-- Apache Tika libs-->
@@ -502,6 +503,11 @@
                 <groupId>org.jdbi</groupId>
                 <artifactId>jdbi3-sqlobject</artifactId>
                 <version>${jdbi3-sqlobject.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jdbi</groupId>
+                <artifactId>jdbi3-postgres</artifactId>
+                <version>${jdbi3-postgres.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>

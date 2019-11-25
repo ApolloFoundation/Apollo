@@ -14,16 +14,17 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * We will not store files in transaction attachment, alternatively we will store it only in tagged_data table
@@ -139,16 +140,24 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     @Override
     public void save(Connection con, TaggedData taggedData) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
-                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO tagged_data (id, account_id, \"name\", description, tags, parsed_tags, " +
+                        "\"type\", channel, \"data\", is_text, filename, block_timestamp, transaction_timestamp, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET account_id = ?, \"name\" = ?, description = ?, tags = ?, parsed_tags = ?, " +
+                        "\"type\" = ?, channel = ?, \"data\" = ?, is_text = ?, filename = ?, block_timestamp = ?, transaction_timestamp = ?, latest = TRUE"
+        )) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getId());
             pstmt.setLong(++i, taggedData.getAccountId());
             pstmt.setString(++i, taggedData.getName());
             pstmt.setString(++i, taggedData.getDescription());
             pstmt.setString(++i, taggedData.getTags());
-            DbUtils.setArray(pstmt, ++i, taggedData.getParsedTags());
+            DbUtils.setArray(pstmt, ++i, taggedData.getParsedTags(), "text");
             pstmt.setString(++i, taggedData.getType());
             pstmt.setString(++i, taggedData.getChannel());
             pstmt.setBytes(++i, taggedData.getData());
@@ -157,6 +166,20 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
             pstmt.setInt(++i, taggedData.getBlockTimestamp());
             pstmt.setInt(++i, taggedData.getTransactionTimestamp());
             pstmt.setInt(++i, taggedData.getHeight());
+
+            pstmt.setLong(++i, taggedData.getAccountId());
+            pstmt.setString(++i, taggedData.getName());
+            pstmt.setString(++i, taggedData.getDescription());
+            pstmt.setString(++i, taggedData.getTags());
+            DbUtils.setArray(pstmt, ++i, taggedData.getParsedTags(), "text");
+            pstmt.setString(++i, taggedData.getType());
+            pstmt.setString(++i, taggedData.getChannel());
+            pstmt.setBytes(++i, taggedData.getData());
+            pstmt.setBoolean(++i, taggedData.isText());
+            pstmt.setString(++i, taggedData.getFilename());
+            pstmt.setInt(++i, taggedData.getBlockTimestamp());
+            pstmt.setInt(++i, taggedData.getTransactionTimestamp());
+
             pstmt.executeUpdate();
         }
     }

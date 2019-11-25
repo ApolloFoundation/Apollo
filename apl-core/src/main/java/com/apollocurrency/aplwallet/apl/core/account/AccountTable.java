@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -72,7 +74,17 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public void save(Connection con, Account account) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO account (id, balance, unconfirmed_balance, forged_balance, " +
+                        "active_lessee_id, has_control_phasing, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET balance = ?, unconfirmed_balance = ?, forged_balance = ?, " +
+                        "active_lessee_id = ?, has_control_phasing = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, account.id);
             pstmt.setLong(++i, account.balanceATM);
@@ -81,6 +93,13 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             DbUtils.setLongZeroToNull(pstmt, ++i, account.activeLesseeId);
             pstmt.setBoolean(++i, account.controls.contains(Account.ControlType.PHASING_ONLY));
             pstmt.setInt(++i, Account.blockchain.getHeight());
+
+            pstmt.setLong(++i, account.balanceATM);
+            pstmt.setLong(++i, account.unconfirmedBalanceATM);
+            pstmt.setLong(++i, account.forgedBalanceATM);
+            DbUtils.setLongZeroToNull(pstmt, ++i, account.activeLesseeId);
+            pstmt.setBoolean(++i, account.controls.contains(Account.ControlType.PHASING_ONLY));
+
             pstmt.executeUpdate();
         }
     }
@@ -129,9 +148,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
      
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
-                PreparedStatement pstmt =
+                @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
+                final PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
+                                " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+") AS subquery") ) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {

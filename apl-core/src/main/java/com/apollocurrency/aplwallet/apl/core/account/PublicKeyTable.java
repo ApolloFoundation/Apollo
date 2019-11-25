@@ -9,15 +9,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
@@ -68,13 +70,23 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> {
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.setHeight(blockchain.getHeight());
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO " + table + " (account_id, public_key, height, latest) " +
+                        "VALUES (?, ?, ?, TRUE) " +
+                        "ON CONFLICT(account_id, height) " +
+                        "DO UPDATE SET public_key = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.accountId);
             DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
             pstmt.setInt(++i, publicKey.getHeight());
+
+            DbUtils.setBytes(pstmt, ++i, publicKey.publicKey);
+
             pstmt.executeUpdate();
         }
     }
-
 }

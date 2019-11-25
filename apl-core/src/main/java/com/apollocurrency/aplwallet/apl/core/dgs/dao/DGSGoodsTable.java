@@ -10,12 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSGoodsMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
 public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
@@ -48,22 +50,43 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
 
     @Override
     public void save(Connection con, DGSGoods goods) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
-                + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO goods (id, seller_id, \"name\", " +
+                        "description, tags, parsed_tags, \"timestamp\", quantity, price, delisted, has_image, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET seller_id = ?, \"name\" = ?, " +
+                        "description = ?, tags = ?, parsed_tags = ?, \"timestamp\" = ?, quantity = ?, price = ?, delisted = ?, has_image = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, goods.getId());
             pstmt.setLong(++i, goods.getSellerId());
             pstmt.setString(++i, goods.getName());
             pstmt.setString(++i, goods.getDescription());
             pstmt.setString(++i, goods.getTags());
-            DbUtils.setArray(pstmt, ++i, goods.getParsedTags());
+            DbUtils.setArray(pstmt, ++i, goods.getParsedTags(), "text");
             pstmt.setInt(++i, goods.getTimestamp());
             pstmt.setInt(++i, goods.getQuantity());
             pstmt.setLong(++i, goods.getPriceATM());
             pstmt.setBoolean(++i, goods.isDelisted());
             pstmt.setBoolean(++i, goods.hasImage());
             pstmt.setInt(++i, goods.getHeight());
+
+            pstmt.setLong(++i, goods.getSellerId());
+            pstmt.setString(++i, goods.getName());
+            pstmt.setString(++i, goods.getDescription());
+            pstmt.setString(++i, goods.getTags());
+            DbUtils.setArray(pstmt, ++i, goods.getParsedTags(), "text");
+            pstmt.setInt(++i, goods.getTimestamp());
+            pstmt.setInt(++i, goods.getQuantity());
+            pstmt.setLong(++i, goods.getPriceATM());
+            pstmt.setBoolean(++i, goods.isDelisted());
+            pstmt.setBoolean(++i, goods.hasImage());
+
             pstmt.executeUpdate();
         }
     }

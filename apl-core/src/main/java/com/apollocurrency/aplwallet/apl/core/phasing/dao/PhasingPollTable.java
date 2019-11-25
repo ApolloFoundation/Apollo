@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -219,8 +221,13 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     public int getAllPhasedTransactionsCount() throws SQLException {
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
+        try (
+                final Connection con = getDatabaseManager().getDataSource().getConnection();
+                @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
+                final PreparedStatement pstmt = con.prepareStatement(
+                        "select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result) AS subquery"
+                )
+        ) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);

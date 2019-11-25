@@ -15,8 +15,7 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.LuceneFullTextSearchEngine;
+
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -40,7 +39,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private Map<String, List<String>> tableWithColumns;
     private Path indexDir;
     private Path dbDir;
-    private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
     public DbExtension(DbProperties dbProperties) {
         this(dbProperties, null, null, null);
@@ -56,7 +54,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this();
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
-            createFtl();
         }
     }
 
@@ -64,9 +61,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         return ftl;
     }
 
-    public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
-        return luceneFullTextSearchEngine;
-    }
+
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
         manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
@@ -114,16 +109,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
-    private void createFtl() {
-        try {
-            this.indexDir = Files.createTempDirectory("indexDir");
-            this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
-            this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(), luceneFullTextSearchEngine, tableWithColumns.keySet(), "PUBLIC");
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Unable to init ftl", e);
-        }
-    }
 
     private void initFtl() {
         ftl.init();

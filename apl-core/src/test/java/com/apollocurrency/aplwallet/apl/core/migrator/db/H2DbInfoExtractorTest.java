@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class H2DbInfoExtractorTest {
+    /*
     private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("sa", "sa");
     private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor" + DbProperties.DB_EXTENSION_WITH_DOT);
 
@@ -48,4 +49,5 @@ class H2DbInfoExtractorTest {
         String path = H2DbInfoExtractorTest.path.toAbsolutePath().toString();
         Assertions.assertEquals(Paths.get(path + DbProperties.DB_EXTENSION_WITH_DOT), h2DbInfoExtractor.getPath(path));
     }
+    */
 }

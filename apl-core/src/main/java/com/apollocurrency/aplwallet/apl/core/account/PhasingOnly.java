@@ -21,6 +21,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -152,10 +155,21 @@ public final class PhasingOnly {
     }
 
     void save(Connection con) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_control_phasing " + "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " + "max_fees, min_duration, max_duration, height, latest) KEY (account_id, height) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO account_control_phasing " +
+                        "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, " +
+                        "max_fees, min_duration, max_duration, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (account_id, height) " +
+                        "DO UPDATE SET whitelist = ?, voting_model = ?, quorum = ?, min_balance = ?, holding_id = ?, min_balance_model = ?, " +
+                        "max_fees = ?, min_duration = ?, max_duration = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.accountId);
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, Convert.toArray(phasingParams.getWhitelist()));
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, Convert.toArray(phasingParams.getWhitelist()), "bigint");
             pstmt.setByte(++i, phasingParams.getVoteWeighting().getVotingModel().getCode());
             DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getQuorum());
             DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getVoteWeighting().getMinBalance());
@@ -165,6 +179,17 @@ public final class PhasingOnly {
             pstmt.setShort(++i, this.minDuration);
             pstmt.setShort(++i, this.maxDuration);
             pstmt.setInt(++i, blockchain.getHeight());
+
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, Convert.toArray(phasingParams.getWhitelist()), "bigint");
+            pstmt.setByte(++i, phasingParams.getVoteWeighting().getVotingModel().getCode());
+            DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getQuorum());
+            DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getVoteWeighting().getMinBalance());
+            DbUtils.setLongZeroToNull(pstmt, ++i, phasingParams.getVoteWeighting().getHoldingId());
+            pstmt.setByte(++i, phasingParams.getVoteWeighting().getMinBalanceModel().getCode());
+            pstmt.setLong(++i, this.maxFees);
+            pstmt.setShort(++i, this.minDuration);
+            pstmt.setShort(++i, this.maxDuration);
+
             pstmt.executeUpdate();
         }
     }

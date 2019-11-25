@@ -10,13 +10,15 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import javax.inject.Singleton;
 
 @Singleton
 public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
@@ -54,10 +56,17 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
         if (prunableMessage.getMessage() == null && prunableMessage.getEncryptedData() == null) {
             throw new IllegalStateException("Prunable message not fully initialized");
         }
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
-                + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) "
-                + "KEY (id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO prunable_message (id, sender_id, recipient_id, " +
+                        "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (id) " +
+                        "DO UPDATE SET sender_id = ?, recipient_id = ?, " +
+                        "message = ?, encrypted_message = ?, message_is_text = ?, encrypted_is_text = ?, is_compressed = ?, block_timestamp = ?, transaction_timestamp = ?, height = ?) "
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, prunableMessage.getId());
             pstmt.setLong(++i, prunableMessage.getSenderId());
@@ -70,6 +79,18 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
             pstmt.setInt(++i, prunableMessage.getBlockTimestamp());
             pstmt.setInt(++i, prunableMessage.getTransactionTimestamp());
             pstmt.setInt(++i, prunableMessage.getHeight());
+
+            pstmt.setLong(++i, prunableMessage.getSenderId());
+            DbUtils.setLongZeroToNull(pstmt, ++i, prunableMessage.getRecipientId());
+            DbUtils.setBytes(pstmt, ++i, prunableMessage.getMessage());
+            DbUtils.setBytes(pstmt, ++i, prunableMessage.getEncryptedData() == null ? null : prunableMessage.getEncryptedData().getBytes());
+            pstmt.setBoolean(++i, prunableMessage.messageIsText());
+            pstmt.setBoolean(++i, prunableMessage.encryptedMessageIsText());
+            pstmt.setBoolean(++i, prunableMessage.isCompressed());
+            pstmt.setInt(++i, prunableMessage.getBlockTimestamp());
+            pstmt.setInt(++i, prunableMessage.getTransactionTimestamp());
+            pstmt.setInt(++i, prunableMessage.getHeight());
+
             pstmt.executeUpdate();
         }
     }

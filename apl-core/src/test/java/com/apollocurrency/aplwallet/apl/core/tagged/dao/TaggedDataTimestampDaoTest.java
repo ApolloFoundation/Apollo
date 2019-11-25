@@ -98,20 +98,20 @@ class TaggedDataTimestampDaoTest {
 
     @Test
     void insertData() throws Exception {
-        DbUtils.inTransaction(extension, (con) -> dataTimestampDao.insert(tagtd.NOT_SAVED_TagDTsmp));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> dataTimestampDao.insert(tagtd.NOT_SAVED_TagDTsmp));
         List<TaggedDataTimestamp> all = dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
         assertEquals(List.of(tagtd.TagDTsmp_1, tagtd.TagDTsmp_2, tagtd.TagDTsmp_3, tagtd.NOT_SAVED_TagDTsmp), all);
     }
 
     @Test
     void testTruncate() throws SQLException {
-        DbUtils.inTransaction(extension, (con)-> dataTimestampDao.truncate());
+        DbUtils.inTransaction((DatabaseManager) extension, (con)-> dataTimestampDao.truncate());
         assertTrue(dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues().isEmpty(), "Table should not have any entries after truncating");
     }
 
     @Test
     void testRollback() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> dataTimestampDao.rollback(tagtd.TagDTsmp_1.getHeight()));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> dataTimestampDao.rollback(tagtd.TagDTsmp_1.getHeight()));
         assertEquals(List.of(tagtd.TagDTsmp_1),
                 dataTimestampDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }

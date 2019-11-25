@@ -11,12 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.core.dgs.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSPurchaseMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
 public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchase> {
@@ -46,10 +48,20 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
 
     @Override
     public void save(Connection con, DGSPurchase purchase) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
-                + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
-                + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO purchase (id, buyer_id, goods_id, seller_id, " +
+                        "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, " +
+                        "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET buyer_id = ?, goods_id = ?, seller_id = ?, " +
+                        "quantity = ?, price = ?, deadline = ?, note = ?, nonce = ?, \"timestamp\" = ?, pending = ?, goods = ?, goods_nonce = ?, goods_is_text = ?, refund_note = ?, " +
+                        "refund_nonce = ?, has_feedback_notes = ?, has_public_feedbacks = ?, discount = ?, refund = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, purchase.getId());
             pstmt.setLong(++i, purchase.getBuyerId());
@@ -69,6 +81,24 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
             pstmt.setLong(++i, purchase.getDiscountATM());
             pstmt.setLong(++i, purchase.getRefundATM());
             pstmt.setInt(++i, purchase.getHeight());
+
+            pstmt.setLong(++i, purchase.getBuyerId());
+            pstmt.setLong(++i, purchase.getGoodsId());
+            pstmt.setLong(++i, purchase.getSellerId());
+            pstmt.setInt(++i, purchase.getQuantity());
+            pstmt.setLong(++i, purchase.getPriceATM());
+            pstmt.setInt(++i, purchase.getDeadline());
+            i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getNote(), ++i);
+            pstmt.setInt(i, purchase.getTimestamp());
+            pstmt.setBoolean(++i, purchase.isPending());
+            i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getEncryptedGoods(), ++i);
+            pstmt.setBoolean(i, purchase.isGoodsIsText());
+            i = EncryptedDataUtil.setEncryptedData(pstmt, purchase.getRefundNote(), ++i);
+            pstmt.setBoolean(i, purchase.hasFeedbacks());
+            pstmt.setBoolean(++i, purchase.hasPublicFeedbacks());
+            pstmt.setLong(++i, purchase.getDiscountATM());
+            pstmt.setLong(++i, purchase.getRefundATM());
+
             pstmt.executeUpdate();
         }
     }
@@ -78,8 +108,9 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
     }
 
     @Override
+    @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
     protected String defaultSort() {
-        return " ORDER BY timestamp DESC, id ASC ";
+        return " ORDER BY \"timestamp\" DESC, id ASC ";
     }
 
 }

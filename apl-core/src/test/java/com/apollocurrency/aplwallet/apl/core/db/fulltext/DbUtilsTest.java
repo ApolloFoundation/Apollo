@@ -27,7 +27,7 @@ public class DbUtilsTest {
                     "DECIMALS", "HEIGHT", "LATEST"),
             Arrays.asList(Types.BIGINT, Types.BIGINT
                     , Types.BIGINT, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.BIGINT, Types.BIGINT, Types.BIGINT,
-                    Types.INTEGER, Types.INTEGER, Types.BIGINT, Types.TINYINT, Types.TINYINT, Types.TINYINT, Types.TINYINT, Types.TINYINT,
+                    Types.INTEGER, Types.INTEGER, Types.BIGINT, Types.SMALLINT, Types.SMALLINT, Types.SMALLINT, Types.SMALLINT, Types.SMALLINT,
                     Types.INTEGER, Types.BOOLEAN),
             Arrays.asList(5, 3, 6)
     );

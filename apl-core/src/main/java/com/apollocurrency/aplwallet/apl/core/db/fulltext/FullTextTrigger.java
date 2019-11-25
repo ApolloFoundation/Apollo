@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import org.h2.api.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ import javax.enterprise.inject.spi.CDI;
 /**
  * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
  */
-public class FullTextTrigger implements Trigger, TransactionCallback {
+public class FullTextTrigger  implements TransactionCallback{
         private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
     /**
      * Pending table updates
@@ -52,7 +51,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * @param   type                Trigger type
      * @throws  SQLException        A SQL error occurred
      */
-    @Override
+   // @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
             throws SQLException {
         this.tableData = readTableData(conn, schema, table);
@@ -63,7 +62,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      *
      * @throws  SQLException        A SQL error occurred
      */
-    @Override
+    //@Override
     public void close() throws SQLException {}
 
     /**
@@ -71,7 +70,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      *
      * @throws  SQLException        A SQL error occurred
      */
-    @Override
+    //@Override
     public void remove() throws SQLException {}
 
     /**
@@ -82,7 +81,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * @param   newRow              The new row or null
      * @throws  SQLException        A SQL error occurred
      */
-    @Override
+    //@Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
         //
         // Commit the change immediately if we are not in a transaction
@@ -127,7 +126,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     /**
      * Commit the table changes for the current transaction (TransactionCallback interface)
      */
-    @Override
+    //@Override
     public void commit() {
         Thread thread = Thread.currentThread();
         try {
@@ -162,7 +161,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
     /**
      * Discard the table changes for the current transaction (TransactionCallback interface)
      */
-    @Override
+    //@Override
     public void rollback() {
         Thread thread = Thread.currentThread();
         synchronized(tableUpdates) {

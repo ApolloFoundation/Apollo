@@ -23,6 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.db.derived;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -50,9 +52,18 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
     public void prune(int time) {
         if (blockchainConfig.isEnablePruning()) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM " + table + " WHERE transaction_timestamp < ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
+            try (
+                    final Connection con = dataSource.getConnection();
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                    final PreparedStatement pstmt = con.prepareStatement(
+                            "DELETE FROM " + table + " " +
+                                    "WHERE (" + keyFactory.getPKColumns() + ") IN " +
+                                    "(SELECT " + keyFactory.getPKColumns() + " FROM " + table +
+                                    " WHERE transaction_timestamp < ? FETCH FIRST ? ROWS ONLY)"
+                    )
+            ) {
                 pstmt.setInt(1, time - blockchainConfig.getMaxPrunableLifetime());
+                pstmt.setInt(2, propertiesHolder.BATCH_COMMIT_SIZE());
                 int deleted;
                 do {
                     deleted = pstmt.executeUpdate();
@@ -69,8 +80,8 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
 
     public MinMaxValue getMinMaxValue(int height, int currentTime) {
         // select MIN and MAX dbId values in one query
-        String selectMinSql = String.format("SELECT IFNULL(min(DB_ID), 0) as min_id, " +
-                "IFNULL(max(DB_ID), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?", table);
+        String selectMinSql = String.format("SELECT COALESCE(min(DB_ID), 0) as min_id, " +
+                "COALESCE(max(DB_ID), 0) as max_id, COALESCE(count(*), 0) as \"count\", max(height) as max_height from %s where HEIGHT <= ? and transaction_timestamp >= ?", table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(selectMinSql)) {

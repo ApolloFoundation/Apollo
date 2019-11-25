@@ -22,14 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import javax.enterprise.inject.spi.CDI;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -105,13 +106,23 @@ public class CurrencyFounder {
 
     private void save(Connection con) throws SQLException {
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO currency_founder (currency_id, account_id, amount, height, latest) " +
+                        "VALUES (?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (currency_id, account_id, height) " +
+                        "DO UPDATE SET amount = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());
             pstmt.setLong(++i, this.getAccountId());
             pstmt.setLong(++i, this.getAmountPerUnitATM());
             pstmt.setInt(++i, blockchain.getHeight());
+
+            pstmt.setLong(++i, this.getAmountPerUnitATM());
+
             pstmt.executeUpdate();
         }
     }

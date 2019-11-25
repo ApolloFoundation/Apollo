@@ -22,9 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
@@ -32,15 +32,16 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-
-import javax.enterprise.inject.spi.CDI;
 
 @Slf4j
 public final class ShufflingParticipant {
@@ -133,14 +134,18 @@ public final class ShufflingParticipant {
 
         @Override
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement(
+            try (
+                    @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                    final PreparedStatement pstmt = con.prepareStatement(
                     "INSERT INTO shuffling_data (shuffling_id, account_id, data, "
                             + "transaction_timestamp, height) "
-                            + "VALUES (?, ?, ?, ?, ?)")) {
+                            + "VALUES (?, ?, ?, ?, ?)"
+                    )
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, shufflingData.getShufflingId());
                 pstmt.setLong(++i, shufflingData.getAccountId());
-                DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData());
+                DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData(), "bytea");
                 pstmt.setInt(++i, shufflingData.getTransactionTimestamp());
                 pstmt.setInt(++i, shufflingData.getHeight());
                 pstmt.executeUpdate();
@@ -218,21 +223,37 @@ public final class ShufflingParticipant {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
-                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) "
-                + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO shuffling_participant (shuffling_id, " +
+                        "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (shuffling_id, account_id, height) " +
+                        "DO UPDATE SET next_account_id = ?, participant_index = ?, state = ?, blame_data = ?," +
+                        "key_seeds = ?, data_transaction_full_hash = ?, data_hash = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.shufflingId);
             pstmt.setLong(++i, this.accountId);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.nextAccountId);
             pstmt.setInt(++i, this.index);
             pstmt.setByte(++i, this.getState().getCode());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData);
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds);
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData, "bytea");
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds, "bytea");
             DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
             DbUtils.setBytes(pstmt, ++i, this.dataHash);
             pstmt.setInt(++i, blockchain.getHeight());
+
+            DbUtils.setLongZeroToNull(pstmt, ++i, this.nextAccountId);
+            pstmt.setInt(++i, this.index);
+            pstmt.setByte(++i, this.getState().getCode());
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData, "bytea");
+            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds, "bytea");
+            DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
+            DbUtils.setBytes(pstmt, ++i, this.dataHash);
+
             pstmt.executeUpdate();
         }
     }

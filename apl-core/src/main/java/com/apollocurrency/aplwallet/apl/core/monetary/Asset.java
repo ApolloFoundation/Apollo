@@ -28,9 +28,8 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+
 import javax.enterprise.inject.spi.CDI;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetIssuance;
@@ -38,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -152,10 +153,17 @@ public final class Asset {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
-                + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest) "
-                + "KEY(id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO asset " +
+                "(id, account_id, \"name\", description, initial_quantity, quantity, decimals, height, latest) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                "ON CONFLICT (id, height) " +
+                "DO UPDATE SET account_id = ?, \"name\" = ?, description = ?, initial_quantity = ?, quantity = ?, decimals = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.accountId);
@@ -165,6 +173,14 @@ public final class Asset {
             pstmt.setLong(++i, this.quantityATU);
             pstmt.setByte(++i, this.decimals);
             pstmt.setInt(++i, blockchain.getHeight());
+
+            pstmt.setLong(++i, this.accountId);
+            pstmt.setString(++i, this.name);
+            pstmt.setString(++i, this.description);
+            pstmt.setLong(++i, this.initialQuantityATU);
+            pstmt.setLong(++i, this.quantityATU);
+            pstmt.setByte(++i, this.decimals);
+
             pstmt.executeUpdate();
         }
     }

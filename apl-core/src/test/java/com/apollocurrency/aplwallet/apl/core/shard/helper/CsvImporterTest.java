@@ -485,7 +485,7 @@ class CsvImporterTest {
 
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
         try (Connection con = dataSource.getConnection();
-             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+             PreparedStatement preparedCount = con.prepareStatement("select count(*) as \"count\" from " + tableName)
         ) {
             long result = -1;
             ResultSet rs = preparedCount.executeQuery();

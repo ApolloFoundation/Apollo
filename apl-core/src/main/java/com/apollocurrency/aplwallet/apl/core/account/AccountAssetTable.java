@@ -5,19 +5,20 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  *
@@ -58,15 +59,27 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
-         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO account_asset (account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (account_id, asset_id, height) " +
+                        "DO UPDATE SET quantity = ?, unconfirmed_quantity = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.accountId);
             pstmt.setLong(++i, accountAsset.assetId);
             pstmt.setLong(++i, accountAsset.quantityATU);
             pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
             pstmt.setInt(++i, Account.blockchain.getHeight());
+
+            pstmt.setLong(++i, accountAsset.quantityATU);
+            pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
+
             pstmt.executeUpdate();
-        }       
+        }
     }
     
     public void save(AccountAsset accountAsset) {

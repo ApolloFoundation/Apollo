@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import lombok.Getter;
+
 import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +29,15 @@ public final class DbProperties implements Cloneable {
     private int defaultLockTimeout;
     private int maxMemoryRows;
     private Long dbIdentity = null;
+    @Getter
+    private String dbHost;
+    @Getter
+    private int dbPort;
+    @Getter
+    private String databaseName;
+    @Getter
+    private boolean isSqlLogEnabled;
+
 
     public long getMaxCacheSize() {
         return maxCacheSize;
@@ -159,6 +170,24 @@ public final class DbProperties implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public DbProperties dbHost(String dbHost) {
+        this.dbHost = dbHost;
+        return this;
+    }
+    public DbProperties dbPort(int dbPort) {
+        this.dbPort = dbPort;
+        return this;
+    }
+    public DbProperties databaseName(String databaseName) {
+        this.databaseName = databaseName;
+        return this;
+    }
+
+    public DbProperties isSqlLogEnabled(boolean isLogEnabled) {
+        this.isSqlLogEnabled = isLogEnabled;
+        return this;
     }
 
     @Override

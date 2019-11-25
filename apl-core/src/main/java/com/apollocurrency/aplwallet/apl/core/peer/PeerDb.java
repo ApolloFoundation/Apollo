@@ -20,12 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -126,14 +127,26 @@ public class PeerDb {
 
     static void updatePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.begin();   
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+        dataSource.begin();
+        try (
+                final Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                        "INSERT INTO peer (address, services, last_updated) " +
+                                "VALUES(?, ?, ?) " +
+                                "ON CONFLICT (address) " +
+                                "DO UPDATE SET services = ?, last_updated = ?"
+                )
+        ) {
             for (Entry peer : peers) {
-                pstmt.setString(1, peer.getAddress());
-                pstmt.setLong(2, peer.getServices());
-                pstmt.setInt(3, peer.getLastUpdated());
+                int i=0;
+                pstmt.setString(++i, peer.getAddress());
+                pstmt.setLong(++i, peer.getServices());
+                pstmt.setInt(++i, peer.getLastUpdated());
+
+                pstmt.setLong(++i, peer.getServices());
+                pstmt.setInt(++i, peer.getLastUpdated());
+
                 pstmt.executeUpdate();
             }
             dataSource.commit();
@@ -145,13 +158,24 @@ public class PeerDb {
 
     static void updatePeer(PeerImpl peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.begin();        
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                        + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
-            pstmt.setString(1, peer.getAnnouncedAddress());
-            pstmt.setLong(2, peer.getServices());
-            pstmt.setInt(3, peer.getLastUpdated());
+        dataSource.begin();
+        try (
+                final Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer (address, services, last_updated) " +
+                        "VALUES(?, ?, ?) " +
+                        "ON CONFLICT (address) " +
+                        "DO UPDATE SET services = ?, last_updated = ? "
+                )
+        ) {
+            int i=0;
+            pstmt.setString(++i, peer.getAnnouncedAddress());
+            pstmt.setLong(++i, peer.getServices());
+            pstmt.setInt(++i, peer.getLastUpdated());
+
+            pstmt.setLong(++i, peer.getServices());
+            pstmt.setInt(++i, peer.getLastUpdated());
+
             pstmt.executeUpdate();
             dataSource.commit();
         } catch (SQLException e) {

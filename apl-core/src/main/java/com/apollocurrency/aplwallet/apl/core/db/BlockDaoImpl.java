@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -176,9 +178,13 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public Block findLastBlock() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
+        try (
+                final Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY \"timestamp\" DESC LIMIT 1"
+                )
+        ) {
             Block block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -422,7 +428,7 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                     "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")) {
+                     "SELECT generator_id, COUNT(generator_id) AS count FROM block AS block WHERE height >= ? GROUP BY generator_id having block.count > 1 limit ?")) {
             pstmt.setInt(1, startHeight);
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -473,10 +479,14 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public void saveBlock(Connection con, Block block) {
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
+            try (
+                    @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                    final PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, \"timestamp\", previous_block_id, "
                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
                     + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    )
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -573,9 +583,11 @@ public class BlockDaoImpl implements BlockDao {
             }
             return lastBlock;
         }
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
-                     + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
+        try (
+                final Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE block.timestamp >= "
+                     + "COALESCE ((SELECT \"timestamp\" FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY block.timestamp DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
              PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
              PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")

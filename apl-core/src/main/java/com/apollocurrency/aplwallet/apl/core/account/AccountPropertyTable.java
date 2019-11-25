@@ -9,6 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,7 +52,15 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
 
     @Override
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, value, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO account_property " + "(id, recipient_id, setter_id, property, \"value\", height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET recipient_id = ?, setter_id = ?, property = ?, \"value\" = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.id);
             pstmt.setLong(++i, accountProperty.recipientId);
@@ -57,6 +68,12 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
             DbUtils.setString(pstmt, ++i, accountProperty.property);
             DbUtils.setString(pstmt, ++i, accountProperty.value);
             pstmt.setInt(++i, Account.blockchain.getHeight());
+
+            pstmt.setLong(++i, accountProperty.recipientId);
+            DbUtils.setLongZeroToNull(pstmt, ++i, accountProperty.setterId != accountProperty.recipientId ? accountProperty.setterId : 0);
+            DbUtils.setString(pstmt, ++i, accountProperty.property);
+            DbUtils.setString(pstmt, ++i, accountProperty.value);
+
             pstmt.executeUpdate();
         }
     }

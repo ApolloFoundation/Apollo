@@ -15,19 +15,19 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "DB_ID BIGINT not null, " +
                         "ID BIGINT not null, " +
                         "VERSION INTEGER not null, " +
-                        "\"TIMESTAMP\" INTEGER not null, " +
+                        "\"timestamp\" INTEGER not null, " +
                         "PREVIOUS_BLOCK_ID BIGINT, " +
                         "TOTAL_AMOUNT BIGINT not null, " +
                         "TOTAL_FEE BIGINT not null, " +
                         "PAYLOAD_LENGTH INTEGER not null, " +
-                        "PREVIOUS_BLOCK_HASH binary(32), " +
-                        "CUMULATIVE_DIFFICULTY binary not null, " +
+                        "PREVIOUS_BLOCK_HASH BYTEA, " +
+                        "CUMULATIVE_DIFFICULTY BYTEA not null, " +
                         "BASE_TARGET BIGINT not null, " +
                         "NEXT_BLOCK_ID BIGINT, " +
                         "HEIGHT INTEGER not null, " +
-                        "GENERATION_SIGNATURE binary(64) not null, " +
-                        "BLOCK_SIGNATURE binary(64) not null, " +
-                        "PAYLOAD_HASH binary(32) not null, " +
+                        "GENERATION_SIGNATURE BYTEA not null, " +
+                        "BLOCK_SIGNATURE BYTEA not null, " +
+                        "PAYLOAD_HASH BYTEA not null, " +
                         "GENERATOR_ID BIGINT not null, " +
                         "TIMEOUT INTEGER default 0 not null" +
                         ")");
@@ -40,21 +40,21 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "transaction_index SMALLINT NOT NULL, " +
                         "amount BIGINT NOT NULL, " +
                         "fee BIGINT NOT NULL, " +
-                        "full_hash BINARY(32) NOT NULL, " +
+                        "full_hash BYTEA NOT NULL, " +
                         "height INT NOT NULL, " +
                         "block_id BIGINT NOT NULL, " +
 //                        "FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
-                        "signature BINARY(64) NOT NULL, " +
+                        "signature BYTEA NOT NULL, " +
                         "timestamp INT NOT NULL, " +
-                        "type TINYINT NOT NULL, " +
-                        "subtype TINYINT NOT NULL, " +
+                        "type SMALLINT NOT NULL, " +
+                        "subtype SMALLINT NOT NULL, " +
                         "sender_id BIGINT NOT NULL, " +
-                        "sender_public_key BINARY(32), "+
+                        "sender_public_key BYTEA, "+
                         "block_timestamp INT NOT NULL, " +
-                        "referenced_transaction_full_hash BINARY(32), " +
+                        "referenced_transaction_full_hash BYTEA, " +
                         "phased BOOLEAN NOT NULL DEFAULT FALSE, " +
-                        "attachment_bytes VARBINARY, " +
-                        "version TINYINT NOT NULL, " +
+                        "attachment_bytes BYTEA, " +
+                        "version SMALLINT NOT NULL, " +
                         "has_message BOOLEAN NOT NULL DEFAULT FALSE, " +
                         "has_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, " +
                         "has_public_key_announcement BOOLEAN NOT NULL DEFAULT FALSE, " +

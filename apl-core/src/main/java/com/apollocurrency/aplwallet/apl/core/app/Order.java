@@ -34,6 +34,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -142,8 +144,17 @@ public abstract class Order {
     }
 
     private void save(Connection con, String table) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
-                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO " + table + " (id, account_id, asset_id, " +
+                "price, quantity, creation_height, transaction_index, transaction_height, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET account_id = ?, asset_id = ?, " +
+                        "price = ?, quantity = ?, creation_height = ?, transaction_index = ?, transaction_height = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
@@ -154,6 +165,15 @@ public abstract class Order {
             pstmt.setShort(++i, this.transactionIndex);
             pstmt.setInt(++i, this.transactionHeight);
             pstmt.setInt(++i, blockchain.getHeight());
+
+            pstmt.setLong(++i, this.accountId);
+            pstmt.setLong(++i, this.assetId);
+            pstmt.setLong(++i, this.priceATM);
+            pstmt.setLong(++i, this.quantityATU);
+            pstmt.setInt(++i, this.creationHeight);
+            pstmt.setShort(++i, this.transactionIndex);
+            pstmt.setInt(++i, this.transactionHeight);
+
             pstmt.executeUpdate();
         }
     }

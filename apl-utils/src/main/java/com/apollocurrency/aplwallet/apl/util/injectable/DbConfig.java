@@ -34,6 +34,10 @@ public class DbConfig {
                 .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
                 .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+                .dbHost(propertiesHolder.getStringProperty("apl.dbHost"))
+                .dbPort(propertiesHolder.getIntProperty("apl.dbPort"))
+                .databaseName(propertiesHolder.getStringProperty("apl.databaseName"))
+                .isSqlLogEnabled(propertiesHolder.getBooleanProperty("apl.isSqlLogEnabled"))
                 .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
                 .dbFileName(dbFileName)
                 .chainId(chainsConfigHolder.getActiveChain().getChainId())

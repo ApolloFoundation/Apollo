@@ -8,6 +8,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -46,6 +48,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     PreparedStatement preparedInsertStatement = null;
 
     String sqlToExecuteWithPaging;
+    @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
     String sqlSelectUpperBound;
     String sqlSelectBottomBound;
     String sqlDeleteFromBottomBound;

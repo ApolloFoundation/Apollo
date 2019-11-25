@@ -90,7 +90,6 @@ class TaggedDataServiceTest {
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(time, NtpTime.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
@@ -151,7 +150,7 @@ class TaggedDataServiceTest {
     @Test
     void addDataUploadAttach() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> {
             taggedDataService.add(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT);
         });
         DbIterator<TaggedData> result = taggedDataService.getAll(0, 5);
@@ -169,7 +168,7 @@ class TaggedDataServiceTest {
 
     @Test
     void restore() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> {
             taggedDataService.restore(ttd.TRANSACTION_8, tagTd.NOT_SAVED_TagDTsmp_ATTACHMENT, btd.BLOCK_7.getTimestamp(), btd.BLOCK_7.getHeight());
         });
         DbIterator<TaggedData> result = taggedDataService.getAll(0, 10);
@@ -185,7 +184,7 @@ class TaggedDataServiceTest {
     @Test
     void extend() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-        DbUtils.inTransaction(extension, (con) -> taggedDataService.extend(ttd.NOT_SAVED_TRANSACTION, tagTd.NOT_SAVED_TagExtend_ATTACHMENT));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> taggedDataService.extend(ttd.NOT_SAVED_TRANSACTION, tagTd.NOT_SAVED_TagExtend_ATTACHMENT));
         DbIterator<TaggedData> result = taggedDataService.getAll(0, 10);
         int count = 0;
         while (result.hasNext()) {

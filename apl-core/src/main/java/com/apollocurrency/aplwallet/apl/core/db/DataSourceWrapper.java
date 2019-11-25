@@ -27,16 +27,18 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
-import org.h2.jdbc.JdbcSQLException;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.h2.H2DatabasePlugin;
+import org.jdbi.v3.postgres.PostgresPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
@@ -48,9 +50,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -115,7 +117,7 @@ public class DataSourceWrapper implements DataSource {
         return this.dataSource.getParentLogger();
     }
 
-    private HikariDataSource dataSource;
+    private DataSource dataSource;
     private HikariPoolMXBean jmxBean;
 //    private JdbcConnectionPool dataSource;
 //    private volatile int maxActiveConnections;
@@ -128,39 +130,39 @@ public class DataSourceWrapper implements DataSource {
     private final int maxMemoryRows;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
+    private final boolean isSqlLogEnabled;
 
     public HikariPoolMXBean getJmxBean() {
         return jmxBean;
     }
 
     public DataSourceWrapper(DbProperties dbProperties) {
-        long maxCacheSize = dbProperties.getMaxCacheSize();
-        if (maxCacheSize == 0) {
-            maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
-        }
-        String dbUrl = dbProperties.getDbUrl();
-        if (StringUtils.isBlank(dbUrl)) {
+        String dbUrlProperties = dbProperties.getDbUrl();
+        if (StringUtils.isBlank(dbUrlProperties)) {
             String dbFileName = dbProperties.getDbFileName();
             Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
             if (m.find()) { // if found
                 shardId = m.group(); // store shard id
             }
-            dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
+
+            dbUrlProperties = String.format(
+                    "jdbc:%s://%s:%d/%s",
+                    dbProperties.getDbType(),
+                    dbProperties.getDbHost(),
+                    dbProperties.getDbPort(),
+                    dbProperties.getDatabaseName()
+            );
         }
-        if (!dbUrl.contains("MV_STORE=")) {
-            dbUrl += ";MV_STORE=TRUE";
-        }
-        if (!dbUrl.contains("CACHE_SIZE=")) {
-            dbUrl += ";CACHE_SIZE=" + maxCacheSize;
-        }
-        this.dbUrl = dbUrl;
-        dbProperties.dbUrl(dbUrl);
+
+        this.dbUrl = dbUrlProperties;
+        dbProperties.dbUrl(dbUrlProperties);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+        this.isSqlLogEnabled = dbProperties.isSqlLogEnabled();
     }
 
     /**
@@ -192,8 +194,14 @@ public class DataSourceWrapper implements DataSource {
         config.setPoolName(shardId);
         log.debug("Creating DataSource pool '{}', path = {}", shardId, dbUrl);
         updateTransactionTable(config, dbVersion);
-        dataSource = new HikariDataSource(config);
-        jmxBean = dataSource.getHikariPoolMXBean();
+        final HikariDataSource hikariDataSource = new HikariDataSource(config);
+        if (isSqlLogEnabled){
+            dataSource = new P6DataSource(hikariDataSource);
+        } else {
+            dataSource = hikariDataSource;
+            jmxBean = hikariDataSource.getHikariPoolMXBean();
+        }
+
 /*
         dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
         dataSource.setMaxConnections(maxConnections);
@@ -202,8 +210,9 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
-            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
+            //Note that if statement_timeout is nonzero, it is rather pointless to set lock_timeout to the same or larger value, since the statement timeout would always trigger first.
+            stmt.executeUpdate("SET statement_timeout = " + defaultLockTimeout);
+            //stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -215,7 +224,7 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
-        jdbi.installPlugin(new H2DatabasePlugin());
+        jdbi.installPlugin(new PostgresPlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OrderTypeFactory());
@@ -226,7 +235,8 @@ public class DataSourceWrapper implements DataSource {
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
-            Optional<Integer> result = handle.createQuery("select 1 from dual;")
+            @DatabaseSpecificDml(DmlMarker.FROM_ABSENCE)
+            Optional<Integer> result = handle.createQuery("select 1;")
                     .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);
         } catch (ConnectionException e) {
@@ -254,8 +264,8 @@ public class DataSourceWrapper implements DataSource {
             try {
                 Connection connection = dataSource.getConnection();
                 Statement st = connection.createStatement();
-                st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BINARY(32) DEFAULT NULL");
-                st.execute("SHUTDOWN COMPACT");
+                st.executeUpdate("ALTER TABLE IF EXISTS transaction ADD COLUMN IF NOT EXISTS sender_public_key BYTEA DEFAULT NULL");
+                //st.execute("SHUTDOWN COMPACT");
             }
             catch (SQLException e) {
                 throw new RuntimeException("Unable to add sender_public_key column to transaction table", e);
@@ -272,14 +282,14 @@ public class DataSourceWrapper implements DataSource {
         try {
             Connection con = dataSource.getConnection();
             Statement stmt = con.createStatement();
-            stmt.execute("SHUTDOWN COMPACT");
+            //stmt.execute("SHUTDOWN COMPACT");
             shutdown = true;
             initialized = false;
-            dataSource.close();
+            final HikariDataSource hikariDataSource = dataSource.unwrap(HikariDataSource.class);
+            hikariDataSource.close();
+
 //            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (JdbcSQLException e) {
-            log.info(e.toString());
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }
@@ -293,7 +303,7 @@ public class DataSourceWrapper implements DataSource {
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
             log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
-            stmt.execute("ANALYZE");
+            //stmt.execute("ANALYZE");
             log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -315,12 +325,13 @@ public class DataSourceWrapper implements DataSource {
             int idleConnections = jmxBean.getIdleConnections();
             int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
             if (log.isDebugEnabled() && idleConnections <= totalConnections * 0.1) {
+                final HikariDataSource hikariDataSource = dataSource.unwrap(HikariDataSource.class);
                 log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
                         totalConnections,
                         activeConnections,
                         idleConnections,
                         threadAwaitingConnections,
-                        dataSource.getPoolName(), // show main or shard db
+                        hikariDataSource.getPoolName(), // show main or shard db
                         Thread.currentThread().getName());
             }
         }

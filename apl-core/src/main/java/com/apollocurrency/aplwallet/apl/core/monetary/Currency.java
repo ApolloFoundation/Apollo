@@ -23,7 +23,28 @@ package com.apollocurrency.aplwallet.apl.core.monetary;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.util.Listener;
+import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
@@ -33,26 +54,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import com.apollocurrency.aplwallet.apl.util.Listeners;
-import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("UnusedDeclaration")
 public final class Currency {
@@ -112,14 +113,25 @@ public final class Currency {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
-                    + "current_reserve_per_unit_atm, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")) {
+            try (
+                    @DatabaseSpecificDml(DmlMarker.MERGE)
+                    final PreparedStatement pstmt = con.prepareStatement(
+                            "INSERT INTO currency_supply (id, current_supply, " +
+                                    "current_reserve_per_unit_atm, height, latest) " +
+                                    "VALUES (?, ?, ?, ?, TRUE) " +
+                                    "ON CONFLICT(id, height) " +
+                                    "DO UPDATE SET current_supply = ?, current_reserve_per_unit_atm = ?, latest = TRUE"
+                    )
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
                 pstmt.setLong(++i, this.currentReservePerUnitATM);
                 pstmt.setInt(++i, blockchain.getHeight());
+
+                pstmt.setLong(++i, this.currentSupply);
+                pstmt.setLong(++i, this.currentReservePerUnitATM);
+
                 pstmt.executeUpdate();
             }
         }
@@ -305,10 +317,20 @@ public final class Currency {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
-                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO currency (id, account_id, \"name\", code, " +
+                        "description, \"type\", initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, " +
+                        "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET account_id = ?, \"name\" = ?, code = ?, " +
+                        "description = ?, \"type\" = ?, initial_supply = ?, reserve_supply = ?, max_supply = ?, creation_height = ?, issuance_height = ?, min_reserve_per_unit_atm = ?, " +
+                        "min_difficulty = ?, max_difficulty = ?, ruleset = ?, algorithm = ?, decimals = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
@@ -322,12 +344,30 @@ public final class Currency {
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setInt(++i, this.issuanceHeight);
             pstmt.setLong(++i, this.minReservePerUnitATM);
-            pstmt.setByte(++i, (byte)this.minDifficulty);
-            pstmt.setByte(++i, (byte)this.maxDifficulty);
+            pstmt.setByte(++i, (byte) this.minDifficulty);
+            pstmt.setByte(++i, (byte) this.maxDifficulty);
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);
             pstmt.setInt(++i, blockchain.getHeight());
+
+            pstmt.setLong(++i, this.accountId);
+            pstmt.setString(++i, this.name);
+            pstmt.setString(++i, this.code);
+            pstmt.setString(++i, this.description);
+            pstmt.setInt(++i, this.type);
+            pstmt.setLong(++i, this.initialSupply);
+            pstmt.setLong(++i, this.reserveSupply);
+            pstmt.setLong(++i, this.maxSupply);
+            pstmt.setInt(++i, this.creationHeight);
+            pstmt.setInt(++i, this.issuanceHeight);
+            pstmt.setLong(++i, this.minReservePerUnitATM);
+            pstmt.setByte(++i, (byte) this.minDifficulty);
+            pstmt.setByte(++i, (byte) this.maxDifficulty);
+            pstmt.setByte(++i, this.ruleset);
+            pstmt.setByte(++i, this.algorithm);
+            pstmt.setByte(++i, this.decimals);
+
             pstmt.executeUpdate();
         }
     }

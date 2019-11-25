@@ -63,7 +63,7 @@ public interface BlockIndexDao {
     int count();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT count(*) FROM block_index where block_height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND block_height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY shard_height desc LIMIT 1),0)")
+    @SqlQuery("SELECT count(*) FROM block_index where block_height < COALESCE((select shard_height from shard where shard_id =:shardId),0) AND block_height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY shard_height desc LIMIT 1),0)")
     long countBlockIndexByShard(@Bind("shardId") long shardId);
 
     @Transactional

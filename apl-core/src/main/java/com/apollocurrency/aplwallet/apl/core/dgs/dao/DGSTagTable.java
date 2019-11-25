@@ -9,12 +9,14 @@ import com.apollocurrency.aplwallet.apl.core.db.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSTagMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSTag;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.inject.Singleton;
 
 @Singleton
 public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
@@ -44,13 +46,24 @@ public class DGSTagTable extends VersionedDeletableEntityDbTable<DGSTag> {
 
     @Override
     public void save(Connection con, DGSTag tag) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                        "INSERT INTO tag (tag, in_stock_count, total_count, height, latest) " +
+                                "VALUES (?, ?, ?, ?, TRUE) " +
+                                "ON CONFLICT (tag, height) " +
+                                "DO UPDATE SET in_stock_count = ?, total_count = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setString(++i, tag.getTag());
             pstmt.setInt(++i, tag.getInStockCount());
             pstmt.setInt(++i, tag.getTotalCount());
             pstmt.setInt(++i, tag.getHeight());
+
+            pstmt.setInt(++i, tag.getInStockCount());
+            pstmt.setInt(++i, tag.getTotalCount());
+
             pstmt.executeUpdate();
         }
     }

@@ -82,7 +82,7 @@ public class ShardDataSourceCreateHelper {
     public String checkGenerateShardName() {
         if (shardId == null) {
             try (Connection con = databaseManager.getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT IFNULL(max(SHARD_ID), 0) as shard_id FROM shard")) {
+                 PreparedStatement pstmt = con.prepareStatement("SELECT COALESCE(max(SHARD_ID), 0) as shard_id FROM shard")) {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
                         shardId = rs.getLong("shard_id");

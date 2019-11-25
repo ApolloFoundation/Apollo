@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -63,16 +62,12 @@ public class ShardHashCalculatorImplTest {
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
-    @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
+
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class, BlockImpl.class, BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class, DaoConfig.class)
             .addBeans(
                     MockBean.of(blockchainConfig, BlockchainConfig.class),
                     MockBean.of(propertiesHolder, PropertiesHolder.class),
-                    MockBean.of(dbExtension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class),
-                    MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class),
-                    MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class),
                     MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class),
                     MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class),

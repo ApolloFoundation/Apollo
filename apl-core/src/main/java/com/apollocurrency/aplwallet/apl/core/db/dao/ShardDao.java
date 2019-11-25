@@ -33,11 +33,11 @@ public interface ShardDao {
     long countShard();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) + 1 as shard_id FROM shard")
+    @SqlQuery("SELECT COALESCE(max(SHARD_ID), 0) + 1 as shard_id FROM shard")
     long getNextShardId();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) FROM shard")
+    @SqlQuery("SELECT COALESCE(max(SHARD_ID), 0) FROM shard")
     long getMaxShardId();
 
     @Transactional
@@ -75,7 +75,7 @@ public interface ShardDao {
     Shard getLastShard();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT IFNULL(max(shard_height), 0) FROM shard")
+    @SqlQuery("SELECT COALESCE(max(shard_height), 0) FROM shard")
     int getLatestShardHeight();
 
     @Transactional(readOnly = true)

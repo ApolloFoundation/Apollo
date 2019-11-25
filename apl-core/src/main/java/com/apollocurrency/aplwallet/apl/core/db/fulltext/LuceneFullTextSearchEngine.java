@@ -25,7 +25,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +145,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void init() throws IOException {
+        /*
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
             indexLock.updateLock().lock();
@@ -177,6 +177,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 indexLock.updateLock().unlock();
             }
         }
+
+         */
     }
 
     /**
@@ -184,6 +186,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void commitIndex() throws SQLException {
+        /*
         indexLock.writeLock().lock();
         try {
             indexWriter.commit();
@@ -199,6 +202,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         } finally {
             indexLock.writeLock().unlock();
         }
+
+         */
     }
 
     /**
@@ -208,6 +213,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void clearIndex() throws SQLException {
+        /*
         indexLock.writeLock().lock();
         try {
             try {
@@ -232,6 +238,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         finally {
             indexLock.writeLock().unlock();
         }
+
+         */
     }
     /**
      * {@inheritDoc}
@@ -239,6 +247,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     @Override
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
             throws SQLException {
+        /*
         //
         // Create the result set columns
         //
@@ -286,6 +295,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             indexLock.readLock().unlock();
         }
         return result;
+
+         */
+        return null;
     }
 
     /**
@@ -293,6 +305,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void shutdown() {
+        /*
         indexLock.writeLock().lock();
         try {
             commitIndex();
@@ -307,5 +320,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         } finally {
             indexLock.writeLock().unlock();
         }
+         */
     }
+
 }

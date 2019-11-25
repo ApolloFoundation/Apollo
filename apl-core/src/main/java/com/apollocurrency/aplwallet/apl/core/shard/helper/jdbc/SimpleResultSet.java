@@ -9,9 +9,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc;
 
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.h2.value.DataType;
+import org.postgresql.core.TypeInfo;
+import org.postgresql.jdbc.PgConnection;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -65,6 +68,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     private SimpleRowSource source;
     private ArrayList<Column> columns = new ArrayList<>(4);
     private boolean autoClose = true;
+    private final DatabaseManager databaseManager;
 
     /**
      * This constructor is used if the result set is later populated with
@@ -72,6 +76,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      */
     public SimpleResultSet() {
         rows = new ArrayList<>(4);
+        this.databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     /**
@@ -82,6 +87,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      */
     public SimpleResultSet(SimpleRowSource source) {
         this.source = source;
+        this.databaseManager = CDI.current().select(DatabaseManager.class).get();
     }
 
     /**
@@ -95,9 +101,23 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * @param scale     the scale
      */
     public void addColumn(String name, int sqlType, int precision, int scale) {
+        /*
         int valueType = DataType.convertSQLTypeToValueType(sqlType);
         addColumn(name, sqlType, DataType.getDataType(valueType).name,
                 precision, scale);
+         */
+        //TODO: check
+        addColumn(name, sqlType, getPgType(sqlType),
+                precision, scale);
+    }
+
+    private String getPgType(int sqlType) {
+        try (final PgConnection connection = databaseManager.getDataSource().getConnection().unwrap(PgConnection.class)) {
+            final TypeInfo result = connection.getTypeInfo();
+            return result.getPGType(sqlType);
+        } catch (SQLException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -1965,8 +1985,11 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      */
     @Override
     public String getColumnClassName(int columnIndex) throws SQLException {
+        /*
         int type = DataType.getValueTypeFromResultSet(this, columnIndex);
         return DataType.getTypeClassName(type, true);
+         */
+        return getPgType(this.getColumnType(columnIndex));
     }
 
     /**

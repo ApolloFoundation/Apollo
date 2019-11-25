@@ -56,7 +56,6 @@ public class DGSServiceSearchTest {
             .addBeans(MockBean.of(blockchain, Blockchain.class))
             .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-            .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
             .build();
     @Inject
     DGSService service;

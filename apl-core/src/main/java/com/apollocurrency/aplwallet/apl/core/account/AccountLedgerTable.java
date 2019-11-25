@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -60,9 +62,17 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
             if (trimKeep <= 0)
                 return;
             TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
-            try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
+            try (
+                    final Connection con = dataSource.getConnection();
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                    final PreparedStatement pstmt = con.prepareStatement(
+                            "DELETE FROM account_ledger WHERE db_id IN " +
+                                    "(SELECT db_id FROM account_ledger " +
+                                    "WHERE height <= ? FETCH FIRST ? ROWS ONLY)"
+                    )
+            ) {
                 pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
+                pstmt.setInt(2, propertiesHolder.BATCH_COMMIT_SIZE());
                 int trimmed;
                 do {
                     trimmed = pstmt.executeUpdate();

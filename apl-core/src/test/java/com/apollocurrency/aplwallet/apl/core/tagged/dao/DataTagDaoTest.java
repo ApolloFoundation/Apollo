@@ -100,14 +100,14 @@ class DataTagDaoTest {
 
     @Test
     void insertDataTag() throws Exception {
-        DbUtils.inTransaction(extension, (con) -> dataTagDao.insert(tagtd.dataTag_NOT_SAVED));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> dataTagDao.insert(tagtd.dataTag_NOT_SAVED));
         List<DataTag> all = dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4, tagtd.dataTag_NOT_SAVED), all);
     }
 
     @Test
     void testRollback() throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
         assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
                 dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
@@ -118,7 +118,7 @@ class DataTagDaoTest {
         doReturn(1_000_000).when(taggedData).getHeight();
         doReturn(new String[]{tagtd.dataTag_1.getTag(), "newTag"}).when(taggedData).getParsedTags();
 
-        DbUtils.inTransaction(extension, (con) -> dataTagDao.add(taggedData));
+        DbUtils.inTransaction((DatabaseManager) extension, (con) -> dataTagDao.add(taggedData));
 
         List<DataTag> dataTags = CollectionUtil.toList(dataTagDao.getAllTags(0, 4));
 

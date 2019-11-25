@@ -4,18 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.tagged.dao;
 
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TagDataTimestampMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataTimestamp;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * DAO for TaggedDataTimestamp
@@ -49,13 +51,23 @@ public class TaggedDataTimestampDao extends VersionedDeletableEntityDbTable<Tagg
     }
 
     public void save(Connection con, TaggedDataTimestamp dataTimestamp) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                        + "KEY (id, height) VALUES (?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                final PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO tagged_data_timestamp (id, \"timestamp\", height, latest) " +
+                        "VALUES (?, ?, ?, TRUE) " +
+                        "ON CONFLICT (id, height) " +
+                        "DO UPDATE SET \"timestamp\" = ?, latest = TRUE"
+                )
+        ) {
             int i = 0;
             pstmt.setLong(++i, dataTimestamp.getId());
             pstmt.setInt(++i, dataTimestamp.getTimestamp());
             pstmt.setInt(++i, dataTimestamp.getHeight());
+
+            pstmt.setInt(++i, dataTimestamp.getTimestamp());
+
             pstmt.executeUpdate();
         }
     }

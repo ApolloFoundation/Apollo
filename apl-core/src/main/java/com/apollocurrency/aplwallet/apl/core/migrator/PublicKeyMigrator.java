@@ -8,6 +8,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -65,18 +67,24 @@ public class PublicKeyMigrator {
                     LOG.info("Copy genesis public keys");
                     // copy genesis public keys into the new table
                     try (PreparedStatement pstmt = con.prepareStatement(
-                            "INSERT INTO genesis_public_key (db_id, account_id, public_key, height, latest )" +
-                                    " select * FROM public_key where DB_ID between ? AND ?")) {
+                            "INSERT INTO genesis_public_key (db_id, account_id, public_key, height, latest ) " +
+                                    "select * FROM public_key where DB_ID between ? AND ? "
+                    )) {
                         pstmt.setLong(1, minDbId);
                         pstmt.setLong(2, maxDbId);
                         pstmt.executeUpdate();
                     }
                     dataSource.commit(false);
                     //delete genesis keys
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
                     int deleted;
                     int totalDeleted = 0;
                     do {
-                        deleted = stmt.executeUpdate("DELETE FROM public_key where height = 0 LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE());
+                        deleted = stmt.executeUpdate(
+                                "DELETE FROM public_key where db_id IN " +
+                                        "(SELECT db_id FROM public_key WHERE height = 0 FETCH FIRST " +
+                                        propertiesHolder.BATCH_COMMIT_SIZE() + " ROWS ONLY)"
+                        );
                         totalDeleted += deleted;
                         LOG.debug("Migration performed for {}/{} public keys", totalDeleted, totalNumberOfGenesisKeys);
                         dataSource.commit(false);

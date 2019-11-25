@@ -10,12 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
     protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
@@ -59,8 +61,14 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
-                    try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                            + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
+                    try (
+                            @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT_AND_LOCK)
+                            final PreparedStatement pstmt = con.prepareStatement(
+                            "UPDATE " + table + " SET latest = FALSE " +
+                                    "WHERE (" + keyFactory.getPKColumns() + ") IN " +
+                                    "(SELECT " + keyFactory.getPKColumns() + " FROM " + table + " " +
+                                    keyFactory.getPKClause() + " AND latest = TRUE FETCH FIRST 1 ROWS ONLY FOR UPDATE)"
+                    )) {
                         dbKey.setPK(pstmt);
                         pstmt.executeUpdate();
                         save(con, t);

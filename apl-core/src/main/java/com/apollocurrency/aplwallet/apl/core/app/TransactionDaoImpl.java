@@ -48,6 +48,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -486,10 +488,11 @@ public class TransactionDaoImpl implements TransactionDao {
             boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly,
             boolean includePrivate, int height, int prunableExpiration) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
+        @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
         createTransactionSelectSqlNoOrder(buf, "transaction.id", type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
-        buf.append(")");
+        buf.append(") AS subquery");
         String sql = buf.toString();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {

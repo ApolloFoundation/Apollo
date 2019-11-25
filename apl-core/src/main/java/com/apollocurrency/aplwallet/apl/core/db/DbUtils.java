@@ -111,7 +111,7 @@ public final class DbUtils {
         if (n != 0) {
             pstmt.setByte(index, n);
         } else {
-            pstmt.setNull(index, Types.TINYINT);
+            pstmt.setNull(index, Types.SMALLINT);
         }
     }
 
@@ -137,17 +137,29 @@ public final class DbUtils {
         }
     }
 
-    public static <T> void setArray(PreparedStatement pstmt, int index, T[] array) throws SQLException {
+    public static <T> void setArray(
+            final PreparedStatement pstmt,
+            final int index,
+            final T[] array,
+            final String dbTypeName
+    ) throws SQLException {
         if (array != null) {
-            pstmt.setObject(index, array);
+            final Connection connection = pstmt.getConnection();
+            pstmt.setArray(index, connection.createArrayOf(dbTypeName, array));
         } else {
             pstmt.setNull(index, Types.ARRAY);
         }
     }
 
-    public static <T> void setArrayEmptyToNull(PreparedStatement pstmt, int index, T[] array) throws SQLException {
+    public static <T> void setArrayEmptyToNull(
+            final PreparedStatement pstmt,
+            final int index,
+            final T[] array,
+            final String dbTypeName
+    ) throws SQLException {
         if (array != null && array.length > 0) {
-            pstmt.setObject(index, array);
+            final Connection connection = pstmt.getConnection();
+            pstmt.setArray(index, connection.createArrayOf(dbTypeName, array));
         } else {
             pstmt.setNull(index, Types.ARRAY);
         }

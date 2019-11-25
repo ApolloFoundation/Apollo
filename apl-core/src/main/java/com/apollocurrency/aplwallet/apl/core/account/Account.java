@@ -52,6 +52,8 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
@@ -623,11 +625,15 @@ public class Account {
         int blockchainHeight = blockchain.getHeight();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
-                     + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
-                     + (height < blockchainHeight ? " AND height <= ? " : "")
-                     + " GROUP BY account_id ORDER BY account_id")) {
-            pstmt.setObject(1, lessorIds);
+             @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+             final PreparedStatement pstmt = con.prepareStatement(
+                     "SELECT account_id, SUM (additions) AS additions " +
+                     "FROM account_guaranteed_balance " +
+                     "WHERE account_id = ANY (?) AND height > ? " +
+                     (height < blockchainHeight ? " AND height <= ? " : "") +
+                     "GROUP BY account_id ORDER BY account_id")
+        ) {
+            pstmt.setArray(1, con.createArrayOf("bigint", lessorIds));
             pstmt.setInt(2, height - blockchainConfig.getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
                 pstmt.setInt(3, height);
@@ -1174,11 +1180,18 @@ public class Account {
         }
         int blockchainHeight = blockchain.getHeight();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
-                     + "WHERE account_id = ? and height = ?");
-             PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
-                     + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
+        try (
+                final Connection con = dataSource.getConnection();
+                final PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
+                        + "WHERE account_id = ? and height = ?");
+
+                @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmtUpdate = con.prepareStatement(
+                        "INSERT INTO account_guaranteed_balance (account_id, additions, height) " +
+                                "VALUES(?, ?, ?) " +
+                                "ON CONFLICT (account_id, height) " +
+                                "DO UPDATE SET additions = ?"
+                )
+        ) {
             pstmtSelect.setLong(1, this.id);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {
@@ -1189,10 +1202,12 @@ public class Account {
                 pstmtUpdate.setLong(1, this.id);
                 pstmtUpdate.setLong(2, additions);
                 pstmtUpdate.setInt(3, blockchainHeight);
+
+                pstmtUpdate.setLong(4, additions);
+
                 pstmtUpdate.executeUpdate();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
