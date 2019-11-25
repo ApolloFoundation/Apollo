@@ -29,7 +29,7 @@ public class TestMarketplace extends TestBaseOld {
     private int price;
     private int quantity;
     private final File image = TestConfiguration.getTestConfiguration().getDefaultImage();
-    String symbols = "!@#$^&*()_+{}:'./,\"";
+    String symbols = "!@$^&*()_+{}:'./,\"";
 
     //TODO: Need implement in test "Purchase"
     private final int DELIVERY_TYPE_GOODS_TO_ENCRYPT = 1;
