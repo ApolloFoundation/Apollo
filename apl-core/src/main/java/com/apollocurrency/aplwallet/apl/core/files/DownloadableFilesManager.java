@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.event.ObservesAsync;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class DownloadableFilesManager {
 
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static String FILES_SUBDIR = "downloadables";
-    private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
+    private final Map<String, FileDownloadInfo> fdiCache = new ConcurrentHashMap<>();
     public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
@@ -75,7 +76,7 @@ public class DownloadableFilesManager {
         FileDownloadInfo downloadInfo =  fillFileDownloadInfo(fileData);
         fdiCache.remove(fileData.getFileId());
         if(fileData.isHashedOK()){
-           fdiCache.put(fileData.getFileId(), downloadInfo);
+           fdiCache.putIfAbsent(fileData.getFileId(), downloadInfo);
         }
     }
     
@@ -146,7 +147,8 @@ public class DownloadableFilesManager {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fops);
         if(downloadInfo.fileInfo.isPresent){
             log.info("createFileDownloadInfo STORE = '{}'", downloadInfo);
-            fdiCache.put(fileId, downloadInfo);
+            fdiCache.remove(fileId);
+            fdiCache.putIfAbsent(fileId, downloadInfo);
         }
         return downloadInfo;
     }
