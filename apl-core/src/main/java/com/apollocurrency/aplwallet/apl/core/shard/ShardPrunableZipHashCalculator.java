@@ -4,53 +4,53 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
 public class ShardPrunableZipHashCalculator {
-    private DerivedTablesRegistry registry;
-    private Zip zip;
-    private DatabaseManager databaseManager;
-    private ShardDao shardDao;
-    private BlockchainConfig blockchainConfig;
-    private DirProvider dirProvider;
+    private final DerivedTablesRegistry registry;
+    private final Zip zip;
+    private final DatabaseManager databaseManager;
+    private final ShardDao shardDao;
+    private final BlockchainConfig blockchainConfig;
+    private final DirProvider dirProvider;
     private int lastPruningTime = 0;
+    private final Event<ChunkedFileOps> fileChangedEvent;
 
     @Inject
-    public ShardPrunableZipHashCalculator(DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider) {
+    public ShardPrunableZipHashCalculator(Event<ChunkedFileOps> fileChangedEvent, DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider) {
         this.registry = registry;
         this.zip = zip;
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.blockchainConfig = blockchainConfig;
         this.dirProvider = dirProvider;
-    }
-
-    public void onTrimDone(@Observes @Async TrimData trimData) {
-        tryRecalculatePrunableArchiveHashes(trimData.getPruningTime());
+        this.fileChangedEvent = fileChangedEvent;
     }
 
     public void tryRecalculatePrunableArchiveHashes(int time) {
@@ -66,6 +66,7 @@ public class ShardPrunableZipHashCalculator {
     }
 
     private void recalculatePrunableArchiveHashes() {
+        UUID chainId = blockchainConfig.getChain().getChainId();
         List<Shard> allCompletedShards = shardDao.getAllCompletedShards().stream().filter(shard -> shard.getPrunableZipHash() != null).collect(Collectors.toList()); // TODO change to completed and imported
         allCompletedShards.forEach(shard -> {
             try {
@@ -75,7 +76,7 @@ public class ShardPrunableZipHashCalculator {
                 prunableTables.forEach(t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100));
                 long count = Files.list(tempDirectory).count();
                 ShardNameHelper shardNameHelper = new ShardNameHelper();
-                String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), blockchainConfig.getChain().getChainId());
+                String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId );
                 Path prunableArchivePath = dirProvider.getDataExportDir().resolve(prunableArchiveName);
                 if (count == 0) {
                     shard.setPrunableZipHash(null);
@@ -83,7 +84,11 @@ public class ShardPrunableZipHashCalculator {
                     Files.deleteIfExists(prunableArchivePath);
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
-                    byte[] hash = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    ChunkedFileOps ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
+                    log.debug("Firing 'FILE_CHANDED' event {}", ops.getFileId());
+                    byte[] hash = ops.getFileHash();
+                    ops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
                     Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);

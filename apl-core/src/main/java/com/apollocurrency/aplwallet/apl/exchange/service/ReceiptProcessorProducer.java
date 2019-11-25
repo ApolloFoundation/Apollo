@@ -13,6 +13,7 @@ import static org.web3j.tx.TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HA
 public class ReceiptProcessorProducer {
     @Inject
     private Web3j web3j;
+
     @Produces
     public TransactionReceiptProcessor receiptProcessor() {
         return new PollingTransactionReceiptProcessor(web3j, DEFAULT_BLOCK_TIME, DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);

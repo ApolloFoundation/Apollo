@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TradingViewService;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
+import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -115,6 +116,9 @@ public final class AplCore {
 
     @Inject @Setter
     private DexOrderProcessor dexOrderProcessor;
+
+    @Inject @Setter
+    private PrunableArchiveMonitor prunableArchiveMonitor;
 
     @Inject
     @Setter

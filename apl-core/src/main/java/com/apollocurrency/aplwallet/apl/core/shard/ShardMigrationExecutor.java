@@ -214,6 +214,7 @@ public class ShardMigrationExecutor {
         blockchainProcessor.resumeBlockchainDownloading();
         Generator.resumeForging();
     }
+
     public MigrateState executeAllOperations() {
         stopNetOperations();
         log.debug("START SHARDING...");

@@ -105,7 +105,7 @@ public class DexSmartContractService {
                 throw new RuntimeException(e);
             }
             if (allowance.compareTo(weiValue) < 0) {
-                String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, weiValue);
+                String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
 
                 if (approvedTx == null) {
                     log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
@@ -159,7 +159,7 @@ public class DexSmartContractService {
         String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.DexOperation.REFUND), true);
         if (txHash == null) {
             ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND,params, fromAddress) ,ethWalletKey.getCredentials());
+            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND, params, fromAddress), ethWalletKey.getCredentials());
             txHash = dexContract.refund(secretHash, waitConfirmation);
         }
         return txHash != null;
@@ -304,6 +304,7 @@ public class DexSmartContractService {
     private String checkExistingTx(DexTransaction tx) {
         return checkExistingTx(tx, false);
     }
+
     private String checkExistingTx(DexTransaction tx, boolean waitConfirmation) {
         String txHash = null;
         if (tx != null) {

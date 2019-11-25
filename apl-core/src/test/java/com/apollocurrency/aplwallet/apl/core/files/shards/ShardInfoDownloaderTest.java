@@ -228,7 +228,8 @@ public class ShardInfoDownloaderTest {
         downloader.processAllPeersShardingInfo();
         Map<String, ShardingInfo> result = downloader.getShardInfoByPeers();
         int size = result.size();
-        assertEquals(size, 7);
+        //one gets removed
+        assertEquals(size,6);
     }
 
     /**

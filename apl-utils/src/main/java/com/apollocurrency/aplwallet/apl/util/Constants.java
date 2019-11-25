@@ -75,7 +75,11 @@ public final class Constants {
 
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
-
+    public static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
+    // 5 min
+    public static final int PRUNABLE_MONITOR_INITIAL_DELAY = 5 * 60 * 1000;
+    // 10 min
+    public static final int PRUNABLE_MONITOR_DELAY = 10 * 60 * 1000;
 
     public static final int MAX_ACCOUNT_NAME_LENGTH = 100;
     public static final int MAX_ACCOUNT_DESCRIPTION_LENGTH = 1000;
@@ -164,6 +168,9 @@ public final class Constants {
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
+
+    public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
 
     public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP = 2 * 60 * 60;
     public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP = 48 * 60 * 60;

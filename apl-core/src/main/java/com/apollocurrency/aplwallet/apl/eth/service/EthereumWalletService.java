@@ -227,7 +227,7 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Third service is not available.");
         }
 
-        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, value,  ethGasInfo.getAverageSpeedPrice());
+        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, ethGasInfo.getAverageSpeedPrice(), value);
     }
 
 
@@ -245,7 +245,7 @@ public class EthereumWalletService {
      * @param value amount
      * @return tx transaction id
      */
-    private String sendApproveTransaction(Credentials credentials, String spenderAddress, BigInteger value, Long gasPrice){
+    private String sendApproveTransaction(Credentials credentials, String spenderAddress, Long gasPrice, BigInteger value) {
         String tx = null;
         try {
             Function function = approve(spenderAddress, value);

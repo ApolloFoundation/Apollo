@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.api.p2p;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.EqualsAndHashCode;
@@ -32,5 +33,6 @@ public class FileChunkInfo {
      */
     public FileChunkState present;
     public long crc;
-
+    @JsonIgnore
+    public int failedAttempts = 0;
 }

@@ -20,8 +20,6 @@ public class FileDownloadStatus {
     @Getter
     private final String id;
     @Getter
-    double completed = 0.0;
-    @Getter
     AtomicInteger chunksTotal = new AtomicInteger(1); //init to 1 to avoid zero division
     @Getter
     AtomicInteger chunksReady = new AtomicInteger(0);
@@ -43,7 +41,12 @@ public class FileDownloadStatus {
     }
 
     @Override
-    public String toString() {
-        return String.format("File ID: %s completed %f3.2 decision %s", id, completed, decision.name());
+    public String toString(){
+       return String.format("File ID: %s completed %f3.2 decision %s", id, getPercentCompleted(),decision.name());
+    }
+
+    public double getPercentCompleted(){
+        double percent = chunksReady.get()*1.0/chunksTotal.get()* 100.0D;
+        return percent;
     }
 }

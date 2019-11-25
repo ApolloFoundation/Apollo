@@ -60,6 +60,7 @@ public class ResponseBase {
         this.errorDetails = errorDetails;
         this.errorCode = errorCode;
     }
+
     public ResponseBase(Integer newErrorCode, String errorDescription, Long errorCode) {
         this(newErrorCode, errorDescription, null, errorCode);
     }

@@ -96,7 +96,7 @@ public class Helper2FA {
         }
     }
 
-    public static void verifyVault2FA(long accountId,  int code2FA) throws ParameterException {
+    public static void verifyVault2FA(long accountId, int code2FA) throws ParameterException {
 
         if (isEnabled2FA(accountId)) {
             Status2FA status2FA = service2FA.tryAuth(accountId, code2FA);

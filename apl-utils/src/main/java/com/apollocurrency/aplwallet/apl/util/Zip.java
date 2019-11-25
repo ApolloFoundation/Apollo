@@ -20,17 +20,10 @@ public interface Zip {
      * @param filesTimeFromEpoch NULL (default will be assigned) or time in ms from Epoch for all file times
      * @param filenameFilter NULL (CSV will be by default) or file filter instance
      * @param recursive with subdirs
-     * @return byte array filled by CRC/hash if success or null, when exception occurred or files for compress were not found
+     * @return ChunkedFileOps containing hash and partial hashes if success or null, when exception occurred or files for compress were not found
      */
-    byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
+    ChunkedFileOps compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch, FilenameFilter filenameFilter, boolean  recursive);
 
-
-    /**
-     * Calculate zip hash crc for zip file specified by path
-     * @param zipFile absolute path to zip file
-     * @return byte array of size 32, which represent zip sha256 crc hash
-     */
-    byte[] calculateHash(String zipFile);
 
     /**
      * Compress all filtered files in directory into ZIP file, change file timestamp to be predefined.Return computed CRC/hash for created ZIP as byte array.
