@@ -392,7 +392,7 @@ public class ShardInfoDownloader {
                 res.replace(predefined, 20.0D);
                 log.info("Downloading of shard {} is forced by enviromnent variable",predefined);
             }else{
-                log.info("Shard ID {} predefined in environment variable is not usable or does not exist");
+                log.info("Shard ID {} predefined in environment variable is not usable or does not exist",predefined);
             }
         }
         return res;

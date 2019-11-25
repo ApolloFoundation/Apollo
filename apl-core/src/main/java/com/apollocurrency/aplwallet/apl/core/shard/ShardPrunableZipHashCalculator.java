@@ -91,7 +91,7 @@ public class ShardPrunableZipHashCalculator {
                         log.error("Can not zip file: {}", zipName);
                     }
                     byte[] hash = ops.getFileHash();
-                    ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
+                    ops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
                     Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
