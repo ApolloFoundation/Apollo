@@ -97,7 +97,7 @@ public class ShardPrunableZipHashCalculator {
                     shardDao.updateShard(shard);
                 }
                 fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
-                log.debug("Firing 'FILE_CHANDED' event {}", ops.getFileId());
+                log.debug("Firing 'FILE_CHANGED' event {}", ops.getFileId());
                 FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
             }
             catch (IOException e) {
