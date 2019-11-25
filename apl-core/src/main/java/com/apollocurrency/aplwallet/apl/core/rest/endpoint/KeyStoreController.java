@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.request.EthKeyStoreDownloadRequest;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
@@ -20,9 +21,9 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -37,11 +38,9 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -234,17 +233,15 @@ public class KeyStoreController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"keyStore"}, summary = "Export eth keystore",
             description = "Generate eth keystore for specified account in json format fully compatible with original geth keystore. Required 2fa code for accounts with enabled 2fa.",
-            responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
+            requestBody = @RequestBody(description = "Account export data. Required: account, passphrase, ethAddress. 'code2FA' required for accounts with enabled 2fa. 'ethKeystorePassword' optional eth keystore password, if omitted passphrase for apl account will be used ", required = true,
+                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = EthKeyStoreDownloadRequest.class))),
+                    responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = WalletFile.class))))
-    public Response downloadEthKeyStore(@Parameter(description = "Apl account id or rs", required = true) @QueryParam("account") String account,
-                                        @Parameter(description = "Eth account address", required = true) @QueryParam("ethAddress") String ethAccountAddress,
-                                        @Parameter(description = "Passphrase for apl vault account", required = true) @QueryParam("passphrase") String passphrase,
-                                        @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @QueryParam("ethKeystorePassword") String ethKeystorePassword,
-                                        @Parameter(description = "2fa code for account if enabled") @QueryParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
-        String aplVaultPassphrase = ParameterParser.getPassphrase(passphrase, true);
-        long accountId = ParameterParser.getAccountId(account, "account", true);
+    public Response downloadEthKeyStore(EthKeyStoreDownloadRequest ethKeyStoreDownloadRequest) throws ParameterException {
+        String aplVaultPassphrase = ParameterParser.getPassphrase(ethKeyStoreDownloadRequest.getPassphrase(), true);
+        long accountId = ParameterParser.getAccountId(ethKeyStoreDownloadRequest.getAccount(), "account", true);
 
-        Helper2FA.verifyVault2FA(accountId, code);
+        Helper2FA.verifyVault2FA(accountId, ethKeyStoreDownloadRequest.getCode2FA());
         if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
             return Response.status(Response.Status.OK)
                     .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
@@ -258,8 +255,9 @@ public class KeyStoreController {
             throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
         }
 
+        String ethKeystorePassword = ethKeyStoreDownloadRequest.getEthKeystorePassword();
         String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
-        EthWalletKey ethKeyToExport = keysInfo.getEthWalletForAddress(ethAccountAddress);
+        EthWalletKey ethKeyToExport = keysInfo.getEthWalletForAddress(ethKeyStoreDownloadRequest.getEthAddress());
         try {
             WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethKeyToExport.getCredentials().getEcKeyPair());
             return Response.ok(walletFile).build();

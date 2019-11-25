@@ -629,7 +629,7 @@ public final class ParameterParser {
     }
     public static String getPassphrase(String passphrase, boolean isMandatory) throws ParameterException {
         if (StringUtils.isBlank(passphrase) && isMandatory) {
-            throw new ParameterException(missing(passphrase));
+            throw new ParameterException(missing("passphrase"));
         }
         return elGamal.elGamalDecrypt(passphrase);
     }

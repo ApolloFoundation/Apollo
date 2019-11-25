@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
@@ -282,6 +283,7 @@ public final class API {
                     new StringJoiner(",")
                             .add(ConstraintViolationExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
+                            .add(LegacyParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(DefaultGlobalExceptionMapper.class.getName())

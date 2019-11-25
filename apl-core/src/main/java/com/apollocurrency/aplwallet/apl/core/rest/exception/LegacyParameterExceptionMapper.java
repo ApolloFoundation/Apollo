@@ -9,24 +9,13 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.StringWriter;
 
-
-/**
- * Global handler for {@link ParameterException} thrown from REST endpoints
- *
- * @author isegodin
- */
 @Provider
-public class ParameterExceptionMapper implements ExceptionMapper<ParameterException> {
+public class LegacyParameterExceptionMapper implements ExceptionMapper<com.apollocurrency.aplwallet.apl.core.http.ParameterException> {
 
     @Override
-    public Response toResponse(ParameterException exception) {
+    public Response toResponse(com.apollocurrency.aplwallet.apl.core.http.ParameterException exception) {
         Object responseEntity;
-
-        if (exception.getErrorResponseNode() != null) {
-
-            responseEntity = exception.getErrorResponseNode().toString();
-
-        } else if (exception.getErrorResponse() != null) {
+        if (exception.getErrorResponse() != null) {
             try {
                 StringWriter writer = new StringWriter();
                 exception.getErrorResponse().writeJSONString(writer);
@@ -49,5 +38,4 @@ public class ParameterExceptionMapper implements ExceptionMapper<ParameterExcept
                 .type(MediaType.APPLICATION_JSON)
                 .build();
     }
-
 }
