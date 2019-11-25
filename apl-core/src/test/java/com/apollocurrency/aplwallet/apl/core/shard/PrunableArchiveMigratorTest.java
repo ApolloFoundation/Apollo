@@ -152,9 +152,15 @@ class PrunableArchiveMigratorTest {
         Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash1 = ops1.getFileHash();
+        byte[] hash1=null;
+        if(ops1!=null && ops1.isHashedOK()){
+            hash1 = ops1.getFileHash();
+        }
         ChunkedFileOps ops2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash2 = ops2.getFileHash();
+        byte[] hash2=null;
+        if(ops2!=null && ops2.isHashedOK()){
+           hash2 = ops2.getFileHash();
+        }
         doReturn(dataExportFolder).when(dirProvider).getDataExportDir();
         AtomicReference<Path> tempDirPath = new AtomicReference<>();
         doAnswer(invocation -> {

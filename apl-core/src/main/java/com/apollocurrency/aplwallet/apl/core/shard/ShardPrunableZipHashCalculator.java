@@ -78,21 +78,26 @@ public class ShardPrunableZipHashCalculator {
                 ShardNameHelper shardNameHelper = new ShardNameHelper();
                 String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId );
                 Path prunableArchivePath = dirProvider.getDataExportDir().resolve(prunableArchiveName);
+                ChunkedFileOps ops;
                 if (count == 0) {
                     shard.setPrunableZipHash(null);
                     shardDao.updateShard(shard);
                     Files.deleteIfExists(prunableArchivePath);
+                    ops = new ChunkedFileOps("");
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
-                    ChunkedFileOps ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
-                    fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
-                    log.debug("Firing 'FILE_CHANDED' event {}", ops.getFileId());
+                    ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    if( ops==null || ! ops.isHashedOK()){
+                        log.error("Can not zip file: {}", zipName);
+                    }
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
                     Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
+                fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
+                log.debug("Firing 'FILE_CHANDED' event {}", ops.getFileId());
                 FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
             }
             catch (IOException e) {
