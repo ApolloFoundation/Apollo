@@ -29,8 +29,8 @@ public class ShardObserver {
 
     private final BlockchainConfig blockchainConfig;
     private final ShardService shardService;
-    private PropertiesHolder propertiesHolder;
-
+    private final PropertiesHolder propertiesHolder;
+    
     @Inject
     public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -63,7 +63,7 @@ public class ShardObserver {
             log.debug("No last shard yet");
         }else{        
             int lastShardHeight = shard.getShardHeight();
-            int nextShardHeight = lastShardHeight+currentConfig.getShardingFrequency();
+            int nextShardHeight = lastShardHeight+getShardingFrequency(currentConfig);
             if(lastTrimBlockHeight >= lastShardHeight && lastTrimBlockHeight < nextShardHeight){
                 log.debug("Shard exists. Last shard at height: {}. trim height: {}, next shard height: {}",
                     lastShardHeight,lastTrimBlockHeight,nextShardHeight);
@@ -76,8 +76,8 @@ public class ShardObserver {
         return res;
     }
     
-    private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
-        int shardingFrequency = 1;
+    private int getShardingFrequency(HeightConfig currentConfig){
+        int shardingFrequency;
         if (!blockchainConfig.isJustUpdated()) {
             // config didn't change from previous trim scheduling
             shardingFrequency = currentConfig.getShardingFrequency();
@@ -89,13 +89,19 @@ public class ShardObserver {
                     ? blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
                     : currentConfig.getShardingFrequency(); // fall back
         }
+        return shardingFrequency;
+    }
+    private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
+        
+        int shardingFrequency = getShardingFrequency(currentConfig);
+        
         log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
                 + ", shardingFrequency = {} ({})",
                 shardingFrequency != 0
                         ? lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
                 lastTrimBlockHeight, blockchainHeight,
                 shardingFrequency, blockchainConfig.isJustUpdated());
-        
+
         //Q. how much blocks we ould be late? 1/4 of frequiency is OK?
         //Q. Do we count on some other parameters?
         long howLateWeCanBe = shardingFrequency / 4;
