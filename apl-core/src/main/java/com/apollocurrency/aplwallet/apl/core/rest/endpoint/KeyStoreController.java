@@ -41,7 +41,6 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -231,16 +230,17 @@ public class KeyStoreController {
 
     @POST
     @Path("/eth")
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"keyStore"}, summary = "Export eth keystore",
             description = "Generate eth keystore for specified account in json format fully compatible with original geth keystore. Required 2fa code for accounts with enabled 2fa.",
-            responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
+                    responses = @ApiResponse(description = "Eth wallet keystore for account in json format", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = WalletFile.class))))
-    public Response downloadEthKeyStore(@Parameter(description = "Apl account id or rs", required = true) @QueryParam("account") String account,
-                                        @Parameter(description = "Eth account address", required = true) @QueryParam("ethAddress") String ethAccountAddress,
-                                        @Parameter(description = "Passphrase for apl vault account", required = true) @QueryParam("passphrase") String passphrase,
-                                        @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @QueryParam("ethKeystorePassword") String ethKeystorePassword,
-                                        @Parameter(description = "2fa code for account if enabled") @QueryParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
+    public Response downloadEthKeyStore(@Parameter(description = "Apl account id or rs", required = true) @FormParam("account") String account,
+                                        @Parameter(description = "Eth account address", required = true) @FormParam("ethAddress") String ethAccountAddress,
+                                        @Parameter(description = "Passphrase for apl vault account", required = true) @FormParam("passphrase") String passphrase,
+                                        @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @FormParam("ethKeystorePassword") String ethKeystorePassword,
+                                        @Parameter(description = "2fa code for account if enabled") @FormParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
         String aplVaultPassphrase = ParameterParser.getPassphrase(passphrase, true);
         long accountId = ParameterParser.getAccountId(account, "account", true);
 
