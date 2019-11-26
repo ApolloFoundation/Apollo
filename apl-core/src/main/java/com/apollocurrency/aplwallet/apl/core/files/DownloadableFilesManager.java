@@ -73,10 +73,23 @@ public class DownloadableFilesManager {
     }
     
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
-        FileDownloadInfo downloadInfo =  fillFileDownloadInfo(fileData);
+        FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
+        if(fileData==null){
+            log.warn("NULL fileData supplied");
+            return;
+        }
+        //remove from cache anyway
         fdiCache.remove(fileData.getFileId());
-        if(fileData.isHashedOK()){
-           fdiCache.putIfAbsent(fileData.getFileId(), downloadInfo);
+        //put only if file is already hased
+        if (fileData.isHashedOK()) {
+            fdiCache.putIfAbsent(fileData.getFileId(), downloadInfo);
+            log.debug("Upadting file info for ID: {} and path: P{}",
+                    fileData.getFileId(), fileData.getAbsPath()
+            );
+        } else {
+            log.debug("Removing from cache file info for ID: {} and path: P{}",
+                    fileData.getFileId(), fileData.getAbsPath()
+            );
         }
     }
     
@@ -94,11 +107,10 @@ public class DownloadableFilesManager {
     }
     
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
-        log.debug("getFileDownloadInfo( '{}' }", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
         log.debug("getFileDownloadInfo fdi in CACHE = {}", fdi);
-        if (fdi == null) {
+        if (fdi == null) {            
             fdi=createFileDownloadInfo(fileId);
         }
         return fdi;
@@ -136,7 +148,7 @@ public class DownloadableFilesManager {
     }
     
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
-        log.debug("createFileDownloadInfo( '{}' )", fileId);
+        log.debug("createing FileDownloadInfo {} ", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         Path fpath = mapFileIdToLocalPath(fileId);
         log.debug("createFileDownloadInfo() fpath = '{}'", fpath);
