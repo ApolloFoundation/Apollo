@@ -47,6 +47,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final String EMPTY_ARRAY = "()";
     private Set<String> excludeColumn = new HashSet<>();
 
+    private static final String quote = String.valueOf(TEXT_FIELD_START);
+    private static final String doubleQuote = quote+quote;
+
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
         if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
@@ -154,6 +157,10 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         this.fileName = newFileName;
     }
 
+    private String quotedEscapedText(String o){
+        return quote + o.replaceAll(quote, doubleQuote) + quote;
+    }
+
     private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend, Map<String, String> defaultValues) throws SQLException {
         try {
             Map<String, Object> lastRow = new HashMap<>();
@@ -229,23 +236,23 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     for (int j = 0; j < objectArray.length; j++) {
                                         Object o1 = objectArray[j];
                                         if (j == 0) {
-                                            outputValue.append("(");
+                                            outputValue.append(arrayStartToken);
                                         }
                                         String objectValue;
                                         if (o1 instanceof byte[]) {
-                                            objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
+                                            objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + quote;
                                         } else if (o1 instanceof String) {
-                                            objectValue = "\'" + o1.toString() + "\'";
+                                            objectValue = quotedEscapedText((String)o1);
                                         } else if (o1 instanceof Long || o1 instanceof Integer) {
                                             objectValue = o1.toString();
                                         } else {
                                             throw new RuntimeException("Unsupported array type: " + o1.getClass());
                                         }
-                                        outputValue.append(objectValue).append(",");
+                                        outputValue.append(objectValue).append(fieldSeparatorWrite);
                                         if (j == objectArray.length - 1) {
                                             // there is a bug in H2 parser, so let's make one extra comma at the end
                                             // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
-                                            outputValue.append(")");
+                                            outputValue.append(arrayEndToken);
                                         }
                                     }
                                     o = outputValue.toString();
@@ -268,7 +275,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             default:
                                 o = rs.getString(i + 1);
                                 if (o != null) {
-                                    o = "'" + ((String) o).replaceAll("'", "''") + "'";
+                                    o = quotedEscapedText((String) o);
                                 } else {
                                     o = nullString;
                                 }

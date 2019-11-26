@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancel
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
@@ -73,9 +72,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
-            if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
-                dexService.refundAPLFrozenMoney(order);
-            }
+            dexService.refundFrozenAplForOrderIfWeCan(order);
 
             dexService.cancelOffer(order);
 

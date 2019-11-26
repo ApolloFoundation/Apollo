@@ -3,13 +3,33 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.account.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.Alias;
+import com.apollocurrency.aplwallet.apl.core.app.Fee;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
+import com.apollocurrency.aplwallet.apl.core.app.Poll;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.Vote;
+import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.*;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasBuy;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasDelete;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -654,6 +674,10 @@ public abstract class Messaging extends TransactionType {
                 long phasedTransactionId = Convert.fullHashToId(hash);
                 if (phasedTransactionId == 0) {
                     throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
+                }
+                PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
+                if (result != null) {
+                    throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
                 }
                 PhasingPoll poll = phasingPollService.getPoll(phasedTransactionId);
                 if (poll == null) {

@@ -219,10 +219,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
                 long max = rs.getLong("max_id");
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
-                // pagination is exclusive for upper + lower bounds
                 result = new MinMaxValue(
-                        min - 1, // plus/minus one in Max/Min value
-                        max + 1,
+                        min ,
+                        max,
                         null,
                         rowCount,
                         height

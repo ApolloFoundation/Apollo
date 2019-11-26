@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -300,13 +301,16 @@ public final class Shuffler {
     }
 
     @Singleton
+    @Slf4j
     public static class ShufflerObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:ShufflerObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
             Set<String> expired = expirations.get(block.getHeight());
             if (expired != null) {
                 expired.forEach(shufflingsMap::remove);
                 expirations.remove(block.getHeight());
             }
+            log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         }
         public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
 

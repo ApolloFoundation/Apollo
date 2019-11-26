@@ -62,6 +62,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,6 +72,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import lombok.Getter;
 
 @Singleton
 public class PeersService {
@@ -162,6 +164,7 @@ public class PeersService {
     private final TimeLimiterService timeLimiterService;
 
     private final PropertiesHolder propertiesHolder;
+    @Getter
     final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
@@ -295,31 +298,31 @@ public class PeersService {
                     .task(new PeerLoaderThread(defaultPeers, unresolvedPeers, timeService, this))
                     .build();
 
-            dispatcher.schedule(peerLoaderTask, TaskOrder.INIT);
+            dispatcher.invokeInit(peerLoaderTask);
         }
-        dispatcher.schedule(Task.builder()
+        dispatcher.invokeAfter(Task.builder()
                 .name("UnresolvedPeersAnalyzer")
                 .task(new UnresolvedPeersAnalyzer(unresolvedPeers))
-                .build(), TaskOrder.AFTER);
+                .build());
         if (!propertiesHolder.isOffline()) {
             dispatcher.schedule(Task.builder()
                     .name("PeerConnecting")
                     .delay(20000)
                     .task(new PeerConnectingThread(timeService, this))
-                    .build(),TaskOrder.TASK);
+                    .build());
 
             dispatcher.schedule(Task.builder()
                     .name("PeerUnBlacklisting")
                     .delay(60000)
                     .task(new PeerUnBlacklistingThread(timeService, this))
-                    .build(), TaskOrder.TASK);
+                    .build());
 
             if (getMorePeers) {
                 dispatcher.schedule(Task.builder()
                         .name("GetMorePeers")
                         .delay(20000)
                         .task(new GetMorePeersThread(timeService, this))
-                        .build(), TaskOrder.TASK);
+                        .build());
             }
         }
     }
@@ -434,9 +437,10 @@ public class PeersService {
     }
 
     public void suspend() {
-        if(peerHttpServer!=null){
-           suspend = peerHttpServer.suspend();
-        }
+        LOG.debug("peerHttpServer suspend...");
+//        if(peerHttpServer!=null){
+//           suspend = peerHttpServer.suspend();
+//        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.suspend();
         getActivePeers().forEach((p) -> {
@@ -445,9 +449,10 @@ public class PeersService {
     }
 
     public void resume() {
-        if (suspend && peerHttpServer!=null) {
-            suspend = !peerHttpServer.resume();
-        }
+        LOG.debug("peerHttpServer resume...");
+//        if (suspend && peerHttpServer!=null) {
+//            suspend = !peerHttpServer.resume();
+//        }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.resume();
     }
@@ -532,7 +537,14 @@ public class PeersService {
     public List<Peer> getOutboundPeers() {
         return getPeers(Peer::isOutbound);
     }
-
+    
+    public Set<Peer> getAllConnectedPeers() {
+        Set<Peer> res = new HashSet<>();
+        Collection<? extends Peer> knownPeers = getActivePeers();
+        res.addAll(knownPeers);
+        return res;
+    }
+    
     public boolean hasTooManyInboundPeers() {
         return getPeers(Peer::isInbound, maxNumberOfInboundConnections).size() >= maxNumberOfInboundConnections;
     }
@@ -600,6 +612,7 @@ public class PeersService {
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
                 this, timeLimiterService.acquireLimiter("P2PTransport"));
+        listeners.notify(peer, Event.NEW_PEER);
         if(apa!=null){
             connectablePeers.put(apa.getAddrWithPort(),peer);
         }else{
@@ -685,12 +698,21 @@ public class PeersService {
         return p;
     }
 
-    public void connectPeer(Peer peer) {
-        peer.unBlacklist();
-        PeerAddress pa= resolveAnnouncedAddress(peer.getAnnouncedAddress());
-        if(pa!=null && !isMyAddress(pa)){
-           peer.handshake(blockchainConfig.getChain().getChainId());
+    public boolean connectPeer(Peer peer) {
+        Objects.requireNonNull(peer, "peer is NULL");
+        boolean res = false;
+        if(peer.getState() == PeerState.CONNECTED){
+            return true;
         }
+        peer.unBlacklist();
+        PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
+        if (pa != null && !isMyAddress(pa)) {
+           res = ((PeerImpl)peer).handshake();
+        }
+        if (res) {
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
+        }
+        return res;
     }
 
     public void sendToSomePeers(Block block) {

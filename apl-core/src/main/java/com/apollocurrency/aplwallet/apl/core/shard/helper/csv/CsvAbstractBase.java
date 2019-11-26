@@ -27,6 +27,9 @@ public abstract class CsvAbstractBase {
      */
     public static final int IO_BUFFER_SIZE = 4 * 1024;
 
+    public static final char EOT = '\u0004';
+    public static final char TEXT_FIELD_START = '\'';
+
     /**
      * System property <code>line.separator</code> (default: \n).<br />
      * It is usually set by the system, and used by the script and trace tools.
@@ -63,6 +66,8 @@ public abstract class CsvAbstractBase {
     protected char lineComment;
     protected char arrayStartToken = '('; // start sql array
     protected char arrayEndToken = ')'; // finish sql array
+    protected char textFieldCharacter = TEXT_FIELD_START;
+    protected char eotCharacter = EOT;
 
     // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!

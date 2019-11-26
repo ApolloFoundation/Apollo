@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardEngineImpl;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -288,9 +289,11 @@ public class Apollo {
                 .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
-//                .devMode() // enable for dev only
+                // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
+                // run with ./bin/apl-run-jmx.sh
+                //.devMode() 
                 .build();
-
+        log.debug("Weld CDI container build done");
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);

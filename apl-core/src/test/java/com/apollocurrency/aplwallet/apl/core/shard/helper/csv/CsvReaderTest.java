@@ -59,7 +59,7 @@ class CsvReaderTest {
 
     @Test
     void readSeveralCsvFiles() throws Exception {
-        List<String> csvFileList = List.of("account_control_phasing.csv", "goods.csv",
+        List<String> csvFileList = List.of("account_control_phasing.csv", "goods.csv", "goods2.csv",
                 "phasing_poll.csv", "public_key.csv", "purchase.csv", "shard.csv", "shuffling_data.csv");
 
         int processedTables = 0;

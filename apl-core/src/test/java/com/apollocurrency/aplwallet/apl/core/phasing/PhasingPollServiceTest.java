@@ -48,7 +48,6 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
-import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -129,7 +128,7 @@ public class PhasingPollServiceTest {
         ttd = new TransactionTestData();
         btd = new BlockTestData();
 
-        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1,1,1,1,1,1L, new FeaturesHeightRequirement(0))));
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1,1,1,1,1,1L)));
     }
 
     @Test

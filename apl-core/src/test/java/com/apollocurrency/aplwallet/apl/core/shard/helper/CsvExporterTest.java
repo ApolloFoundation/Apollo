@@ -151,12 +151,15 @@ class CsvExporterTest {
     private List<String> blockIndexExportContent = List.of("BLOCK_ID(-5|19|0),BLOCK_HEIGHT(4|10|0)", "1,1", "2,2", "3,30");
     private List<String> transactionIndexExportContent = List.of(
             "TRANSACTION_ID(-5|19|0),PARTIAL_TRANSACTION_HASH(-3|2147483647|0),TRANSACTION_INDEX(5|5|0),HEIGHT(4|10|0)",
+            "100,zG8XGTR3IJylgh0305HnCuZo3RwR3XmO,0,30",
             "101,InCisA4/cPtdXY4No8eRnt1NM2gXbm8t,0,1",
             "102,uW1en2TlHFl1E3F2ke7urxiiaoZANPYs,1,1",
-            "103,zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY,2,1",
-            "100,zG8XGTR3IJylgh0305HnCuZo3RwR3XmO,0,30");
+            "103,zKWh+CX5uRi+APNUBvcLEItmVrKZdVVY,2,1"
+          );
     private List<String> transactionExportContent = List.of(
             "ID(-5|19|0),DEADLINE(5|5|0),RECIPIENT_ID(-5|19|0),TRANSACTION_INDEX(5|5|0),AMOUNT(-5|19|0),FEE(-5|19|0),FULL_HASH(-3|32|0),HEIGHT(4|10|0),BLOCK_ID(-5|19|0),SIGNATURE(-3|64|0),TIMESTAMP(4|10|0),TYPE(-6|3|0),SUBTYPE(-6|3|0),SENDER_ID(-5|19|0),SENDER_PUBLIC_KEY(-3|32|0),BLOCK_TIMESTAMP(4|10|0),REFERENCED_TRANSACTION_FULL_HASH(-3|32|0),PHASED(16|1|0),ATTACHMENT_BYTES(-3|2147483647|0),VERSION(-6|3|0),HAS_MESSAGE(16|1|0),HAS_ENCRYPTED_MESSAGE(16|1|0),HAS_PUBLIC_KEY_ANNOUNCEMENT(16|1|0),EC_BLOCK_HEIGHT(4|10|0),EC_BLOCK_ID(-5|19|0),HAS_ENCRYPTTOSELF_MESSAGE(16|1|0),HAS_PRUNABLE_MESSAGE(16|1|0),HAS_PRUNABLE_ENCRYPTED_MESSAGE(16|1|0),HAS_PRUNABLE_ATTACHMENT(16|1|0)",
+            "3444674909301056677,1440,null,0,0,2500000000000,pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,1000,-468651855371775066,N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==,35073712,5,0,9211698109297098287,vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=,9200,ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,FALSE,AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB,1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
+            "2402544248051582903,1440,null,1,0,1000000000000,t8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=,1000,-468651855371775066,/G8R85aqIHF8kZGh+yX6sGgVEsyXbJNdsVY4mKq62Q/8bO0o4bizOD1au1WSi7sSKmdNwGariwzFhbm0zb2PrA==,35075179,2,0,9211698109297098287,vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=,9200,ZQAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,FALSE,AQdNWUFTU0VUCwBmZGZza2RmbGFscxAnAAAAAAAAAg==,1,FALSE,FALSE,FALSE,14405,-2297016555338476945,FALSE,FALSE,FALSE,FALSE",
             "3444674909301056677,1440,null,0,0,2500000000000,pSSXT5TxzS/MbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,1000,-468651855371775066,N17xwFrlmifvJjNqWa/mkBTGi5v0Nk1bGy+k6+MCAgqGitNl818MqNPrrdxGns06fEnexeTS+tQfZyiXe3MzzA==,35073712,5,0,9211698109297098287,vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=,9200,ZAAAAAAAAADMbxcZNHcgnKWCHTfTkecK5mjdHBHdeY4=,FALSE,AQVmc2RmcwNRRVIFAGZzZGZzAa4VAAAAAAAAAAAAAAAAAACuFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB,1,FALSE,FALSE,FALSE,14399,-5416619518547901377,FALSE,FALSE,FALSE,FALSE",
             "5373370077664349170,1440,457571885748888948,0,100000000000000000,100000000,8ovlxZ0Lkkq5bV6fZOUcWXUTcXaR7u6vGKJqhkA09iw=,1500,-7242168411665692630,iv06kdDjAR5QXgNTsfcInA1AFnL47V0N3CEH4LEwqgvdF/A7LXXu2PzGRc2oi1yCrBtiHBQqutmxu5XfUXqnDA==,35078473,0,0,9211698109297098287,vwztBHLYuj354hgI6Y5hs0QEqtc34rrhd4zrxpi0Dzc=,13800,t8dFrkONVyEicKKwDj9w+11djg2jx5Ge3U0zaBduby0=,FALSE,null,1,FALSE,FALSE,FALSE,14734,2621055931824266697,FALSE,FALSE,FALSE,FALSE"
     );
@@ -193,7 +196,7 @@ class CsvExporterTest {
             AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            GenesisPublicKeyTable.class)
+            GenesisPublicKeyTable.class, DexOrderTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -231,6 +234,8 @@ class CsvExporterTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
+    @Inject
+    DexOrderTable dexOrderTable;
 
     CsvExporter csvExporter;
 
@@ -273,7 +278,7 @@ class CsvExporterTest {
         publicKeyTable.init();
         DexContractTable dexContractTable = new DexContractTable();
         registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable();
+//        DexOrderTable dexOrderTable = new DexOrderTable();
         registry.registerDerivedTable(dexOrderTable);
         dataExportPath = createPath("csvExportDir");
         csvExporter = new CsvExporterImpl(extension.getDatabaseManager(), dataExportPath);
@@ -344,6 +349,7 @@ class CsvExporterTest {
         assertEquals(3, lines.size());
         assertTrue(lines.get(0).contains("BLOCK_TIMEOUTS"));
         assertTrue(lines.get(0).contains("BLOCK_TIMESTAMPS"));
+        assertFalse(lines.get(0).contains("PRUNABLE_ZIP_HASH"));
         log.debug("Processed Table = [{}]", filesInFolder.size());
     }
 
@@ -360,7 +366,7 @@ class CsvExporterTest {
         long exported = csvExporter.exportTransactionIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
         assertEquals(3, exported);
         List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
-        assertEquals(transactionIndexExportContent.subList(0, 4), transactionIndexCsv);
+        assertEquals(List.of(transactionIndexExportContent.get(0), transactionIndexExportContent.get(2), transactionIndexExportContent.get(3), transactionIndexExportContent.get(4)), transactionIndexCsv);
     }
 
     @Test
@@ -382,8 +388,9 @@ class CsvExporterTest {
     @Test
     void testExportTransactions() throws IOException {
         TransactionTestData td = new TransactionTestData();
-        long exported = csvExporter.exportTransactions(List.of(td.DB_ID_2, td.DB_ID_0));
-        assertEquals(2, exported);
+        long exported = csvExporter.exportTransactions( /*two rows exported*/ List.of(td.DB_ID_2, td.DB_ID_0),
+                /*more two rows exported*/ 1000);
+        assertEquals(4, exported);
         List<String> transactionCsv = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
         assertEquals(transactionExportContent, transactionCsv);
     }
@@ -417,6 +424,16 @@ class CsvExporterTest {
         assertTrue(allLines.get(1).startsWith("\'1"));
         assertTrue(allLines.get(2).startsWith("\'Some product"));
         assertTrue(allLines.get(6).startsWith("\'Test product"));
+    }
+
+    @Test
+    void testExportDexOfferSortedByHeight() throws IOException {
+        csvExporter.exportDerivedTableCustomSort(dexOrderTable, 542100, 2, Set.of("DB_ID", "LATEST"), "height");
+        List<String> allLines = Files.readAllLines(dataExportPath.resolve("dex_offer.csv"));
+        assertEquals(6, allLines.size());
+        assertTrue(allLines.get(1).startsWith("1,0,100"));
+        assertTrue(allLines.get(2).startsWith("2,1,100"));
+        assertTrue(allLines.get(5).startsWith("5,0,100"));
     }
 
     @Test

@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.38.8");
+    public static final Version VERSION = new Version("1.39.0");
 
 
     public static final String APPLICATION = "Apollo";
@@ -75,7 +75,11 @@ public final class Constants {
 
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
-
+    public static final int DEFAULT_PRUNABLE_UPDATE_PERIOD = 3600;
+    // 5 min
+    public static final int PRUNABLE_MONITOR_INITIAL_DELAY = 5 * 60 * 1000;
+    // 10 min
+    public static final int PRUNABLE_MONITOR_DELAY = 10 * 60 * 1000;
 
     public static final int MAX_ACCOUNT_NAME_LENGTH = 100;
     public static final int MAX_ACCOUNT_DESCRIPTION_LENGTH = 1000;
