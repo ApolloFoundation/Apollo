@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -88,11 +87,11 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public ExchangeContract getByOrder(Long orderId) {
-        return getBy(new DbClause.LongClause("offer_id", orderId));
+        return getBy(new DbClause.LongClause("offer_id", orderId).and(new DbClause.ByteClause("status", DbClause.Op.GT, (byte) 0)));
     }
 
     public ExchangeContract getByCounterOrder(Long orderId) {
-        return getBy(new DbClause.LongClause("counter_offer_id", orderId));
+        return getBy(new DbClause.LongClause("counter_offer_id", orderId).and(new DbClause.ByteClause("status", DbClause.Op.GT, (byte) 0)));
     }
 
     public ExchangeContract getByOrderAndCounterOrder(Long orderId, Long counterOrderId) {
