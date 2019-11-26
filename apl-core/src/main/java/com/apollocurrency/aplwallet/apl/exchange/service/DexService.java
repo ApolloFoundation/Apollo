@@ -177,22 +177,22 @@ public class DexService {
         dexContractTable.insert(exchangeContract);
     }
 
-    @Transactional
+
     public List<ExchangeContract> getDexContracts(DexContractDBRequest dexContractDBRequest) {
         return dexContractDao.getAll(dexContractDBRequest);
     }
 
-    @Transactional
+
     public List<ExchangeContract> getDexContractsByCounterOrderId(Long counterOrderId) {
         return dexContractTable.getAllByCounterOrder(counterOrderId);
     }
 
-    @Transactional
+
     public ExchangeContract getDexContractByOrderId(Long orderId) {
         return dexContractTable.getByOrder(orderId);
     }
 
-    @Transactional
+
     public ExchangeContract getDexContractByCounterOrderId(Long counterOrderId) {
         return dexContractTable.getByCounterOrder(counterOrderId);
     }
@@ -261,8 +261,8 @@ public class DexService {
                 .sorted(Comparator.comparingInt(DexOrder::getHeight))
                 .collect(Collectors.toList());
     }
-
-
+    
+ 
     private List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
         return orders.stream().map(order -> new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney())).collect(Collectors.toList());
     }
@@ -346,22 +346,30 @@ public class DexService {
 
     public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
-            Long phasingTx;
-            ExchangeContract contract = getDexContractByOrderId(order.getId());
-
-            if (contract == null) {
-                contract = getDexContractByCounterOrderId(order.getId());
-                phasingTx = Long.parseUnsignedLong(contract.getCounterTransferTxId());
-            } else {
-                phasingTx = Long.parseUnsignedLong(contract.getTransferTxId());
+            Long phasingTx = getAplTransferTxForOrder(order.getId());
+            boolean doRefund = true;
+            if (phasingTx != null) {
+                PhasingPollResult phasingPollResult = phasingPollService.getResult(phasingTx);
+                doRefund = !phasingPollResult.isApproved();
             }
-
-            PhasingPollResult phasingPollResult = phasingPollService.getResult(phasingTx);
-
-            if (!phasingPollResult.isApproved()) {
+            if (doRefund) {
                 refundAPLFrozenMoney(order);
             }
         }
+    }
+
+    private Long getAplTransferTxForOrder(long orderId) {
+        ExchangeContract contract = getDexContractByOrderId(orderId);
+        Long txId = null;
+        if (contract == null) {
+            contract = getDexContractByCounterOrderId(orderId);
+            if (contract != null && contract.getCounterTransferTxId() != null) {
+                txId = Long.parseUnsignedLong(contract.getCounterTransferTxId());
+            }
+        } else if (contract.getTransferTxId() != null) {
+            txId = Long.parseUnsignedLong(contract.getTransferTxId());
+        }
+        return txId;
     }
 
 
