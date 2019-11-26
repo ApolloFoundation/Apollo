@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -145,11 +146,11 @@ public class TrimService {
                     int pruningTime = doTrimDerivedTablesOnHeight(trimHeight);
                     if (async) {
                         log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
-                        trimEvent.select(new AnnotationLiteral() {
+                        trimEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fireAsync(new TrimData(trimHeight, blockchainHeight, pruningTime));
                     } else {
                         log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
-                        trimEvent.select(new AnnotationLiteral() {
+                        trimEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                     }
                     trimEntry.setDone(true);
