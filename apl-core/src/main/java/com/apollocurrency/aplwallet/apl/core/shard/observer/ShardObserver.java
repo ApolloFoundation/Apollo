@@ -95,9 +95,9 @@ public class ShardObserver {
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
         
         int shardingFrequency = getShardingFrequency(currentConfig);
-
-        //Q. how much blocks we ould be late? (frequiency - 2) is OK?
-        //Q. Do we count on some other parameters?
+        //Q. can we create shard if we late for entire shard requecny? 
+        //Q. how much blocks we could be late? (frequiency - 2) is OK?
+        //Q. Do we count on some other parameters like blockchainHeight?
         long lastShardHeight = getLastShardHeight();
         long howLateWeCanBe = shardingFrequency - 2;
         long nextShardHeight = lastShardHeight+shardingFrequency;
