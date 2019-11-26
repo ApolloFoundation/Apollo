@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
@@ -40,12 +41,12 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-    public void onTrimDoneAsync(@ObservesAsync TrimData trimData) {
-        lastTrimHeight = trimData.getTrimHeight();
+    public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
+         lastTrimHeight = trimData.getTrimHeight();
     }
 
-    public void onTrimDone(@Observes TrimData trimData) {
-        lastTrimHeight = trimData.getTrimHeight();
+    public void onTrimDone(@Observes  @TrimEvent  TrimData trimData) {
+         lastTrimHeight = trimData.getTrimHeight();
     }
     
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
