@@ -4,14 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
-import com.apollocurrency.aplwallet.apl.util.ModWatcher;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.ObservesAsync;
 
 @Singleton
 public class ShardObserver {
@@ -30,6 +31,7 @@ public class ShardObserver {
     private final BlockchainConfig blockchainConfig;
     private final ShardService shardService;
     private final PropertiesHolder propertiesHolder;
+    private int lastTrimHeight;
     
     @Inject
     public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
@@ -38,14 +40,19 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-//no matter how we get signal sync or async, do it async
-    public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
+    public void onTrimDoneAsync(@ObservesAsync TrimData trimData) {
+        lastTrimHeight = trimData.getTrimHeight();
     }
 
-    public void onTrimDone(@Observes @Sync TrimData trimData) {
-//do it async anyway because we have to exit from trim and unlock it       
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+    public void onTrimDone(@Observes TrimData trimData) {
+        lastTrimHeight = trimData.getTrimHeight();
+    }
+    
+    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+        int blockHeight = block.getHeight();
+        if(blockHeight % 2000 == 0){
+            tryCreateShardAsync(lastTrimHeight, blockHeight);
+        }
     }
     
     private boolean isShardingEnabled(HeightConfig currentConfig){
@@ -95,15 +102,14 @@ public class ShardObserver {
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
         
         int shardingFrequency = getShardingFrequency(currentConfig);
-        //Q. can we create shard if we late for entire shard requecny? 
+        //Q. can we create shard if we late for entire shard frequecny? 
         //Q. how much blocks we could be late? (frequiency - 2) is OK?
-        //Q. Do we count on some other parameters like blockchainHeight?
+        //Q. Do we count on some other parameters like lastTrimBlockHeight?
         long lastShardHeight = getLastShardHeight();
         long howLateWeCanBe = shardingFrequency - 2;
         long nextShardHeight = lastShardHeight+shardingFrequency;
-        long howLateWeAre = lastTrimBlockHeight-nextShardHeight;
+        long howLateWeAre = blockchainHeight-Constants.MAX_AUTO_ROLLBACK*2 -nextShardHeight;
         boolean res=false;
-
         
         if(howLateWeAre >= 0){
           if(howLateWeAre > howLateWeCanBe){
