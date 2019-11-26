@@ -1076,7 +1076,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // > 0 on sharded node with one or more shards
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (commonBlockHeight < shardInitialHeight) {
-                // when we have a shard on node, we can't scan below 'latest' snaphot blokc in main db
+                // when we have a shard on node, we can't scan below 'latest' snapshot block in main db
                 log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})",
                         commonBlockHeight, shardInitialHeight);
             } else {
@@ -1086,12 +1086,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 boolean shardingEnabled = currentConfig.isShardingEnabled();
                 log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
                 if (shardInitialHeight != 0 && shardingEnabled && !isShardingOff) {
-                    // sharding was enabled and turned ON
+                    // sharding is enabled and turned ON
                     log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
                             commonBlockHeight + 1,  shardInitialHeight);
 //                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
                 } else {
-                    // sharding was DISABLED and turned OFF, FULL DB mode
+                    // sharding is DISABLED and turned OFF, FULL DB mode
                     log.warn("DO 'popOffWithRescan' to height(+1) = {}...", commonBlockHeight + 1);
                     popOffWithRescan(commonBlockHeight + 1); // 'full node' can go to full rescan here
                 }
