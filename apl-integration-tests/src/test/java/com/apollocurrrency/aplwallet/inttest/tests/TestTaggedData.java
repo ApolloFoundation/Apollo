@@ -1,6 +1,5 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.helper.WalletProvider;
@@ -12,12 +11,10 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,8 +33,8 @@ public class TestTaggedData extends TestBaseOld {
 
     @BeforeEach
     @Override
-    public void setUP(TestInfo testInfo) {
-        super.setUP(testInfo);
+    public void setUp(TestInfo testInfo) {
+        super.setUp(testInfo);
         this.Name = RandomStringUtils.randomAlphabetic(5);
         this.description = RandomStringUtils.randomAlphabetic(5);
         this.channel = RandomStringUtils.randomAlphabetic(5);

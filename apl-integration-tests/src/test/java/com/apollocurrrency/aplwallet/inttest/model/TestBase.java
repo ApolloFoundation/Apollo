@@ -70,14 +70,14 @@ public abstract class TestBase implements ITest {
 
     @BeforeEach
     @DisplayName("Before test")
-    public void setUP(TestInfo testInfo){
+    public void setUp(TestInfo testInfo){
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
     @DisplayName("After test")
-   public void testEnd(){
+   public void tearDown(){
         this.testInfo = null;
     }
 

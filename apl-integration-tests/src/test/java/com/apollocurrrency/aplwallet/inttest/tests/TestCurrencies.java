@@ -9,21 +9,16 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,8 +31,8 @@ public class TestCurrencies extends TestBaseOld {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
     @BeforeEach
     @Override
-    public void setUP(TestInfo testInfo) {
-        super.setUP(testInfo);
+    public void setUp(TestInfo testInfo) {
+        super.setUp(testInfo);
         wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
     }

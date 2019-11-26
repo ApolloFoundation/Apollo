@@ -1,27 +1,19 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
-import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
-import com.apollocurrency.aplwallet.api.dto.PollDTO;
-import com.apollocurrency.aplwallet.api.dto.VoteDTO;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.bouncycastle.crypto.prng.RandomGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Poll")
@@ -36,8 +28,8 @@ public class TestPoll extends TestBaseOld {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
     @BeforeEach
     @Override
-    public void setUP(TestInfo testInfo) {
-        super.setUP(testInfo);
+    public void setUp(TestInfo testInfo) {
+        super.setUp(testInfo);
         wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
     }

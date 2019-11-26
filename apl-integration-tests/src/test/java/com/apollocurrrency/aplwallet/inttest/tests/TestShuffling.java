@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import io.qameta.allure.Epic;
@@ -31,7 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingVerify;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
@@ -74,8 +72,8 @@ public class TestShuffling extends TestBaseOld {
     private final ArrayList<Wallet> wallets = new ArrayList<>();
     @BeforeEach
     @Override
-    public void setUP(TestInfo testInfo) {
-                super.setUP(testInfo);
+    public void setUp(TestInfo testInfo) {
+                super.setUp(testInfo);
                 wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
 
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
@@ -385,8 +383,8 @@ public class TestShuffling extends TestBaseOld {
 
     @AfterEach
     @Override
-    public void testEnd() {
-        super.testEnd();
+    public void tearDown() {
+        super.tearDown();
          sendMoney(randomVault,TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(),(int)((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L)/100000000));
          if (getShuffling(shuffling.getTransaction()).getStage() == STAGE_DONE){
              for (Wallet wallet: recipients) {

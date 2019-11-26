@@ -39,8 +39,8 @@ public class TestMarketplace extends TestBaseOld {
 
     @BeforeEach
     @Override
-    public void setUP(TestInfo testInfo) {
-        super.setUP(testInfo);
+    public void setUp(TestInfo testInfo) {
+        super.setUp(testInfo);
         this.dgsName = RandomStringUtils.randomAlphabetic(5);
         this.description = RandomStringUtils.randomAlphabetic(5);
         StringBuilder tags =  new StringBuilder();
