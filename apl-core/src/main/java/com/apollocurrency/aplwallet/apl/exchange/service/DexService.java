@@ -529,7 +529,7 @@ public class DexService {
 
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false);
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false, accountService);
             orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
             order.setId(orderTx.getId());
 
@@ -545,7 +545,7 @@ public class DexService {
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
+                    .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true, accountService);
             orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
             order.setId(orderTx.getId());
         }

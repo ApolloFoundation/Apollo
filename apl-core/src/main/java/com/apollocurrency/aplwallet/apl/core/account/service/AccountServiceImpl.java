@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -141,6 +142,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account addOrGetAccount(long id, boolean isGenesis) {
+        //TODO: use the publickKeyCache:  accountPublicKeyService.xxxCache();
         if (id == 0) {
             throw new IllegalArgumentException("Invalid accountId 0");
         }
@@ -189,6 +191,13 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            if(log.isTraceEnabled()) {
+                log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                        height,
+                        account.getPublicKey()!=null?account.getPublicKey().getHeight():null,
+                        height - (account.getPublicKey()!=null?account.getPublicKey().getHeight():0),
+                        EFFECTIVE_BALANCE_CONFIRMATIONS);
+            }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -224,7 +233,11 @@ public class AccountServiceImpl implements AccountService {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < lookupBlockchainProcessor().getMinRollbackHeight()
                     || height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
+                log.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
+                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
+                        height, blockchain.getHeight() );
+                throw new IllegalArgumentException("Height " + height +
+                        " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
             }
             Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(account.getId(), height, currentHeight);
             if (sum == null) {
@@ -333,16 +346,6 @@ public class AccountServiceImpl implements AccountService {
             log.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", account.getId(), last3Stacktrace(), amountATM, amountATM + account.getBalanceATM(), blockchain.getHeight());
         }
         addToBalanceATM(account, event, eventId, amountATM, 0);
-    }
-
-    private String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    private String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     @Override

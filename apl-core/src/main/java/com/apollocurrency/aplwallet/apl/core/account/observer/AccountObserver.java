@@ -95,7 +95,7 @@ public class AccountObserver {
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-        log.trace("Catch event (AFTER_BLOCK_APPLY) {}", block);
+        log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         int height = block.getHeight();
         List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
         for (AccountLease lease : changingLeases) {
@@ -130,6 +130,7 @@ public class AccountObserver {
             }
             accountService.update(lessor);
         }
+        log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
     }
 
     public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event ){

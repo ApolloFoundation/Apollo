@@ -84,9 +84,6 @@ class GenesisImporterTest {
     PropertiesHolder propertiesHolder;
     @Inject
     Blockchain blockchain;
-    AccountTable accountTable;
-    PublicKeyTable publicKeyTable;
-
 
     @Inject
     PublicKeyTable publicKeyTable;
@@ -136,12 +133,6 @@ class GenesisImporterTest {
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
         genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
-        accountTable = new AccountTable();
-        publicKeyTable = new PublicKeyTable(blockchain);
-        publicKeyTable.init();
-        //TODO: propertiesHolder is never used in Account.init()
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null,
-                null, blockchain, null, publicKeyTable, accountTable, null, null);
         //TODO: propertiesHolder is empty, default values will be used
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
@@ -161,7 +152,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
@@ -191,7 +184,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         assertThrows(RuntimeException.class, () -> {
             genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
@@ -219,7 +214,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
@@ -246,7 +243,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                mockedPropertiesHolder
+                mockedPropertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
@@ -280,7 +279,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
 
         assertThrows(RuntimeException.class, () -> genesisImporter.newGenesisBlock());
@@ -303,7 +304,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                mockedPropertiesHolder
+                mockedPropertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         dataSource.begin();
         genesisImporter.importGenesisJson(true);
@@ -327,7 +330,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
@@ -343,7 +348,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
@@ -379,7 +386,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                mockedPropertiesHolder
+                mockedPropertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
@@ -397,7 +406,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 weld.select(ApplicationJsonFactory.class).get(),
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
         assertThrows(RuntimeException.class, () -> genesisImporter.loadGenesisAccounts());
     }
@@ -422,7 +433,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 jsonFactory,
-                propertiesHolder
+                propertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
 
         //WHEN
@@ -459,7 +472,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 jsonFactory,
-                mockedPropertiesHolder
+                mockedPropertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
 
         //WHEN
@@ -491,7 +506,9 @@ class GenesisImporterTest {
                 aplAppStatus,
                 genesisImporterProducer,
                 jsonFactory,
-                mockedPropertiesHolder
+                mockedPropertiesHolder,
+                accountService,
+                accountPublicKeyService
         );
 
         //WHEN

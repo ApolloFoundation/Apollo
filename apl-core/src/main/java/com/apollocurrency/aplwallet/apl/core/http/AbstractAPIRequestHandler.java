@@ -45,7 +45,7 @@ public abstract class AbstractAPIRequestHandler {
     private String fileParameter;
     private Set<APITag> apiTags;
     private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
+    protected BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
