@@ -16,14 +16,13 @@ import java.util.Date;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Read/Write file by chunks
  * @author alukin@gmail.com
  */
-
+@Slf4j
 public class ChunkedFileOps {
     public final static int FILE_CHUNK_SIZE = 32768;
 
@@ -42,10 +41,13 @@ public class ChunkedFileOps {
     private Long lastRDChunkCrc;
     private Long lastWRChunkCrc;
     public static final String DIGESTER="SHA-256";
-    private static final Logger log = LoggerFactory.getLogger(ChunkedFileOps.class);
     private byte[] fileHash = null;
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
-      
+    
+    public boolean isHashedOK(){
+        return fileHash!=null;
+    }
+    
     public ChunkedFileOps(String absPath) {
         this.absPath = Paths.get(absPath);        
     }
