@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -419,7 +420,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public int getMinRollbackHeight() {
         int minRollBackHeight = trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight()
                 : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
-        log.trace("minRollbackHeight  = {}", minRollBackHeight);
+        log.debug("minRollbackHeight  = {}", minRollBackHeight);
         return minRollBackHeight;
     }
 
@@ -1071,14 +1072,29 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (commonBlockHeight < minRollbackHeight) {
             log.info("Rollback to height " + commonBlockHeight + " not supported, will do a full rescan");
 
+            // usually = 0 on full node (or on sharded node without any shard yet)
+            // > 0 on sharded node with one or more shards
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (commonBlockHeight < shardInitialHeight) {
+                // when we have a shard on node, we can't scan below 'latest' snaphot blokc in main db
                 log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})",
                         commonBlockHeight, shardInitialHeight);
             } else {
-                log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
-                        commonBlockHeight + 1,  shardInitialHeight);
-//                popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
+                // check shard conditions...
+                HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+                boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+                boolean shardingEnabled = currentConfig.isShardingEnabled();
+                log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
+                if (shardInitialHeight != 0 && shardingEnabled && !isShardingOff) {
+                    // sharding was enabled and turned ON
+                    log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
+                            commonBlockHeight + 1,  shardInitialHeight);
+//                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
+                } else {
+                    // sharding was DISABLED and turned OFF, FULL DB mode
+                    log.warn("DO 'popOffWithRescan' to height(+1) = {}...", commonBlockHeight + 1);
+                    popOffWithRescan(commonBlockHeight + 1); // 'full node' can go to full rescan here
+                }
             }
             return Collections.emptyList();
         }
