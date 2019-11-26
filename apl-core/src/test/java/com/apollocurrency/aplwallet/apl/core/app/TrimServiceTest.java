@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
@@ -81,7 +79,7 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         doReturn(entry).when(trimDao).save(entry);
         doReturn(7300).when(timeService).getEpochTime();
 
@@ -106,7 +104,7 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         doReturn(entry).when(trimDao).save(entry);
         doReturn(new TrimEntry(1L, 5500, false)).when(trimDao).save(new TrimEntry(null, 5500, false));
         doReturn(7300).when(timeService).getEpochTime();
@@ -132,7 +130,7 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         mockTrimEntries(8000, 10000, 1000);
         doReturn(8000).when(timeService).getEpochTime();
 
@@ -159,7 +157,7 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Sync>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         doReturn(7199).when(timeService).getEpochTime();
         mockTrimEntries(10000, 11000, 1000);
 
@@ -186,7 +184,7 @@ class TrimServiceTest {
     void testDoTrimDerivedTablesAndTriggerAsyncEvent() {
         Event firedEvent = mock(Event.class);
         doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Async>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         doReturn(8100).when(timeService).getEpochTime();
 
@@ -219,7 +217,7 @@ class TrimServiceTest {
         databaseManager.getDataSource().begin();
         doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
         Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<Async>() {});
+        doReturn(firedEvent).when(event).select(new AnnotationLiteral() {});
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         doReturn(3500).when(timeService).getEpochTime();
 
