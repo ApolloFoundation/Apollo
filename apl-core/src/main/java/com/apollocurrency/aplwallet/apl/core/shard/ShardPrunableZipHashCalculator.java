@@ -108,6 +108,7 @@ public class ShardPrunableZipHashCalculator {
                     );
                     if( ops==null || ! ops.isHashedOK()){
                         log.error("Can not zip file: {}", zipName);
+                        throw new RuntimeException("Can not create zip file: "+zipName);
                     }
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
