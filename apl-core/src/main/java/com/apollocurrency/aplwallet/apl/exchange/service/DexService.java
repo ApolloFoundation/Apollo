@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -154,6 +155,18 @@ public class DexService {
                                                      Byte pairCurrency, Integer offset, Integer limit) {
         return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
     }
+        /**
+     * returns unsorted list of orders for the specific time interval
+     *
+     * @param DexOrderDBRequestForTrading 
+     */
+    @Transactional(readOnly = true)
+    public List<DexOrder> getOrdersForTrading(DexOrderDBRequestForTrading dexOrderDBRequestForTrading ) {
+        return dexOrderDao.getOrdersForTrading(dexOrderDBRequestForTrading)
+                .stream()               
+                .collect(Collectors.toList());
+    }
+    
     
     @Transactional
     public void saveDexTradeEntry(DexTradeEntry dexTradeEntry) {
@@ -262,8 +275,8 @@ public class DexService {
                 .sorted(Comparator.comparingInt(DexOrder::getHeight))
                 .collect(Collectors.toList());
     }
-
-
+    
+ 
     private List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
         return orders.stream().map(order -> new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney())).collect(Collectors.toList());
     }
@@ -352,7 +365,7 @@ public class DexService {
 
             if (contract == null) {
                 contract = getDexContractByCounterOrderId(order.getId());
-                phasingTx = Long.parseUnsignedLong(contract.getCounterTransferTxId());
+                phasingTx = Long.parseUnsignedLong(contract.getCounterTransferTxId());               
             } else {
                 phasingTx = Long.parseUnsignedLong(contract.getTransferTxId());
             }
