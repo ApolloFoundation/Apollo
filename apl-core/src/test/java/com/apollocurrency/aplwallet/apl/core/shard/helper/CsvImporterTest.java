@@ -483,6 +483,40 @@ class CsvImporterTest {
         });
     }
 
+    @Test
+    void importDexContracts() {
+        ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
+
+        DatabaseManager databaseManager = extension.getDatabaseManager();
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+
+        DbUtils.inTransaction(dataSource, (conOuter) -> {
+            csvImporter = new CsvImporterImpl(resourceFileLoader.getResourcePath(), extension.getDatabaseManager(), aplAppStatus, valueParser);
+            assertNotNull(csvImporter);
+
+            String tableName = "dex_contract"; // 65 records is prepared
+            long result = 0;
+            try {
+                result = csvImporter.importCsv(tableName, 10, true);
+                dataSource.commit(false);
+            } catch (Exception e) {
+                log.error("Import error " + tableName, e);
+                throw new RuntimeException(e);
+            }
+            assertTrue(result > 0, "incorrect '" + tableName + "'");
+            log.debug("Imported '{}' rows for table '{}'", result, tableName);
+
+            List<String> lineInCsv = null;
+            try {
+                lineInCsv = Files.readAllLines(resourceFileLoader.getResourcePath().resolve(tableName + ".csv"));
+            } catch (IOException e) {
+                log.error("Load all lines error", e);
+            }
+            int numberOfLines = lineInCsv.size();
+            assertEquals(numberOfLines - 1, result, "incorrect lines imported from'" + tableName + "'");
+        });
+    }
+
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
         try (Connection con = dataSource.getConnection();
              PreparedStatement preparedCount = con.prepareStatement("select count(*) as \"count\" from " + tableName)
