@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -69,19 +70,20 @@ public abstract class TestBase implements ITest {
     }
 
     @BeforeEach
-    @DisplayName("Before test")
+    @Step("Before test")
     public void setUp(TestInfo testInfo){
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
-    @DisplayName("After test")
+    @Step("AfterEach")
    public void tearDown(){
         this.testInfo = null;
     }
 
     @AfterAll
+    @Step("AfterAll")
     static void afterAll() {
 
     }
