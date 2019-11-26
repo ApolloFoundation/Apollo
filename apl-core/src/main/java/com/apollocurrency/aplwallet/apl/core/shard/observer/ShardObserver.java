@@ -95,29 +95,34 @@ public class ShardObserver {
     private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
         
         int shardingFrequency = getShardingFrequency(currentConfig);
-        
-        log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                + ", shardingFrequency = {} ({})",
-                shardingFrequency != 0
-                        ? lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
-                lastTrimBlockHeight, blockchainHeight,
-                shardingFrequency, blockchainConfig.isJustUpdated());
 
-        //Q. how much blocks we ould be late? 1/2 of frequiency - 1 is OK?
+        //Q. how much blocks we ould be late? (frequiency - 2) is OK?
         //Q. Do we count on some other parameters?
         long lastShardHeight = getLastShardHeight();
-        long howLateWeCanBe = shardingFrequency / 2 - 1;
+        long howLateWeCanBe = shardingFrequency - 2;
         long nextShardHeight = lastShardHeight+shardingFrequency;
         long howLateWeAre = lastTrimBlockHeight-nextShardHeight;
         boolean res=false;
+
+        
         if(howLateWeAre >= 0){
           if(howLateWeAre > howLateWeCanBe){
-              log.warn("We have missed shard for {} blocks!",howLateWeAre);
+              log.warn("We have missed shard for {} blocks! lastTrimHeitght: {} blockchainHeight: {}",
+                      howLateWeAre,lastTrimBlockHeight,blockchainHeight);
           }else{
             res=true;
-            log.debug("Time for sharding is OK");
+            log.debug("Time for sharding is OK. lastTrimHeitght: {} blockchainHeight: {}",
+                    lastTrimBlockHeight,blockchainHeight);
           }
+        }else{
+            log.trace("Sharding is not now. lastTrimHeight: {} nextShardHeight: {}",lastShardHeight, nextShardHeight);
         }
+        
+        log.debug("Check shard conditions:  howLateWeAre = {},  lastTrimBlockHeight = {}, blockchainHeight = {}"
+            + ", shardingFrequency = {} justUpdted: {} Result: {}",
+            howLateWeAre,  lastTrimBlockHeight, blockchainHeight,
+            shardingFrequency, blockchainConfig.isJustUpdated(), res);          
+        
         return res;
     }
     
