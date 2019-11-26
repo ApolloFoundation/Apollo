@@ -210,7 +210,7 @@ public class TrimService {
     
     @Transactional
     private int doTrimDerivedTablesOnHeight(int height) {
-        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, oneLock={}", height);
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}", height);
         long start = System.currentTimeMillis();
 
         TransactionalDataSource dataSource = dbManager.getDataSource();
