@@ -74,6 +74,10 @@ public class DownloadableFilesManager {
     
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
+        if(fileData==null){
+            log.warn("NULL fileData supplied");
+            return;
+        }
         //remove from cache anyway
         fdiCache.remove(fileData.getFileId());
         //put only if file is already hased
