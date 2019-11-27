@@ -9,13 +9,16 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.Currency;
+import com.apollocurrency.aplwallet.api.dto.DGSGoodsDTO;
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.apollocurrency.aplwallet.api.dto.DexTradeInfoDto;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -26,6 +29,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -34,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
@@ -42,6 +47,7 @@ import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -49,7 +55,10 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -58,17 +67,23 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import okhttp3.Response;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
@@ -79,11 +94,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
-
-    @BeforeEach
-    void setUP(TestInfo testInfo) {
-        this.testInfo = testInfo;
-    }
 
     @Step
     public boolean verifyTransactionInBlock(String transaction)
@@ -103,10 +113,11 @@ public class TestBaseOld extends TestBase {
     @Step
     public boolean waitForHeight(int height)
     {
+      log.info("Wait For Height: {}",height);
       RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)
-                .withDelay(5, TimeUnit.SECONDS);
+                .withDelay(10, TimeUnit.SECONDS);
         boolean isHeight = false;
 
         try {
@@ -114,7 +125,7 @@ public class TestBaseOld extends TestBase {
         }
         catch (Exception e)
         {
-            assertTrue(isHeight,String.format("Height %s  not reached: %s",height,getBlock().getHeight()));
+            fail(String.format("Height %s  not reached. Exception msg: %s",height,e.getMessage()));
         }
         assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
         return isHeight;
@@ -152,9 +163,9 @@ public class TestBaseOld extends TestBase {
         return getInstanse(AccountBlockIdsResponse.class);
     }
     @Step
-    public AccountDTO getAccountId(Wallet wallet) {
+    public AccountDTO getAccountId(String secretPhrase) {
         addParameters(RequestType.requestType, getAccountId);
-        addParameters(Parameters.wallet,wallet);
+        addParameters(Parameters.secretPhrase,secretPhrase);
         return getInstanse(AccountDTO.class);
     }
     @Step
@@ -464,6 +475,86 @@ public class TestBaseOld extends TestBase {
     @Step
     public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth){
         throw new NotImplementedException("Already implemented in TestBaseNew");
+    }
+
+    @Step
+    public PollDTO getPoll(String poll) {
+        addParameters(RequestType.requestType, getPoll);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(PollDTO.class);
+    }
+
+    @Step("Create Poll with param: votingModel: {2}")
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue){
+        int currentHeight = getBlock().getHeight();
+        int finishHeight = currentHeight + plusFinishHeight;
+
+        addParameters(RequestType.requestType, RequestType.createPoll);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.finishHeight, finishHeight);
+        addParameters(Parameters.minNumberOfOptions, 1);
+        addParameters(Parameters.maxNumberOfOptions, 1);
+        addParameters(Parameters.feeATM, 1000000000);
+        addParameters(Parameters.isCustomFee, true);
+        addParameters(Parameters.minRangeValue, 0);
+        addParameters(Parameters.maxRangeValue, maxRangeValue);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.answers, "YES");
+        addParameters(Parameters.answers, "NO");
+        addParameters(Parameters.answers, "MAYBE");
+        addParameters(Parameters.create_poll_answers, 1);
+        addParameters(Parameters.option00, "YES");
+        addParameters(Parameters.option01, "NO");
+        addParameters(Parameters.option02, "MAYBE");
+        addParameters(Parameters.deadline, 1440);
+
+        if (votingModel==0) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 0);
+            addParameters(Parameters.minBalance ,0 );
+            addParameters(Parameters.description, "poll by account");
+            addParameters(Parameters.holding, "");
+        }
+
+        if (votingModel==1) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 1);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.description, "poll by account balance");
+            addParameters(Parameters.holding, "");
+        }
+
+        if (votingModel==2) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 2);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.description, "poll by asset");
+        }
+
+        if (votingModel==3) {
+            addParameters(Parameters.votingModel, votingModel);
+            addParameters(Parameters.minBalanceModel, 3);
+            addParameters(Parameters.minBalance, minBalance);
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.description, "poll by currency");
+        }
+
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote){
+
+        addParameters(RequestType.requestType, RequestType.castVote);
+        addParameters(Parameters.feeATM, 2000000000);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.vote00, vote);
+        addParameters(Parameters.vote01, "");
+        addParameters(Parameters.vote02, "");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.poll, poll);
+
+        return getInstanse(CreateTransactionResponse.class);
     }
 
     @Step
@@ -891,7 +982,7 @@ public class TestBaseOld extends TestBase {
     @Step("Issue Currency with param: Type: {2}")
     public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
         int currentHeight = getBlock().getHeight();
-        int issuanceHeight = currentHeight + 8;
+        int issuanceHeight = currentHeight + 11;
 
         final int EXCHANGEABLE = 1;
         final int CONTROLLABLE = 2;
@@ -907,7 +998,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.type, type);
         addParameters(Parameters.initialSupply, initialSupply);
         addParameters(Parameters.decimals, decimals);
-        addParameters(Parameters.feeATM, 10000000000L);
+        addParameters(Parameters.feeATM, 100000000000L);
         addParameters(Parameters.deadline, "1440");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.issuanceHeight, 0);
@@ -937,9 +1028,11 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.maxDifficulty, 2);
             addParameters(Parameters.reserveSupply, 0);
         }
-        
+
         return getInstanse(CreateTransactionResponse.class);
     }
+
+
 
 
     @Step
@@ -1073,25 +1166,287 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
+        addParameters(RequestType.requestType, getAccountCurrencies);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.includeCurrencyInfo, true);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(AccountCurrencyResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType ) {
+        addParameters(RequestType.requestType, shufflingCreate);
+        addParameters(Parameters.wallet, wallet);
+        if (holdingType > 0) {
+            addParameters(Parameters.holding, holding);
+            addParameters(Parameters.holdingType, holdingType);
+            addParameters(Parameters.amount, amount);
+        }else{
+            addParameters(Parameters.amount, amount+"00000000");
+        }
+        addParameters(Parameters.registrationPeriod, registrationPeriod);
+        addParameters(Parameters.participantCount, participantCount);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+
+    }
+    @Step
+    public CreateTransactionResponse shufflingCancel( Wallet wallet, String shuffling, String cancellingAccount, String shufflingStateHash) {
+        addParameters(RequestType.requestType, shufflingCancel);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.shuffling, shuffling);
+        if (cancellingAccount !=null) {
+            addParameters(Parameters.cancellingAccount, cancellingAccount);
+        }
+        addParameters(Parameters.shufflingStateHash, shufflingStateHash);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
 
     }
 
+    @Step
+    public ShufflingDTO getShuffling(String shuffling) {
+        addParameters(RequestType.requestType, getShuffling);;
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.includeHoldingInfo, false);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(ShufflingDTO.class);
+    }
 
+    @Step
+    public CreateTransactionResponse shufflingRegister(Wallet wallet, String shufflingFullHash) {
+        addParameters(RequestType.requestType, shufflingRegister);;
+        addParameters(Parameters.shufflingFullHash, shufflingFullHash);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
+    @Step
+    public CreateTransactionResponse shufflingProcess(Wallet wallet,String shuffling, String recipientSecretPhrase) {
+        addParameters(RequestType.requestType, shufflingProcess);
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
 
-    @AfterEach
-    void testEnd() {
-        this.testInfo = null;
+    @Step
+    public CreateTransactionResponse startShuffler(Wallet wallet,String shufflingFullHash, String recipientSecretPhrase) {
+        addParameters(RequestType.requestType, startShuffler);
+        addParameters(Parameters.shufflingFullHash, shufflingFullHash);
+        addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
+        addParameters(RequestType.requestType, shufflingVerify);
+        addParameters(Parameters.shuffling, shuffling);
+        addParameters(Parameters.shufflingStateHash, shufflingStateHash);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse dgsListing(Wallet wallet, String name, String description, String tags, int quantity, int priceATM, File file) {
+        addParameters(RequestType.requestType, dgsListing);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.messageFile, file);
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.tags, tags);
+        addParameters(Parameters.quantity, quantity);
+        addParameters(Parameters.messageIsText, false);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.priceATM, priceATM +"00000000");
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsDelisting(Wallet wallet, String goods) {
+        addParameters(RequestType.requestType, dgsDelisting );
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsQuantityChange(Wallet wallet, String goods, int deltaQuantity) {
+        addParameters(RequestType.requestType, dgsQuantityChange );
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.deltaQuantity, deltaQuantity);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsPriceChange(Wallet wallet, String goods, int priceATM) {
+        addParameters(RequestType.requestType, dgsPriceChange );
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsPurchase(Wallet wallet, String goods, long priceATM, int quantity, int deliveryDeadlineTimeInHours) {
+        addParameters(RequestType.requestType, dgsPurchase );
+        addParameters(Parameters.priceATM, priceATM);
+        addParameters(Parameters.quantity, quantity);
+        addParameters(Parameters.deliveryDeadlineTimestamp, deliveryDeadlineTimeInHours * 3600000);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.goods, goods);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsDelivery(Wallet wallet, String purchase, String delivery, int discountATM) {
+        addParameters(RequestType.requestType, dgsDelivery );
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.discountATM, discountATM);
+        addParameters(Parameters.goodsToEncrypt, delivery);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+    @Step
+    public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
+        addParameters(RequestType.requestType, dgsFeedback);
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.message, message);
+        addParameters(Parameters.messageToEncrypt, message);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
+        addParameters(RequestType.requestType, uploadTaggedData);
+        addParameters(Parameters.name, name);
+        addParameters(Parameters.file, file);
+        addParameters(Parameters.description, description);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.tags, tags);
+        addParameters(Parameters.channel, channel);
+        addParameters(Parameters.messageIsText, false);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse dgsRefund(Wallet wallet, String purchase, int refundATM, String message) {
+        addParameters(RequestType.requestType, dgsRefund );
+        addParameters(Parameters.purchase, purchase);
+        addParameters(Parameters.refundATM, refundATM);
+        addParameters(Parameters.message, message);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
     }
 
 
-    @AfterAll
-    static void afterAll() {
-        try {
-        //    deleteKey(getTestConfiguration().getVaultWallet());
-        } catch (Exception e) { }
-
+    @Step
+    public DGSGoodsDTO getDGSGood(String goods) {
+        addParameters(RequestType.requestType, getDGSGood);
+        addParameters(Parameters.goods, goods);
+        return getInstanse(DGSGoodsDTO.class);
     }
 
+    @Step
+    public AllTaggedDataResponse getAllTaggedData() {
+        addParameters(RequestType.requestType, getAllTaggedData);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
+
+    @Step
+    public TaggedDataDTO getTaggedData(String transaction) {
+        addParameters(RequestType.requestType, getTaggedData);
+        addParameters(Parameters.transaction, transaction);
+        return getInstanse(TaggedDataDTO.class);
+    }
+
+    @Step
+    public DataTagCountResponse getDataTagCount() {
+        addParameters(RequestType.requestType, getDataTagCount);
+        return getInstanse(DataTagCountResponse.class);
+    }
+
+    @Step
+    public AllTaggedDataResponse searchTaggedDataByName(String query) {
+        addParameters(RequestType.requestType, searchTaggedData);
+        addParameters(Parameters.query, query);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
+
+    @Step
+    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {
+        addParameters(RequestType.requestType, searchTaggedData);
+        addParameters(Parameters.tag, tag);
+        return getInstanse(AllTaggedDataResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {
+        addParameters(RequestType.requestType, extendTaggedData);
+        addParameters(Parameters.transaction, transaction);
+        addParameters(Parameters.feeATM, "100000000000");
+        addParameters(Parameters.deadline, 1440);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public PollVotesResponse getPollVotes (String poll) {
+        addParameters(RequestType.requestType, getPollVotes);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(PollVotesResponse.class);
+    }
+
+    //get poll results
+    @Step
+    public PollResultResponse getPollResult (String poll) {
+        addParameters(RequestType.requestType, getPollResult);
+        addParameters(Parameters.poll, poll);
+        return getInstanse(PollResultResponse.class);
+    }
+    @Step
+    public void messagePrunable(){
+        String message = RandomStringUtils.randomAlphabetic(3,5);
+        addParameters(Parameters.messageIsPrunable, true);
+        addParameters(Parameters.messageIsText, true);
+        addParameters(Parameters.messageToEncrypt, message);
+        addParameters(Parameters.encryptedMessageIsPrunable, true);
+        addParameters(Parameters.compressMessageToEncrypt, message);
+        addParameters(Parameters.messageToEncryptToSelf, message);
+        addParameters(Parameters.messageToEncryptToSelfIsText, true);
+    }
 
 }
