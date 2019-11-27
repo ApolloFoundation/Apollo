@@ -112,7 +112,7 @@ public class ShardPrunableZipHashCalculator {
                     }
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
-                    Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
+                    ops.moveFile(prunableArchivePath);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
