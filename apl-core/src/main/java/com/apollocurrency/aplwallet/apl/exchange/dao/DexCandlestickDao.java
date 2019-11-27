@@ -14,9 +14,9 @@ import java.util.List;
 public interface DexCandlestickDao {
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp < : toTimestamp ORDER BY timestamp DESC LIMIT :limit")
+    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp < :toTimestamp AND timestamp >= :fromTimestamp ORDER BY timestamp")
     @RegisterRowMapper(DexCandlestickMapper.class)
-    List<DexCandlestick> getToTimestamp(@Bind("toTimestamp") int toTimestamp, @Bind("limit") int limit, @Bind("pairedCoin") DexCurrency pairedCoin);
+    List<DexCandlestick> getFromToTimestamp(@Bind("fromTimestamp") int fromTimestamp, @Bind("toTimestamp") int toTimestamp, @Bind("pairedCoin") DexCurrency pairedCoin);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp = :timestamp")
