@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -417,7 +418,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
     @Override
     public int getMinRollbackHeight() {
-        return trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight() : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
+        int minRollBackHeight = trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight()
+                : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
+        log.trace("minRollbackHeight  = {}", minRollBackHeight);
+        return minRollBackHeight;
     }
 
     @Override
@@ -1062,14 +1066,35 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource) {
-        if (commonBlock.getHeight() < getMinRollbackHeight()) {
-            log.info("Rollback to height " + commonBlock.getHeight() + " not supported, will do a full rescan");
+        int minRollbackHeight = getMinRollbackHeight();
+        int commonBlockHeight = commonBlock.getHeight();
+        log.debug(">> popOffToInTransaction() to height = {}, minRollbackHeight={}", commonBlockHeight, minRollbackHeight);
+        if (commonBlockHeight < minRollbackHeight) {
+            log.info("Rollback to height " + commonBlockHeight + " not supported, will do a full rescan");
 
+            // usually = 0 on full node (or on sharded node without any shard yet)
+            // > 0 on sharded node with one or more shards
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
-            if (commonBlock.getHeight() < shardInitialHeight) {
-                log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})", commonBlock.getHeight(), shardInitialHeight);
-            }else {
-                popOffWithRescan(commonBlock.getHeight() + 1);
+            if (commonBlockHeight < shardInitialHeight) {
+                // when we have a shard on node, we can't scan below 'latest' snapshot block in main db
+                log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})",
+                        commonBlockHeight, shardInitialHeight);
+            } else {
+                // check shard conditions...
+                HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+                boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
+                boolean shardingEnabled = currentConfig.isShardingEnabled();
+                log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
+                if (shardInitialHeight != 0 && shardingEnabled && !isShardingOff) {
+                    // sharding is enabled and turned ON
+                    log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
+                            commonBlockHeight + 1,  shardInitialHeight);
+//                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
+                } else {
+                    // sharding is DISABLED and turned OFF, FULL DB mode
+                    log.warn("DO 'popOffWithRescan' to height(+1) = {}...", commonBlockHeight + 1);
+                    popOffWithRescan(commonBlockHeight + 1); // 'full node' can go to full rescan here
+                }
             }
             return Collections.emptyList();
         }
@@ -1081,22 +1106,26 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             Block block = lookupBlockhain().getLastBlock();
             ((BlockImpl) block).loadTransactions();
-            log.debug("ROLLBACK       from block " + block.getStringId() + " at height " + block.getHeight()
-                    + " to " + commonBlock.getStringId() + " at " + commonBlock.getHeight());
+            log.debug("ROLLBACK from block " + block.getStringId() + " at height " + block.getHeight()
+                    + " to " + commonBlock.getStringId() + " at " + commonBlockHeight);
             while (block.getId() != commonBlock.getId() && block.getHeight() > 0) {
                 poppedOffBlocks.add(block);
                 block = popLastBlock();
             }
             long rollbackStartTime = System.currentTimeMillis();
+            log.debug("Start rollback for tables=[{}]", dbTables.getDerivedTables().size());
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
-                table.rollback(commonBlock.getHeight());
+                long start = System.currentTimeMillis();
+                table.rollback(commonBlockHeight);
+                log.debug("rollback for table={} in {} ms", table.getName(), System.currentTimeMillis() - start);
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
             dataSource.commit(false); // should happen definitely otherwise
+            log.debug("<< popOffToInTransaction() blocks=[{}] at height={}", poppedOffBlocks.size(), commonBlockHeight);
         }
         catch (RuntimeException e) {
-            log.error("Error popping off to {}, cause {}", commonBlock.getHeight(), e.toString());
+            log.error("Error popping off to {}, cause {}", commonBlockHeight, e.toString());
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown
                 Block lastBlock = blockchain.findLastBlock();
@@ -1125,6 +1154,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void popOffWithRescan(int height) {
+        log.debug(">> popOffWithRescan to height = " + height);
         globalSync.writeLock();
         try {
             int scanHeight = 0;
@@ -1132,21 +1162,29 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if ( shardInitialHeight > 0 ) {
                 scanHeight = Math.max(height, shardInitialHeight);
             }
-            log.debug("Set the height for Scan process to {}, shards' initialBlock height={}", scanHeight, shardInitialHeight);
+            log.debug("Set scanHeight={}, shard's initialBlockHeight={}, currentHeight={}", scanHeight, shardInitialHeight, height);
             try {
                 scheduleScan(scanHeight, false);
                 long blockIdAtHeight = blockchain.getBlockIdAtHeight(height);
+                log.debug("popOffWithRescan blockIdAtHeight={}", blockIdAtHeight);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
-                // rollback not scan safe derived tables with blocks and transactions
+                log.debug("popOffWithRescan lastBLock={}", lastBLock);
                 for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
+                    // rollback not scan safe, 'prunable tables' only
                     if (!derivedTable.isScanSafe()) {
-                        log.debug("Rollback not scan safe table {}, height={}", derivedTable.getName(), height);
+                        long start = System.currentTimeMillis();
                         derivedTable.rollback(height);
+                        log.debug("rollback on height={} table={} in {} ms", height,
+                                derivedTable.getName(), System.currentTimeMillis() - start);
                     }
                 }
+                log.debug("popOffWithRescan set to lastBLock={}", lastBLock);
                 lookupBlockhain().setLastBlock(lastBLock);
                 lookupBlockhainConfigUpdater().rollback(lastBLock.getHeight());
-                log.debug("Blockchain config updated, lastblock={} at height={}", lastBLock.getId(), lastBLock.getHeight());
+                log.debug("Blockchain config updated, lastBlockId={} at height={}", lastBLock.getId(), lastBLock.getHeight());
+            } catch (Exception e) {
+                // just for logging possible hidden error
+                log.error("popOffWithRescan Error", e);
             } finally {
                 try {
                     scan(scanHeight, false);
@@ -1157,6 +1195,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } finally {
             globalSync.writeUnlock();
         }
+        log.debug("<< popOffWithRescan to height = " + height);
     }
 
     private int getBlockVersion(int previousBlockHeight) {
@@ -1321,6 +1360,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void scan(int height, boolean validate, boolean shutdown) {
+        log.debug(">> scan height={}, validate={}, shutdown={}", height, validate, shutdown);
         globalSync.writeLock();
         TransactionalDataSource dataSource = lookupDataSource();
         try {
@@ -1396,6 +1436,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
+                log.debug("scan currentBlock={} at height={}", currentBlock, height);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();
                 if (height == shardInitialHeight) {
@@ -1527,9 +1568,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 isScanning = false;
                 aplAppStatus.durableTaskFinished(scanTaskId, false, "");
             }
+        } catch (Exception e) {
+            // just for logging possible hidden error
+            log.error("popOffWithRescan ->scan error", e);
         } finally {
             globalSync.writeUnlock();
         }
+        log.debug("<< scan height={}, validate={}, shutdown={}", height, validate, shutdown);
     }
 
     private double getPercentsPerEvent(double totalPercents, int events) {

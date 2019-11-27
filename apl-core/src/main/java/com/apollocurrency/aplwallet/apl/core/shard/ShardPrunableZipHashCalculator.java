@@ -67,13 +67,25 @@ public class ShardPrunableZipHashCalculator {
 
     private void recalculatePrunableArchiveHashes() {
         UUID chainId = blockchainConfig.getChain().getChainId();
-        List<Shard> allCompletedShards = shardDao.getAllCompletedShards().stream().filter(shard -> shard.getPrunableZipHash() != null).collect(Collectors.toList()); // TODO change to completed and imported
+        List<Shard> allCompletedShards = shardDao.getAllCompletedShards()
+                .stream()
+                .filter(shard -> shard.getPrunableZipHash() != null)
+                .collect(Collectors.toList()); // TODO change to completed and imported
+        
         allCompletedShards.forEach(shard -> {
             try {
                 Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
-                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory); // create new instance of CsvExporter for each directory
-                List<PrunableDbTable> prunableTables = registry.getDerivedTables().stream().filter(t -> t instanceof PrunableDbTable).map(t -> (PrunableDbTable) t).collect(Collectors.toList());
-                prunableTables.forEach(t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100));
+                // create new instance of CsvExporter for each directory
+                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory); 
+                List<PrunableDbTable> prunableTables = registry.getDerivedTables()
+                        .stream()
+                        .filter(t -> t instanceof PrunableDbTable)
+                        .map(t -> (PrunableDbTable) t)
+                        .collect(Collectors.toList());
+                
+                prunableTables.forEach(
+                        t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
+                );
                 long count = Files.list(tempDirectory).count();
                 ShardNameHelper shardNameHelper = new ShardNameHelper();
                 String prunableArchiveName = shardNameHelper.getPrunableShardArchiveNameByShardId(shard.getShardId(), chainId );
@@ -83,16 +95,24 @@ public class ShardPrunableZipHashCalculator {
                     shard.setPrunableZipHash(null);
                     shardDao.updateShard(shard);
                     Files.deleteIfExists(prunableArchivePath);
+                    //supply empty to remove from cache
                     ops = new ChunkedFileOps("");
                 } else {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
-                    ops = zip.compressAndHash(tempDirectory.resolve(zipName).toAbsolutePath().toString(), tempDirectory.toAbsolutePath().toString(), 0L, null, false);
+                    ops = zip.compressAndHash(
+                            tempDirectory.resolve(zipName).toAbsolutePath().toString(), //zip file abs path
+                            tempDirectory.toAbsolutePath().toString(), //dir to zip abs path
+                            0L, //zip fiules time
+                            null, //filter of file names
+                            false //recursive
+                    );
                     if( ops==null || ! ops.isHashedOK()){
                         log.error("Can not zip file: {}", zipName);
+                        throw new RuntimeException("Can not create zip file: "+zipName);
                     }
                     byte[] hash = ops.getFileHash();
-                    ops.setFileId(shardNameHelper.getFullShardId(shard.getShardId(), chainId));
-                    Files.move(tempDirectory.resolve(zipName), prunableArchivePath, StandardCopyOption.REPLACE_EXISTING);
+                    ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
+                    ops.moveFile(prunableArchivePath);
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
