@@ -406,7 +406,7 @@ public final class Shuffling {
         this.blocksRemaining = rs.getShort("blocks_remaining");
         this.stage = Stage.get(rs.getByte("stage"));
         this.assigneeAccountId = rs.getLong("assignee_account_id");
-        this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
+        this.recipientPublicKeys = DbUtils.get2dByteArray(rs, "recipient_public_keys", Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
         this.height = rs.getInt("height");
     }
@@ -436,7 +436,7 @@ public final class Shuffling {
             DbUtils.setShortZeroToNull(pstmt, ++i, this.blocksRemaining);
             pstmt.setByte(++i, this.getStage().getCode());
             DbUtils.setLongZeroToNull(pstmt, ++i, this.assigneeAccountId);
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.recipientPublicKeys, "bytea");
+            DbUtils.set2dByteArray(pstmt, ++i, this.recipientPublicKeys);
             pstmt.setByte(++i, this.registrantCount);
             pstmt.setInt(++i, blockchain.getHeight());
 
@@ -448,7 +448,7 @@ public final class Shuffling {
             DbUtils.setShortZeroToNull(pstmt, ++i, this.blocksRemaining);
             pstmt.setByte(++i, this.getStage().getCode());
             DbUtils.setLongZeroToNull(pstmt, ++i, this.assigneeAccountId);
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.recipientPublicKeys, "bytea");
+            DbUtils.set2dByteArray(pstmt, ++i, this.recipientPublicKeys);
             pstmt.setByte(++i, this.registrantCount);
 
             pstmt.executeUpdate();

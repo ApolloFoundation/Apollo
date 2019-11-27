@@ -552,7 +552,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS shuffling (db_id BIGINT GENERATED ALWAYS AS IDENTITY, id BIGINT NOT NULL, holding_id BIGINT NULL, holding_type SMALLINT NOT NULL, "
                         + "issuer_id BIGINT NOT NULL, amount BIGINT NOT NULL, participant_count SMALLINT NOT NULL, blocks_remaining SMALLINT NULL, "
                         + "stage SMALLINT NOT NULL, assignee_account_id BIGINT NULL, registrant_count SMALLINT NOT NULL, "
-                        + "recipient_public_keys BYTEA[], height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "recipient_public_keys BYTEA, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 203:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_id_height_idx ON shuffling (id, height DESC)");
             case 204:
@@ -564,7 +564,7 @@ public class AplDbVersion extends DbVersion {
             case 207:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_participant (db_id BIGINT GENERATED ALWAYS AS IDENTITY, shuffling_id BIGINT NOT NULL, "
                         + "account_id BIGINT NOT NULL, next_account_id BIGINT NULL, participant_index SMALLINT NOT NULL, "
-                        + "state SMALLINT NOT NULL, blame_data BYTEA[], key_seeds BYTEA[], data_transaction_full_hash BYTEA, data_hash BYTEA, "
+                        + "state SMALLINT NOT NULL, blame_data BYTEA, key_seeds BYTEA, data_transaction_full_hash BYTEA, data_hash BYTEA, "
                         + "height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 208:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_participant_shuffling_id_account_id_idx ON shuffling_participant "
@@ -573,7 +573,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS shuffling_participant_height_idx ON shuffling_participant (height, shuffling_id, account_id)");
             case 210:
                 apply("CREATE TABLE IF NOT EXISTS shuffling_data (db_id BIGINT GENERATED ALWAYS AS IDENTITY, shuffling_id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
-                        + "data BYTEA[], transaction_timestamp INT NOT NULL, height INT NOT NULL)");
+                        + "data BYTEA, transaction_timestamp INT NOT NULL, height INT NOT NULL)");
             case 211:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS shuffling_data_id_height_idx ON shuffling_data (shuffling_id, height DESC)");
             case 212:

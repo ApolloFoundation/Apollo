@@ -145,7 +145,7 @@ public final class ShufflingParticipant {
                 int i = 0;
                 pstmt.setLong(++i, shufflingData.getShufflingId());
                 pstmt.setLong(++i, shufflingData.getAccountId());
-                DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData(), "bytea");
+                DbUtils.set2dByteArray(pstmt, ++i, shufflingData.getData());
                 pstmt.setInt(++i, shufflingData.getTransactionTimestamp());
                 pstmt.setInt(++i, shufflingData.getHeight());
                 pstmt.executeUpdate();
@@ -216,8 +216,8 @@ public final class ShufflingParticipant {
         this.nextAccountId = rs.getLong("next_account_id");
         this.index = rs.getInt("participant_index");
         this.state = State.get(rs.getByte("state"));
-        this.blameData = DbUtils.getArray(rs, "blame_data", byte[][].class, Convert.EMPTY_BYTES);
-        this.keySeeds = DbUtils.getArray(rs, "key_seeds", byte[][].class, Convert.EMPTY_BYTES);
+        this.blameData = DbUtils.get2dByteArray(rs, "blame_data", Convert.EMPTY_BYTES);
+        this.keySeeds = DbUtils.get2dByteArray(rs, "key_seeds", Convert.EMPTY_BYTES);
         this.dataTransactionFullHash = rs.getBytes("data_transaction_full_hash");
         this.dataHash = rs.getBytes("data_hash");
     }
@@ -240,8 +240,8 @@ public final class ShufflingParticipant {
             DbUtils.setLongZeroToNull(pstmt, ++i, this.nextAccountId);
             pstmt.setInt(++i, this.index);
             pstmt.setByte(++i, this.getState().getCode());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData, "bytea");
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds, "bytea");
+            DbUtils.set2dByteArray(pstmt, ++i, this.blameData);
+            DbUtils.set2dByteArray(pstmt, ++i, this.keySeeds);
             DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
             DbUtils.setBytes(pstmt, ++i, this.dataHash);
             pstmt.setInt(++i, blockchain.getHeight());
@@ -249,8 +249,8 @@ public final class ShufflingParticipant {
             DbUtils.setLongZeroToNull(pstmt, ++i, this.nextAccountId);
             pstmt.setInt(++i, this.index);
             pstmt.setByte(++i, this.getState().getCode());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.blameData, "bytea");
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, this.keySeeds, "bytea");
+            DbUtils.set2dByteArray(pstmt, ++i, this.blameData);
+            DbUtils.set2dByteArray(pstmt, ++i, this.keySeeds);
             DbUtils.setBytes(pstmt, ++i, this.dataTransactionFullHash);
             DbUtils.setBytes(pstmt, ++i, this.dataHash);
 

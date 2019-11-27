@@ -38,7 +38,7 @@ public class ShufflingData {
         this.shufflingId = rs.getLong("shuffling_id");
         this.accountId = rs.getLong("account_id");
         this.dbKey = dbKey;
-        this.data = DbUtils.getArray(rs, "data", byte[][].class, Convert.EMPTY_BYTES);
+        this.data = DbUtils.get2dByteArray(rs, "data", Convert.EMPTY_BYTES);
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
         this.height = rs.getInt("height");
     }

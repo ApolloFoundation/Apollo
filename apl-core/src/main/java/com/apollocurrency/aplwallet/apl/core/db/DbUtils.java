@@ -21,6 +21,13 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 
@@ -71,6 +79,24 @@ public final class DbUtils {
     public static void setBytes(PreparedStatement pstmt, int index, byte[] bytes) throws SQLException {
         if (bytes != null) {
             pstmt.setBytes(index, bytes);
+        } else {
+            pstmt.setNull(index, Types.BINARY);
+        }
+    }
+
+    /**
+     * JDBC Driver for Postgres does not support bytea[], so
+     * this method serialize byte[][] to binary data to store in as bytea.
+     * @param pstmt
+     * @param index
+     * @param bytes
+     * @throws SQLException
+     *
+     * @see <a href="https://github.com/pgjdbc/pgjdbc/issues/936">issue 936</a>
+     */
+    public static void set2dByteArray(PreparedStatement pstmt, int index, byte[][] bytes) throws SQLException {
+        if (bytes != null) {
+            pstmt.setBytes(index, convertToBytes(bytes));
         } else {
             pstmt.setNull(index, Types.BINARY);
         }
@@ -137,6 +163,28 @@ public final class DbUtils {
         }
     }
 
+    /**
+     * JDBC Driver for Postgres does not support bytea[], so
+     * this method deserialize binary data to byte[][].
+     * @param resultSet
+     * @param columnName
+     * @param defaultValue
+     * @return
+     * @throws SQLException
+     *
+     * @see <a href="https://github.com/pgjdbc/pgjdbc/issues/936">issue 936</a>
+     */
+    public static byte[][] get2dByteArray(
+            final ResultSet resultSet,
+            final String columnName,
+            final byte[][] defaultValue
+    ) throws SQLException {
+        final byte[] resultSetBytes = resultSet.getBytes(columnName);
+        return Optional.ofNullable(convertFromBytes(resultSetBytes))
+                .map(byte[][].class::cast)
+                .orElse(defaultValue);
+    }
+
     public static <T> void setArray(
             final PreparedStatement pstmt,
             final int index,
@@ -162,6 +210,31 @@ public final class DbUtils {
             pstmt.setArray(index, connection.createArrayOf(dbTypeName, array));
         } else {
             pstmt.setNull(index, Types.ARRAY);
+        }
+    }
+
+    private static byte[] convertToBytes(final Object object) {
+        try (
+                final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                final ObjectOutput out = new ObjectOutputStream(bos)
+        ) {
+            out.writeObject(object);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            log.debug("Failed to convertToBytes: {}", e.getMessage());
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
+    }
+
+    private static Object convertFromBytes(final byte[] bytes) {
+        try (
+                final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+                final ObjectInput in = new ObjectInputStream(bis)
+        ) {
+            return in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            log.debug("Failed to convertFromBytes: {}", e.getMessage());
+            throw new IllegalArgumentException(e.getMessage(), e);
         }
     }
 
