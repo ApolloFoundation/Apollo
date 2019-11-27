@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -357,7 +357,7 @@ public class DexOrderProcessor {
         log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOrder.getType(), counterOrder.getAccountId(),
                 counterOrder.getToAddress(), counterOrder.getFromAddress(), counterOrder.getPairCurrency(), counterOrder.getPairRate());
 
-        DexCurrencies curr = counterOrder.getPairCurrency();
+        DexCurrency curr = counterOrder.getPairCurrency();
 
         int rx;
 

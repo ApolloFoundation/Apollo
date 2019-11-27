@@ -848,7 +848,11 @@ public class AplDbVersion extends DbVersion {
             case 324:
                 apply("CREATE TABLE IF NOT EXISTS user_error_message(db_id IDENTITY, address VARCHAR NOT NULL, error VARCHAR NOT NULL, operation VARCHAR, details VARCHAR, timestamp BIGINT NOT NULL)");
             case 325:
-                return 325;
+                apply("CREATE TABLE IF NOT EXISTS dex_candlestick(coin TINYINT NOT NULL, from DECIMAL NOT NULL, to DECIMAL NOT NULL, min DECIMAL NOT NULL, max DECIMAL NOT NULL, from_volume DECIMAL NOT NULL, to_volume DECIMAL NOT NULL, timestamp INT NOT NULL)");
+            case 326:
+                apply("ALTER TABLE dex_candlestick ADD CONSTRAINT IF NOT EXISTS dex_candlestick_coin_timestamp_idx UNIQUE (coin, timestamp)");
+            case 327:
+                return 327;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.utils;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -21,7 +21,7 @@ public class DexCurrencyValidator {
     }
 
 
-    public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrencies offerCurrencies, DexCurrencies pairCurrencies) {
+    public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrency offerCurrencies, DexCurrency pairCurrencies) {
         if ((orderType.isSell() && offerCurrencies.isApl())) {
             return true;
          }
