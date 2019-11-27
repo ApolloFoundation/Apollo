@@ -349,8 +349,7 @@ public class DexService {
             Long phasingTx = getAplTransferTxForOrder(order.getId());
             boolean doRefund = true;
             if (phasingTx != null) {
-                PhasingPollResult phasingPollResult = phasingPollService.getResult(phasingTx);
-                doRefund = !phasingPollResult.isApproved();
+                doRefund = !(phasingPollService.getResult(phasingTx) != null || phasingPollService.getPoll(phasingTx) != null);
             }
             if (doRefund) {
                 refundAPLFrozenMoney(order);
