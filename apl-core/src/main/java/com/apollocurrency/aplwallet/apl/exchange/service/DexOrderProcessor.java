@@ -450,6 +450,7 @@ public class DexOrderProcessor {
                     PhasingPollResult result = phasingPollService.getResult(id);
                     if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
                         log.debug("Apl phasing transfer {} was already finished", id);
+                        continue;
                     }
                     timeLeft = poll.getFinishTime() - timeService.getEpochTime();
                 }
