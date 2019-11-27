@@ -67,5 +67,6 @@ public interface DexOrderDao {
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
-    
+
+    List<DexOrder> getOrdersByTime();
 }
