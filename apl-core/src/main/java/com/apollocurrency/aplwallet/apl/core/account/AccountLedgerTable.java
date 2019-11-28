@@ -64,7 +64,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
             TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
             try (
                     final Connection con = dataSource.getConnection();
-                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
                     final PreparedStatement pstmt = con.prepareStatement(
                             "DELETE FROM account_ledger WHERE db_id IN " +
                                     "(SELECT db_id FROM account_ledger " +

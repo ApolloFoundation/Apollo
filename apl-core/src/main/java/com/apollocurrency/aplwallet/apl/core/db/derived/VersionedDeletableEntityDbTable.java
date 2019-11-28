@@ -62,12 +62,12 @@ public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T
             try (ResultSet rs = pstmtCount.executeQuery()) {
                 if (rs.next()) {
                     try (
-                            @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT_AND_LOCK)
+                            @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
                             final PreparedStatement pstmt = con.prepareStatement(
                             "UPDATE " + table + " SET latest = FALSE " +
                                     "WHERE (" + keyFactory.getPKColumns() + ") IN " +
                                     "(SELECT " + keyFactory.getPKColumns() + " FROM " + table + " " +
-                                    keyFactory.getPKClause() + " AND latest = TRUE FETCH FIRST 1 ROWS ONLY FOR UPDATE)"
+                                    keyFactory.getPKClause() + " AND latest = TRUE FETCH FIRST 1 ROWS ONLY)"
                     )) {
                         dbKey.setPK(pstmt);
                         pstmt.executeUpdate();

@@ -43,7 +43,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (
                 final Connection con = dataSource.getConnection();
-                @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
                 final PreparedStatement pstmtDelete = con.prepareStatement(
                         "DELETE FROM account_guaranteed_balance " +
                                 "WHERE db_id IN " +

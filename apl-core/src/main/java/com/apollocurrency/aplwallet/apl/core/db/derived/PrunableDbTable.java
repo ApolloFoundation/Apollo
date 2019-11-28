@@ -54,7 +54,7 @@ public abstract class PrunableDbTable<T> extends EntityDbTable<T> {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (
                     final Connection con = dataSource.getConnection();
-                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
                     final PreparedStatement pstmt = con.prepareStatement(
                             "DELETE FROM " + table + " " +
                                     "WHERE (" + keyFactory.getPKColumns() + ") IN " +

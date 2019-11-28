@@ -76,7 +76,7 @@ public class PublicKeyMigrator {
                     }
                     dataSource.commit(false);
                     //delete genesis keys
-                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT_WITHOUT_LOCK)
+                    @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
                     int deleted;
                     int totalDeleted = 0;
                     do {
