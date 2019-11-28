@@ -176,7 +176,7 @@ public class FileDownloader {
             log.debug("Failed to download or save chunk: {}",fci.chunkId);
             setFileChunkState(FileChunkState.PRESENT_IN_PEER, fci);  //well, it exists anyway on some peer
         }
-        if(fci.failedAttempts>DOWNLOAD_THREADS){
+        if(fci.failedAttempts>=DOWNLOAD_THREADS*2){
            //Seems that no peer has this chunk, we should finish
             isLast=true;
         }

@@ -24,12 +24,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.Getter;
 
 /**
@@ -64,7 +67,7 @@ public class ShardInfoDownloader {
     private final PeersService peers;
     private final UUID myChainId;
     public static final String SHARD_ID_ENV="APOLLO_DOWNLOAD_SHARD_ID";
-       
+    public static final long PEER_RECONNECT_TIME_MS=2000L;  
     @Inject
     public ShardInfoDownloader( PeersService peers) {
         this.additionalPeers = ConcurrentHashMap.newKeySet();
@@ -133,8 +136,28 @@ public class ShardInfoDownloader {
         }
         return haveShard;
     }
-    
+    private boolean tryConnectToPeer(Peer p, int attempts){
+        boolean res = false;
+        if(p.getState()==PeerState.CONNECTED){
+            res = true;
+        }else{
+            for(int i=0; i<attempts; i++){
+                res = peers.connectPeer(p);
+                if(res){
+                    break;
+                }else{
+                    try {
+                        Thread.sleep(PEER_RECONNECT_TIME_MS);
+                    } catch (InterruptedException ex) {
+                       Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        }
+        return res;        
+    }
     public ShardingInfo getShardingInfoFromPeer(String addr) {
+        int attempts = 2;
         if (StringUtils.isBlank(addr)) {
             String error = String.format("address is EMPTY or NULL : '%s'", addr);
             log.error(error);
@@ -144,7 +167,7 @@ public class ShardInfoDownloader {
         //here we are trying to create peers and trying to connect
          Peer p = peers.findOrCreatePeer(null, addr, true);
          if(p!=null){
-             if( peers.connectPeer(p)){
+             if( tryConnectToPeer(p,attempts)){
                 PeerClient pc = new PeerClient(p);
                 res = pc.getShardingInfo();
              }else{
