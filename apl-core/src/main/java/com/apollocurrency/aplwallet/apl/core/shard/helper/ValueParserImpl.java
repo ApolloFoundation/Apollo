@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvStringUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 
@@ -19,7 +20,7 @@ public class ValueParserImpl implements ValueParser {
     private final static String doubleQuote = quote+quote;
 
     @Override
-    public String parseStringObject(Object data) {
+    public String parseStringObject(Object data, char escape, char fieldDelimiter) {
         String value = null;
         if (data!=null) {
             String stringObject = (String) data;
@@ -34,12 +35,18 @@ public class ValueParserImpl implements ValueParser {
                 stringValue = stringObject;
             }
             value = stringValue.replaceAll(doubleQuote, quote);
+            value = CsvStringUtils.unEscape(value, escape, fieldDelimiter);
         }
         return value;
     }
 
     @Override
-    public Object[] parseArrayObject(Object data) {
+    public String parseStringObject(Object data) {
+        return parseStringObject(data, CsvStringUtils.DEFAULT_ESCAPE_CHARACTER, CsvStringUtils.DEFAULT_FIELD_DELIMITER);
+    }
+
+    @Override
+    public Object[] parseArrayObject(Object data, char escape, char fieldDelimiter) {
         Object[] actualArray = null;
         if (data != null) {
             String objectArray = (String) data;
@@ -53,7 +60,7 @@ public class ValueParserImpl implements ValueParser {
                         byte[] actualValue = Base64.getDecoder().decode(value.substring(2, value.length() - 1));
                         actualArray[j] = actualValue;
                     } else if (value.startsWith(quote)) { //find string
-                        actualArray[j] = parseStringObject(value);
+                        actualArray[j] = parseStringObject(value, escape, fieldDelimiter);
                     } else { // try to process number
                         try {
                             actualArray[j] = Integer.parseInt(split[j]);
@@ -71,6 +78,11 @@ public class ValueParserImpl implements ValueParser {
             }
         }
         return actualArray;
+    }
+
+    @Override
+    public Object[] parseArrayObject(Object data) {
+        return parseArrayObject(data, CsvStringUtils.DEFAULT_ESCAPE_CHARACTER, CsvStringUtils.DEFAULT_FIELD_DELIMITER);
     }
 
     @Override
