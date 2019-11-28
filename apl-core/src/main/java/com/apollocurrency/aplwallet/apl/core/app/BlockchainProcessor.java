@@ -67,7 +67,7 @@ public interface BlockchainProcessor {
 
     List<Block> popOffTo(int height);
 
-    List<Block> popOffTo(Block commonBlock);
+    List<Block> popOffToCommonBlock(Block commonBlock);
 
     int restorePrunedData();
 
