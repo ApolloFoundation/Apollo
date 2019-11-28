@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.apollocurrrency.aplwallet.inttest.model.Parameters.Parameters.messageFile;
 import static com.apollocurrrency.aplwallet.inttest.model.Parameters.file;
+import static com.apollocurrrency.aplwallet.inttest.model.Parameters.messageFile;
 import static org.junit.jupiter.api.Assertions.fail;
 
 
@@ -59,7 +59,7 @@ public class HttpHelper {
     public static Response httpCallPost() throws IOException {
         RequestBody body = RequestBody.create(null, new byte[]{});
 
-        if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())){
+        if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())) {
             String param = reqestParam.containsKey(messageFile.toString()) ? messageFile.toString() : file.toString();
             body = uploadImage(param);
           /*  File file = (File) reqestParam.get(messageFile.toString());
@@ -116,7 +116,7 @@ public class HttpHelper {
         }
         reqestParam.clear();
         if (TestBase.testInfo != null) {
-             Allure.addAttachment("Request URL", requestUrl.toString());
+            Allure.addAttachment("Request URL", requestUrl.toString());
         }
         return requestUrl.toString();
     }
@@ -170,11 +170,11 @@ public class HttpHelper {
         }
     }
 
-    private static RequestBody uploadImage(String param){
+    private static RequestBody uploadImage(String param) {
         File file = (File) reqestParam.get(param);
         final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
                 MediaType.parse("image/png") : MediaType.parse("image/jpeg");
-        return   new MultipartBody.Builder()
+        return new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart(param, file.getName(), RequestBody.create(MEDIA_TYPE, file))
                 .build();

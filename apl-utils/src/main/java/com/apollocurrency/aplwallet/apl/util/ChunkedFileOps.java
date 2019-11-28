@@ -3,6 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.util;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -15,9 +19,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Read/Write file by chunks
@@ -44,9 +45,9 @@ public class ChunkedFileOps {
     public static final String DIGESTER="SHA-256";
     private byte[] fileHash = null;
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
-    
-    public boolean isHashedOK(){
-        return fileHash!=null;
+
+    public boolean isHashedOK() {
+        return fileHash != null;
     }
     
     public ChunkedFileOps(String absPath) {
@@ -55,8 +56,8 @@ public class ChunkedFileOps {
     public ChunkedFileOps(Path fpath) {
         this.absPath=fpath;
     }
-    
-    public void moveFile(Path target) throws IOException{
+
+    public void moveFile(Path target) throws IOException {
         absPath = Files.move(absPath, target, StandardCopyOption.REPLACE_EXISTING);
     }
     

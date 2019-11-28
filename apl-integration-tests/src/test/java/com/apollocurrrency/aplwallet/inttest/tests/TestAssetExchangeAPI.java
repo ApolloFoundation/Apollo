@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -82,7 +83,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         String assetName = "AS" + String.valueOf(new Date().getTime()).substring(7);
         String description = "description of assetName";
         Integer quantityATU = 50;
-        CreateTransactionResponse issueAsset = issueAsset(wallet,assetName, description, quantityATU);
+        CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, description, quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
         verifyTransactionInBlock(assetID);
@@ -296,7 +297,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         verifyCreatingTransaction(deleteAssetShares);
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
         AccountAssetDTO asset = getAsset(assetID);
-        assertEquals(0,asset.getQuantityATU(),String.format("Asset: %s wasn't deleted",assetID));
+        assertEquals(0, asset.getQuantityATU(), String.format("Asset: %s wasn't deleted", assetID));
     }
 
 

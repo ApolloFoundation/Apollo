@@ -25,7 +25,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,13 +75,13 @@ public class ShardPrunableZipHashCalculator {
             try {
                 Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
                 // create new instance of CsvExporter for each directory
-                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory); 
+                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory);
                 List<PrunableDbTable> prunableTables = registry.getDerivedTables()
                         .stream()
                         .filter(t -> t instanceof PrunableDbTable)
                         .map(t -> (PrunableDbTable) t)
                         .collect(Collectors.toList());
-                
+
                 prunableTables.forEach(
                         t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
                 );
@@ -106,9 +105,9 @@ public class ShardPrunableZipHashCalculator {
                             null, //filter of file names
                             false //recursive
                     );
-                    if( ops==null || ! ops.isHashedOK()){
+                    if (ops == null || !ops.isHashedOK()) {
                         log.error("Can not zip file: {}", zipName);
-                        throw new RuntimeException("Can not create zip file: "+zipName);
+                        throw new RuntimeException("Can not create zip file: " + zipName);
                     }
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
@@ -116,7 +115,8 @@ public class ShardPrunableZipHashCalculator {
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
-                fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
+                fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>() {
+                }).fireAsync(ops);
                 log.debug("Firing 'FILE_CHANGED' event {}", ops.getFileId());
                 FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
             }

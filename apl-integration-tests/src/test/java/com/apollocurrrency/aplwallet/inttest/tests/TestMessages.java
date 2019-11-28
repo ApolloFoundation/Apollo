@@ -56,10 +56,10 @@ public class TestMessages extends TestBaseOld {
     public void messageAttachmentTest(Wallet wallet) throws IOException {
         String textMessage = "Test MSG";
         messagePrunable();
-        CreateTransactionResponse response = sendMessage(wallet,wallet.getUser(),textMessage);
+        CreateTransactionResponse response = sendMessage(wallet, wallet.getUser(), textMessage);
         verifyCreatingTransaction(response);
         verifyTransactionInBlock(response.getTransaction());
-        AccountMessageDTO message =  readMessage(wallet,response.getTransaction());
-        assertEquals(textMessage,message.getMessage());
+        AccountMessageDTO message = readMessage(wallet, response.getTransaction());
+        assertEquals(textMessage, message.getMessage());
     }
 }

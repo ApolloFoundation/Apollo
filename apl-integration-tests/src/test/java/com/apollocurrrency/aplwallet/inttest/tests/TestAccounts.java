@@ -85,8 +85,8 @@ public class TestAccounts extends TestBaseOld {
     public void testAccountId() {
         Wallet wallet = TestConfiguration.getTestConfiguration().getStandartWallet();
         AccountDTO account = getAccountId(wallet.getPass());
-        assertEquals(getTestConfiguration().getStandartWallet().getUser(),account.getAccountRS());
-        assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(),account.getPublicKey());
+        assertEquals(getTestConfiguration().getStandartWallet().getUser(), account.getAccountRS());
+        assertEquals(getTestConfiguration().getStandartWallet().getPublicKey(), account.getPublicKey());
         assertNotNull(account.getAccount());
     }
 

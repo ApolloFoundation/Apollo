@@ -47,8 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -78,7 +76,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -1107,7 +1104,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (shardInitialHeight != 0 && shardingEnabled && !isShardingOff) {
                     // sharding is enabled and turned ON
                     log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
-                            commonBlockHeight + 1,  shardInitialHeight);
+                            commonBlockHeight + 1, shardInitialHeight);
 //                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
                 } else {
                     // sharding is DISABLED and turned OFF, FULL DB mode

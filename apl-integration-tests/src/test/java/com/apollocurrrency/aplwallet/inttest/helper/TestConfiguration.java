@@ -33,7 +33,7 @@ public class TestConfiguration {
     private HashMap<String, NetConfig> testNetIp;
 
 
-    private TestConfiguration(){
+    private TestConfiguration() {
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             parser = new JSONParser();
@@ -106,6 +106,7 @@ public class TestConfiguration {
     public Wallet getGenesisWallet() {
         return genesisWallet;
     }
+
     public File getDefaultImage() {
         return defaultImage;
     }

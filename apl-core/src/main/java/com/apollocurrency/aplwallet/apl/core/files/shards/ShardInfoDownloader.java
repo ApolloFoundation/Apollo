@@ -14,11 +14,13 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,12 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -66,7 +62,7 @@ public class ShardInfoDownloader {
 
     private final PeersService peers;
     private final UUID myChainId;
-    public static final String SHARD_ID_ENV="APOLLO_DOWNLOAD_SHARD_ID";
+    public static final String SHARD_ID_ENV = "APOLLO_DOWNLOAD_SHARD_ID";
 
     @Inject
     public ShardInfoDownloader(PeersService peers) {
@@ -219,12 +215,13 @@ public class ShardInfoDownloader {
         return shardInfoByPeers;
     }
 
-/**
- * Hash of main archive only
- * @param shardId id of shard
- * @param peerAddr address of peer that provided this shard
- * @return Hash of main archive as in ShardInfo.zipCrcHash
- */
+    /**
+     * Hash of main archive only
+     *
+     * @param shardId  id of shard
+     * @param peerAddr address of peer that provided this shard
+     * @return Hash of main archive as in ShardInfo.zipCrcHash
+     */
     byte[] getHash(long shardId, String peerAddr) {
         byte[] res = null;
         ShardingInfo psi = shardInfoByPeers.get(peerAddr);
@@ -242,7 +239,8 @@ public class ShardInfoDownloader {
 
     /**
      * Composite hash of main archive and all additional files
-     * @param shardId id of shard
+     *
+     * @param shardId         id of shard
      * @param peerAddraddress of peer that provided this shard
      * @return hash of hashes of archive and all additional files
      */
@@ -250,18 +248,17 @@ public class ShardInfoDownloader {
         byte[] res = null;
         MessageDigest md = Crypto.sha256();
         ShardingInfo psi = shardInfoByPeers.get(peerAddr);
-        if(psi!=null){
-            for(ShardInfo si: psi.shards){
-                if(myChainId.equals(UUID.fromString(si.chainId))
-                        && si.shardId==shardId)
-                {
-                   byte[] mhb = Convert.parseHexString(si.zipCrcHash);
-                   md.update(mhb);
-                   for(String h: si.additionalHashes){
-                       byte[] hb = Convert.parseHexString(h);
-                       md.update(hb);
-                   }
-                   break;
+        if (psi != null) {
+            for (ShardInfo si : psi.shards) {
+                if (myChainId.equals(UUID.fromString(si.chainId))
+                        && si.shardId == shardId) {
+                    byte[] mhb = Convert.parseHexString(si.zipCrcHash);
+                    md.update(mhb);
+                    for (String h : si.additionalHashes) {
+                        byte[] hb = Convert.parseHexString(h);
+                        md.update(hb);
+                    }
+                    break;
                 }
             }
             res = md.digest();
@@ -279,7 +276,7 @@ public class ShardInfoDownloader {
             //FIRE event when shard is NOT PRESENT
             log.debug("Less then 2 peers. result = {}, Fire = {}", result, "NO_SHARD");
             return result;
-        }        
+        }
         //do statistical analysys of shard's main zip hashes only
         PeersList shardPeerList = new PeersList();
         ShardNameHelper snh = new ShardNameHelper();
@@ -290,7 +287,7 @@ public class ShardInfoDownloader {
         }
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(shardPeerList);
         FileDownloadDecision res = pvdm.calcualteNetworkState();
-        log.debug("Decision based on main shard file: {}",res);
+        log.debug("Decision based on main shard file: {}", res);
         if (pvdm.isNetworkUsable()) {
             //do statistical analysys of shard's composite hashes
             shardPeerList = new PeersList();
@@ -301,11 +298,11 @@ public class ShardInfoDownloader {
             }
             PeerValidityDecisionMaker pvdm2 = new PeerValidityDecisionMaker(shardPeerList);
             res = pvdm2.calcualteNetworkState();
-            log.debug("Decision based on main shard file and additional files: {}",res);
-            goodPeersMap.put(shardId,pvdm2.getValidPeers());
-            badPeersMap.put(shardId,pvdm2.getInvalidPeers());
-        }else{
-            goodPeersMap.put(shardId,pvdm.getValidPeers());
+            log.debug("Decision based on main shard file and additional files: {}", res);
+            goodPeersMap.put(shardId, pvdm2.getValidPeers());
+            badPeersMap.put(shardId, pvdm2.getInvalidPeers());
+        } else {
+            goodPeersMap.put(shardId, pvdm.getValidPeers());
             badPeersMap.put(shardId,pvdm.getInvalidPeers());
         }
 
@@ -358,23 +355,25 @@ public class ShardInfoDownloader {
         res = (1.0 * goodPeersNumber - 1.0 * badPeersNumber - 1.0 * noShardPeersNumber) / allPeersNumber;
         return res;
     }
-    private Long readManuallyDefinedShardId(){
+
+    private Long readManuallyDefinedShardId() {
         Long res = null;
         String envVal = System.getProperty(SHARD_ID_ENV);
-        if(envVal!=null){
-           try{
-             res = Long.parseLong(envVal);
-           }catch(NumberFormatException ex){
-               log.debug("Invalid shard ID:{}",envVal);
-           }
+        if (envVal != null) {
+            try {
+                res = Long.parseLong(envVal);
+            } catch (NumberFormatException ex) {
+                log.debug("Invalid shard ID:{}", envVal);
+            }
         }
         return res;
     }
- /**
-  * Calculates relative weight of each available shard
-  * Weight is less for older shard
-  * 
-  * @return map of relative weight of each shard.
+
+    /**
+     * Calculates relative weight of each available shard
+     * Weight is less for older shard
+     *
+     * @return map of relative weight of each shard.
   */   
     public Map<Long, Double> getShardRelativeWeights() {
         Map<Long,Double> res = new HashMap<>();
@@ -385,16 +384,16 @@ public class ShardInfoDownloader {
             //1.0 for last shard and then less
             Double k = 1.0*shardId/sortedByIdShards.keySet().size();
             Double weight = getShardWeight(shardId)*k;
-            res.put(shardId,weight);
+            res.put(shardId, weight);
         }
         //we can use environment variable to fore download of some shard
         Long predefined = readManuallyDefinedShardId();
-        if(predefined!=null){
-            boolean exists = res.get(predefined)!=null;
-            if(exists){
+        if (predefined != null) {
+            boolean exists = res.get(predefined) != null;
+            if (exists) {
                 res.replace(predefined, 20.0D);
-                log.info("Downloading of shard {} is forced by enviromnent variable",predefined);
-            }else{
+                log.info("Downloading of shard {} is forced by enviromnent variable", predefined);
+            } else {
                 log.info("Shard ID {} predefined in environment variable is not usable or does not exist",predefined);
             }
         }

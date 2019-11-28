@@ -15,11 +15,10 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.event.ObservesAsync;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Downloadable files info
@@ -47,7 +47,7 @@ public class DownloadableFilesManager {
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new ConcurrentHashMap<>();
-    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun", 1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
@@ -74,7 +74,7 @@ public class DownloadableFilesManager {
     
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
-        if(fileData==null){
+        if (fileData == null) {
             log.warn("NULL fileData supplied");
             return;
         }

@@ -16,7 +16,7 @@ public class ValueParserImpl implements ValueParser {
     private final static String EOT_REGEXP = String.valueOf(CsvAbstractBase.EOT);
     private final static char quoteChar = CsvAbstractBase.TEXT_FIELD_START;
     private final static String quote = String.valueOf(CsvAbstractBase.TEXT_FIELD_START);
-    private final static String doubleQuote = quote+quote;
+    private final static String doubleQuote = quote + quote;
 
     @Override
     public String parseStringObject(Object data) {

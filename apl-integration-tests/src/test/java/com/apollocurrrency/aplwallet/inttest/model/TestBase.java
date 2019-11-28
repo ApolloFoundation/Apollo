@@ -5,14 +5,13 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import net.jodah.failsafe.Failsafe;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +47,7 @@ public abstract class TestBase implements ITest {
     public static TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
+    protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
 
     @BeforeAll
@@ -74,14 +73,14 @@ public abstract class TestBase implements ITest {
 
     @BeforeEach
     @Step("Before test")
-    public void setUp(TestInfo testInfo){
+    public void setUp(TestInfo testInfo) {
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
     @Step("AfterEach")
-   public void tearDown(){
+    public void tearDown() {
         this.testInfo = null;
     }
 
@@ -187,53 +186,53 @@ public abstract class TestBase implements ITest {
                         .then()
                         .assertThat().statusCode(200)
                         .extract().body().jsonPath()
-                        .getObject("",BlockchainInfoDTO.class);
+                        .getObject("", BlockchainInfoDTO.class);
 
                 peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
 
             } else {
                 peersIp = TestConfiguration.getTestConfiguration().getPeers();
             }
-        if (peersIp != null && peersIp.size() > 0){
+            if (peersIp != null && peersIp.size() > 0) {
 
-        boolean isForgingEnableOnGen = false;
-        try {
+                boolean isForgingEnableOnGen = false;
+                try {
 
-        for (String ip: peersIp) {
+                    for (String ip : peersIp) {
 
                     HashMap<String, String> param = new HashMap();
                     param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
 
-            path = "/apl";
-            ForgingResponse forgingResponse = given().log().all()
-                    .baseUri(String.format("http://%s:%s", ip, 7876))
-                    .contentType(ContentType.URLENC)
-                    .formParams(param)
-                    .when()
-                    .post(path)
-                    .then()
-                    .assertThat().statusCode(200)
-                    .extract().body().jsonPath()
-                    .getObject("", ForgingResponse.class);
+                        path = "/apl";
+                        ForgingResponse forgingResponse = given().log().all()
+                                .baseUri(String.format("http://%s:%s", ip, 7876))
+                                .contentType(ContentType.URLENC)
+                                .formParams(param)
+                                .when()
+                                .post(path)
+                                .then()
+                                .assertThat().statusCode(200)
+                                .extract().body().jsonPath()
+                                .getObject("", ForgingResponse.class);
 
-            if (forgingResponse.getGenerators().size() > 0) {
-                isForgingEnableOnGen = true;
-                break;
+                        if (forgingResponse.getGenerators().size() > 0) {
+                            isForgingEnableOnGen = true;
+                            break;
+                        }
+
+                    }
+
+                    if (!isForgingEnableOnGen) {
+                        addParameters(RequestType.requestType, startForging);
+                        addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
+                        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
+                        getInstanse(ForgingDetails.class);
+                    }
+                } catch (Exception ex) {
+                    log.error("FAILED: Get Forging. " + ex.getMessage());
+                }
             }
-
-          }
-
-          if (!isForgingEnableOnGen){
-              addParameters(RequestType.requestType, startForging);
-              addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-              addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
-              getInstanse(ForgingDetails.class);
-          }
-        }catch (Exception ex){
-                log.error("FAILED: Get Forging. "+ex.getMessage());
-            }
-      }
 
         } else {
             addParameters(RequestType.requestType, getForging);
