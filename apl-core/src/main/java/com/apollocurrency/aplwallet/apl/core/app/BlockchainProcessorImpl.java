@@ -691,12 +691,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-        long timeDelay = 4000L;
+        long peerConnectionWaitDelayMS = 10000L;
         try {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
-                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
+                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", peerConnectionWaitDelayMS);
             // try make delay before PeersService are up and running
-            Thread.sleep(timeDelay); // milli-seconds to wait for PeersService initialization
+            Thread.sleep(peerConnectionWaitDelayMS); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.tryDownloadLastGoodShard();
             disableScheduleOneScan();

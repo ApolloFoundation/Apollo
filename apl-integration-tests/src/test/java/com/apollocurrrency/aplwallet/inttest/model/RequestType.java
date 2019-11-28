@@ -1,6 +1,23 @@
 package com.apollocurrrency.aplwallet.inttest.model;
 
 public enum RequestType {
+    dgsRefund,
+    dgsFeedback,
+    dgsDelivery,
+    dgsPurchase,
+    dgsPriceChange,
+    getDGSGood,
+    dgsQuantityChange,
+    dgsDelisting,
+    dgsListing,
+    shufflingVerify,
+    startShuffler,
+    shufflingProcess,
+    shufflingRegister,
+    shufflingCancel,
+    getShuffling,
+    getAccountCurrencies,
+    shufflingCreate,
     scheduleCurrencyBuy,
     currencyBuy,
     currencySell,
@@ -116,5 +133,17 @@ public enum RequestType {
     dividendPayment,
     getAssetDividends,
     getExpectedAssetTransfers,
-    issueCurrency
+    issueCurrency,
+    getPoll,
+    createPoll,
+    castVote,
+    getPollVotes,
+    getPollResult,
+    uploadTaggedData,
+    downloadTaggedData,
+    getAllTaggedData,
+    getTaggedData,
+    getDataTagCount,
+    searchTaggedData,
+    extendTaggedData
 }

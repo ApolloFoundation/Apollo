@@ -384,7 +384,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 }
                 String s;
                 if (rowColumnValues[i] instanceof Object[]) {
-                    int index = 0;
                     for (int j = 0; j < rowColumnValues.length; j++) {
                         Object rowColumnValue = rowColumnValues[j];
                         if (j == 0) {
@@ -426,21 +425,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String escape(String data) {
-        if (data.indexOf(fieldDelimiter) < 0) {
-            if (escapeCharacter == fieldDelimiter || data.indexOf(escapeCharacter) < 0) {
-                return data;
-            }
-        }
-        int length = data.length();
-        StringBuilder buff = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            char ch = data.charAt(i);
-            if (ch == fieldDelimiter || ch == escapeCharacter) {
-                buff.append(escapeCharacter);
-            }
-            buff.append(ch);
-        }
-        return buff.toString();
+        return CsvStringUtils.escape(data, escapeCharacter, fieldDelimiter);
     }
 
     @Override
