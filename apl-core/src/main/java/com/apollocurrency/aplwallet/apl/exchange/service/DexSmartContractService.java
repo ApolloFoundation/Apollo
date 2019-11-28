@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -97,20 +98,34 @@ public class DexSmartContractService {
             throw new UnsupportedOperationException("This function not supported this currency " + currency.name());
         }
 
-        if(currency.isPax()) {
+        if (currency.isPax()) {
             BigInteger allowance;
             try {
                 allowance = ethereumWalletService.getAllowance(smartContractAddress, ethWalletKey.getCredentials().getAddress(), paxContractAddress);
+
+                if (allowance.compareTo(weiValue) < 0) {
+                    String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
+
+                    if (approvedTx == null) {
+                        log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
+                        throw new AplException.ExecutiveProcessException("Approved tx wasn't send for PAX. OrderIs: " + offerId);
+                    }
+
+                    // 5 minutes
+                    int retryCounter = 30;
+                    while (allowance.compareTo(weiValue) < 0 && retryCounter > 0) {
+                        try {
+                            TimeUnit.SECONDS.sleep(10);
+                        } catch (InterruptedException e) {
+                            log.warn(e.getMessage(), e);
+                        }
+                        allowance = ethereumWalletService.getAllowance(smartContractAddress, ethWalletKey.getCredentials().getAddress(), paxContractAddress);
+                        retryCounter--;
+                    }
+
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            }
-            if (allowance.compareTo(weiValue) < 0) {
-                String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
-
-                if (approvedTx == null) {
-                    log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
-                    throw new AplException.ExecutiveProcessException("Approved tx wasn't send for PAX. OrderIs: " + offerId);
-                }
             }
         }
 
