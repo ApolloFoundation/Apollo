@@ -65,7 +65,7 @@ public class TestDex extends TestBaseNew {
         assertNotNull(dexTrades);
     }
 
-    @DisplayName("Create 4 types of orders and cancel them and cancel them")
+    @DisplayName("Create 4 types of orders and cancel them")
     @Test
     public void dexOrders() {
         //Create Sell order ETH

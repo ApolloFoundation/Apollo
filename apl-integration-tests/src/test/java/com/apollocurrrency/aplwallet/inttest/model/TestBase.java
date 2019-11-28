@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.BalanceDTO;
 import com.apollocurrency.aplwallet.api.dto.BlockchainInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
@@ -12,17 +13,15 @@ import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.restassured.builder.RequestSpecBuilder;
+import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +49,11 @@ public abstract class TestBase implements ITest {
     public static TestInfo testInfo;
     protected static RetryPolicy retryPolicy;
     protected static RestHelper restHelper;
-    protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
 
     @BeforeAll
     static void initAll() {
+        log.info("Preconditions started");
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
@@ -62,7 +61,7 @@ public abstract class TestBase implements ITest {
                 .withDelay(5, TimeUnit.SECONDS);
         restHelper = new RestHelper();
         ClassLoader classLoader = TestBase.class.getClassLoader();
-        String secretFilePath = Objects.requireNonNull(classLoader.getResource("APL-MK35-9X23-YQ5E-8QBKH")).getPath();
+        String secretFilePath = Objects.requireNonNull(classLoader.getResource(TestConfiguration.getTestConfiguration().getVaultWallet().getUser())).getPath();
         try {
             importSecretFileSetUp(secretFilePath, "1");
             startForgingSetUp();
@@ -70,20 +69,24 @@ public abstract class TestBase implements ITest {
         } catch (Exception ex) {
             fail("Precondition FAILED: " + ex.getMessage(), ex);
         }
+        log.info("Preconditions finished");
     }
 
     @BeforeEach
-    void setUP(TestInfo testInfo) {
+    @Step("Before test")
+    public void setUp(TestInfo testInfo){
         this.testInfo = testInfo;
     }
 
 
     @AfterEach
-    void testEnd() {
+    @Step("AfterEach")
+   public void tearDown(){
         this.testInfo = null;
     }
 
     @AfterAll
+    @Step("AfterAll")
     static void afterAll() {
 
     }
@@ -92,7 +95,7 @@ public abstract class TestBase implements ITest {
     private static void importSecretFileSetUp(String pathToSecretFile, String pass) {
         String path = "/rest/keyStore/upload";
         given().log().all()
-                .spec(restHelper.getSpec())
+                .spec(restHelper.getPreconditionSpec())
                 .header("Content-Type", "multipart/form-data")
                 .multiPart("keyStore", new File(pathToSecretFile))
                 .formParam("passPhrase", pass)
@@ -102,7 +105,7 @@ public abstract class TestBase implements ITest {
 
     public static void setUpTestData() {
         CreateTransactionResponse transactionResponse;
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 9000000000000L) {
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
@@ -112,7 +115,7 @@ public abstract class TestBase implements ITest {
                 TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 10);
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
-        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 9000000000000L) {
+        if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
@@ -158,87 +161,79 @@ public abstract class TestBase implements ITest {
         return getInstanse(BalanceDTO.class);
     }
 
-    private static void startForgingSetUp() throws JsonProcessingException {
+
+    private static void startForgingSetUp() {
         List<String> peersIp;
         String path;
         if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")) {
             path = "/rest/networking/peer/all";
             List<String> peers = given().log().uri()
-                    .spec(restHelper.getSpec())
+                    .spec(restHelper.getPreconditionSpec())
                     .when()
                     .get(path).as(GetPeersIpResponse.class).getPeers();
+
             if (peers.size() > 0) {
                 //TODO: Change on REST Easy
                 HashMap<String, String> param = new HashMap();
                 param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
 
                 path = "/apl";
-                Response response = given().log().all()
-                        .spec(restHelper.getSpec())
+                BlockchainInfoDTO status = given().log().all()
+                        .spec(restHelper.getPreconditionSpec())
                         .contentType(ContentType.URLENC)
                         .formParams(param)
                         .when()
-                        .post(path);
-                BlockchainInfoDTO status = mapper.readValue(response.body().prettyPrint(), BlockchainInfoDTO.class);
+                        .post(path)
+                        .then()
+                        .assertThat().statusCode(200)
+                        .extract().body().jsonPath()
+                        .getObject("",BlockchainInfoDTO.class);
+
                 peersIp = TestConfiguration.getTestConfiguration().getHostsByChainID(status.getChainId());
+
             } else {
                 peersIp = TestConfiguration.getTestConfiguration().getPeers();
             }
-            if (peersIp != null && peersIp.size() > 0) {
+        if (peersIp != null && peersIp.size() > 0){
 
-                boolean isForgingEnableOnGen = false;
+        boolean isForgingEnableOnGen = false;
+        try {
 
-                for (String ip : peersIp) {
-                    RequestSpecification spec = new RequestSpecBuilder()
-                            .setContentType(ContentType.JSON)
-                            .setBaseUri(String.format("http://%s:%s", ip, 7876))
-                            .build();
+        for (String ip: peersIp) {
 
                     HashMap<String, String> param = new HashMap();
                     param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
 
-                    path = "/apl";
-                    Response response = given().log().all()
-                            .spec(spec)
-                            .contentType(ContentType.URLENC)
-                            .formParams(param)
-                            .when()
-                            .post(path);
-
-                    ForgingResponse forgingResponse = null;
-                    try {
-                        forgingResponse = mapper.readValue(response.body().prettyPrint(), ForgingResponse.class);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                    }
-                    if (forgingResponse.getGenerators().size() > 0) {
-                        isForgingEnableOnGen = true;
-                        break;
-                    }
-                    //need when  rest/nodeinfo/forgers will be worked
-         /*
-
-
-            path = "/rest/nodeinfo/forgers";
-            ForgingResponse forgingResponse = given()
-                    .spec(spec)
+            path = "/apl";
+            ForgingResponse forgingResponse = given().log().all()
+                    .baseUri(String.format("http://%s:%s", ip, 7876))
+                    .contentType(ContentType.URLENC)
+                    .formParams(param)
                     .when()
-                    .get(path).as(ForgingResponse.class);
+                    .post(path)
+                    .then()
+                    .assertThat().statusCode(200)
+                    .extract().body().jsonPath()
+                    .getObject("", ForgingResponse.class);
 
-            System.out.println("+++++++++++++++++++++"+ip+"++++++++++++++++++++++++");
-            System.out.println(forgingResponse.getGenerators().size());
-            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
-          */
-                }
-
-                if (!isForgingEnableOnGen) {
-                    addParameters(RequestType.requestType, startForging);
-                    addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
-                    addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
-                    getInstanse(ForgingDetails.class);
-                }
+            if (forgingResponse.getGenerators().size() > 0) {
+                isForgingEnableOnGen = true;
+                break;
             }
+
+          }
+
+          if (!isForgingEnableOnGen){
+              addParameters(RequestType.requestType, startForging);
+              addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
+              addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+              getInstanse(ForgingDetails.class);
+          }
+        }catch (Exception ex){
+                log.error("FAILED: Get Forging. "+ex.getMessage());
+            }
+      }
 
         } else {
             addParameters(RequestType.requestType, getForging);

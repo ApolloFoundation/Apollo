@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
@@ -20,6 +19,7 @@ import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.ObservesAsync;
 
 @Singleton
 public class ShardObserver {
@@ -37,11 +37,11 @@ public class ShardObserver {
     }
 
 //no matter how we get signal sync or async, do it async
-    public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
+    public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
     }
 
-    public void onTrimDone(@Observes @Sync TrimData trimData) {
+    public void onTrimDone(@Observes  @TrimEvent  TrimData trimData) {
 //do it async anyway because we have to exit from trim and unlock it       
         tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }

@@ -15,7 +15,9 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
+import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -26,6 +28,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -34,6 +37,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
@@ -42,6 +46,7 @@ import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
@@ -49,6 +54,8 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
@@ -61,6 +68,8 @@ import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.DisplayName;
 
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -100,7 +109,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AccountDTO getAccountId(Wallet wallet) {
+    public AccountDTO getAccountId(String secretPhrase) {
         throw new NotImplementedException("Not implemented");
     }
 
@@ -231,13 +240,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.generateAccount.toString());
         String path = "/apl";
-        Response response = given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",Account2FAResponse.class);
     }
 
     @Override
@@ -249,13 +261,16 @@ public class TestBaseNew extends TestBase {
         param.put(Parameters.account.toString(), wallet.getUser());
         param.put(Parameters.passphrase.toString(), wallet.getPass());
         String path = "/apl";
-        Response response = given().log().all()
+        return  given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), Account2FAResponse.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",Account2FAResponse.class);
     }
 
     @Override
@@ -297,13 +312,16 @@ public class TestBaseNew extends TestBase {
         param = restHelper.addWalletParameters(param, wallet);
 
         String path = "/apl";
-        Response response = given().log().all()
+        return  given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), AccountDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",AccountDTO.class);
     }
 
     @Override
@@ -351,13 +369,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
-        Response response = given().log().all()
+        return   given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",BlockDTO.class);
     }
 
     @Step("Get Last Block")
@@ -366,13 +387,16 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
-        Response response = given()
+        return given()
                 .baseUri(String.format("http://%s:%s", peer, TestConfiguration.getTestConfiguration().getPort()))
                 .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
-                .post(path);
-        return mapper.readValue(response.body().prettyPrint(), BlockDTO.class);
+                .post(path)
+                .then()
+                .assertThat().statusCode(200)
+                .extract().body().jsonPath()
+                .getObject("",BlockDTO.class);
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
@@ -814,6 +838,21 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
+    public PollDTO getPoll(String poll) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse createPoll(Wallet wallet,int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
     public CurrencyAccountsResponse getCurrencyAccounts(String CurrencyId) {
         throw new NotImplementedException("Not implemented");
     }
@@ -857,4 +896,46 @@ public class TestBaseNew extends TestBase {
     public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
         throw new NotImplementedException("Not implemented");
     }
+
+    @Override
+    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public CreateTransactionResponse shufflingCreate(Wallet wallet, int registrationPeriod, int participantCount, int amount, String holding, int holdingType) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public PollVotesResponse getPollVotes (String poll) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public PollResultResponse getPollResult (String poll) { throw new NotImplementedException("Not implemented"); }
+
+    @Override
+    public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public AllTaggedDataResponse getAllTaggedData() {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public TaggedDataDTO getTaggedData(String transaction) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public DataTagCountResponse getDataTagCount() {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public AllTaggedDataResponse searchTaggedDataByName(String query) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {throw new NotImplementedException("Not implemented");}
+
+    @Override
+    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {throw new NotImplementedException("Not implemented");}
+
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigInteger;
 
+import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.EOT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,8 +34,8 @@ class ValueParserTest {
 
     @Test
     void parseArrayObject() {
-        String o = "'tag1','tag2','batman'";
-        Object[] expected = {"tag1", "tag2", "batman"};
+        String o = "'tag1'"+EOT+"'tag2'"+EOT+"'batman'"+EOT;
+        Object[] expected = {"tag1", "tag2","batman"};
         assertArrayEquals(expected, parser.parseArrayObject(o));
     }
 

@@ -47,4 +47,19 @@ public class TestMessages extends TestBaseOld {
         AccountMessageDTO message = readMessage(wallet, response.getTransaction());
         assertEquals(textMessage, message.getMessage());
     }
+
+    @DisplayName("Send Prunable Message")
+    @Feature(value = "Not Private Message")
+    @Story(value = "Send Message")
+    @ParameterizedTest(name = "{displayName} Wallet type: {0}")
+    @ArgumentsSource(WalletProvider.class)
+    public void messageAttachmentTest(Wallet wallet) throws IOException {
+        String textMessage = "Test MSG";
+        messagePrunable();
+        CreateTransactionResponse response = sendMessage(wallet,wallet.getUser(),textMessage);
+        verifyCreatingTransaction(response);
+        verifyTransactionInBlock(response.getTransaction());
+        AccountMessageDTO message =  readMessage(wallet,response.getTransaction());
+        assertEquals(textMessage,message.getMessage());
+    }
 }

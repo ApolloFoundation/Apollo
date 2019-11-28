@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.event.ObservesAsync;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +46,8 @@ public class DownloadableFilesManager {
 
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static String FILES_SUBDIR = "downloadables";
-    private final Map<String, FileDownloadInfo> fdiCache = new HashMap<>();
-    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun", 1, "attachment", 2, "file", 3, "debug", 4);
+    private final Map<String, FileDownloadInfo> fdiCache = new ConcurrentHashMap<>();
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
@@ -72,9 +73,24 @@ public class DownloadableFilesManager {
     }
     
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
-        FileDownloadInfo downloadInfo =  fillFileDownloadInfo(fileData);
+        FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
+        if(fileData==null){
+            log.warn("NULL fileData supplied");
+            return;
+        }
+        //remove from cache anyway
         fdiCache.remove(fileData.getFileId());
-        fdiCache.put(fileData.getFileId(), downloadInfo);
+        //put only if file is already hased
+        if (fileData.isHashedOK()) {
+            fdiCache.putIfAbsent(fileData.getFileId(), downloadInfo);
+            log.debug("Upadting file info for ID: {} and path: P{}",
+                    fileData.getFileId(), fileData.getAbsPath()
+            );
+        } else {
+            log.debug("Removing from cache file info for ID: {} and path: P{}",
+                    fileData.getFileId(), fileData.getAbsPath()
+            );
+        }
     }
     
     public FileInfo getFileInfo(String fileId) {
@@ -91,7 +107,6 @@ public class DownloadableFilesManager {
     }
     
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
-        log.debug("getFileDownloadInfo( '{}' }", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
         log.debug("getFileDownloadInfo fdi in CACHE = {}", fdi);
@@ -104,7 +119,7 @@ public class DownloadableFilesManager {
     private FileDownloadInfo fillFileDownloadInfo(ChunkedFileOps fops){
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = fops.getAbsPath();
-        if (fpath != null && Files.isReadable(fpath)) {
+        if (fpath != null && Files.isReadable(fpath) && fops.isHashedOK()) {
             downloadInfo.fileInfo.isPresent = true;
             downloadInfo.created = Instant.now(); // in UTC
             downloadInfo.fileInfo.size = fops.getFileSize();
@@ -133,7 +148,7 @@ public class DownloadableFilesManager {
     }
     
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
-        log.debug("createFileDownloadInfo( '{}' )", fileId);
+        log.debug("createing FileDownloadInfo {} ", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
         Path fpath = mapFileIdToLocalPath(fileId);
         log.debug("createFileDownloadInfo() fpath = '{}'", fpath);
@@ -144,7 +159,8 @@ public class DownloadableFilesManager {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fops);
         if(downloadInfo.fileInfo.isPresent){
             log.info("createFileDownloadInfo STORE = '{}'", downloadInfo);
-            fdiCache.put(fileId, downloadInfo);
+            fdiCache.remove(fileId);
+            fdiCache.putIfAbsent(fileId, downloadInfo);
         }
         return downloadInfo;
     }

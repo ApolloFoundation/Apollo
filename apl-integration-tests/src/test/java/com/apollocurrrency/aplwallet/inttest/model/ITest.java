@@ -15,6 +15,8 @@ import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.EntryDTO;
 import com.apollocurrency.aplwallet.api.dto.ForgingDetails;
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
+import com.apollocurrency.aplwallet.api.dto.PollDTO;
+import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
@@ -25,6 +27,7 @@ import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCountAliasesResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetAskOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAssetBidOrderIdsResponse;
@@ -33,6 +36,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsResponse;
@@ -41,18 +45,23 @@ import com.apollocurrency.aplwallet.api.response.BlockchainTransactionsResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.CurrenciesResponse;
 import com.apollocurrency.aplwallet.api.response.CurrencyAccountsResponse;
+import com.apollocurrency.aplwallet.api.response.DataTagCountResponse;
 import com.apollocurrency.aplwallet.api.response.EthGasInfoResponse;
 import com.apollocurrency.aplwallet.api.response.ExpectedAssetDeletes;
 import com.apollocurrency.aplwallet.api.response.ForgingResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
+import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.List;
 
 
@@ -70,7 +79,7 @@ public interface ITest {
 
     AccountBlockIdsResponse getAccountBlockIds(String account);
 
-    AccountDTO getAccountId(Wallet wallet);
+    AccountDTO getAccountId(String secretPhrase);
 
     AccountLedgerResponse getAccountLedger(Wallet wallet);
 
@@ -256,14 +265,23 @@ public interface ITest {
     CreateTransactionResponse currencyReserveClaim(String currency, Wallet wallet, int units);
 
     CreateTransactionResponse currencyReserveIncrease(String currency, Wallet wallet, int amountPerUnitATM);
-
-    CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply);
-
-    CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate);
-
-    CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate);
-
-    CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer);
-
+    CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply);
+    CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate);
+    CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate);
+    CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer);
+    PollDTO getPoll(String poll);
+    CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue);
+    CreateTransactionResponse castVote(Wallet wallet, String poll, int vote);
+    AccountCurrencyResponse getAccountCurrencies(Wallet wallet);
+    CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType );
+    PollVotesResponse getPollVotes (String poll);
+    PollResultResponse getPollResult (String poll);
+    CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file);
+    AllTaggedDataResponse getAllTaggedData();
+    TaggedDataDTO getTaggedData(String transaction);
+    DataTagCountResponse getDataTagCount();
+    AllTaggedDataResponse searchTaggedDataByName(String query);
+    AllTaggedDataResponse searchTaggedDataByTag(String tag);
+    CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction);
 
 }
