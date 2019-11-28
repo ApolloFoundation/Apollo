@@ -57,7 +57,8 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }, "UpdaterShutdownThread").start();
     }
 
-    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException;
+    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
+                                boolean userMode, boolean isShardingOn) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
@@ -84,7 +85,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         try {
             LOG.debug("Starting platform dependent script");
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode());
+                    !RuntimeEnvironment.getInstance().isServiceMode(), false); // TODO: real value is needed
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {
