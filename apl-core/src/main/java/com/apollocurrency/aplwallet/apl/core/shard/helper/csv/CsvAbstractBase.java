@@ -53,8 +53,8 @@ public abstract class CsvAbstractBase {
     protected String lineSeparator = LINE_SEPARATOR;
     protected String nullString = "null";// it's better do not change that value
 
-    protected char escapeCharacter = '\"';
-    protected char fieldDelimiter = '\"';
+    protected char escapeCharacter = CsvStringUtils.DEFAULT_ESCAPE_CHARACTER;
+    protected char fieldDelimiter = CsvStringUtils.DEFAULT_FIELD_DELIMITER;
     protected char fieldTypeSeparatorStart = '('; // use here only non-alphanumeric characters, no space here
     protected char fieldTypeSeparatorEnd = ')'; // use here only non-alphanumeric characters, no space here
     protected char fieldSeparatorRead = ',';

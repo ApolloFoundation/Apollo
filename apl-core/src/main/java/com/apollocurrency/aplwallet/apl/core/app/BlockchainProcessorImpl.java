@@ -75,7 +75,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -305,7 +304,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockApplier blockApplier, AplAppStatus aplAppStatus,
                                    ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
-                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent, Event<BlockchainConfig> blockchainEvent) {
+                                   TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
+                                   Event<BlockchainConfig> blockchainEvent) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -337,7 +337,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Task blockChainInitTask = Task.builder()
                 .name("BlockchainInit")
                 .task(() -> {
-                    continuedDownloadOrTryImportGenesisShard(); // continue blockchain automatically or try import genesis / shard data
+                    checkResumeDownloadDecideShardImport(); // continue blockchain automatically or try import genesis / shard data
                     if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
                         trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
                     } else {
@@ -420,7 +420,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public int getMinRollbackHeight() {
         int minRollBackHeight = trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight()
                 : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
-        log.trace("minRollbackHeight  = {}", minRollBackHeight);
+        log.debug("minRollbackHeight  = {}", minRollBackHeight);
         return minRollBackHeight;
     }
 
@@ -453,7 +453,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         return; // blockchain changed, ignore the block
                     }
                     Block previousBlock = lookupBlockhain().getBlock(lastBlock.getPreviousBlockId());
-                    lastBlock = popOffTo(previousBlock).get(0);
+                    lastBlock = popOffToCommonBlock(previousBlock).get(0);
                     try {
                         pushBlock(block);
                         log.debug("Pushed better peer block: id {} height: {} generator: {}",
@@ -479,15 +479,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     @Override
     public List<Block> popOffTo(int height) {
         if (height <= 0) {
-            fullReset();
+            log.debug("Do 'popOff' to ZERO by supplied height='{}'<=0", height);
+//            fullReset(); // now doesn't work as expected on full/shard db
+            return popOffToCommonBlock(lookupBlockhain().getBlockAtHeight(0)); // can trigger rescan !
         } else if (height < lookupBlockhain().getHeight()) {
-            return popOffTo(lookupBlockhain().getBlockAtHeight(height));
+            log.debug("Do 'popOff' to height='{}'", height);
+            return popOffToCommonBlock(lookupBlockhain().getBlockAtHeight(height));
         }
         return Collections.emptyList();
     }
 
     @Override
     public void fullReset() {
+        log.debug("FULL reset...");
         globalSync.writeLock();
         try {
             suspendBlockchainDownloading();
@@ -513,7 +517,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 finally {
                     dataSource.commit();
                 }
-                continuedDownloadOrTryImportGenesisShard();// continue blockchain automatically or try import genesis / shard data
+                checkResumeDownloadDecideShardImport();// continue blockchain automatically or try import genesis / shard data
             } finally {
                 resumeBlockchainDownloading();
             }
@@ -673,13 +677,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void continuedDownloadOrTryImportGenesisShard() {
+    private void checkResumeDownloadDecideShardImport() {
         Block lastBlock = lookupBlockhain().getLastBlock(); // blockchain should be initialized independently
         if (lastBlock != null) {
             // continue blockchain automatically
             log.info("Genesis block already in database");
             blockchain.deleteBlocksFromHeight(lastBlock.getHeight() + 1);
-            popOffTo(lastBlock);
+            popOffToCommonBlock(lastBlock);
             log.info("Last block height: " + lastBlock.getHeight());
             resumeBlockchainDownloading(); // turn ON blockchain downloading
             scheduleOneScan();
@@ -687,12 +691,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
         // NEW START-UP logic, try import genesis OR start downloading shard zip data
         suspendBlockchainDownloading(); // turn off automatic blockchain downloading
-        long timeDelay = 4000L;
+        long peerConnectionWaitDelayMS = 10000L;
         try {
             log.warn("----!!!>>> NODE IS WAITING FOR '{}' milliseconds about 'shard/no_shard decision' " +
-                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", timeDelay);
+                    "and proceeding with necessary data later by receiving NO_SHARD / SHARD_PRESENT event....", peerConnectionWaitDelayMS);
             // try make delay before PeersService are up and running
-            Thread.sleep(timeDelay); // milli-seconds to wait for PeersService initialization
+            Thread.sleep(peerConnectionWaitDelayMS); // milli-seconds to wait for PeersService initialization
             // ignore result, because async event is expected/received by 'ShardDownloadPresenceObserver' component
             FileDownloadDecision downloadDecision = shardDownloader.tryDownloadLastGoodShard();
             disableScheduleOneScan();
@@ -788,7 +792,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (Exception e) {
                 dataSource.rollback(false); // do not close current transaction
                 log.error("PushBlock, error:", e);
-                popOffTo(previousLastBlock); // do in current transaction
+                popOffToCommonBlock(previousLastBlock); // do in current transaction
                 blockchain.setLastBlock(previousLastBlock);
                 throw e;
             } finally {
@@ -1046,7 +1050,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .thenComparingInt(Transaction::getIndex)
             .thenComparingLong(Transaction::getId);
 
-    public List<Block> popOffTo(Block commonBlock) {
+    public List<Block> popOffToCommonBlock(Block commonBlock) {
+        if (commonBlock == null) {
+            // that case is possible on sharded node without full blockchain parts
+            log.error("Sorry, it's NOT POSSIBLE make popOff to specified height, returning...");
+            return Collections.emptyList();
+        }
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         globalSync.writeLock();
         try {
@@ -1068,16 +1077,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource) {
         int minRollbackHeight = getMinRollbackHeight();
         int commonBlockHeight = commonBlock.getHeight();
-        log.debug(">> popOffToInTransaction() to height = {}, minRollbackHeight={}", commonBlockHeight, minRollbackHeight);
+        log.debug(">> popOffToInTransaction() to commonBlockHeight = {}, minRollbackHeight={}", commonBlockHeight, minRollbackHeight);
         if (commonBlockHeight < minRollbackHeight) {
-            log.info("Rollback to height " + commonBlockHeight + " not supported, will do a full rescan");
+            log.info("Rollback to commonBlockHeight " + commonBlockHeight + " not supported, will do a full rescan");
 
             // usually = 0 on full node (or on sharded node without any shard yet)
             // > 0 on sharded node with one or more shards
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
             if (commonBlockHeight < shardInitialHeight) {
                 // when we have a shard on node, we can't scan below 'latest' snapshot block in main db
-                log.warn("Popping the blocks off that before the last shard block is not supported (height={} < shardInitialHeight={})",
+                log.warn("Popping the blocks off that before the last shard block is not supported (commonBlockHeight={} < shardInitialHeight={})",
                         commonBlockHeight, shardInitialHeight);
             } else {
                 // check shard conditions...
@@ -1087,12 +1096,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
                 if (shardInitialHeight != 0 && shardingEnabled && !isShardingOff) {
                     // sharding is enabled and turned ON
-                    log.warn("DO NOT do 'popOffWithRescan' to height(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
+                    log.warn("DO NOT do 'popOffWithRescan' to commonBlockHeight(+1) = {} / shardInitialHeight={}, it NEEDs refactoring...",
                             commonBlockHeight + 1,  shardInitialHeight);
-//                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring
+//                    popOffWithRescan(commonBlockHeight + 1); // YL: needs more investigation and scan refactoring for shard case
                 } else {
                     // sharding is DISABLED and turned OFF, FULL DB mode
-                    log.warn("DO 'popOffWithRescan' to height(+1) = {}...", commonBlockHeight + 1);
+                    log.warn("DO 'popOffWithRescan' to commonBlockHeight(+1) = {}...", commonBlockHeight + 1);
                     popOffWithRescan(commonBlockHeight + 1); // 'full node' can go to full rescan here
                 }
             }
@@ -1117,12 +1126,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
-                log.debug("rollback for table={} in {} ms", table.getName(), System.currentTimeMillis() - start);
+                log.debug("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
+                        commonBlockHeight, System.currentTimeMillis() - start);
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.clearCache();
             dataSource.commit(false); // should happen definitely otherwise
-            log.debug("<< popOffToInTransaction() blocks=[{}] at height={}", poppedOffBlocks.size(), commonBlockHeight);
+            log.debug("<< popOffToInTransaction() blocks=[{}] at commonBlockHeight={}", poppedOffBlocks.size(), commonBlockHeight);
         }
         catch (RuntimeException e) {
             log.error("Error popping off to {}, cause {}", commonBlockHeight, e.toString());
@@ -1524,7 +1534,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         + (currentBlock == null ? 0 : currentBlock.getHeight()) + " failed, deleting from database");
                                 Block lastBlock = blockchain.deleteBlocksFrom(currentBlockId);
                                 blockchain.setLastBlock(lastBlock);
-                                popOffTo(lastBlock);
+                                popOffToCommonBlock(lastBlock);
                                 break outer;
                             }
                             if (validate) {
@@ -2082,7 +2092,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             
             BigInteger curCumulativeDifficulty = lookupBlockhain().getLastBlock().getCumulativeDifficulty();
             
-            List<Block> myPoppedOffBlocks = popOffTo(commonBlock);
+            List<Block> myPoppedOffBlocks = popOffToCommonBlock(commonBlock);
             
             int pushedForkBlocks = 0;
             if (lookupBlockhain().getLastBlock().getId() == commonBlock.getId()) {
@@ -2102,7 +2112,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (pushedForkBlocks > 0 && lookupBlockhain().getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
                 log.debug("Pop off caused by peer {}, blacklisting",peer.getHost());
                 peer.blacklist("Pop off");
-                List<Block> peerPoppedOffBlocks = popOffTo(commonBlock);
+                List<Block> peerPoppedOffBlocks = popOffToCommonBlock(commonBlock);
                 pushedForkBlocks = 0;
                 for (Block block : peerPoppedOffBlocks) {
                     lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
