@@ -4,15 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.AccountCurrencyTable;
@@ -99,7 +90,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -107,6 +97,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -121,12 +112,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-//TODO: 
-@Disabled        
 class CsvExporterTest {
     private static final Logger log = getLogger(CsvExporterTest.class);
 
@@ -399,10 +396,7 @@ class CsvExporterTest {
     void testExportBlock() throws IOException {
         BlockTestData td = new BlockTestData();
         long exported = csvExporter.exportBlock(td.BLOCK_7.getHeight());
-        assertEquals(3, exported);
-        List<String> exportedBlockTransactions = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
-        assertEquals(blockTransactionExportContent, exportedBlockTransactions);
-
+        assertEquals(1, exported);
         List<String> exportedBlock = Files.readAllLines(dataExportPath.resolve("block.csv"));
         assertEquals(blockExportContent, exportedBlock);
     }
@@ -438,9 +432,6 @@ class CsvExporterTest {
         long exported = csvExporter.exportBlock(td.GENESIS_BLOCK.getHeight());
         assertEquals(1, exported);
         assertTrue(Files.exists(dataExportPath.resolve("block.csv")));
-        List<String> header = transactionExportContent.subList(0, 1);
-        assertEquals(header, Files.readAllLines(dataExportPath.resolve("transaction.csv")));
-
     }
 
     @Test
