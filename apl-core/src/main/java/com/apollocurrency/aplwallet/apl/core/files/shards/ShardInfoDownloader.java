@@ -136,28 +136,34 @@ public class ShardInfoDownloader {
         }
         return haveShard;
     }
+
     private boolean tryConnectToPeer(Peer p, int attempts){
         boolean res = false;
         if(p.getState()==PeerState.CONNECTED){
             res = true;
         }else{
-            for(int i=0; i<attempts; i++){
+            for(int i=0; i < attempts; i++) {
+                log.debug("Attempt connect to peer: {} attempt# '{}'", p.getAnnouncedAddress(), i);
                 res = peers.connectPeer(p);
-                if(res){
+                if (res) {
+                    log.debug("SUCCESS! connected to peer: {} on attempt# '{}'", p.getAnnouncedAddress(), i);
                     break;
-                }else{
+                } else {
                     try {
+                        log.debug("FAILED connect to peer: {} attempt# '{}' , DELAY for '{}' ms before next attempt...",
+                                p.getAnnouncedAddress(), i, PEER_RECONNECT_TIME_MS);
                         Thread.sleep(PEER_RECONNECT_TIME_MS);
                     } catch (InterruptedException ex) {
-                       Thread.currentThread().interrupt();
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
         }
         return res;        
     }
+
     public ShardingInfo getShardingInfoFromPeer(String addr) {
-        int attempts = 2;
+        int attempts = 3; // connect to peer 'retry number'
         if (StringUtils.isBlank(addr)) {
             String error = String.format("address is EMPTY or NULL : '%s'", addr);
             log.error(error);
@@ -166,15 +172,15 @@ public class ShardInfoDownloader {
         ShardingInfo res = null;
         //here we are trying to create peers and trying to connect
          Peer p = peers.findOrCreatePeer(null, addr, true);
-         if(p!=null){
-             if( tryConnectToPeer(p,attempts)){
-                PeerClient pc = new PeerClient(p);
-                res = pc.getShardingInfo();
+         if (p != null) {
+             if( tryConnectToPeer(p, attempts)) {
+                 PeerClient pc = new PeerClient(p);
+                 res = pc.getShardingInfo();
              }else{
-                 log.debug("Can not connect to peer: {}",addr);
+                 log.debug("FAILED to connect to peer: {} after '{}' attempts", addr, attempts);
              }
          }else{
-             log.debug("Can not create peer: {}",addr);
+             log.debug("Can not create peer: {}", addr);
          }  
          return res;
     }
@@ -186,7 +192,7 @@ public class ShardInfoDownloader {
     }
     
     public Map<String,ShardingInfo> getShardInfoFromPeers() {
-        log.debug("Requesting ShardingInfo from Peers...");
+        log.debug(">> Requesting ShardingInfo from Peers...");
         int counterTotal = 0;        
 
         Set<Peer> kp = peers.getAllConnectedPeers();
@@ -194,12 +200,12 @@ public class ShardInfoDownloader {
         kp.forEach((p) -> {
                 knownPeers.add(p.getHostWithPort());
         });
-        log.trace("ShardInfo knownPeers {}", knownPeers);
+        log.debug("Get ShardInfo from knownPeers [{}]...", knownPeers.size());
         //get sharding info from known peers
         for (String pa : randomizeOrder(knownPeers)) {
             ShardingInfo si = getShardingInfoFromPeer(pa);
             //do not count peers that do not create shrds
-            if(si != null && si.isShardingOff == false){
+            if(si != null && !si.isShardingOff){
                 shardInfoByPeers.put(pa, si);
                 additionalPeers.addAll(si.knownPeers);
             }
@@ -216,9 +222,10 @@ public class ShardInfoDownloader {
         if (shardInfoByPeers.size() < ENOUGH_PEERS_FOR_SHARD_INFO) {
             //we need new ones only here 
             additionalPeers.removeAll(knownPeers);
+            log.debug("Get ShardInfo from additionalPeers [{}]...", additionalPeers.size());
             for (String pa : randomizeOrder(additionalPeers)) {
                 ShardingInfo si = getShardingInfoFromPeer(pa);
-                if (si != null && si.isShardingOff == false) {
+                if (si != null && !si.isShardingOff) {
                     shardInfoByPeers.put(pa, si);
                 } else {
                     log.warn("No shardInfo '{}' from peerAddress = {}", si, pa);
