@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DexOrderDBRequestForTrading {
-    private long startInterval;
-    private long endInterval;
+    private Integer startInterval;
+    private Integer endInterval;
     private byte pairCur;
     private Integer offset;
     private Integer limit;

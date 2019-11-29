@@ -162,9 +162,7 @@ public class DexService {
      */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrdersForTrading(DexOrderDBRequestForTrading dexOrderDBRequestForTrading ) {
-        return dexOrderDao.getOrdersForTrading(dexOrderDBRequestForTrading)
-                .stream()               
-                .collect(Collectors.toList());
+        return dexOrderDao.getOrdersForTrading(dexOrderDBRequestForTrading);
     }
     
     

@@ -58,14 +58,14 @@ public interface DexOrderDao {
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             "WHERE latest = true " +                        
-            "AND (:currentTime is NULL OR offer.finish_time > :startInterval) " +
-            "AND (:currentTime is NULL OR offer.finish_time <= :endInterval) " +
-            "AND (:type is NULL OR offer.type = 1) " +
-            "AND (:status is NULL OR offer.status = 0) " +            
-            "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +            
+            "AND (offer.finish_time > :startInterval) " +
+            "AND (offer.finish_time <= :endInterval) " +
+            "AND (offer.type = 1) " +
+            "AND (offer.status = 4) " +            
+            "AND (offer.pair_currency = :pairCur) " +            
             "OFFSET :offset LIMIT :limit"
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
-    
+   
 }
