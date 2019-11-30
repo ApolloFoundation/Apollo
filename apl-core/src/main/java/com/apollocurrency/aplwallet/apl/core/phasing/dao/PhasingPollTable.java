@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
@@ -294,11 +296,23 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
         Connection con = null;
+        Block block = null;
+        try{
+            block = blockchain.getBlockAtHeight(height);
+        }catch (BlockNotFoundException e){
+            LOG.warn("{}, use short query for trimming the {} table.", e.getMessage(), TABLE_NAME);
+        }
         try {
             con = databaseManager.getDataSource().getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1 or finish_time < ? and finish_time <> -1");
+            String query = "SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1";
+            if(block != null){
+                query += " or finish_time < ? and finish_time <> -1";
+            }
+            PreparedStatement pstmt = con.prepareStatement(query);
             pstmt.setInt(1, height);
-            pstmt.setInt(2, blockchain.getBlockAtHeight(height).getTimestamp());
+            if(block != null) {
+                pstmt.setInt(2, block.getTimestamp());
+            }
             return getManyBy(con, pstmt, false);
         } catch (SQLException e) {
             DbUtils.close(con);

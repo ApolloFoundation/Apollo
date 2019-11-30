@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -37,7 +38,7 @@ public class ChunkedFileOps {
     @Setter
     private String fileId;
     @Getter
-    private final Path absPath;
+    private Path absPath;
     private Long lastRDChunkCrc;
     private Long lastWRChunkCrc;
     public static final String DIGESTER="SHA-256";
@@ -53,6 +54,10 @@ public class ChunkedFileOps {
     }
     public ChunkedFileOps(Path fpath) {
         this.absPath=fpath;
+    }
+    
+    public void moveFile(Path target) throws IOException{
+        absPath = Files.move(absPath, target, StandardCopyOption.REPLACE_EXISTING);
     }
     
     public byte[] getFileHash() {
