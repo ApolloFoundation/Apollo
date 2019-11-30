@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import javax.enterprise.inject.Vetoed;
 
+@Slf4j
 @Vetoed
 public final class PopOff extends AbstractAPIRequestHandler {
 
@@ -61,12 +63,16 @@ public final class PopOff extends AbstractAPIRequestHandler {
             _waitForSuitableConditionBeforePopOff();
 
             if (numBlocks > 0) {
-                blocks = blockchainProcessor.popOffTo(lookupBlockchain().getHeight() - numBlocks);
+                height = lookupBlockchain().getHeight() - numBlocks;
+                log.trace(">> PopOff by 'numBlocks' to height = {}", height);
+                blocks = blockchainProcessor.popOffTo(height);
             } else if (height > 0) {
+                log.trace(">> PopOff to exact 'height' = {}", height);
                 blocks = blockchainProcessor.popOffTo(height);
             } else {
                 return JSONResponses.missing("numBlocks", "height");
             }
+            log.trace("<< PopOff to height = {}", height);
         } finally {
             blockchainProcessor.resumeBlockchainDownloading();
         }
