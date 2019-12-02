@@ -16,13 +16,14 @@ import javax.inject.Inject;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author Serhiy Lymar
  */
-
+@Disabled
 @EnableWeld
 public class EthGasStationInfoDaoTest {
     
