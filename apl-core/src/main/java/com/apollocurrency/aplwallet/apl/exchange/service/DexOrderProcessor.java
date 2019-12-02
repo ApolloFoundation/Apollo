@@ -1,15 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
-import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
@@ -79,6 +69,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
+
 @Slf4j
 @Singleton
 public class DexOrderProcessor {
@@ -110,7 +110,7 @@ public class DexOrderProcessor {
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
-    private final Map<Long, byte[]> expiredSwaps = new ConcurrentHashMap<>();
+    private final Set<String> expiredSwaps = ConcurrentHashMap.newKeySet();
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -776,15 +776,21 @@ public class DexOrderProcessor {
 
                     for (ExchangeContract contract : contracts) {
                         byte[] swapHash = contract.getSecretHash();
-                        Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
+                        if (swapHash == null) { // swap hash may be not exist for STEP4 contracts (e.i. STEP4 contract was an expired 'STEP1' contract earlier)
+                            continue;
+                        }
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
+                        if (StringUtils.isBlank(swapData.getStatus())) { // eth swap is not exists (all fields are empty or zero)
+                            continue;
+                        }
                         Long timeDeadLine = swapData.getTimeDeadLine();
                         if (timeDeadLine + SWAP_EXPIRATION_OFFSET < timeService.systemTime()) {
-                            if (expiredSwaps.get(orderId) == null) { // skip swaps under processing
-                                expiredSwaps.put(orderId, swapData.getSecretHash());
+                            String swapHashHex = Convert.toHexString(swapHash);
+                            if (expiredSwaps.contains(swapHashHex)) { // skip swaps under processing
+                                expiredSwaps.add(swapHashHex);
                                 CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
                                         .handle((r, e) -> {
-                                            expiredSwaps.remove(orderId);
+                                            expiredSwaps.remove(swapHashHex);
                                             if (r != null) {
                                                 log.debug("Swap {} have got refunding status {}", Convert.toHexString(swapData.getSecretHash()), r);
                                             }
@@ -793,6 +799,8 @@ public class DexOrderProcessor {
                                             }
                                             return r;
                                         });
+                            } else {
+                                log.debug("Swap {} is processing now ", swapHashHex);
                             }
                         }
                     }

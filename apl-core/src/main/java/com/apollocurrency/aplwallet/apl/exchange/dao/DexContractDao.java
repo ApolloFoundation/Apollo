@@ -45,14 +45,14 @@ public interface DexContractDao {
             "WHERE latest=true " +
             "AND (recipient = :account or sender = :account) " +
             "AND (offer_id = :orderId or counter_offer_id=:orderId) "+
-            "AND status BETWEEN :fromStatus AND :toStatus")
+            "AND status BETWEEN :fromStatus AND :toStatus ORDER BY height desc, db_id desc")
     @RegisterRowMapper(ExchangeContractMapper.class)
     List<ExchangeContract> getAllForAccountOrder(@Bind("account") long account, @Bind("orderId") long orderId,@Bind("fromStatus") int fromStatus, @Bind("toStatus") int toStatus);
 
     @SqlQuery("SELECT * FROM dex_contract AS contract " +
             "WHERE (recipient = :account or sender = :account) " +
             "AND (offer_id = :orderId or counter_offer_id=:orderId) "+
-            "AND status BETWEEN :fromStatus AND :toStatus")
+            "AND status BETWEEN :fromStatus AND :toStatus ORDER BY height desc, db_id desc")
     @RegisterRowMapper(ExchangeContractMapper.class)
     List<ExchangeContract> getAllVersionedForAccountOrder(@Bind("account") long account, @Bind("orderId") long orderId,@Bind("fromStatus") int fromStatus, @Bind("toStatus") int toStatus);
 

@@ -603,7 +603,7 @@ public class DexController {
     @Path("/contracts")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Retrieve processable dex contract for order", description = "Lookup the database to get dex contract associated with specified account and order with status > STEP1",
-            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in exceptional(error) cases may contain more than 1 entries", responseCode = "200",
+            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                         @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
