@@ -93,7 +93,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -128,8 +127,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-//TODO:
-@Disabled
 class CsvExporterTest {
     private static final Logger log = getLogger(CsvExporterTest.class);
 
@@ -408,10 +405,7 @@ class CsvExporterTest {
     void testExportBlock() throws IOException {
         BlockTestData td = new BlockTestData();
         long exported = csvExporter.exportBlock(td.BLOCK_7.getHeight());
-        assertEquals(3, exported);
-        List<String> exportedBlockTransactions = Files.readAllLines(dataExportPath.resolve("transaction.csv"));
-        assertEquals(blockTransactionExportContent, exportedBlockTransactions);
-
+        assertEquals(1, exported);
         List<String> exportedBlock = Files.readAllLines(dataExportPath.resolve("block.csv"));
         assertEquals(blockExportContent, exportedBlock);
     }
@@ -447,9 +441,6 @@ class CsvExporterTest {
         long exported = csvExporter.exportBlock(td.GENESIS_BLOCK.getHeight());
         assertEquals(1, exported);
         assertTrue(Files.exists(dataExportPath.resolve("block.csv")));
-        List<String> header = transactionExportContent.subList(0, 1);
-        assertEquals(header, Files.readAllLines(dataExportPath.resolve("transaction.csv")));
-
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -57,7 +58,8 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }, "UpdaterShutdownThread").start();
     }
 
-    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory, boolean userMode) throws IOException;
+    abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
+                                boolean userMode, boolean isShardingOn) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
@@ -83,8 +85,17 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         }
         try {
             LOG.debug("Starting platform dependent script");
+            PropertiesHolder ph = updaterMediator.getPropertyHolder();
+            
+            boolean isSharding = true; //node's sharding is on by default
+            if(ph!=null){
+               boolean isShardingOff = ph.getBooleanProperty("apl.noshardcreate", false);
+               isSharding = !isShardingOff;
+            }else{
+               LOG.warn("Can not access PeropertiesHolder");
+            }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode());
+                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding); 
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

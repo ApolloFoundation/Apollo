@@ -85,11 +85,11 @@ public class PrunableArchiveMigrator {
                     ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
                     if(fops!=null && fops.isHashedOK()){
                        byte[] hash = fops.getFileHash();
-                       Files.move(newArchive, shardArchivePath, StandardCopyOption.REPLACE_EXISTING);
                        shard.setCoreZipHash(hash);
                        shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation
                        shardDao.updateShard(shard);
                        //inform DownloadableFileManafer about file change
+                       fops.moveFile(shardArchivePath);
                        fops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
                        fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(fops);        
                        log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());

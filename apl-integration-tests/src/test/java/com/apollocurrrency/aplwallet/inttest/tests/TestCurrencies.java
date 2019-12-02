@@ -9,41 +9,39 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Step;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 @DisplayName("Currencies")
 @Epic(value = "Currencies")
+@Execution(SAME_THREAD)
 public class TestCurrencies extends TestBaseOld {
-    /*   EXCHANGEABLE - 1
-        CONTROLLABLE - 2
-        RESERVABLE - 4
-        CLAIMABLE - 8
-        MINTABLE - 16
-        NON_SHUFFLEABLE - 32
-      */
+    private final ArrayList<Wallet> wallets = new ArrayList<>();
+    @BeforeEach
+    @Override
+    public void setUp(TestInfo testInfo) {
+        super.setUp(testInfo);
+        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
+        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+    }
 
-    @DisplayName("Issue Currencys")
+    @DisplayName("Issue Currencies")
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,5,7,12,13,14,15,17,19,21,23,33,35,37,39,44,45,46,47,51,53,55 })
     public void issueCurrencys(int type){
-
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
+        log.info("Issue Currencies type: {}",type);
         int supply  = RandomUtils.nextInt(0,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
@@ -62,11 +60,7 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51})
     public void deleteCurrency(int type){
-
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
-        int supply  = RandomUtils.nextInt(0,1000);
+        int supply  = RandomUtils.nextInt(1,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
                     RandomStringUtils.randomAlphabetic(5),
@@ -105,10 +99,6 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51})
     public void transferCurrencyTest(int type){
-
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
         int supply  = RandomUtils.nextInt(0,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
@@ -135,12 +125,6 @@ public class TestCurrencies extends TestBaseOld {
     @ValueSource(ints = {17})
     @Disabled
     public void currencyMint(int type){
-
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
-
-
         int supply  = RandomUtils.nextInt(100000000,1000000000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
@@ -166,6 +150,7 @@ public class TestCurrencies extends TestBaseOld {
         wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
         int supply  = RandomUtils.nextInt(10,1000);
         for (Wallet wallet: wallets) {
+            log.info("Issue Currencies type: {}",type);
             CreateTransactionResponse currency = issueCurrency(wallet,type,
                     RandomStringUtils.randomAlphabetic(5),
                     RandomStringUtils.randomAlphabetic(5),
@@ -177,6 +162,7 @@ public class TestCurrencies extends TestBaseOld {
             verifyTransactionInBlock(currency.getTransaction());
             CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+10);
             verifyTransactionInBlock(reserveTransaction.getTransaction());
+            log.info("Reserve Currencys: {}",reserveTransaction.getTransaction());
             waitForHeight(getCurrency(currency.getTransaction()).getIssuanceHeight());
             CreateTransactionResponse  reserveClaimTransaction =  currencyReserveClaim(currency.getTransaction(),wallet,1);
             verifyCreatingTransaction(reserveClaimTransaction);
@@ -194,9 +180,6 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 12,13,14,15,44,45,46,47 })
     public void currencyReserveIncreaseTest(int type){
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
         int supply  = RandomUtils.nextInt(1,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
@@ -208,7 +191,7 @@ public class TestCurrencies extends TestBaseOld {
                     0);
             verifyCreatingTransaction(currency);
             verifyTransactionInBlock(currency.getTransaction());
-            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,1);
+            CreateTransactionResponse  reserveTransaction = currencyReserveIncrease(currency.getTransaction(),wallet,supply+1);
             verifyCreatingTransaction(reserveTransaction);
         }
     }
@@ -217,9 +200,6 @@ public class TestCurrencies extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = { 1,3,17,19,33,35,51 })
     public void publishExchangeOfferTest(int type){
-        ArrayList<Wallet> wallets = new ArrayList<>();
-        wallets.add(TestConfiguration.getTestConfiguration().getStandartWallet());
-        wallets.add(TestConfiguration.getTestConfiguration().getVaultWallet());
         int supply  = RandomUtils.nextInt(1,1000);
         for (Wallet wallet: wallets) {
             CreateTransactionResponse currency = issueCurrency(wallet,type,
