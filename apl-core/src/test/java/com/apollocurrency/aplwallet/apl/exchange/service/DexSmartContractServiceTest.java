@@ -79,6 +79,8 @@ class DexSmartContractServiceTest {
     private DexTransactionDao dexTransactionDao;
     @Mock
     private TransactionReceiptProcessor receiptProcessor;
+    @Mock
+    private ReceiptProcessorProducer receiptProcessorProducer;
     private DexSmartContractService service;
     private static final long ALICE_ID = 100;
     private static final String ALICE_PASS = "PASS";
@@ -101,7 +103,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor));
+        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));

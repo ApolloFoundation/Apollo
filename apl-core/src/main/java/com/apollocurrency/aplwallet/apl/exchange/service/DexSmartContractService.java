@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -66,12 +65,14 @@ public class DexSmartContractService {
     private EthereumWalletService ethereumWalletService;
     private DexTransactionDao dexTransactionDao;
     private TransactionReceiptProcessor receiptProcessor;
+    private ReceiptProcessorProducer receiptProcessorProducer;
 
     private static final String ACCOUNT_TO_READ_DATA = "1234";
 
     @Inject
     public DexSmartContractService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
-                                   EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao, TransactionReceiptProcessor receiptProcessor) {
+                                   EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao, TransactionReceiptProcessor receiptProcessor,
+                                   ReceiptProcessorProducer receiptProcessorProducer) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
@@ -80,6 +81,7 @@ public class DexSmartContractService {
         this.ethereumWalletService = ethereumWalletService;
         this.dexTransactionDao = dexTransactionDao;
         this.receiptProcessor = receiptProcessor;
+        this.receiptProcessorProducer = receiptProcessorProducer;
     }
 
     /**
@@ -111,20 +113,9 @@ public class DexSmartContractService {
                         throw new AplException.ExecutiveProcessException("Approved tx wasn't send for PAX. OrderIs: " + offerId);
                     }
 
-                    // 5 minutes
-                    int retryCounter = 30;
-                    while (allowance.compareTo(weiValue) < 0 && retryCounter > 0) {
-                        try {
-                            TimeUnit.SECONDS.sleep(10);
-                        } catch (InterruptedException e) {
-                            log.warn(e.getMessage(), e);
-                        }
-                        allowance = ethereumWalletService.getAllowance(smartContractAddress, ethWalletKey.getCredentials().getAddress(), paxContractAddress);
-                        retryCounter--;
-                    }
-
+                    receiptProcessorProducer.receiptProcessor().waitForTransactionReceipt(approvedTx);
                 }
-            } catch (IOException e) {
+            } catch (IOException | TransactionException e) {
                 throw new RuntimeException(e);
             }
         }
