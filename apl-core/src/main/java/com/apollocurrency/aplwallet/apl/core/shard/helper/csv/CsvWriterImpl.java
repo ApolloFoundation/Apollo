@@ -248,11 +248,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         } else {
                                             throw new RuntimeException("Unsupported array type: " + o1.getClass());
                                         }
-                                        outputValue.append(objectValue).append(fieldSeparatorWrite);
+                                        final StringBuilder appendedValue = outputValue.append(objectValue);
                                         if (j == objectArray.length - 1) {
-                                            // there is a bug in H2 parser, so let's make one extra comma at the end
-                                            // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
                                             outputValue.append(arrayEndToken);
+                                        } else {
+                                            appendedValue.append(fieldSeparatorWrite);
                                         }
                                     }
                                     o = outputValue.toString();
