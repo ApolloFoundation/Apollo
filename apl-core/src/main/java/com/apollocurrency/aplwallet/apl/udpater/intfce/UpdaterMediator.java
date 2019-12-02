@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -31,5 +32,6 @@ public interface UpdaterMediator {
     TransactionalDataSource getDataSource();
 
     Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException;
-
+    
+    PropertiesHolder getPropertyHolder();
 }
