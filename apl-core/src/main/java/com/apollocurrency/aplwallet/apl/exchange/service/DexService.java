@@ -189,12 +189,12 @@ public class DexService {
 
 
     public ExchangeContract getDexContractByOrderId(Long orderId) {
-        return dexContractTable.getByOrder(orderId);
+        return dexContractTable.getLastByOrder(orderId);
     }
 
 
     public ExchangeContract getDexContractByCounterOrderId(Long counterOrderId) {
-        return dexContractTable.getByCounterOrder(counterOrderId);
+        return dexContractTable.getLastByCounterOrder(counterOrderId);
     }
 
     /**
@@ -306,28 +306,26 @@ public class DexService {
         log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
 
-    public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {
+    public void closeExpiredContracts(Integer time) throws AplException.ExecutiveProcessException {
         List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time);
 
         for (ExchangeContract contract : contracts) {
-            closeOverdueContracts(contract, time);
+            closeContract(contract, time);
         }
     }
 
-    public void closeOverdueContracts(ExchangeContract contract, Integer time) throws AplException.ExecutiveProcessException {
-        DexOrder order = getOrder(contract.getOrderId());
+    public void closeContract(ExchangeContract contract, Integer time) throws AplException.ExecutiveProcessException {
+        DexOrder order        = getOrder(contract.getOrderId());
         DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
-        closeOverdueContract(order, time);
-        closeOverdueContract(counterOrder, time);
+        handleExpiredContractOrder(order, time);
+        handleExpiredContractOrder(counterOrder, time);
         contract.setContractStatus(ExchangeContractStatus.STEP_4);
-        order.setHeight(this.blockchain.getHeight()); // new height value
-        dexContractTable.insert(contract);
-
+        saveDexContract(contract);
     }
 
 
-    public void closeOverdueContract(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
+    public void handleExpiredContractOrder(DexOrder order, Integer time) throws AplException.ExecutiveProcessException {
         if (!order.getStatus().isClosedOrExpiredOrCancel()) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
@@ -346,18 +344,23 @@ public class DexService {
 
     public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
-            Long phasingTx = getAplTransferTxForOrder(order.getId());
-            boolean doRefund = true;
-            if (phasingTx != null) {
-                doRefund = !(phasingPollService.getResult(phasingTx) != null || phasingPollService.getPoll(phasingTx) != null);
-            }
-            if (doRefund) {
-                refundAPLFrozenMoney(order);
+            if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
+                    blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+                Long phasingTx = getAplTransferTxIdForOrder(order.getId());
+                boolean doRefund = true;
+                if (phasingTx != null) {
+                    doRefund = !(phasingPollService.getResult(phasingTx) != null || phasingPollService.getPoll(phasingTx) != null);
+                }
+                if (doRefund) {
+                    doRefundApl(order);
+                }
+            } else {
+                doRefundApl(order);
             }
         }
     }
 
-    private Long getAplTransferTxForOrder(long orderId) {
+    private Long getAplTransferTxIdForOrder(long orderId) {
         ExchangeContract contract = getDexContractByOrderId(orderId);
         Long txId = null;
         if (contract == null) {
@@ -372,8 +375,8 @@ public class DexService {
     }
 
 
-    private void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
-        DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
+    private void doRefundApl(DexOrder order) throws AplException.ExecutiveProcessException {
+        DexCurrencyValidator.requireAplRefundable(order);
 
         //Return APL.
         Account account = Account.getAccount(order.getAccountId());
@@ -381,7 +384,7 @@ public class DexService {
     }
 
     public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
-        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(order);
+        DexCurrencyValidator.requireEthOrPaxRefundable(order);
 
         //Check if deposit exist.
         String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
@@ -416,7 +419,7 @@ public class DexService {
     public String freezeEthPax(String passphrase, DexOrder order) throws ExecutionException, AplException.ExecutiveProcessException {
         String txHash;
 
-        DexCurrencyValidator.checkHaveFreezeOrRefundEthOrPax(order);
+        DexCurrencyValidator.requireEthOrPaxRefundable(order);
 
         BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
         txHash = dexSmartContractService.deposit(passphrase, order.getId(), order.getAccountId(), order.getFromAddress(), EthUtil.etherToWei(haveToPay), null, order.getPairCurrency());
@@ -780,13 +783,13 @@ public class DexService {
 
     public void onPhasedTxReject(@Observes @TxEvent(TxEventType.REJECT_PHASED_TRANSACTION) Transaction transaction) throws AplException.ExecutiveProcessException {
         if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
-                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getHeight()) {
 
             if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
-                Long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
+                long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
                 ExchangeContract exchangeContract = getDexContractById(contractId);
 
-                closeOverdueContracts(exchangeContract, blockchain.getLastBlockTimestamp());
+                closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
             }
         }
     }
