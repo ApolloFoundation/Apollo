@@ -83,22 +83,41 @@ public class TradingViewUtils {
             
             Integer toTS = Convert2.toEpochTime(startTS);
                                    
-            byte currencyType = 0;
-            
-            if (tsym.equals("ETH")) {                
-                currencyType = 1;
-                } else if (tsym.equals("PAX")) {                
-                currencyType = 0;
+            byte currencyType = 0, requestedType=0;
+
+            switch (fsym) {
+                // Apollo
+                case "APL" : {
+                    requestedType = 0; //sell
+                    if (tsym.equals("ETH")) {                
+                        currencyType = 1;
+                        } else if (tsym.equals("PAX")) {                
+                        currencyType = 0;                                                
+                        }
+                    break;
                 }
-                            
-            log.debug("start: {}, finish: {}, currencyType: {}", startTS, endTS, currencyType ); 
+                // eth or pax    
+                default : {
+                    requestedType = 1; // buy
+                    if (fsym.equals("ETH")) {                
+                        currencyType = 1;
+                        } else if (fsym.equals("PAX")) {                
+                        currencyType = 0;                                                
+                        }                    
+                    break;                    
+                }                    
+            }
+            
+                                        
+            log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}", startTS, endTS, currencyType, requestedType ); 
                         
             Integer startTSEpoch = Convert2.toEpochTime(startTS);
             Integer endTSEpoch = Convert2.toEpochTime(endTS);
             
             log.debug("Epoch, start: {}, finish: {}", startTSEpoch, endTSEpoch ); 
             
-            DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, currencyType, 0, Integer.MAX_VALUE);
+            DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, requestedType, currencyType, 0, Integer.MAX_VALUE);
+            
             List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading);
             
             TradingDataOutput tradingDataOutput = new TradingDataOutput();

@@ -60,8 +60,8 @@ public interface DexOrderDao {
             "WHERE latest = true " +                        
             "AND (offer.finish_time > :startInterval) " +
             "AND (offer.finish_time <= :endInterval) " +
-            "AND (offer.type = 1) " +
-            "AND (offer.status = 4) " +            
+            "AND (offer.type = :requestedType) " +
+            "AND (offer.status = 5) " +            
             "AND (offer.pair_currency = :pairCur) " +            
             "OFFSET :offset LIMIT :limit"
     )

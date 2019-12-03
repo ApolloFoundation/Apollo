@@ -21,6 +21,7 @@ public class DexOrderDBRequestForTrading {
     private Integer startInterval;
     private Integer endInterval;
     private byte pairCur;
+    private byte requestedType;    
     private Integer offset;
     private Integer limit;
 }
