@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
  *
  * @author Serhiy Lymar
  */
-@Disabled
 @EnableWeld
 public class EthGasStationInfoDaoTest {
     
