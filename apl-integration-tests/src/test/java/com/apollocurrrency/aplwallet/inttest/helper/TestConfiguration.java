@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,10 +25,13 @@ public class TestConfiguration {
     private Wallet standartWallet;
     private Wallet genesisWallet;
     private Wallet vaultWallet;
+    private File defaultImage;
+
     private String adminPass;
     private List<String> peers;
     private String env;
     private HashMap<String, NetConfig> testNetIp;
+
 
     private TestConfiguration() {
         try {
@@ -37,6 +41,7 @@ public class TestConfiguration {
             JSONObject jsonObject = (JSONObject) obj;
             host = (String) jsonObject.get("host");
             port = (String) jsonObject.get("port");
+            defaultImage = new File(classLoader.getResource(String.valueOf(jsonObject.get("defaultImage"))).getPath());
             adminPass = (String) jsonObject.get("adminPassword");
             standartWallet = mapper.readValue(jsonObject.get("standartWallet").toString(), Wallet.class);
             vaultWallet = mapper.readValue(jsonObject.get("vaultWallet").toString(), Wallet.class);
@@ -98,13 +103,11 @@ public class TestConfiguration {
         });
         return this.peers;
     }
-
     public Wallet getGenesisWallet() {
         return genesisWallet;
     }
 
-    public void setGenesisWallet(Wallet genesisWallet) {
-        this.genesisWallet = genesisWallet;
+    public File getDefaultImage() {
+        return defaultImage;
     }
-
 }

@@ -42,15 +42,15 @@ public class DexCurrencyValidator {
         return false;
     }
 
-    public static void checkHaveFreezeOrRefundEthOrPax(DexOrder offer) throws AplException.ExecutiveProcessException {
+    public static void requireEthOrPaxRefundable(DexOrder offer) throws AplException.ExecutiveProcessException {
         if(!haveFreezeOrRefundEthOrPax(offer)){
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
         }
     }
 
-    public static void checkHaveFreezeOrRefundApl(DexOrder offer) throws AplException.ExecutiveProcessException {
-        if(!haveFreezeOrRefundApl(offer)){
-            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
+    public static void requireAplRefundable(DexOrder order) throws AplException.ExecutiveProcessException {
+        if(!haveFreezeOrRefundApl(order)){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + order.getType() + " | " + order.getOrderCurrency() + "-" + order.getPairCurrency());
         }
     }
 

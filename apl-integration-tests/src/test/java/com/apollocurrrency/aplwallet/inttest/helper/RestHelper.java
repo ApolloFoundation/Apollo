@@ -11,7 +11,8 @@ import java.util.HashMap;
 
 
 public class RestHelper {
-    public RequestSpecification spec;
+    private RequestSpecification spec;
+    private RequestSpecification preconditionSpec;
     private String host = TestConfiguration.getTestConfiguration().getBaseURL();
     private String port = TestConfiguration.getTestConfiguration().getPort();
 
@@ -21,10 +22,19 @@ public class RestHelper {
                 .setBaseUri(String.format("http://%s:%s", host, port))
                 .addFilter(new AllureRestAssured())
                 .build();
+
+        preconditionSpec = new RequestSpecBuilder()
+                .setContentType(ContentType.JSON)
+                .setBaseUri(String.format("http://%s:%s", host, port))
+                .build();
     }
 
     public RequestSpecification getSpec() {
         return spec;
+    }
+
+    public RequestSpecification getPreconditionSpec() {
+        return preconditionSpec;
     }
 
     public HashMap<String, String> addWalletParameters(HashMap<String, String> param, Wallet wallet) {
@@ -37,4 +47,5 @@ public class RestHelper {
         }
         return param;
     }
+
 }

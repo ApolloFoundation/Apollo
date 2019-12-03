@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -81,7 +82,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         String assetID;
         String assetName = "AS" + String.valueOf(new Date().getTime()).substring(7);
         String description = "description of assetName";
-        Integer quantityATU = 10;
+        Integer quantityATU = 50;
         CreateTransactionResponse issueAsset = issueAsset(wallet, assetName, description, quantityATU);
         verifyCreatingTransaction(issueAsset);
         assetID = issueAsset.getTransaction();
@@ -242,7 +243,7 @@ public class TestAssetExchangeAPI extends TestBaseOld {
     }
 
 
-    //Creating Asset -> place AskOrder -> getAllOpenAskOrders -> getAskOrder -> cancelAskOrder -> deleteAssetShares
+
     @DisplayName("getAskOrder + getAskOrderIds")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
@@ -295,10 +296,8 @@ public class TestAssetExchangeAPI extends TestBaseOld {
         CreateTransactionResponse deleteAssetShares = deleteAssetShares(wallet, assetID, quantityATU.toString());
         verifyCreatingTransaction(deleteAssetShares);
         verifyTransactionInBlock(deleteAssetShares.getTransaction());
-
-        AssetsResponse getAllAssets = getAllAssets();
-        assertFalse(getAllAssets.getAssets().stream().anyMatch(assetDTO -> assetDTO.getAsset().equals(assetID)), String.format("Asset: %s wasn't deleted", assetID));
-
+        AccountAssetDTO asset = getAsset(assetID);
+        assertEquals(0, asset.getQuantityATU(), String.format("Asset: %s wasn't deleted", assetID));
     }
 
 

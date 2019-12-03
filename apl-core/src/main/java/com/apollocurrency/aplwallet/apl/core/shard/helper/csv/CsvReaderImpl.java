@@ -4,13 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -24,15 +22,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * {@inheritDoc}
  */
-public class CsvReaderImpl extends CsvAbstractBase
-        implements CsvReader, SimpleRowSource, AutoCloseable {
-    private static final Logger log = getLogger(CsvReaderImpl.class);
+@Slf4j
+//@NotThreadSafe
+public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource, AutoCloseable {
 
     private Reader input;
     private char[] inputBuffer;
@@ -199,6 +196,7 @@ public class CsvReaderImpl extends CsvAbstractBase
     private boolean isWhiteSpace(int ch){
         return (ch == ' ' || ch == '\t');
     }
+
     private String readDelimitedValue() throws IOException {
         int ch;
         boolean containsEscape = false;
@@ -225,8 +223,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                 break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - sep);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - sep);
         if (containsEscape) {
             s = unEscape(s);
         }
@@ -247,6 +244,7 @@ public class CsvReaderImpl extends CsvAbstractBase
         }
         return s;
     }
+
     private String readQuotedTextValue() throws IOException {
         int ch;
         int state=1;
@@ -255,6 +253,7 @@ public class CsvReaderImpl extends CsvAbstractBase
             ch = readChar();
             switch (state) {
                 case 0: //Error state
+                    endLex = true;
                     break;
                 case 1:
                     if (ch == textFieldCharacter) {
@@ -271,7 +270,7 @@ public class CsvReaderImpl extends CsvAbstractBase
                     } else if (ch == fieldSeparatorRead) {
                         state=3;//end state
                         endLex = true;
-                    } else if (endOfFile=isEOL(ch)) {
+                    } else if (isEOL(ch)) {
                         state=3;//end state
                         endLex = true;
                         endOfLine = true;
@@ -284,13 +283,130 @@ public class CsvReaderImpl extends CsvAbstractBase
                     break;
             }
         }
-        String s = new String(inputBuffer,
-                inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
         if (!preserveWhitespace) {
             s = s.trim();
         }
         inputBufferStart = -1;
         return s;
+    }
+
+    private String readArrayValue() throws IOException {
+        // start SQL ARRAY processing written as = (x, y, z)
+        // read until of 'arrayEndToken' symbol
+        inputBufferStart = inputBufferPos;
+        int ch;
+        int state = 1;
+        boolean endLex = false;
+        while (!endLex) {
+            ch = readChar();
+            switch (state) {
+                case 0: //error state
+                    endLex = true;
+                    break;
+                case 1:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    } else if (isEOL(ch)) {
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    } else if (ch == textFieldCharacter) {
+                        state = 2;
+                    } else if (ch == fieldSeparatorRead) {
+                        replaceChar(eotCharacter);
+                    } else {
+                        state = 3;
+                    }
+                    break;
+                case 2:
+                    if (isEOL(ch)) {
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    } else if (ch == textFieldCharacter) {
+                        state = 4;
+                    }
+                    break;
+                case 3:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    } else if (isEOL(ch)) {
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    } else if (ch == fieldSeparatorRead) {
+                        replaceChar(eotCharacter);
+                    }
+                    break;
+                case 4:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    } else if (isEOL(ch)) {
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    } else if (ch == textFieldCharacter) {
+                        state = 2;
+                    } else if (ch == fieldSeparatorRead) {
+                        replaceChar(eotCharacter);
+                        state = 1;
+                    } else if (isWhiteSpace(ch)) {
+                        //ignore
+                    } else {
+                        endLex = true;
+                        state = 0;
+                    }
+                    break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        if (!endOfLine) {
+            ch = readChar();//read an eventual field separator ','
+            endOfLine = isEOL(ch);
+        }
+        inputBufferStart = -1; // reset
+        return readNull(s);
+    }
+
+    private String readUndelimitedValue() throws IOException {
+        // un-delimited value
+        int ch;
+        while (true) {
+            ch = readChar();
+            if (ch == fieldSeparatorRead) {
+                break;
+            } else if (isEOL(ch)) {
+                endOfLine = true;
+                break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        inputBufferStart = -1;
+        // check un-delimited value for nullString
+        return readNull(s);
+    }
+
+    private void skipComments() throws IOException {
+        // comment until end of line
+        int ch;
+        inputBufferStart = -1;
+        while (true) {
+            ch = readChar();
+            if (isEOL(ch)) {
+                break;
+            }
+        }
+        endOfLine = true;
     }
 
     /**
@@ -318,60 +434,20 @@ public class CsvReaderImpl extends CsvAbstractBase
                 return null;
             } else if (ch <= ' ') {
                 // ignore spaces
-                continue;
             } else if (lineComment != 0 && ch == lineComment) {
-                // comment until end of line
-                inputBufferStart = -1;
-                while (true) {
-                    ch = readChar();
-                    if (isEOL(ch)) {
-                        break;
-                    }
-                }
-                endOfLine = true;
+                skipComments();
                 return null;
             } else if (arrayStartToken != 0 && ch == arrayStartToken) { // ARRAY processing stuff - first check '('
-                // start SQL ARRAY processing written as = (x, y, z)
-                // read until of 'arrayEndToken' symbol
-                inputBufferStart = inputBufferPos;
-                while (true) {
-                    ch = readChar();
-                    if (isEOL(ch) || ch == arrayEndToken) {
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                ch = inputBuffer[inputBufferPos]; // lookup one char ahead (we don't want to miss EoL)
-                if (ch == '\n' || ch == '\r') {
-                    endOfLine = true; // EoL - stop line processing in outer method
-                }
-                inputBufferPos++; // skip closing ')' inside long line (no EoL present)
-                inputBufferStart = -1; // reset
-                return readNull(s);
+                return readArrayValue();
             } else {
-                // un-delimited value
-                while (true) {
-                    ch = readChar();
-                    if (ch == fieldSeparatorRead) {
-                        break;
-                    } else if (isEOL(ch)) {
-                        endOfLine = true;
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                inputBufferStart = -1;
-                // check un-delimited value for nullString
-                return readNull(s);
+                return readUndelimitedValue();
             }
+        }
+    }
+
+    private void replaceChar(char r) {
+        if (inputBufferPos >= 1) {
+            inputBuffer[inputBufferPos - 1] = r;
         }
     }
 
