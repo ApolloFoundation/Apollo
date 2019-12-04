@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DexOrderDBRequestForTrading {
-    private long startInterval;
-    private long endInterval;
-    private byte pairCur;
-    private Integer offset;
-    private Integer limit;
+public class HeightDbIdRequest {
+    private long fromDbId;
+    private int fromHeight;
+    private int toHeight;
+    private byte coin;
+    private int limit;
 }

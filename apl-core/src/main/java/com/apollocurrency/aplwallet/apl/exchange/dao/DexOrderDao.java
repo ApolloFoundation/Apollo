@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -57,16 +57,15 @@ public interface DexOrderDao {
     
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
-            "WHERE latest = true " +                        
-            "AND (:currentTime is NULL OR offer.finish_time > :startInterval) " +
-            "AND (:currentTime is NULL OR offer.finish_time <= :endInterval) " +
-            "AND (:type is NULL OR offer.type = 1) " +
-            "AND (:status is NULL OR offer.status = 0) " +            
-            "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +            
-            "OFFSET :offset LIMIT :limit"
+            "WHERE latest = true " +
+            "AND offer.status = 5 " + // CLOSED
+            "AND offer.pair_currency = :coin " +
+            "AND offer.height >= :fromHeight " +
+            "AND offer.height < :toHeight " +
+            "AND offer.db_id > :fromDbId ORDER BY db_id" +
+            "LIMIT :limit"
     )
     @RegisterRowMapper(DexOrderMapper.class)
-    List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
+    List<DexOrder> getOrdersFromHeight(@BindBean HeightDbIdRequest heightDbIdRequest);
 
-    List<DexOrder> getOrdersByTime();
 }

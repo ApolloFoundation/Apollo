@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -23,6 +24,16 @@ public interface DexCandlestickDao {
     @RegisterRowMapper(DexCandlestickMapper.class)
     DexCandlestick getByTimestamp(@Bind("timestamp") int timestamp, @Bind("pairedCoin") DexCurrency pairedCoin);
 
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin ORDER BY timestamp DESC LIMIT 1")
+    @RegisterRowMapper(DexCandlestickMapper.class)
+    DexCandlestick getLast(@Bind("pairedCoin") DexCurrency pairedCoin);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_candlestick ORDER BY timestamp DESC LIMIT 1")
+    @RegisterRowMapper(DexCandlestickMapper.class)
+    DexCandlestick getLast();
+
     @Transactional
     @SqlUpdate("DELETE FROM dex_candlestick")
     int removeAll();
@@ -34,4 +45,9 @@ public interface DexCandlestickDao {
     @Transactional
     @SqlUpdate("INSERT INTO dex_candlestick(coin, min, max, open, close, from_volume,to_volume, timestamp) VALUES (:coin, :min, :max, :open, :close, :fromVolume, :toVolume, :timestamp)")
     void add(DexCandlestick candlestick);
+
+    @Transactional
+    @SqlUpdate("UPDATE dex_candlestick SET min = :min, max = :max, open = :open, close = :close, from_volume = :fromVolume, to_volume = :toVolume WHERE timestamp = :timestamp AND coin = :coin")
+    void update(@BindBean DexCandlestick candlestick);
+
 }

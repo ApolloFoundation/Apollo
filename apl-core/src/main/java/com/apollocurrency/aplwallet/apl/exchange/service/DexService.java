@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -160,8 +160,8 @@ public class DexService {
      * @param DexOrderDBRequestForTrading 
      */
     @Transactional(readOnly = true)
-    public List<DexOrder> getOrdersForTrading(DexOrderDBRequestForTrading dexOrderDBRequestForTrading ) {
-        return dexOrderDao.getOrdersForTrading(dexOrderDBRequestForTrading)
+    public List<DexOrder> getOrdersForTrading(HeightDbIdRequest heightDbIdRequest) {
+        return dexOrderDao.getOrdersFromHeight(heightDbIdRequest)
                 .stream()               
                 .collect(Collectors.toList());
     }
@@ -726,6 +726,11 @@ public class DexService {
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);
         order.setStatus(OrderStatus.CLOSED);
+        // set an actual finish time of the order starting from the dex2.0 height
+        if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+            order.setFinishTime(blockchain.getLastBlockTimestamp());
+        }
         saveOrder(order);
         return order;
     }

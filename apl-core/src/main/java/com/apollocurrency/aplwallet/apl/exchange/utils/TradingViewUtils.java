@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import java.math.BigDecimal;
@@ -250,8 +250,8 @@ public class TradingViewUtils {
             log.debug("start: {}, finish: {}, currencyType: {}", startTS, endTS, currencyType ); 
             
             // List<DexTradeEntry> dexTradeEntries = service.getTradeInfoForPeriod(startTS, endTS, (byte)currencyType, 0, Integer.MAX_VALUE);
-            DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTS, endTS, currencyType, 0, Integer.MAX_VALUE);
-            List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading);
+            HeightDbIdRequest heightDbIdRequest = new HeightDbIdRequest(startTS, endTS, currencyType, 0, Integer.MAX_VALUE);
+            List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(heightDbIdRequest);
            
             
             TradingDataOutput tradingDataOutput = new TradingDataOutput();

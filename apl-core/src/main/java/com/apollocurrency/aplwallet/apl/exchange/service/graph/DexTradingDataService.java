@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.exchange.service;
+package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
@@ -19,11 +19,11 @@ public class DexTradingDataService {
     private boolean enableTradingViewGraphDataFeeder;
     private boolean enableTradingDataCache;
     private DexCandlestickDao dao;
-    private static final int BASE_TIME_INTERVAL = 15 * 60 * 60; // 15 minutes in seconds
+    static final int BASE_TIME_INTERVAL = 15 * 60 * 60; // 15 minutes in seconds
 
     public enum TimeFrame {
         QUARTER(1), HOUR(4), FOUR_HOURS(16), DAY(96);
-        private final int muliplier;
+        private final int muliplier; // BASE TIME INTERVAL multiplier
         TimeFrame(int multiplier) {
             this.muliplier = multiplier;
         }
@@ -84,7 +84,6 @@ public class DexTradingDataService {
         }
         int groupedDataSize = entries.size() / tf.muliplier;
         List<SimpleTradingEntry> groupedData = new ArrayList<>(groupedDataSize);
-        SimpleTradingEntry groupedEntry = new SimpleTradingEntry();
         for (int i = 0; i < groupedDataSize; i++) {
             List<SimpleTradingEntry> listToGroup = entries.subList(i * tf.muliplier, (i + 1) * tf.muliplier);
             SimpleTradingEntry compressed = compress(listToGroup);
