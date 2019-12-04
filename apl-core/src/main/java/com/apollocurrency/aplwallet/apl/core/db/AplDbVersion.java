@@ -852,7 +852,7 @@ public class AplDbVersion extends DbVersion {
             case 326:
                 apply("ALTER TABLE dex_candlestick ADD CONSTRAINT IF NOT EXISTS dex_candlestick_coin_timestamp_idx UNIQUE (coin, timestamp)");
             case 327:
-                apply("CREATE TABLE order_scan (coin TINYINT NOT NULL, BIGINT last_db_id NOT NULL, last_timestamp INT NOT NULL)");
+                apply("CREATE TABLE order_scan (coin TINYINT NOT NULL, last_db_id BIGINT NOT NULL, last_timestamp INT NOT NULL)");
             case 328:
                 apply("ALTER TABLE order_scan ADD CONSTRAINT IF NOT EXISTS order_scan_coin_idx UNIQUE (coin)");
             case 329:

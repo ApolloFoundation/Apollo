@@ -99,7 +99,7 @@ public class DexTradingGraphScanningService {
                 }
                 long fromDbId = getFromDbId(currency);
                 orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
-                        .coin((byte) currency.ordinal())
+                        .coin(currency)
                         .toHeight(toHeight)
                         .fromDbId(fromDbId)
                         .limit(ORDER_SELECT_LIMIT)
@@ -160,7 +160,7 @@ public class DexTradingGraphScanningService {
         return new ArrayList<>(candlesticks.values());
     }
 
-    private void convertOrders(List<DexOrder> orders, Map<Integer, DexCandlestick> candlesticks) {
+    public static void convertOrders(List<DexOrder> orders, Map<Integer, DexCandlestick> candlesticks) {
         for (DexOrder order : orders) {
             int unixEpochSeconds = (int) (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
             int openTime = unixEpochSeconds % BASE_TIME_INTERVAL;
@@ -169,7 +169,7 @@ public class DexTradingGraphScanningService {
         }
     }
 
-    private DexCandlestick toCandlestick(DexOrder order, DexCandlestick thisCandlestick, int candlestickTime) {
+    private static DexCandlestick toCandlestick(DexOrder order, DexCandlestick thisCandlestick, int candlestickTime) {
         if (thisCandlestick != null) {
             thisCandlestick.setFromVolume(thisCandlestick.getFromVolume().add(EthUtil.atmToEth(order.getOrderAmount())));
             BigDecimal pairedCurrencyVolume = order.getPairRate().multiply(EthUtil.atmToEth(order.getOrderAmount()));

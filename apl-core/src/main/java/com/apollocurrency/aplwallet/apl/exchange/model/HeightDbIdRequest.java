@@ -20,6 +20,6 @@ import lombok.NoArgsConstructor;
 public class HeightDbIdRequest {
     private long fromDbId;
     private int toHeight;
-    private byte coin;
+    private DexCurrency coin;
     private int limit;
 }

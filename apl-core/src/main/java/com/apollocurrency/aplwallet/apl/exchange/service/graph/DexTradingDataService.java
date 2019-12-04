@@ -3,22 +3,31 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DexTradingDataService {
     private boolean enableTradingViewGraphDataFeeder;
     private boolean enableTradingDataCache;
-    private DexCandlestickDao dao;
+    private DexCandlestickDao candlestickDao;
+    private DexOrderDao orderDao;
     static final int BASE_TIME_INTERVAL = 15 * 60 * 60; // 15 minutes in seconds
 
     public enum TimeFrame {
@@ -33,15 +42,17 @@ public class DexTradingDataService {
     @Inject
     public DexTradingDataService(@Property("apl.dex.graph.enableDataFeeder") boolean enableTradingViewGraphDataFeeder,
                                  @Property("apl.dex.graph.enableDataCache") boolean enableTradingDataCache,
-                                 DexCandlestickDao dao) {
+                                 DexCandlestickDao candlestickDao,
+                                 DexOrderDao orderDao) {
         this.enableTradingViewGraphDataFeeder = enableTradingViewGraphDataFeeder;
         this.enableTradingDataCache = enableTradingDataCache;
-        this.dao = dao;
+        this.candlestickDao = candlestickDao;
+        this.orderDao = orderDao;
     }
 
-    public TradingDataOutput getForTimeFrameFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+    public List<SimpleTradingEntry> getForTimeFrameFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
         int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
-        List<DexCandlestick> candlesticks = dao.getFromToTimestamp(startTime, toTimestamp, currency);
+        List<DexCandlestick> candlesticks = candlestickDao.getFromToTimestamp(startTime, toTimestamp, currency);
         List<SimpleTradingEntry> fullData = new ArrayList<>(limit * timeFrame.muliplier);
         int prevTime = startTime;
         for (DexCandlestick candlestick : candlesticks) {
@@ -49,14 +60,60 @@ public class DexTradingDataService {
             fullData.add(fromCandleStick(candlestick));
             prevTime = candlestick.getTimestamp();
         }
-        List<SimpleTradingEntry> resultData = getResultData(fullData, timeFrame);
-        return buildTradingDataOutput(toTimestamp, startTime, resultData);
+        return getResultData(fullData, timeFrame);
     }
 
-    public TradingDataOutput getForTimeFrameFromDexOrders(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
-        DexCandlestick last = dao.getLast(currency);
+    public TradingDataOutput getForTimeFrame(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+        int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
+        DexCandlestick last = candlestickDao.getLast(currency);
         int timestamp = last.getTimestamp();
-        return null;
+        int timeInterval = timeFrame.muliplier * BASE_TIME_INTERVAL;
+        int orderStartTime = timestamp + timeInterval;
+        List<SimpleTradingEntry> data = new ArrayList<>();
+        if (orderStartTime < startTime) {
+            data.addAll(getForTimeFrameFromDexOrders(startTime, toTimestamp, currency, timeFrame));
+        } else {
+            List<SimpleTradingEntry> dexOrderCandlesticks = getForTimeFrameFromDexOrders(orderStartTime, toTimestamp, currency, timeFrame);
+            limit -= dexOrderCandlesticks.size();
+            toTimestamp = orderStartTime;
+            data.addAll(getForTimeFrameFromCandlesticks(toTimestamp, limit, currency, timeFrame));
+            data.addAll(dexOrderCandlesticks);
+        }
+        return buildTradingDataOutput(toTimestamp, startTime, data);
+    }
+    public List<SimpleTradingEntry> getForTimeFrameFromDexOrders(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
+        List<DexCandlestick> orderCandlesticks = getOrderCandlesticks(fromTimestamp, toTimestamp, currency);
+        int prevTime = fromTimestamp;
+        List<SimpleTradingEntry> fullData = new ArrayList<>();
+        for (DexCandlestick candlestick : orderCandlesticks) {
+            pushUntil(prevTime, candlestick.getTimestamp(), fullData);
+            fullData.add(fromCandleStick(candlestick));
+            prevTime = candlestick.getTimestamp();
+        }
+        return getResultData(fullData, timeFrame);
+//        return buildTradingDataOutput(toTimestamp, startTime, resultData);
+    }
+
+    private List<DexCandlestick> getOrderCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency) {
+        int fromEpochTime = Convert2.toEpochTime(fromTimestamp);
+        int toEpochTime = Convert2.toEpochTime(toTimestamp);
+        long fromDbId = 0;
+        List<DexOrder> orders;
+        Map<Integer, DexCandlestick> candlesticks = new HashMap<>();
+        do {
+            orders = orderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
+                    .limit(100)
+                    .coin(currency)
+                    .fromTime(fromEpochTime)
+                    .toTime(toEpochTime)
+                    .fromDbId(fromDbId)
+                    .build());
+            DexTradingGraphScanningService.convertOrders(orders, candlesticks);
+            if (orders.size() > 0) {
+                fromDbId = orders.get(orders.size() - 1).getDbId();
+            }
+        } while (orders.size() == 100);
+        return candlesticks.values().stream().sorted(Comparator.comparing(DexCandlestick::getTimestamp)).collect(Collectors.toList());
     }
 
 

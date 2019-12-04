@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -62,6 +63,7 @@ public interface DexOrderDao {
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             "WHERE latest = true " +
             "AND offer.status = 5 " + // CLOSED
+            "AND offer.type = 0 " + // only autocloseable buy orders
             "AND offer.pair_currency = :coin " +
             "AND offer.height < :toHeight " +
             "AND offer.db_id > :fromDbId ORDER BY db_id " +
@@ -73,6 +75,7 @@ public interface DexOrderDao {
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             "WHERE latest = true " +
             "AND offer.status = 5 " + // CLOSED
+            "AND offer.type = 0 " + // only autocloseable buy orders
             "AND offer.pair_currency = :coin " +
             "AND offer.height < :toHeight " +
             " ORDER BY height DESC, db_id DESC " +
@@ -93,5 +96,19 @@ public interface DexOrderDao {
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND offer.finish_time BETWEEN :fromTime AND :toTime " +
+            "AND offer.db_id > :fromDbId " + // pagination
+            "AND offer.type = 0 " +
+            "AND offer.status = 5 " +
+            "AND offer.pair_currency = :coin " +
+            "ORDER BY offer.finish_time ASC " +
+            "LIMIT :limit "
+    )
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getOrdersFromDbIdBetweenTimestamps(@BindBean OrderDbIdPaginationDbRequest request);
 
 }
