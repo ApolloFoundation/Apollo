@@ -222,7 +222,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement();
-             ResultSet rs = qstmt.executeQuery("SELECT TABLE FROM FTL.INDEXES")) {
+             ResultSet rs = qstmt.executeQuery("SELECT \"TABLE\" FROM FTL.INDEXES")) {
             while(rs.next()) {
                 String table = rs.getString(1);
                 stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
