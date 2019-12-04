@@ -93,6 +93,7 @@ public class TradingViewUtils {
         });
         
         if (periodEntries.size() > 0) { 
+            log.debug("offers: {}", periodEntries.size());
 
             BigDecimal hi = periodEntries.get(0).getPairRate();            
             BigDecimal low = periodEntries.get(0).getPairRate(); 
@@ -101,7 +102,10 @@ public class TradingViewUtils {
             BigDecimal volumefrom = BigDecimal.ZERO;
             BigDecimal volumeto = BigDecimal.ZERO; 
             
-            for(DexOrder entryOfPeriod: periodEntries) {            
+            for(DexOrder entryOfPeriod: periodEntries) {   
+                
+                log.debug("pairRate: {}", entryOfPeriod.getPairRate());
+                
                 if ( entryOfPeriod.getPairRate().compareTo(hi) == 1 ) {
                     hi = entryOfPeriod.getPairRate();
                 }
@@ -173,9 +177,9 @@ public class TradingViewUtils {
         List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading); 
         
         log.debug("found {} orders", dexOrdersForInterval.size() );
-//        for (DexOrder cr : dexOrdersForInterval) {
-//            log.debug("order: {}, amount: {}, rate: {},", cr.getId(), cr.getOrderAmount(), cr.getPairRate());
-//        }
+        for (DexOrder cr : dexOrdersForInterval) {
+            log.debug("order: {}, amount: {}, rate: {},", cr.getId(), cr.getOrderAmount(), cr.getPairRate());
+        }
             
         TradingDataOutput tradingDataOutput = new TradingDataOutput();            
         tradingDataOutput.setResponse("Success");
@@ -197,9 +201,9 @@ public class TradingViewUtils {
             SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch ); 
             entryForPeriod.time = initialTime;
             
-//            if (dexOrdersForInterval.size() > 0) {
-//                log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
-//            }
+            if (dexOrdersForInterval.size() > 0) {
+                log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
+            }
             // entryForPeriod.open =  prevClose;
             // prevClose = entryForPeriod.close;                                
             initialTime += interval;                
