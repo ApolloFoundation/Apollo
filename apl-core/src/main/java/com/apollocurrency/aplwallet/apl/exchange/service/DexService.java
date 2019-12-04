@@ -161,7 +161,7 @@ public class DexService {
      */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrdersForTrading(HeightDbIdRequest heightDbIdRequest) {
-        return dexOrderDao.getOrdersFromHeight(heightDbIdRequest)
+        return dexOrderDao.getClosedOrdersFromDbId(heightDbIdRequest)
                 .stream()               
                 .collect(Collectors.toList());
     }

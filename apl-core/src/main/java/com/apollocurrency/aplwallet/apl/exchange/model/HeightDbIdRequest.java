@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class HeightDbIdRequest {
     private long fromDbId;
-    private int fromHeight;
     private int toHeight;
     private byte coin;
     private int limit;

@@ -6,12 +6,14 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -60,12 +62,20 @@ public interface DexOrderDao {
             "WHERE latest = true " +
             "AND offer.status = 5 " + // CLOSED
             "AND offer.pair_currency = :coin " +
-            "AND offer.height >= :fromHeight " +
             "AND offer.height < :toHeight " +
-            "AND offer.db_id > :fromDbId ORDER BY db_id" +
-            "LIMIT :limit"
-    )
+            "AND offer.db_id > :fromDbId ORDER BY db_id " +
+            "LIMIT :limit")
     @RegisterRowMapper(DexOrderMapper.class)
-    List<DexOrder> getOrdersFromHeight(@BindBean HeightDbIdRequest heightDbIdRequest);
+    List<DexOrder> getClosedOrdersFromDbId(@BindBean HeightDbIdRequest heightDbIdRequest);
 
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND offer.status = 5 " + // CLOSED
+            "AND offer.pair_currency = :coin " +
+            "AND offer.height < :toHeight " +
+            " ORDER BY height DESC, db_id DESC " +
+            "LIMIT 1")
+    @RegisterRowMapper(DexOrderMapper.class)
+    DexOrder getLastClosedOrderBeforeHeight(@Bind("coin") DexCurrency coin, @Bind("toHeight") int toHeight);
 }

@@ -852,9 +852,11 @@ public class AplDbVersion extends DbVersion {
             case 326:
                 apply("ALTER TABLE dex_candlestick ADD CONSTRAINT IF NOT EXISTS dex_candlestick_coin_timestamp_idx UNIQUE (coin, timestamp)");
             case 327:
-                apply("CREATE TABLE TRADING_GRAPH_SCAN (height INT NOT NULL, block_timestamp INT NOT NULL)");
+                apply("CREATE TABLE order_scan (coin TINYINT NOT NULL, BIGINT last_db_id NOT NULL, last_timestamp INT NOT NULL)");
             case 328:
-                return 328;
+                apply("ALTER TABLE order_scan ADD CONSTRAINT IF NOT EXISTS order_scan_coin_idx UNIQUE (coin)");
+            case 329:
+                return 329;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

@@ -39,7 +39,7 @@ public class DexTradingDataService {
         this.dao = dao;
     }
 
-    public TradingDataOutput getForTimeFrame(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+    public TradingDataOutput getForTimeFrameFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
         int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
         List<DexCandlestick> candlesticks = dao.getFromToTimestamp(startTime, toTimestamp, currency);
         List<SimpleTradingEntry> fullData = new ArrayList<>(limit * timeFrame.muliplier);
@@ -51,6 +51,12 @@ public class DexTradingDataService {
         }
         List<SimpleTradingEntry> resultData = getResultData(fullData, timeFrame);
         return buildTradingDataOutput(toTimestamp, startTime, resultData);
+    }
+
+    public TradingDataOutput getForTimeFrameFromDexOrders(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+        DexCandlestick last = dao.getLast(currency);
+        int timestamp = last.getTimestamp();
+        return null;
     }
 
 
