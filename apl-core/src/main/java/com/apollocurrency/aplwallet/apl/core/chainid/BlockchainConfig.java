@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Singleton;
 
 /**
@@ -28,14 +29,15 @@ public class BlockchainConfig {
     private int minPrunableLifetime;
     private boolean enablePruning;
     private int maxPrunableLifetime;
-    // lastKnownBlock must also be set in html/www/js/ars.constants.js
     private short shufflingProcessingDeadline;
     private long lastKnownBlock;
     private long unconfirmedPoolDepositAtm;
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
+    private volatile HeightConfig previousConfig; // keep previous config for easy access
     private Chain chain;
+    private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {}
 
@@ -62,7 +64,6 @@ public class BlockchainConfig {
         this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
         this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
         this.guaranteedBalanceConfirmations = 1440;
-
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
     }
@@ -129,6 +130,14 @@ public class BlockchainConfig {
         return maxPrunableLifetime;
     }
 
+    public Integer getDexPendingOrdersReopeningHeight() {
+        if (chain.getFeaturesHeightRequirement() != null) {
+            return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
+        } else {
+            return null;
+        }
+    }
+
     public HeightConfig getCurrentConfig() {
         return currentConfig;
     }
@@ -142,6 +151,25 @@ public class BlockchainConfig {
      * @param currentConfig
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
+        this.previousConfig = this.currentConfig;
         this.currentConfig = currentConfig;
+        this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
+    }
+
+    public Optional<HeightConfig> getPreviousConfig() {
+        return Optional.of(previousConfig);
+    }
+
+    /**
+     * Flag to catch configuration changing
+     * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
+     * @return
+     */
+    public boolean isJustUpdated() {
+        return isJustUpdated;
+    }
+
+    public void resetJustUpdated() {
+        this.isJustUpdated = false; // reset flag
     }
 }

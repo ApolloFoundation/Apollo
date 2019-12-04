@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -70,6 +71,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -156,6 +158,7 @@ public class Account {
 
 
     @Singleton
+    @Slf4j
     public static class AccountObserver {
 
         public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
@@ -191,6 +194,7 @@ public class Account {
         }
 
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
             try (DbIterator<AccountLease> leases =accountLeaseTable.getLeaseChangingAccounts(height)) {
@@ -227,6 +231,7 @@ public class Account {
                 }
                 lessor.save();
             }
+            log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 
@@ -407,7 +412,14 @@ public class Account {
                 } else {
                     publicKey = publicKeyTable.newEntity(dbKey);
                     publicKeyTable.insert(publicKey);
-                    publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                }
+                if (publicKeyCache != null) {
+                    //TODO: what if insert above fails?
+                    if (isGenesis) {
+                        publicKeyCache.put(dbKey, genesisPublicKeyTable.get(dbKey, true));
+                    } else {
+                        publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
+                    }
                 }
             }
             account.publicKey = publicKey;
@@ -472,7 +484,9 @@ public class Account {
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
             publicKey.setHeight(blockchain.getHeight());
-            publicKeyCache.put(dbKey, publicKey);
+            if (publicKeyCache != null) {
+                publicKeyCache.put(dbKey, publicKey);
+            }
             return true;
         }
         return Arrays.equals(publicKey.publicKey, key);
@@ -567,8 +581,13 @@ public class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
-                    height, this.publicKey.getHeight(), height - this.publicKey.getHeight(), EFFECTIVE_BALANCE_CONFIRMATIONS);
+            if(LOG.isTraceEnabled()) {
+                LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                        height,
+                        this.publicKey!=null?this.publicKey.getHeight():null,
+                        height - (this.publicKey!=null?this.publicKey.getHeight():0),
+                        EFFECTIVE_BALANCE_CONFIRMATIONS);
+            }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -654,7 +673,10 @@ public class Account {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < blockchainProcessor.getMinRollbackHeight()
                     || height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
+                LOG.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
+                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
+                        height, blockchain.getHeight() );
+                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
             }
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
@@ -1043,16 +1065,6 @@ public class Account {
            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
        }
        addToBalanceATM(event, eventId, amountATM, 0);
-    }
-
-    private String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    private String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {

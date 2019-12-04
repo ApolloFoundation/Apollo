@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.core.utils.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;

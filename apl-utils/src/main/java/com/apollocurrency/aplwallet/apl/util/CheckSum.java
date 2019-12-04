@@ -11,11 +11,13 @@ import java.util.zip.Checksum;
  * @author alukin@gmail.com
  */
 public class CheckSum {
-    Checksum cs = new CRC32();
+    private Checksum cs = new CRC32();
+
     public void update(byte[] bytes){
         cs.update(bytes);
     }
-    public Long finish(){
+
+    public long finish(){
         return cs.getValue();
     }
 

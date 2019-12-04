@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
@@ -50,8 +47,11 @@ public class ShardObserverIntegrationTest {
     void testDoShardByAsyncEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
-        trimEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(100, 100, 0));
-
+        trimEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(new TrimData(100, 100, 0));
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException ex) {           
+        }
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }
 
@@ -63,18 +63,10 @@ public class ShardObserverIntegrationTest {
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
-        trimEvent.select(new AnnotationLiteral<Sync>() {
+        trimEvent.select(new AnnotationLiteral<TrimEvent>() {
         }).fire(new TrimData(100, 100, 0));
 
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }
 
-    private AnnotationLiteral literal(BlockEventType blockEvent) {
-        return new BlockEventBinding() {
-            @Override
-            public BlockEventType value() {
-                return blockEvent;
-            }
-        };
-    }
 }

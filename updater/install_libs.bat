@@ -14,3 +14,10 @@ mkdir %1\lib
 
 move /Y %WALLETDIR:~0,-1%\ApolloWallet-%VERSION%-libs\*" %WALLETDIR:~0,-1%\lib"
 del /S /F /Q %1\ApolloWallet-%VERSION%-libs*
+mkdir %1\tmpdir
+
+
+
+
+
+
