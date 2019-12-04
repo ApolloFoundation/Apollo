@@ -79,7 +79,7 @@ public class PeerClient {
             res.error="Null returned from peer";
         }
         if (res.errorCode != 0 || res.error!=null) {
-            log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, peer.getAnnouncedAddress(), res.errorCode);
+            log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode, peer.getAnnouncedAddress(), entityId, res.error);
         }
         return res.downloadInfo;
     }

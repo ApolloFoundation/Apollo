@@ -162,14 +162,6 @@ public class DexContractTransaction extends DEX {
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
-        if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
-            order.setStatus(OrderStatus.WAITING_APPROVAL);
-            dexService.saveOrder(order);
-
-            counterOrder.setStatus(OrderStatus.WAITING_APPROVAL);
-            dexService.saveOrder(counterOrder);
-        }
-
         ExchangeContract contract = dexService.getDexContractByOrderAndCounterOrder(attachment.getOrderId(), attachment.getCounterOrderId());
 
         // contract == null it means, that it's a first step.
@@ -182,6 +174,12 @@ public class DexContractTransaction extends DEX {
 
             dexService.saveDexContract(contract);
         } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
+            order.setStatus(OrderStatus.WAITING_APPROVAL);
+            dexService.saveOrder(order);
+
+            counterOrder.setStatus(OrderStatus.WAITING_APPROVAL);
+            dexService.saveOrder(counterOrder);
+
             contract.setEncryptedSecret(attachment.getEncryptedSecret());
             contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());

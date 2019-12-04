@@ -5,7 +5,7 @@
     <parent>
         <artifactId>apollo-wallet</artifactId>
         <groupId>com.apollocurrency</groupId>
-        <version>1.41.1</version>
+        <version>1.41.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>apl-integration-tests</artifactId>
@@ -16,6 +16,16 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.29</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.29</version>
+        </dependency>
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
@@ -110,10 +120,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
-                    <!--
                     <parallel>classes</parallel>
-                     <threadCount>4</threadCount>
-                     -->
+                    <threadCount>4</threadCount>
                     <skipTests>${skipIntergationTests}</skipTests>
                     <testFailureIgnore>true</testFailureIgnore>
                     <argLine>

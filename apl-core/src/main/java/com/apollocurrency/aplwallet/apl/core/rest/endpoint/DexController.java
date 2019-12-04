@@ -80,6 +80,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToD
 
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForInterval;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getTestDataForInterval;
+import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -529,7 +531,7 @@ public class DexController {
     @Path("/contracts")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Retrieve processable dex contract for order", description = "Lookup the database to get dex contract associated with specified account and order with status > STEP1",
-            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in exceptional(error) cases may contain more than 1 entries", responseCode = "200",
+            responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                         @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
@@ -541,67 +543,11 @@ public class DexController {
         }
         return Response.ok(contractConverter.convert(contracts)).build();
     }
-    
+
+
+
     @GET
     @Path("/histominute")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histominute", description = "getting histominute")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistominute(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);        
-        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60); 
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
-    }
-
-    @GET
-    @Path("/histohour")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histohour", description = "getting histohour")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistohour(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getHistohour:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
-        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60*60);
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
-    }
-    
-    @GET
-    @Path("/histoday")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histoday", description = "getting histoday")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistoday(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-            
-        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
-        TradingDataOutput tradingDataOutput = getTestDataForInterval(  fsym,  tsym,  toTs, limit,  60*60*24 );
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
-    }
-        
-    @GET
-    @Path("/histominute1")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get histominute", description = "getting histominute")
     @ApiResponses(value = {
@@ -614,14 +560,14 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistominute1:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
-        TradingDataOutput tradingDataOutput = getDataForInterval(  fsym,  tsym,  toTs, limit,  60, service);
+        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers(  fsym,  tsym,  toTs, limit,  60, service, timeService);
         return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
 
     }
 
     @GET
-    @Path("/histohour1")
+    @Path("/histohour")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get histohour", description = "getting histohour")
     @ApiResponses(value = {
@@ -634,13 +580,13 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistohour1:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
-        TradingDataOutput tradingDataOutput = getDataForInterval(  fsym,  tsym,  toTs, limit,  60*60, service);
+        log.debug("getHistohour:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
+        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers(  fsym,  tsym,  toTs, limit,  60*60, service, timeService);
         return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 
     @GET
-    @Path("/histoday1")
+    @Path("/histoday")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get histoday", description = "getting histoday")
     @ApiResponses(value = {
@@ -653,8 +599,8 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistoday1:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
-        TradingDataOutput tradingDataOutput = getDataForInterval(  fsym,  tsym,  toTs, limit,  60*60*24, service);
+        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
+        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers (fsym,  tsym,  toTs, limit,  60*60*24, service, timeService);
         return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 

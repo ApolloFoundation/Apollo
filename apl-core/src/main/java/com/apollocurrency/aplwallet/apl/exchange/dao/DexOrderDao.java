@@ -78,4 +78,19 @@ public interface DexOrderDao {
             "LIMIT 1")
     @RegisterRowMapper(DexOrderMapper.class)
     DexOrder getLastClosedOrderBeforeHeight(@Bind("coin") DexCurrency coin, @Bind("toHeight") int toHeight);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND (offer.finish_time > :startInterval) " +
+            "AND (offer.finish_time <= :endInterval) " +
+            "AND (offer.type = :requestedType) " +
+            "AND (offer.status = 5) " +
+            "AND (offer.pair_currency = :pairCur) " +
+            "ORDER BY offer.finish_time ASC " +
+            "OFFSET :offset LIMIT :limit "
+    )
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
+
 }

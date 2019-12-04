@@ -2,6 +2,7 @@
   "host": "localhost",
   "port": "7876",
   "adminPassword": "1",
+  "defaultImage": "Icon.jpeg",
   "standartWallet": {
     "user": "APL-AKU5-JP6B-Y42V-H5X8U",
     "pass": "111",

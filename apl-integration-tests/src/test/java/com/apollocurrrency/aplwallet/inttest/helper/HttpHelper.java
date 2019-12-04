@@ -5,6 +5,8 @@ import com.apollocurrrency.aplwallet.inttest.model.TestBase;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Allure;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -12,10 +14,13 @@ import okhttp3.Response;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.apollocurrrency.aplwallet.inttest.model.Parameters.file;
+import static com.apollocurrrency.aplwallet.inttest.model.Parameters.messageFile;
 import static org.junit.jupiter.api.Assertions.fail;
 
 
@@ -53,6 +58,18 @@ public class HttpHelper {
 
     public static Response httpCallPost() throws IOException {
         RequestBody body = RequestBody.create(null, new byte[]{});
+
+        if (reqestParam.containsKey(messageFile.toString()) || reqestParam.containsKey(file.toString())) {
+            String param = reqestParam.containsKey(messageFile.toString()) ? messageFile.toString() : file.toString();
+            body = uploadImage(param);
+          /*  File file = (File) reqestParam.get(messageFile.toString());
+            final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
+                    MediaType.parse("image/png") : MediaType.parse("image/jpeg");
+             body = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("messageFile", file.getName(), RequestBody.create(MEDIA_TYPE, file))
+                    .build();*/
+        }
         Request request = new Request.Builder()
                 .url(buildGetReqestUrl())
                 .post(body)
@@ -63,7 +80,7 @@ public class HttpHelper {
 
     public static void addParameters(Enum parameter, Object value) {
         if (value instanceof String)
-            reqestParam.put(parameter.toString(), (String) value);
+            reqestParam.put(parameter.toString(), value);
         else if (value instanceof Integer || value instanceof Boolean)
             reqestParam.put(parameter.toString(), String.valueOf(value));
         else if (value instanceof Enum)
@@ -98,7 +115,9 @@ public class HttpHelper {
             }
         }
         reqestParam.clear();
-        Allure.addAttachment("Request URL", requestUrl.toString());
+        if (TestBase.testInfo != null) {
+            Allure.addAttachment("Request URL", requestUrl.toString());
+        }
         return requestUrl.toString();
     }
 
@@ -140,13 +159,26 @@ public class HttpHelper {
             //System.out.println(responseBody);
             if (TestBase.testInfo != null && TestBase.testInfo.getTags() != null && !TestBase.testInfo.getTags().contains("NEGATIVE")) {
                 Assertions.assertFalse(responseBody.contains("errorDescription"), responseBody);
+            }
+            if (TestBase.testInfo != null) {
                 Allure.addAttachment("Response Body", responseBody);
             }
             return (T) mapper.readValue(responseBody, clazz);
         } catch (Exception e) {
+            Allure.addAttachment("Response Body", responseBody);
             return fail(responseBody + "\n" + e.getMessage());
         }
     }
 
+    private static RequestBody uploadImage(String param) {
+        File file = (File) reqestParam.get(param);
+        final MediaType MEDIA_TYPE = file.getName().endsWith("png") ?
+                MediaType.parse("image/png") : MediaType.parse("image/jpeg");
+        return new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(param, file.getName(), RequestBody.create(MEDIA_TYPE, file))
+                .build();
+
+    }
 
 }

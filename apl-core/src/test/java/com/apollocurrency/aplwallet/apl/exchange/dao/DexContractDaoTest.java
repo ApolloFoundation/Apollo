@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -17,8 +15,10 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.util.List;
 import javax.inject.Inject;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @EnableWeld
 public class DexContractDaoTest {
@@ -41,5 +41,12 @@ public class DexContractDaoTest {
         List<ExchangeContract> contract = dao.getAllForAccountOrder(td.EXCHANGE_CONTRACT_2.getSender(), td.EXCHANGE_CONTRACT_2.getCounterOrderId(), 0, 2);
 
         assertEquals(List.of(td.EXCHANGE_CONTRACT_2), contract);
+    }
+
+    @Test
+    void testGetContractsForVersionedAccount() {
+        List<ExchangeContract> contract = dao.getAllVersionedForAccountOrder(td.EXCHANGE_CONTRACT_4.getSender(), td.EXCHANGE_CONTRACT_4.getCounterOrderId(), 0, 2);
+
+        assertEquals(List.of(td.EXCHANGE_CONTRACT_7, td.EXCHANGE_CONTRACT_5, td.EXCHANGE_CONTRACT_4), contract);
     }
 }

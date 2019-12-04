@@ -81,20 +81,38 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
         return get(KEY_FACTORY.newKey(id));
     }
 
-    public List<ExchangeContract> getAllByCounterOrder(Long orderId) {
-        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause("counter_offer_id", orderId), 0, -1);
+    public List<ExchangeContract> getAllByCounterOrder(Long counterOrderId) {
+        return getAllByLongParameterFromStatus(counterOrderId, "counter_offer_id", 0);
+    }
+    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
+        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1, " ORDER BY height DESC, db_id DESC");
         return CollectionUtil.toList(dbIterator);
     }
-
-    public ExchangeContract getByOrder(Long orderId) {
-        return getBy(new DbClause.LongClause("offer_id", orderId).and(new DbClause.ByteClause("status", DbClause.Op.GT, (byte) 0)));
+    public List<ExchangeContract> getAllByOrder(Long orderId) {
+        return getAllByLongParameterFromStatus(orderId, "offer_id", 0);
     }
 
-    public ExchangeContract getByCounterOrder(Long orderId) {
-        return getBy(new DbClause.LongClause("counter_offer_id", orderId).and(new DbClause.ByteClause("status", DbClause.Op.GT, (byte) 0)));
+    public ExchangeContract getLastByOrder(Long orderId) {
+        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatus(orderId, "offer_id", 1);
+        return getFirstOrNull(allByOrder);
+    }
+
+    private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
+        if (contracts.size() > 0) {
+            return contracts.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public ExchangeContract getLastByCounterOrder(Long orderId) {
+        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatus(orderId, "counter_offer_id", 1);
+        return getFirstOrNull(allByOrder);
     }
 
     public ExchangeContract getByOrderAndCounterOrder(Long orderId, Long counterOrderId) {
+        // impossible to match to the same order multiple times,
+        // so that contract for pair of counter order and order is always unique
         return getBy(new DbClause.LongClause("counter_offer_id", counterOrderId).and(new DbClause.LongClause("offer_id", orderId)));
     }
 

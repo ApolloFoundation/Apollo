@@ -15,6 +15,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -95,6 +98,7 @@ public class DexOrderProcessor {
     private final DexSmartContractService dexSmartContractService;
     private final EthereumWalletService ethereumWalletService;
     private final TaskDispatchManager taskDispatchManager;
+    private final PhasingPollService phasingPollService;
     private TaskDispatcher taskDispatcher;
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
@@ -106,14 +110,14 @@ public class DexOrderProcessor {
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
-    private final Map<Long, byte[]> expiredSwaps = new ConcurrentHashMap<>();
+    private final Set<String> expiredSwaps = ConcurrentHashMap.newKeySet();
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
                              DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl,
                              DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService,
                              MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService,
-                             Blockchain blockchain) {
+                             Blockchain blockchain, PhasingPollService phasingPollService) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -125,6 +129,7 @@ public class DexOrderProcessor {
         this.timeService = timeService;
         this.taskDispatchManager = Objects.requireNonNull(taskDispatchManager, "Task dispatch manager is NULL.");
         this.blockchain = blockchain;
+        this.phasingPollService = phasingPollService;
     }
 
     @PostConstruct
@@ -424,26 +429,44 @@ public class DexOrderProcessor {
                     //TODO do something
                     continue;
                 }
-
-                SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
-                Long swapDeadline = swapData.getTimeDeadLine();
-                long currentTime = timeService.systemTime();
-                long timeLeft = swapDeadline - currentTime;
-                String hexHash = Convert.toHexString(swapData.getSecretHash());
+                long timeLeft;
+                String contractHexHash = Convert.toHexString(contract.getSecretHash());
+                if (order.getType() == OrderType.SELL) {
+                    SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
+                    if (StringUtils.isBlank(swapData.getStatus())) {
+                        log.debug("Swap {} does not exist", contractHexHash);
+                        continue;
+                    }
+                    Long swapDeadline = swapData.getTimeDeadLine();
+                    long currentTime = timeService.systemTime();
+                    timeLeft = swapDeadline - currentTime;
+                } else {
+                    long id = Long.parseUnsignedLong(contract.getCounterTransferTxId());
+                    PhasingPoll poll = phasingPollService.getPoll(id);
+                    if (poll == null) {
+                        log.debug("Account {} did not send transfer tx {}", contract.getRecipient(), id);
+                        continue;
+                    }
+                    PhasingPollResult result = phasingPollService.getResult(id);
+                    if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
+                        log.debug("Apl phasing transfer {} was already finished", id);
+                        continue;
+                    }
+                    timeLeft = poll.getFinishTime() - timeService.getEpochTime();
+                }
                 if (timeLeft < 0) {
-                    log.debug("Atomic swap {} expired, unable to proceed with exchange process, order - {}, counterOrder - {}, contract - {}", hexHash, order.getId(), counterOrder.getId(), contract.getId());
+                    log.debug("Contract expired, unable to proceed with exchange process, order - {}, counterOrder - {}, contract id - {}, hash - {}", order.getId(), counterOrder.getId(), contract.getId(), contractHexHash);
                     continue;
                 }
                 if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. Hash - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hexHash);
+                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. Hash - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, contractHexHash);
                     continue;
                 }
                 if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. Hash - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hexHash);
+                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. Hash - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, contractHexHash);
                     continue;
                 }
                 long transferWithApprovalDuration = timeLeft / 2;
-
                 String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
@@ -753,15 +776,21 @@ public class DexOrderProcessor {
 
                     for (ExchangeContract contract : contracts) {
                         byte[] swapHash = contract.getSecretHash();
-                        Objects.requireNonNull(swapHash, "Secret hash should not be null for contracts with status > 0");
+                        if (swapHash == null) { // swap hash may be not exist for STEP4 contracts (e.i. STEP4 contract was an expired 'STEP1' contract earlier)
+                            continue;
+                        }
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
+                        if (StringUtils.isBlank(swapData.getStatus())) { // eth swap is not exists (all fields are empty or zero)
+                            continue;
+                        }
                         Long timeDeadLine = swapData.getTimeDeadLine();
                         if (timeDeadLine + SWAP_EXPIRATION_OFFSET < timeService.systemTime()) {
-                            if (expiredSwaps.get(orderId) == null) { // skip swaps under processing
-                                expiredSwaps.put(orderId, swapData.getSecretHash());
+                            String swapHashHex = Convert.toHexString(swapHash);
+                            if (expiredSwaps.contains(swapHashHex)) { // skip swaps under processing
+                                expiredSwaps.add(swapHashHex);
                                 CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
                                         .handle((r, e) -> {
-                                            expiredSwaps.remove(orderId);
+                                            expiredSwaps.remove(swapHashHex);
                                             if (r != null) {
                                                 log.debug("Swap {} have got refunding status {}", Convert.toHexString(swapData.getSecretHash()), r);
                                             }
@@ -770,6 +799,8 @@ public class DexOrderProcessor {
                                             }
                                             return r;
                                         });
+                            } else {
+                                log.debug("Swap {} is processing now ", swapHashHex);
                             }
                         }
                     }

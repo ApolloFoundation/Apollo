@@ -1,22 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -45,6 +28,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +37,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -152,9 +152,15 @@ class PrunableArchiveMigratorTest {
         Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash1 = ops1.getFileHash();
+        byte[] hash1 = null;
+        if (ops1 != null && ops1.isHashedOK()) {
+            hash1 = ops1.getFileHash();
+        }
         ChunkedFileOps ops2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash2 = ops2.getFileHash();
+        byte[] hash2 = null;
+        if (ops2 != null && ops2.isHashedOK()) {
+            hash2 = ops2.getFileHash();
+        }
         doReturn(dataExportFolder).when(dirProvider).getDataExportDir();
         AtomicReference<Path> tempDirPath = new AtomicReference<>();
         doAnswer(invocation -> {
