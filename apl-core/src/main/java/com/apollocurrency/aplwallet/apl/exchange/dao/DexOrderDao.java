@@ -63,7 +63,8 @@ public interface DexOrderDao {
             "AND (offer.type = :requestedType) " +
             "AND (offer.status = 5) " +            
             "AND (offer.pair_currency = :pairCur) " +            
-            "OFFSET :offset LIMIT :limit"
+            "ORDER BY offer.finish_time ASC " +
+            "OFFSET :offset LIMIT :limit "             
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
