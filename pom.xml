@@ -84,7 +84,7 @@
         <apache-commons-math3.version>3.6.1</apache-commons-math3.version>
 
         <openjfx.version>12-ea+3</openjfx.version>
-        <tika.version>1.20</tika.version>
+        <tika.version>1.22</tika.version>
         <upnp.version>0.1.4</upnp.version>
         <jackson.version>2.10.0.pr3</jackson.version>
         <!--Indexing-->
