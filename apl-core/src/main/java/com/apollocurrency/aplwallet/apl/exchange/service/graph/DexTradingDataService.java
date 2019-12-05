@@ -91,7 +91,6 @@ public class DexTradingDataService {
             prevTime = candlestick.getTimestamp();
         }
         return getResultData(fullData, timeFrame);
-//        return buildTradingDataOutput(toTimestamp, startTime, resultData);
     }
 
     private List<DexCandlestick> getOrderCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency) {

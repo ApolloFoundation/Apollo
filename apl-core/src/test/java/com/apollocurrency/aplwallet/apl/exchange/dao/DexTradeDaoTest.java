@@ -12,10 +12,10 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -34,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * @author Serhiy Lymar
  */
 
-@EnableWeld
+//@EnableWeld
+    @Disabled
 public class DexTradeDaoTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension();

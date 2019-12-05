@@ -1,9 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexTradingTestData;
@@ -14,7 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class DexCandlestickDaoTest {
     @RegisterExtension
@@ -62,6 +63,41 @@ class DexCandlestickDaoTest {
 
         List<DexCandlestick> candlesticks = dao.getFromToTimestamp(0, Integer.MAX_VALUE, DexCurrency.ETH);
         assertEquals(List.of(td.ETH_0_CANDLESTICK, td.ETH_1_CANDLESTICK, td.ETH_2_CANDLESTICK), candlesticks);
+    }
+
+    @Test
+    void testGetLast() {
+        DexCandlestick last = dao.getLast();
+
+        assertEquals(td.ETH_9_CANDLESTICK, last);
+    }
+
+
+    @Test
+    void testGetLastPax() {
+        DexCandlestick last = dao.getLast(DexCurrency.PAX);
+
+        assertEquals(td.PAX_4_CANDLESTICK, last);
+    }
+
+    @Test
+    void testUpdate() {
+        DexCandlestick candlestick = td.ETH_3_CANDLESTICK;
+        candlestick.setClose(BigDecimal.ZERO);
+        candlestick.setOpen(BigDecimal.ONE);
+        dao.update(candlestick);
+
+        assertEquals(candlestick, dao.getByTimestamp(candlestick.getTimestamp(), candlestick.getCoin()));
+    }
+
+    @Test
+    void testAdd() {
+        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
+
+        dao.add(candlestick);
+
+        assertEquals(candlestick, dao.getByTimestamp(candlestick.getTimestamp(), DexCurrency.ETH));
+        assertEquals(11, dao.getFromToTimestamp(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
     }
 
 }

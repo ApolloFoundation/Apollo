@@ -44,7 +44,7 @@ public interface DexCandlestickDao {
 
     @Transactional
     @SqlUpdate("INSERT INTO dex_candlestick(coin, min, max, open, close, from_volume,to_volume, timestamp) VALUES (:coin, :min, :max, :open, :close, :fromVolume, :toVolume, :timestamp)")
-    void add(DexCandlestick candlestick);
+    void add(@BindBean DexCandlestick candlestick);
 
     @Transactional
     @SqlUpdate("UPDATE dex_candlestick SET min = :min, max = :max, open = :open, close = :close, from_volume = :fromVolume, to_volume = :toVolume WHERE timestamp = :timestamp AND coin = :coin")
