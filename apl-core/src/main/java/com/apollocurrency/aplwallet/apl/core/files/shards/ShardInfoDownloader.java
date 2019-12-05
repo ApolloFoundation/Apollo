@@ -67,7 +67,7 @@ public class ShardInfoDownloader {
     private final PeersService peers;
     private final UUID myChainId;
     public static final String SHARD_ID_ENV="APOLLO_DOWNLOAD_SHARD_ID";
-    public static final long PEER_RECONNECT_TIME_MS=2000L;  
+ 
     @Inject
     public ShardInfoDownloader( PeersService peers) {
         this.additionalPeers = ConcurrentHashMap.newKeySet();
@@ -151,8 +151,8 @@ public class ShardInfoDownloader {
                 } else {
                     try {
                         log.debug("FAILED connect to peer: {} attempt# '{}' , DELAY for '{}' ms before next attempt...",
-                                p.getAnnouncedAddress(), i, PEER_RECONNECT_TIME_MS);
-                        Thread.sleep(PEER_RECONNECT_TIME_MS);
+                                p.getAnnouncedAddress(), i, PeersService.connectTimeout);
+                        Thread.sleep(PeersService.connectTimeout+20);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }

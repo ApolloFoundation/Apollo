@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import lombok.extern.slf4j.Slf4j;
 
@@ -181,6 +182,9 @@ public class ShardImporter {
                 throw new RuntimeException(e);
             }
         }
+        // remove all extracted *.csv files after successful importing from zip shard archive(s)
+        log.debug("Start deleting imported CSV files from folder: {}", csvImporter.getDataExportPath());
+        FileUtils.deleteFilesByPattern(csvImporter.getDataExportPath(), new String[]{"csv"}, null);
         aplAppStatus.durableTaskFinished(genesisTaskId, false, "Shard data import");
     }
 

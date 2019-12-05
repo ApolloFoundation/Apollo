@@ -158,7 +158,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String quotedEscapedText(String o){
-        return quote + o.replaceAll(quote, doubleQuote) + quote;
+        return quotedText(o.replaceAll(quote, doubleQuote));
+    }
+
+    private String quotedText(String o){
+        return quote + o + quote;
     }
 
     private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend, Map<String, String> defaultValues) throws SQLException {
@@ -248,11 +252,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         } else {
                                             throw new RuntimeException("Unsupported array type: " + o1.getClass());
                                         }
-                                        outputValue.append(objectValue).append(fieldSeparatorWrite);
+                                        final StringBuilder appendedValue = outputValue.append(objectValue);
                                         if (j == objectArray.length - 1) {
-                                            // there is a bug in H2 parser, so let's make one extra comma at the end
-                                            // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
                                             outputValue.append(arrayEndToken);
+                                        } else {
+                                            appendedValue.append(fieldSeparatorWrite);
                                         }
                                     }
                                     o = outputValue.toString();
@@ -261,16 +265,16 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     o = array != null ? EMPTY_ARRAY : nullString;
                                 }
                                 break;
-                            case Types.NVARCHAR:
                             case Types.VARBINARY:
                             case Types.BINARY:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
-                                    o = Base64.getEncoder().encodeToString(((byte[]) o));
+                                    o = quotedText(Base64.getEncoder().encodeToString(((byte[]) o)));
                                 } else {
                                     o = nullString;
                                 }
                                 break;
+                            case Types.NVARCHAR:
                             case Types.VARCHAR:
                             default:
                                 o = rs.getString(i + 1);
