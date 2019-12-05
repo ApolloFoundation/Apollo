@@ -66,6 +66,8 @@
         <web-wallet.version>2.5.29</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
+        <!--  -->
+        <antifraud.version>1.0.4</antifraud.version>
 
         <!--Crypto-->
 
@@ -185,6 +187,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+        <dependency>
+            <groupId>com.apollocurrency.antifraud</groupId>
+            <artifactId>antifraud</artifactId>
+            <version>${antifraud.version}</version>
+        </dependency>            
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk15on</artifactId>
