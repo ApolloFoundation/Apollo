@@ -191,7 +191,7 @@
             <groupId>com.apollocurrency.antifraud</groupId>
             <artifactId>antifraud</artifactId>
             <version>${antifraud.version}</version>
-        </dependency>            
+        </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk15on</artifactId>
