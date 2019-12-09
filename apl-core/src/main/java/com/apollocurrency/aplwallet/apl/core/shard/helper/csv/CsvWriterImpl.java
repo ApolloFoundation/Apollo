@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
@@ -15,8 +16,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.Array;
 import java.sql.Connection;
@@ -32,7 +35,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,6 +56,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
     private static final String quote = String.valueOf(TEXT_FIELD_START);
     private static final String doubleQuote = quote+quote;
+    /**
+     * Extends H2 ARRAY SQL type by providing a proper precision and scale
+     * as per Java type.
+     */
+    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
+    private static final String DB_ARRAY_FILE_NAME = "db_arrays.csv";
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
@@ -179,9 +192,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
                 // fill in meta data
-                columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
-                        meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
-                        meta.getPrecision(i + 1), meta.getScale(i + 1));
+                columnsMetaData[i] = getColumnMetaData(meta, i+1);
             }
             log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
             if (writeColumnHeader) {
@@ -315,6 +326,98 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             }
             DbUtils.closeSilently(rs);
         }
+    }
+
+    static {
+        try (Stream<String> stream = Files.lines(
+                Paths.get(
+                        Objects.requireNonNull(
+                                Thread.currentThread().getContextClassLoader().getResource(DB_ARRAY_FILE_NAME),
+                                String.format("A resource associated with a file: %s is null",DB_ARRAY_FILE_NAME)
+                        ).toURI()
+                )
+        )) {
+            ARRAY_COLUMN_INDEX = stream
+                    .map(CsvWriterImpl::getArrayColumn)
+                    .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
+
+        } catch (IOException | URISyntaxException e) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Cannot load %s from classpath resources",
+                            DB_ARRAY_FILE_NAME
+                    )
+            );
+        }
+    }
+
+    private static ArrayColumn getArrayColumn(final String line) {
+        final String[] values = line.split(",");
+        final int valuesNumber = 4;
+        if (values.length != valuesNumber) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "%d values describing H2 arrays are supposed to be here",
+                            valuesNumber
+                    )
+            );
+        }
+        return ArrayColumn.builder()
+                .tableName(values[0])
+                .columnName(values[1])
+                .precision(Integer.parseInt(values[2]))
+                .scale(Integer.parseInt(values[3]))
+                .build();
+    }
+
+    /**
+     * Gets a ColumnMetaData object as per an index in ResultSetMetaData.
+     * When it comes to the ARRAY SQL type, this method asks a prepopulated index map
+     * for a proper precision and scale. This is because, H2 has no concrete types for arrays
+     * and the precision of arrays may change (as it was from 196 to 200).
+     *
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private ColumnMetaData getColumnMetaData(
+            final ResultSetMetaData meta,
+            final int index
+    ) throws SQLException {
+        final int columnType = meta.getColumnType(index);
+        final String columnLabel = meta.getColumnLabel(index);
+        final String columnTypeName = meta.getColumnTypeName(index);
+        int precision;
+        int scale;
+        if (columnType == Types.ARRAY) {
+            final String tableName = meta.getTableName(index);
+            final String columnName = meta.getColumnName(index);
+            final ArrayColumn arrayColumn = getArrayColumn(tableName, columnName);
+            precision = arrayColumn.getPrecision();
+            scale = arrayColumn.getScale();
+        } else {
+            precision = meta.getPrecision(index);
+            scale = meta.getScale(index);
+        }
+        return new ColumnMetaData(columnLabel, columnTypeName, columnType, precision, scale);
+    }
+
+    private ArrayColumn getArrayColumn(String tableName, String columnName) {
+        return Optional.ofNullable(
+                ARRAY_COLUMN_INDEX.get(
+                        ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
+                )
+        ).orElseThrow(
+                () -> new IllegalStateException(
+                        String.format(
+                                "Cannot find tableName: %s and columnName: %s in the file: %s",
+                                tableName,
+                                columnName,
+                                DB_ARRAY_FILE_NAME
+                        )
+                )
+        );
     }
 
     /**
