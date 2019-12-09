@@ -50,20 +50,20 @@ public class EthChainGasInfoImpl implements EthGasInfo {
      * Gwei
      */
     public Long getFastSpeedPrice() {
-        return Double.valueOf(fastSpeedPrice * 10).longValue();
+        return Double.valueOf(fastSpeedPrice).longValue();
     }
 
     /**
      * Gwei
      */
     public Long getAverageSpeedPrice() {
-        return Double.valueOf(averageSpeedPrice * 10).longValue();
+        return Double.valueOf(averageSpeedPrice).longValue();
     }
 
     /**
      * Gwei
      */
     public Long getSafeLowSpeedPrice() {
-        return Double.valueOf(safeLowSpeedPrice * 10).longValue();
+        return Double.valueOf(safeLowSpeedPrice).longValue();
     }
 }

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.38.13</version>
+        <version>1.39.0</version>
     </parent>
 
     <artifactId>apl-tools</artifactId>
@@ -80,7 +80,11 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

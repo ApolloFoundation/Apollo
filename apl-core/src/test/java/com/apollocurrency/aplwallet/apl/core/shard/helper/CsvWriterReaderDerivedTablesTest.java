@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -63,6 +64,8 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -96,7 +99,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -196,6 +198,10 @@ class CsvWriterReaderDerivedTablesTest {
         publicKeyTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
         purchaseTable.init();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
     }
 
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
@@ -225,7 +231,7 @@ class CsvWriterReaderDerivedTablesTest {
 
             // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id > ? and db_id < ? limit ?");
+                 PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id BETWEEN ? and  ? limit ?");
                  CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
@@ -244,7 +250,7 @@ class CsvWriterReaderDerivedTablesTest {
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID"));
+                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID") + 1);
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
@@ -282,6 +288,7 @@ class CsvWriterReaderDerivedTablesTest {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
+        ValueParser parser = new ValueParserImpl();
 
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(dataExportDir);
@@ -320,7 +327,7 @@ class CsvWriterReaderDerivedTablesTest {
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
                         InputStream is = null;
                         try {
-                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            is = new ByteArrayInputStream( parser.parseBinaryObject(object) );
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
                         } catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);
@@ -366,7 +373,7 @@ class CsvWriterReaderDerivedTablesTest {
     private int dropDataByName(long minDbValue, long maxDbValue, String itemName) {
         // drop data
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("delete from " + itemName + " where db_id > ? AND db_id < ?")) {
+             PreparedStatement pstmt = con.prepareStatement("delete from " + itemName + " where db_id  BETWEEN ? AND ?")) {
             pstmt.setLong(1, minDbValue);
             pstmt.setLong(2, maxDbValue);
             int deleted = pstmt.executeUpdate();

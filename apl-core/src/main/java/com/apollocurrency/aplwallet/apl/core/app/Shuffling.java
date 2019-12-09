@@ -63,6 +63,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -198,19 +199,9 @@ public final class Shuffling {
         public void save(Connection con, Shuffling shuffling) throws SQLException {
             shuffling.save(con);
             LOG.trace("Save shuffling {} - height - {} remaining - {} Trace - {}",
-                    shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(),  shuffling.last3Stacktrace());
+                    shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), ThreadUtils.last3Stacktrace());
         }
     };
-    String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
-    }
-
 
     public static boolean addListener(Listener<Shuffling> listener, Event eventType) {
         return listeners.addListener(listener, eventType);
@@ -234,6 +225,18 @@ public final class Shuffling {
 
     public static DbIterator<Shuffling> getActiveShufflings(int from, int to) {
         return shufflingTable.getManyBy(new DbClause.NotNullClause("blocks_remaining"), from, to, " ORDER BY blocks_remaining, height DESC ");
+    }
+
+    public static List<Shuffling> getActiveShufflings() {
+        Connection con = null;
+        try {
+            con = lookupDataSource().getConnection();
+            PreparedStatement psActiveShuffling = con.prepareStatement("SELECT * FROM shuffling WHERE blocks_remaining IS NOT NULL AND latest = TRUE ORDER BY blocks_remaining, height DESC");
+            return CollectionUtil.toList(shufflingTable.getManyBy(con, psActiveShuffling, true));
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     public static DbIterator<Shuffling> getFinishedShufflings(int from, int to) {
@@ -313,7 +316,8 @@ public final class Shuffling {
     @Singleton
     public static class ShufflingObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-                long startTime = System.currentTimeMillis();
+            LOG.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
+            long startTime = System.currentTimeMillis();
                 LOG.trace("Shuffling observer call at {}", block.getHeight());
                 if (block.getOrLoadTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
                         || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
@@ -321,13 +325,13 @@ public final class Shuffling {
                     return;
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
-                List<Shuffling> activeShufflings = CollectionUtil.toList(getActiveShufflings(0, -1));
-                LOG.trace("Got {} active shufflings", activeShufflings.size());
+                List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
+                LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
                     } else {
-                        LOG.trace("Skip shuffling {}, block is full");
+                        LOG.trace("Skip shuffling {}, block is full", block.getId());
                     }
                 }
                 LOG.trace("Shufflings to process - {} ", shufflings.size());
@@ -337,13 +341,13 @@ public final class Shuffling {
                         cancelled++;
                         shuffling.cancel(block);
                     } else {
-                        LOG.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
+                        LOG.trace("Insert shuffling {} - height - {} remaining - {}",
                                 shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining());
                         inserted++;
                         shufflingTable.insert(shuffling);
                     }
                 }
-                LOG.trace("Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
+                LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
         }
 

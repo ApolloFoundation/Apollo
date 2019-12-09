@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -77,8 +78,10 @@ public abstract class CurrencyExchangeOffer {
     }
 
     @Singleton
+    @Slf4j
     public static class CurrencyExchangeOfferObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
+            log.trace(":accept:CurrencyExchangeOfferObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             List<CurrencyBuyOffer> expired = new ArrayList<>();
             try (DbIterator<CurrencyBuyOffer> offers = CurrencyBuyOffer.getOffers(new DbClause.IntClause("expiration_height", block.getHeight()), 0, -1)) {
                 for (CurrencyBuyOffer offer : offers) {
@@ -86,6 +89,7 @@ public abstract class CurrencyExchangeOffer {
                 }
             }
             expired.forEach((offer) -> CurrencyExchangeOffer.removeOffer(LedgerEvent.CURRENCY_OFFER_EXPIRED, offer));
+            log.trace(":accept:CurrencyExchangeOfferObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 

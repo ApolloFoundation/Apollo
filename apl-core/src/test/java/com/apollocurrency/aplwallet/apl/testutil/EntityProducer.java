@@ -212,11 +212,6 @@ public class EntityProducer {
             }
 
             @Override
-            public boolean handshake(UUID targetChainId) {
-               return true;
-            }
-
-            @Override
             public boolean isTrusted() {
                 return false;
             }

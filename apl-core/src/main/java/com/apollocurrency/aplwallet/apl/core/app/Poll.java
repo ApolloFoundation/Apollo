@@ -226,8 +226,10 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-                int height = block.getHeight();
+            LOG.trace(":accept:PollObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            int height = block.getHeight();
                 Poll.checkPolls(height);
+            LOG.trace(":accept:PollObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 

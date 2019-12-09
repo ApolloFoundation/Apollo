@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class DGSObserver {
     private DGSService service;
 
@@ -32,6 +34,7 @@ public class DGSObserver {
         if (block.getHeight() == 0) {
             return;
         }
+        log.trace(":accept:DGSObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         List<DGSPurchase> expiredPurchases = new ArrayList<>();
         try (DbIterator<DGSPurchase> iterator = service.getExpiredPendingPurchases(block)) {
             while (iterator.hasNext()) {
@@ -48,5 +51,6 @@ public class DGSObserver {
             purchase.setHeight(block.getHeight());
             service.setPending(purchase, false);
         }
+        log.trace(":accept:DGSObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
     }
 }

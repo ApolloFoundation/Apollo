@@ -1,27 +1,31 @@
+/*
+ * Copyright (c) 2018-2019. Apollo Foundation
+ */
 
 package com.apollocurrency.aplwallet.api.dto;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  *
  * @author al
  */
-public class BasicAccount {
-    @JsonAlias({"account", "accountRS"}) // from json
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+public class BasicAccount extends BaseDTO {
+    @JsonAlias({"account"}) // from json
     @JsonProperty("account") //to json
-    public long id;
+    protected long id;
+    public String accountRS;
 
-    public BasicAccount() {
-    }
-    
-    public BasicAccount(long account) {
-        this.id = account;
-    }   
     public BasicAccount(String account) {
         this.id = Convert.parseAccountId(account);
     }
-    
-   }
+
+}

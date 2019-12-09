@@ -26,7 +26,5 @@ import lombok.ToString;
 public class ShardingInfo {
     public List<ShardInfo> shards = new ArrayList<>();    
     public List<String> knownPeers = new ArrayList<>();
-    @JsonIgnore
-    //needed for processing only
-    public String source;
+    public Boolean isShardingOff=false;
 }

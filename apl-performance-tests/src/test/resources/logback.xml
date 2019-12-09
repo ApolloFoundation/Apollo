@@ -1,0 +1,3 @@
+<logger name="io.gatling.http.engine.response" level="DEBUG" additivity="false">
+    <appender-ref ref="ERROR"/>
+</logger>

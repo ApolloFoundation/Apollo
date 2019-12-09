@@ -64,5 +64,12 @@ public interface CsvReader extends AutoCloseable {
      */
     String setOptions(String options);
 
+    /**
+     * UnEscape the fieldDelimiter character that already escaped with the escape character.
+     * @param data source escaped string
+     * @return unescaped string
+     */
+    String unEscape(String data);
+
 
 }
