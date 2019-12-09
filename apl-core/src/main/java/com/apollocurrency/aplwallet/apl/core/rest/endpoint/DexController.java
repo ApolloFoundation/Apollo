@@ -602,17 +602,14 @@ public class DexController {
     @GET
     @Path("/contracts")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Retrieve processable dex contract for order", description = "Lookup the database to get dex contract associated with specified account and order with status > STEP1",
+    @Operation(tags = {"dex"}, summary = "Retrieve dex contracts for order", description = "Lookup the database to get dex contracts associated with specified account and order with status >= STEP1",
             responses = @ApiResponse(description = "List of contracts, by default should contain 1 entry, in some cases may contain more than 1 entry (i.e. order was reopened due to expired contract; few users sent matching contract to one order) ", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     public Response getContractForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
                                         @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
         long accountId = Convert.parseAccountId(account);
         long orderId = Convert.parseLong(order);
-        List<ExchangeContract> contracts = service.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) ExchangeContractStatus.STEP_2.ordinal());
-        if (contracts.size() > 1) {
-            log.warn("Found {} processable contracts for order {}, account - {} ", contracts, orderId, accountId);
-        }
+        List<ExchangeContract> contracts = service.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) ExchangeContractStatus.STEP_1.ordinal());
         return Response.ok(contractConverter.convert(contracts)).build();
     }
 
