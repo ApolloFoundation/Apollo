@@ -17,7 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
+
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -150,6 +152,7 @@ public class ShardImporter {
             ChunkedFileOps ops = new ChunkedFileOps(zipInFolder.toAbsolutePath().toString());
             lastShard.setCoreZipHash(ops.getFileHash());
             log.debug("Update shard info: coreZipHash={}", Convert.toHexString(lastShard.getCoreZipHash()));
+
             shardDao.updateShard(lastShard);
         }
 
@@ -210,6 +213,7 @@ public class ShardImporter {
                 log.debug("Zip for '{}' is unpacked = {}", optionalFileId, unpackResult);
                 if (!unpackResult) {
                     logErrorAndThrowException(shardPresentData, genesisTaskId, extZipInFolder, unpackResult);
+
                     return null;
                 }
             }
