@@ -33,6 +33,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -313,6 +315,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
             PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
                     ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
                     + " WHERE " + table + ".db_id = ft.keys[1] "
@@ -475,8 +478,11 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
+                try (
+                        @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
+                        PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                ) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }

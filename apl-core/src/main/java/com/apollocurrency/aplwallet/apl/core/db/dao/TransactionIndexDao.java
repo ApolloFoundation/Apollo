@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.TransactionIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -55,6 +57,7 @@ public interface TransactionIndexDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT count(*) FROM transaction_shard_index where height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY height desc LIMIT 1),0)")
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long countTransactionIndexByShardId(@Bind("shardId") long shardId);
 
     @Transactional(readOnly = true)

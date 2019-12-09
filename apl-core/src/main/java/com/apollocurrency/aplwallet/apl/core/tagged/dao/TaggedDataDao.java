@@ -14,6 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.tagged.mapper.TaggedDataMapper;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedData;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -139,9 +141,13 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
 
     @Override
     public void save(Connection con, TaggedData taggedData) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
                 + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getId());
             pstmt.setLong(++i, taggedData.getAccountId());

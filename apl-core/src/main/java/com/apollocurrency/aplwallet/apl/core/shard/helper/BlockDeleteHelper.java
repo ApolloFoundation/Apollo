@@ -8,6 +8,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import java.sql.Connection;

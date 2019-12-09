@@ -27,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.OrderTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.ShardStateFactory;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
@@ -226,6 +228,7 @@ public class DataSourceWrapper implements DataSource {
 
         log.debug("Attempting to open Jdbi handler to database..");
         try (Handle handle = jdbi.open()) {
+            @DatabaseSpecificDml(DmlMarker.DUAL_TABLE_USE)
             Optional<Integer> result = handle.createQuery("select 1 from dual;")
                     .mapTo(Integer.class).findOne();
             log.debug("check SQL result ? = {}", result);

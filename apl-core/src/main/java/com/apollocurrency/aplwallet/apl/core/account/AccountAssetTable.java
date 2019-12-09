@@ -13,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -58,7 +61,10 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
-         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+         try (
+                 @DatabaseSpecificDml(DmlMarker.MERGE)
+                 final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")
+         ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.accountId);
             pstmt.setLong(++i, accountAsset.assetId);

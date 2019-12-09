@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextSearchServiceImpl implements FullTextSearchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);

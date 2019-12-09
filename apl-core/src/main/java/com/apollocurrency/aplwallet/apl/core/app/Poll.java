@@ -38,6 +38,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
@@ -283,10 +285,13 @@ public final class Poll extends AbstractPoll {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
                 + "name, description, options, finish_height, voting_model, min_balance, min_balance_model, "
                 + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, id);
             pstmt.setLong(++i, accountId);
