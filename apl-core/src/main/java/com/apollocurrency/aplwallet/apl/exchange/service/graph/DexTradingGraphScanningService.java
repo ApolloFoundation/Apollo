@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 public class DexTradingGraphScanningService {
     private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
-    private static final String SERVICE_NAME = "CandlesticksScanner";
+    static final String SERVICE_NAME = "CandlesticksScanner";
     private static final String TASK_NAME = "OrderProcessor";
     private static final int ORDER_SCANNING_HEIGHT_OFFSET = 50_000;
     private static final int ORDER_SCANNING_DELAY = 5 * 60 * 1000; // 5 minutes in ms
@@ -97,6 +98,7 @@ public class DexTradingGraphScanningService {
             finally {
                 lock.unlock();
             }
+            ThreadUtils.sleep(200);
         } while (orders == orderSelectLimit);
     }
 

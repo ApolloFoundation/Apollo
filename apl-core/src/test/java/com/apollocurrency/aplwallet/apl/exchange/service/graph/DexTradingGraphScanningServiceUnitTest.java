@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
-class DexTradingGraphScanningServiceTest {
+class DexTradingGraphScanningServiceUnitTest {
     @Mock
     Blockchain blockchain;
     @Mock
