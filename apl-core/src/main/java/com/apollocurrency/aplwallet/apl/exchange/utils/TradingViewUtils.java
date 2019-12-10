@@ -26,59 +26,6 @@ public class TradingViewUtils {
     
     private static final Logger log = LoggerFactory.getLogger(TradingViewUtils.class);
 
-   /* 
-    static public SimpleTradingEntry getDataForPeriodFromOffersBuyEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
-        // request type =1 or 0 depending on sale or buy
-        
-        SimpleTradingEntry result = new SimpleTradingEntry();
-        
-        List<DexOrder> periodEntries = new ArrayList<>();
-        dexOrders.forEach((entry)-> {                
-            long finishTS = entry.getFinishTime();                
-            if (finishTS >= start && finishTS < finish) {                                   
-                periodEntries.add(entry);                
-            }                            
-        });
-        
-        if (periodEntries.size() > 0) { 
-
-            BigDecimal hi = BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal low =  BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal open = BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal close = BigDecimal.valueOf(periodEntries.get(periodEntries.size()-1).getOrderAmount());
-            BigDecimal volumefrom = BigDecimal.ZERO;
-            BigDecimal volumeto = BigDecimal.ZERO; 
-            
-            for(DexOrder entryOfPeriod: periodEntries) { 
-                if ( entryOfPeriod.getPairRate().compareTo( hi ) == 1 ) {
-                    hi = entryOfPeriod.getPairRate();
-                }                
-                if ( entryOfPeriod.getPairRate().compareTo( low ) == -1 ) {
-                    low = entryOfPeriod.getPairRate();
-                } 
-                
-                BigDecimal amount = BigDecimal.valueOf( entryOfPeriod.getOrderAmount() );
-                BigDecimal vx = BigDecimal.valueOf(entryOfPeriod.getOrderAmount()).multiply(entryOfPeriod.getPairRate());
-                volumefrom = volumefrom.add(vx);
-                volumeto = volumeto.add(amount);
-            }            
-            result.low = low; 
-            result.high = hi;
-            result.open = open; 
-            result.close = close;             
-            result.volumefrom = volumefrom;
-            result.volumeto = volumeto;            
-        } else {
-            result.low = BigDecimal.ZERO;
-            result.high = BigDecimal.ZERO;
-            result.open = BigDecimal.ZERO;
-            result.close = BigDecimal.ZERO;             
-            result.volumefrom = BigDecimal.ZERO;
-            result.volumeto = BigDecimal.ZERO;     
-        }
-        return result;         
-    }    
- */
     
     static public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
         // request type =1 or 0 depending on sale or buy
@@ -107,7 +54,7 @@ public class TradingViewUtils {
                 
                 
                 BigDecimal currentPairRate = new BigDecimal( EthUtil.etherToWei( entryOfPeriod.getPairRate() ));
-                log.debug("pairRate: {}", currentPairRate);
+                log.debug("TS: {}, pairRate: {}", Convert2.fromEpochTime(entryOfPeriod.getFinishTime()), currentPairRate);
                 
                 if ( currentPairRate.compareTo(hi) == 1 ) {
                     hi = currentPairRate;
@@ -138,15 +85,7 @@ public class TradingViewUtils {
         return result;         
     }        
 
- /*   
-    static public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish, Integer requestType) {
-        if (requestType == 0) {
-            return getDataForPeriodFromOffersSaleEpoch(dexOrders, start, finish);
-        } else {
-            return getDataForPeriodFromOffersBuyEpoch(dexOrders, start, finish);
-        }
-    }
-*/
+
         
     static public TradingDataOutput getDataForIntervalFromOffers( String fsym, String tsym, Integer toTs, Integer limit, Integer interval, DexService service, TimeService timeService) {
         int initialTime = toTs - (interval*limit);
