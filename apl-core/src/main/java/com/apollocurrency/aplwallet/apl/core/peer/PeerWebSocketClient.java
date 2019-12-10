@@ -29,6 +29,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
     private static void init() throws Exception {
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        client.setConnectTimeout(PeersService.connectTimeout);
         client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         client.setStopAtShutdown(true);
         client.start();
