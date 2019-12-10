@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -14,6 +16,7 @@ import java.util.List;
  * @author Serhiy Lymar
  */
 @JsonSerialize
+@Data
 public class TradingDataOutputDTO {
     @Schema(name="Response", description="Response description")        
     public String Response;

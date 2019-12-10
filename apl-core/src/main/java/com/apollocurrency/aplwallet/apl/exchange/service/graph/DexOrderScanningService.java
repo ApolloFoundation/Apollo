@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 @Slf4j
-public class DexTradingGraphScanningService {
+public class DexOrderScanningService {
     private static final int DEFAULT_ORDER_SELECT_LIMIT = 100;
     static final String SERVICE_NAME = "CandlesticksScanner";
     private static final String TASK_NAME = "OrderProcessor";
@@ -42,7 +42,7 @@ public class DexTradingGraphScanningService {
     private final Lock lock = new ReentrantLock();
     private boolean blockchainScanInProgress;
 
-    public DexTradingGraphScanningService(ScanPerformer performer, DexCandlestickDao candlestickDao, DexOrderDao dexOrderDao, TaskDispatchManager taskDispatchManager, Blockchain blockchain, int orderSelectLimit) {
+    public DexOrderScanningService(ScanPerformer performer, DexCandlestickDao candlestickDao, DexOrderDao dexOrderDao, TaskDispatchManager taskDispatchManager, Blockchain blockchain, int orderSelectLimit) {
         this.candlestickDao = candlestickDao;
         this.dexOrderDao = dexOrderDao;
         this.taskDispatchManager = taskDispatchManager;
@@ -52,7 +52,7 @@ public class DexTradingGraphScanningService {
     }
 
     @Inject
-    public DexTradingGraphScanningService(ScanPerformer performer, Blockchain blockchain, DexCandlestickDao candlestickDao, DexOrderDao dexOrderDao, TaskDispatchManager taskDispatchManager) {
+    public DexOrderScanningService(ScanPerformer performer, Blockchain blockchain, DexCandlestickDao candlestickDao, DexOrderDao dexOrderDao, TaskDispatchManager taskDispatchManager) {
         this(performer, candlestickDao, dexOrderDao, taskDispatchManager, blockchain, DEFAULT_ORDER_SELECT_LIMIT);
     }
 

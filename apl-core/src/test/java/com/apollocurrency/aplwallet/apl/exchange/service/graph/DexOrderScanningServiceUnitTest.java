@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
-class DexTradingGraphScanningServiceUnitTest {
+class DexOrderScanningServiceUnitTest {
     @Mock
     Blockchain blockchain;
     @Mock
@@ -52,7 +52,7 @@ class DexTradingGraphScanningServiceUnitTest {
     private ScanPerformer scanPerformer;
     private OrderScanDao orderScanDao;
     private DexCandlestickDao candlestickDao;
-    private DexTradingGraphScanningService service;
+    private DexOrderScanningService service;
 
 
     @BeforeEach
@@ -61,7 +61,7 @@ class DexTradingGraphScanningServiceUnitTest {
         candlestickDao = new InMemoryDexCandlestickDao();
         orderScanDao = new InMemoryOrderScanDao();
         scanPerformer = new ScanPerformer(orderScanDao, orderDao, candlestickDao);
-        service = new DexTradingGraphScanningService(scanPerformer, candlestickDao, orderDao, dispatchManager, blockchain, 2);
+        service = new DexOrderScanningService(scanPerformer, candlestickDao, orderDao, dispatchManager, blockchain, 2);
     }
 
     @Test

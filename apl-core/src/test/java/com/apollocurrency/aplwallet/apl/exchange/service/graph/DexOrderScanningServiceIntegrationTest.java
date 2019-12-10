@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.eOrder;
-import static com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingGraphScanningService.SERVICE_NAME;
+import static com.apollocurrency.aplwallet.apl.exchange.service.graph.DexOrderScanningService.SERVICE_NAME;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @EnableWeld
-class DexTradingGraphScanningServiceIntegrationTest {
+class DexOrderScanningServiceIntegrationTest {
 
     Blockchain blockchain = mock(Blockchain.class);
     TaskDispatchManager dispatchManager = mock(TaskDispatchManager.class);
@@ -48,11 +48,11 @@ class DexTradingGraphScanningServiceIntegrationTest {
     private OrderScanDao orderScanDao = mock(OrderScanDao.class);
     private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
     @Inject
-    DexTradingGraphScanningService service;
+    DexOrderScanningService service;
     @Inject
     Event<Block> blockEvent;
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(DexTradingGraphScanningService.class)
+    WeldInitiator weld = WeldInitiator.from(DexOrderScanningService.class)
             .addBeans(
                     MockBean.of(orderDao, DexOrderDao.class)
                     , MockBean.of(scanPerformer, ScanPerformer.class)
