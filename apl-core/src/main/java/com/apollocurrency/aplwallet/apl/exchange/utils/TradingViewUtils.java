@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -25,58 +26,8 @@ public class TradingViewUtils {
 
     private static final Logger log = LoggerFactory.getLogger(TradingViewUtils.class);
 
-    static public SimpleTradingEntry getDataForPeriodFromOffersBuyEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
-        // request type =1 or 0 depending on sale or buy
 
-        SimpleTradingEntry result = new SimpleTradingEntry();
-        
-        List<DexOrder> periodEntries = new ArrayList<>();
-        dexOrders.forEach((entry)-> {
-            long finishTS = entry.getFinishTime();                
-            if (finishTS >= start && finishTS < finish) {                                   
-                periodEntries.add(entry);                
-            }                            
-        });
-        
-        if (periodEntries.size() > 0) {
-
-            BigDecimal hi = BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal low =  BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal open = BigDecimal.valueOf(periodEntries.get(0).getOrderAmount());
-            BigDecimal close = BigDecimal.valueOf(periodEntries.get(periodEntries.size()-1).getOrderAmount());
-            BigDecimal volumefrom = BigDecimal.ZERO;
-            BigDecimal volumeto = BigDecimal.ZERO; 
-            
-            for(DexOrder entryOfPeriod: periodEntries) {
-                if ( entryOfPeriod.getPairRate().compareTo( hi ) == 1 ) {
-                    hi = entryOfPeriod.getPairRate();
-                }                
-                if ( entryOfPeriod.getPairRate().compareTo( low ) == -1 ) {
-                    low = entryOfPeriod.getPairRate();
-                }                
-                BigDecimal amount = BigDecimal.valueOf( entryOfPeriod.getOrderAmount() );
-                BigDecimal vx = BigDecimal.valueOf(entryOfPeriod.getOrderAmount()).multiply(entryOfPeriod.getPairRate());
-                volumefrom = volumefrom.add(vx);
-                volumeto = volumeto.add(amount);
-            }            
-            result.low = low; 
-            result.high = hi;
-            result.open = open; 
-            result.close = close;             
-            result.volumefrom = volumefrom;
-            result.volumeto = volumeto;            
-        } else {
-            result.low = BigDecimal.ZERO;
-            result.high = BigDecimal.ZERO;
-            result.open = BigDecimal.ZERO;
-            result.close = BigDecimal.ZERO;
-            result.volumefrom = BigDecimal.ZERO;
-            result.volumeto = BigDecimal.ZERO;
-        }
-        return result;         
-    }
-
-    static public SimpleTradingEntry getDataForPeriodFromOffersSaleEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
+    static public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
         // request type =1 or 0 depending on sale or buy
 
         SimpleTradingEntry result = new SimpleTradingEntry();
@@ -90,21 +41,28 @@ public class TradingViewUtils {
         });
         
         if (periodEntries.size() > 0) {
+            log.debug("offers: {}", periodEntries.size());
 
-            BigDecimal hi = periodEntries.get(0).getPairRate();            
-            BigDecimal low = periodEntries.get(0).getPairRate();
-            BigDecimal open = periodEntries.get(0).getPairRate();
-            BigDecimal close = periodEntries.get( periodEntries.size()-1 ).getPairRate();
+            BigDecimal hi = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ) );
+            BigDecimal low = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ));
+            BigDecimal open = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ));
+            BigDecimal close = new BigDecimal( EthUtil.etherToWei( periodEntries.get( periodEntries.size()-1 ).getPairRate() ));
             BigDecimal volumefrom = BigDecimal.ZERO;
             BigDecimal volumeto = BigDecimal.ZERO; 
             
-            for(DexOrder entryOfPeriod: periodEntries) {            
-                if ( entryOfPeriod.getPairRate().compareTo( hi ) == 1 ) {
-                    hi = entryOfPeriod.getPairRate();
-                }                
-                if ( entryOfPeriod.getPairRate().compareTo( low ) == -1 ) {
-                    low = entryOfPeriod.getPairRate();
-                }                
+            for(DexOrder entryOfPeriod: periodEntries) {
+
+
+                BigDecimal currentPairRate = new BigDecimal( EthUtil.etherToWei( entryOfPeriod.getPairRate() ));
+                log.debug("TS: {}, pairRate: {}", Convert2.fromEpochTime(entryOfPeriod.getFinishTime()), currentPairRate);
+
+                if ( currentPairRate.compareTo(hi) == 1 ) {
+                    hi = currentPairRate;
+                }
+
+                if ( currentPairRate.compareTo(low) == -1 ) {
+                    low = currentPairRate;
+                }
                 BigDecimal amount = BigDecimal.valueOf( entryOfPeriod.getOrderAmount() );
                 BigDecimal vx = BigDecimal.valueOf(entryOfPeriod.getOrderAmount()).multiply(entryOfPeriod.getPairRate());
                 volumefrom = volumefrom.add(amount);
@@ -120,67 +78,50 @@ public class TradingViewUtils {
             result.low = BigDecimal.ZERO;
             result.high = BigDecimal.ZERO;
             result.open = BigDecimal.ZERO;
-            result.close = BigDecimal.ZERO;
+            result.close = BigDecimal.ZERO;             
             result.volumefrom = BigDecimal.ZERO;
-            result.volumeto = BigDecimal.ZERO;
+            result.volumeto = BigDecimal.ZERO;     
         }
         return result;         
-    }
-    
-    static public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish, Integer requestType) {
-        if (requestType == 0) {
-            return getDataForPeriodFromOffersSaleEpoch(dexOrders, start, finish);
-        } else {
-            return getDataForPeriodFromOffersBuyEpoch(dexOrders, start, finish);
-        }
-    }
+    }        
 
+
+        
     static public TradingDataOutput getDataForIntervalFromOffers( String fsym, String tsym, Integer toTs, Integer limit, Integer interval, DexService service, TimeService timeService) {
         int initialTime = toTs - (interval*limit);
         int startGraph = initialTime;
 
             
         long startTS = (long)initialTime * 1000L;
-        long endTS = (long)toTs * 1000L;
+        long endTS = (long)toTs * 1000L; 
             
         Integer toTS = Convert2.toEpochTime(startTS);
+                                   
+        byte currencyType = 0;
 
-        byte currencyType = 0, requestedType=0;
+        if ( tsym.equals("ETH") || fsym.equals("ETH") ) {
+            currencyType = 1;
+        }
 
-        switch (fsym) {
-            // Apollo
-            case "APL" : {
-                requestedType = 0; //sell
-                if (tsym.equals("ETH")) {
-                    currencyType = 1;
-                    } else if (tsym.equals("PAX")) {
-                        currencyType = 0;
-                    }
-                    break;
-                }
-                // eth or pax
-                default : {
-                    requestedType = 1; // buy
-                    if (fsym.equals("ETH")) {
-                        currencyType = 1;
-                        } else if (fsym.equals("PAX")) {
-                        currencyType = 0;
-                        }
-                    break;
-                }
-            }
+        if ( tsym.equals("PAX") || fsym.equals("PAX") ) {
+            currencyType = 0;
+        }
 
-
-        log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}", startTS, endTS, currencyType, Integer.valueOf(requestedType) );
-
+        log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}", startTS, endTS, currencyType );
+                        
         Integer startTSEpoch = Convert2.toEpochTime(startTS);
         Integer endTSEpoch = Convert2.toEpochTime(endTS);
             
-        log.debug("Epoch, start: {}, finish: {}", startTSEpoch, endTSEpoch );
-
-        DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, requestedType, currencyType, 0, Integer.MAX_VALUE);
+        log.debug("Epoch, start: {}, finish: {}", startTSEpoch, endTSEpoch ); 
+            
+        DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, (byte)1, currencyType, 0 , Integer.MAX_VALUE);
 
         List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading);
+
+        log.debug("found {} orders", dexOrdersForInterval.size() );
+        for (DexOrder cr : dexOrdersForInterval) {
+            log.debug("order: {}, amount: {}, rate: {},", cr.getId(), cr.getOrderAmount(), cr.getPairRate());
+        }
             
         TradingDataOutput tradingDataOutput = new TradingDataOutput();
         tradingDataOutput.setResponse("Success");
@@ -195,12 +136,16 @@ public class TradingViewUtils {
             
         for (int i=0; i< limit; i++) {
             long start = (long)initialTime * 1000;
-            long finish = 60000L + start ;
+            long finish = (interval * 1000L) + start ;
             Integer startEpoch =  Convert2.toEpochTime(start);
             Integer finishEpoch =  Convert2.toEpochTime(finish);
-
-            SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch, Integer.valueOf(requestedType) );
+                
+            SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch );
             entryForPeriod.time = initialTime;
+
+            if (dexOrdersForInterval.size() > 0) {
+                log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
+            }
             // entryForPeriod.open =  prevClose;
             // prevClose = entryForPeriod.close;
             initialTime += interval;
