@@ -12,8 +12,7 @@ public class OrderScanMapper implements RowMapper<OrderScan> {
     @Override
     public OrderScan map(ResultSet rs, StatementContext ctx) throws SQLException {
         byte coin = rs.getByte("coin");
-        int lastTimestamp = rs.getInt("last_timestamp");
         long lastDbId = rs.getLong("last_db_id");
-        return new OrderScan(DexCurrency.getType(coin), lastTimestamp, lastDbId);
+        return new OrderScan(DexCurrency.getType(coin), lastDbId);
     }
 }

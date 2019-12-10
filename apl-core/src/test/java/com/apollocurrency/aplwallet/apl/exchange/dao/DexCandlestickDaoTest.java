@@ -44,24 +44,24 @@ class DexCandlestickDaoTest {
     }
 
     @Test
-    void testGetFromToTimestamp() {
-        List<DexCandlestick> candlesticks = dao.getFromToTimestamp(td.ETH_2_CANDLESTICK.getTimestamp(), td.ETH_6_CANDLESTICK.getTimestamp(), DexCurrency.ETH);
+    void testGetForTimespan() {
+        List<DexCandlestick> candlesticks = dao.getForTimespan(td.ETH_2_CANDLESTICK.getTimestamp(), td.ETH_6_CANDLESTICK.getTimestamp(), DexCurrency.ETH);
 
-        assertEquals(List.of(td.ETH_2_CANDLESTICK, td.ETH_3_CANDLESTICK, td.ETH_4_CANDLESTICK, td.ETH_5_CANDLESTICK), candlesticks);
+        assertEquals(List.of(td.ETH_2_CANDLESTICK, td.ETH_3_CANDLESTICK, td.ETH_4_CANDLESTICK, td.ETH_5_CANDLESTICK, td.ETH_6_CANDLESTICK), candlesticks);
     }
 
     @Test
     void testRemoveAll() {
         dao.removeAll();
 
-        assertEquals(0, dao.getFromToTimestamp(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
+        assertEquals(0, dao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
     }
 
     @Test
     void testRemoveAfterTimestamp() {
         dao.removeAfterTimestamp(td.ETH_2_CANDLESTICK.getTimestamp());
 
-        List<DexCandlestick> candlesticks = dao.getFromToTimestamp(0, Integer.MAX_VALUE, DexCurrency.ETH);
+        List<DexCandlestick> candlesticks = dao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.ETH);
         assertEquals(List.of(td.ETH_0_CANDLESTICK, td.ETH_1_CANDLESTICK, td.ETH_2_CANDLESTICK), candlesticks);
     }
 
@@ -92,12 +92,12 @@ class DexCandlestickDaoTest {
 
     @Test
     void testAdd() {
-        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
+        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
 
         dao.add(candlestick);
 
         assertEquals(candlestick, dao.getByTimestamp(candlestick.getTimestamp(), DexCurrency.ETH));
-        assertEquals(11, dao.getFromToTimestamp(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
+        assertEquals(11, dao.getForTimespan(0, Integer.MAX_VALUE, DexCurrency.ETH).size());
     }
 
 }

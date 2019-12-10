@@ -15,9 +15,9 @@ import java.util.List;
 public interface DexCandlestickDao {
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp < :toTimestamp AND timestamp >= :fromTimestamp ORDER BY timestamp")
+    @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp BETWEEN :fromTimestamp AND :toTimestamp ORDER BY timestamp")
     @RegisterRowMapper(DexCandlestickMapper.class)
-    List<DexCandlestick> getFromToTimestamp(@Bind("fromTimestamp") int fromTimestamp, @Bind("toTimestamp") int toTimestamp, @Bind("pairedCoin") DexCurrency pairedCoin);
+    List<DexCandlestick> getForTimespan(@Bind("fromTimestamp") int fromTimestamp, @Bind("toTimestamp") int toTimestamp, @Bind("pairedCoin") DexCurrency pairedCoin);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_candlestick WHERE coin = :pairedCoin AND timestamp = :timestamp")
@@ -43,11 +43,11 @@ public interface DexCandlestickDao {
     int removeAfterTimestamp(@Bind("timestamp") int timestamp);
 
     @Transactional
-    @SqlUpdate("INSERT INTO dex_candlestick(coin, min, max, open, close, from_volume,to_volume, timestamp) VALUES (:coin, :min, :max, :open, :close, :fromVolume, :toVolume, :timestamp)")
+    @SqlUpdate("INSERT INTO dex_candlestick(coin, min, max, open, close, from_volume,to_volume, timestamp, open_order_timestamp, close_order_timestamp) VALUES (:coin, :min, :max, :open, :close, :fromVolume, :toVolume, :timestamp, :openOrderTimestamp, :closeOrderTimestamp)")
     void add(@BindBean DexCandlestick candlestick);
 
     @Transactional
-    @SqlUpdate("UPDATE dex_candlestick SET min = :min, max = :max, open = :open, close = :close, from_volume = :fromVolume, to_volume = :toVolume WHERE timestamp = :timestamp AND coin = :coin")
+    @SqlUpdate("UPDATE dex_candlestick SET min = :min, max = :max, open = :open, close = :close, from_volume = :fromVolume, to_volume = :toVolume, open_order_timestamp =:openOrderTimestamp, close_order_timestamp =:closeOrderTimestamp WHERE timestamp = :timestamp AND coin = :coin")
     void update(@BindBean DexCandlestick candlestick);
 
 }

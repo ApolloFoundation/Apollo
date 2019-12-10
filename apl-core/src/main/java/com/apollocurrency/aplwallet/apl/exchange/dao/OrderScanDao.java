@@ -12,11 +12,11 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface OrderScanDao {
     @Transactional
-    @SqlUpdate("INSERT INTO order_scan (coin, last_timestamp, last_db_id) VALUES (:coin, :lastTimestamp, :lastDbId)")
+    @SqlUpdate("INSERT INTO order_scan (coin, last_db_id) VALUES (:coin, :lastDbId)")
     void add(@BindBean OrderScan orderScan);
 
     @Transactional
-    @SqlUpdate("UPDATE order_scan SET last_timestamp = :lastTimestamp, last_db_id = :lastDbId WHERE coin = :coin")
+    @SqlUpdate("UPDATE order_scan SET last_db_id = :lastDbId WHERE coin = :coin")
     void update(@BindBean OrderScan orderScan);
 
     @Transactional(readOnly = true)

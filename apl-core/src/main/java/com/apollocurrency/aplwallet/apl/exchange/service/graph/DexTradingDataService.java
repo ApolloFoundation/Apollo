@@ -20,23 +20,23 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickUtil.BASE_TIME_INTERVAL;
+import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickUtil.convertOrders;
 
 @Singleton
 public class DexTradingDataService {
-    private boolean enableTradingViewGraphDataFeeder;
-    private boolean enableTradingDataCache;
+
+    private static final int  DEFAULT_ORDER_SELECT_LIMIT = 100;
+
+    private boolean enableTradingViewGraphDataFeeder; // not yet implemented
+    private boolean enableTradingDataCache; // not yet implemented
     private DexCandlestickDao candlestickDao;
     private DexOrderDao orderDao;
-    static final int BASE_TIME_INTERVAL = 15 * 60 * 60; // 15 minutes in seconds
+    private int orderSelectLimit;
 
-    public enum TimeFrame {
-        QUARTER(1), HOUR(4), FOUR_HOURS(16), DAY(96);
-        private final int muliplier; // BASE TIME INTERVAL multiplier
-        TimeFrame(int multiplier) {
-            this.muliplier = multiplier;
-        }
-    }
 
 
     @Inject
@@ -44,84 +44,117 @@ public class DexTradingDataService {
                                  @Property("apl.dex.graph.enableDataCache") boolean enableTradingDataCache,
                                  DexCandlestickDao candlestickDao,
                                  DexOrderDao orderDao) {
-        this.enableTradingViewGraphDataFeeder = enableTradingViewGraphDataFeeder;
-        this.enableTradingDataCache = enableTradingDataCache;
-        this.candlestickDao = candlestickDao;
-        this.orderDao = orderDao;
+        this(enableTradingViewGraphDataFeeder, enableTradingDataCache, candlestickDao, orderDao, DEFAULT_ORDER_SELECT_LIMIT);
     }
 
-    public List<SimpleTradingEntry> getForTimeFrameFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+    public DexTradingDataService(boolean enableTradingViewGraphDataFeeder,
+                                 boolean enableTradingDataCache,
+                                 DexCandlestickDao candlestickDao,
+                                 DexOrderDao orderDao,
+                                 int orderSelectLimit) {
+        this.enableTradingViewGraphDataFeeder = enableTradingViewGraphDataFeeder;
+        this.enableTradingDataCache = enableTradingDataCache;
+        this.candlestickDao = Objects.requireNonNull(candlestickDao);
+        this.orderDao = Objects.requireNonNull(orderDao);
+        this.orderSelectLimit = orderSelectLimit;
+    }
+
+    public List<SimpleTradingEntry> getFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+        validateLimit(limit);
         int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
-        List<DexCandlestick> candlesticks = candlestickDao.getFromToTimestamp(startTime, toTimestamp, currency);
-        List<SimpleTradingEntry> fullData = new ArrayList<>(limit * timeFrame.muliplier);
-        int prevTime = startTime;
-        for (DexCandlestick candlestick : candlesticks) {
-            pushUntil(prevTime, candlestick.getTimestamp(), fullData);
-            fullData.add(fromCandleStick(candlestick));
-            prevTime = candlestick.getTimestamp();
-        }
-        return getResultData(fullData, timeFrame);
+        int prevTime = ceilTo(timeFrame, startTime);
+        List<DexCandlestick> candlesticks = candlestickDao.getForTimespan(prevTime, toTimestamp, currency);
+        List<SimpleTradingEntry> entries = candlesticks.stream().map(this::fromCandleStick).collect(Collectors.toList());
+        return getResultData(entries, timeFrame, prevTime, toTimestamp);
+    }
+
+    private int ceilTo(TimeFrame timeFrame, int time) {
+        int interval = timeFrame.muliplier * BASE_TIME_INTERVAL;
+        int remainder = time % interval;
+        return time + (interval - remainder);
+    }
+
+    private int floorTo(TimeFrame timeFrame, int time) {
+        int interval = timeFrame.muliplier * BASE_TIME_INTERVAL;
+        int remainder = time % interval;
+        return time - remainder;
     }
 
     public TradingDataOutput getForTimeFrame(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
+        validateLimit(limit);
         int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
-        DexCandlestick last = candlestickDao.getLast(currency);
-        int timestamp = last.getTimestamp();
-        int timeInterval = timeFrame.muliplier * BASE_TIME_INTERVAL;
-        int orderStartTime = timestamp + timeInterval;
+        int lastCandlestickTimestamp = getLastCandlestickTimestamp(currency);
         List<SimpleTradingEntry> data = new ArrayList<>();
-        if (orderStartTime < startTime) {
-            data.addAll(getForTimeFrameFromDexOrders(startTime, toTimestamp, currency, timeFrame));
-        } else {
-            List<SimpleTradingEntry> dexOrderCandlesticks = getForTimeFrameFromDexOrders(orderStartTime, toTimestamp, currency, timeFrame);
+        if (lastCandlestickTimestamp == -1 ||
+                floorTo(timeFrame, lastCandlestickTimestamp) <= ceilTo(timeFrame, startTime) && floorTo(timeFrame, lastCandlestickTimestamp) <= toTimestamp) { // only orders
+            data.addAll(getForTimeFrameFromDexOrders(ceilTo(timeFrame, startTime), toTimestamp, currency, timeFrame));
+        } else if (floorTo(timeFrame, lastCandlestickTimestamp) > toTimestamp) { // only candlesticks
+            data.addAll(getFromCandlesticks(toTimestamp, limit, currency, timeFrame));
+        } else { // both candlesticks and orders
+            int fromTimestamp = floorTo(timeFrame, lastCandlestickTimestamp);
+            List<SimpleTradingEntry> dexOrderCandlesticks = getForTimeFrameFromDexOrders(fromTimestamp, toTimestamp, currency, timeFrame);
             limit -= dexOrderCandlesticks.size();
-            toTimestamp = orderStartTime;
-            data.addAll(getForTimeFrameFromCandlesticks(toTimestamp, limit, currency, timeFrame));
+            data.addAll(getFromCandlesticks(fromTimestamp - 1, limit, currency, timeFrame)); // do not include last candlestick
             data.addAll(dexOrderCandlesticks);
         }
         return buildTradingDataOutput(toTimestamp, startTime, data);
     }
-    public List<SimpleTradingEntry> getForTimeFrameFromDexOrders(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
-        List<DexCandlestick> orderCandlesticks = getOrderCandlesticks(fromTimestamp, toTimestamp, currency);
-        int prevTime = fromTimestamp;
-        List<SimpleTradingEntry> fullData = new ArrayList<>();
-        for (DexCandlestick candlestick : orderCandlesticks) {
-            pushUntil(prevTime, candlestick.getTimestamp(), fullData);
-            fullData.add(fromCandleStick(candlestick));
-            prevTime = candlestick.getTimestamp();
+
+    private void validateLimit(int limit) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit should be greater than zero");
         }
-        return getResultData(fullData, timeFrame);
     }
 
-    private List<DexCandlestick> getOrderCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency) {
-        int fromEpochTime = Convert2.toEpochTime(fromTimestamp);
-        int toEpochTime = Convert2.toEpochTime(toTimestamp);
+    public int getLastCandlestickTimestamp(DexCurrency currency) {
+        DexCandlestick last = candlestickDao.getLast(currency);
+        if (last != null) {
+            return last.getTimestamp();
+        } else {
+            return -1;
+        }
+    }
+    public List<SimpleTradingEntry> getForTimeFrameFromDexOrders(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
+        List<DexCandlestick> orderCandlesticks = getOrderCandlesticks(fromTimestamp, toTimestamp, currency, timeFrame);
+        List<SimpleTradingEntry> fullData = orderCandlesticks.stream().map(this::fromCandleStick).collect(Collectors.toList());
+        return getResultData(fullData, timeFrame, fromTimestamp, toTimestamp);
+    }
+
+    private List<DexCandlestick> getOrderCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
+        int fromEpochTime = Convert2.toEpochTime((long)fromTimestamp * 1000);
+        int toEpochTime = Convert2.toEpochTime((long)toTimestamp * 1000);
         long fromDbId = 0;
         List<DexOrder> orders;
         Map<Integer, DexCandlestick> candlesticks = new HashMap<>();
         do {
             orders = orderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
-                    .limit(100)
+                    .limit(orderSelectLimit)
                     .coin(currency)
                     .fromTime(fromEpochTime)
                     .toTime(toEpochTime)
                     .fromDbId(fromDbId)
                     .build());
-            DexTradingGraphScanningService.convertOrders(orders, candlesticks);
+            convertOrders(orders, candlesticks, timeFrame, t-> null);
             if (orders.size() > 0) {
                 fromDbId = orders.get(orders.size() - 1).getDbId();
             }
-        } while (orders.size() == 100);
+        } while (orders.size() == orderSelectLimit);
         return candlesticks.values().stream().sorted(Comparator.comparing(DexCandlestick::getTimestamp)).collect(Collectors.toList());
     }
 
-
-    private List<SimpleTradingEntry> getResultData(List<SimpleTradingEntry> fullData, TimeFrame timeFrame) {
-        if (timeFrame != TimeFrame.QUARTER) {
-            return groupBy(fullData, timeFrame);
+    private List<SimpleTradingEntry> getResultData(List<SimpleTradingEntry> fullData, TimeFrame timeFrame, int startTime, int finishTime) {
+        List<SimpleTradingEntry> result = new ArrayList<>();
+        int interval = timeFrame.muliplier * BASE_TIME_INTERVAL;
+        for (int candlestickTime = startTime; candlestickTime <= finishTime; candlestickTime += interval) {
+            int candlestickFinishTime = candlestickTime + interval;
+            int finalCandlestickTime = candlestickTime;
+            List<SimpleTradingEntry> entries = fullData.stream().filter(e->e.getTime() < candlestickFinishTime && e.getTime() >= finalCandlestickTime).collect(Collectors.toList());
+            SimpleTradingEntry compressed = compress(entries, candlestickTime);
+            result.add(compressed);
         }
-        return fullData;
+        return result;
     }
+
 
     private TradingDataOutput buildTradingDataOutput(int toTimestamp, int fromTimestamp, List<SimpleTradingEntry> data) {
         TradingDataOutput tradingDataOutput = new TradingDataOutput();
@@ -140,65 +173,34 @@ public class DexTradingDataService {
         return tradingDataOutput;
     }
 
-    private List<SimpleTradingEntry> groupBy(List<SimpleTradingEntry> entries, TimeFrame tf) {
-        if (entries.size() % tf.muliplier != 0) {
-            throw new IllegalArgumentException("Got " + entries.size() + " trading entries, expected size%" + tf.muliplier + "=0");
-        }
-        int groupedDataSize = entries.size() / tf.muliplier;
-        List<SimpleTradingEntry> groupedData = new ArrayList<>(groupedDataSize);
-        for (int i = 0; i < groupedDataSize; i++) {
-            List<SimpleTradingEntry> listToGroup = entries.subList(i * tf.muliplier, (i + 1) * tf.muliplier);
-            SimpleTradingEntry compressed = compress(listToGroup);
-            groupedData.add(compressed);
-        }
-        return groupedData;
-    }
-
-    private SimpleTradingEntry compress(List<SimpleTradingEntry> entries) {
-        BigDecimal totalVolumeFrom = BigDecimal.ZERO;
-        BigDecimal totalVolumeTo = BigDecimal.ZERO;
-        BigDecimal maxPrice = BigDecimal.ZERO;
-        BigDecimal openPrice = BigDecimal.ZERO;
-        BigDecimal closePrice = BigDecimal.ZERO;
-        BigDecimal minPrice = BigDecimal.valueOf(Long.MAX_VALUE);
-        boolean openFound = false;
-        boolean closeFound = false;
-        for (SimpleTradingEntry entry : entries) {
-            if (maxPrice.compareTo(entry.getHigh()) < 0) {
-                maxPrice = entry.getHigh();
-            }
-            if (minPrice.compareTo(entry.getLow()) > 0) {
-                minPrice = entry.getLow();
-            }
-            totalVolumeFrom = totalVolumeFrom.add(entry.getVolumefrom());
-            totalVolumeTo = totalVolumeTo.add(entry.getVolumeto());
-            if (!openFound && entry.getOpen() != null) {
-                openPrice = entry.getOpen();
-                openFound = true;
-            }
-            if (!closeFound && entry.getClose() != null) {
+    private SimpleTradingEntry compress(List<SimpleTradingEntry> entries, int time) {
+            BigDecimal totalVolumeFrom = BigDecimal.ZERO;
+            BigDecimal totalVolumeTo = BigDecimal.ZERO;
+            BigDecimal maxPrice = BigDecimal.ZERO;
+            BigDecimal openPrice = BigDecimal.ZERO;
+            BigDecimal closePrice = BigDecimal.ZERO;
+            BigDecimal minPrice = BigDecimal.ZERO;
+            boolean openFound = false;
+            for (SimpleTradingEntry entry : entries) {
+                if (maxPrice.compareTo(entry.getHigh()) < 0) {
+                    maxPrice = entry.getHigh();
+                }
+                if (minPrice.equals(BigDecimal.ZERO) || minPrice.compareTo(entry.getLow()) > 0) {
+                    minPrice = entry.getLow();
+                }
+                totalVolumeFrom = totalVolumeFrom.add(entry.getVolumefrom());
+                totalVolumeTo = totalVolumeTo.add(entry.getVolumeto());
+                if (!openFound) {
+                    openPrice = entry.getOpen();
+                    openFound = true;
+                }
                 closePrice = entry.getClose();
-                closeFound = true;
             }
-        }
-        return new SimpleTradingEntry(entries.get(0).getTime(), openPrice, closePrice, minPrice, maxPrice, totalVolumeFrom, totalVolumeTo);
-
+            return new SimpleTradingEntry(time, openPrice, closePrice, minPrice, maxPrice, totalVolumeFrom, totalVolumeTo);
     }
 
     private SimpleTradingEntry fromCandleStick(DexCandlestick c) {
         return new SimpleTradingEntry(c.getTimestamp(), c.getOpen(), c.getClose(), c.getMin(), c.getMax(), c.getFromVolume(), c.getToVolume());
-    }
-
-    private void pushUntil(int startTimestamp, int finishTimestamp, List<SimpleTradingEntry> entries) {
-        for (int currentTimestamp = startTimestamp; currentTimestamp < finishTimestamp; currentTimestamp+= BASE_TIME_INTERVAL) {
-            entries.add(emptyEntry(currentTimestamp));
-        }
-    }
-
-    private SimpleTradingEntry emptyEntry(int timestamp) {
-        SimpleTradingEntry entry = new SimpleTradingEntry();
-        entry.setTime(timestamp);
-        return entry;
     }
 
 }

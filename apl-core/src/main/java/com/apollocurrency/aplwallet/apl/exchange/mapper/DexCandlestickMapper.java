@@ -20,6 +20,8 @@ public class DexCandlestickMapper implements RowMapper<DexCandlestick> {
         candlestick.setFromVolume(rs.getBigDecimal("from_volume"));
         candlestick.setToVolume(rs.getBigDecimal("to_volume"));
         candlestick.setTimestamp(rs.getInt("timestamp"));
+        candlestick.setOpenOrderTimestamp(rs.getInt("open_order_timestamp"));
+        candlestick.setCloseOrderTimestamp(rs.getInt("close_order_timestamp"));
         return candlestick;
     }
 }

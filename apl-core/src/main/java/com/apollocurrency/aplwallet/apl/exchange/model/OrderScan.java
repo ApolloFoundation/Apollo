@@ -7,6 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class OrderScan {
     private DexCurrency coin;
-    private int lastTimestamp; // unix epoch seconds for 
     private long lastDbId; // last processed order db_id
 }

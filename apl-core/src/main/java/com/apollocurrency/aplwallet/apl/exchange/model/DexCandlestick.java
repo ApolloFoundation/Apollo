@@ -17,4 +17,6 @@ public class DexCandlestick {
     private BigDecimal fromVolume; // apl coin volume
     private BigDecimal toVolume; // paired coin volume
     private int timestamp; // seconds since unix epoch
+    private int openOrderTimestamp; // finish time of the earliest order included into this candlestick
+    private int closeOrderTimestamp; // finish time of the latest order included into this candlestick
 }
