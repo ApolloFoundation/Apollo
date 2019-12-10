@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -95,23 +96,25 @@ public class TradingViewUtils {
         if (periodEntries.size() > 0) { 
             log.debug("offers: {}", periodEntries.size());
 
-            BigDecimal hi = periodEntries.get(0).getPairRate();            
-            BigDecimal low = periodEntries.get(0).getPairRate(); 
-            BigDecimal open = periodEntries.get(0).getPairRate();
-            BigDecimal close = periodEntries.get( periodEntries.size()-1 ).getPairRate();
+            BigDecimal hi = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ) );            
+            BigDecimal low = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() )); 
+            BigDecimal open = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ));
+            BigDecimal close = new BigDecimal( EthUtil.etherToWei( periodEntries.get( periodEntries.size()-1 ).getPairRate() ));
             BigDecimal volumefrom = BigDecimal.ZERO;
             BigDecimal volumeto = BigDecimal.ZERO; 
             
             for(DexOrder entryOfPeriod: periodEntries) {   
                 
-                log.debug("pairRate: {}", entryOfPeriod.getPairRate());
                 
-                if ( entryOfPeriod.getPairRate().compareTo(hi) == 1 ) {
-                    hi = entryOfPeriod.getPairRate();
+                BigDecimal currentPairRate = new BigDecimal( EthUtil.etherToWei( entryOfPeriod.getPairRate() ));
+                log.debug("pairRate: {}", currentPairRate);
+                
+                if ( currentPairRate.compareTo(hi) == 1 ) {
+                    hi = currentPairRate;
                 }
 
-                if ( entryOfPeriod.getPairRate().compareTo(low) == -1 ) {
-                    low = entryOfPeriod.getPairRate();
+                if ( currentPairRate.compareTo(low) == -1 ) {
+                    low = currentPairRate;
                 } 
                 BigDecimal amount = BigDecimal.valueOf( entryOfPeriod.getOrderAmount() );
                 BigDecimal vx = BigDecimal.valueOf(entryOfPeriod.getOrderAmount()).multiply(entryOfPeriod.getPairRate());
