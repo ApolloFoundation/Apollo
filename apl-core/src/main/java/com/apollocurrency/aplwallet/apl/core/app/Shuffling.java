@@ -809,6 +809,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_DONE);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Done = {} , height = {}", Long.toUnsignedString(this.id), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was distributed", Long.toUnsignedString(id));
@@ -869,6 +870,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_CANCELLED);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Cancelled = {} , height = {} / {}", Long.toUnsignedString(this.id), block.getHeight(), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was cancelled, blaming account {}", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
