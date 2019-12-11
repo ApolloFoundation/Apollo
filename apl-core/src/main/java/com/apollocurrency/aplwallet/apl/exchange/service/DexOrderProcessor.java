@@ -786,7 +786,7 @@ public class DexOrderProcessor {
                         Long timeDeadLine = swapData.getTimeDeadLine();
                         if (timeDeadLine + SWAP_EXPIRATION_OFFSET < timeService.systemTime()) {
                             String swapHashHex = Convert.toHexString(swapHash);
-                            if (expiredSwaps.contains(swapHashHex)) { // skip swaps under processing
+                            if (!expiredSwaps.contains(swapHashHex)) { // skip swaps under processing
                                 expiredSwaps.add(swapHashHex);
                                 CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
                                         .handle((r, e) -> {
