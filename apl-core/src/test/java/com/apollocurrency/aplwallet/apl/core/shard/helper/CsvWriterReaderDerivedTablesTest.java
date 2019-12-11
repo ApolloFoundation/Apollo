@@ -55,6 +55,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -98,7 +99,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -288,6 +288,7 @@ class CsvWriterReaderDerivedTablesTest {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
+        ValueParser parser = new ValueParserImpl();
 
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(dataExportDir);
@@ -326,7 +327,7 @@ class CsvWriterReaderDerivedTablesTest {
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
                         InputStream is = null;
                         try {
-                            is = new ByteArrayInputStream( Base64.getDecoder().decode(((String)object)) );
+                            is = new ByteArrayInputStream( parser.parseBinaryObject(object) );
                             preparedInsertStatement.setBinaryStream(i + 1, is, meta.getPrecision(i + 1));
                         } catch (SQLException e) {
                             log.error("Binary/Varbinary reading error = " + object, e);

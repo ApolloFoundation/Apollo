@@ -22,6 +22,7 @@ import java.util.logging.Logger;
  *
  * @author Serhiy Lymar
  */
+
 @Disabled
 @EnableWeld
 public class EthGasStationInfoDaoTest {

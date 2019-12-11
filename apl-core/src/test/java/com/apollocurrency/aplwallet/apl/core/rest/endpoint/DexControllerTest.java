@@ -60,7 +60,7 @@ public class DexControllerTest {
     @Test
     void testGetContractsForAccountOrder() throws URISyntaxException, IOException {
         List<ExchangeContract> contracts = List.of(td.EXCHANGE_CONTRACT_1, td.EXCHANGE_CONTRACT_3);
-        doReturn(contracts).when(service).getContractsByAccountOrderFromStatus(td.EXCHANGE_CONTRACT_1.getSender(), td.EXCHANGE_CONTRACT_1.getOrderId(), (byte) 1);
+        doReturn(contracts).when(service).getContractsByAccountOrderFromStatus(td.EXCHANGE_CONTRACT_1.getSender(), td.EXCHANGE_CONTRACT_1.getOrderId(), (byte) 0);
 
         MockHttpRequest request = MockHttpRequest.get("/dex/contracts?accountId=" + td.EXCHANGE_CONTRACT_1.getSender() + "&orderId=" + td.EXCHANGE_CONTRACT_1.getOrderId()).contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();
@@ -77,7 +77,7 @@ public class DexControllerTest {
     @Test
     void testGetContractForAccountOrder() throws URISyntaxException, IOException {
         List<ExchangeContract> contracts = List.of(td.EXCHANGE_CONTRACT_1);
-        doReturn(contracts).when(service).getContractsByAccountOrderFromStatus(td.EXCHANGE_CONTRACT_1.getSender(), td.EXCHANGE_CONTRACT_1.getOrderId(), (byte) 1);
+        doReturn(contracts).when(service).getContractsByAccountOrderFromStatus(td.EXCHANGE_CONTRACT_1.getSender(), td.EXCHANGE_CONTRACT_1.getOrderId(), (byte) 0);
 
         MockHttpRequest request = MockHttpRequest.get("/dex/contracts?accountId=" + td.EXCHANGE_CONTRACT_1.getSender() + "&orderId=" + td.EXCHANGE_CONTRACT_1.getOrderId()).contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();

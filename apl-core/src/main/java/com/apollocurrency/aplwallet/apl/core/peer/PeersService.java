@@ -80,7 +80,6 @@ public class PeersService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
 
-
     public enum Event {
         BLACKLIST, UNBLACKLIST, DEACTIVATE, REMOVE,
         DOWNLOADED_VOLUME, UPLOADED_VOLUME, WEIGHT,
@@ -97,7 +96,8 @@ public class PeersService {
     List<String> wellKnownPeers;
     Set<String> knownBlacklistedPeers;
 
-    static int connectTimeout;
+    public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
+    public static int connectTimeout=DEFAULT_CONNECT_TIMEOUT;
     static int readTimeout;
     static int blacklistingPeriod;
     public static boolean getMorePeers;
@@ -245,7 +245,7 @@ public class PeersService {
                 maxNumberOfOutboundConnections);
         maxNumberOfKnownPeers = propertiesHolder.getIntProperty("apl.maxNumberOfKnownPeers");
         minNumberOfKnownPeers = propertiesHolder.getIntProperty("apl.minNumberOfKnownPeers");
-        connectTimeout = propertiesHolder.getIntProperty("apl.connectTimeout");
+        connectTimeout = propertiesHolder.getIntProperty("apl.connectTimeout",DEFAULT_CONNECT_TIMEOUT);
         readTimeout = propertiesHolder.getIntProperty("apl.readTimeout");
         enableHallmarkProtection = propertiesHolder.getBooleanProperty("apl.enableHallmarkProtection") && !propertiesHolder.isLightClient();
         pushThreshold = propertiesHolder.getIntProperty("apl.pushThreshold");
