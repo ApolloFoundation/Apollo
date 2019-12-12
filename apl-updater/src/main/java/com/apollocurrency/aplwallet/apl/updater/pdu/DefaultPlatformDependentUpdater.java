@@ -27,14 +27,15 @@ public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUp
 
     @Override
     Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
-                       boolean userMode, boolean isShardingOn) throws IOException {
+                       boolean userMode, boolean isShardingOn, String chain) throws IOException {
         String[] cmdArray = new String[] {
                 runTool,
                 updateDirectory.resolve(updateScriptPath).toAbsolutePath().toString(), //path to update script should include all subfolders
                 appDirectory.toAbsolutePath().toString(),
                 updateDirectory.toAbsolutePath().toString(),
                 String.valueOf(userMode),
-                String.valueOf(isShardingOn) // true if sharding is enabled on node
+                String.valueOf(isShardingOn), // true if sharding is enabled on node
+                chain
         };
         LOG.info("Runscript params {}", Arrays.toString(cmdArray));
         LOG.info("Working directory {}", workingDirectory.toFile().getPath());

@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.UUID;
 
 public interface UpdaterMediator {
 
@@ -34,4 +35,7 @@ public interface UpdaterMediator {
     Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException;
     
     PropertiesHolder getPropertyHolder();
+
+    public String getChainId();
+
 }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
@@ -59,7 +60,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
     }
 
     abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
-                                boolean userMode, boolean isShardingOn) throws IOException;
+                                boolean userMode, boolean isShardingOn, String chain) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
@@ -94,8 +95,13 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             }else{
                LOG.warn("Can not access PeropertiesHolder");
             }
+            String chainId=updaterMediator.getChainId();
+            String chain="unknown";
+            if(chainId!=null && chainId.length()>6){
+               chain = chainId.substring(0,6);
+            }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding); 
+                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain); 
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

@@ -19,6 +19,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.UUID;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -122,5 +123,10 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public PropertiesHolder getPropertyHolder() {
        return propertiesHolder;
+    }
+
+    @Override
+    public String getChainId() {
+        return peers.getMyPeerInfo().getChainId();
     }
 }
