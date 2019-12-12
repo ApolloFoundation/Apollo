@@ -156,8 +156,21 @@ public class TradingViewUtils {
             // entryForPeriod.open =  prevClose;
             // prevClose = entryForPeriod.close;                                
             initialTime += interval;                
-            data.add(entryForPeriod);
+            // data.add(entryForPeriod);
+            
+            if (!entryForPeriod.isZero()) {
+                log.debug("adding data");
+                data.add(entryForPeriod);
+                } else {
+                log.debug("zero interval, skipping it");
+                if (i==limit-1) {
+                    log.debug("no, adding...");
+                    data.add(entryForPeriod);
+                    }
+                }
             }
+            
+            
                 
         tradingDataOutput.setData(data);
         tradingDataOutput.setTimeTo(toTs);

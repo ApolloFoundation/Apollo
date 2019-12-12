@@ -31,4 +31,10 @@ public class SimpleTradingEntry {
     public BigDecimal high;
     public BigDecimal volumefrom;
     public BigDecimal volumeto;    
+    
+    public boolean isZero() {
+        return open.equals(BigDecimal.ZERO)&&close.equals(BigDecimal.ZERO)&&
+                low.equals(BigDecimal.ZERO)&&high.equals(BigDecimal.ZERO)&&
+                volumefrom.equals(BigDecimal.ZERO)&&volumeto.equals(BigDecimal.ZERO);
+    }
 }
