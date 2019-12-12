@@ -423,7 +423,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public int getMinRollbackHeight() {
         int minRollBackHeight = trimService.getLastTrimHeight() > 0 ? trimService.getLastTrimHeight()
                 : Math.max(lookupBlockhain().getHeight() - propertiesHolder.MAX_ROLLBACK(), 0);
-        log.debug("minRollbackHeight  = {}", minRollBackHeight);
+        log.trace("minRollbackHeight  = {}", minRollBackHeight);
+
         return minRollBackHeight;
     }
 
