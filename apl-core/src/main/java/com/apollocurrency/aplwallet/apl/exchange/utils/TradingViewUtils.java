@@ -43,17 +43,24 @@ public class TradingViewUtils {
         if (periodEntries.size() > 0) { 
             log.debug("offers: {}", periodEntries.size());
 
-            BigDecimal hi = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ) );            
-            BigDecimal low = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() )); 
-            BigDecimal open = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ));
-            BigDecimal close = new BigDecimal( EthUtil.etherToWei( periodEntries.get( periodEntries.size()-1 ).getPairRate() ));
+//            BigDecimal hi = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ) );            
+//            BigDecimal low = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() )); 
+//            BigDecimal open = new BigDecimal( EthUtil.etherToWei( periodEntries.get(0).getPairRate() ));
+//            BigDecimal close = new BigDecimal( EthUtil.etherToWei( periodEntries.get( periodEntries.size()-1 ).getPairRate() ));
+            BigDecimal hi =  periodEntries.get(0).getPairRate();            
+            BigDecimal low =  periodEntries.get(0).getPairRate(); 
+            BigDecimal open = periodEntries.get(0).getPairRate();
+            BigDecimal close = periodEntries.get( periodEntries.size()-1 ).getPairRate();
+
+
+
             BigDecimal volumefrom = BigDecimal.ZERO;
             BigDecimal volumeto = BigDecimal.ZERO; 
             
             for(DexOrder entryOfPeriod: periodEntries) {   
                 
                 
-                BigDecimal currentPairRate = new BigDecimal( EthUtil.etherToWei( entryOfPeriod.getPairRate() ));
+                BigDecimal currentPairRate = entryOfPeriod.getPairRate();
                 log.debug("TS: {}, pairRate: {}", Convert2.fromEpochTime(entryOfPeriod.getFinishTime()), currentPairRate);
                 
                 if ( currentPairRate.compareTo(hi) == 1 ) {
