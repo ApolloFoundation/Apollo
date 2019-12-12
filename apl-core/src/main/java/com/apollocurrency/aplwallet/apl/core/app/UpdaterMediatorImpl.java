@@ -19,7 +19,6 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.UUID;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -30,8 +29,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private PeersService peers = CDI.current().select(PeersService.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private final PeersService peers = CDI.current().select(PeersService.class).get();
+    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
