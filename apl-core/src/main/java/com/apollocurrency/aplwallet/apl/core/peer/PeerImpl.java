@@ -405,6 +405,7 @@ public final class PeerImpl implements Peer {
         blacklistingCause = cause;
         deactivate("Blacklisting because of: "+cause);
         peers.notifyListeners(this, PeersService.Event.BLACKLIST);
+        LOG.debug("Peer {} blackisted. Cause: {}",getHostWithPort(),cause);
     }
 
     @Override
