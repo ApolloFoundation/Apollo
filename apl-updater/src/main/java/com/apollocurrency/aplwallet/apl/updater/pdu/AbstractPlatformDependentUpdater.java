@@ -18,13 +18,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
-    private UpdaterMediator updaterMediator;
-    private UpdateInfo updateInfo;
+    private final UpdaterMediator updaterMediator;
+    private final UpdateInfo updateInfo;
     private int maxShutdownTimeOut = MAX_SHUTDOWN_TIMEOUT;
 
     public AbstractPlatformDependentUpdater(UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
@@ -97,7 +96,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             }
             String chainId=updaterMediator.getChainId();
             String chain="unknown";
-            if(chainId!=null && chainId.length()>6){
+            if(chainId!=null && chainId.length()>=6){
                chain = chainId.substring(0,6);
             }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),

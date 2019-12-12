@@ -15,8 +15,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public class DefaultPlatformDependentUpdater extends AbstractPlatformDependentUpdater {
-    private String runTool;
-    private String updateScriptPath;
+    private final String runTool;
+    private final String updateScriptPath;
         private static final Logger LOG = LoggerFactory.getLogger(DefaultPlatformDependentUpdater.class);
 
     public DefaultPlatformDependentUpdater(String runTool, String updateScriptPath, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
