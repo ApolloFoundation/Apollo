@@ -123,6 +123,15 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
+# Download db with shards
+
+    notify "Downloading db shards..."
+    if [ $4 == true ]
+    then
+	bash ./update3.sh
+    fi
+
+
     cd $1 
     chmod 755 bin/*.sh
 
