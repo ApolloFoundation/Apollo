@@ -32,8 +32,6 @@ import java.util.List;
 @Singleton
 public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeContract> {
 
-    private static ExchangeContractMapper exchangeContractMapper = new ExchangeContractMapper();
-
     static final LongKeyFactory<ExchangeContract> KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(ExchangeContract exchangeContract) {
@@ -84,16 +82,19 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     public List<ExchangeContract> getAllByCounterOrder(Long counterOrderId) {
         return getAllByLongParameterFromStatus(counterOrderId, "counter_offer_id", 0);
     }
-    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
+
+    private List<ExchangeContract> getAllByLongParameterFromStatusHeightSorted(Long parameterValue, String parameterName,  int fromStatus) {
         DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1, " ORDER BY height DESC, db_id DESC");
         return CollectionUtil.toList(dbIterator);
     }
-    public List<ExchangeContract> getAllByOrder(Long orderId) {
-        return getAllByLongParameterFromStatus(orderId, "offer_id", 0);
+
+    private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
+        DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1);
+        return CollectionUtil.toList(dbIterator);
     }
 
     public ExchangeContract getLastByOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatus(orderId, "offer_id", 1);
+        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "offer_id", 1);
         return getFirstOrNull(allByOrder);
     }
 
@@ -106,7 +107,7 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public ExchangeContract getLastByCounterOrder(Long orderId) {
-        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatus(orderId, "counter_offer_id", 1);
+        List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "counter_offer_id", 1);
         return getFirstOrNull(allByOrder);
     }
 
