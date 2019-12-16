@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -63,8 +62,7 @@ class DexServiceTest {
     @Mock DexContractDao dexContractDao;
     @Mock Blockchain blockchain;
     @Mock PhasingPollServiceImpl phasingPollService;
-    @Mock DexMatcherServiceImpl dexMatcherService;
-    @Mock DexTradeDao dexTradeDao;
+    @Mock DexMatcherServiceImpl dexMatcherService;    
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
@@ -90,7 +88,7 @@ class DexServiceTest {
     @BeforeEach
     void setUp() {
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
-                dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService, dexTradeDao,
+                dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
                 approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache);
     }
 

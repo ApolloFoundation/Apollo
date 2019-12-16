@@ -832,23 +832,17 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS mandatory_transaction " +
                         "(db_id IDENTITY, id BIGINT NOT NULL, transaction_bytes VARBINARY NOT NULL, required_tx_hash BINARY(32))");
             case 317:
-                apply("CREATE TABLE IF NOT EXISTS dex_transaction (db_id IDENTITY, hash VARBINARY NOT NULL, tx VARBINARY NOT NULL, operation TINYINT NOT NULL, params VARCHAR NOT NULL, account VARCHAR NOT NULL, timestamp BIGINT)");
-            
-            case 318: 
-                apply("CREATE TABLE IF NOT EXISTS TRADING_TRACK ( LAST_TIMESTAMP BIGINT NOT NULL);");
-                                                                        
-            case 320:
-                apply("ALTER TABLE dex_trade MODIFY FINISH_TIME BIGINT NOT NULL");            
-            case 321:    
-                apply("INSERT INTO TRADING_TRACK VALUES (0)");                                
-            case 322:                 
+                apply("CREATE TABLE IF NOT EXISTS dex_transaction (db_id IDENTITY, hash VARBINARY NOT NULL, tx VARBINARY NOT NULL, operation TINYINT NOT NULL, params VARCHAR NOT NULL, account VARCHAR NOT NULL, timestamp BIGINT)");                                                                                    
+            case 318:
+                apply("DROP TABLE IF EXISTS dex_trade");                                                  
+            case 319:                 
                 apply("CREATE INDEX IF NOT EXISTS dex_offer_overdue_idx ON dex_offer (status, finish_time)");
-            case 323:
+            case 320:
                 apply("CREATE TABLE IF NOT EXISTS dex_transaction (db_id IDENTITY, hash VARBINARY NOT NULL, tx VARBINARY NOT NULL, operation TINYINT NOT NULL, params VARCHAR NOT NULL, account VARCHAR NOT NULL, timestamp BIGINT)");
-            case 324:
+            case 321:
                 apply("CREATE TABLE IF NOT EXISTS user_error_message(db_id IDENTITY, address VARCHAR NOT NULL, error VARCHAR NOT NULL, operation VARCHAR, details VARCHAR, timestamp BIGINT NOT NULL)");
-            case 325:
-                return 325;
+            case 322:
+                return 322;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

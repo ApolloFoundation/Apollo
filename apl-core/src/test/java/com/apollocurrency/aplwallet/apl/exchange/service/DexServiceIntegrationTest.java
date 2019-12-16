@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
@@ -64,8 +63,7 @@ class DexServiceIntegrationTest {
             DexContractDao.class,
             Blockchain.class,
             PhasingPollServiceImpl.class,
-            IDexMatcherInterface.class,
-            DexTradeDao.class,
+            IDexMatcherInterface.class,            
             PhasingApprovedResultTable.class,
             BlockchainConfig.class,
             BlockchainImpl.class))

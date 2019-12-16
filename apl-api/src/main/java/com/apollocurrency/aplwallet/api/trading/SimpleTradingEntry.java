@@ -16,9 +16,6 @@ import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// example of how it looks like
-// {"time":1571643660,"close":8222.11,"high":8226,"low":8222.11,"open":8226,"volumefrom":0.08722,"volumeto":717.32},
-
 @NoArgsConstructor
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)

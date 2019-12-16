@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAtt
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -87,8 +86,6 @@ public class DexTestData {
     public final DexTransaction TX_1 = new DexTransaction(100L, Numeric.hexStringToByteArray("0xa69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.DEPOSIT, "100", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 250);
     public final DexTransaction TX_2 = new DexTransaction(200L, Numeric.hexStringToByteArray("0x203b36aac62037ac7c4502aa023887f7fcae843c456fde083e6a1dc70a29f3d61a73f57d79481f06e27ea279c74528e1ba6b1854d219b1e3b255729889ca5926"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.INITIATE, "100", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 300);
     public final DexTransaction TX_3 = new DexTransaction(300L, Numeric.hexStringToByteArray("0x05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.DEPOSIT, "102", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 400);
-
-    public final DexTradeEntry NEW_TRADE_ENTRY_1;
 
     public DexTestData() {
 
@@ -175,7 +172,6 @@ public class DexTestData {
                 ExchangeContractStatus.STEP_2, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
         NEW_EXCHANGE_CONTRACT_16 = new ExchangeContract(NEW_EXCHANGE_CONTRACT_ID, NEW_EXCHANGE_CONTRACT_SENDER_ID, NEW_EXCHANGE_CONTRACT_RECIPIENT_ID, 53499882, NEW_DEX_CONTRACT_ATTACHMENT_4);
-
-        NEW_TRADE_ENTRY_1 = new DexTradeEntry(null, null);
+        
        }
 }
