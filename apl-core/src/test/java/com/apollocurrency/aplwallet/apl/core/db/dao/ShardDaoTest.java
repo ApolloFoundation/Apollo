@@ -194,4 +194,10 @@ class ShardDaoTest {
         List<Shard> result = dao.getAllCompletedOrArchivedShards();
         assertEquals(Arrays.asList(SHARD_2, SHARD_1), result);
     }
+
+    @Test
+    void testGetLatestShardHeight() {
+        int latestShardHeight = dao.getLatestShardHeight();
+        assertEquals(SHARD_2.getShardHeight(), latestShardHeight);
+    }
 }

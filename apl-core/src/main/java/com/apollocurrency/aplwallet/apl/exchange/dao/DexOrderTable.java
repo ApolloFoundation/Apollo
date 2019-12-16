@@ -1,6 +1,9 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
@@ -18,29 +21,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Implemented for backward compatibility with rollback function in the DerivedDbTable.
  * Use DexOfferDao for not transactional operations. (f.e. search)
+ * DEX trade in derived table hierarchy is used for exporting/importing shard data.
  */
 @Singleton
 @Slf4j
 public class DexOrderTable extends EntityDbTable<DexOrder> {
 
-
-
     private static final String TABLE_NAME = "dex_offer";
-    private final Blockchain blockchain;
-    private DexOrderMapper dexOrderMapper;
-    private DexOrderKeyFactory keyFactory;
+    private DexOrderMapper dexOrderMapper = new DexOrderMapper();
+    private static DexOrderKeyFactory keyFactory = new DexOrderKeyFactory();
 
     @Inject
-    public DexOrderTable(Blockchain blockchain, DexOrderMapper dexOrderMapper, DexOrderKeyFactory keyFactory) {
-        super(TABLE_NAME, keyFactory, true, null,false);
-        this.keyFactory = keyFactory;
-        this.dexOrderMapper = dexOrderMapper;
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
+    public DexOrderTable() {
+        super(TABLE_NAME, keyFactory, true, null, false);
     }
 
     @Override
@@ -76,7 +73,7 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     public void save(Connection con, DexOrder order) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, type, " +
                 "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")){
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, order.getId());
             pstmt.setLong(++i, order.getAccountId());
@@ -88,10 +85,22 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             pstmt.setLong(++i, EthUtil.ethToGwei(order.getPairRate()));
             pstmt.setInt(++i, order.getFinishTime());
             pstmt.setByte(++i, (byte) order.getStatus().ordinal());
-            pstmt.setInt(++i, blockchain.getHeight());
+            pstmt.setInt(++i, order.getHeight());
             pstmt.setString(++i, order.getFromAddress());
             pstmt.setString(++i, order.getToAddress());
             pstmt.executeUpdate();
+        }
+    }
+
+    public List<DexOrder> getPendingOrdersWithoutContracts(int height) {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstm = con.prepareStatement(
+                     "SELECT * FROM dex_offer LEFT JOIN dex_contract ON dex_offer.id = dex_contract.counter_offer_id " +
+                             "OR dex_offer.id = dex_contract.offer_id WHERE dex_contract.id IS NULL AND dex_offer.status=1 AND dex_offer.height < ? AND dex_offer.latest = true")) {
+            pstm.setInt(1, height);
+            return CollectionUtil.toList(getManyBy(con, pstm, false));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }

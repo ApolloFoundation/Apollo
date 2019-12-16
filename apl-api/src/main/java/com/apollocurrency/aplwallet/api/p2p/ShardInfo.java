@@ -5,6 +5,8 @@ package com.apollocurrency.aplwallet.api.p2p;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,4 +31,6 @@ public class ShardInfo {
     public String hash=null;
     public String zipCrcHash=null;
     public Long height;
+    public List<String> additionalFiles = new ArrayList<>();
+    public List<String> additionalHashes = new ArrayList<>();
 }

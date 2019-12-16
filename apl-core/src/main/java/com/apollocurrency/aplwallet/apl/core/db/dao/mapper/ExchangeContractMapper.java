@@ -24,6 +24,8 @@ public class ExchangeContractMapper  implements RowMapper<ExchangeContract> {
                 .transferTxId(rs.getString("transfer_tx_id"))
                 .counterTransferTxId(rs.getString("counter_transfer_tx_id"))
                 .deadlineToReply(rs.getInt("deadline_to_reply"))
+                .height(rs.getInt("height"))
+                .latest(rs.getBoolean("latest"))
                 .build();
     }
 }

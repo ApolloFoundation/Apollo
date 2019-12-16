@@ -1,28 +1,29 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018-2019 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.jboss.weld.junit5.EnableWeld;
+import org.jboss.weld.junit5.WeldInitiator;
+import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.inject.Inject;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author Serhiy Lymar
  */
 
+@Disabled
 @EnableWeld
 public class EthGasStationInfoDaoTest {
     

@@ -30,4 +30,12 @@ public class CsvExportData {
     public void setLastRow(Map<String, Object> lastRow) {
         this.lastRow = lastRow;
     }
+
+    public int getRowCount() {
+        if (this.lastRow != null) {
+            return this.lastRow.size();
+        } else {
+            return -1;
+        }
+    }
 }

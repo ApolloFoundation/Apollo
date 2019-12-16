@@ -23,6 +23,10 @@ public class ShardConstants {
     public static final String DATA_TAG_TABLE_NAME = "data_tag";
     public static final String UNCONFIRMED_TX_TABLE_NAME = "unconfirmed_transaction";
     public static final String GENESIS_PK_TABLE_NAME = "genesis_public_key";
+    public static final String DEX_ORDER_TABLE_NAME = "dex_offer";
+    public static final String ACCOUNT_CURRENCY_TABLE_NAME = "account_currency";
+    public static final String ACCOUNT_ASSET_TABLE_NAME = "account_asset";
+
 
     private ShardConstants() {}
 }

@@ -43,7 +43,7 @@ public final class AfterStart implements AddOn {
         String afterStartScript = propertiesHolder.getStringProperty("apl.afterStartScript");
         if (afterStartScript != null) {
             taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
-                    .schedule(Task.builder()
+                    .invokeAfter(Task.builder()
                             .name("AfterStartScriptRunner")
                             .task(() -> {
                                 try {
@@ -51,7 +51,7 @@ public final class AfterStart implements AddOn {
                                 } catch (Exception e) {
                                     LOG.error("Failed to run after start script: " + afterStartScript, e);
                                 }
-                            }).build(), TaskOrder.AFTER);
+                            }).build());
         }
     }
 

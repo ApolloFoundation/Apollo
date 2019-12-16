@@ -68,21 +68,22 @@ import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StackTraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -151,13 +152,17 @@ public class DexService {
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
      */
-    @Transactional
     public void saveOrder(DexOrder order) {
+        order.setHeight(this.blockchain.getHeight()); // new height value
+        if (log.isTraceEnabled()) {
+            log.trace("Save order {} at height {} : {} ", order.getId(), order.getHeight(), StackTraceUtils.lastNStacktrace(3));
+        }
         dexOrderTable.insert(order);
     }
 
     @Transactional
     public void saveDexContract(ExchangeContract exchangeContract) {
+        exchangeContract.setHeight(this.blockchain.getHeight()); // new height value
         dexContractTable.insert(exchangeContract);
     }
 
@@ -234,18 +239,21 @@ public class DexService {
 
 
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
+        long start = System.currentTimeMillis();
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
+        log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
+                orders.size(), System.currentTimeMillis() - start, time);
 
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
-            dexOrderTable.insert(order);
-
-            refundFrozenAplForOrder(order);
+            saveOrder(order);
+            refundFrozenAplForOrderIfWeCan(order);
 
             reopenIncomeOrders(order.getId());
 
         }
+        log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
 
     public void closeOverdueContracts(Integer time) throws AplException.ExecutiveProcessException {
@@ -258,6 +266,7 @@ public class DexService {
             closeOverdueContract(order, time);
             closeOverdueContract(counterOrder, time);
             contract.setContractStatus(ExchangeContractStatus.STEP_4);
+            order.setHeight(this.blockchain.getHeight()); // new height value
             dexContractTable.insert(contract);
         }
     }
@@ -266,11 +275,11 @@ public class DexService {
         if (order.getStatus() != OrderStatus.EXPIRED && order.getStatus() != OrderStatus.CLOSED && order.getStatus() != OrderStatus.CANCEL) {
             if (order.getFinishTime() > time) {
                 order.setStatus(OrderStatus.OPEN);
-                dexOrderTable.insert(order);
+                saveOrder(order);
             } else {
                 order.setStatus(OrderStatus.EXPIRED);
-                dexOrderTable.insert(order);
-                refundFrozenAplForOrder(order);
+                saveOrder(order);
+                refundFrozenAplForOrderIfWeCan(order);
                 reopenIncomeOrders(order.getId());
             }
 
@@ -279,13 +288,14 @@ public class DexService {
         }
     }
 
-    public void refundFrozenAplForOrder(DexOrder order) throws AplException.ExecutiveProcessException {
+    public void refundFrozenAplForOrderIfWeCan(DexOrder order) throws AplException.ExecutiveProcessException {
         if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
             refundAPLFrozenMoney(order);
         }
     }
 
-    public void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
+
+    private void refundAPLFrozenMoney(DexOrder order) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.checkHaveFreezeOrRefundApl(order);
 
         //Return APL.
@@ -393,7 +403,7 @@ public class DexService {
 
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
-                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting(), null);
+                        order.getFromAddress(), order.getId(), secretHash, toAddress, contractStatus.timeOfWaiting() / 60, null);
                 result.setTxId(txHash);
             } else {
                 throw new AplException.ExecutiveProcessException("There is no deposit(frozen money) for order. OrderId: " + order.getId());
@@ -497,11 +507,13 @@ public class DexService {
         return true;
     }
 
-
+    @Transactional
     public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
+        Transaction orderTx;
+        Transaction contractTx = null;
 
         if (counterOffer != null) {
             if (counterOffer.getAccountId().equals(order.getAccountId())) {
@@ -512,32 +524,35 @@ public class DexService {
             order.setStatus(OrderStatus.PENDING);
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), false);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
 
             // 2. Create contract.
             DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
             TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
-            response = transactionResponse.getJson();
-            Transaction contractTx = transactionResponse.getTx();
-            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(offerTx, null, null);
+            contractTx = transactionResponse.getTx();
+
+            MandatoryTransaction offerMandatoryTx = new MandatoryTransaction(orderTx, null, null);
             MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, offerMandatoryTx.getFullHash(), null);
             mandatoryTransactionDao.insert(offerMandatoryTx);
             mandatoryTransactionDao.insert(contractMandatoryTx);
             transactionProcessor.broadcast(offerMandatoryTx.getTransaction());
-            // will be broadcasted by DexOrderProcessor when offer will be confirmed
-            //            transactionProcessor.broadcast(contractMandatoryTx.getTransaction());
         } else {
             CreateTransactionRequest createOfferTransactionRequest = HttpRequestToCreateTransactionRequestConverter
                     .convert(requestWrapper, account, 0L, 0L, new DexOrderAttachmentV2(order), true);
-            Transaction offerTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
-            order.setId(offerTx.getId());
+            orderTx = dexOrderTransactionCreator.createTransaction(createOfferTransactionRequest);
+            order.setId(orderTx.getId());
         }
 
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
             log.debug("Create order - frozen money, accountId: {}, offerId: {}", account.getId(), order.getId());
+        }
+
+        ((JSONObject) response).put("order", orderTx.getJSONObject());
+        if (contractTx != null) {
+            ((JSONObject) response).put("contract", contractTx.getJSONObject());
         }
         if (freezeTx != null) {
             ((JSONObject) response).put("frozenTx", freezeTx);
@@ -615,7 +630,22 @@ public class DexService {
         return blockchain.hasTransaction(txId, requiredTxHeight);
     }
 
-    
+    public void reopenPendingOrders(int height, int time) throws AplException.ExecutiveProcessException {
+        if (height % 10 == 0 ) { // every ten blocks
+            List<DexOrder> pendingOrders = dexOrderTable.getPendingOrdersWithoutContracts(height - Constants.DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS);
+            for (DexOrder pendingOrder : pendingOrders) {
+                if (pendingOrder.getFinishTime() > time) {
+                    pendingOrder.setStatus(OrderStatus.OPEN);
+                } else {
+                    pendingOrder.setStatus(OrderStatus.EXPIRED);
+                    refundFrozenAplForOrderIfWeCan(pendingOrder);
+                }
+                saveOrder(pendingOrder);
+            }
+        }
+    }
+
+
 
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);

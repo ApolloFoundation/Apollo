@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.app.service;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public interface SecureStorageService {
@@ -30,12 +31,12 @@ public interface SecureStorageService {
     /**
      * Restore user keys from secure storage.
      */
-    boolean restoreSecretStorage();
+    boolean restoreSecretStorage(Path path);
 
     /**
      * Delete secure storage file.
      */
-    boolean deleteSecretStorage();
+    boolean deleteSecretStorage(Path path);
 
     /**
      * Create private key for application.
@@ -50,5 +51,7 @@ public interface SecureStorageService {
      * @return flag whether the corresponding pair was found
      */
     boolean flushAccountKeys(Long accountID, String passPhrase);
-    
+
+
+    boolean isEnabled();
 }

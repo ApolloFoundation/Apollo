@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Async;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.Sync;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
@@ -20,6 +19,7 @@ import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import javax.enterprise.event.ObservesAsync;
 
 @Singleton
 public class ShardObserver {
@@ -36,20 +36,14 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
     }
 
-
-    public void onTrimDoneAsync(@Observes @Async TrimData trimData) {
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
+//no matter how we get signal sync or async, do it async
+    public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());        
     }
 
-    public void onTrimDone(@Observes @Sync TrimData trimData) {
-        try {
-            CompletableFuture<MigrateState> future = tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
-            if (future != null) {
-                future.get();
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.toString(), e);
-        }
+    public void onTrimDone(@Observes  @TrimEvent  TrimData trimData) {
+//do it async anyway because we have to exit from trim and unlock it       
+        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight());
     }
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
@@ -58,17 +52,34 @@ public class ShardObserver {
         boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
         boolean shardingEnabled = currentConfig.isShardingEnabled();
         log.debug("Is sharding enabled ? : '{}' && '{}'", shardingEnabled, !isShardingOff);
+        int shardingFrequency = 1;
         if (shardingEnabled && !isShardingOff) {
+            if (!blockchainConfig.isJustUpdated()) {
+                // config didn't change from previous trim scheduling
+                shardingFrequency = currentConfig.getShardingFrequency();
+            } else {
+                // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated()' usage and checking
+                // config has changed from previous trim scheduling, try to get previous 'shard frequency' value
+                shardingFrequency = blockchainConfig.getPreviousConfig().isPresent()
+                        && blockchainConfig.getPreviousConfig().get().isShardingEnabled() ?
+                        blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
+                        : currentConfig.getShardingFrequency(); // fall back
+            }
             log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                            + ", shardingFrequency = {}",
-                    currentConfig.getShardingFrequency() != 0 ?
-                            lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0 : "zeroDivision",
+                            + ", shardingFrequency = {} ({})",
+                    shardingFrequency != 0 ?
+                            lastTrimBlockHeight % shardingFrequency == 0 : "zeroDivision",
                     lastTrimBlockHeight, blockchainHeight,
-                    currentConfig.getShardingFrequency());
-            if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % currentConfig.getShardingFrequency() == 0) {
+                    shardingFrequency, blockchainConfig.isJustUpdated());
+            if (lastTrimBlockHeight != 0 && lastTrimBlockHeight % shardingFrequency == 0) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
-                log.debug("No attempt to create new shard at height '{}'", blockchainHeight);
+                log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
+                        blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
+            }
+            // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
+            if (blockchainConfig.isJustUpdated()) {
+                blockchainConfig.resetJustUpdated(); // reset flag
             }
         } else {
             log.debug("Sharding is disabled on node : {} && {}", shardingEnabled, isShardingOff);

@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.38.3</version>
+        <version>1.39.0</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -188,6 +188,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-junit5</artifactId>
             <scope>test</scope>
@@ -200,6 +205,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -252,7 +262,7 @@
         <dependency>
             <groupId>com.apollocurrency.antifraud</groupId>
             <artifactId>antifraud</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
 
         <!-- Ethereum API -->
@@ -303,7 +313,11 @@
             <version>1.5.21</version>
             <type>jar</type>
         </dependency>
-                
+
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
