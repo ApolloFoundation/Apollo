@@ -7,8 +7,12 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,16 +39,79 @@ class DexOrderDaoTest {
 
     @Test
     void testGetOrdersByType() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(0).build());
+        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build());
 
-        assertEquals(List.of(td.ORDER_BPB_1, td.ORDER_BEA_1, td.ORDER_BEA_4), orders);
+        assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
     }
 
     @Test
     void testGetOrdersByAccountAndDbId() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().dbId(td.ORDER_SPA_2.getDbId()).accountId(td.ALICE).build());
+        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder()
+                .dbId(td.ORDER_SPA_2.getDbId())
+                .accountId(td.BOB)
+                .pairCur(DexCurrency.PAX.ordinal())
+                .build());
 
-        assertEquals(List.of(td.ORDER_SEA_3, td.ORDER_BEA_4), orders);
+        assertEquals(List.of(td.ORDER_BPB_1, td.ORDER_BPB_2), orders);
+    }
+
+    @Test
+    void testGetLastClosedOrderBeforeHeight() {
+        DexOrder order = dexOrderDao.getLastClosedOrderBeforeHeight(DexCurrency.ETH, 125);
+
+        assertEquals(td.ORDER_BEA_8, order);
+    }
+
+    @Test
+    void testGetClosedOrders() {
+        List<DexOrder> orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
+                .coin(DexCurrency.ETH)
+                .fromDbId(999)
+                .limit(2)
+                .toHeight(123)
+                .build());
+
+        assertEquals(List.of(td.ORDER_BEA_1), orders);
+    }
+
+    @Test
+    void testGetClosedOrdersWithPagination() {
+        List<DexOrder> orders = dexOrderDao.getClosedOrdersFromDbId(HeightDbIdRequest.builder()
+                .coin(DexCurrency.ETH)
+                .fromDbId(999)
+                .limit(2)
+                .toHeight(125)
+                .build());
+
+        assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_BEA_8), orders);
+    }
+
+    @Test
+    void testGetNoClosedBuyOrdersBetweenTimestamps() {
+        List<DexOrder> orders = dexOrderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
+                .limit(3)
+                .coin(DexCurrency.ETH)
+                .fromDbId(0)
+                .fromTime(11_000)
+                .toTime(17_000)
+                .build());
+
+        assertEquals(List.of(), orders);
+
+    }
+
+    @Test
+    void testGetClosedBuyOrdersBetweenTimestamps() {
+        List<DexOrder> orders = dexOrderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
+                .limit(3)
+                .coin(DexCurrency.ETH)
+                .fromDbId(1030)
+                .fromTime(6_001)
+                .toTime(19_001)
+                .build());
+
+        assertEquals(List.of(td.ORDER_BEA_8), orders);
+
     }
 
 }

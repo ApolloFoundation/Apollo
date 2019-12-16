@@ -4,6 +4,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -15,13 +20,15 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
@@ -73,16 +80,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
-import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils;
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import java.util.ArrayList;
-import java.util.Random;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(info = @Info(description = "Operations with exchange."))
@@ -184,8 +181,8 @@ public class DexController {
             OrderType type = OrderType.getType(offerType);
             DexOrder order;
             try {
-                DexCurrencies pairedCurrency = DexCurrencies.getType(pairCurrency);
-                if (pairedCurrency == DexCurrencies.APL) {
+                DexCurrency pairedCurrency = DexCurrency.getType(pairCurrency);
+                if (pairedCurrency == DexCurrency.APL) {
                     return Response.ok(incorrect("pairedCurrency", "APL is not allowed to be a paired currency")).build();
                 }
                 order = DexOrder.builder()
@@ -194,7 +191,7 @@ public class DexController {
                         .orderAmount(EthUtil.gweiToAtm(orderAmount))
                         .fromAddress(type.isSell() ? Convert2.defaultRsAccount(account.getId()) : walletAddress)
                         .toAddress(type.isSell() ? walletAddress : Convert2.defaultRsAccount(account.getId()))
-                        .orderCurrency(DexCurrencies.APL)
+                        .orderCurrency(DexCurrency.APL)
                         .pairCurrency(pairedCurrency)
                         .pairRate(EthUtil.gweiToEth(pairRate))
                         .status(OrderStatus.OPEN)
@@ -293,7 +290,7 @@ public class DexController {
 
         OrderType type = null;
         OrderStatus orderStatus = null;
-        DexCurrencies pairCur = null;
+        DexCurrency pairCur = null;
         Integer currentTime = null;
         Long accountId = null;
 
@@ -303,7 +300,7 @@ public class DexController {
                 type = OrderType.getType(orderType);
             }
             if (pairCurrency != null) {
-                pairCur = DexCurrencies.getType(pairCurrency);
+                pairCur = DexCurrency.getType(pairCurrency);
             }
             if (isAvailableForNow) {
                 currentTime = timeService.getEpochTime();
@@ -328,7 +325,7 @@ public class DexController {
         DexOrderDBRequest dexOrderDBRequest = DexOrderDBRequest.builder()
                 .type(type != null ? type.ordinal() : null)
                 .currentTime(currentTime)
-                .offerCur(DexCurrencies.APL.ordinal())
+                .offerCur(DexCurrency.APL.ordinal())
                 .pairCur(pairCur != null ? pairCur.ordinal() : null)
                 .accountId(accountId)
                 .status(orderStatus)
@@ -419,7 +416,7 @@ public class DexController {
 
         log.debug("dexWithdrawPost, amount: {}, fromAddress: {}, toAddr: {}, transferFee: {}, currency: ", amount, fromAddress, toAddress, transferFee, cryptocurrency);
 
-        DexCurrencies currencies = null;
+        DexCurrency currencies = null;
         String passphrase;
         long sender;
         try{
@@ -427,7 +424,7 @@ public class DexController {
             sender = ParameterParser.getAccountId(req, "sender", true);
 
             if (cryptocurrency != null) {
-                currencies = DexCurrencies.getType(cryptocurrency);
+                currencies = DexCurrency.getType(cryptocurrency);
             }
         } catch (ParameterException ex){
             log.error(ex.getMessage(), ex);
@@ -437,7 +434,7 @@ public class DexController {
             return Response.ok(JSON.toString(JSONResponses.ERROR_INCORRECT_REQUEST)).build();
         }
 
-        if (currencies == null || DexCurrencies.APL.equals(currencies)) {
+        if (currencies == null || DexCurrency.APL.equals(currencies)) {
             return Response.status(Response.Status.OK).entity(JSON.toString(incorrect("cryptocurrency", "Withdraw can work only with Eth or Pax."))).build();
         }
 
@@ -595,7 +592,7 @@ public class DexController {
                                 @Parameter(description = "limit") @QueryParam("limit") Integer limit,
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
+        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
         TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers (fsym,  tsym,  toTs, limit,  60*60*24, service, timeService);
         return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }

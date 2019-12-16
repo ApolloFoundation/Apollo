@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
@@ -72,11 +72,11 @@ class DexServiceTest {
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
 
-    DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 127_000_000L, DexCurrencies.ETH, BigDecimal.valueOf(0.0001), 500);
-    DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrencies.APL, 10000L, DexCurrencies.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
-    DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrencies.APL, 50000L, DexCurrencies.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-    DexOrder order3 = new DexOrder(3L, 6L, OrderType.BUY, 200L, DexCurrencies.APL, 100000L, DexCurrencies.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-    DexOrder order4 = new DexOrder(4L, 8L, OrderType.BUY, 100L, DexCurrencies.APL, 20000L, DexCurrencies.PAX, BigDecimal.valueOf(2.2), 500, OrderStatus.PENDING, 381 , "", "");
+    DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
+    DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
+    DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
+    DexOrder order3 = new DexOrder(3L, 6L, OrderType.BUY, 200L, DexCurrency.APL, 100000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
+    DexOrder order4 = new DexOrder(4L, 8L, OrderType.BUY, 100L, DexCurrency.APL, 20000L, DexCurrency.PAX, BigDecimal.valueOf(2.2), 500, OrderStatus.PENDING, 381 , "", "");
     ExchangeContract contract = new ExchangeContract(
             0L, 2L, 1L, 3L, 200L, 100L,
             ExchangeContractStatus.STEP_3, new byte[32], "123",
@@ -134,7 +134,7 @@ class DexServiceTest {
 
     @Test
     void testHasConfirmationsForUnknownCurrency() {
-        order.setPairCurrency(DexCurrencies.APL); //set apl here, because apl cannot represent paired currency
+        order.setPairCurrency(DexCurrency.APL); //set apl here, because apl cannot represent paired currency
         order.setType(OrderType.SELL);
 
         assertThrows(IllegalArgumentException.class, () -> dexService.hasConfirmations(contract, order));
@@ -175,8 +175,8 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutHasFrozenMoneyParameter() {
-        DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrencies.APL, 10000L, DexCurrencies.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
-        DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrencies.APL, 50000L, DexCurrencies.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
+        DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
+        DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
         DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request);
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);

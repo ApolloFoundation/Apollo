@@ -169,7 +169,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (314);
+INSERT into version values (329);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
@@ -379,6 +379,11 @@ INSERT INTO dex_offer
 (1020      , 3               , 0    , 200        , 0,               100000      , 2              ,150000000  ,7000        , 0      , 121    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
 (1030      , 4               , 1    , 100        , 0,               400000      , 1              ,1000000    ,8000        , 4      , 121    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
 (1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1050      , 6               , 0    , 100        , 0,               400000      , 2              ,10000      ,13001       , 5      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1060      , 7               , 0    , 100        , 0,               500000      , 1              ,54000000   ,15001       , 4      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1070      , 8               , 0    , 200        , 0,               44000       , 2              ,430000     ,16001       , 1      , 123    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
+(1080      , 9               , 1    , 100        , 0,               43000       , 1              ,7600000    ,17001       , 5      , 124    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1090      , 10              , 0    , 100        , 0,               6550000     , 1              ,7400000    ,19001       , 5      , 124    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
 ;
 
 INSERT INTO mandatory_transaction

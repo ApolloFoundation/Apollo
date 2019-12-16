@@ -47,7 +47,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
@@ -144,11 +144,10 @@ public class DexService {
     public DexOrder getOrder(Long transactionId) {
         return dexOrderTable.getByTxId(transactionId);
     }
-    
+
     /**
      * returns unsorted list of orders for the specific time interval
      *
-     * @param DexOrderDBRequestForTrading 
      */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrdersForTrading(DexOrderDBRequestForTrading dexOrderDBRequestForTrading ) {
@@ -276,7 +275,7 @@ public class DexService {
     }
 
 
-    public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrencies currencies, Long transferFee) throws AplException.ExecutiveProcessException {
+    public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrency currencies, Long transferFee) throws AplException.ExecutiveProcessException {
         if (currencies != null && currencies.isEthOrPax()) {
             return ethereumWalletService.transfer(secretPhrase, accountId, fromAddress, toAddress, amount, transferFee, currencies);
         } else {
@@ -711,6 +710,11 @@ public class DexService {
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);
         order.setStatus(OrderStatus.CLOSED);
+        // set an actual finish time of the order starting from the dex2.0 height
+        if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+            order.setFinishTime(blockchain.getLastBlockTimestamp());
+        }
         saveOrder(order);
         return order;
     }
