@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -76,11 +76,11 @@ public class DexValidationServiceImpl implements IDexValidator {
         return null;
     }
 
-    BigInteger getUserEthDeposit(String user, DexCurrencies currencyType) {
+    BigInteger getUserEthDeposit(String user, DexCurrency currencyType) {
         return  ethereumWalletService.getEthOrPaxBalanceWei(user, currencyType);
     }
 
-    BigInteger getEthOrPaxBalanceWei(String user, DexCurrencies currencyType) {
+    BigInteger getEthOrPaxBalanceWei(String user, DexCurrency currencyType) {
         return ethereumWalletService.getEthOrPaxBalanceWei(user, currencyType );
     }
 

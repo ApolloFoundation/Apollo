@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMap
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -89,7 +89,7 @@ public class DexSmartContractService {
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
-    public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrencies currency) throws ExecutionException, AplException.ExecutiveProcessException {
+    public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws ExecutionException, AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
         Long gasPrice = gas;
         if(gasPrice == null){

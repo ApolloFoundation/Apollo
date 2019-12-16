@@ -24,13 +24,13 @@ import org.slf4j.LoggerFactory;
  * @author Serhiy Lymar
  */
 public class TradingViewUtils {
-    
+
     private static final Logger log = LoggerFactory.getLogger(TradingViewUtils.class);
 
-    
+
     static public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
         // request type =1 or 0 depending on sale or buy
-        
+
         SimpleTradingEntry result = new SimpleTradingEntry();
         
         List<DexOrder> periodEntries = new ArrayList<>();
@@ -44,8 +44,8 @@ public class TradingViewUtils {
         if (periodEntries.size() > 0) { 
             log.trace("offers: {}", periodEntries.size());
 
-            BigDecimal hi =  periodEntries.get(0).getPairRate();            
-            BigDecimal low =  periodEntries.get(0).getPairRate(); 
+            BigDecimal hi =  periodEntries.get(0).getPairRate();
+            BigDecimal low =  periodEntries.get(0).getPairRate();
             BigDecimal open = periodEntries.get(0).getPairRate();
             BigDecimal close = periodEntries.get( periodEntries.size()-1 ).getPairRate();
 
@@ -69,9 +69,9 @@ public class TradingViewUtils {
 
                 BigDecimal amount = EthUtil.fromAtm( BigDecimal.valueOf(entryOfPeriod.getOrderAmount()) );
                 BigDecimal vx = amount.multiply(entryOfPeriod.getPairRate());
-                
+
                 log.trace("amount: {}, rate: {}", amount, entryOfPeriod.getPairRate() );
-                
+
                 volumefrom = volumefrom.add(amount);
                 volumeto = volumeto.add(vx);
             }            
@@ -155,8 +155,8 @@ public class TradingViewUtils {
             if (dexOrdersForInterval.size() > 0) {
                 log.trace ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
             }
-            initialTime += interval;                
-            
+            initialTime += interval;
+
             if (!entryForPeriod.isZero()) {
                 log.trace("adding data");
                 data.add(entryForPeriod);

@@ -10,11 +10,13 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
 
 import javax.enterprise.inject.Produces;
@@ -25,6 +27,7 @@ import javax.inject.Singleton;
  * Configuration DAO classes with Jdbi, Transaction resources
  */
 @Singleton
+@SuppressWarnings("unused")
 public class DaoConfig {
 
     private JdbiHandleFactory jdbiHandleFactory;
@@ -83,6 +86,16 @@ public class DaoConfig {
     @Produces
     private UserErrorMessageDao userErrorMessage() {
         return createDaoInterfaceProxy(UserErrorMessageDao.class);
+    }
+
+    @Produces
+    private DexCandlestickDao candlestickDao() {
+        return createDaoInterfaceProxy(DexCandlestickDao.class);
+    }
+
+    @Produces
+    private OrderScanDao orderScanDao() {
+        return createDaoInterfaceProxy(OrderScanDao.class);
     }
 
     private <T> T createDaoInterfaceProxy(Class<T> daoClass) {

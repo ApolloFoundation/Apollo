@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.eth.model;
 
 import com.apollocurrency.aplwallet.apl.core.config.EthBalanceWeiToEthSerializer;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.math.BigInteger;
@@ -33,10 +33,10 @@ public class EthWalletBalanceInfo {
 
 
     public BigInteger getEth() {
-        return balances.get(DexCurrencies.ETH.getCurrencyCode());
+        return balances.get(DexCurrency.ETH.getCurrencyCode());
     }
 
     public BigInteger getPax() {
-        return balances.get(DexCurrencies.PAX.getCurrencyCode());
+        return balances.get(DexCurrency.PAX.getCurrencyCode());
     }
 }
