@@ -3,7 +3,6 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -717,19 +716,6 @@ public class DexService {
         }
         saveOrder(order);
         return order;
-    }
-
-    public void finishExchange(long transactionId, long orderId) {
-        DexOrder order = closeOrder(orderId);
-
-        ExchangeContract exchangeContract = getDexContractByOrderId(order.getId());
-
-        if (exchangeContract == null) {
-            exchangeContract = getDexContractByCounterOrderId(order.getId());
-        }
-
-        Block lastBlock = blockchain.getLastBlock();
-
     }
     
     public boolean flushSecureStorage(Long accountID, String passPhrase) {                
