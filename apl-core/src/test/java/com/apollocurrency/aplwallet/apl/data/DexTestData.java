@@ -6,9 +6,8 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -23,11 +22,16 @@ public class DexTestData {
     public final long ALICE = 100;
     public final long BOB = 200;
     // type(Buy/Sell currency (ETH/PAX) account (Alice/BOB)
-    public final DexOrder ORDER_BEA_1 = new DexOrder(1000L, 1L, OrderType.BUY, 100L, DexCurrencies.APL, 500000L, DexCurrencies.ETH, BigDecimal.valueOf(0.001), 6000, OrderStatus.CLOSED, 100, "0x602242c68640e754677b683e20a2740f8f95f7d3", "APL-K78W-Z7LR-TPJY-73HZK");
-    public final DexOrder ORDER_SPA_2 = new DexOrder(1010L, 2L, OrderType.SELL, 100L, DexCurrencies.APL, 200000L, DexCurrencies.PAX, BigDecimal.valueOf(0.16), 6500, OrderStatus.CANCEL, 110, "APL-K78W-Z7LR-TPJY-73HZK", "0x602242c68640e754677b683e20a2740f8f95f7d3");
-    public final DexOrder ORDER_BPB_1 = new DexOrder(1020L, 3L, OrderType.BUY, 200L, DexCurrencies.APL, 100000L, DexCurrencies.PAX, BigDecimal.valueOf(0.15), 7000, OrderStatus.OPEN, 121, "0x777BE94ea170AfD894Dd58e9634E442F6C5602EF", "APL-T69E-CTDG-8TYM-DKB5H");
-    public final DexOrder ORDER_SEA_3 = new DexOrder(1030L, 4L, OrderType.SELL, 100L, DexCurrencies.APL, 400000L, DexCurrencies.ETH, BigDecimal.valueOf(0.001), 8000, OrderStatus.WAITING_APPROVAL, 121, "APL-K78W-Z7LR-TPJY-73HZK", "0x602242c68640e754677b683e20a2740f8f95f7d3");
-    public final DexOrder ORDER_BEA_4 = new DexOrder(1040L, 5L, OrderType.BUY, 100L, DexCurrencies.APL, 600000L, DexCurrencies.ETH, BigDecimal.valueOf(0.001), 11000, OrderStatus.OPEN, 122, "0x602242c68640e754677b683e20a2740f8f95f7d3", "APL-K78W-Z7LR-TPJY-73HZK");
+    public final DexOrder ORDER_BEA_1 = new DexOrder(1000L, 1L, OrderType.BUY, 100L, DexCurrency.APL, 500000L, DexCurrency.ETH, BigDecimal.valueOf(0.001), 6000, OrderStatus.CLOSED, 100, "0x602242c68640e754677b683e20a2740f8f95f7d3", "APL-K78W-Z7LR-TPJY-73HZK");
+    public final DexOrder ORDER_SPA_2 = new DexOrder(1010L, 2L, OrderType.SELL, 100L, DexCurrency.APL, 200000L, DexCurrency.PAX, BigDecimal.valueOf(0.16), 6500, OrderStatus.CANCEL, 110, "APL-K78W-Z7LR-TPJY-73HZK", "0x602242c68640e754677b683e20a2740f8f95f7d3");
+    public final DexOrder ORDER_BPB_1 = new DexOrder(1020L, 3L, OrderType.BUY, 200L, DexCurrency.APL, 100000L, DexCurrency.PAX, BigDecimal.valueOf(0.15), 7000, OrderStatus.OPEN, 121, "0x777BE94ea170AfD894Dd58e9634E442F6C5602EF", "APL-T69E-CTDG-8TYM-DKB5H");
+    public final DexOrder ORDER_SEA_3 = new DexOrder(1030L, 4L, OrderType.SELL, 100L, DexCurrency.APL, 400000L, DexCurrency.ETH, BigDecimal.valueOf(0.001), 8000, OrderStatus.WAITING_APPROVAL, 121, "APL-K78W-Z7LR-TPJY-73HZK", "0x602242c68640e754677b683e20a2740f8f95f7d3");
+    public final DexOrder ORDER_BEA_4 = new DexOrder(1040L, 5L, OrderType.BUY, 100L, DexCurrency.APL, 600000L, DexCurrency.ETH, BigDecimal.valueOf(0.001), 11000, OrderStatus.OPEN, 122, "0x602242c68640e754677b683e20a2740f8f95f7d3", "APL-K78W-Z7LR-TPJY-73HZK");
+    public final DexOrder ORDER_BPA_5 = new DexOrder(1050L      , 6L               , OrderType.BUY    , 100L        , DexCurrency.APL,               400000L      , DexCurrency.PAX              ,BigDecimal.valueOf(0.00001)     ,13001       , OrderStatus.CLOSED           , 123    ,"0x602242c68640e754677b683e20a2740f8f95f7d3" ,"APL-K78W-Z7LR-TPJY-73HZK"                     );
+    public final DexOrder ORDER_BEA_6 = new DexOrder(1060L      , 7L               , OrderType.BUY    , 100L        , DexCurrency.APL,               500000L      , DexCurrency.ETH              ,BigDecimal.valueOf(0.054)       ,15001       , OrderStatus.WAITING_APPROVAL , 123    ,"0x602242c68640e754677b683e20a2740f8f95f7d3" ,"APL-K78W-Z7LR-TPJY-73HZK"                     );
+    public final DexOrder ORDER_BPB_2 = new DexOrder(1070L      , 8L               , OrderType.BUY    , 200L        , DexCurrency.APL,               44000L       , DexCurrency.PAX              ,BigDecimal.valueOf(0.00043)     ,16001       , OrderStatus.PENDING          , 123    ,"0x777BE94ea170AfD894Dd58e9634E442F6C5602EF" ,"APL-T69E-CTDG-8TYM-DKB5H"                     );
+    public final DexOrder ORDER_SEA_7 = new DexOrder(1080L      , 9L               , OrderType.SELL   , 100L        , DexCurrency.APL,               43000L       , DexCurrency.ETH              ,BigDecimal.valueOf(0.0076)      ,17001       , OrderStatus.CLOSED           , 124    ,"APL-K78W-Z7LR-TPJY-73HZK"                   ,"0x602242c68640e754677b683e20a2740f8f95f7d3"   );
+    public final DexOrder ORDER_BEA_8 = new DexOrder(1090L      , 10L              , OrderType.BUY    , 100L        , DexCurrency.APL,               6550000L     , DexCurrency.ETH              ,BigDecimal.valueOf(0.0074 )     ,19001       , OrderStatus.CLOSED           , 124    ,"0x602242c68640e754677b683e20a2740f8f95f7d3" ,"APL-K78W-Z7LR-TPJY-73HZK"                     );
 
     public static final long EXCHANGE_CONTRACT_ID_1       =  -3625894990594689368L ;
     public static final long EXCHANGE_CONTRACT_ID_2       =  -7277152511870517934L ;
@@ -87,8 +91,6 @@ public class DexTestData {
     public final DexTransaction TX_1 = new DexTransaction(100L, Numeric.hexStringToByteArray("0xa69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.DEPOSIT, "100", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 250);
     public final DexTransaction TX_2 = new DexTransaction(200L, Numeric.hexStringToByteArray("0x203b36aac62037ac7c4502aa023887f7fcae843c456fde083e6a1dc70a29f3d61a73f57d79481f06e27ea279c74528e1ba6b1854d219b1e3b255729889ca5926"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.INITIATE, "100", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 300);
     public final DexTransaction TX_3 = new DexTransaction(300L, Numeric.hexStringToByteArray("0x05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1"), Numeric.hexStringToByteArray("0xff"), DexTransaction.DexOperation.DEPOSIT, "102", "0x0398E119419E0D7792c53913d3f370f9202Ae137", 400);
-
-    public final DexTradeEntry NEW_TRADE_ENTRY_1;
 
     public DexTestData() {
 
@@ -175,7 +177,6 @@ public class DexTestData {
                 ExchangeContractStatus.STEP_2, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
 
         NEW_EXCHANGE_CONTRACT_16 = new ExchangeContract(NEW_EXCHANGE_CONTRACT_ID, NEW_EXCHANGE_CONTRACT_SENDER_ID, NEW_EXCHANGE_CONTRACT_RECIPIENT_ID, 53499882, NEW_DEX_CONTRACT_ATTACHMENT_4);
-
-        NEW_TRADE_ENTRY_1 = new DexTradeEntry(null, null);
+        
        }
 }

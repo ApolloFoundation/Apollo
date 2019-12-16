@@ -3,7 +3,6 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -45,14 +44,13 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTradeEntry;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
@@ -105,7 +103,6 @@ public class DexService {
     private SecureStorageService secureStorageService;
     private MandatoryTransactionDao mandatoryTransactionDao;
     private LoadingCache<Long, OrderFreezing> orderFreezingCache;
-    private DexTradeDao dexTradeDao;
 
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
@@ -118,7 +115,7 @@ public class DexService {
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
                       DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
-                      IDexMatcherInterface dexMatcherService, DexTradeDao dexTradeDao, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
+                      IDexMatcherInterface dexMatcherService, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
@@ -128,8 +125,7 @@ public class DexService {
         this.transactionProcessor = transactionProcessor;
         this.dexSmartContractService = dexSmartContractService;
         this.secureStorageService = secureStorageService;
-        this.dexContractTable = dexContractTable;
-        this.dexTradeDao = dexTradeDao;
+        this.dexContractTable = dexContractTable;      
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
         this.timeService = timeService;
         this.dexContractDao = dexContractDao;
@@ -148,16 +144,15 @@ public class DexService {
         return dexOrderTable.getByTxId(transactionId);
     }
 
-    @Transactional
-    public List<DexTradeEntry> getTradeInfoForPeriod(Integer start, Integer finish,
-                                                     Byte pairCurrency, Integer offset, Integer limit) {
-        return dexTradeDao.getDexEntriesForInterval(start, finish, pairCurrency, offset, limit);
+    /**
+     * returns unsorted list of orders for the specific time interval
+     *
+     */
+    @Transactional(readOnly = true)
+    public List<DexOrder> getOrdersForTrading(DexOrderDBRequestForTrading dexOrderDBRequestForTrading ) {
+        return dexOrderDao.getOrdersForTrading(dexOrderDBRequestForTrading);
     }
-
-    @Transactional
-    public void saveDexTradeEntry(DexTradeEntry dexTradeEntry) {
-        dexTradeDao.saveDexTradeEntry(dexTradeEntry);
-    }
+    
 
     /**
      * Use dexOfferTable for insert, to be sure that everything in one transaction.
@@ -279,7 +274,7 @@ public class DexService {
     }
 
 
-    public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrencies currencies, Long transferFee) throws AplException.ExecutiveProcessException {
+    public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrency currencies, Long transferFee) throws AplException.ExecutiveProcessException {
         if (currencies != null && currencies.isEthOrPax()) {
             return ethereumWalletService.transfer(secretPhrase, accountId, fromAddress, toAddress, amount, transferFee, currencies);
         } else {
@@ -714,35 +709,13 @@ public class DexService {
     public DexOrder closeOrder(long orderId) {
         DexOrder order = getOrder(orderId);
         order.setStatus(OrderStatus.CLOSED);
+        // set an actual finish time of the order starting from the dex2.0 height
+        if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null &&
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() < blockchain.getLastBlock().getHeight()) {
+            order.setFinishTime(blockchain.getLastBlockTimestamp());
+        }
         saveOrder(order);
         return order;
-    }
-
-    public void finishExchange(long transactionId, long orderId) {
-        DexOrder order = closeOrder(orderId);
-
-        ExchangeContract exchangeContract = getDexContractByOrderId(order.getId());
-
-        if (exchangeContract == null) {
-            exchangeContract = getDexContractByCounterOrderId(order.getId());
-        }
-
-        Block lastBlock = blockchain.getLastBlock();
-
-        DexTradeEntry dexTradeEntry = DexTradeEntry.builder()
-                .transactionID(transactionId)
-                .senderOfferID(exchangeContract.getSender())
-                .receiverOfferID(exchangeContract.getRecipient())
-                .senderOfferType((byte) order.getType().ordinal())
-                .senderOfferCurrency((byte) order.getOrderCurrency().ordinal())
-                .senderOfferAmount(order.getOrderAmount())
-                .pairCurrency((byte) order.getPairCurrency().ordinal())
-                .pairRate(order.getPairRate())
-                .finishTime(lastBlock.getTimestamp())
-                .height(lastBlock.getHeight())
-                .build();
-
-        saveDexTradeEntry(dexTradeEntry);
     }
     
     public boolean flushSecureStorage(Long accountID, String passPhrase) {                

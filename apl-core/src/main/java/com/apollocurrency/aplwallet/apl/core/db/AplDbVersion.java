@@ -818,10 +818,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE TABLE IF NOT EXISTS phasing_approval_tx (db_id IDENTITY NOT NULL, phasing_tx BIGINT NOT NULL, approved_tx BIGINT NOT NULL," +
                         " height INT NOT NULL)");
             case 312:
-                apply(  "CREATE TABLE IF NOT EXISTS dex_trade (db_id IDENTITY NOT NULL, transaction_id BIGINT not null, sender_offer_id BIGINT not null, " +
-                        "RECEIVER_OFFER_ID BIGINT not null, SENDER_OFFER_TYPE TINYINT not null, SENDER_OFFER_CURRENCY TINYINT not null, " +
-                        "SENDER_OFFER_AMOUNT BIGINT not null, PAIR_CURRENCY TINYINT not null, PAIR_RATE DECIMAL not null, FINISH_TIME INT not null, " +
-                        "HEIGHT INT not null )" );
+                apply(  null);
             case 313:
                 apply("ALTER TABLE dex_offer ALTER COLUMN transaction_id RENAME TO id");
             case 314:
@@ -838,7 +835,17 @@ public class AplDbVersion extends DbVersion {
             case 319:
                 apply("CREATE TABLE IF NOT EXISTS user_error_message(db_id IDENTITY, address VARCHAR NOT NULL, error VARCHAR NOT NULL, operation VARCHAR, details VARCHAR, timestamp BIGINT NOT NULL)");
             case 320:
-                return 320;
+                apply("DROP TABLE IF EXISTS dex_trade");
+            case 321:
+                apply("CREATE TABLE IF NOT EXISTS dex_candlestick(coin TINYINT NOT NULL, open DECIMAL NOT NULL, close DECIMAL NOT NULL, min DECIMAL NOT NULL, max DECIMAL NOT NULL, from_volume DECIMAL NOT NULL, to_volume DECIMAL NOT NULL, timestamp INT NOT NULL, open_order_timestamp INT NOT NULL, close_order_timestamp INT NOT NULL)");
+            case 322:
+                apply("ALTER TABLE dex_candlestick ADD CONSTRAINT IF NOT EXISTS dex_candlestick_coin_timestamp_idx UNIQUE (coin, timestamp)");
+            case 323:
+                apply("CREATE TABLE order_scan (coin TINYINT NOT NULL, last_db_id BIGINT NOT NULL)");
+            case 324:
+                apply("ALTER TABLE order_scan ADD CONSTRAINT IF NOT EXISTS order_scan_coin_idx UNIQUE (coin)");
+            case 325:
+                return 325;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

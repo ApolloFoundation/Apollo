@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
@@ -92,8 +92,8 @@ public class EthereumWalletService {
         Objects.requireNonNull(address);
         EthWalletBalanceInfo ethWalletBalanceInfo = new EthWalletBalanceInfo(address);
 
-        ethWalletBalanceInfo.put(DexCurrencies.ETH.getCurrencyCode(), getEthBalanceWei(address));
-        ethWalletBalanceInfo.put(DexCurrencies.PAX.getCurrencyCode(), getPaxBalanceWei(address));
+        ethWalletBalanceInfo.put(DexCurrency.ETH.getCurrencyCode(), getEthBalanceWei(address));
+        ethWalletBalanceInfo.put(DexCurrency.PAX.getCurrencyCode(), getPaxBalanceWei(address));
 
         return ethWalletBalanceInfo;
     }
@@ -115,14 +115,14 @@ public class EthereumWalletService {
      * @param address Eth address
      * @return account balance in Wei
      */
-    public BigInteger getEthOrPaxBalanceWei(String address, DexCurrencies dexCurrencies){
-        if(!dexCurrencies.isEthOrPax()){
+    public BigInteger getEthOrPaxBalanceWei(String address, DexCurrency dexCurrency){
+        if(!dexCurrency.isEthOrPax()){
             throw new UnsupportedOperationException("This currency is not supported");
         }
 
-        if(dexCurrencies.isEth()){
+        if(dexCurrency.isEth()){
             return getEthBalanceWei(address);
-        } else if(dexCurrencies.isPax()){
+        } else if(dexCurrency.isPax()){
             return getPaxBalanceWei(address);
         } else {
             throw new UnsupportedOperationException();
@@ -202,7 +202,7 @@ public class EthereumWalletService {
      * @param gasPrice Gwei
      * @return String - transaction Hash.
      */
-    public String transfer(String passphrase, long accountId, String fromAddress, String toAddress, BigDecimal amountEth, Long gasPrice, DexCurrencies currencies) throws AplException.ExecutiveProcessException {
+    public String transfer(String passphrase, long accountId, String fromAddress, String toAddress, BigDecimal amountEth, Long gasPrice, DexCurrency currencies) throws AplException.ExecutiveProcessException {
         WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
         EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
 
@@ -210,9 +210,9 @@ public class EthereumWalletService {
             throw new AplException.ExecutiveProcessException("Not found eth address at the user storage: " + fromAddress);
         }
 
-        if (DexCurrencies.ETH.equals(currencies)) {
+        if (DexCurrency.ETH.equals(currencies)) {
             return transferEth(ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
-        } else if (DexCurrencies.PAX.equals(currencies)) {
+        } else if (DexCurrency.PAX.equals(currencies)) {
             return transferERC20(PAX_CONTRACT_ADDRESS, ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());

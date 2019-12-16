@@ -35,7 +35,6 @@ delete from phasing_approval_tx;
 delete from dex_offer;
 delete from mandatory_transaction;
 delete from dex_contract;
-delete from dex_trade;
 delete from dex_transaction;
 delete from user_error_message;
 
@@ -170,7 +169,7 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458),
 ;
-INSERT into version values (314);
+INSERT into version values (329);
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
 INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
@@ -380,6 +379,11 @@ INSERT INTO dex_offer
 (1020      , 3               , 0    , 200        , 0,               100000      , 2              ,150000000  ,7000        , 0      , 121    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
 (1030      , 4               , 1    , 100        , 0,               400000      , 1              ,1000000    ,8000        , 4      , 121    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
 (1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1050      , 6               , 0    , 100        , 0,               400000      , 2              ,10000      ,13001       , 5      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1060      , 7               , 0    , 100        , 0,               500000      , 1              ,54000000   ,15001       , 4      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1070      , 8               , 0    , 200        , 0,               44000       , 2              ,430000     ,16001       , 1      , 123    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
+(1080      , 9               , 1    , 100        , 0,               43000       , 1              ,7600000    ,17001       , 5      , 124    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1090      , 10              , 0    , 100        , 0,               6550000     , 1              ,7400000    ,19001       , 5      , 124    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
 ;
 
 INSERT INTO mandatory_transaction
@@ -407,19 +411,8 @@ INSERT INTO dex_contract
 (150       , -2471101731518812718   , 8603248567538608464   , -6968465014361285240      , null                                                                  , 800       , TRUE  , 53497245          , 3     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 ;
 
-INSERT INTO dex_trade
-(DB_ID  , TRANSACTION_ID        , SENDER_OFFER_ID       , RECEIVER_OFFER_ID     , SENDER_OFFER_TYPE , SENDER_OFFER_CURRENCY , SENDER_OFFER_AMOUNT   , PAIR_CURRENCY , PAIR_RATE , FINISH_TIME   , HEIGHT    ) VALUES
-(1      , -4051151109082391457  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409395      , 100       ),
-(2      , -2205141163302755096  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(3      , -1685152182717622930  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(4      , -2122633089739232717  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(5      , 7065684111058088763   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(6      , -606154572201429269   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409448      , 300       ),
-(7      , 636192110663088186    , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409448      , 300       ),
-(8      , -7687407464048556007  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409464      , 300       ),
-(9      , 3468015179521711523   , 7477442401604846627   , -582612439131997299   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409563      , 400       ),
-(10     , 6490420391026496458   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409723      , 400       ),
-;
+
+
 
 INSERT INTO dex_transaction
 (db_id , hash ,                                                                                                                                 tx ,  operation , params , account , timestamp ) VALUES
