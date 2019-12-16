@@ -44,13 +44,12 @@ class MandatoryTransactionDaoTest {
     private MandatoryTransaction cancelTx;
     private MandatoryTransaction orderTx;
 
-
-
     @WeldSetup
-    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class), List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
-                .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-                .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
-                .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+    WeldInitiator weld =  WeldUtils.from(List.of(MandatoryTransactionDao.class, DaoConfig.class),
+            List.of(BlockchainConfig.class, Blockchain.class, DexService.class, PropertiesHolder.class, TimeService.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .build();
 
     @Inject

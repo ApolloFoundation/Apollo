@@ -26,13 +26,19 @@ import java.util.List;
  */
 @Slf4j
 public class ChunkedFileOps {
-    public final static int FILE_CHUNK_SIZE = 32768;
+    public static final int FILE_CHUNK_SIZE = 32768;
+    public static final String DIGESTER = "SHA-256";
 
-    
-    public class ChunkInfo{
-        public Long offset;
-        public Long size;
-        public Long crc;
+    public static class ChunkInfo{
+        public long offset;
+        public long size;
+        public long crc;
+
+        ChunkInfo(long offset, long size, long crc) {
+            this.offset = offset;
+            this.size = size;
+            this.crc = crc;
+        }
     }
     
     @Getter
@@ -42,7 +48,7 @@ public class ChunkedFileOps {
     private Path absPath;
     private Long lastRDChunkCrc;
     private Long lastWRChunkCrc;
-    public static final String DIGESTER="SHA-256";
+
     private byte[] fileHash = null;
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
 
@@ -51,10 +57,11 @@ public class ChunkedFileOps {
     }
     
     public ChunkedFileOps(String absPath) {
-        this.absPath = Paths.get(absPath);        
+        this(Paths.get(absPath));
     }
-    public ChunkedFileOps(Path fpath) {
-        this.absPath=fpath;
+
+    public ChunkedFileOps(Path absPath) {
+        this.absPath=absPath;
     }
 
     public void moveFile(Path target) throws IOException {
@@ -73,24 +80,18 @@ public class ChunkedFileOps {
         CheckSum cs = new CheckSum();
         cs.update(data);
         lastWRChunkCrc=cs.finish();
-        if(lastWRChunkCrc!=crc){
+        if(lastWRChunkCrc != crc){
             throw new BadCheckSumException(absPath.toString());
         }
         if(!absPath.getParent().toFile().exists()){
             absPath.getParent().toFile().mkdirs();
         }
-        RandomAccessFile rf=null;
-        try  {
-            rf = new RandomAccessFile(absPath.toFile(),"rw");  
+        try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "rw")) {
             rf.seek(offset);
             rf.write(data);
-        }catch( IOException e){
-           log.error("Can not write file: {}",absPath.toAbsolutePath().toString());
-           throw e;
-        }finally{
-            if(rf!=null){
-              rf.close();
-            }
+        } catch (IOException e) {
+            log.error("Can not write file: {}", absPath.toAbsolutePath().toString());
+            throw e;
         }
     }
     
@@ -122,7 +123,7 @@ public class ChunkedFileOps {
         try {  
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.size();
-        } catch (IOException ex) {            
+        } catch (IOException ignored) {
         }
       return res;   
     }   
@@ -146,38 +147,35 @@ public class ChunkedFileOps {
         try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r")) {
             //TODO: use FBCryptoDigest after FBCrypto update for stream operations
             MessageDigest dgst = MessageDigest.getInstance(DIGESTER);
-            Integer rd;
+            int rd;
             long offset=0;
             while((rd=rf.read(buf))>0){
                 dgst.update(buf,0,rd);
                 CheckSum cs = new CheckSum();
                 cs.update(buf,rd);
-                ChunkInfo ci = new ChunkInfo();
-                ci.offset=offset;
-                ci.size=rd.longValue();
-                ci.crc=cs.finish();
+                ChunkInfo ci = new ChunkInfo(offset, rd, cs.finish());
                 fileCRCs.add(ci);
-                offset=offset+rd;
+                offset += rd;
             }
             fileHash=dgst.digest();
-        } catch (IOException | NoSuchAlgorithmException ex) {
+        } catch (IOException | NoSuchAlgorithmException ignored) {
         }
        return fileHash;    
     }
     
     public List<ChunkInfo> getChunksCRC(){
-        if(fileCRCs.size()==0){
+        if(fileCRCs.size() == 0){
             getFileHashSums();
         }
         return fileCRCs;
     }
 
     public Date getFileDate() {
-        Long res=1L;
+        long res=1L;
         try {  
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.lastModifiedTime().toMillis();
-        } catch (IOException ex) {            
+        } catch (IOException ignored) {
         }
        return new Date(res);       
     }

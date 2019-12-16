@@ -27,6 +27,13 @@ class ValueParserTest {
     }
 
     @Test
+    void parseEscapedStringObject() {
+        String input = "'123,456"+CsvStringUtils.DEFAULT_ESCAPE_CHARACTER+CsvStringUtils.DEFAULT_FIELD_DELIMITER+"789'";
+        String expected = "123,456"+CsvStringUtils.DEFAULT_FIELD_DELIMITER+"789";
+        assertEquals(expected, parser.parseStringObject(input, CsvStringUtils.DEFAULT_ESCAPE_CHARACTER, CsvStringUtils.DEFAULT_FIELD_DELIMITER));
+    }
+
+    @Test
     void parseStringObjectWithImbalancedQuotes() {
         String o = "'APL-ZW95-E7B5-MVVP-CCBDT";
         assertThrows(RuntimeException.class, () -> parser.parseStringObject(o));
@@ -37,6 +44,13 @@ class ValueParserTest {
         String o = "'tag1'" + EOT + "'tag2'" + EOT + "'batman'" + EOT;
         Object[] expected = {"tag1", "tag2", "batman"};
         assertArrayEquals(expected, parser.parseArrayObject(o));
+    }
+
+    @Test
+    void parseArrayObjectWithEscapedString() {
+        String o = "'tag1'"+EOT+"'tag2'"+EOT+"'bat"+CsvStringUtils.DEFAULT_ESCAPE_CHARACTER+CsvStringUtils.DEFAULT_FIELD_DELIMITER+"man'"+EOT;
+        Object[] expected = {"tag1", "tag2","bat"+CsvStringUtils.DEFAULT_FIELD_DELIMITER+"man"};
+        assertArrayEquals(expected, parser.parseArrayObject(o, CsvStringUtils.DEFAULT_ESCAPE_CHARACTER, CsvStringUtils.DEFAULT_FIELD_DELIMITER));
     }
 
     @Test

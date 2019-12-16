@@ -410,6 +410,7 @@ public class EthereumWalletService {
 
         return transactionResponse.getTransactionHash();
     }
+
     public BigInteger estimateGasLimit(String fromAddress, String toAddress, Function function, BigInteger weiValue) {
         try {
             EthEstimateGas ethEstimateGas  = web3j.ethEstimateGas(new Transaction(fromAddress, null, null, null

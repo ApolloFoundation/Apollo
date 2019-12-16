@@ -373,6 +373,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional
     @Override
     public void deleteBlocksFromHeight(int height) {
+        log.debug("deleteBlocksFromHeight ({})", height);
         blockDao.deleteBlocksFromHeight(height);
     }
 

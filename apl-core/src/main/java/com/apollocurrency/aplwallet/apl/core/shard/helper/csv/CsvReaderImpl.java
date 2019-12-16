@@ -500,31 +500,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         return s.equals(nullString) ? null : s;
     }
 
-    private String unEscape(String s) {
-        StringBuilder buff = new StringBuilder(s.length());
-        int start = 0;
-        char[] chars = null;
-        while (true) {
-            int idx = s.indexOf(escapeCharacter, start);
-            if (idx < 0) {
-                idx = s.indexOf(fieldDelimiter, start);
-                if (idx < 0) {
-                    break;
-                }
-            }
-            if (chars == null) {
-                chars = s.toCharArray();
-            }
-            buff.append(chars, start, idx - start);
-            if (idx == s.length() - 1) {
-                start = s.length();
-                break;
-            }
-            buff.append(chars[idx + 1]);
-            start = idx + 2;
-        }
-        buff.append(s.substring(start));
-        return buff.toString();
+    @Override
+    public String unEscape(String s) {
+        return CsvStringUtils.unEscape(s, escapeCharacter, fieldDelimiter);
     }
 
     /**

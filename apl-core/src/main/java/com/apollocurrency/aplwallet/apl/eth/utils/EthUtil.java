@@ -64,7 +64,9 @@ public class EthUtil {
         return weiToEther(gweiToWei(gwei)).multiply(BigDecimal.valueOf(Constants.ONE_APL)).longValue();
     }
 
-
+    public static BigDecimal fromAtm(BigDecimal ix) {
+        return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));        
+    }
 
     public static boolean isAddressValid(String address){
         return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);

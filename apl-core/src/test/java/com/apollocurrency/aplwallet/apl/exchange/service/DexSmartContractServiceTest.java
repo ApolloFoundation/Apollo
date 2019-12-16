@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
@@ -53,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -79,6 +81,9 @@ class DexSmartContractServiceTest {
     private DexTransactionDao dexTransactionDao;
     @Mock
     private TransactionReceiptProcessor receiptProcessor;
+    @Mock
+    private ReceiptProcessorProducer receiptProcessorProducer;
+
     private DexSmartContractService service;
     private static final long ALICE_ID = 100;
     private static final String ALICE_PASS = "PASS";
@@ -101,7 +106,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor));
+        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
@@ -173,7 +178,7 @@ class DexSmartContractServiceTest {
     }
 
     @Test
-    void testDepositPaxWithoutAllowance() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
+    void testDepositPaxWithoutAllowance() throws ExecutionException, AplException.ExecutiveProcessException, IOException, TransactionException {
         BigInteger amount = EthUtil.etherToWei(BigDecimal.ONE);
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
@@ -182,7 +187,11 @@ class DexSmartContractServiceTest {
         doReturn("approve-hash").when(ethereumWalletService).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), amount, PAX_ETH_ADDRESS);
 
-        String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrency.PAX);
+        TransactionReceiptProcessor transactionReceiptProcessor = Mockito.mock(TransactionReceiptProcessor.class);
+        doReturn(new TransactionReceipt()).when(transactionReceiptProcessor).waitForTransactionReceipt(any());
+        doReturn(transactionReceiptProcessor).when(receiptProcessorProducer).receiptProcessor();
+
+        String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrencies.PAX);
 
         assertEquals("hash", hash);
     }
