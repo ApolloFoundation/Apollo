@@ -158,7 +158,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String quotedEscapedText(String o){
-        return quote + o.replaceAll(quote, doubleQuote) + quote;
+        return quotedText(o.replaceAll(quote, doubleQuote));
+    }
+
+    private String quotedText(String o){
+        return quote + o + quote;
     }
 
     private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend, Map<String, String> defaultValues) throws SQLException {
@@ -261,16 +265,16 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                     o = array != null ? EMPTY_ARRAY : nullString;
                                 }
                                 break;
-                            case Types.NVARCHAR:
                             case Types.VARBINARY:
                             case Types.BINARY:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
-                                    o = Base64.getEncoder().encodeToString(((byte[]) o));
+                                    o = quotedText(Base64.getEncoder().encodeToString(((byte[]) o)));
                                 } else {
                                     o = nullString;
                                 }
                                 break;
+                            case Types.NVARCHAR:
                             case Types.VARCHAR:
                             default:
                                 o = rs.getString(i + 1);
@@ -384,7 +388,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 }
                 String s;
                 if (rowColumnValues[i] instanceof Object[]) {
-                    int index = 0;
                     for (int j = 0; j < rowColumnValues.length; j++) {
                         Object rowColumnValue = rowColumnValues[j];
                         if (j == 0) {
@@ -426,21 +429,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String escape(String data) {
-        if (data.indexOf(fieldDelimiter) < 0) {
-            if (escapeCharacter == fieldDelimiter || data.indexOf(escapeCharacter) < 0) {
-                return data;
-            }
-        }
-        int length = data.length();
-        StringBuilder buff = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            char ch = data.charAt(i);
-            if (ch == fieldDelimiter || ch == escapeCharacter) {
-                buff.append(escapeCharacter);
-            }
-            buff.append(ch);
-        }
-        return buff.toString();
+        return CsvStringUtils.escape(data, escapeCharacter, fieldDelimiter);
     }
 
     @Override

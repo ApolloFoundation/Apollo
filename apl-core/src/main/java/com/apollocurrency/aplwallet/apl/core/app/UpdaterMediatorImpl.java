@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -29,6 +30,7 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
     private PeersService peers = CDI.current().select(PeersService.class).get();
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
@@ -115,5 +117,10 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
         return lookupBlockchain().loadTransaction(connection, rs);
+    }
+
+    @Override
+    public PropertiesHolder getPropertyHolder() {
+       return propertiesHolder;
     }
 }
