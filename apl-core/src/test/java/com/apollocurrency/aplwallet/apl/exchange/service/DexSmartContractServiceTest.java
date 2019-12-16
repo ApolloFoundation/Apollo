@@ -191,7 +191,7 @@ class DexSmartContractServiceTest {
         doReturn(new TransactionReceipt()).when(transactionReceiptProcessor).waitForTransactionReceipt(any());
         doReturn(transactionReceiptProcessor).when(receiptProcessorProducer).receiptProcessor();
 
-        String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrencies.PAX);
+        String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrency.PAX);
 
         assertEquals("hash", hash);
     }
