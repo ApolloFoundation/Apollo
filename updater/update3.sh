@@ -1,7 +1,7 @@
 #!/bin/bash
 #Database downloader script
 
-echo Downloading database...
+echo Downloading shards...
 
 cd $1
 mkdir tmpdir
