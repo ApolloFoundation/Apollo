@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
@@ -318,7 +319,7 @@ public class DexSmartContractService {
             try {
                 Optional<Transaction> transaction = getTxByHash(txHash);
                 if (transaction.isPresent()) { // pending or confirmed
-                    if (transaction.get().getBlockNumber() != null) { // confirmed
+                    if (transaction.get().getBlockNumberRaw() != null) { // confirmed
                         Optional<TransactionReceipt> receiptOptional = getTxReceipt(txHash);
                         if (receiptOptional.isPresent()) {
                             TransactionReceipt receipt = receiptOptional.get();
@@ -350,7 +351,15 @@ public class DexSmartContractService {
     }
 
     String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException {
-        String transactionHash = web3j.ethSendRawTransaction(encodedTx).send().getTransactionHash();
+        EthSendTransaction response = web3j.ethSendRawTransaction(encodedTx).send();
+        if (response != null) {
+            if (response.hasError()) {
+                throw new RuntimeException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
+            }
+        } else {
+            throw new RuntimeException("Unable to broadcast eth transaction, null response:  " + encodedTx);
+        }
+        String transactionHash = response.getTransactionHash();
         if (waitConfirmation) {
             try {
                 TransactionReceipt receipt = receiptProcessor.waitForTransactionReceipt(transactionHash);
