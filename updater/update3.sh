@@ -1,7 +1,7 @@
 #!/bin/bash
 #Database downloader script
 
-echo Downloading database...
+echo Downloading shards...
 
 cd $1
 mkdir tmpdir
@@ -14,10 +14,12 @@ tar -zxvf $5.tar.gz
 CONFIGDIR=conf
 
 if [ $5 == 'a2e9b9']
+then
     CONFIGDIR=conf-tn1
 fi
 
 if [ $5 == '2f2b61']
+then
     CONFIGDIR=conf-tn2
 fi
 

@@ -113,6 +113,8 @@ then
     fi
 
     rm -rf apollo-wallet-deps-${VERSION}.tar.gz
+    rm -rf apollo-wallet-deps-*
+    echo Version = $VERSION
     curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
@@ -128,7 +130,7 @@ then
     notify "Downloading db shards..."
     if [ $4 == true ]
     then
-	bash ./update3.sh
+	bash ./update3.sh $1 $2 $3 $4 $5
     fi
 
 
