@@ -36,5 +36,9 @@ public interface  DexTradeDao {
     @RegisterRowMapper(DexTradeEntryMapper.class)
     List<DexTradeEntry> getDexEntriesForInterval(@Bind("start") Integer start, @Bind("finish") Integer finish, @Bind("pairCurrency") Byte pairCurrency,
             @Bind("offset") Integer offset, @Bind("limit") Integer limit);
-    
+
+    @Transactional
+    @SqlUpdate("DELETE FROM dex_trade")
+    int hardDeleteAllDexTrade();
+
 }

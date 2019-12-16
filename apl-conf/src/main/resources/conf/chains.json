@@ -50,6 +50,9 @@
     "prefix": "APL",
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3500000
+    },
     "blockchainProperties": [
       {
         "height": 0,

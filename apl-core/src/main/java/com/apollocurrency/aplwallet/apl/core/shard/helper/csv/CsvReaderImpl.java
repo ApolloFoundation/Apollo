@@ -4,13 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleRowSource;
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -24,15 +22,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * {@inheritDoc}
  */
-public class CsvReaderImpl extends CsvAbstractBase
-        implements CsvReader, SimpleRowSource, AutoCloseable {
-    private static final Logger log = getLogger(CsvReaderImpl.class);
+@Slf4j
+//@NotThreadSafe
+public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleRowSource, AutoCloseable {
 
     private Reader input;
     private char[] inputBuffer;
@@ -192,6 +189,226 @@ public class CsvReaderImpl extends CsvAbstractBase
         list.toArray(columnNames);
     }
 
+    private boolean isEOL(int ch){
+        return (ch == '\n' || ch < 0 || ch == '\r');
+    }
+
+    private boolean isWhiteSpace(int ch){
+        return (ch == ' ' || ch == '\t');
+    }
+
+    private String readDelimitedValue() throws IOException {
+        int ch;
+        boolean containsEscape = false;
+        inputBufferStart = inputBufferPos;
+        int sep;
+        while (true) {
+            ch = readChar();
+            if (ch == fieldDelimiter) {
+                ch = readChar();
+                if (ch != fieldDelimiter) {
+                    sep = 2;
+                    break;
+                }
+                containsEscape = true;
+            } else if (ch == escapeCharacter) {
+                ch = readChar();
+                if (ch < 0) {
+                    sep = 1;
+                    break;
+                }
+                containsEscape = true;
+            } else if (ch < 0) {
+                sep = 1;
+                break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - sep);
+        if (containsEscape) {
+            s = unEscape(s);
+        }
+        inputBufferStart = -1;
+        while (true) {
+            if (ch == fieldSeparatorRead) {
+                break;
+            } else if (isEOL(ch)) {
+                endOfLine = true;
+                break;
+            } else if (isWhiteSpace(ch)) {
+                // ignore
+            } else {
+                pushBack();
+                break;
+            }
+            ch = readChar();
+        }
+        return s;
+    }
+
+    private String readQuotedTextValue() throws IOException {
+        int ch;
+        int state=1;
+        boolean endLex=false;
+        while (!endLex) {
+            ch = readChar();
+            switch (state) {
+                case 0: //Error state
+                    endLex = true;
+                    break;
+                case 1:
+                    if (ch == textFieldCharacter) {
+                        state = 2;
+                    } else if (isEOL(ch)) {
+                        state = 0;//error state
+                        endLex = true;
+                        endOfLine = true;
+                    }
+                    break;
+                case 2:
+                    if (ch == textFieldCharacter) {
+                        state = 1;
+                    } else if (ch == fieldSeparatorRead) {
+                        state=3;//end state
+                        endLex = true;
+                    } else if (isEOL(ch)) {
+                        state=3;//end state
+                        endLex = true;
+                        endOfLine = true;
+                    } else if (isWhiteSpace(ch)) {
+                        //ignore
+                    } else {
+                        state = 0;
+                        endLex = true;
+                    }
+                    break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        inputBufferStart = -1;
+        return s;
+    }
+
+    private String readArrayValue() throws IOException {
+        // start SQL ARRAY processing written as = (x, y, z)
+        // read until of 'arrayEndToken' symbol
+        inputBufferStart = inputBufferPos;
+        int ch;
+        int state=1;
+        boolean endLex=false;
+        while (!endLex) {
+            ch = readChar();
+            switch (state){
+                case 0: //error state
+                    endLex = true;
+                    break;
+                case 1:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 2;
+                    }else if(ch == fieldSeparatorRead){
+                        replaceChar(eotCharacter);
+                    }else{
+                        state = 3;
+                    }
+                    break;
+                case 2:
+                    if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 4;
+                    }
+                    break;
+                case 3:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == fieldSeparatorRead){
+                        replaceChar(eotCharacter);
+                    }
+                    break;
+                case 4:
+                    if (ch == arrayEndToken) {
+                        endLex = true;
+                        state = 5;
+                    }else if (isEOL(ch)){
+                        endOfLine = true;
+                        endLex = true;
+                        state = 0;
+                    }else if(ch == textFieldCharacter) {
+                        state = 2;
+                    }else if(ch == fieldSeparatorRead) {
+                        replaceChar(eotCharacter);
+                        state = 1;
+                    }else if (isWhiteSpace(ch)){
+                        //ignore
+                    }else{
+                        endLex = true;
+                        state = 0;
+                    }
+                    break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        if(!endOfLine) {
+            ch = readChar();//read an eventual field separator ','
+            endOfLine=isEOL(ch);
+        }
+        inputBufferStart = -1; // reset
+        return readNull(s);
+    }
+
+    private String readUndelimitedValue() throws IOException {
+        // un-delimited value
+        int ch;
+        while (true) {
+            ch = readChar();
+            if (ch == fieldSeparatorRead) {
+                break;
+            } else if (isEOL(ch)) {
+                endOfLine = true;
+                break;
+            }
+        }
+        String s = new String(inputBuffer, inputBufferStart, inputBufferPos - inputBufferStart - 1);
+        if (!preserveWhitespace) {
+            s = s.trim();
+        }
+        inputBufferStart = -1;
+        // check un-delimited value for nullString
+        return readNull(s);
+    }
+
+    private void skipComments() throws IOException {
+        // comment until end of line
+        int ch;
+        inputBufferStart = -1;
+        while (true) {
+            ch = readChar();
+            if (isEOL(ch)) {
+                break;
+            }
+        }
+        endOfLine = true;
+    }
+
     /**
      * Key method for reading one column value as string.
      * It reads HEADER column first and data column in row.
@@ -206,52 +423,10 @@ public class CsvReaderImpl extends CsvAbstractBase
             int ch = readChar();
             if (ch == fieldDelimiter) {
                 // delimited value
-                boolean containsEscape = false;
-                inputBufferStart = inputBufferPos;
-                int sep;
-                while (true) {
-                    ch = readChar();
-                    if (ch == fieldDelimiter) {
-                        ch = readChar();
-                        if (ch != fieldDelimiter) {
-                            sep = 2;
-                            break;
-                        }
-                        containsEscape = true;
-                    } else if (ch == escapeCharacter) {
-                        ch = readChar();
-                        if (ch < 0) {
-                            sep = 1;
-                            break;
-                        }
-                        containsEscape = true;
-                    } else if (ch < 0) {
-                        sep = 1;
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - sep);
-                if (containsEscape) {
-                    s = unEscape(s);
-                }
-                inputBufferStart = -1;
-                while (true) {
-                    if (ch == fieldSeparatorRead) {
-                        break;
-                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
-                        endOfLine = true;
-                        break;
-                    } else if (ch == ' ' || ch == '\t') {
-                        // ignore
-                    } else {
-                        pushBack();
-                        break;
-                    }
-                    ch = readChar();
-                }
-                return s;
-            } else if (ch == '\n' || ch < 0 || ch == '\r') {
+                return readDelimitedValue();
+            } else if (ch == textFieldCharacter) {
+                return readQuotedTextValue();
+            } else if (isEOL(ch)) {
                 endOfLine = true;
                 return null;
             } else if (ch == fieldSeparatorRead) {
@@ -259,60 +434,20 @@ public class CsvReaderImpl extends CsvAbstractBase
                 return null;
             } else if (ch <= ' ') {
                 // ignore spaces
-                continue;
             } else if (lineComment != 0 && ch == lineComment) {
-                // comment until end of line
-                inputBufferStart = -1;
-                while (true) {
-                    ch = readChar();
-                    if (ch == '\n' || ch < 0 || ch == '\r') {
-                        break;
-                    }
-                }
-                endOfLine = true;
+                skipComments();
                 return null;
             } else if (arrayStartToken != 0 && ch == arrayStartToken) { // ARRAY processing stuff - first check '('
-                // start SQL ARRAY processing written as = (x, y, z)
-                // read until of 'arrayEndToken' symbol
-                inputBufferStart = inputBufferPos;
-                while (true) {
-                    ch = readChar();
-                    if (ch == '\n' || ch < 0 || ch == '\r' || ch == arrayEndToken) {
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                ch = inputBuffer[inputBufferPos]; // lookup one char ahead (we don't want to miss EoL)
-                if (ch == '\n' || ch == '\r') {
-                    endOfLine = true; // EoL - stop line processing in outer method
-                }
-                inputBufferPos++; // skip closing ')' inside long line (no EoL present)
-                inputBufferStart = -1; // reset
-                return readNull(s);
+                return readArrayValue();
             } else {
-                // un-delimited value
-                while (true) {
-                    ch = readChar();
-                    if (ch == fieldSeparatorRead) {
-                        break;
-                    } else if (ch == '\n' || ch < 0 || ch == '\r') {
-                        endOfLine = true;
-                        break;
-                    }
-                }
-                String s = new String(inputBuffer,
-                        inputBufferStart, inputBufferPos - inputBufferStart - 1);
-                if (!preserveWhitespace) {
-                    s = s.trim();
-                }
-                inputBufferStart = -1;
-                // check un-delimited value for nullString
-                return readNull(s);
+                return readUndelimitedValue();
             }
+        }
+    }
+
+    private void replaceChar(char r){
+        if(inputBufferPos>=1) {
+            inputBuffer[inputBufferPos - 1] = r;
         }
     }
 
@@ -365,31 +500,9 @@ public class CsvReaderImpl extends CsvAbstractBase
         return s.equals(nullString) ? null : s;
     }
 
-    private String unEscape(String s) {
-        StringBuilder buff = new StringBuilder(s.length());
-        int start = 0;
-        char[] chars = null;
-        while (true) {
-            int idx = s.indexOf(escapeCharacter, start);
-            if (idx < 0) {
-                idx = s.indexOf(fieldDelimiter, start);
-                if (idx < 0) {
-                    break;
-                }
-            }
-            if (chars == null) {
-                chars = s.toCharArray();
-            }
-            buff.append(chars, start, idx - start);
-            if (idx == s.length() - 1) {
-                start = s.length();
-                break;
-            }
-            buff.append(chars[idx + 1]);
-            start = idx + 2;
-        }
-        buff.append(s.substring(start));
-        return buff.toString();
+    @Override
+    public String unEscape(String s) {
+        return CsvStringUtils.unEscape(s, escapeCharacter, fieldDelimiter);
     }
 
     /**

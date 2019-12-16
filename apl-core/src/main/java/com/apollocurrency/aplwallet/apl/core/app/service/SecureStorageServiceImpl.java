@@ -15,15 +15,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
@@ -31,39 +29,47 @@ public class SecureStorageServiceImpl implements SecureStorageService {
     private static final Logger LOG = getLogger(SecureStorageServiceImpl.class);
 
     private Path secureStoragePath;
+    private Path secureStoragePathCopy;
+
     private static final String SECURE_STORE_FILE_NAME = "secure_store";
+    private static final String SECURE_STORE_FILE_COPY_NAME = "secure_store_copy";
     private static final String SECURE_STORE_KEY = "secure_store_key";
+
     private Map<Long, String> store = new ConcurrentHashMap<>();
     private OptionDAO optionDAO;
+    private boolean isEnabled;
 
     @Inject
     public SecureStorageServiceImpl(@Named("secureStoreDirPath") Path secureStorageDirPath, PropertiesHolder propertiesHolder, OptionDAO optionDAO) {
         this.optionDAO = optionDAO;
 
-        boolean restore = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnable");
+        isEnabled = propertiesHolder.getBooleanProperty("apl.secureStorage.restore.isEnabled");
 
-        if(restore) {
+        if (isEnabled) {
             Objects.requireNonNull(secureStorageDirPath, "secureStorageDirPath can't be null");
             this.secureStoragePath = secureStorageDirPath.resolve(SECURE_STORE_FILE_NAME);
+            this.secureStoragePathCopy = secureStorageDirPath.resolve(SECURE_STORE_FILE_COPY_NAME);
 
             if (!Files.exists(secureStorageDirPath)) {
                 try {
                     Files.createDirectories(secureStorageDirPath);
                 } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
                     throw new RuntimeException(e.toString(), e);
                 }
             }
 
-            boolean isRestored = restoreSecretStorageIfExist();
-            if (isRestored) {
-                deleteSecretStorage();
-            }
+            restoreSecretStorageIfExist();
         }
     }
 
     @Override
     public void addUserPassPhrase(Long accountId, String passPhrase){
-        store.put(accountId, passPhrase);
+        if (isEnabled) {
+            store.put(accountId, passPhrase);
+
+            storeSecretStorage();
+        }
     }
 
     @Override
@@ -81,13 +87,28 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true - stored successfully.
      */
     @Override
-    public boolean storeSecretStorage() {
-        String privateKey = createPrivateKeyForStorage();
+    public synchronized boolean storeSecretStorage() {
+        deleteSecretStorage(secureStoragePathCopy);
+        storeSecretStorage(SECURE_STORE_KEY, secureStoragePathCopy);
+
+        // Copy to the original file.
+        try {
+            Files.copy(secureStoragePathCopy, secureStoragePath, REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        }
+
+        return true;
+    }
+
+
+    public boolean storeSecretStorage(String keyName, Path secureStoragePath) {
+        String privateKey = optionDAO.get(keyName);
 
         if(privateKey == null){
-            return false;
+            optionDAO.set(keyName, createPrivateKeyForStorage());
         }
-        optionDAO.set(SECURE_STORE_KEY, privateKey);
+        privateKey = optionDAO.get(keyName);
 
         SecureStorage secureStore;
         try {
@@ -96,8 +117,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
             LOG.error(e.getMessage());
             return false;
         }
-        return secureStore != null && secureStoragePath != null ?  // shutdown case
-                secureStore.store(privateKey, secureStoragePath.toString()) : false;
+
+        return secureStore.store(privateKey, secureStoragePath.toString());
     }
 
     /**
@@ -105,19 +126,19 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true - restored successfully.
      */
     @Override
-    public boolean restoreSecretStorage() {
+    public boolean restoreSecretStorage(Path file) {
         String privateKey = optionDAO.get(SECURE_STORE_KEY);
         if(privateKey == null){
             return false;
         }
 
-        SecureStorage fbWallet = SecureStorage.get(privateKey, secureStoragePath.toString());
+        SecureStorage fbWallet = SecureStorage.get(privateKey, file.toString());
 
         if(fbWallet == null){
             return false;
         }
 
-        fbWallet.get(privateKey, secureStoragePath.toString());
+        fbWallet.get(privateKey, file.toString());
 
         store.putAll(fbWallet.getDexKeys());
 
@@ -129,10 +150,8 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      * @return true deleted successfully.
      */
     @Override
-    public boolean deleteSecretStorage() {
-        File file = new File(secureStoragePath.toString());
-        optionDAO.delete(SECURE_STORE_KEY);
-
+    public boolean deleteSecretStorage(Path path) {
+        File file = new File(path.toString());
         return file.delete();
     }
 
@@ -153,9 +172,23 @@ public class SecureStorageServiceImpl implements SecureStorageService {
      */
     public boolean restoreSecretStorageIfExist() {
         File tmpDir = new File(secureStoragePath.toString());
-        if (tmpDir.exists()){
-            return restoreSecretStorage();
+        try {
+            if (tmpDir.exists()) {
+                return restoreSecretStorage(secureStoragePath);
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
         }
+
+        try {
+            File oldDir = new File(secureStoragePathCopy.toString());
+            if (oldDir.exists()) {
+                return restoreSecretStorage(secureStoragePathCopy);
+            }
+        } catch (Exception ex) {
+            LOG.error(ex.getMessage(), ex);
+        }
+
         return false;
     }
 
@@ -168,15 +201,23 @@ public class SecureStorageServiceImpl implements SecureStorageService {
 
     @Override
     public boolean flushAccountKeys(Long accountID, String passPhrase) {
-        LOG.debug("flushAccountKeys entry point");        
-        if (store.containsKey(accountID)) {            
+        LOG.debug("flushAccountKeys entry point");
+        if (isEnabled && store.containsKey(accountID)) {
             String extractedPass = store.get(accountID);
             if ( extractedPass!=null && extractedPass.equals(passPhrase)) {
                 LOG.debug("flushed key for account: {}",accountID);
                 store.remove(accountID);
+
+                storeSecretStorage();
                 return true;
             }
         }
-        return false;        
-    }        
+        return false;
+    }
+
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
+    }
 }

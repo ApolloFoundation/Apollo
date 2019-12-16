@@ -32,7 +32,7 @@ import java.util.UUID;
 public class PeerClient {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private Peer peer;
+    private final Peer peer;
     private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
 
     public PeerClient(Peer peer) {
@@ -79,7 +79,7 @@ public class PeerClient {
             res.error="Null returned from peer";
         }
         if (res.errorCode != 0 || res.error!=null) {
-            log.debug("Error: {} FileInfo response from peer: {} code: {}",res.error, res.errorCode, peer.getAnnouncedAddress());
+            log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode,  peer.getAnnouncedAddress(), entityId, res.error);
         }
         return res.downloadInfo;
     }
@@ -113,7 +113,7 @@ public class PeerClient {
        }else{
            fc=null;
        }
-        log.trace("downloadChunk() result = {}", fc.info);
+        log.trace("downloadChunk() result = {}", fc==null?"null":fc.info.toString());
         return fc;
     }
     

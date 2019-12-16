@@ -37,7 +37,7 @@ then
     fi
 
     kill $(ps -ef | grep apl-de | awk '{ print $2 }')
-
+    $1/bin/apl-stop.sh
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
@@ -112,7 +112,7 @@ then
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
-
+    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
     curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
@@ -133,6 +133,7 @@ then
 
 
     cd $1 
+
     chmod 755 bin/*.sh
 
     cd $1 

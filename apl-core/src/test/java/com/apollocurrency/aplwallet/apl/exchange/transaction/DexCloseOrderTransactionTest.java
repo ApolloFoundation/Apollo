@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -43,7 +47,10 @@ import static org.mockito.Mockito.verify;
 class DexCloseOrderTransactionTest {
 
     DexCloseOrderAttachment attachment = new DexCloseOrderAttachment(10);
-    ExchangeContract contract = new ExchangeContract(1L, 10L, 200L, 300L, 1000L, 2000L, ExchangeContractStatus.STEP_2, new byte[32], null, null, new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+    ExchangeContract contract = new ExchangeContract(
+            1L, 10L, 200L, 300L, 1000L, 2000L,
+            ExchangeContractStatus.STEP_2, new byte[32], null, null, new byte[32],
+            Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, null, true);
     DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 250L, DexCurrencies.ETH, BigDecimal.ONE, 500);
     DexService dexService = mock(DexService.class);
     @WeldSetup

@@ -75,6 +75,10 @@ public interface ShardDao {
     Shard getLastShard();
 
     @Transactional(readOnly = true)
+    @SqlQuery("SELECT IFNULL(max(shard_height), 0) FROM shard")
+    int getLatestShardHeight();
+
+    @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 ORDER BY shard_height DESC LIMIT 1")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastCompletedShard();

@@ -179,6 +179,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 };
     }
 
+    private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 //    private final Listeners<List<? extends Transaction>,Event> transactionListeners = new Listeners<>();
 
@@ -367,28 +368,33 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         .name("ProcessTransactions")
                         .delay(5000)
                         .task(processTransactionsThread)
-                        .build(), TaskOrder.TASK);
-                dispatcher.schedule(Task.builder()
+                        .build());
+                dispatcher.invokeAfter(Task.builder()
                         .name("InitialUnconfirmedTxsRebroadcasting")
                         .task(this::rebroadcastAllUnconfirmedTransactions)
-                        .build(), TaskOrder.AFTER);
+                        .build());
 
                 dispatcher.schedule(Task.builder()
                         .name("RebroadcastTransactions")
                         .delay(23000)
                         .task(rebroadcastTransactionsThread)
-                        .build(), TaskOrder.TASK);
+                        .build());
             }
             dispatcher.schedule(Task.builder()
                     .name("RemoveUnconfirmedTransactions")
                     .delay(20000)
                     .task(createRemoveUnconfirmedTransactionsThread())
-                    .build(), TaskOrder.TASK);
+                    .build());
             dispatcher.schedule(Task.builder()
                     .name("ProcessWaitingTransactions")
                     .delay(1000)
                     .task(processWaitingTransactionsThread)
-                    .build(), TaskOrder.TASK);
+                    .build());
+            dispatcher.schedule(Task.builder()
+                    .name("ProcessTransactionsToBroadcastWhenConfirmed")
+                    .delay(10000)
+                    .task(this::processTxsToBrodcastWhenConfirmed)
+                    .build());
         }
     }
 
@@ -904,5 +910,28 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             globalSync.readUnlock();
         }
         return processed;
+    }
+
+    public void processTxsToBrodcastWhenConfirmed() {
+        List<Transaction> txsToDelete = new ArrayList<>();
+        txToBroadcastWhenConfirmed.forEach((tx, uncTx)-> {
+            if (blockchain.hasTransaction(uncTx.getId())) {
+                if (getUnconfirmedTransaction(tx.getId()) == null) {
+                    txsToDelete.add(tx);
+                    if (!blockchain.hasTransaction(tx.getId())) {
+                        try {
+                            broadcast(tx);
+                        } catch (AplException.ValidationException e) {
+                            LOG.debug("Unable to broadcast tx {}, reason {}", tx.getId(), e.getMessage());
+                        }
+                    }
+                }
+            }
+        });
+        txsToDelete.forEach(txToBroadcastWhenConfirmed::remove);
+    }
+
+    public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {
+        txToBroadcastWhenConfirmed.put(tx, unconfirmedTx);
     }
 }

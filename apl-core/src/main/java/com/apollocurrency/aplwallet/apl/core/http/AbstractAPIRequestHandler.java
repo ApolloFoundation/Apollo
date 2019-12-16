@@ -11,38 +11,39 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-@Vetoed
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;
     private String fileParameter;
     private Set<APITag> apiTags;
     private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
+    protected BlockchainProcessor blockchainProcessor;
     private TransactionProcessor transactionProcessor;
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
     protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
     protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    protected TrimService trimService;
     private PeersService peers;
 
     protected PeersService lookupPeersService() {
@@ -70,6 +71,11 @@ public abstract class AbstractAPIRequestHandler {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
         }
         return databaseManager.getDataSource();
+    }
+
+    protected TrimService lookupTrimService() {
+        if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
+        return trimService;
     }
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {

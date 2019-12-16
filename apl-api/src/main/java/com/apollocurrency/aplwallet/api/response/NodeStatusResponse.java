@@ -29,7 +29,7 @@ import java.util.List;
         content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = NodeStatusResponse.class)))
 public class NodeStatusResponse extends ResponseBase {
-    public String message = "";
+    public String message="";
     public List<DurableTaskInfo> tasks = new ArrayList<>();
     public NodeStatusInfo nodeInfo = new NodeStatusInfo();
 }
