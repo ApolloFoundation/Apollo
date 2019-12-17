@@ -66,7 +66,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     @Override
     public void clearCache() {
         if ( isCacheEnabled()) {
-            publicKeyCache.cleanUp();
+            publicKeyCache.invalidateAll();
         }
     }
 
