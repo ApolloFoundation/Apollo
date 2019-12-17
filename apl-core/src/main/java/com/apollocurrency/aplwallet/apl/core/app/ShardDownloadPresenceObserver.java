@@ -64,7 +64,16 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
-        try {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            // create Lucene search indexes first
+            for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+                table.createSearchIndex(con);
+            }
+            // import data so it gets into search indexes as well
             shardImporter.importShardByFileId(shardPresentData);
         } catch (Exception e) {
             log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
