@@ -26,8 +26,8 @@
         </repository>
         <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
         <repository>
-            <id>apl</id>
-            <name>arti.firstbridge.work-releases</name>
+            <id>apl-exchange</id>
+            <name>arti.firstbridge.exchange</name>
             <url>https://arti.firstbridge.work/artifactory/apl-exchange</url>
         </repository>
     </repositories>
