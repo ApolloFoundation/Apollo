@@ -46,7 +46,12 @@ else
     	    cp -rfv $1/tmpdir/$5 .
 	fi
 	
+    else
+	cd $1/apl-blockchain-db/
+	rm -rfv $5
+    	cp -rfv $1/tmpdir/$5 .
     fi
+
     rm -rfv $/tmpdir
 fi
 
