@@ -173,7 +173,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).finishExchange(0, 300);
+        verify(dexService).closeOrder( 300);
     }
 
     @Test
@@ -190,7 +190,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(sender).addToBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(recipient).addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).finishExchange(0, 200);
+        verify(dexService).closeOrder( 200);
     }
 
     @Test

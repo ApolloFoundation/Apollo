@@ -276,7 +276,7 @@ class DexSmartContractServiceTest {
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         Transaction responseTx = mock(Transaction.class);
         doReturn(Optional.ofNullable(responseTx)).when(service).getTxByHash(Numeric.toHexString(new byte[32]));
-        doReturn(BigInteger.ONE).when(responseTx).getBlockNumber();
+        doReturn("1").when(responseTx).getBlockNumberRaw();
         TransactionReceipt responseReceipt = mock(TransactionReceipt.class);
         doReturn(Optional.ofNullable(responseReceipt)).when(service).getTxReceipt(Numeric.toHexString(new byte[32]));
         doReturn("0x1").when(responseReceipt).getStatus();
@@ -294,7 +294,7 @@ class DexSmartContractServiceTest {
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         Transaction responseTx = mock(Transaction.class);
         doReturn(Optional.ofNullable(responseTx)).when(service).getTxByHash(Numeric.toHexString(new byte[32]));
-        doReturn(BigInteger.ONE).when(responseTx).getBlockNumber();
+        doReturn("1").when(responseTx).getBlockNumberRaw();
         TransactionReceipt responseReceipt = mock(TransactionReceipt.class);
         doReturn(Optional.ofNullable(responseReceipt)).when(service).getTxReceipt(Numeric.toHexString(new byte[32]));
         doReturn("0x0").when(responseReceipt).getStatus();
@@ -315,7 +315,7 @@ class DexSmartContractServiceTest {
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         Transaction responseTx = mock(Transaction.class);
         doReturn(Optional.ofNullable(responseTx)).when(service).getTxByHash(Numeric.toHexString(new byte[32]));
-        doReturn(BigInteger.ONE).when(responseTx).getBlockNumber();
+        doReturn("1").when(responseTx).getBlockNumberRaw();
         doReturn(Optional.empty()).when(service).getTxReceipt(Numeric.toHexString(new byte[32]));
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
