@@ -19,4 +19,5 @@ public class ExchangeContractDTO {
     private String counterTransferTxId;
     private String encryptedSecret;
     private Integer deadlineToReply;
+    private int height;
 }

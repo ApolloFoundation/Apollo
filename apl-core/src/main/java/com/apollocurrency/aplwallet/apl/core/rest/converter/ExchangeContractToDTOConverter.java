@@ -8,7 +8,7 @@ public class ExchangeContractToDTOConverter implements Converter<ExchangeContrac
     @Override
     public ExchangeContractDTO apply(ExchangeContract exchangeContract) {
         ExchangeContractDTO exchangeContractDTO = new ExchangeContractDTO();
-        exchangeContractDTO.setId(Convert.defaultRsAccount(exchangeContract.getId()));
+        exchangeContractDTO.setId(Long.toUnsignedString(exchangeContract.getId()));
         exchangeContractDTO.setOrderId(Long.toUnsignedString(exchangeContract.getOrderId()));
         exchangeContractDTO.setCounterOrderId(Long.toUnsignedString(exchangeContract.getCounterOrderId()));
         exchangeContractDTO.setContractStatus((byte) exchangeContract.getContractStatus().ordinal());
@@ -19,6 +19,7 @@ public class ExchangeContractToDTOConverter implements Converter<ExchangeContrac
         exchangeContractDTO.setSecretHash(Convert.toHexString(exchangeContract.getSecretHash()));
         exchangeContractDTO.setSender(Convert.defaultRsAccount(exchangeContract.getSender()));
         exchangeContractDTO.setRecipient(Convert.defaultRsAccount(exchangeContract.getRecipient()));
+        exchangeContractDTO.setHeight(exchangeContract.getHeight());
         return exchangeContractDTO;
     }
 }
