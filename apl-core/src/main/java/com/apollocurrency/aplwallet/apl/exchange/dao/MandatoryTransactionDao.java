@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
@@ -27,6 +31,9 @@ public interface MandatoryTransactionDao {
 
     @Transactional
     @SqlUpdate("DELETE from mandatory_transaction WHERE id = :id")
-    void delete(@Bind("id") long id);
+    int delete(@Bind("id") long id);
 
+    @Transactional
+    @SqlUpdate("DELETE FROM mandatory_transaction")
+    int deleteAll();
 }

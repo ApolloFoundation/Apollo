@@ -30,6 +30,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
+import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -37,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -222,6 +224,12 @@ public final class APIServlet extends HttpServlet {
             }
         } catch (ParameterException e) {
             response = e.getErrorResponse();
+        } catch (BlockNotFoundException e){
+            LOG.error("Error: {}", e.getMessage());
+            LOG.debug("Trace: {}", ThreadUtils.lastStacktrace(e.getStackTrace(), 5));
+            JSONObject json = new JSONObject();
+            JSONData.putException(json, e);
+            response = JSON.prepare(json);
         } catch (AplException | RuntimeException e) {
             LOG.debug("Error processing API request", e);
             JSONObject json = new JSONObject();

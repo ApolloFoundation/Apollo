@@ -55,7 +55,7 @@ public class ImportantUpdater extends AbstractUpdater {
     }
 
     private void waitHeight(int updateHeight) {
-        LOG.info("Update estimated height: ", updateHeight);
+        LOG.info("Update estimated height: {}", updateHeight);
         while (updaterMediator.getBlockchainHeight() < updateHeight) {
             try {
                 TimeUnit.MILLISECONDS.sleep(500);

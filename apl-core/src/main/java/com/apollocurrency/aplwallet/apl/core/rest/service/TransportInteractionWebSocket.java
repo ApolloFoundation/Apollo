@@ -51,6 +51,7 @@ public class TransportInteractionWebSocket {
     private static final Logger log = LoggerFactory.getLogger(TransportInteractionWebSocket.class);
     
     private SecureTransportStatus secureTransportStatus;
+    public static final int CONNECTION_WAIT_MS=300;
     
     // status of the transport connection
     public enum SecureTransportStatus implements Serializable {
@@ -113,10 +114,10 @@ public class TransportInteractionWebSocket {
         ClientUpgradeRequest request = new ClientUpgradeRequest();
         client.connect(this, endpointURI, request);
         log.debug("Connecting to : {} ", endpointURI);
-        awaitClose(5, TimeUnit.SECONDS);
+        awaitClose(CONNECTION_WAIT_MS, TimeUnit.MILLISECONDS);
         
         } catch (Exception ex) {
-            log.error("WS connection exception: {}",  ex.getMessage().toString());            
+            log.error("WS connection exception: ",  ex);            
         }
         
     }

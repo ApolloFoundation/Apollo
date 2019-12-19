@@ -14,6 +14,9 @@ If Wscript.Arguments.Count > 1 Then
       prgArgs = prgArgs & " " & chr(34) & Wscript.Arguments.Item(i) & chr(34)
    Next
 End If
+Dim Shell
+Set Shell = WScript.CreateObject ("WScript.Shell")
+Shell.CurrentDirectory = WScript.Arguments(1)
 
 If Not WScript.Arguments.Named.Exists("elevate") Then
   CreateObject("Shell.Application").ShellExecute WScript.FullName _
@@ -28,15 +31,13 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 	WScript.Echo "Starting Platform Dependent Updater"
 	WScript.Echo "Waiting 3 sec"
 	WScript.Sleep 3000
-	Dim Shell
-	Set Shell = WScript.CreateObject ("WScript.Shell")
 	Shell.Run "taskkill /f /im ""java.exe""", , True
 	WScript.Echo "Waiting 3 sec"
 	WScript.Sleep 3000
 	Shell.Run "taskkill /f /im ""java.exe""", , True
 rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
 	Shell.CurrentDirectory = WScript.Arguments(1)
-	Shell.Run "install_libs.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34), 1, True
+	Shell.Run "install_libs.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34) & " " & Wscript.Arguments(4), 1, True
 
 	WScript.Echo "Copy update files"
 

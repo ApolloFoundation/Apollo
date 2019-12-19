@@ -36,7 +36,7 @@ public class ElGamalEncryptor {
                         .name("KeyGenerationTask")
                         .delay(15 * 60 * 1000) // 15 min
                         .task(this::generateKeys)
-                        .build(), TaskOrder.TASK);
+                        .build());
     }
 
     private synchronized void generateKeys() {

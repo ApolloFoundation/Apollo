@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import org.slf4j.Logger;
 
@@ -162,7 +163,7 @@ public class BlockDaoImpl implements BlockDao {
                 if (rs.next()) {
                     block = loadBlock(con, rs);
                 } else {
-                    throw new RuntimeException("Block at height " + height + " not found in database!");
+                    throw new BlockNotFoundException("Block at height " + height + " not found in database!");
                 }
                 return block;
             }
@@ -597,7 +598,12 @@ public class BlockDaoImpl implements BlockDao {
                     }
                 }
                 Block lastBlock = findLastBlock();
-                lastBlock.setNextBlockId(0);
+                if (lastBlock == null) {
+                    // should never happen, but possible in rare error cases
+                    LOG.warn("Block was not found in 'main db' by blockId = {}", blockId);
+                } else {
+                    lastBlock.setNextBlockId(0);
+                }
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
                     pstmt.setLong(1, lastBlock.getId());
                     pstmt.executeUpdate();

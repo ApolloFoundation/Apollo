@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -105,7 +104,7 @@ public final class Generator implements Comparable<Generator> {
                                     int timestamp = generator.getTimestamp(generationLimit);
                                     if (timestamp != generationLimit && generator.getHitTime() > 0 && timestamp < lastBlock.getTimestamp() - lastBlock.getTimeout()) {
                                         LOG.debug("Pop off: " + generator.toString() + " will pop off last block " + lastBlock.getStringId());
-                                        List<Block> poppedOffBlock = blockchainProcessor.popOffTo(previousBlock);
+                                        List<Block> poppedOffBlock = blockchainProcessor.popOffToCommonBlock(previousBlock);
                                         for (Block block : poppedOffBlock) {
                                             transactionProcessor.processLater(block.getOrLoadTransactions());
                                         }
@@ -166,7 +165,7 @@ public final class Generator implements Comparable<Generator> {
                             .name("GenerateBlocks")
                             .delay(500)
                             .task(generateBlocksThread)
-                            .build(), TaskOrder.TASK);
+                            .build());
         }        
     }
 

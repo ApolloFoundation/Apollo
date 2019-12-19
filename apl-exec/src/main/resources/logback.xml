@@ -54,14 +54,9 @@
     </logger>
     <logger name="jdbc" level="off" additivity="false"/>
     <logger name="jdbc.connection" level="info" additivity="false"/>
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">
-        <appender-ref ref="shuffling-file"/>
-    </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffler" level="trace" additivity="false">
-        <appender-ref ref="shuffling-file"/>
-    </logger>
     <logger name="jdbc.sqltiming" level="info" additivity="false"/>
     <logger name="com.zaxxer" level="warn"/>
+    <logger name="p6spy" level="trace"/>
     <root level="warn">
         <appender-ref ref="console" />
         <appender-ref ref="file" />
