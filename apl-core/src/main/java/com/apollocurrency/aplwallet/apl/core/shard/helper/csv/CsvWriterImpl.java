@@ -48,7 +48,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private Set<String> excludeColumn = new HashSet<>();
 
     private static final String quote = String.valueOf(TEXT_FIELD_START);
-    private static final String doubleQuote = quote+quote;
+    private static final String doubleQuote = quote + quote;
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
@@ -246,7 +246,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         if (o1 instanceof byte[]) {
                                             objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + quote;
                                         } else if (o1 instanceof String) {
-                                            objectValue = quotedEscapedText((String)o1);
+                                            objectValue = quotedEscapedText((String) o1);
                                         } else if (o1 instanceof Long || o1 instanceof Integer) {
                                             objectValue = o1.toString();
                                         } else {

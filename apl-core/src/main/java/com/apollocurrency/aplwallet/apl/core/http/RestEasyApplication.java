@@ -12,7 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NetworkController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeControlController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
@@ -45,6 +47,8 @@ public class RestEasyApplication extends Application  {
         set.add(TransportInteractionController.class);
         set.add(ShardController.class);
         set.add(MandatoryTransactionController.class);
+        set.add(UserErrorMessageController.class);
+        set.add(TradingDataController.class);
 
 
         //TODO: add all endpoints below

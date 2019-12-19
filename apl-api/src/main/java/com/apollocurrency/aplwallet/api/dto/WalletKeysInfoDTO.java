@@ -31,7 +31,7 @@ public class WalletKeysInfoDTO extends BaseDTO {
     private AplWalletDTO apl;
     private List<EthWalletKeyDTO> eth = new ArrayList<>();
 
-    public void addEthWalletKey(EthWalletKeyDTO dto){
+    public void addEthWalletKey(EthWalletKeyDTO dto) {
         eth.add(dto);
     }
 

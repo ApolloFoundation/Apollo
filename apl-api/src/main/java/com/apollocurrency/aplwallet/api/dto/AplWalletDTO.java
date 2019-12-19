@@ -18,7 +18,8 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Getter @Setter
+@Getter
+@Setter
 public class AplWalletDTO {
     private String currency = "apl";
     private AplWalletKeyDTO wallets;

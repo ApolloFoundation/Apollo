@@ -1,7 +1,10 @@
 package com.apollocurrency.aplwallet.apl.eth.contracts;
 
+import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
+import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -17,8 +20,10 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.request.EthFilter;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tuples.generated.Tuple4;
@@ -27,6 +32,7 @@ import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,6 +88,9 @@ public class DexContract extends Contract {
 
     public static final String FUNC_GETSWAPDATA = "getSwapData";
 
+    private Credentials credentials;
+    private EthereumWalletService ethereumWalletService;
+
     public static final Event INITIATED_EVENT = new Event("Initiated",
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {
             }, new TypeReference<Bytes32>() {
@@ -131,6 +140,7 @@ public class DexContract extends Contract {
 
     protected DexContract(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
         super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
+        this.credentials = credentials;
     }
 
     @Deprecated
@@ -138,8 +148,9 @@ public class DexContract extends Contract {
         super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
     }
 
-    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+    protected DexContract(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
         super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
+        this.ethereumWalletService = ethereumWalletService;
     }
 
     public RemoteCall<BigInteger> getSwapType(byte[] secretHash) {
@@ -150,12 +161,13 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
-    public RemoteCall<TransactionReceipt> withdraw(BigInteger orderId) {
+    public String withdraw(BigInteger orderId) {
         final Function function = new Function(
                 FUNC_WITHDRAW, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<Tuple4<Boolean, String, BigInteger, Boolean>> getDepositedOrderDetails(BigInteger orderId, String user) {
@@ -170,7 +182,7 @@ public class DexContract extends Contract {
         return new RemoteCall<Tuple4<Boolean, String, BigInteger, Boolean>>(
                 new Callable<Tuple4<Boolean, String, BigInteger, Boolean>>() {
                     @Override
-                    public Tuple4<Boolean, String, BigInteger, Boolean> call() throws Exception {
+            public Tuple4<Boolean, String, BigInteger, Boolean> call() throws Exception {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple4<Boolean, String, BigInteger, Boolean>(
                                 (Boolean) results.get(0).getValue(), 
@@ -184,10 +196,14 @@ public class DexContract extends Contract {
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }));
+                Arrays.<TypeReference<?>>asList(
+                        new TypeReference<DynamicArray<Uint256>>() {
+                        },
+                        new TypeReference<DynamicArray<Uint256>>() {
+                        },
+                        new TypeReference<DynamicArray<Uint256>>() {
+                        }
+                ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
                 new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
                     @Override
@@ -247,12 +263,12 @@ public class DexContract extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public RemoteCall<TransactionReceipt> refund(byte[] secretHash) {
+    public String refund(byte[] secretHash, boolean waitConfirmation) {
         final Function function = new Function(
                 FUNC_REFUND,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
     public RemoteCall<BigInteger> getUserDepositsAmount(String user) {
@@ -262,7 +278,7 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
-    public RemoteCall<TransactionReceipt> initiate(BigInteger orderId, byte[] secretHash, String recipient, BigInteger refundTimestamp) {
+    public String initiate(BigInteger orderId, byte[] secretHash, String recipient, BigInteger refundTimestamp) {
         final Function function = new Function(
                 FUNC_INITIATE,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId),
@@ -270,7 +286,7 @@ public class DexContract extends Contract {
                         new org.web3j.abi.datatypes.Address(recipient),
                         new org.web3j.abi.datatypes.generated.Uint256(refundTimestamp)),
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<String> owner() {
@@ -281,14 +297,14 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, String.class);
     }
 
-    public RemoteCall<TransactionReceipt> deposit(BigInteger orderId, BigInteger amount, String token) {
+    public String deposit(BigInteger orderId, BigInteger amount, String token) {
         final Function function = new Function(
                 FUNC_DEPOSIT, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId), 
                 new org.web3j.abi.datatypes.generated.Uint256(amount), 
                 new org.web3j.abi.datatypes.Address(token)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<Boolean> isOwner() {
@@ -308,12 +324,50 @@ public class DexContract extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public RemoteCall<TransactionReceipt> deposit(BigInteger orderId, BigInteger weiValue) {
+    public String deposit(BigInteger orderId, BigInteger weiValue) {
         final Function function = new Function(
                 FUNC_DEPOSIT, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function, weiValue);
+
+        return sendTx(function, weiValue);
+    }
+    public String sendTx(Function function, BigInteger weiValue) {
+        return sendTx(function, weiValue, false);
+    }
+
+    public String sendTx(Function function, BigInteger weiValue, boolean waitConfirmation) {
+        BigInteger gasLimit = ethereumWalletService.validateBalanceAndReturnGasLimit(transactionManager.getFromAddress(), contractAddress, function, weiValue, gasProvider.getGasPrice(function.getName()));
+        String hash;
+        if (waitConfirmation) {
+            TransactionReceipt receipt;
+            try {
+                receipt = send(contractAddress, FunctionEncoder.encode(function), weiValue, gasProvider.getGasPrice(function.getName()), gasLimit);
+            } catch (IOException | TransactionException e) {
+                throw new RuntimeException("Unable to send eth transaction or retrieve tx receipt", e);
+            }
+            if (!receipt.isStatusOK()) {
+                throw new AplException.DEXProcessingException(String.format("Transaction was failed. Gas used - %d, status - %s", receipt.getGasUsed(), receipt.getStatus()));
+            }
+            hash = receipt.getTransactionHash();
+        } else {
+            EthSendTransaction sendTransaction;
+            try {
+                sendTransaction = transactionManager.sendTransaction(gasProvider.getGasPrice(function.getName()),
+                        gasLimit,
+                        contractAddress,
+                        FunctionEncoder.encode(function),
+                        weiValue);
+                hash = sendTransaction.getTransactionHash();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to send eth transaction. Function: " + function.getName());
+            }
+            if (sendTransaction.hasError()) {
+                throw new AplException.DEXProcessingException(sendTransaction.getError().getMessage());
+            }
+        }
+
+        return hash;
     }
 
     public RemoteCall<Boolean> doesUserExist(String user) {
@@ -323,12 +377,12 @@ public class DexContract extends Contract {
         return executeRemoteCallSingleValueReturn(function, Boolean.class);
     }
 
-    public RemoteCall<TransactionReceipt> redeem(byte[] secret) {
+    public String redeem(byte[] secret) {
         final Function function = new Function(
                 FUNC_REDEEM,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secret)), 
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public RemoteCall<TransactionReceipt> transferOwnership(String newOwner) {
@@ -611,8 +665,8 @@ public class DexContract extends Contract {
         return new DexContract(contractAddress, web3j, credentials, contractGasProvider);
     }
 
-    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
-        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider);
+    public static DexContract load(String contractAddress, Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider, EthereumWalletService ethereumWalletService) {
+        return new DexContract(contractAddress, web3j, transactionManager, contractGasProvider, ethereumWalletService);
     }
 
     public static RemoteCall<DexContract> deploy(Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {

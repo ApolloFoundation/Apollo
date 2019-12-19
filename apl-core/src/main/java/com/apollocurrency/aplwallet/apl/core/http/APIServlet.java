@@ -20,20 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_DISABLED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_INCORRECT_REQUEST;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_NOT_ALLOWED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LIGHT_CLIENT_DISABLED_API;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POST_REQUIRED;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_BLOCK_NOT_FOUND;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -44,18 +34,27 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_DISABLED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_INCORRECT_REQUEST;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_NOT_ALLOWED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LIGHT_CLIENT_DISABLED_API;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POST_REQUIRED;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_BLOCK_NOT_FOUND;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.REQUIRED_LAST_BLOCK_NOT_FOUND;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class APIServlet extends HttpServlet {
     private static final Logger LOG = getLogger(APIServlet.class);
@@ -224,7 +223,7 @@ public final class APIServlet extends HttpServlet {
             }
         } catch (ParameterException e) {
             response = e.getErrorResponse();
-        } catch (BlockNotFoundException e){
+        } catch (BlockNotFoundException e) {
             LOG.error("Error: {}", e.getMessage());
             LOG.debug("Trace: {}", ThreadUtils.lastStacktrace(e.getStackTrace(), 5));
             JSONObject json = new JSONObject();

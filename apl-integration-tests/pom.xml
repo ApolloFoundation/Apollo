@@ -5,7 +5,7 @@
     <parent>
         <artifactId>apollo-wallet</artifactId>
         <groupId>com.apollocurrency</groupId>
-        <version>1.39.0</version>
+        <version>1.41.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>apl-integration-tests</artifactId>
@@ -120,7 +120,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
-                   <parallel>classes</parallel>
+                    <parallel>classes</parallel>
                     <threadCount>4</threadCount>
                     <skipTests>${skipIntergationTests}</skipTests>
                     <testFailureIgnore>true</testFailureIgnore>
@@ -146,9 +146,9 @@
                         <version>1.2.0</version>
                     </dependency>
                     <dependency>
-                    <groupId>org.aspectj</groupId>
-                    <artifactId>aspectjweaver</artifactId>
-                    <version>${aspectj.version}</version>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
