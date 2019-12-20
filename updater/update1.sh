@@ -40,7 +40,7 @@ function getConfigPath()
     then
 	CONFIGDIR=conf
     else
-	CONFIGDIR=conf-tn$?
+	CONFIGDIR=conf-tn${NETWORK}
     fi
     
     if [ $3 == "true" ]
