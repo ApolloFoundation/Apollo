@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.eOrder;
@@ -66,18 +66,26 @@ class DexOrderScanningServiceIntegrationTest {
     @Test
     void testStartBlockchainScan() {
         doReturn(51000).when(blockchain).getHeight();
+        AtomicInteger state = new AtomicInteger(0);
+        // 1 - started
+        // 2 - interrupted
+        // 3 - iter finished
+        // 4 - scan finished
         doAnswer((d) -> {
-            ThreadUtils.sleep(200);
+            state.set(1);
+            waitFor(state, 2, 3);
             return 100;
         }).when(scanPerformer).doIteration(DexCurrency.ETH, 1000, 100);
-        CompletableFuture.supplyAsync(()-> {
+        doAsync(()-> {
             service.tryScan();
-            return null;
+            state.set(4);
         });
         Block block = mock(Block.class);
         doReturn(50900).when(block).getHeight();
         doReturn(8000).when(block).getTimestamp();
         doReturn(eOrder(10L, 10_000, dec("3.22"), 1000, 50000)).when(orderDao).getLastClosedOrderBeforeHeight(DexCurrency.ETH, 50901);
+        waitFor(state, 1); // wait until doIteration method will be started
+        doAsync(()-> state.set(2)); // interrupt waiting in doIteration method
 
         blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(block);
         verify(candlestickDao).removeAfterTimestamp(7999);
@@ -85,16 +93,18 @@ class DexOrderScanningServiceIntegrationTest {
         verify(scanPerformer).saveOrderScan(new OrderScan(DexCurrency.ETH, 10));
         verify(scanPerformer).saveOrderScan(new OrderScan(DexCurrency.PAX, 0));
         verifyNoMoreInteractions(scanPerformer, orderScanDao);
-        ThreadUtils.sleep(200); // wait finish of prev tryScan()
 
-        service.tryScan();
+        waitFor(state, 4); // wait finishing of async tryScan method
+
+        service.tryScan(); // try to scan orders during blockchain scan have not to be possible
         verifyNoMoreInteractions(scanPerformer); // scan is disabled
 
         blockEvent.select(literal(BlockEventType.RESCAN_END)).fire(block); // enable scan
-        doAnswer((d) -> 1).when(scanPerformer).doIteration(DexCurrency.ETH, 1000, 100);
-        service.tryScan();
+        doReturn(51100).when(blockchain).getHeight();
+        doAnswer((d) -> 1).when(scanPerformer).doIteration(DexCurrency.ETH, 1100, 100);
+        service.tryScan(); //
 
-        verify(scanPerformer).doIteration(DexCurrency.PAX, 1000, 100);
+        verify(scanPerformer).doIteration(DexCurrency.ETH, 1100, 100);
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -105,4 +115,21 @@ class DexOrderScanningServiceIntegrationTest {
             }
         };
     }
+
+    private void doAsync(Runnable runnable) {
+        CompletableFuture.supplyAsync(() -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    private void waitFor(AtomicInteger integer, int state) {
+        waitFor(integer, state, state);
+    }
+    private void waitFor(AtomicInteger integer, int expected, int newValue) {
+        while (!integer.compareAndSet(expected, newValue)) {
+            ThreadUtils.sleep(10);
+        }
+    }
+
 }

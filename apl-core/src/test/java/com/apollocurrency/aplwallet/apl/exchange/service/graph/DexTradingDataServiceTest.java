@@ -235,9 +235,9 @@ class DexTradingDataServiceTest {
 
     private OrderDbIdPaginationDbRequest request(long fromDbId, int fromTimestamp, int toTimestamp, int limit) {
         return OrderDbIdPaginationDbRequest.builder()
-                .fromTime(fromTimestamp)
+                .fromTime((int) (((long)fromTimestamp * 1000 + 500)  / 1000))
                 .fromDbId(fromDbId)
-                .toTime(toTimestamp)
+                .toTime((int) (((long)toTimestamp * 1000 + 500)  / 1000))
                 .limit(limit)
                 .coin(DexCurrency.ETH)
                 .build();
