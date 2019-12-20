@@ -16,7 +16,7 @@ del /S /F /Q %1\ApolloWallet-%VERSION%-libs*
 mkdir %1\tmpdir
 
 curl --retry 100 -o %1\tmpdir\a2e9b9.zip -k https://s3.amazonaws.com/updates.apollowallet.org/database/a2e9b9.zip
-del /S /F /Q %userprofile%\.apl-blockchain\apl-blockchain-db\a2e9b9*
+del /S /F /Q %userprofile%\.apl-blockchain\apl-blockchain-db\a2e9b9
 unzip -o %1\tmpdir\a2e9b9.zip -d %userprofile%\.apl-blockchain\apl-blockchain-db\
 del /S /F /Q %1\tmpdir\a2e9b9.zip
 
