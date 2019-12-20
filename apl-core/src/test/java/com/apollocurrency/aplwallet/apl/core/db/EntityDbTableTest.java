@@ -89,9 +89,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, true);
             assertEquals(expected, actual);
-            assertInCache(expected);
         });
-        assertNotInCache(expected);
         T actual = table.get(dbKey, true);
         assertEquals(expected, actual);
     }
@@ -104,9 +102,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             T actual = table.get(dbKey, false);
             assertEquals(expected, actual);
-            assertNotInCache(expected);
         });
-        assertNotInCache(expected);
         T actual = table.get(dbKey, false);
         assertEquals(expected, actual);
     }
@@ -118,7 +114,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbKey dbKey = table.getDbKeyFactory().newKey(expected);
         T actual = table.get(dbKey, true);
         assertEquals(expected, actual);
-        assertNotInCache(expected);
     }
 
     @Test
@@ -382,37 +377,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     }
 
     @Test
-    public void testGetManyOnConnectionWithCache() {
-        List<T> allExpectedData = sortByHeightDesc(getAll());
-        Map<DbKey, T> keys = new HashMap<>();
-        for (int i = 0; i < allExpectedData.size(); i++) {
-            T t = allExpectedData.get(i);
-            DbKey key = table.getDbKeyFactory().newKey(t);
-            if (keys.containsKey(key)) {
-                allExpectedData.set(i, keys.get(key));
-            } else {
-                keys.put(key, t);
-            }
-        }
-        DbUtils.inTransaction(extension, (con) -> {
-                    try {
-                        PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " ORDER BY height desc, DB_ID desc ");
-                        List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, true));
-
-                        assertEquals(allExpectedData, all);
-                        assertListInCache(allExpectedData);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.toString(), e);
-                    }
-                }
-        );
-        assertListNotInCache(allExpectedData);
-    }
-
-
-
-    @Test
     public void testGetManyOnConnectionWithoutCache() {
         List<T> allExpectedData = sortByHeightDesc(getAll());
         DbUtils.inTransaction(extension, (con) -> {
@@ -420,14 +384,12 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
                         PreparedStatement pstm = con.prepareStatement("select * from " + table.getTableName() + " order by height desc, db_id desc");
                         List<T> all = CollectionUtil.toList(table.getManyBy(con, pstm, false));
                         assertEquals(allExpectedData, all);
-                        assertListNotInCache(allExpectedData);
                     }
                     catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }
                 }
         );
-        assertListNotInCache(allExpectedData);
     }
 
     @Test
@@ -479,15 +441,10 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             List<T> actual = getAllWithSort(from, to, sort);
             assertEquals(expected, actual);
-            assertListInCache(expected);
         });
-
-        assertListNotInCache(expected);
 
         List<T> actual = getAllWithSort(from, to, sort);
         assertEquals(expected, actual);
-        assertListNotInCache(expected);
-
     }
 
     private List<T> getAllWithSort(int from, int to, String sort) {
@@ -572,13 +529,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             }
             //check cache, which should not contain data
             assertEquals(expected, actual);
-            if (getBlockchain().getHeight() <= height || height < 0) {
-                assertListInCache(expected);
-            } else {
-                assertListNotInCache(expected);
-            }
         });
-        assertListNotInCache(expected);
     }
 
     protected List<T> getExpectedAtHeight(int from, int to, int height, Comparator<T> comp, Filter<T> filter) {
@@ -740,18 +691,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         Assertions.assertThrows(IllegalStateException.class, () -> table.insert(mock(clazz)));
     }
 
-    @Test
-    public void testInsertWhenCachedValueDbKeyEqualsToInsertedButReferencesDiffer() {
-        Assertions.assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> {
-            T t = getAllLatest().get(0);
-            DbKey dbKey = table.getDbKeyFactory().newKey(t);
-            table.get(dbKey, true); //add to cache
-            T mock = mock(clazz);
-            doReturn(dbKey).when(mock).getDbKey();
-            table.insert(mock);
-        }));
-    }
-
     @Override
     @Test
     public void testInsert() {
@@ -759,9 +698,7 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         DbUtils.inTransaction(extension, (con) -> {
             table.insert(value);
             assertEquals(value, table.get(table.getDbKeyFactory().newKey(value)));
-            assertInCache(value);
         });
-        assertNotInCache(value);
     }
 
     @Test
@@ -773,7 +710,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
             table.insert(value);
             T t = table.get(table.getDbKeyFactory().newKey(value));
             assertEquals(t, value);
-            assertInCache(t);
         });
         T actual = table.get(table.getDbKeyFactory().newKey(value));
         assertEquals(value, actual);
@@ -786,44 +722,6 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     Map<DbKey, List<T>> groupByDbKey() {
         return groupByDbKey(table.getDbKeyFactory());
-    }
-
-    public void assertInCache(T value) {
-        T cachedValue = getCache(table.getDbKeyFactory().newKey(value));
-        assertEquals(value, cachedValue);
-    }
-
-    public void assertNotInCache(T value) {
-        T cachedValue = getCache(table.getDbKeyFactory().newKey(value));
-        assertNotEquals(value, cachedValue);
-    }
-
-    public void assertListNotInCache(List<T> values) {
-        values.forEach(this::assertNotInCache);
-    }
-
-    public void assertListInCache(List<T> values) {
-        values.forEach(this::assertInCache);
-    }
-
-    public T getCache(DbKey dbKey) {
-        if (!extension.getDatabaseManager().getDataSource().isInTransaction()) {
-            return DbUtils.getInTransaction(extension, (con) -> getCacheInTransaction(dbKey));
-        } else {
-            return getCacheInTransaction(dbKey);
-        }
-    }
-
-    public T getCacheInTransaction(DbKey dbKey) {
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        return (T) cache.get(dbKey);
-    }
-
-
-    public void removeFromCache(T value) {
-        DbKey dbKey = table.getDbKeyFactory().newKey(value);
-        Map<DbKey, Object> cache = extension.getDatabaseManager().getDataSource().getCache(derivedDbTable.getTableName());
-        cache.remove(dbKey);
     }
 
     public List<T> getAllLatest() {

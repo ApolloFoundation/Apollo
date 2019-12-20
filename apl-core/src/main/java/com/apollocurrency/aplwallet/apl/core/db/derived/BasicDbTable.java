@@ -92,7 +92,6 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 i = dbKey.setPK(pstmtSetLatest, i);
                 i = dbKey.setPK(pstmtSetLatest, i);
                 pstmtSetLatest.executeUpdate();
-                dataSource.getCache(table).remove(dbKey);
             }
         }
         catch (SQLException e) {
@@ -264,10 +263,5 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             }
         }
         return dbKeys;
-    }
-
-    protected void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
     }
 }

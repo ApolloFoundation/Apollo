@@ -54,6 +54,8 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
@@ -119,6 +121,8 @@ public class Account {
     final long id;
     DbKey dbKey;
     private PublicKey publicKey;
+    @Getter
+    @Setter
     long balanceATM;
     long unconfirmedBalanceATM;
     long forgedBalanceATM;
