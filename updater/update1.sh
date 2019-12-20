@@ -200,6 +200,7 @@ then
     esac    
 
     if [ "$#" -eq 3 ]
+    then
 	if [ ${NOSHARD} == false ]
 	then
 	    ./update3.sh $1 $2 $3 true ${NETID}
