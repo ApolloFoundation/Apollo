@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.data.DexTradingTestData;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -11,9 +12,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
@@ -25,13 +23,13 @@ import static com.apollocurrency.aplwallet.apl.exchange.service.graph.Candlestic
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
-@ExtendWith(MockitoExtension.class)
 class DexTradingDataServiceTest {
-    @Mock
-    DexCandlestickDao candlestickDao;
-    @Mock
-    DexOrderDao orderDao;
+
+    DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
+
+    DexOrderDao orderDao = mock(DexOrderDao.class);
 
     DexTradingDataService service;
     DexTradingTestData td = new DexTradingTestData();
@@ -39,6 +37,7 @@ class DexTradingDataServiceTest {
 
     @BeforeEach
     void setUp() {
+        GenesisImporter.EPOCH_BEGINNING = 0;
         service = new DexTradingDataService(true, false, candlestickDao, orderDao, 2);
     }
 

@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -65,6 +66,7 @@ class DexOrderScanningServiceIntegrationTest {
 
     @Test
     void testStartBlockchainScan() {
+        GenesisImporter.EPOCH_BEGINNING = 0;
         doReturn(51000).when(blockchain).getHeight();
         AtomicInteger state = new AtomicInteger(0);
         // 1 - started
