@@ -25,7 +25,7 @@ function getNetwork()
     NETWORK=0
     if [ $(cat ~/.apl-blockchain/apl.cmdline | grep "\-n" | wc -l) -eq 1 ]
     then
-        NETWORK=$(cat ~/.apl-blockchain/apl.cmdline | grep -oE "\-n\s{1,}[0-9]{1}" | cut -f2 -d' ')
+        NETWORK=$(cat ~/.apl-blockchain/apl.cmdline | grep -oE "(\-n|\-\-net)\s{1,}[0-9]{1}" | cut -f2 -d' ')
     else
         NETWORK=0
     fi
@@ -203,7 +203,7 @@ then
     then
 	if [ ${NOSHARD} == false ]
 	then
-	    ./update3.sh $1 $2 $3 true ${NETID}
+	    bash ./update3.sh $1 $2 $3 true ${NETID}
 	fi
     elif [ $4 == false ]
     then
