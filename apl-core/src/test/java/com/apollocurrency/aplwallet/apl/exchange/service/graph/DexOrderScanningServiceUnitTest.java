@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -57,6 +58,7 @@ class DexOrderScanningServiceUnitTest {
 
     @BeforeEach
     void setUp() {
+        GenesisImporter.EPOCH_BEGINNING = 0;
         orderDao = new InMemoryOrderDao();
         candlestickDao = new InMemoryDexCandlestickDao();
         orderScanDao = new InMemoryOrderScanDao();
