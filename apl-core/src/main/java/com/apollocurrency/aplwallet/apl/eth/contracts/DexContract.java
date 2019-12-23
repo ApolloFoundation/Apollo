@@ -581,20 +581,20 @@ public class DexContract extends Contract {
         return refundedEventFlowable(filter);
     }
 
-    public RemoteCall<TransactionReceipt> refundAndWithdraw(byte[] secretHash) {
+    public String refundAndWithdraw(byte[] secretHash) {
         final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
                 FUNC_REFUNDANDWITHDRAW,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)),
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
-    public RemoteCall<TransactionReceipt> refundAndWithdrawAll() {
+    public String refundAndWithdrawAll() {
         final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
                 FUNC_REFUNDANDWITHDRAWALL,
                 Arrays.<Type>asList(),
                 Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
+        return sendTx(function, BigInteger.ZERO);
     }
 
     public List<OwnershipTransferredEventResponse> getOwnershipTransferredEvents(TransactionReceipt transactionReceipt) {
