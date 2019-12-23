@@ -5,7 +5,7 @@
 
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.39.6</version>
+    <version>1.39.7</version>
     <packaging>pom</packaging>
     <name>Apollo wallet</name>
 
@@ -67,7 +67,7 @@
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
-        <antifraud.version>1.0.5</antifraud.version>
+        <antifraud.version>1.0.6</antifraud.version>
 
         <!--Crypto-->
 
