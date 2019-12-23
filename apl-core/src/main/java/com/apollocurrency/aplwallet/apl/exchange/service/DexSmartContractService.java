@@ -76,7 +76,7 @@ public class DexSmartContractService {
                                    ReceiptProcessorProducer receiptProcessorProducer) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
-        this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.contract.address");
+        this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
         this.paxContractAddress   = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
         this.ethereumWalletService = ethereumWalletService;
@@ -409,7 +409,7 @@ public class DexSmartContractService {
         TransactionManager transactionManager = new ClientTransactionManager(web3j, address);
         DexContract  dexContract = new DexContractImpl(smartContractAddress, web3j, transactionManager, null, null);
         try {
-            return DepositedOrderDetailsMapper.map(dexContract.getDepositedOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
+            return DepositedOrderDetailsMapper.map(dexContract.getOrderDetails(new BigInteger(Long.toUnsignedString(orderId)), address).sendAsync().get());
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

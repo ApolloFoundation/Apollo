@@ -102,7 +102,7 @@ class DexSmartContractServiceTest {
     @BeforeEach
     void setUp() {
         Properties props = new Properties();
-        props.setProperty("apl.eth.swap.contract.address", SWAP_ETH_ADDRESS);
+        props.setProperty("apl.eth.swap.proxy.contract.address", SWAP_ETH_ADDRESS);
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         holder = new PropertiesHolder();
         holder.init(props);
