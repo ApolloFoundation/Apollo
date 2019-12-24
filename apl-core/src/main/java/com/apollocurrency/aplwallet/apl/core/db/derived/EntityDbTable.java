@@ -107,13 +107,13 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         return get(dbKey, true);
     }
 
-    public final T get(DbKey dbKey, boolean cache) {
+    public final T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
              + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbKey.setPK(pstmt);
-            return get(con, pstmt, cache);
+            return get(con, pstmt, createDbKey);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -176,18 +176,15 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    protected T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
+    protected T get(Connection con, PreparedStatement pstmt, boolean createDbKey) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        final boolean initDbKey = cache && dataSource.isInTransaction();
         try (ResultSet rs = pstmt.executeQuery()) {
             if (!rs.next()) {
                 return null;
             }
-
-            DbKey dbKey = null;
-            if (initDbKey) {
-                dbKey = keyFactory.newKey(rs);
-            }
+            DbKey dbKey = createDbKey && dataSource.isInTransaction()
+                    ? keyFactory.newKey(rs)
+                    : null;
             T t = load(con, rs, dbKey);
             if (rs.next() && dbKey!=null) {
               log.debug("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
