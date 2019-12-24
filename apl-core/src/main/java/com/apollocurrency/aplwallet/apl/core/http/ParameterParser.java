@@ -268,8 +268,12 @@ public final class ParameterParser {
             }
             return 0;
         }
+        return parseAccountId(paramValue, name);
+    }
+
+    private static long parseAccountId(String accountParam, String name) throws ParameterException {
         try {
-            long value = Convert.parseAccountId(paramValue);
+            long value = Convert.parseAccountId(accountParam);
             if (value == 0) {
                 throw new ParameterException(incorrect(name));
             }
@@ -605,6 +609,9 @@ public final class ParameterParser {
 
     public static Account getAccount(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         long accountId = getAccountId(req, "account", isMandatory);
+        return validateAccount(accountId, isMandatory);
+    }
+    private static Account validateAccount(long accountId, boolean isMandatory) throws ParameterException {
         if (accountId == 0 && !isMandatory) {
             return null;
         }
@@ -613,6 +620,11 @@ public final class ParameterParser {
             throw new ParameterException(JSONResponses.unknownAccount(accountId));
         }
         return account;
+    }
+
+    public static Account getAccount(String accountValue, String name) throws ParameterException {
+        long accountId = parseAccountId(accountValue, name);
+        return validateAccount(accountId, true);
     }
 
     public static String getStringParameter(HttpServletRequest req, String name, boolean isMandatory) throws ParameterException {

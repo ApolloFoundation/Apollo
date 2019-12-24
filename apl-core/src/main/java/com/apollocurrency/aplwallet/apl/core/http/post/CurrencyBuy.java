@@ -69,7 +69,7 @@ public final class CurrencyBuy extends CreateTransaction {
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_FUNDS;
+            return JSONResponses.NOT_ENOUGH_APL;
         }
     }
 
