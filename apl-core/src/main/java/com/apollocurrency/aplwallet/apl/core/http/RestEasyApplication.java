@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexTransactionSendingController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.KeyStoreController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.MandatoryTransactionController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.Metadata;
@@ -49,6 +50,7 @@ public class RestEasyApplication extends Application  {
         set.add(MandatoryTransactionController.class);
         set.add(UserErrorMessageController.class);
         set.add(TradingDataController.class);
+        set.add(DexTransactionSendingController.class);
 
 
         //TODO: add all endpoints below

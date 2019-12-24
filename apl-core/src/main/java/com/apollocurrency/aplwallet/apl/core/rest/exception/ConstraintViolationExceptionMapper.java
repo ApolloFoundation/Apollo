@@ -1,19 +1,18 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
+import com.apollocurrency.aplwallet.api.response.ResponseBase;
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import org.jboss.resteasy.api.validation.ResteasyViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
-import javax.validation.metadata.ConstraintDescriptor;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.lang.annotation.Annotation;
 import java.util.Iterator;
-
-import com.apollocurrency.aplwallet.api.response.ResponseBase;
-import org.jboss.resteasy.api.validation.ResteasyViolationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generic exception mapper for resteasy validation-provider.
@@ -28,32 +27,16 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Reste
     @SuppressWarnings("unchecked")
     @Override
     public Response toResponse(ResteasyViolationException exception) {
-        ConstraintViolation<?> violation = exception.getConstraintViolations().iterator().next();
-        ConstraintDescriptor<Annotation> constraintDescriptor = (ConstraintDescriptor<Annotation>) violation.getConstraintDescriptor();
-
         ResponseBase responseEntity = new ResponseBase();
+        responseEntity.errorCode = ApiErrors.CONSTRAINT_VIOLATION_ERROR_CODE;
 
-        Object oldErrorCode = constraintDescriptor.getAttributes().get("oldErrorCode");
-        if (!(oldErrorCode instanceof Long)) {
-            logger.error("Rest validation annotation of type {} should have field 'long oldErrorCode'.", constraintDescriptor.getAnnotation().annotationType());
-        } else {
-            Long code = (Long) oldErrorCode;
-            if (code > 0) {
-//                responseEntity.setErrorCode(code);
-            }
+        StringBuilder errorDescription = new StringBuilder();
+        for (ConstraintViolation<?> viol : exception.getConstraintViolations()) {
+            String message = viol.getMessage();
+            String parameter = viol.getPropertyPath().toString();
+            errorDescription.append (String.format("%s %s, got value %s\n", parameter, message, viol.getInvalidValue()));
         }
-
-        Object errorCode = constraintDescriptor.getAttributes().get("errorCode");
-        if (!(errorCode instanceof Integer)) {
-            logger.error("Rest validation annotation of type {} should have field 'int errorCode'.", constraintDescriptor.getAnnotation().annotationType());
-        } else {
-            Integer code = (Integer) errorCode;
-            if (code > 0) {
-//                responseEntity.setNewErrorCode(code);
-            }
-        }
-
-//        responseEntity.setErrorDescription(buildMessage(violation));
+        responseEntity.errorDescription = errorDescription.toString();
 
         return Response.status(Response.Status.OK)
                 .entity(responseEntity)

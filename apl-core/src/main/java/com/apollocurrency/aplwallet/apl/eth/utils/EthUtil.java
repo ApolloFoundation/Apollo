@@ -9,9 +9,10 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
 
+import javax.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
+@Vetoed
 public class EthUtil {
 
     private static final String ETH_ADDRESS_PATTERN = "^0x[0-9a-f]{40}$";
@@ -61,7 +62,7 @@ public class EthUtil {
     }
 
     public static Long gweiToAtm(Long gwei) {
-        return weiToEther(gweiToWei(gwei)).multiply(BigDecimal.valueOf(Constants.ONE_APL)).longValue();
+        return gwei / 10;
     }
 
     public static BigDecimal fromAtm(BigDecimal ix) {
@@ -71,5 +72,7 @@ public class EthUtil {
     public static boolean isAddressValid(String address){
         return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);
     }
+
+    private EthUtil() {}
 
 }

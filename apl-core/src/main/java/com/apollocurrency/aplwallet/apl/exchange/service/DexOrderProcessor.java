@@ -103,7 +103,7 @@ public class DexOrderProcessor {
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
 
-    private volatile boolean processorEnabled = true;
+    private volatile boolean processorEnabled = false;
     @Getter
     private boolean initialized = false;
     private Blockchain blockchain;
@@ -818,7 +818,7 @@ public class DexOrderProcessor {
             boolean refundCompleted = true;
             if (!depositExist) {
                 log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
-                refundCompleted = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true);
+                refundCompleted = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true) != null;
                 if (!refundCompleted) {
                     log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
                     success = false;

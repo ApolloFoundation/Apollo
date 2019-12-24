@@ -4,11 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
-import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -80,6 +75,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
 @OpenAPIDefinition(info = @Info(description = "Operations with exchange."))
@@ -231,14 +231,14 @@ public class DexController {
             //If we should freeze APL
             if (order.getType().isSell()) {
                 if (account.getUnconfirmedBalanceATM() < order.getOrderAmount()) {
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
                 }
             } else if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
                 BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), order.getPairCurrency());
                 BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
 
                 if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
                 }
             }
 
@@ -251,7 +251,7 @@ public class DexController {
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             } catch (AplException.ThirdServiceIsNotAvailable e) {
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
@@ -392,7 +392,7 @@ public class DexController {
                 JSONStreamAware response = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, dexOrderCancelAttachment, true).getJson();
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
         } catch (ParameterException ex){
             return Response.ok(JSON.toString(ex.getErrorResponse())).build();
@@ -452,12 +452,12 @@ public class DexController {
             BigDecimal eth = EthUtil.weiToEther(ethereumWalletService.getEthBalanceWei(fromAddress));
             //we cant send every thing because we should pay fee.
             if(eth==null || eth.compareTo(amount) < 1){
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
         } else if(currencies.isPax()){
             BigDecimal pax = EthUtil.weiToEther(ethereumWalletService.getPaxBalanceWei(fromAddress));
             if(pax==null || pax.compareTo(amount) < 0){
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_FUNDS)).build();
+                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
             }
         }
 

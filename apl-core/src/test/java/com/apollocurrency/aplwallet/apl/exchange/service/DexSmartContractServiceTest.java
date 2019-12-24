@@ -357,7 +357,7 @@ class DexSmartContractServiceTest {
         doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.DexOperation.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
         doReturn("hash").when(dexContract).refund(secretHash, true);
 
-        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true);
+        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertTrue(r);
     }
@@ -368,7 +368,7 @@ class DexSmartContractServiceTest {
         doReturn(gasInfo).when(dexEthService).getEthPriceInfo();
         doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.DexOperation.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
 
-        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true);
+        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertFalse(r);
     }
@@ -377,7 +377,7 @@ class DexSmartContractServiceTest {
     void testRefundSendExistingRawTransactionWithConfirmation() throws ExecutionException, AplException.ExecutiveProcessException, IOException, TransactionException {
         mockExistingTransactionSendingWithReceipt(empty32EncodedBytes);
 
-        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true);
+        boolean r = service.refund(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertTrue(r);
         verifyZeroInteractions(dexContract, dexEthService);

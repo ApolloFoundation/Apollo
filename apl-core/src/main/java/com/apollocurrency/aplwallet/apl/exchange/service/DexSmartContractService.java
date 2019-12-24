@@ -90,7 +90,7 @@ public class DexSmartContractService {
      * @param currency Eth or Pax
      * @return String transaction hash.
      */
-    public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws ExecutionException, AplException.ExecutiveProcessException {
+    public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
         Long gasPrice = gas;
         if(gasPrice == null){
@@ -151,15 +151,14 @@ public class DexSmartContractService {
         return initiate(ethWalletKey.getCredentials(), new BigInteger(Long.toUnsignedString(orderId)), secretHash, recipient, refundTimestamp, gasPrice);
     }
 
-    public boolean approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
+    public String approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
-        boolean isApproved = approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
+        return approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
 
-        return isApproved;
     }
 
-    public boolean refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
+    public String refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
@@ -169,7 +168,7 @@ public class DexSmartContractService {
             DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND, params, fromAddress), ethWalletKey.getCredentials());
             txHash = dexContract.refund(secretHash, waitConfirmation);
         }
-        return txHash != null;
+        return txHash;
 
     }
 
@@ -260,7 +259,7 @@ public class DexSmartContractService {
                 .collect(Collectors.toList());
     }
 
-    private boolean approve(Credentials credentials, byte[] secret, Long gasPrice){
+    private String approve(Credentials credentials, byte[] secret, Long gasPrice){
         String params = Numeric.toHexString(secret);
         String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.DexOperation.REDEEM));
         if (txHash == null) {
@@ -269,7 +268,7 @@ public class DexSmartContractService {
             txHash = dexContract.redeem(secret);
         }
 
-        return txHash != null;
+        return txHash;
     }
 
     private TransactionManager createTransactionManager(DexTransaction dexTransaction, Credentials credentials) {

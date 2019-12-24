@@ -24,6 +24,7 @@ public enum ApiErrors implements ErrorInfo {
     UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: \'%s\', see stacktrace for details"),
     WEB3J_CRYPTO_ERROR(-1, 2013, "Web3j crypto error: \'%s\', see stacktrace for details"),
     ;
+    public static final Long CONSTRAINT_VIOLATION_ERROR_CODE = 2014L;
 
     private int oldErrorCode;
     private int errorCode;

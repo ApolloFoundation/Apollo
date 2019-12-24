@@ -19,6 +19,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-validator-provider-11</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
             <version>${project.version}</version>
