@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
+
 import java.util.stream.Collectors;
 import javax.enterprise.event.ObservesAsync;
 
@@ -49,7 +50,8 @@ public class ShardsDownloadService {
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
     private static final int MIN_SHARDING_PEERS=2;
-
+    public static final String FORCED_SHARD_ID_ENV="APOLLO_FORCE_IMPORT_SHARD_ID";
+ 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
             BlockchainConfig blockchainConfig,
@@ -130,6 +132,10 @@ public class ShardsDownloadService {
         ShardNameHelper snh = new ShardNameHelper();
         String fileId = snh.getFullShardId(shardId, myChainId);
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
+        
+        if(si==null){//forced shard import
+            si = new ShardInfo(); //TODO: forced additional files
+        }
         ShardPresentData shardPresentData = new ShardPresentData(
                 shardId,
                 fileId,
@@ -197,6 +203,19 @@ public class ShardsDownloadService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
     
+    private Long readForcedShardId(){
+        Long res = null;
+        String envVal = System.getProperty(FORCED_SHARD_ID_ENV);
+        if(envVal!=null){
+           try{
+             res = Long.parseLong(envVal);
+           }catch(NumberFormatException ex){
+               log.debug("Invalid shard ID:{}",envVal);
+           }
+        }
+        return res;
+    }
+    
     public FileDownloadDecision tryDownloadLastGoodShard() {
         boolean goodShardFound = false;
         log.debug("SHARDING: prepare and start downloading of last good shard in the network...");
@@ -206,6 +225,12 @@ public class ShardsDownloadService {
             fireNoShardEvent(-1L, "SHARDING: skipping shard import due to config/command-line option");
             result = FileDownloadDecision.NoPeers;
             return result;
+        }
+        Long forcedShardImportId = readForcedShardId();
+        if(forcedShardImportId!=null){
+            log.debug("Defined {} to {}. Reading shard from disk",FORCED_SHARD_ID_ENV,forcedShardImportId);
+            fireShardPresentEvent(forcedShardImportId);
+            return FileDownloadDecision.AbsOK;
         }
         if(!getShardingInfoFromPeers()){
             fireNoShardEvent(-1L, "SHARDING: no good shards foud in the network");
