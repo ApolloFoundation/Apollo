@@ -5,7 +5,7 @@
     <parent>
         <artifactId>apollo-wallet</artifactId>
         <groupId>com.apollocurrency</groupId>
-        <version>1.39.0</version>
+        <version>1.41.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -35,21 +35,21 @@
         </dependency>
     </dependencies>
     <build>
-    <plugins>
-        <plugin>
-            <groupId>io.gatling</groupId>
-            <artifactId>gatling-maven-plugin</artifactId>
-            <version>3.0.4</version>
-            <configuration>
-                <runMultipleSimulations>true</runMultipleSimulations>
-                <jvmArgs>
-                    <jvmArg>-Dusers=${users}</jvmArg>
-                    <jvmArg>-Dduration=${duration}</jvmArg>
-                    <jvmArg>-Dtest.env=${test.env}</jvmArg>
-                </jvmArgs>
-            </configuration>
-        </plugin>
-    </plugins>
+        <plugins>
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>3.0.4</version>
+                <configuration>
+                    <runMultipleSimulations>true</runMultipleSimulations>
+                    <jvmArgs>
+                        <jvmArg>-Dusers=${users}</jvmArg>
+                        <jvmArg>-Dduration=${duration}</jvmArg>
+                        <jvmArg>-Dtest.env=${test.env}</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

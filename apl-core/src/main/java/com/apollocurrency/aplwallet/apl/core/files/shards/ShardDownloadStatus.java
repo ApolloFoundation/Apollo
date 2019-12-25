@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- *
  * @author alukin@gmail.com
  */
 public class ShardDownloadStatus {
@@ -24,28 +23,31 @@ public class ShardDownloadStatus {
     @Getter
     @Setter
     private boolean sigalFired = false;
+
     public ShardDownloadStatus(Set<String> fileIds) {
-      status = new HashMap<>();
-      fileIds.forEach((s) -> {
-          status.put(s, NONE);
+        status = new HashMap<>();
+        fileIds.forEach((s) -> {
+            status.put(s, NONE);
         });
     }
-    public boolean isDownloadCompleted(){
+
+    public boolean isDownloadCompleted() {
         boolean res = true;
-        for(Integer st: status.values()){
-            res = res && (st>=3);
-        }
-        return res;      
-    }
-    public boolean isDowloadedOK(){
-        boolean res = true;
-        for(Integer st: status.values()){
-            res = res && (st==3);
+        for (Integer st : status.values()) {
+            res = res && (st >= 3);
         }
         return res;
     }
-    
-    public void setStatus(String fileId, int fstatus){
+
+    public boolean isDowloadedOK() {
+        boolean res = true;
+        for (Integer st : status.values()) {
+            res = res && (st == 3);
+        }
+        return res;
+    }
+
+    public void setStatus(String fileId, int fstatus) {
         status.replace(fileId, fstatus);
     }
 }

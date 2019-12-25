@@ -20,20 +20,20 @@
 
 package com.apollocurrency.aplwallet.apldesktop;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.slf4j.Logger;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import javax.swing.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DesktopMode {
     public static String logDir = System.getProperty("user.home" + "/.apl-blockchain/apl-desktop");
@@ -126,8 +126,7 @@ public class DesktopMode {
             Response response;
             try {
                 response = client.newCall(request).execute();
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 //java.util.logging.Logger.getLogger(DesktopMode.class.getName()).log(Level.SEVERE, null, ex);
                 return false;
             }
@@ -182,7 +181,7 @@ public class DesktopMode {
         desktopApp.updateSplashScreenStatus(newStatus);
     }
 
-    private static void runBackend(String[] args){
+    private static void runBackend(String[] args) {
         Process p;
         try{
             String cmdArgs = String.join(" ", args);
@@ -215,12 +214,9 @@ public class DesktopMode {
                     .redirectError(ProcessBuilder.Redirect.to(errorLogFile));
             int code = pb.start().waitFor();
             LOG.info("Backend start script returned code {}", code);
-        }            
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             LOG.debug(e.getMessage());
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         /* catch (InterruptedException ex) {

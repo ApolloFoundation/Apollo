@@ -90,7 +90,7 @@ public final class DGSPurchase extends CreateTransaction {
         try {
             return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
         } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_FUNDS;
+            return JSONResponses.NOT_ENOUGH_APL;
         }
 
     }

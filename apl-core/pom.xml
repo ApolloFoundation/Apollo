@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apollo-wallet</artifactId>
-        <version>1.39.0</version>
+        <version>1.41.4</version>
     </parent>
 
     <artifactId>apl-core</artifactId>
@@ -17,6 +17,10 @@
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-crypto</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-validator-provider-11</artifactId>
         </dependency>
         <dependency>
             <groupId>com.apollocurrency</groupId>
@@ -269,7 +273,7 @@
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
-            <version>4.1.0</version>
+            <version>4.5.6</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->

@@ -221,7 +221,7 @@ class BackgroundTaskDispatcherTest {
 
         Task taskMain = Task.builder()
                 .name("MainTask-sleep-main")
-                .task(()->{
+                .task(() -> {
                     log.debug("main task is called.");
                 })
                 .delay(10)
@@ -235,11 +235,12 @@ class BackgroundTaskDispatcherTest {
 
         try {
             Thread.sleep(100);
-        } catch (InterruptedException ignored) {}
+        } catch (InterruptedException ignored) {
+        }
 
     }
 
-    static class SimpleTask implements Runnable{
+    static class SimpleTask implements Runnable {
         @Override
         public void run() {
             Task exceptionGenerator = new Task(() -> {

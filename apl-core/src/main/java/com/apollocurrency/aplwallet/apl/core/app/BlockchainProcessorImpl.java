@@ -36,16 +36,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
@@ -82,6 +83,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -108,11 +114,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -160,6 +161,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final AplAppStatus aplAppStatus;
     private final BlockApplier blockApplier;
     private final ShardsDownloadService shardDownloader;
+    private final ShardDao shardDao;
     private final PrunableMessageService prunableMessageService;
     private volatile int lastBlockchainFeederHeight;
     private volatile boolean getMoreBlocks = true;
@@ -305,7 +307,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ShardsDownloadService shardDownloader,
                                    ShardImporter importer, PrunableMessageService prunableMessageService,
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
-                                   Event<BlockchainConfig> blockchainEvent) {
+                                   Event<BlockchainConfig> blockchainEvent,
+                                   ShardDao shardDao) {
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.globalSync = globalSync;
@@ -324,6 +327,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableMessageService = prunableMessageService;
         this.taskDispatchManager = taskDispatchManager;
         this.txEvent = txEvent;
+        this.shardDao = shardDao;
         this.blockchainEvent = blockchainEvent;
 
         configureBackgroundTasks();
@@ -854,6 +858,18 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
+    private int getPhasingStartTime(Block lastBlock) {
+        int startTime;
+        if (lastBlock.getHeight() == 0) {
+            startTime = 0;
+        } else if (blockchain.getShardInitialBlock().getHeight() == lastBlock.getHeight()) {
+            startTime = shardDao.getLastShard().getBlockTimestamps()[0];
+        } else {
+            startTime = blockchain.getBlock(lastBlock.getPreviousBlockId()).getTimestamp();
+        }
+        return startTime;
+    }
+
     private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionType, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long payloadLength = 0;
@@ -1022,7 +1038,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.trace(":accept: dex service block.");
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
-                dexService.closeOverdueContracts(block.getTimestamp());
+                dexService.closeExpiredContracts(block.getTimestamp());
                 if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
@@ -1140,7 +1156,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown
                 Block lastBlock = blockchain.findLastBlock();
-                if (lastBlock == null){
+                if (lastBlock == null) {
                     log.error("Error popping off, lastBlock is NULL.", e);
                 } else {
                     blockchain.setLastBlock(lastBlock);
@@ -1170,7 +1186,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             int scanHeight = 0;
             int shardInitialHeight = blockchain.getShardInitialBlock().getHeight();
-            if ( shardInitialHeight > 0 ) {
+            if (shardInitialHeight > 0) {
                 scanHeight = Math.max(height, shardInitialHeight);
             }
             log.debug("Set scanHeight={}, shard's initialBlockHeight={}, currentHeight={}", scanHeight, shardInitialHeight, height);
@@ -1199,7 +1215,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 try {
                     scan(scanHeight, false);
-                }catch (BlockchainScanException e){
+                } catch (BlockchainScanException e) {
                     log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + e.toString(), e);
                 }
             }
@@ -1423,7 +1439,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     return;
                 }
                 if (height == shardInitialHeight) {
-                    trimService.resetTrim(height+trimService.getMaxRollback());
+                    trimService.resetTrim(height + trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
                     lookupFullTextSearchProvider().dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
@@ -1570,7 +1586,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 //if (e.getErrorCode() != 90007) { //The error with code 90007 is thrown when trying to call a JDBC method on an object that has been closed.
                 try {
                     dataSource.rollback(false);
-                }catch (IllegalStateException ex){
+                } catch (IllegalStateException ex) {
                     log.error("Error during the Rollback caused by SQL Exception", e);
                 }
                 //}
@@ -1611,7 +1627,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     @Override
-    public void waitUntilBlockchainDownloadingStops(){
+    public void waitUntilBlockchainDownloadingStops() {
         log.debug("Waiting until blockchain downloading stops.");
         globalSync.updateLock();
         globalSync.updateUnlock();

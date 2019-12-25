@@ -12,8 +12,10 @@ public interface ValueParser {
     Object[] parseArrayObject(Object data, char escape, char fieldDelimiter);
 
     Object[] parseArrayObject(Object data);
+
     byte[] parseBinaryObject(Object data);
-    default Object parseObject(Object data){
+
+    default Object parseObject(Object data) {
         return data;
     }
 }
