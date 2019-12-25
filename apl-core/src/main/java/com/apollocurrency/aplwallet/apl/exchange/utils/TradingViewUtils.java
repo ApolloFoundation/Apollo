@@ -171,7 +171,10 @@ public class TradingViewUtils {
             if (dexOrdersForInterval.size() > 0 && log.isTraceEnabled()) {
                 log.trace ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
             }
-            initialTime += interval;                
+            initialTime += interval;   
+            
+            entryForPeriod.open = prevClose;
+            prevClose = entryForPeriod.getClose();
             
             data.add(entryForPeriod);
             }
