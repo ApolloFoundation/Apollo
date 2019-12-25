@@ -173,13 +173,7 @@ public class TradingViewUtils {
             }
             initialTime += interval;                
             
-            if (!entryForPeriod.isZero()) {                
-                data.add(entryForPeriod);
-                } else {                
-                if (i==limit-1) {                    
-                    data.add(entryForPeriod);
-                    }
-                }
+            data.add(entryForPeriod);
             }
                 
         tradingDataOutput.setData(data);
