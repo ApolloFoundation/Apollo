@@ -102,7 +102,7 @@ public class DexOrderProcessor {
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
 
-    private volatile boolean processorEnabled = false;
+    private volatile boolean processorEnabled = true;
     @Getter
     private boolean initialized = false;
     private Blockchain blockchain;
