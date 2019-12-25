@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.exchange.utils;
 import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -121,10 +122,11 @@ public class TradingViewUtils {
             currencyType = 0;
         } 
                                         
-        if (log.isTraceEnabled()) {
-            log.trace("start: {}, finish: {}, currencyType: {}, requestedType: {}", startTS, endTS, currencyType );
-        } 
+        // if (log.isTraceEnabled()) {
+            log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}",  new java.util.Date(startTS), new java.util.Date(endTS), currencyType );
+        //} 
                         
+        // log.debug("from: {} , to: {}",  new java.util.Date(timeStamp);
         Integer startTSEpoch = Convert2.toEpochTime(startTS);
         Integer endTSEpoch = Convert2.toEpochTime(endTS);
             
@@ -136,14 +138,14 @@ public class TradingViewUtils {
             
         List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading); 
         
-        if (log.isTraceEnabled()) {
-            log.debug("found {} orders", dexOrdersForInterval.size() );
-        }
+        // if (log.isTraceEnabled()) {
+        log.debug("found {} orders", dexOrdersForInterval.size() );
+        // }
         for (DexOrder cr : dexOrdersForInterval) {
-            if (log.isTraceEnabled()) {
-                log.trace("order: {}, amount: {}, a1: {}, a2: {}, rate: {},", cr.getId(), cr.getOrderAmount(), EthUtil.weiToEther(BigInteger.valueOf(cr.getOrderAmount())),
+//             if (log.isTraceEnabled()) {
+                log.debug("order: {}, amount: {}, a1: {}, a2: {}, rate: {},", cr.getId(), cr.getOrderAmount(), EthUtil.weiToEther(BigInteger.valueOf(cr.getOrderAmount())),
                     EthUtil.fromAtm(BigDecimal.valueOf(cr.getOrderAmount())), cr.getPairRate());
-            }
+//            }
         }
             
         TradingDataOutput tradingDataOutput = new TradingDataOutput();            
@@ -171,16 +173,25 @@ public class TradingViewUtils {
             if (dexOrdersForInterval.size() > 0 && log.isTraceEnabled()) {
                 log.trace ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
             }
-            initialTime += interval;                
+            initialTime += interval;  
             
-            if (!entryForPeriod.isZero()) {                
-                data.add(entryForPeriod);
-                } else {                
-                if (i==limit-1) {                    
-                    data.add(entryForPeriod);
-                    }
-                }
-            }
+            
+            
+            entryForPeriod.open = prevClose;
+            prevClose = entryForPeriod.close;
+            
+
+            data.add(entryForPeriod);
+        }
+            
+//            if (!entryForPeriod.isZero()) {                
+//                data.add(entryForPeriod);
+//                } else {                
+//                if (i==limit-1) {                    
+//                    data.add(entryForPeriod);
+//                    }
+//                }
+//            }
                 
         tradingDataOutput.setData(data);
         tradingDataOutput.setTimeTo(toTs);
@@ -194,5 +205,141 @@ public class TradingViewUtils {
             
         return tradingDataOutput;
         }
+        
+    public static TradingDataOutputUpdated getUpdatedDataForIntervalFromOffers( String symbol, String resolution, Integer toTs, Integer fromTs, DexService service, TimeService timeService) {
 
+        int initialTime = fromTs;// *  1000;// toTs - (interval*limit);
+        int startGraph = initialTime;
+            
+        long startTS = (long)toTs * 1000L;
+        long endTS = (long)toTs * 1000L; 
+            
+        Integer toTS = Convert2.toEpochTime(startTS);
+                                   
+        byte currencyType = 0;
+        int interval=0; 
+        
+        if (resolution.equalsIgnoreCase("D")) {
+            interval = 60*60*24;
+        } else if (resolution.equals("H")) {
+            interval = 60*60; 
+        } else if (resolution.equals("M")) {
+            interval = 60;          
+        }
+        
+        int limit = (toTS - fromTs)/interval;
+        
+        if ( symbol.equalsIgnoreCase("ETH") ) {
+            currencyType = 1;
+        } 
+                
+        if ( symbol.equalsIgnoreCase("PAX") ) {
+            currencyType = 0;
+        } 
+        
+        currencyType = 1;
+                                        
+        // if (log.isTraceEnabled()) {
+            log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}",  new java.util.Date(startTS), new java.util.Date(endTS), currencyType );
+        //} 
+                        
+        // log.debug("from: {} , to: {}",  new java.util.Date(timeStamp);
+        Integer startTSEpoch = Convert2.toEpochTime(startTS);
+        Integer endTSEpoch = Convert2.toEpochTime(endTS);
+            
+        if (log.isTraceEnabled() ) {
+            log.trace("Epoch, start: {}, finish: {}", startTSEpoch, endTSEpoch );
+        } 
+            
+        DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, (byte)1, currencyType, 0 , Integer.MAX_VALUE);
+            
+        List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading); 
+        
+        // if (log.isTraceEnabled()) {
+        log.debug("found {} orders", dexOrdersForInterval.size() );
+        
+        if (dexOrdersForInterval.size()==0) {
+            
+        }
+        
+        // } 
+        for (DexOrder cr : dexOrdersForInterval) {
+//             if (log.isTraceEnabled()) {
+                log.debug("order: {}, amount: {}, a1: {}, a2: {}, rate: {},", cr.getId(), cr.getOrderAmount(), EthUtil.weiToEther(BigInteger.valueOf(cr.getOrderAmount())),
+                    EthUtil.fromAtm(BigDecimal.valueOf(cr.getOrderAmount())), cr.getPairRate());
+//            }
+        }
+            
+        TradingDataOutput tradingDataOutput = new TradingDataOutput();            
+        tradingDataOutput.setResponse("Success");
+        tradingDataOutput.setType(100);
+        tradingDataOutput.setAggregated(false);
+            
+        List<SimpleTradingEntry> data = new ArrayList<>();
+            
+        BigDecimal prevClose= BigDecimal.ZERO;
+            
+        if (log.isTraceEnabled()) {
+            log.trace("extracted: {} values", dexOrdersForInterval.size() );
+            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+            tdo.setC(null);
+            tdo.setH(null);
+            tdo.setL(null);
+            tdo.setO(null);
+            tdo.setT(null);
+            tdo.setV(null);
+            // tdo.setNextTime(initialTime);
+            
+        }
+            
+        for (int i=0; i< limit; i++) {                
+            long start = (long)initialTime * 1000L;
+            long finish = (interval * 1000L) + start ;                
+            Integer startEpoch =  Convert2.toEpochTime(start);
+            Integer finishEpoch =  Convert2.toEpochTime(finish);
+                
+            SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch ); 
+            entryForPeriod.time = initialTime;
+            
+            //if (dexOrdersForInterval.size() > 0 && log.isTraceEnabled()) {
+            log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
+            //}
+            initialTime += interval;  
+            
+            entryForPeriod.open = prevClose;
+            prevClose = entryForPeriod.close;
+            
+            if (!entryForPeriod.isZero()) {
+                data.add(entryForPeriod);
+            }
+            
+        }
+            
+//            if (!entryForPeriod.isZero()) {                
+//                data.add(entryForPeriod);
+//                } else {                
+//                if (i==limit-1) {                    
+//                    data.add(entryForPeriod);
+//                    }
+//                }
+//            }
+                
+//        tradingDataOutput.setData(data);
+//        tradingDataOutput.setTimeTo(toTs);
+//        tradingDataOutput.setTimeFrom(startGraph);
+//        tradingDataOutput.setFirstValueInArray(true);
+//        ConversionType conversionType = new ConversionType();
+//        conversionType.type = "force_direct";
+//        conversionType.conversionSymbol = "";
+//        tradingDataOutput.setConversionType(conversionType);
+//        tradingDataOutput.setHasWarning(false);
+            
+        return tradingDataOutput;
+        }
+
+    
 }
+
+
+
+// TradingDataOutputUpdated
