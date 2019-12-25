@@ -40,8 +40,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     private boolean endOfLine;
     private boolean endOfFile;
 
-    public CsvReaderImpl(Path dataExportPath) {
+    public CsvReaderImpl(Path dataExportPath, CsvEscaper translator) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
+        super.translator = Objects.requireNonNull(translator, "Csv escaper is NULL.");
     }
 
     /**
@@ -502,7 +503,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
 
     @Override
     public String unEscape(String s) {
-        return CsvStringUtils.unEscape(s, escapeCharacter, fieldDelimiter);
+        return translator.unEscape(s);
     }
 
     /**

@@ -134,7 +134,7 @@ class GenesisImporterTest {
     @Test
     void newGenesisBlock() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+        doReturn("conf/data/genesisAccounts-HUGE.json").when(chain).getGenesisLocation();
         genesisImporter = new GenesisImporter(
                 blockchainConfig,
                 blockchainConfigUpdater,

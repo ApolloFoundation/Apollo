@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -19,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -43,9 +43,10 @@ public class PrunableArchiveMigrator {
     private final Zip zip;
     private final DerivedTablesRegistry registry;
     private final Event<ChunkedFileOps> fileChangedEvent;
+    private final CsvEscaper translator;
 
     @Inject
-    public PrunableArchiveMigrator(Event<ChunkedFileOps> fileChangedEvent, ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
+    public PrunableArchiveMigrator(Event<ChunkedFileOps> fileChangedEvent, ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager, CsvEscaper translator) {
         this.shardDao = shardDao;
         this.optionDAO = optionDAO;
         this.dirProvider = dirProvider;
@@ -54,6 +55,7 @@ public class PrunableArchiveMigrator {
         this.databaseManager = databaseManager;
         this.registry = registry;
         this.fileChangedEvent=fileChangedEvent;
+        this.translator = translator;
     }
 
     public void migrate() {
@@ -107,6 +109,6 @@ public class PrunableArchiveMigrator {
     }
 
     CsvExporter createExporter(Path dir) { // just to mock instance creation
-        return new CsvExporterImpl(databaseManager, dir);
+        return new CsvExporterImpl(databaseManager, dir, translator);
     }
 }

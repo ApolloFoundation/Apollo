@@ -41,20 +41,21 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
-    private Writer output;
-    private StringBuffer outputBuffer = new StringBuffer(400);
-    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    //private static final String QUOTE = String.valueOf(TEXT_FIELD_START);
+    //private static final String DOUBLE_QUOTE = QUOTE + QUOTE;
     private static final String EMPTY_ARRAY = "()";
-    private Set<String> excludeColumn = new HashSet<>();
 
-    private static final String quote = String.valueOf(TEXT_FIELD_START);
-    private static final String doubleQuote = quote+quote;
+    private Writer output;
+    private final StringBuilder outputBuffer = new StringBuilder(400);
+    private final Set<String> excludeColumn = new HashSet<>();
 
-    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
-        super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
-        if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
+    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
+        super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL.");
+        super.translator = Objects.requireNonNull(translator, "Csv escaper is NULL.");
+        if (excludeColumnNames != null && !excludeColumnNames.isEmpty()) {
             // assign non empty Set
-            this.excludeColumn = excludeColumnNames;
+            this.excludeColumn.addAll(excludeColumnNames);
             log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
         }
     }
@@ -99,7 +100,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     public CsvExportData append(String outputFileName, ResultSet rs, Map<String, String> defaultValues) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
-//        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
         assignNewFileName(outputFileName);
         try {
             initWrite(true);
@@ -115,10 +115,11 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      */
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
-        Statement stat = conn.createStatement();
-        ResultSet rs = stat.executeQuery(sql);
-        CsvExportData exportData = write(outputFileName, rs);
-        stat.close();
+        CsvExportData exportData;
+        try (Statement stat = conn.createStatement()) {
+            ResultSet rs = stat.executeQuery(sql);
+            exportData = write(outputFileName, rs);
+        }
         return exportData;
     }
 
@@ -155,14 +156,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             this.writeColumnHeader = true; // will write header column names
         }
         this.fileName = newFileName;
-    }
-
-    private String quotedEscapedText(String o){
-        return quotedText(o.replaceAll(quote, doubleQuote));
-    }
-
-    private String quotedText(String o){
-        return quote + o + quote;
     }
 
     private CsvExportData writeResultSet(ResultSet rs, boolean closeWhenNotAppend, Map<String, String> defaultValues) throws SQLException {
@@ -229,7 +222,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 if (date == null) {
                                     o = nullString;
                                 } else {
-                                    o = "TO_DATE('" + dateFormat.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
+                                    o = "TO_DATE('" + DATE_FORMAT.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
                                 }
                                 break;
                             case Types.ARRAY:
@@ -237,28 +230,25 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 if (array != null && array.getArray() instanceof Object[] && ((Object[]) array.getArray()).length > 0) {
                                     Object[] objectArray = (Object[]) array.getArray();
                                     StringBuilder outputValue = new StringBuilder();
+                                    outputValue.append(arrayStartToken);
                                     for (int j = 0; j < objectArray.length; j++) {
-                                        Object o1 = objectArray[j];
-                                        if (j == 0) {
-                                            outputValue.append(arrayStartToken);
+                                        if (j>0){
+                                            outputValue.append(fieldSeparatorWrite);
                                         }
+                                        Object item = objectArray[j];
                                         String objectValue;
-                                        if (o1 instanceof byte[]) {
-                                            objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + quote;
-                                        } else if (o1 instanceof String) {
-                                            objectValue = quotedEscapedText((String)o1);
-                                        } else if (o1 instanceof Long || o1 instanceof Integer) {
-                                            objectValue = o1.toString();
+                                        if (item instanceof byte[]) {
+                                            objectValue = translator.translate((byte[]) item);
+                                        } else if (item instanceof String) {
+                                            objectValue = translator.quotedText((String)item);
+                                        } else if (item instanceof Long || item instanceof Integer) {
+                                            objectValue = item.toString();
                                         } else {
-                                            throw new RuntimeException("Unsupported array type: " + o1.getClass());
+                                            throw new RuntimeException("Unsupported array type: " + item.getClass());
                                         }
-                                        outputValue.append(objectValue).append(fieldSeparatorWrite);
-                                        if (j == objectArray.length - 1) {
-                                            // there is a bug in H2 parser, so let's make one extra comma at the end
-                                            // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
-                                            outputValue.append(arrayEndToken);
-                                        }
+                                        outputValue.append(objectValue);
                                     }
+                                    outputValue.append(arrayEndToken);
                                     o = outputValue.toString();
                                     break;
                                 } else {
@@ -269,7 +259,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             case Types.BINARY:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
-                                    o = quotedText(Base64.getEncoder().encodeToString(((byte[]) o)));
+                                    o = translator.translate((byte[]) o);
                                 } else {
                                     o = nullString;
                                 }
@@ -279,7 +269,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                             default:
                                 o = rs.getString(i + 1);
                                 if (o != null) {
-                                    o = quotedEscapedText((String) o);
+                                    o = translator.quotedText((String) o);
                                 } else {
                                     o = nullString;
                                 }
@@ -288,17 +278,13 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
-                log.trace("Row = {}", Arrays.toString(rowColumnNames));
+                if(log.isTraceEnabled()) {
+                    log.trace("Row = {}", Arrays.toString(rowColumnNames));
+                }
                 writeRow(rowColumnNames);
                 rows++;
+            }
 
-                //                minMaxDbId.setMin(rs.getLong(defaultPaginationColumnName));
-            }
-/*
-            if (rows == 1) {
-                minMaxDbId.incrementMin(); // increase by one in order to advance further on result set
-            }
-*/
             if (closeWhenNotAppend) {
                 output.close(); // close file on 'write mode'
             } else {
@@ -386,20 +372,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     isSkippedColumn = true; // do not put not needed comma
                     continue;
                 }
-                String s;
-                if (rowColumnValues[i] instanceof Object[]) {
-                    for (int j = 0; j < rowColumnValues.length; j++) {
-                        Object rowColumnValue = rowColumnValues[j];
-                        if (j == 0) {
-                            outputBuffer.append("(");
-                        }
-                        outputBuffer.append(rowColumnValue).append(",");
-                    }
-                    outputBuffer.append(")");
-                } else {
-                    s = rowColumnValues[i].toString(); // column value
-                    outputEscapedValueWithDelimiter(s);
-                }
+                String s = rowColumnValues[i].toString(); // column value
+                outputEscapedValueWithDelimiter(s);
             } else if (nullString != null && nullString.length() > 0 && !nullString.equalsIgnoreCase("null")) {
                 outputBuffer.append(nullString);
             }
@@ -414,7 +388,21 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         outputBuffer.setLength(0); // reset
     }
 
-    private void outputEscapedValueWithDelimiter(String s) throws IOException {
+    private String arrayToString(Object[] data){
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("(");
+        for (int j = 0; j < data.length; j++) {
+                if(j>0){
+                    buffer.append(",");
+                }
+                Object rowColumnValue = data[j];
+                buffer.append(rowColumnValue);
+        }
+        buffer.append(")");
+        return buffer.toString();
+    }
+
+    private void outputEscapedValueWithDelimiter(String s) {
         if (escapeCharacter != 0) {
             if (fieldDelimiter != 0) {
                 outputBuffer.append(fieldDelimiter);
@@ -429,7 +417,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String escape(String data) {
-        return CsvStringUtils.escape(data, escapeCharacter, fieldDelimiter);
+        return translator.escape(data);
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
@@ -45,23 +46,26 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class CsvImporterImpl implements CsvImporter {
     private static final Logger log = getLogger(CsvImporterImpl.class);
 
-    private Path dataExportPath; // path to folder with CSV files
-    private DatabaseManager databaseManager;
-    private Set<String> excludeTables; // skipped tables,
-    private  AplAppStatus aplAppStatus;
-    private ValueParser parser;
+    private final Path dataExportPath; // path to folder with CSV files
+    private final DatabaseManager databaseManager;
+    private final Set<String> excludeTables; // skipped tables,
+    private final  AplAppStatus aplAppStatus;
+    private final ValueParser parser;
+    private final CsvEscaper translator;
 
     @Inject
     public CsvImporterImpl(@Named("dataExportDir") Path dataExportPath,
                            DatabaseManager databaseManager,
                            AplAppStatus aplAppStatus,
-                           ValueParser parser) {
+                           ValueParser parser,
+                           CsvEscaper translator) {
         Objects.requireNonNull(dataExportPath, "dataExport path is NULL");
         this.dataExportPath = dataExportPath;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of("genesis_public_key");
         this.aplAppStatus = aplAppStatus;
         this.parser = Objects.requireNonNull(parser, "value parser is NULL");
+        this.translator = Objects.requireNonNull(translator, "Csv escaper is NULL.");
     }
 
     /**
@@ -172,7 +176,7 @@ public class CsvImporterImpl implements CsvImporter {
         Map<String, Object> row = null;
         int rsCounter=1; //start from 1 for "a%b==0" operations
         // open CSV Reader and db connection
-        try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath);
+        try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath, translator);
              ResultSet rs = csvReader.read(
                 inputFileName, null, null);
              Connection con = dataSource.isInTransaction() ? dataSource.getConnection() : dataSource.begin()) {
@@ -196,7 +200,7 @@ public class CsvImporterImpl implements CsvImporter {
                 columnsValues.append(String.join(",", "?"));
             }
             sqlInsert.append(columnNames).append(") VALUES").append(" (").append(columnsValues).append(")");
-            log.debug("SQL = {}", sqlInsert.toString()); // composed insert
+            log.debug("SQL = {}", sqlInsert); // composed insert
             // precompile insert SQL
             preparedInsertStatement = con.prepareStatement(sqlInsert.toString());
 
@@ -238,7 +242,7 @@ public class CsvImporterImpl implements CsvImporter {
                     preparedInsertStatement.setObject(i++, value);
                 }
 
-                log.trace("sql = {}", sqlInsert.toString());
+                log.trace("sql = {}", sqlInsert);
                 importedCount += preparedInsertStatement.executeUpdate();
                 if (rowDataConsumer != null) {
                     rowDataConsumer.accept(row);

@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import org.slf4j.Logger;
@@ -46,20 +47,21 @@ import javax.inject.Singleton;
 public class CsvExporterImpl implements CsvExporter {
     private static final Logger log = getLogger(CsvExporterImpl.class);
     private static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("DB_ID", "LATEST");
+    private final CsvEscaper translator;
     private Path dataExportPath; // path to folder with CSV files
     private DatabaseManager databaseManager;
     private Set<String> excludeTables; // skipped tables
 
     @Inject
-    public CsvExporterImpl(DatabaseManager databaseManager, @Named("dataExportDir") Path dataExportPath) {
+    public CsvExporterImpl(DatabaseManager databaseManager, @Named("dataExportDir") Path dataExportPath, CsvEscaper translator) {
         Objects.requireNonNull(dataExportPath, "exportDirProducer 'data Path' is NULL");
+        this.translator = Objects.requireNonNull(translator, "Csv escaper is NULL.");
         this.dataExportPath = dataExportPath;
         try {
              Files.createDirectories(this.dataExportPath);
         } catch (IOException e) {
             throw new RuntimeException("Unable to create data export directory", e);
         }
-        //        this.dataExportPath = Objects.requireNonNull(dataExportPath, "data export Path is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.excludeTables = Set.of(ShardConstants.GENESIS_PK_TABLE_NAME, ShardConstants.DATA_TAG_TABLE_NAME, ShardConstants.UNCONFIRMED_TX_TABLE_NAME);
     }
@@ -129,7 +131,7 @@ public class CsvExporterImpl implements CsvExporter {
                              SHARD_TABLE_NAME + " WHERE shard_id > ? AND shard_height <= ? ORDER BY shard_id LIMIT ?");
              PreparedStatement countPstmt = con.prepareStatement(
                      "SELECT count(*) FROM " + SHARD_TABLE_NAME + " WHERE shard_height <= ?");
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("SHARD_STATE", "PRUNABLE_ZIP_HASH"))
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("SHARD_STATE", "PRUNABLE_ZIP_HASH"), translator)
         ) {
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
             // select Min, Max DbId + rows count
@@ -180,7 +182,7 @@ public class CsvExporterImpl implements CsvExporter {
                 if (rs.next()) {
                     int height = rs.getInt("shard_height");
                     totalCount += exportShardTable(height - 1, batchLimit);
-                    try (CsvWriter csvWriter = new CsvWriterImpl(dataExportPath, Set.of("SHARD_STATE", "PRUNABLE_ZIP_HASH"))) {
+                    try (CsvWriter csvWriter = new CsvWriterImpl(dataExportPath, Set.of("SHARD_STATE", "PRUNABLE_ZIP_HASH"), translator)) {
                         csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
                         csvWriter.append(SHARD_TABLE_NAME, pstmt.executeQuery(), Map.of("zip_hash_crc", "null"));
                         totalCount += 1;
@@ -210,7 +212,7 @@ public class CsvExporterImpl implements CsvExporter {
              PreparedStatement blockPstm = con.prepareStatement(
                      "select * from " + BLOCK_INDEX_TABLE_NAME + " where block_height >= ? and block_height < ? order by block_height limit ?");
              PreparedStatement blockCountPstm = con.prepareStatement("select count(*) from " + BLOCK_INDEX_TABLE_NAME);
-             CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, null)
+             CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, null, translator)
         ) {
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
@@ -287,7 +289,7 @@ public class CsvExporterImpl implements CsvExporter {
              // phasing related Txs for inclusion
              PreparedStatement txPstm = con.prepareStatement(
                      "select * from " + TRANSACTION_TABLE_NAME + " where db_id = ?");
-             CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"))
+             CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"), translator)
         ) {
             txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
@@ -330,7 +332,7 @@ public class CsvExporterImpl implements CsvExporter {
         try (Connection con = dataSource.getConnection();
              PreparedStatement blockPstm = con.prepareStatement(
                      "select * from " + BLOCK_TABLE_NAME + " where height = ?");
-             CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"));
+             CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("DB_ID"), translator);
         ) {
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
 
@@ -366,7 +368,7 @@ public class CsvExporterImpl implements CsvExporter {
         String sql = "select * from " + table + " " + condition;
         try (Connection con = this.databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql);
-             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns)
+             CsvWriter csvWriter = new CsvWriterImpl(this.dataExportPath, excludedColumns, translator)
         ) {
             csvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
             // select Min, Max DbId + rows count

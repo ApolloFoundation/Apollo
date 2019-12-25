@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -65,6 +66,8 @@ class PrunableArchiveMigratorTest {
     Zip zip = spy(new ZipImpl());
     @Mock DerivedTablesRegistry registry;
     @Mock CsvExporter csvExporter;
+    @Mock
+    CsvEscaper csvEscaper;
     @Mock DatabaseManager databaseManager;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
@@ -79,7 +82,7 @@ class PrunableArchiveMigratorTest {
 
     @BeforeEach
     void setUp() {
-        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
+        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager, csvEscaper));
     }
 
 
