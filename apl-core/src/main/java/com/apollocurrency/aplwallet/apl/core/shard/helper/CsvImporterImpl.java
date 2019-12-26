@@ -99,7 +99,8 @@ public class CsvImporterImpl implements CsvImporter {
 
     /**
      * Return true if column type is binary.
-     * @param meta the result set meta
+     *
+     * @param meta      the result set meta
      * @param columnIdx column index, the first column is at index 0
      * @return true if column type is BINARY or VARBINARY
      * @throws SQLException
@@ -110,7 +111,8 @@ public class CsvImporterImpl implements CsvImporter {
 
     /**
      * Return true if column type is array.
-     * @param meta the result set meta
+     *
+     * @param meta      the result set meta
      * @param columnIdx column index, the first column is at index 0
      * @return true if column type is ARRAY
      * @throws SQLException
@@ -121,7 +123,8 @@ public class CsvImporterImpl implements CsvImporter {
 
     /**
      * Return true if column type is varchar.
-     * @param meta the result set meta
+     *
+     * @param meta      the result set meta
      * @param columnIdx column index, the first column is at index 0
      * @return true if column type is VARCHAR or NVARCHAR
      * @throws SQLException
@@ -164,7 +167,7 @@ public class CsvImporterImpl implements CsvImporter {
         }
 
         Map<String, Object> row = null;
-        int rsCounter=1; //start from 1 for "a%b==0" operations
+        int rsCounter = 1; //start from 1 for "a%b==0" operations
         // open CSV Reader and db connection
         try (CsvReader csvReader = new CsvReaderImpl(this.dataExportPath, translator);
              ResultSet rs = csvReader.read(

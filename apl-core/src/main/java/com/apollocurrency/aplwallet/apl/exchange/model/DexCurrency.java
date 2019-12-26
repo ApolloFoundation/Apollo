@@ -3,13 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
-public enum  DexCurrencies {
+public enum DexCurrency {
 
     APL("apl"),
     ETH("eth"),
     PAX("pax");
 
-    DexCurrencies(String currency) {
+    DexCurrency(String currency) {
         this.currencyCode = currency;
     }
 
@@ -19,7 +19,7 @@ public enum  DexCurrencies {
         return currencyCode;
     }
     
-    public static Integer getValue( DexCurrencies i ) {
+    public static Integer getValue( DexCurrency i ) {
         switch (i) {
             case APL : return 0;
             case ETH : return 1;
@@ -28,25 +28,25 @@ public enum  DexCurrencies {
         return -1;
     }
 
-    public static DexCurrencies getType(int ordinal){
-        if(ordinal < 0 || ordinal > DexCurrencies.values().length){
+    public static DexCurrency getType(int ordinal){
+        if(ordinal < 0 || ordinal > DexCurrency.values().length){
             return null;
         }
 
-        return DexCurrencies.values()[ordinal];
+        return DexCurrency.values()[ordinal];
     }
 
     public boolean isEthOrPax(){
-        return (this == DexCurrencies.ETH) || (this == DexCurrencies.PAX);
+        return (this == DexCurrency.ETH) || (this == DexCurrency.PAX);
     }
 
     public boolean isApl(){
-        return this == DexCurrencies.APL;
+        return this == DexCurrency.APL;
     }
     public boolean isEth(){
-        return this == DexCurrencies.ETH;
+        return this == DexCurrency.ETH;
     }
     public boolean isPax(){
-        return this == DexCurrencies.PAX;
+        return this == DexCurrency.PAX;
     }
 }

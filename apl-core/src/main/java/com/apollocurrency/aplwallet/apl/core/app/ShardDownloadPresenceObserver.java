@@ -11,17 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Objects;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Interface for shard data downloading management. It does following:

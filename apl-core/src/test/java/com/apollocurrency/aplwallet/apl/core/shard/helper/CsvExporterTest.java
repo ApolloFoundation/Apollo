@@ -420,7 +420,7 @@ class CsvExporterTest {
     void testExportDexOfferSortedByHeight() throws IOException {
         csvExporter.exportDerivedTableCustomSort(dexOrderTable, 542100, 2, Set.of("DB_ID", "LATEST"), "height");
         List<String> allLines = Files.readAllLines(dataExportPath.resolve("dex_offer.csv"));
-        assertEquals(6, allLines.size());
+        assertEquals(11, allLines.size());
         assertTrue(allLines.get(1).startsWith("1,0,100"));
         assertTrue(allLines.get(2).startsWith("2,1,100"));
         assertTrue(allLines.get(5).startsWith("5,0,100"));

@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.api.dto;
 
-public enum  CurrencyTypes {
+public enum CurrencyTypes {
     EXCHANGEABLE,
     CONTROLLABLE,
     MINTABLE,

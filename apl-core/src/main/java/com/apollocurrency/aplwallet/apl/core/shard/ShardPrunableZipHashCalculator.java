@@ -73,7 +73,7 @@ public class ShardPrunableZipHashCalculator {
                 .stream()
                 .filter(shard -> shard.getPrunableZipHash() != null)
                 .collect(Collectors.toList()); // TODO change to completed and imported
-        
+
         allCompletedShards.forEach(shard -> {
             try {
                 Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
@@ -84,7 +84,7 @@ public class ShardPrunableZipHashCalculator {
                         .filter(t -> t instanceof PrunableDbTable)
                         .map(t -> (PrunableDbTable) t)
                         .collect(Collectors.toList());
-                
+
                 prunableTables.forEach(
                         t -> csvExporter.exportPrunableDerivedTable(t, shard.getShardHeight(), lastPruningTime, 100)
                 );
@@ -108,9 +108,9 @@ public class ShardPrunableZipHashCalculator {
                             null, //filter of file names
                             false //recursive
                     );
-                    if( ops==null || ! ops.isHashedOK()){
+                    if (ops == null || !ops.isHashedOK()) {
                         log.error("Can not zip file: {}", zipName);
-                        throw new RuntimeException("Can not create zip file: "+zipName);
+                        throw new RuntimeException("Can not create zip file: " + zipName);
                     }
                     byte[] hash = ops.getFileHash();
                     ops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
@@ -118,7 +118,8 @@ public class ShardPrunableZipHashCalculator {
                     shard.setPrunableZipHash(hash);
                     shardDao.updateShard(shard);
                 }
-                fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(ops);
+                fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>() {
+                }).fireAsync(ops);
                 log.debug("Firing 'FILE_CHANGED' event {}", ops.getFileId());
                 FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
             }

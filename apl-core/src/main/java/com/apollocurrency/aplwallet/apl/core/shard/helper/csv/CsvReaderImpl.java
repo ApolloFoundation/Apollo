@@ -297,11 +297,11 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         // read until of 'arrayEndToken' symbol
         inputBufferStart = inputBufferPos;
         int ch;
-        int state=1;
-        boolean endLex=false;
+        int state = 1;
+        boolean endLex = false;
         while (!endLex) {
             ch = readChar();
-            switch (state){
+            switch (state) {
                 case 0: //error state
                     endLex = true;
                     break;
@@ -309,24 +309,24 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                     if (ch == arrayEndToken) {
                         endLex = true;
                         state = 5;
-                    }else if (isEOL(ch)){
+                    } else if (isEOL(ch)) {
                         endOfLine = true;
                         endLex = true;
                         state = 0;
-                    }else if(ch == textFieldCharacter) {
+                    } else if (ch == textFieldCharacter) {
                         state = 2;
-                    }else if(ch == fieldSeparatorRead){
+                    } else if (ch == fieldSeparatorRead) {
                         replaceChar(eotCharacter);
-                    }else{
+                    } else {
                         state = 3;
                     }
                     break;
                 case 2:
-                    if (isEOL(ch)){
+                    if (isEOL(ch)) {
                         endOfLine = true;
                         endLex = true;
                         state = 0;
-                    }else if(ch == textFieldCharacter) {
+                    } else if (ch == textFieldCharacter) {
                         state = 4;
                     }
                     break;
@@ -334,11 +334,11 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                     if (ch == arrayEndToken) {
                         endLex = true;
                         state = 5;
-                    }else if (isEOL(ch)){
+                    } else if (isEOL(ch)) {
                         endOfLine = true;
                         endLex = true;
                         state = 0;
-                    }else if(ch == fieldSeparatorRead){
+                    } else if (ch == fieldSeparatorRead) {
                         replaceChar(eotCharacter);
                     }
                     break;
@@ -346,18 +346,18 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                     if (ch == arrayEndToken) {
                         endLex = true;
                         state = 5;
-                    }else if (isEOL(ch)){
+                    } else if (isEOL(ch)) {
                         endOfLine = true;
                         endLex = true;
                         state = 0;
-                    }else if(ch == textFieldCharacter) {
+                    } else if (ch == textFieldCharacter) {
                         state = 2;
-                    }else if(ch == fieldSeparatorRead) {
+                    } else if (ch == fieldSeparatorRead) {
                         replaceChar(eotCharacter);
                         state = 1;
-                    }else if (isWhiteSpace(ch)){
+                    } else if (isWhiteSpace(ch)) {
                         //ignore
-                    }else{
+                    } else {
                         endLex = true;
                         state = 0;
                     }
@@ -368,9 +368,9 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         if (!preserveWhitespace) {
             s = s.trim();
         }
-        if(!endOfLine) {
+        if (!endOfLine) {
             ch = readChar();//read an eventual field separator ','
-            endOfLine=isEOL(ch);
+            endOfLine = isEOL(ch);
         }
         inputBufferStart = -1; // reset
         return readNull(s);
@@ -446,8 +446,8 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
         }
     }
 
-    private void replaceChar(char r){
-        if(inputBufferPos>=1) {
+    private void replaceChar(char r) {
+        if (inputBufferPos >= 1) {
             inputBuffer[inputBufferPos - 1] = r;
         }
     }

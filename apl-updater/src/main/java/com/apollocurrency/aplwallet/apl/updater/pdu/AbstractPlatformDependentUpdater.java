@@ -86,7 +86,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         try {
             LOG.debug("Starting platform dependent script");
             PropertiesHolder ph = updaterMediator.getPropertyHolder();
-            
+
             boolean isSharding = true; //node's sharding is on by default
             if(ph!=null){
                boolean isShardingOff = ph.getBooleanProperty("apl.noshardcreate", false);
@@ -100,7 +100,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
                chain = chainId.substring(0,6);
             }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain); 
+                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain);
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {

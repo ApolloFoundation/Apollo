@@ -9,7 +9,8 @@ import lombok.ToString;
 
 import java.util.Map;
 
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

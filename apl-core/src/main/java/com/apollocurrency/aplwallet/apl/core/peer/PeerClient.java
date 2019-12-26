@@ -38,25 +38,25 @@ public class PeerClient {
     public PeerClient(Peer peer) {
         Objects.requireNonNull(peer);
         //TODO: remove Json.org entirely from P2P
-        mapper.registerModule(new JsonOrgModule());        
+        mapper.registerModule(new JsonOrgModule());
         this.peer=peer;
     }
-    
+
     public Peer gePeer(){
         return peer;
     }
-    
+
     public boolean checkConnection(){
         boolean res = peer.getState() == PeerState.CONNECTED;
         return res;
     }
-    
+
     public FileDownloadInfo getFileInfo(String entityId){
         log.debug("getFileInfo() entityId = {}", entityId);
         if(!checkConnection()){
             log.debug("Peer: {} is not connected", peer.getAnnouncedAddress());
             return null;
-        }        
+        }
         FileDownloadInfoRequest rq = new FileDownloadInfoRequest();
         rq.fileId = entityId;
         rq.full = true;
@@ -79,7 +79,7 @@ public class PeerClient {
             res.error="Null returned from peer";
         }
         if (res.errorCode != 0 || res.error!=null) {
-            log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode,  peer.getAnnouncedAddress(), entityId, res.error);
+            log.debug("Error code: {}  peer: {} file: {} error: {}", res.errorCode, peer.getAnnouncedAddress(), entityId, res.error);
         }
         return res.downloadInfo;
     }
@@ -89,7 +89,7 @@ public class PeerClient {
         if(!checkConnection()){
             log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;
-        }         
+        }
        FileChunk fc;
        FileChunkRequest rq = new FileChunkRequest();
        rq.fileId=fci.fileId;
@@ -116,12 +116,12 @@ public class PeerClient {
         log.trace("downloadChunk() result = {}", fc==null?"null":fc.info.toString());
         return fc;
     }
-    
+
     public ShardingInfo getShardingInfo(){
         if(!checkConnection()){
             log.debug("Can not connect to peer: {}",peer.getAnnouncedAddress());
             return null;
-        }         
+        }
         ShardingInfoRequest rq = new ShardingInfoRequest();
         rq.full=true;
         JSONObject req = mapper.convertValue(rq, JSONObject.class);
@@ -139,5 +139,5 @@ public class PeerClient {
         ShardingInfoResponse res = mapper.convertValue(resp, ShardingInfoResponse.class);
         log.trace("getShardingInfo() = {}", res);
         return res.shardingInfo;
-    }     
+    }
 }
