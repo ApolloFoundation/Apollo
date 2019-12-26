@@ -4,17 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.tools.impl.heightmon;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.model.HeightMonitorConfig;
 import com.apollocurrency.aplwallet.apl.tools.impl.heightmon.web.JettyServer;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class HeightMonitor {
     private static final Logger log = getLogger(HeightMonitor.class);
@@ -36,7 +36,7 @@ public class HeightMonitor {
         try {
             this.container =  AplContainer.builder().containerId("MAIN-APL-CDI")
                     .annotatedDiscoveryMode()
-                    .recursiveScanPackages(JettyServer.class)
+//                    .recursiveScanPackages(JettyServer.class)
                     .devMode() // enable for dev only
                     .build();
             HeightMonitorService service = CDI.current().select(HeightMonitorService.class).get();
