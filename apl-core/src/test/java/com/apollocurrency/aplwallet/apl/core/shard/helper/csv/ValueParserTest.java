@@ -43,7 +43,7 @@ class ValueParserTest {
     @Test
     void parseArrayObject() {
         String o = "'tag1'"+EOT+"'tag2'"+EOT+"'batman'";
-        Object[] expected = {"tag1", "tag2","batman"};
+        Object[] expected = {"tag1", "tag2", "batman"};
         assertArrayEquals(expected, parser.parseArrayObject(o));
     }
 

@@ -42,8 +42,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    //private static final String QUOTE = String.valueOf(TEXT_FIELD_START);
-    //private static final String DOUBLE_QUOTE = QUOTE + QUOTE;
     private static final String EMPTY_ARRAY = "()";
 
     private Writer output;
@@ -56,7 +54,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         if (excludeColumnNames != null && !excludeColumnNames.isEmpty()) {
             // assign non empty Set
             this.excludeColumn.addAll(excludeColumnNames);
-            log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+            if(log.isDebugEnabled()) {
+                log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+            }
         }
     }
 
@@ -80,8 +80,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         try {
             initWrite(false);
             return writeResultSet(rs, true, Map.of());
-        } catch (IOException e) {
-            throw new SQLException("IOException writing " + outputFileName, e);
+        } catch (Exception e) {
+            throw new CsvException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -104,8 +104,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         try {
             initWrite(true);
             return writeResultSet(rs, false, defaultValues);
-        } catch (IOException e) {
-            throw new SQLException("IOException writing " + outputFileName, e);
+        } catch (Exception e) {
+            throw new CsvException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -123,10 +123,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         return exportData;
     }
 
-    private void initWrite(boolean appendMode) throws IOException {
+    private void initWrite(boolean appendMode){
         if (output == null) {
             try {
-
                 Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
                 boolean fileExist = Files.exists(filePath);
                 if (!fileExist && appendMode) { // check CSV file in dataExport folder
@@ -143,8 +142,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));
             } catch (Exception e) {
                 close();
-                log.error("initWrite() exception, appendMode=" + appendMode, e);
-                throw e;
+                throw new CsvException("initWrite() exception, appendMode=" + appendMode, e);
             }
         }
     }
@@ -176,9 +174,13 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                         meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
                         meta.getPrecision(i + 1), meta.getScale(i + 1));
             }
-            log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            if(log.isTraceEnabled()) {
+                log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            }
             if (writeColumnHeader) {
-                log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
+                if(log.isDebugEnabled()) {
+                    log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
+                }
                 writeHeaderRow(columnsMetaData);
                 this.writeColumnHeader = false;// write header columns only once after fileName/tableName has been changed
             }
@@ -293,8 +295,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             log.trace("CSV file '{}' written rows=[{}]", fileName, rows);
             return new CsvExportData(rows, lastRow);
         } catch (IOException e) {
-            log.error("IO exception", e);
-            throw new SQLException(e);
+            throw new CsvException("IO exception, file="+fileName, e);
         } finally {
             if (closeWhenNotAppend) {
                 close();
