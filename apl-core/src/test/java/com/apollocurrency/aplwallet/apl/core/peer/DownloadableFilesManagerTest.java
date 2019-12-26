@@ -44,7 +44,7 @@ class DownloadableFilesManagerTest {
     private DirProvider dirProvider = mock(DirProvider.class);
     private BlockchainConfig chainCoinfig;
     private Chain chain;
-    private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");    
+    private final UUID chainId=UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
     {
         doReturn(csvResourcesPath).when(dirProvider).getDataExportDir();
         chain = mock(Chain.class);
@@ -55,7 +55,7 @@ class DownloadableFilesManagerTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-               ShardNameHelper.class, 
+               ShardNameHelper.class,
                DownloadableFilesManager.class)
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(chainCoinfig, BlockchainConfig.class))
@@ -65,10 +65,10 @@ class DownloadableFilesManagerTest {
 
     @Inject
     private DownloadableFilesManager filesManager;
-    
+
     private String createTestZip() throws IOException{
         int n_lines=1000;
-        
+
         File tmpDir = new File(fileBaseDir);
         File wDir = new File(tmpDir.getAbsolutePath()+"/"+"apl-test-zip");
         if(wDir.exists()){
@@ -76,7 +76,7 @@ class DownloadableFilesManagerTest {
         }
         wDir.mkdirs();
         for(int i=0; i<10; i++){
-          String fn="test_file_"+i;  
+          String fn="test_file_"+i;
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(wDir.getAbsolutePath()+"/"+fn))) {
                 for(int j=0; j<n_lines; j++){
                     writer.write("line "+j);
@@ -86,7 +86,7 @@ class DownloadableFilesManagerTest {
         zip.compress(fileBaseDir+"/"+zipFileName, wDir.getAbsolutePath(), Long.MIN_VALUE, null,false);
         return wDir.getAbsolutePath();
     }
-    
+
     @Test
     void getFileDownloadInfo() {
         String tdir=null;
@@ -108,7 +108,7 @@ class DownloadableFilesManagerTest {
         log.debug("Parsed bytes from string = {}", Convert.parseHexString(fi.fileInfo.hash) );
         assertEquals(fileId, fi.fileInfo.fileId);
         File f = new File(fileBaseDir+"/"+zipFileName);
-        f.delete();        
+        f.delete();
     }
 
     @Test
@@ -125,7 +125,7 @@ class DownloadableFilesManagerTest {
         Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
         assertNotNull(pathToShardArchive);
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
-        
+
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
 
@@ -134,14 +134,14 @@ class DownloadableFilesManagerTest {
 
         //        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
 //        assertEquals("123", fpath);
-        
+
 //        fpath = filesManager.mapFileIdToLocalPath("debug::123").toString();
 //        assertEquals("123", fpath);
-        
+
         // parse simple file name
 //        fpath = filesManager.mapFileIdToLocalPath("file::phasing_poll.csv").toString();
 //        assertEquals("123", fpath);;
-        
+
 //        assertEquals("phasing_poll.csv", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::");

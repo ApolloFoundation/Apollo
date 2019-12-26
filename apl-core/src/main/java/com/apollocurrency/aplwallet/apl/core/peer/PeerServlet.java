@@ -88,12 +88,12 @@ public final class PeerServlet extends WebSocketServlet {
     private DownloadableFilesManager downloadableFilesManager;
     @Inject
     private PeersService peersService;
-    
+
     private ExecutorService threadPool;
 
     @Override
     public void init() throws ServletException {
-        super.init(); 
+        super.init();
         lookupComponents();
         threadPool = new QueuedThreadPool(
                 Runtime.getRuntime().availableProcessors(),
@@ -108,8 +108,8 @@ public final class PeerServlet extends WebSocketServlet {
         if (timeService ==null) timeService = CDI.current().select(TimeService.class).get();
         if (propertiesHolder == null) propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         if (peersService == null) peersService = CDI.current().select(PeersService.class).get();
-    }  
-    
+    }
+
     public PeerRequestHandler getHandler(String rtype) {
         if(rtype==null){
             return null;
@@ -155,10 +155,10 @@ public final class PeerServlet extends WebSocketServlet {
                 break;
             case "getFileChunk":
                 res = CDI.current().select(GetFileChunk.class).get();
-                break; 
+                break;
             case "getShardingInfo":
                 res = CDI.current().select(GetShardingInfo.class).get();
-                break;                
+                break;
         }
         return res;
     }
@@ -221,7 +221,7 @@ public final class PeerServlet extends WebSocketServlet {
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
 
-//jetty misused this, ignore            
+//jetty misused this, ignore
             if (!(e instanceof ClosedChannelException)) {
                 LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 peer.blacklist(e);

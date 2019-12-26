@@ -20,6 +20,54 @@ function notify
     fi
 }
 
+function getNetwork()
+{
+    NETWORK=0
+    if [ $(cat ~/.apl-blockchain/apl.cmdline | grep "\-n" | wc -l) -eq 1 ]
+    then
+        NETWORK=$(cat ~/.apl-blockchain/apl.cmdline | grep -oE "(\-n|\-\-net)\s{1,}[0-9]{1}" | cut -f2 -d' ')
+    else
+        NETWORK=0
+    fi
+    
+
+}
+
+function getConfigPath()
+{
+    getNetwork
+    if  [ ${NETWORK} -eq 0 ]
+    then
+	CONFIGDIR=conf
+    else
+	CONFIGDIR=conf-tn${NETWORK}
+    fi
+    
+    if [ $3 == "true" ]
+    then
+	CONFIGDIR=~/.apl-blockchain/${CONFIGDIR}
+    else
+	CONFIGDIR=$1/${CONFIGDIR}
+    fi
+}
+
+function isSharding()
+{
+    NOSHARD=false
+    if [ $(cat ~/.apl-blockchain/apl.cmdline |  grep -oE "\--no-shards-create\s{1,}true" | wc -l) -eq 1 ]
+    then
+	NOSHARD=true
+    else
+	if [ $(cat ${CONFIGDIR}/apl-blockchain.properties | grep apl.noshardcreate | grep -v "#" | wc -l ) -eq 1 ]
+	then
+    	    NOSHARD=$(cat ${CONFIGDIR}/apl-blockchain.properties | grep apl.noshardcreate | grep -v "#" | cut -f2 -d'=')
+	else
+	    NOSHARD=false
+        fi
+    fi
+}
+
+
 VERSION=$(head -n1 ${2}/VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
@@ -125,14 +173,47 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
-# Download db with shards
+#determine, if shrding was performed or not
 
-    notify "Downloading db shards..."
-    if [ $4 == true ]
+    
+    
+    
+
+# Download db with shards
+    getNetwork
+    getConfigPath $1 $2 $3
+    isSharding
+    
+    case ${NETWORK} in
+	0)
+	    NETID=b5d7b6
+	    ;;
+	1)
+	    NETID=a2e9b9
+	    ;;
+	2)
+	    NETID=2f2b61
+	    ;;
+	*)
+	    NETID=b5d7b6
+	    
+    esac    
+
+    if [ "$#" -eq 3 ]
+    then
+	if [ ${NOSHARD} == false ]
+	then
+	    bash ./update3.sh $1 $2 $3 true ${NETID}
+	fi
+    elif [ $4 == false ]
     then
 	bash ./update3.sh $1 $2 $3 $4 $5
     fi
 
+    
+
+    notify "Downloading db shards..."
+    
 
     cd $1 
 
