@@ -210,11 +210,11 @@ public class TradingViewUtils {
 
         int initialTime = fromTs;// *  1000;// toTs - (interval*limit);
         int startGraph = initialTime;
-            
-        long startTS = (long)toTs * 1000L;
+        
+        long startTS = (long)fromTs * 1000L;
         long endTS = (long)toTs * 1000L; 
             
-        Integer toTS = Convert2.toEpochTime(startTS);
+        // Integer toTS = Convert2.toEpochTime(startTS);
                                    
         byte currencyType = 0;
         int interval=0; 
@@ -227,7 +227,11 @@ public class TradingViewUtils {
             interval = 60;          
         }
         
-        int limit = (toTS - fromTs)/interval;
+        
+        
+        int limit = (toTs - fromTs)/interval;
+        
+        log.debug("interval: {}, limit: {} ", interval, limit);
         
         if ( symbol.equalsIgnoreCase("ETH") ) {
             currencyType = 1;
@@ -260,6 +264,18 @@ public class TradingViewUtils {
         
         if (dexOrdersForInterval.size()==0) {
             
+            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+            tdo.setC(null);
+            tdo.setH(null);
+            tdo.setL(null);
+            tdo.setO(null);
+            tdo.setT(null);
+            tdo.setV(null);
+            
+            tdo.setNextTime(fromTs);
+            tdo.setS("no_data");
+            return tdo;
+            
         }
         
         // } 
@@ -281,14 +297,7 @@ public class TradingViewUtils {
             
         if (log.isTraceEnabled()) {
             log.trace("extracted: {} values", dexOrdersForInterval.size() );
-            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
-            tdo.setC(null);
-            tdo.setH(null);
-            tdo.setL(null);
-            tdo.setO(null);
-            tdo.setT(null);
-            tdo.setV(null);
-            // tdo.setNextTime(initialTime);
+
             
         }
             
@@ -301,19 +310,57 @@ public class TradingViewUtils {
             SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch ); 
             entryForPeriod.time = initialTime;
             
-            //if (dexOrdersForInterval.size() > 0 && log.isTraceEnabled()) {
-            log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
-            //}
+            if (dexOrdersForInterval.size() > 0 && !entryForPeriod.isZero()/*&& log.isTraceEnabled()*/) {
+                log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
+                }
             initialTime += interval;  
             
-            entryForPeriod.open = prevClose;
-            prevClose = entryForPeriod.close;
+            // entryForPeriod.open = prevClose;
+            // prevClose = entryForPeriod.close;
             
             if (!entryForPeriod.isZero()) {
                 data.add(entryForPeriod);
             }
             
         }
+        
+        
+        TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+        
+        tdo.setT(new ArrayList<>());
+        tdo.setC(new ArrayList<>());
+        tdo.setH(new ArrayList<>());
+        tdo.setO(new ArrayList<>());
+        tdo.setL(new ArrayList<>());
+        tdo.setV(new ArrayList<>());
+
+        
+        for (SimpleTradingEntry e : data) {
+                        
+//            tdo.setC(e.close);
+//            tdo.setH(null);
+//            tdo.setL(null);
+//            tdo.setO(null);
+//            tdo.setT(null);
+//            tdo.setV(null);
+//            
+            tdo.getT().add(e.time);
+            tdo.getC().add(e.close);
+            tdo.getH().add(e.high);
+            tdo.getO().add(e.open);
+            tdo.getL().add(e.low);
+            tdo.getV().add(e.volumefrom);
+            
+            
+            
+        }
+        tdo.setS("OK");
+        tdo.setNextTime(null);   
+        return tdo;
+        
+        
+        // iterating
+        
             
 //            if (!entryForPeriod.isZero()) {                
 //                data.add(entryForPeriod);
@@ -334,7 +381,7 @@ public class TradingViewUtils {
 //        tradingDataOutput.setConversionType(conversionType);
 //        tradingDataOutput.setHasWarning(false);
             
-        return tradingDataOutput;
+        //return tradingDataOutput;
         }
 
     

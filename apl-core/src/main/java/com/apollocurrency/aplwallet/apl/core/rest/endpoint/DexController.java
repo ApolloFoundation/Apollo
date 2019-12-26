@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -609,13 +610,14 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     public Response getHistoday2(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
                                 @Parameter(description = "resolution") @QueryParam("resolution") String resolution,                                
-                                @Parameter(description = "from") @QueryParam("from") String from,                                
+                                @Parameter(description = "from") @QueryParam("from") Integer from,                                
                                 @Parameter(description = "to") @QueryParam("to") Integer to,                                
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
         // TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers (fsym,  tsym,  toTs, limit,  60*60*24, service, timeService);
-        TradingDataOutputUpdated tradingDataOutputUpdated = new TradingDataOutputUpdated();
+        // TradingDataOutputUpdated tradingDataOutputUpdated = new TradingDataOutputUpdated();
+        TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from,service, timeService);
         return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
     }
     
