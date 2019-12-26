@@ -5,8 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
+import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
+import com.apollocurrency.aplwallet.api.trading.SymbolsOutput;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
@@ -78,10 +80,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.SymbolsOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import java.util.ArrayList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -621,6 +626,67 @@ public class DexController {
         return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
     }
     
+    
+    @GET
+    @Path("/symbol")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getSymbols(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,                                                            
+                                @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getSymbols:  fsym: {}", symbol );
+        
+        /*
+            name: "AAPL"
+            exchange-traded: "NasdaqNM"
+            exchange-listed: "NasdaqNM"
+            timezone: "America/New_York"
+            minmov: 1
+            minmov2: 0
+            pointvalue: 1
+            session: "0930-1630"
+            has_intraday: false
+            has_no_volume: false
+            description: "Apple Inc."
+            type: "stock"
+            supported_resolutions: ["D", "2D", "3D", "W", "3W", "M", "6M"]
+            pricescale: 100
+            ticker: "AAPL"
+        */
+        
+        SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
+        
+        symbolsOutputDTO.name = "AAPL";
+        symbolsOutputDTO.exchange_traded = "NasdaqNM";
+        symbolsOutputDTO.exchange_listed = "NasdaqNM";
+        symbolsOutputDTO.timezone = "America/New_York";
+        symbolsOutputDTO.minmov = 1;
+        symbolsOutputDTO.minmov2 = 0;
+        symbolsOutputDTO.pointvalue = 1;
+        symbolsOutputDTO.session = "0930-1630";
+        symbolsOutputDTO.has_intraday = false;
+        symbolsOutputDTO.has_no_volume = false;
+        symbolsOutputDTO.description = "Apple Inc.";
+        symbolsOutputDTO.type = "stock";
+        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
+        symbolsOutputDTO.supported_resolutions.add("D");
+        symbolsOutputDTO.supported_resolutions.add("2D");
+        symbolsOutputDTO.supported_resolutions.add("3D");
+        symbolsOutputDTO.supported_resolutions.add("W");
+        symbolsOutputDTO.supported_resolutions.add("3W");
+        symbolsOutputDTO.supported_resolutions.add("M");
+        symbolsOutputDTO.supported_resolutions.add("6M");
+
+        symbolsOutputDTO.pricescale = 100;
+        symbolsOutputDTO.ticker = "AAPL";
+        
+        
+        
+        return Response.ok( symbolsOutputDTO ) .build();
+    }
     
 
     @GET
