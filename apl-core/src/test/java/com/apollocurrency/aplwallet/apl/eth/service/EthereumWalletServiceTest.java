@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Request;
@@ -101,6 +102,18 @@ class EthereumWalletServiceTest {
         int numberOfConfirmations = service.getNumberOfConfirmations(txHash);
 
         assertEquals(3, numberOfConfirmations);
+    }
+
+    @Test
+    void testGetNumberOfConfirmationsWhenThrowException() throws IOException {
+        EthTransaction ethTransaction = mockTxRequestResponse();
+        Transaction tx = mock(Transaction.class);
+        doReturn(tx).when(ethTransaction).getResult();
+        doThrow(new MessageDecodingException("Value must be in format 0x[1-9]+[0-9]* or 0x0")).when(tx).getBlockNumber();
+
+        int numberOfConfirmations = service.getNumberOfConfirmations(txHash);
+
+        assertEquals(-1, numberOfConfirmations);
     }
 
     @Test
