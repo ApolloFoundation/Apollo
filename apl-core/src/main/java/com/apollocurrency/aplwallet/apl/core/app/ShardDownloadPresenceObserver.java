@@ -70,9 +70,7 @@ public class ShardDownloadPresenceObserver {
         }
         try (Connection con = dataSource.getConnection()) {
             // create Lucene search indexes first
-            for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-                table.createSearchIndex(con);
-            }
+            createLuceneSearchIndexes(con);
             // import data so it gets into search indexes as well
             shardImporter.importShardByFileId(shardPresentData);
         } catch (Exception e) {
@@ -91,6 +89,17 @@ public class ShardDownloadPresenceObserver {
         blockchainConfigUpdater.updateToLatestConfig();
         blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
         log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+    }
+
+    /**
+     * Travers Derived tables and create Lucene search indexes
+     * @param con connection should be opened
+     * @throws SQLException possible error
+     */
+    private void createLuceneSearchIndexes(Connection con) throws SQLException {
+        for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+            table.createSearchIndex(con);
+        }
     }
 
     /**
@@ -133,9 +142,8 @@ public class ShardDownloadPresenceObserver {
                     long initialBlockId = genesisBlock.getId();
                     log.debug("Generated Genesis block with Id = {}", initialBlockId);
                     genesisImporter.importGenesisJson(false);
-                    for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-                        table.createSearchIndex(con);
-                    }
+                    // create Lucene search indexes first
+                    createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
                     dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);
