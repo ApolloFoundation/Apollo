@@ -2,6 +2,8 @@ package com.apollocurrency.aplwallet.apl.util.cls;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +14,8 @@ import java.util.List;
  *
  * @author al
  */
+
+@Slf4j
 public class BasicClassificator {
     ClsItem root;
     private final ItemValueComparator compS = new StringValueComparator();
@@ -32,8 +36,11 @@ public class BasicClassificator {
     public static BasicClassificator fromJsonFile(String jsonFilePath) throws IOException{
         ObjectMapper mapper = new ObjectMapper();
         BasicClassificator res = new BasicClassificator();
-        FileInputStream jsonIs = new FileInputStream(jsonFilePath);
-        res.root = mapper.readValue(jsonIs, ClsItem.class);
+        try (FileInputStream jsonIs = new FileInputStream(jsonFilePath)) {
+            res.root = mapper.readValue(jsonIs, ClsItem.class);
+        } catch (IOException e) {
+            log.error("Error reading from json file by path = '{}'", jsonFilePath, e);
+        }
         return res;
     }
     
@@ -41,8 +48,15 @@ public class BasicClassificator {
         ObjectMapper mapper = new ObjectMapper();
         BasicClassificator res = new BasicClassificator();
         ClassLoader classLoader = BasicClassificator.class.getClassLoader();
-        InputStream jsonIs = classLoader.getResourceAsStream(jsonFilePath);
-        res.root = mapper.readValue(jsonIs, ClsItem.class);
+        try (InputStream jsonIs = classLoader.getResourceAsStream(jsonFilePath)) {
+            if (jsonIs != null) {
+                res.root = mapper.readValue(jsonIs, ClsItem.class);
+            } else {
+                log.warn("Resource was not found by path = '{}'", jsonFilePath);
+            }
+        } catch (IOException e) {
+            log.error("Error reading from json resource by path = '{}'", jsonFilePath, e);
+        }
         return res;
     }  
     public String toJson() throws JsonProcessingException{
