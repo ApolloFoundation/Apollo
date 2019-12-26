@@ -55,7 +55,7 @@ public final class ShufflingRegister extends CreateTransaction {
         } catch (AplException.InsufficientBalanceException e) {
             Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
             if (shuffling == null) {
-                return JSONResponses.NOT_ENOUGH_FUNDS;
+                return JSONResponses.NOT_ENOUGH_APL;
             }
             return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
         }

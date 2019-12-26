@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -106,7 +106,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
         
         log.debug("DexMatcherServiceImpl.validateOffer entry point:");
 
-        DexCurrencies curr = hisOrder.getPairCurrency();
+        DexCurrency curr = hisOrder.getPairCurrency();
         log.debug("my order: orderCurrency: {}, pairCurrency: {}", myOrder.getOrderCurrency(), myOrder.getPairCurrency() );
         log.debug("his order: orderCurrency: {}, pairCurrency: {}", hisOrder.getOrderCurrency(), hisOrder.getPairCurrency() );
         
@@ -170,7 +170,7 @@ public class DexMatcherServiceImpl implements IDexMatcherInterface {
 
         Integer currentTime = timeService.getEpochTime();
         BigDecimal offerAmount = new BigDecimal(createdOrder.getOrderAmount());
-        Integer pairCurrency = DexCurrencies.getValue(createdOrder.getPairCurrency());
+        Integer pairCurrency = DexCurrency.getValue(createdOrder.getPairCurrency());
 
         BigDecimal pairRate = new BigDecimal(EthUtil.ethToGwei(createdOrder.getPairRate()));
 

@@ -28,10 +28,10 @@ public class DexOrder extends VersionedDerivedEntity {
 
     private OrderType type;
     private OrderStatus status;
-    private DexCurrencies orderCurrency;
+    private DexCurrency orderCurrency;
     private Long orderAmount;
 
-    private DexCurrencies pairCurrency;
+    private DexCurrency pairCurrency;
     private BigDecimal pairRate;
     private Integer finishTime;
 
@@ -40,7 +40,7 @@ public class DexOrder extends VersionedDerivedEntity {
     }
 
     // for tests
-    public DexOrder(Long db_id, Long id, OrderType type, Long accountId, DexCurrencies orderCurrency, Long orderAmount, DexCurrencies pairCurrency, BigDecimal pairRate, Integer finishTime, OrderStatus status, Integer height, String fromAddress, String toAddress) {
+    public DexOrder(Long db_id, Long id, OrderType type, Long accountId, DexCurrency orderCurrency, Long orderAmount, DexCurrency pairCurrency, BigDecimal pairRate, Integer finishTime, OrderStatus status, Integer height, String fromAddress, String toAddress) {
         super(db_id, height);
         this.id = id;
         this.accountId = accountId;
@@ -55,7 +55,7 @@ public class DexOrder extends VersionedDerivedEntity {
         this.finishTime = finishTime;
     }
 
-    public DexOrder(Long id, Long accountId, String fromAddress, String toAddress, OrderType type, OrderStatus status, DexCurrencies orderCurrency, Long orderAmount, DexCurrencies pairCurrency, BigDecimal pairRate, Integer finishTime) {
+    public DexOrder(Long id, Long accountId, String fromAddress, String toAddress, OrderType type, OrderStatus status, DexCurrency orderCurrency, Long orderAmount, DexCurrency pairCurrency, BigDecimal pairRate, Integer finishTime) {
         super(null, null);
         this.id = id;
         this.accountId = accountId;
@@ -75,9 +75,9 @@ public class DexOrder extends VersionedDerivedEntity {
         this.id = transaction.getId();
         this.accountId = transaction.getSenderId();
         this.type = OrderType.getType(dexOrderAttachment.getType());
-        this.orderCurrency = DexCurrencies.getType(dexOrderAttachment.getOrderCurrency());
+        this.orderCurrency = DexCurrency.getType(dexOrderAttachment.getOrderCurrency());
         this.orderAmount = dexOrderAttachment.getOrderAmount();
-        this.pairCurrency = DexCurrencies.getType(dexOrderAttachment.getPairCurrency());
+        this.pairCurrency = DexCurrency.getType(dexOrderAttachment.getPairCurrency());
         this.pairRate = EthUtil.gweiToEth(dexOrderAttachment.getPairRate());
         this.status = OrderStatus.getType(dexOrderAttachment.getStatus());
         this.finishTime = dexOrderAttachment.getFinishTime();
@@ -88,7 +88,7 @@ public class DexOrder extends VersionedDerivedEntity {
         }
     }
 
-    public DexOrderDto toDto() {
+    public DexOrderDto toDto(boolean hasFrozenMoney) {
         DexOrderDto dexOrderDto = new DexOrderDto();
 
         dexOrderDto.id = Long.toUnsignedString(this.getId());
@@ -104,6 +104,7 @@ public class DexOrder extends VersionedDerivedEntity {
         dexOrderDto.status = this.getStatus().ordinal();
         //TODO make changes on UI. Send BigDecimal.
         dexOrderDto.pairRate = EthUtil.ethToGwei(this.getPairRate());
+        dexOrderDto.hasFrozenMoney = hasFrozenMoney;
 
         return dexOrderDto;
     }

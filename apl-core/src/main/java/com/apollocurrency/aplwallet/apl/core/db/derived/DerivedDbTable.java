@@ -213,7 +213,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(
-                        min ,
+                        min,
                         max,
                         null,
                         rowCount,

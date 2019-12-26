@@ -10,6 +10,7 @@ import org.spongycastle.util.Arrays;
 
 /**
  * Entity that have hash and could be sorted by it
+ *
  * @author alukin@gmail.com
  */
 @ToString(exclude = {"hash"})
@@ -17,7 +18,7 @@ public class PeerFileHashSum {
     @Getter
     @Setter
     private byte[] hash;
-    @Getter    
+    @Getter
     private final String peerId;
     @Getter
     private final String fileId;
@@ -32,9 +33,9 @@ public class PeerFileHashSum {
         this.peerId = peerId;
         this.fileId = fileId;
     }
-    
-    public boolean hasSameHash(PeerFileHashSum other){
-        if(other==null) return false;
-        return Arrays.areEqual(getHash(),other.getHash());
+
+    public boolean hasSameHash(PeerFileHashSum other) {
+        if (other == null) return false;
+        return Arrays.areEqual(getHash(), other.getHash());
     }
 }

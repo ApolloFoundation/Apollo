@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Simple class to indicate which file is downloaded
+ *
  * @author al
  */
 @AllArgsConstructor

@@ -17,6 +17,9 @@ import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
+
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -148,6 +151,8 @@ public class ShardImporter {
             lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
             ChunkedFileOps ops = new ChunkedFileOps(zipInFolder.toAbsolutePath().toString());
             lastShard.setCoreZipHash(ops.getFileHash());
+            log.debug("Update shard info: coreZipHash={}", Convert.toHexString(lastShard.getCoreZipHash()));
+
             shardDao.updateShard(lastShard);
         }
 
@@ -200,13 +205,15 @@ public class ShardImporter {
         // unzip additional files
         if (shardPresentData.getAdditionalFileIDs() != null && shardPresentData.getAdditionalFileIDs().size() > 0) {
             log.debug("Try unpack Optional files(s)=[{}]", shardPresentData.getAdditionalFileIDs().size());
+            Path extZipInFolder = null;
             for (String optionalFileId : shardPresentData.getAdditionalFileIDs()) {
                 log.debug("Try unpack Optional file by fileId '{}'", optionalFileId);
-                zipInFolder = downloadableFilesManager.mapFileIdToLocalPath(optionalFileId).toAbsolutePath();
-                unpackResult = zipComponent.extract(zipInFolder.toString(), csvImporter.getDataExportPath().toString());
+                extZipInFolder = downloadableFilesManager.mapFileIdToLocalPath(optionalFileId).toAbsolutePath();//!!!! right path was re-wrote
+                unpackResult = zipComponent.extract(extZipInFolder.toString(), csvImporter.getDataExportPath().toString());
                 log.debug("Zip for '{}' is unpacked = {}", optionalFileId, unpackResult);
                 if (!unpackResult) {
-                    logErrorAndThrowException(shardPresentData, genesisTaskId, zipInFolder, unpackResult);
+                    logErrorAndThrowException(shardPresentData, genesisTaskId, extZipInFolder, unpackResult);
+
                     return null;
                 }
             }

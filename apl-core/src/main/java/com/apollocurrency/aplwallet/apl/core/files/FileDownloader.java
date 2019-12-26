@@ -9,19 +9,26 @@ import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
 import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
+import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerClient;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PreDestroy;
+import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -34,10 +41,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerAddress;
-import java.util.HashSet;
-import javax.enterprise.event.Event;
 
 /**
  * This class performs complete file downloading from peers
@@ -54,7 +57,7 @@ public class FileDownloader {
     private final DownloadableFilesManager manager;
     private final AplAppStatus aplAppStatus;
     private String taskId;
-    private final ReadWriteLock fileChunksLock =  new ReentrantReadWriteLock();
+    private final ReadWriteLock fileChunksLock = new ReentrantReadWriteLock();
     private final AtomicLong lastPercent = new AtomicLong(0L);
             
     ExecutorService executor;
@@ -64,7 +67,7 @@ public class FileDownloader {
     private CompletableFuture<Boolean> downloadTask;
     @Getter
     private FileDownloadStatus status;
-    private final Set<Peer> peers=new HashSet<>();
+    private final Set<Peer> peers = new HashSet<>();
     private final PeersService peersService;
 
     @Inject
@@ -76,17 +79,17 @@ public class FileDownloader {
         this.executor = Executors.newFixedThreadPool(DOWNLOAD_THREADS);
         this.fileEvent = fileEvent;
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.peersService=peers;
+        this.peersService = peers;
     }
-    
+
     public void startDownload(FileDownloadInfo downloadInfo, FileDownloadStatus status, Set<PeerFileHashSum> goodPeers) {
         this.status = Objects.requireNonNull(status, "status is NULL");
         this.status.fileDownloadInfo = Objects.requireNonNull(downloadInfo, "downloadInfo is NULL");
         Objects.requireNonNull(goodPeers, "goodPeers is NULL");
         peers.clear();
-        for(PeerFileHashSum ps: goodPeers){
-           PeerAddress actualAddr = new PeerAddress(ps.getPeerId());
-           peers.add((Peer)peersService.findOrCreatePeer(actualAddr, null, false));
+        for (PeerFileHashSum ps : goodPeers) {
+            PeerAddress actualAddr = new PeerAddress(ps.getPeerId());
+            peers.add((Peer) peersService.findOrCreatePeer(actualAddr, null, false));
         }
         fileID = downloadInfo.fileInfo.fileId;
         this.taskId = this.aplAppStatus.durableTaskStart("FileDownload", "Downloading file from Peers...", true);
@@ -128,12 +131,13 @@ public class FileDownloader {
                 ""
         );
         log.debug("Firing 'FILE_DOWNLOADED_PRESENT' event {}", data);
-        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
+        fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
+        }).fireAsync(data);
     }
     //TODO: change to more general signal, not shard   
 
     private void signalFailed(String reason) {
-          FileEventData data = new FileEventData(
+        FileEventData data = new FileEventData(
                 fileID,
                 false,
                 reason
@@ -193,7 +197,7 @@ public class FileDownloader {
                 long percent = Math.round(status.getPercentCompleted());
                 if(lastPercent.get()+5<percent){
                     lastPercent.set(percent);
-                    aplAppStatus.durableTaskUpdate(this.taskId, status.getPercentCompleted(), "File downloading: "+this.fileID+"...");            
+                    aplAppStatus.durableTaskUpdate(this.taskId, status.getPercentCompleted(), "File downloading: "+this.fileID+"...");
                 }
             }
             if(isLast){
@@ -239,7 +243,7 @@ public class FileDownloader {
             if(fdi.fileInfo.hash.equalsIgnoreCase(status.fileDownloadInfo.fileInfo.hash)){
                 signalFinishedOK();
             }else{
-                signalFailed("File downloading final hash check failed: "+fileID); 
+                signalFailed("File downloading final hash check failed: "+fileID);
             }
         }else{
             signalFailed("File downloading failed, not all chunks: "+fileID);
@@ -248,10 +252,9 @@ public class FileDownloader {
     }
 
 
-    
     @PreDestroy
     public void preDestroy(){
-        if(executor != null){
+        if (executor != null) {
             //TODO: do we need to cancel tasks and threads?
             executor.shutdown();
         }

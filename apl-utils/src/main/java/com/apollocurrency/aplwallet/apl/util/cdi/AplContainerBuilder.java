@@ -1,14 +1,14 @@
 package com.apollocurrency.aplwallet.apl.util.cdi;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.jboss.weld.bootstrap.spi.BeanDiscoveryMode;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Class for building AplContainer with Weld container instance inside.
@@ -47,7 +47,7 @@ public class AplContainerBuilder {
     
     public AplContainerBuilder devMode(){
         devMode=true;
-        System.setProperty("org.jboss.weld.probe.jmxSupport","true");
+        System.setProperty("org.jboss.weld.probe.jmxSupport", "true");
         return this;
     }
         

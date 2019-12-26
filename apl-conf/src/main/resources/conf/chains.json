@@ -51,7 +51,7 @@
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts.json",
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 2999999
+      "dexReopenPendingOrdersHeight": 3500000
     },
     "blockchainProperties": [
       {

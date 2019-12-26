@@ -22,17 +22,22 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTradeDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 
 import static org.mockito.Mockito.doReturn;
@@ -45,7 +50,7 @@ class DexServiceIntegrationTest {
 
 
     @WeldSetup
-    WeldInitiator weld = WeldUtils.from(List.of(DexService.class), List.of(EthereumWalletService.class,
+    WeldInitiator weld = WeldUtils.from(List.of(DexService.class, CacheProducer.class), List.of(EthereumWalletService.class,
             DexOrderDao.class,
             DexOrderTable.class,
             TransactionProcessor.class,
@@ -58,11 +63,11 @@ class DexServiceIntegrationTest {
             DexContractDao.class,
             Blockchain.class,
             PhasingPollServiceImpl.class,
-            IDexMatcherInterface.class,
-            DexTradeDao.class,
+            IDexMatcherInterface.class,            
             PhasingApprovedResultTable.class,
             BlockchainConfig.class,
-            BlockchainImpl.class)).build();
+            BlockchainImpl.class))
+            .build();
     @Inject
     DexService dexService;
     @Inject
@@ -84,12 +89,20 @@ class DexServiceIntegrationTest {
         verify(approvedResultTable).insert(new PhasingApprovalResult(0, 1, 20));
 
     }
+    @Singleton
+static class CacheProducer {
+        @Produces
+    private LoadingCache<Long, OrderFreezing> createCache() {
+        return CacheBuilder.newBuilder().build(CacheLoader.from(ord-> new OrderFreezing(1, true)));
+    }
+
+}
 
     @Test
-    void testTriggerPhasingTxRejectedEvent() {
+    void testTriggerPhasingForDifferentEvent() {
         Transaction phasedTx = mock(Transaction.class);
 
-        txEvent.select(TxEventType.literal(TxEventType.REJECT_PHASED_TRANSACTION)).fire(phasedTx);
+        txEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(phasedTx);
 
         verifyZeroInteractions(phasingPollService, approvedResultTable, phasedTx);
     }

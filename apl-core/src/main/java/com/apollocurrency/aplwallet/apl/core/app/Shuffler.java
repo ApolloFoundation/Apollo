@@ -293,16 +293,19 @@ public final class Shuffler {
     @Slf4j
     public static class ShufflerObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            log.trace(":accept:ShufflerObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
+            log.trace(":accept:ShufflerObserver: START onBlockApply AFTER_BLOCK_APPLY, block={}", block.getHeight());
             Set<String> expired = expirations.get(block.getHeight());
             if (expired != null) {
                 expired.forEach(shufflingsMap::remove);
                 expirations.remove(block.getHeight());
+                log.trace(":accept:ShufflerObserver:  onBlockApply AFTER_BLOCK_APPLY, block={}, expired=[{}]",
+                        block.getHeight(), expired.size());
             }
             log.trace(":accept:ShufflerObserver: END onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         }
         public void onBlockAccepted(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_ACCEPT) Block block) {
-
+            log.debug(":accept:ShufflerObserver: START onAfterBlockAccept AFTER_BLOCK_ACCEPT, block height={}, shufflingsMap=[{}]",
+                    block.getHeight(), shufflingsMap.size());
             shufflingsMap.values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
                 if (shuffler.failedTransaction != null) {
                     try {

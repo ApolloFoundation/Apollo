@@ -19,7 +19,7 @@ public class ValueParserImpl implements ValueParser {
     private final static String EOT_REGEXP = String.valueOf(CsvAbstractBase.EOT);
     private final static char quoteChar = CsvAbstractBase.TEXT_FIELD_START;
     private final static String quote = String.valueOf(CsvAbstractBase.TEXT_FIELD_START);
-    private final static String doubleQuote = quote+quote;
+    private final static String doubleQuote = quote + quote;
 
     @Override
     public String parseStringObject(Object data, char escape, char fieldDelimiter) {
@@ -79,7 +79,7 @@ public class ValueParserImpl implements ValueParser {
 
     @Override
     public byte[] parseBinaryObject(Object data) {
-        if(data == null){
+        if (data == null) {
             return null;
         }else {
             return Base64.getDecoder().decode((removeQuote(data)));

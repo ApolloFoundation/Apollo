@@ -13,7 +13,11 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @DisplayName("Blocks")
 @Epic(value = "Blocks")
 public class TestBlock extends TestBaseOld {
@@ -65,12 +69,11 @@ public class TestBlock extends TestBaseOld {
     @Test
     @DisplayName("Get ECB Block")
     public void getECB() throws IOException {
-        ECBlockDTO blockchainStatus =  getECBlock();
+        ECBlockDTO blockchainStatus = getECBlock();
         assertNotNull(blockchainStatus);
         assertNotNull(blockchainStatus.getEcBlockHeight());
         assertNotNull(blockchainStatus.getEcBlockId());
     }
-
 
 
 }

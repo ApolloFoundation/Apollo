@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -73,8 +74,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
-import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -466,7 +465,7 @@ public class ShardEngineImpl implements ShardEngine {
                         case ShardConstants.ACCOUNT_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, null);
 //                        case ShardConstants.DEX_ORDER_TABLE_NAME: // now it's returned back to usual export for derived tables
-                            // this is en example how to export using specified columns + index on it
+                        // this is en example how to export using specified columns + index on it
 //                            return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST"), -1, "HEIGHT");
                         case ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME:
                             return exportDerivedTable(tableInfo, paramInfo, Set.of("DB_ID", "LATEST", "HEIGHT"), pruningTime, " account_id, currency_id");
@@ -651,10 +650,10 @@ public class ShardEngineImpl implements ShardEngine {
             ChunkedFileOps fops = zipComponent.compressAndHash(
                     zipPath.toAbsolutePath().toString(),
                     dirProvider.getDataExportDir().toAbsolutePath().toString(), null, fileFilter, false);
-              byte[] zipCrcHash = null;
-              if(fops!=null && fops.isHashedOK()){
-                  zipCrcHash = fops.getFileHash();
-              }
+            byte[] zipCrcHash = null;
+            if (fops != null && fops.isHashedOK()) {
+                zipCrcHash = fops.getFileHash();
+            }
             //inform DownladableFileManager
             postCompressTask.accept(requireLastNotFinishedShard(), zipCrcHash);
             updateRecovery(recovery, zipName);

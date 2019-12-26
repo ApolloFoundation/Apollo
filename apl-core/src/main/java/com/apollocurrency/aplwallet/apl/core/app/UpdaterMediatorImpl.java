@@ -29,8 +29,8 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private PeersService peers = CDI.current().select(PeersService.class).get();
-    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private final PeersService peers = CDI.current().select(PeersService.class).get();
+    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
@@ -122,5 +122,10 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public PropertiesHolder getPropertyHolder() {
        return propertiesHolder;
+    }
+
+    @Override
+    public String getChainId() {
+        return peers.getMyPeerInfo().getChainId();
     }
 }
