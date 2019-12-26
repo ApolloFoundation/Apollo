@@ -23,7 +23,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShardingInfo {
-    public List<ShardInfo> shards = new ArrayList<>();    
+    public List<ShardInfo> shards = new ArrayList<>();
     public List<String> knownPeers = new ArrayList<>();
     public Boolean isShardingOff = false;
 }

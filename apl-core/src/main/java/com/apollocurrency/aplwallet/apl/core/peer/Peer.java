@@ -47,7 +47,7 @@ public interface Peer extends Comparable<Peer> {
             return code;
         }
     }
-    
+
 
     boolean providesService(Service service);
 
@@ -56,9 +56,9 @@ public interface Peer extends Comparable<Peer> {
     String getHost();
 
     int getPort();
-    
+
     String getHostWithPort();
-    
+
     String getAnnouncedAddress();
 
     PeerState getState();
@@ -114,7 +114,7 @@ public interface Peer extends Comparable<Peer> {
     boolean isInboundSocket();
 
     boolean isOutboundSocket();
-    
+
     boolean isOpenAPI();
 
     boolean isApiConnectable();
@@ -128,8 +128,8 @@ public interface Peer extends Comparable<Peer> {
     JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
 
     public boolean isTrusted();
-    
+
     public PeerTrustLevel getTrustLevel();
-    
+
     public long getServices();
 }

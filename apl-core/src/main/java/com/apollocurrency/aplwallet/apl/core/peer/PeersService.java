@@ -150,7 +150,7 @@ public class PeersService {
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     /**
      * Map of ANNOUNCED address with port to peer. Contains only peers that are connectable
-     * (has announced public address) 
+     * (has announced public address)
      */
 
     private final ConcurrentMap<String, PeerImpl> connectablePeers = new ConcurrentHashMap<>();
@@ -521,7 +521,7 @@ public class PeersService {
                 if (result.size() >= limit) {
                     break;
                 }
-            }            
+            }
         }
         return result;
     }
@@ -545,7 +545,7 @@ public class PeersService {
         res.addAll(knownPeers);
         return res;
     }
-    
+
     public boolean hasTooManyInboundPeers() {
         return getPeers(Peer::isInbound, maxNumberOfInboundConnections).size() >= maxNumberOfInboundConnections;
     }
@@ -604,7 +604,7 @@ public class PeersService {
             LOG.trace("Returning existing peer from connectable map {}", peer);
             return peer;
         }
-        
+
         if (!create) {
             return null;
         }
@@ -655,7 +655,7 @@ public class PeersService {
     }
 
     public boolean addPeer(Peer peer) {
-        
+
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
             connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
@@ -675,11 +675,11 @@ public class PeersService {
         }
         inboundPeers.values().stream()
                 .filter((p) -> (
-                        p.getState()!=PeerState.CONNECTED 
+                        p.getState()!=PeerState.CONNECTED
                      && now - p.getLastActivityTime() > webSocketIdleTimeout)
                 )
                 .forEachOrdered((p) -> toDelete.add(p));
-        
+
         toDelete.forEach((p) -> {
             p.deactivate("Cleanup of inbounds");
             inboundPeers.remove(p.getHostWithPort());
@@ -761,12 +761,12 @@ public class PeersService {
                     continue;
                 }
 
-                if ( !peer.isBlacklisted() 
+                if ( !peer.isBlacklisted()
                      && peer.getState() == PeerState.CONNECTED // skip not connected peers
                      && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
                    ) {
                     LOG.trace("Prepare send to peer = {}", peer);
-                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() ->
                         peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
                     );
                     expectedResponses.add(futureResponse);
