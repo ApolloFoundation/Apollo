@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
                 schema = @Schema(implementation = ResponseBase.class)))
 public class ResponseBase {
     @JsonIgnore
-    public static final String PROTOCOL_VERSION = "1"; 
+    public static final String PROTOCOL_VERSION = "1";
     /**
      * Protocol version. Should be incremented in case of
      * protocol changes. Incompatible changes should increment
@@ -29,7 +29,7 @@ public class ResponseBase {
      */
     @Schema(name="Protocol version", description="Information about Protocol version")
     public String protocol = PROTOCOL_VERSION;
-    
+
     /**
      * Error code on new API. 0 means success, no error.
      */

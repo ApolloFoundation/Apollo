@@ -126,7 +126,7 @@ public abstract class AplException extends Exception {
         public AccountControlException(String message, Throwable cause) {
             super(message, cause);
         }
-        
+
     }
 
     public static class InsufficientBalanceException extends NotCurrentlyValidException {
