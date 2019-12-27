@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -60,7 +61,8 @@ class ShardPrunableZipHashCalculatorTest {
             Event.class,
             ShardPrunableZipHashCalculator.class,
             PropertiesHolder.class,
-            FullTextConfigImpl.class)
+            FullTextConfigImpl.class,
+            CsvEscaperImpl.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(registry, DerivedTablesRegistry.class))
             .addBeans(MockBean.of(zip, Zip.class))
