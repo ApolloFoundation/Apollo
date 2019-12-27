@@ -63,7 +63,7 @@
     <!-- cross-platform zip distribution -->
     <zipname>apollo-wallet</zipname>
     <!-- Dependency Versions a-->
-    <web-wallet.version>2.5.34</web-wallet.version>
+    <web-wallet.version>2.5.35</web-wallet.version>
 
 
     <!--Web-->
