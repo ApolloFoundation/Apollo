@@ -34,7 +34,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
             this.netIndex=netIdx;
         }
     }
-    
+
     @Override
     public String getConfigDirectoryName(){
         return CONF_DIRS[netIndex];
@@ -62,6 +62,6 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
                 ? getSysConfigDirectory()
                 : getUserConfigDirectory();
         return res;
-       
+
     }
 }
