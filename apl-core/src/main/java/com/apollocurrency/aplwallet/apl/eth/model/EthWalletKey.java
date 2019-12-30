@@ -1,9 +1,10 @@
 package com.apollocurrency.aplwallet.apl.eth.model;
 
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
-
+@EqualsAndHashCode
 public class EthWalletKey {
     private Credentials credentials;
 
@@ -11,7 +12,7 @@ public class EthWalletKey {
         this.credentials = credentials;
     }
 
-    public EthWalletKey(byte[] privateKey){
+    public EthWalletKey(byte[] privateKey) {
         ECKeyPair ecKeyPair = ECKeyPair.create(privateKey);
         this.credentials = Credentials.create(ecKeyPair);
     }

@@ -97,6 +97,7 @@ public final class AplCore {
     private FullTextSearchService fullTextSearchService;
     private static BlockchainConfig blockchainConfig;
     private static TransportInteractionService transportInteractionService;
+
     private API apiServer;
     private IDexMatcherInterface tcs;
 
@@ -169,6 +170,7 @@ public final class AplCore {
             LOG.info("transport interaction service shutdown...");
             transportInteractionService.stop();
         }
+        
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
@@ -214,7 +216,7 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
                 transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
                 transportInteractionService.start();
-
+                
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  6.0, "Database initialization");
@@ -306,7 +308,7 @@ public final class AplCore {
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
 
-                if(!dexOrderProcessor.isInitialized()){
+                if (!dexOrderProcessor.isInitialized()) {
                     LOG.warn("DexOrder processor is not initialized.");
                 }
 

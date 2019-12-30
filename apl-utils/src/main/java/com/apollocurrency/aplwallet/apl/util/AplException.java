@@ -126,7 +126,7 @@ public abstract class AplException extends Exception {
         public AccountControlException(String message, Throwable cause) {
             super(message, cause);
         }
-        
+
     }
 
     public static class InsufficientBalanceException extends NotCurrentlyValidException {
@@ -228,6 +228,20 @@ public abstract class AplException extends Exception {
         }
 
         public ThirdServiceIsNotAvailable(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static final class DEXProcessingException extends RuntimeException {
+        public DEXProcessingException() {
+            super();
+        }
+
+        public DEXProcessingException(String message) {
+            super(message);
+        }
+
+        public DEXProcessingException(String message, Throwable cause) {
             super(message, cause);
         }
     }

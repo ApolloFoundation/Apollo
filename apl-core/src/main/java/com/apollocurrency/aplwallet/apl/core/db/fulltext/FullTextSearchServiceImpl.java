@@ -288,7 +288,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         reindexAll(conn, indexTables, schemaName);
     }
     private void reindexAll(Connection conn, Set<String> tables, String schema) throws SQLException {
-        LOG.info("Rebuilding the Lucene search index");
+        long start = System.currentTimeMillis();
+        LOG.info("Rebuilding Lucene search index");
         try {
             //
             // Delete the current Lucene index
@@ -298,11 +299,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // Reindex each table
             //
             for (String tableName : tables) {
+                long startTable = System.currentTimeMillis();
+                LOG.debug("Reindexing {}", tableName);
                 reindex(conn, tableName, schema);
+                LOG.debug("Reindexing {} DONE in '{}' ms", tableName, System.currentTimeMillis() - startTable);
             }
         } catch (SQLException exc) {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
-        LOG.info("Lucene search index successfully rebuilt");
+        LOG.info("Rebuilding Lucene search index DONE in '{}' ms", System.currentTimeMillis() - start);
     }
 }

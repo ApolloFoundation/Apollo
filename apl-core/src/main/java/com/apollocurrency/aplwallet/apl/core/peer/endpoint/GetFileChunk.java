@@ -3,20 +3,20 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import java.io.IOException;
-import java.util.Base64;
-
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileChunkResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import java.nio.file.Path;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Base64;
 
 /**
  *
@@ -25,12 +25,12 @@ import org.json.simple.JSONStreamAware;
 @Slf4j
 public class GetFileChunk extends PeerRequestHandler {
     private DownloadableFilesManager downloadableFilesManager;
-    
+
     @Inject
     public GetFileChunk(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
     }
-    
+
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
         FileChunkResponse res = new FileChunkResponse();
@@ -48,7 +48,7 @@ public class GetFileChunk extends PeerRequestHandler {
             FileChunk fc = new FileChunk();
             fc.info.crc=ops.getLastRDChunkCrc();
             fc.info.fileId=fcr.fileId;
-            fc.info.size=rres.longValue();            
+            fc.info.size=rres.longValue();
             fc.info.offset=fcr.offset;
             fc.mime64data=Base64.getEncoder().encodeToString(dataBuf);
             res.chunk = fc;

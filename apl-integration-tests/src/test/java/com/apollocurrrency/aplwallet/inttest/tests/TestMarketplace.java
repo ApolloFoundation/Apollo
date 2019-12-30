@@ -43,58 +43,60 @@ public class TestMarketplace extends TestBaseOld {
         super.setUp(testInfo);
         this.dgsName = RandomStringUtils.randomAlphabetic(5);
         this.description = RandomStringUtils.randomAlphabetic(5);
-        StringBuilder tags =  new StringBuilder();
-        for (int i = 0; i < RandomUtils.nextInt(2,5) ; i++) {
-            if (i > 0) {tags.append(symbols.charAt(RandomUtils.nextInt(0,symbols.length())));}
-                tags.append(RandomStringUtils.randomAlphabetic(3,5));
+        StringBuilder tags = new StringBuilder();
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
+            if (i > 0) {
+                tags.append(symbols.charAt(RandomUtils.nextInt(0, symbols.length())));
+            }
+            tags.append(RandomStringUtils.randomAlphabetic(3, 5));
         }
         this.tag = tags.toString();
-        this.price = RandomUtils.nextInt(1,1000);
-        this.quantity = RandomUtils.nextInt(10,1000);
+        this.price = RandomUtils.nextInt(1, 1000);
+        this.quantity = RandomUtils.nextInt(10, 1000);
 
-        log.info("DGS Name: {}",dgsName);
-        log.info("DGS Tag: {}",tag);
-        log.info("DGS Quantity: {}",quantity);
+        log.info("DGS Name: {}", dgsName);
+        log.info("DGS Tag: {}", tag);
+        log.info("DGS Quantity: {}", quantity);
     }
 
     @DisplayName("DGS Listing -> Delisting")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    void dgsListingTest(Wallet wallet){
-        CreateTransactionResponse  dgs =  dgsListing(wallet,dgsName,description,tag,quantity,price,image);
+    void dgsListingTest(Wallet wallet) {
+        CreateTransactionResponse dgs = dgsListing(wallet, dgsName, description, tag, quantity, price, image);
         verifyCreatingTransaction(dgs);
         verifyTransactionInBlock(dgs.getTransaction());
-        CreateTransactionResponse  dgsDelisting = dgsDelisting(wallet,dgs.getTransaction());
+        CreateTransactionResponse dgsDelisting = dgsDelisting(wallet, dgs.getTransaction());
         verifyCreatingTransaction(dgsDelisting);
     }
 
     @DisplayName("DGS Quantity and Price Change")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    void quantityChangeTest(Wallet wallet){
+    void quantityChangeTest(Wallet wallet) {
         final int deltaQuantity = 10;
         final int newPrice = 10;
-        CreateTransactionResponse  dgs =  dgsListing(wallet,dgsName,description,tag,quantity,price,image);
+        CreateTransactionResponse dgs = dgsListing(wallet, dgsName, description, tag, quantity, price, image);
         verifyCreatingTransaction(dgs);
         verifyTransactionInBlock(dgs.getTransaction());
 
-        CreateTransactionResponse  dgsQuantityChange = dgsQuantityChange(wallet,dgs.getTransaction(),deltaQuantity);
+        CreateTransactionResponse dgsQuantityChange = dgsQuantityChange(wallet, dgs.getTransaction(), deltaQuantity);
         verifyCreatingTransaction(dgsQuantityChange);
         verifyTransactionInBlock(dgsQuantityChange.getTransaction());
 
-        CreateTransactionResponse  dgsPriceChange = dgsPriceChange(wallet,dgs.getTransaction(),newPrice);
+        CreateTransactionResponse dgsPriceChange = dgsPriceChange(wallet, dgs.getTransaction(), newPrice);
         verifyCreatingTransaction(dgsPriceChange);
         verifyTransactionInBlock(dgsPriceChange.getTransaction());
 
         DGSGoodsDTO goodsDTO = getDGSGood(dgs.getTransaction());
-        assertEquals(quantity+deltaQuantity,goodsDTO.getQuantity());
-        assertEquals(newPrice,goodsDTO.getPriceATM());
+        assertEquals(quantity + deltaQuantity, goodsDTO.getQuantity());
+        assertEquals(newPrice, goodsDTO.getPriceATM());
     }
 
     @DisplayName("DGS Purchase -> Delivery -> Feedback -> Refund")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    void dgsPurchaseTest(Wallet wallet){
+    void dgsPurchaseTest(Wallet wallet) {
         Wallet randomWallet = getRandomStandartWallet();
         DGSGoodsDTO goodsDTO = null;
         CreateTransactionResponse delivery = null;
@@ -105,40 +107,40 @@ public class TestMarketplace extends TestBaseOld {
         // min value - 165
         int deliveryDeadlineTimeInHours = 165;
 
-        CreateTransactionResponse  dgs =  dgsListing(wallet,dgsName,description,tag,quantity,price,image);
+        CreateTransactionResponse dgs = dgsListing(wallet, dgsName, description, tag, quantity, price, image);
         verifyCreatingTransaction(dgs);
         verifyTransactionInBlock(dgs.getTransaction());
         goodsDTO = getDGSGood(dgs.getTransaction());
-        log.info("DGS ID: {}",dgs.getTransaction());
+        log.info("DGS ID: {}", dgs.getTransaction());
 
-        purchase = dgsPurchase(randomWallet,dgs.getTransaction(),goodsDTO.getPriceATM(),1, deliveryDeadlineTimeInHours);
+        purchase = dgsPurchase(randomWallet, dgs.getTransaction(), goodsDTO.getPriceATM(), 1, deliveryDeadlineTimeInHours);
         verifyCreatingTransaction(purchase);
         verifyTransactionInBlock(purchase.getTransaction());
-        log.info("Purchase ID: {}",purchase.getTransaction());
+        log.info("Purchase ID: {}", purchase.getTransaction());
 
-        delivery = dgsDelivery(wallet,purchase.getTransaction(), RandomStringUtils.randomAlphabetic(5), 0);
+        delivery = dgsDelivery(wallet, purchase.getTransaction(), RandomStringUtils.randomAlphabetic(5), 0);
         verifyCreatingTransaction(delivery);
         verifyTransactionInBlock(delivery.getTransaction());
-        log.info("Delivery ID: {}",delivery.getTransaction());
+        log.info("Delivery ID: {}", delivery.getTransaction());
 
-        feedback = dgsFeedback(randomWallet,purchase.getTransaction(),RandomStringUtils.randomAlphabetic(3,5)+symbols.charAt(RandomUtils.nextInt(0,symbols.length())));
+        feedback = dgsFeedback(randomWallet, purchase.getTransaction(), RandomStringUtils.randomAlphabetic(3, 5) + symbols.charAt(RandomUtils.nextInt(0, symbols.length())));
         verifyCreatingTransaction(feedback);
         verifyTransactionInBlock(feedback.getTransaction());
-        log.info("Feedback ID: {}",feedback.getTransaction());
+        log.info("Feedback ID: {}", feedback.getTransaction());
 
-        refund = dgsRefund(wallet, purchase.getTransaction(),1,RandomStringUtils.randomAlphabetic(3,5)+symbols.charAt(RandomUtils.nextInt(0,symbols.length())));
+        refund = dgsRefund(wallet, purchase.getTransaction(), 1, RandomStringUtils.randomAlphabetic(3, 5) + symbols.charAt(RandomUtils.nextInt(0, symbols.length())));
         verifyCreatingTransaction(refund);
         verifyTransactionInBlock(refund.getTransaction());
-        log.info("Refund ID: {}",refund.getTransaction());
+        log.info("Refund ID: {}", refund.getTransaction());
 
 
     }
 
     @Step
-    private Wallet getRandomStandartWallet(){
-        String randomPass = String.valueOf(RandomUtils.nextInt(1,199));
-        Wallet wallet =  new Wallet(getAccountId(randomPass).getAccountRS(),randomPass);
-        log.info(String.format("Standard Wallet: %s pass: %s",wallet.getUser(),wallet.getPass()));
+    private Wallet getRandomStandartWallet() {
+        String randomPass = String.valueOf(RandomUtils.nextInt(1, 199));
+        Wallet wallet = new Wallet(getAccountId(randomPass).getAccountRS(), randomPass);
+        log.info(String.format("Standard Wallet: %s pass: %s", wallet.getUser(), wallet.getPass()));
         return wallet;
     }
 

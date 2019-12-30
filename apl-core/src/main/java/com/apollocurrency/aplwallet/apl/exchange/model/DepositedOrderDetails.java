@@ -11,5 +11,8 @@ public class DepositedOrderDetails {
     private boolean created;
     private String assetAddress;
     private BigInteger amount;
+    /**
+     * true if deposit was withdrawn.
+     */
     private boolean withdrawn;
 }

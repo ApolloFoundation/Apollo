@@ -4,11 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.cache;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfiguration;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
+import com.google.common.cache.CacheLoader;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
@@ -18,10 +21,16 @@ public class AplCacheConfig implements InMemoryCacheConfigurator {
 
     private static final int ADDRESSABLE_MEM_PERCENT_FOR_CACHE = 30; //30 percent of Available memory;
 
-    private CacheConfiguration[] cacheConfigurations = {
-            new PublicKeyCacheConfig(60),
-            new BlockIndexCacheConfig(60)
-    };
+    private CacheConfiguration[] cacheConfigurations;
+
+    @Inject
+    public AplCacheConfig(CacheLoader<Long, OrderFreezing> orderFreezingCacheLoader) {
+        this.cacheConfigurations = new CacheConfiguration[]{
+                new PublicKeyCacheConfig(60),
+                new BlockIndexCacheConfig(60),
+                new DexOrderFreezingCacheConfig(15, orderFreezingCacheLoader)
+        };
+    }
 
     @PostConstruct
     public void setUp() {

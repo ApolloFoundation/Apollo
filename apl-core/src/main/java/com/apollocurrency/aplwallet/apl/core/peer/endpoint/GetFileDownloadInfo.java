@@ -7,10 +7,11 @@ import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.inject.Inject;
 
 /**
  *
@@ -20,7 +21,7 @@ import org.json.simple.JSONStreamAware;
 public class GetFileDownloadInfo extends PeerRequestHandler{
 
     private DownloadableFilesManager downloadableFilesManager;
-    
+
     @Inject
     public GetFileDownloadInfo(DownloadableFilesManager downloadableFilesManager) {
         this.downloadableFilesManager = downloadableFilesManager;
@@ -39,12 +40,12 @@ public class GetFileDownloadInfo extends PeerRequestHandler{
         }
         JSONObject response = mapper.convertValue(res, JSONObject.class);
         log.debug("GetFileDownloadInfo response = {}", response);
-        return response;        
+        return response;
     }
 
     @Override
     public boolean rejectWhileDownloading() {
        return false;
     }
-    
+
 }

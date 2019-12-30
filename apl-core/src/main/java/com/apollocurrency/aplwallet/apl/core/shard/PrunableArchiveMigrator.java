@@ -11,24 +11,24 @@ import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -43,9 +43,10 @@ public class PrunableArchiveMigrator {
     private final Zip zip;
     private final DerivedTablesRegistry registry;
     private final Event<ChunkedFileOps> fileChangedEvent;
+    private final CsvEscaper translator;
 
     @Inject
-    public PrunableArchiveMigrator(Event<ChunkedFileOps> fileChangedEvent, ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager) {
+    public PrunableArchiveMigrator(Event<ChunkedFileOps> fileChangedEvent, ShardDao shardDao, OptionDAO optionDAO, DirProvider dirProvider, BlockchainConfig blockchainConfig, Zip zip, DerivedTablesRegistry registry, DatabaseManager databaseManager, CsvEscaper translator) {
         this.shardDao = shardDao;
         this.optionDAO = optionDAO;
         this.dirProvider = dirProvider;
@@ -54,6 +55,7 @@ public class PrunableArchiveMigrator {
         this.databaseManager = databaseManager;
         this.registry = registry;
         this.fileChangedEvent=fileChangedEvent;
+        this.translator = translator;
     }
 
     public void migrate() {
@@ -83,19 +85,20 @@ public class PrunableArchiveMigrator {
                     String zipName = "shard-" + shard.getShardId() + ".zip";
                     Path newArchive = tempDirectory.resolve(zipName);
                     ChunkedFileOps fops = zip.compressAndHash(newArchive.toAbsolutePath().toString(), tempDirectoryString, 0L, (dir, name) -> !tablesToExclude.contains(name.substring(0, name.indexOf(".csv"))), false);
-                    if(fops!=null && fops.isHashedOK()){
-                       byte[] hash = fops.getFileHash();
-                       shard.setCoreZipHash(hash);
-                       shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation
-                       shardDao.updateShard(shard);
-                       //inform DownloadableFileManafer about file change
-                       fops.moveFile(shardArchivePath);
-                       fops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
-                       fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>(){}).fireAsync(fops);        
-                       log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());
-                    }else{
-                        log.error("Can not comperess prunable zip: {}",zipName);
-                    }        
+                    if (fops != null && fops.isHashedOK()) {
+                        byte[] hash = fops.getFileHash();
+                        shard.setCoreZipHash(hash);
+                        shard.setPrunableZipHash(new byte[32]); // not null to force prunable archive recreation
+                        shardDao.updateShard(shard);
+                        //inform DownloadableFileManafer about file change
+                        fops.moveFile(shardArchivePath);
+                        fops.setFileId(shardNameHelper.getFullShardPrunId(shard.getShardId(), chainId));
+                        fileChangedEvent.select(new AnnotationLiteral<FileChangedEvent>() {
+                        }).fireAsync(fops);
+                        log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());
+                    } else {
+                        log.error("Can not comperess prunable zip: {}", zipName);
+                    }
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }
                 catch (IOException e) {
@@ -107,6 +110,6 @@ public class PrunableArchiveMigrator {
     }
 
     CsvExporter createExporter(Path dir) { // just to mock instance creation
-        return new CsvExporterImpl(databaseManager, dir);
+        return new CsvExporterImpl(databaseManager, dir, translator);
     }
 }

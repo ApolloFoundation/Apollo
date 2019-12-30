@@ -54,8 +54,8 @@ import com.apollocurrency.aplwallet.api.response.GetAccountBlockCountResponse;
 import com.apollocurrency.aplwallet.api.response.GetAccountResponse;
 import com.apollocurrency.aplwallet.api.response.GetBlockIdResponse;
 import com.apollocurrency.aplwallet.api.response.GetPeersIpResponse;
-import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.PollResultResponse;
+import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
@@ -68,11 +68,10 @@ import io.restassured.response.Response;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.jupiter.api.DisplayName;
 
-
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -248,7 +247,7 @@ public class TestBaseNew extends TestBase {
                 .then()
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
-                .getObject("",Account2FAResponse.class);
+                .getObject("", Account2FAResponse.class);
     }
 
     @Override
@@ -260,7 +259,7 @@ public class TestBaseNew extends TestBase {
         param.put(Parameters.account.toString(), wallet.getUser());
         param.put(Parameters.passphrase.toString(), wallet.getPass());
         String path = "/apl";
-        return  given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
@@ -269,7 +268,7 @@ public class TestBaseNew extends TestBase {
                 .then()
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
-                .getObject("",Account2FAResponse.class);
+                .getObject("", Account2FAResponse.class);
     }
 
     @Override
@@ -282,7 +281,7 @@ public class TestBaseNew extends TestBase {
         String path = "/rest/keyStore/download";
         return given().log().all()
                 .spec(restHelper.getSpec())
-                 .contentType(ContentType.URLENC)
+                .contentType(ContentType.URLENC)
                 .formParams(param)
                 .when()
                 .post(path).as(VaultWalletResponse.class);
@@ -308,10 +307,10 @@ public class TestBaseNew extends TestBase {
         //TODO: Change on REST Easy
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.enable2FA.toString());
-        param = restHelper.addWalletParameters(param,wallet);
+        param = restHelper.addWalletParameters(param, wallet);
 
         String path = "/apl";
-        return  given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
@@ -320,7 +319,7 @@ public class TestBaseNew extends TestBase {
                 .then()
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
-                .getObject("",AccountDTO.class);
+                .getObject("", AccountDTO.class);
     }
 
     @Override
@@ -328,10 +327,10 @@ public class TestBaseNew extends TestBase {
     @DisplayName("Get All Peers")
     public List<String> getPeers() {
         String path = "/rest/networking/peer/all";
-            return given().log().uri()
-                    .spec(restHelper.getSpec())
-                    .when()
-                    .get(path).as(GetPeersIpResponse.class).getPeers();
+        return given().log().uri()
+                .spec(restHelper.getSpec())
+                .when()
+                .get(path).as(GetPeersIpResponse.class).getPeers();
 
     }
 
@@ -339,7 +338,7 @@ public class TestBaseNew extends TestBase {
     @Step
     @DisplayName("Get Peer")
     public PeerDTO getPeer(String peer) {
-        String path = String.format("/rest/networking/peer?peer=%s",peer);
+        String path = String.format("/rest/networking/peer?peer=%s", peer);
         return given().log().uri()
                 .spec(restHelper.getSpec())
                 .when()
@@ -368,7 +367,7 @@ public class TestBaseNew extends TestBase {
         HashMap<String, String> param = new HashMap();
         param.put(RequestType.requestType.toString(), RequestType.getBlock.toString());
         String path = "/apl";
-        return   given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .contentType(ContentType.URLENC)
                 .formParams(param)
@@ -377,8 +376,9 @@ public class TestBaseNew extends TestBase {
                 .then()
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
-                .getObject("",BlockDTO.class);
+                .getObject("", BlockDTO.class);
     }
+
     @Step("Get Last Block")
     public BlockDTO getLastBlock(String peer) throws JsonProcessingException {
         //TODO: Change on REST Easy
@@ -394,7 +394,7 @@ public class TestBaseNew extends TestBase {
                 .then()
                 .assertThat().statusCode(200)
                 .extract().body().jsonPath()
-                .getObject("",BlockDTO.class);
+                .getObject("", BlockDTO.class);
     }
 
     //TODO add: boolean isAvailableForNow, int minAskPrice, int maxBidPrice
@@ -435,7 +435,7 @@ public class TestBaseNew extends TestBase {
     @Step("Get Dex Orders")
     public List<DexOrderDto> getDexOrders() {
         String path = "/rest/dex/offers";
-        return   given().log().all()
+        return given().log().all()
                 .spec(restHelper.getSpec())
                 .when()
                 .get(path)
@@ -501,6 +501,7 @@ public class TestBaseNew extends TestBase {
                 .get(path)
                 .getBody().jsonPath().getList("", DexTradeInfoDto.class);
     }
+
     //TODO: edit to new RESPONSEDTO, not STRING
     @Override
     @Step("dexGetBalances endpoint returns cryptocurrency wallets' (ETH/PAX) balances")
@@ -527,7 +528,7 @@ public class TestBaseNew extends TestBase {
         param.put("toAddress", toAddress);
         param.put("amount", amount);
         param.put("transferFee", transferFee);
-        if (isEth){
+        if (isEth) {
             param.put("cryptocurrency", "1");
         } else {
             param.put("cryptocurrency", "2");
@@ -543,7 +544,7 @@ public class TestBaseNew extends TestBase {
                 .as(WithdrawResponse.class);
 
 
-                //.post(path).as(WithdrawResponse.class);
+        //.post(path).as(WithdrawResponse.class);
         //.getBody().jsonPath().getList("", WithdrawResponse.class);
     }
 
@@ -570,18 +571,18 @@ public class TestBaseNew extends TestBase {
     @Step
     public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
         HashMap<String, String> param = new HashMap();
-        if (isBuyOrder){
-        param.put("offerType", "0");
+        if (isBuyOrder) {
+            param.put("offerType", "0");
         } else {
             param.put("offerType", "1");
         }
-        if (isEth){
+        if (isEth) {
             param.put("pairCurrency", "1");
         } else {
             param.put("pairCurrency", "2");
         }
         param.put("pairRate", pairRate);
-        param.put("offerAmount", offerAmount+"000000000");
+        param.put("offerAmount", offerAmount + "000000000");
         param.put("sender", wallet.getUser());
         param.put("passphrase", wallet.getPass());
         param.put("walletAddress", wallet.getEthAddress());
@@ -616,7 +617,7 @@ public class TestBaseNew extends TestBase {
     public void verifyCreatingTransaction(CreateTransactionResponse transaction) {
         assertNotNull(transaction);
         assertNotNull(transaction.getTransaction(), transaction.errorDescription);
-        assertNotNull(transaction.getTransactionJSON(),transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON(), transaction.errorDescription);
         assertNotNull(transaction.getTransactionJSON().getSenderPublicKey());
         assertNotNull(transaction.getTransactionJSON().getSignature());
         assertNotNull(transaction.getTransactionJSON().getFullHash());
@@ -789,9 +790,9 @@ public class TestBaseNew extends TestBase {
         String path = "/rest/shards";
         return given().log().uri()
                 .contentType(ContentType.JSON)
-                .baseUri(String.format("http://%s:%s",ip,7876))
+                .baseUri(String.format("http://%s:%s", ip, 7876))
                 .when()
-                .get(path).getBody().jsonPath().getList("",ShardDTO.class);
+                .get(path).getBody().jsonPath().getList("", ShardDTO.class);
     }
 
     @Override
@@ -840,7 +841,7 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public CreateTransactionResponse createPoll(Wallet wallet,int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue) {
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue) {
         throw new NotImplementedException("Not implemented");
     }
 
@@ -905,12 +906,14 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public PollVotesResponse getPollVotes (String poll) {
+    public PollVotesResponse getPollVotes(String poll) {
         throw new NotImplementedException("Not implemented");
     }
 
     @Override
-    public PollResultResponse getPollResult (String poll) { throw new NotImplementedException("Not implemented"); }
+    public PollResultResponse getPollResult(String poll) {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
     public CreateTransactionResponse uploadTaggedData(Wallet wallet, String name, String description, String tags, String channel, File file) {
@@ -918,21 +921,33 @@ public class TestBaseNew extends TestBase {
     }
 
     @Override
-    public AllTaggedDataResponse getAllTaggedData() {throw new NotImplementedException("Not implemented");}
+    public AllTaggedDataResponse getAllTaggedData() {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
-    public TaggedDataDTO getTaggedData(String transaction) {throw new NotImplementedException("Not implemented");}
+    public TaggedDataDTO getTaggedData(String transaction) {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
-    public DataTagCountResponse getDataTagCount() {throw new NotImplementedException("Not implemented");}
+    public DataTagCountResponse getDataTagCount() {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
-    public AllTaggedDataResponse searchTaggedDataByName(String query) {throw new NotImplementedException("Not implemented");}
+    public AllTaggedDataResponse searchTaggedDataByName(String query) {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
-    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {throw new NotImplementedException("Not implemented");}
+    public AllTaggedDataResponse searchTaggedDataByTag(String tag) {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @Override
-    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {throw new NotImplementedException("Not implemented");}
+    public CreateTransactionResponse extendTaggedData(Wallet wallet, String transaction) {
+        throw new NotImplementedException("Not implemented");
+    }
 
 }

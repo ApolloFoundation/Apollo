@@ -1,22 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
@@ -26,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -45,6 +29,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,8 +38,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -65,6 +66,8 @@ class PrunableArchiveMigratorTest {
     Zip zip = spy(new ZipImpl());
     @Mock DerivedTablesRegistry registry;
     @Mock CsvExporter csvExporter;
+    @Mock
+    CsvEscaper csvEscaper;
     @Mock DatabaseManager databaseManager;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
@@ -79,7 +82,7 @@ class PrunableArchiveMigratorTest {
 
     @BeforeEach
     void setUp() {
-        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager));
+        migrator = spy(new PrunableArchiveMigrator(event, shardDao, optionDAO, dirProvider, blockchainConfig, zip, registry, databaseManager, csvEscaper));
     }
 
 
@@ -152,14 +155,14 @@ class PrunableArchiveMigratorTest {
         Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
         ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash1=null;
-        if(ops1!=null && ops1.isHashedOK()){
+        byte[] hash1 = null;
+        if (ops1 != null && ops1.isHashedOK()) {
             hash1 = ops1.getFileHash();
         }
         ChunkedFileOps ops2 = zip.compressAndHash(secondZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
-        byte[] hash2=null;
-        if(ops2!=null && ops2.isHashedOK()){
-           hash2 = ops2.getFileHash();
+        byte[] hash2 = null;
+        if (ops2 != null && ops2.isHashedOK()) {
+            hash2 = ops2.getFileHash();
         }
         doReturn(dataExportFolder).when(dirProvider).getDataExportDir();
         AtomicReference<Path> tempDirPath = new AtomicReference<>();

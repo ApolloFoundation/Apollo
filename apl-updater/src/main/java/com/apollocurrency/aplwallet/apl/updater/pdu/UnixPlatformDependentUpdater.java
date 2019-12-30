@@ -18,8 +18,8 @@ public class UnixPlatformDependentUpdater extends DefaultPlatformDependentUpdate
 
     @Override
     Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
-                       boolean userMode, boolean isShardingOn) throws IOException {
-        Process process = super.runCommand(updateDirectory, workingDirectory, appDirectory, userMode, isShardingOn);
+                       boolean userMode, boolean isShardingOn, String chain) throws IOException {
+        Process process = super.runCommand(updateDirectory, workingDirectory, appDirectory, userMode, isShardingOn, chain);
         try {
             process.waitFor();
             return process;

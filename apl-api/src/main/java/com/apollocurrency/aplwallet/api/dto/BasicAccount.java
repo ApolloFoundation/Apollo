@@ -16,8 +16,10 @@ import lombok.Setter;
  *
  * @author al
  */
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class BasicAccount extends BaseDTO {
     @JsonAlias({"account"}) // from json
     @JsonProperty("account") //to json

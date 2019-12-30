@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
+import org.slf4j.Logger;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
-import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
-import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Abstract Base class for CSV writer, reader classes. It is manly used for storing and
@@ -53,8 +53,8 @@ public abstract class CsvAbstractBase {
     protected String lineSeparator = LINE_SEPARATOR;
     protected String nullString = "null";// it's better do not change that value
 
-    protected char escapeCharacter = CsvStringUtils.DEFAULT_ESCAPE_CHARACTER;
-    protected char fieldDelimiter = CsvStringUtils.DEFAULT_FIELD_DELIMITER;
+    protected char escapeCharacter = CsvEscaper.DEFAULT_ESCAPE_CHARACTER;
+    protected char fieldDelimiter = CsvEscaper.DEFAULT_FIELD_DELIMITER;
     protected char fieldTypeSeparatorStart = '('; // use here only non-alphanumeric characters, no space here
     protected char fieldTypeSeparatorEnd = ')'; // use here only non-alphanumeric characters, no space here
     protected char fieldSeparatorRead = ',';
@@ -71,6 +71,9 @@ public abstract class CsvAbstractBase {
 
     // CVS WRITER only config parameters
     protected boolean writeColumnHeader = true; // if HEADER is not written (false), we CAN'T store skipped column index !!
+
+    //escaper fot ctrl characters
+    protected CsvEscaper translator;
 
     /**
      * TODO: refactor that functionality to using another configuration approach (properties or similar)
@@ -98,7 +101,7 @@ public abstract class CsvAbstractBase {
                 setEscapeCharacter(ch);
             } else if (isParam(key, "fieldDelimiter", "fieldDelim")) {
                 setFieldDelimiter(ch);
-            } else if (isParam(key, "fileNameExtension", "fieldDelim")) {
+            } else if (isParam(key, "fileNameExtension", "fileExt")) {
                 setFileNameExtension(value);
             } else if (isParam(key, "fieldSeparator", "fieldSep")) {
                 setFieldSeparatorRead(ch);

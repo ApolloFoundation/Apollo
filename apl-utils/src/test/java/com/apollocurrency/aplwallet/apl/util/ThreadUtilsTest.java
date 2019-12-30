@@ -20,18 +20,18 @@ class ThreadUtilsTest {
         assertNotNull(result0);
         String result = ThreadUtils.lastStacktrace(stack, length);
         assertNotNull(result);
-        assertTrue(result.length()<result0.length());
-        String result2 = ThreadUtils.lastStacktrace(stack, length+10);
+        assertTrue(result.length() < result0.length());
+        String result2 = ThreadUtils.lastStacktrace(stack, length + 10);
         assertNotNull(result2);
         assertEquals(result, result2);
-        String result3 = ThreadUtils.lastStacktrace(stack, length-2);
+        String result3 = ThreadUtils.lastStacktrace(stack, length - 2);
         assertNotNull(result3);
-        assertTrue(result3.length()<result.length());
+        assertTrue(result3.length() < result.length());
     }
 
     @Test
     void getStacktraceSpec() {
-        StackTraceElement element  = Thread.currentThread().getStackTrace()[0];
+        StackTraceElement element = Thread.currentThread().getStackTrace()[0];
         String result = ThreadUtils.getStacktraceSpec(element);
         assertNotNull(result);
         assertTrue(result.contains("."));

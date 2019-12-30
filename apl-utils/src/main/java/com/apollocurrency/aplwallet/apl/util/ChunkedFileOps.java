@@ -3,6 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.util;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
@@ -15,9 +19,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Read/Write file by chunks
@@ -39,7 +40,7 @@ public class ChunkedFileOps {
             this.crc = crc;
         }
     }
-    
+
     @Getter
     @Setter
     private String fileId;
@@ -50,11 +51,11 @@ public class ChunkedFileOps {
 
     private byte[] fileHash = null;
     private final List<ChunkInfo> fileCRCs = new ArrayList<>();
-    
-    public boolean isHashedOK(){
-        return fileHash!=null;
+
+    public boolean isHashedOK() {
+        return fileHash != null;
     }
-    
+
     public ChunkedFileOps(String absPath) {
         this(Paths.get(absPath));
     }
@@ -62,11 +63,11 @@ public class ChunkedFileOps {
     public ChunkedFileOps(Path absPath) {
         this.absPath=absPath;
     }
-    
-    public void moveFile(Path target) throws IOException{
+
+    public void moveFile(Path target) throws IOException {
         absPath = Files.move(absPath, target, StandardCopyOption.REPLACE_EXISTING);
     }
-    
+
     public byte[] getFileHash() {
         if(fileHash==null){
             getFileHashSums(FILE_CHUNK_SIZE);
@@ -93,13 +94,13 @@ public class ChunkedFileOps {
             throw e;
         }
     }
-    
+
     public int readChunk(Long offset, Long size, byte[] dataBuf) throws IOException{
         int res;
         if(!absPath.toFile().exists()){
            res=-2;
            return res;
-        }        
+        }
         RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r");
         rf.skipBytes(offset.intValue());
         res = rf.read(dataBuf,0,size.intValue());
@@ -112,21 +113,21 @@ public class ChunkedFileOps {
     public long getLastWRChunkCrc() {
         return lastWRChunkCrc;
     }
-    
+
     public long getLastRDChunkCrc() {
         return lastRDChunkCrc;
     }
-    
+
     public long getFileSize(){
         long res = -1L;
-        try {  
+        try {
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.size();
         } catch (IOException ignored) {
         }
-      return res;   
-    }   
-    
+      return res;
+    }
+
     public byte[] getFileHashSums(){
         return getFileHashSums(FILE_CHUNK_SIZE);
     }
@@ -141,8 +142,8 @@ public class ChunkedFileOps {
         byte[] buf = new byte[chunkSize];
         fileCRCs.clear();
         if(absPath==null){
-           return hash;   
-        }        
+           return hash;
+        }
         try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(),"r")) {
             //TODO: use FBCryptoDigest after FBCrypto update for stream operations
             MessageDigest dgst = MessageDigest.getInstance(DIGESTER);
@@ -159,9 +160,9 @@ public class ChunkedFileOps {
             fileHash=dgst.digest();
         } catch (IOException | NoSuchAlgorithmException ignored) {
         }
-       return fileHash;    
+       return fileHash;
     }
-    
+
     public List<ChunkInfo> getChunksCRC(){
         if(fileCRCs.size() == 0){
             getFileHashSums();
@@ -171,11 +172,11 @@ public class ChunkedFileOps {
 
     public Date getFileDate() {
         long res=1L;
-        try {  
+        try {
             BasicFileAttributes attrs = Files.readAttributes(absPath, BasicFileAttributes.class);
             res = attrs.lastModifiedTime().toMillis();
         } catch (IOException ignored) {
         }
-       return new Date(res);       
+       return new Date(res);
     }
 }

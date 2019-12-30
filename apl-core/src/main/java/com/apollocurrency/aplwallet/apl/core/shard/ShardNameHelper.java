@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.slf4j.Logger;
 
 import java.util.Objects;
 import java.util.UUID;
+
+import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Class for mapping shard_id into shard file name as String.
@@ -28,7 +28,7 @@ public class ShardNameHelper {
     private final static String SHARD_PRUN_ID_PATTERN = "shardprun::%d;chain::%s";
     public ShardNameHelper() {
     }
-    
+
     public String getShardNameByShardId(Long shardId, UUID chainId) {
         if (shardId == null || shardId < 0) {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
@@ -38,14 +38,15 @@ public class ShardNameHelper {
         log.debug(result);
         return result;
     }
-    
+
     public String getFullShardId(Long shardId, UUID chainId){
        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
        return result;
     }
-    public String getFullShardPrunId(Long shardId, UUID chainId){
-       String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
-       return result;
+
+    public String getFullShardPrunId(Long shardId, UUID chainId) {
+        String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
+        return result;
     }
     public String getCoreShardArchiveNameByShardId(Long shardId, UUID chainId) {
         return getShardArchiveNameByShardId(SHARD_CORE_ARCHIVE_NAME_PATTERN, shardId, chainId);

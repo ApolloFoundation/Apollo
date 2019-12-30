@@ -4,6 +4,21 @@
 package com.apollocurrency.aplwallet.apl.core.files;
 
 
+import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
+import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
+import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
+import com.apollocurrency.aplwallet.api.p2p.FileInfo;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
@@ -16,22 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-
-import com.apollocurrency.aplwallet.api.p2p.FileChunkInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileChunkState;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileInfo;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.event.ObservesAsync;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Downloadable files info
@@ -47,11 +47,11 @@ public class DownloadableFilesManager {
     public final static long FDI_TTL = 7 * 24 * 3600 * 1000; //7 days in ms
     public final static String FILES_SUBDIR = "downloadables";
     private final Map<String, FileDownloadInfo> fdiCache = new ConcurrentHashMap<>();
-    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun",1, "attachment", 2, "file", 3, "debug", 4);
+    public static final Map<String, Integer> LOCATION_KEYS = Map.of("shard", 0, "shardprun", 1, "attachment", 2, "file", 3, "debug", 4);
     public static final String MOD_CHAINID="chainid";
     public static final Map<String, Integer> LOCATION_MODIFIERS = Map.of(MOD_CHAINID, 0);
 
-    
+
     private final ShardNameHelper shardNameHelper;
     private final DirProvider dirProvider;
     private final BlockchainConfig blockchainConfig;
@@ -71,10 +71,10 @@ public class DownloadableFilesManager {
         this.shardNameHelper = shardNameHelper;
         this.blockchainConfig = blockchainConfig;
     }
-    
+
     public void onAnyFileChangedEvent(@ObservesAsync @FileChangedEvent ChunkedFileOps fileData) {
         FileDownloadInfo downloadInfo = fillFileDownloadInfo(fileData);
-        if(fileData==null){
+        if (fileData == null) {
             log.warn("NULL fileData supplied");
             return;
         }
@@ -92,7 +92,7 @@ public class DownloadableFilesManager {
             );
         }
     }
-    
+
     public FileInfo getFileInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileInfo fi;
@@ -100,22 +100,22 @@ public class DownloadableFilesManager {
         fi = fdi.fileInfo;
         return fi;
     }
-    
+
     public FileDownloadInfo updateFileDownloadInfo(String fileId){
         fdiCache.remove(fileId);
         return  getFileDownloadInfo(fileId);
     }
-    
+
     public FileDownloadInfo getFileDownloadInfo(String fileId) {
         Objects.requireNonNull(fileId, "fileId is NULL");
         FileDownloadInfo fdi = fdiCache.get(fileId);
         log.debug("getFileDownloadInfo fdi in CACHE = {}", fdi);
-        if (fdi == null) {            
+        if (fdi == null) {
             fdi=createFileDownloadInfo(fileId);
         }
         return fdi;
     }
-    
+
     private FileDownloadInfo fillFileDownloadInfo(ChunkedFileOps fops){
         FileDownloadInfo downloadInfo = new FileDownloadInfo();
         Path fpath = fops.getAbsPath();
@@ -146,7 +146,7 @@ public class DownloadableFilesManager {
         }
         return downloadInfo;
     }
-    
+
     private FileDownloadInfo createFileDownloadInfo(String fileId) {
         log.debug("createing FileDownloadInfo {} ", fileId);
         Objects.requireNonNull(fileId, "fileId is NULL");
@@ -194,8 +194,8 @@ public class DownloadableFilesManager {
         log.trace("<< ParsedFileId = {}", res);
         return res;
     }
-    
-    private UUID getChainId(ParsedFileId parsed){
+
+    private UUID getChainId(ParsedFileId parsed) {
         UUID chainId;
         if (parsed.modifiers.isEmpty()) {
             chainId = blockchainConfig.getChain().getChainId();
@@ -205,7 +205,7 @@ public class DownloadableFilesManager {
         }
         return chainId;
     }
-    
+
     /**
      * Find the real ZIP file in folder by specified fileId.
      *
@@ -245,14 +245,15 @@ public class DownloadableFilesManager {
                 try {
                     shardId = Long.parseLong(parsed.fileId);
                     UUID chainId = getChainId(parsed);
-                    String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId,chainId);
+                    String fileName = shardNameHelper.getPrunableShardArchiveNameByShardId(shardId, chainId);
                     String fileBaseDir = dirProvider.getDataExportDir().toString();
                     absPath = fileBaseDir + File.separator + fileName;
                 } catch (NumberFormatException e) {
                     log.warn("Incorrect shardId value found in parameter = '{}'", fileId);
                 }
-            };
-            break;    
+            }
+            ;
+            break;
             case 2: //attachment
             {
                  log.warn("Attachment downloading is not implemented yet");

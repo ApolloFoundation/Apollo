@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.utils;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -21,7 +21,7 @@ public class DexCurrencyValidator {
     }
 
 
-    public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrencies offerCurrencies, DexCurrencies pairCurrencies) {
+    public static boolean haveFreezeOrRefundApl(OrderType orderType, DexCurrency offerCurrencies, DexCurrency pairCurrencies) {
         if ((orderType.isSell() && offerCurrencies.isApl())) {
             return true;
          }
@@ -42,15 +42,15 @@ public class DexCurrencyValidator {
         return false;
     }
 
-    public static void checkHaveFreezeOrRefundEthOrPax(DexOrder offer) throws AplException.ExecutiveProcessException {
+    public static void requireEthOrPaxRefundable(DexOrder offer) throws AplException.ExecutiveProcessException {
         if(!haveFreezeOrRefundEthOrPax(offer)){
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
         }
     }
 
-    public static void checkHaveFreezeOrRefundApl(DexOrder offer) throws AplException.ExecutiveProcessException {
-        if(!haveFreezeOrRefundApl(offer)){
-            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + offer.getType() + " | " + offer.getOrderCurrency() + "-" + offer.getPairCurrency());
+    public static void requireAplRefundable(DexOrder order) throws AplException.ExecutiveProcessException {
+        if(!haveFreezeOrRefundApl(order)){
+            throw new AplException.ExecutiveProcessException("Withdraw not supported for " + order.getType() + " | " + order.getOrderCurrency() + "-" + order.getPairCurrency());
         }
     }
 

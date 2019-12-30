@@ -108,8 +108,8 @@ public class Account {
     private static AccountPropertyTable accountPropertyTable;
 
     private static Cache<DbKey, PublicKey> publicKeyCache = null;
-           
-    
+
+
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
     private static final Listeners<AccountCurrency, Event> currencyListeners = new Listeners<>();
@@ -334,7 +334,7 @@ public class Account {
         throw new RuntimeException("DUPLICATE KEY for account " + Long.toUnsignedString(accountId)
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
     }
-    
+
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -347,9 +347,9 @@ public class Account {
 
     public static long getTotalAmountOnTopAccounts() {
         return getTotalAmountOnTopAccounts(100);
-    } 
+    }
 
-    
+
     public static long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -443,7 +443,7 @@ public class Account {
         }
         return publicKey;
     }
-    
+
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
@@ -581,11 +581,11 @@ public class Account {
             this.publicKey = getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            if(LOG.isTraceEnabled()) {
+            if (LOG.isTraceEnabled()) {
                 LOG.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
                         height,
-                        this.publicKey!=null?this.publicKey.getHeight():null,
-                        height - (this.publicKey!=null?this.publicKey.getHeight():0),
+                        this.publicKey != null ? this.publicKey.getHeight() : null,
+                        height - (this.publicKey != null ? this.publicKey.getHeight() : 0),
                         EFFECTIVE_BALANCE_CONFIRMATIONS);
             }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
@@ -675,8 +675,8 @@ public class Account {
                     || height > blockchain.getHeight()) {
                 LOG.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
                         height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
-                        height, blockchain.getHeight() );
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
+                        height, blockchain.getHeight());
+                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height=" + blockchain.getHeight());
             }
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
