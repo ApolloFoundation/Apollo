@@ -98,7 +98,7 @@ public class EthereumWalletService {
         return ethWalletBalanceInfo;
     }
 
-    
+
      /**
      * Get Eth balance for ETH wallets
      * @param address Eth address
@@ -107,9 +107,9 @@ public class EthereumWalletService {
     public BigInteger getOnlyEthBalanceWei(String address){
         return getEthBalanceWei(address);
     }
-   
-    
-    
+
+
+
     /**
      * Get Eth / PAX token balance.
      * @param address Eth address
@@ -392,7 +392,7 @@ public class EthereumWalletService {
 
     private String execute(Credentials credentials, Function function, String contractToAddress, Long gasPrice) throws ExecutionException, InterruptedException {
         BigInteger gasPriceWei = EthUtil.gweiToWei(gasPrice);
-        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function,BigInteger.ZERO, gasPriceWei);
+        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function, BigInteger.ZERO, gasPriceWei);
         BigInteger nonce = getNonce(credentials.getAddress());
         String encodedFunction = FunctionEncoder.encode(function);
 

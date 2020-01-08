@@ -845,7 +845,9 @@ public class AplDbVersion extends DbVersion {
             case 324:
                 apply("ALTER TABLE order_scan ADD CONSTRAINT IF NOT EXISTS order_scan_coin_idx UNIQUE (coin)");
             case 325:
-                return 325;
+                apply("CREATE TABLE dex_operation (db_id IDENTITY, account VARCHAR NOT NULL, stage INT NOT NULL, description VARCHAR, details VARCHAR, time TIMESTAMP NOT NULL)");
+            case 326:
+                return 326;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");

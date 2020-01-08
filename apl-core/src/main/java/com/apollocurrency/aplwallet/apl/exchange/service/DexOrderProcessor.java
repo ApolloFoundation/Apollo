@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
@@ -101,6 +102,7 @@ public class DexOrderProcessor {
     private TaskDispatcher taskDispatcher;
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
+    private DexOperationDao dexOperationDao;
 
     private volatile boolean processorEnabled = true;
     @Getter
@@ -263,7 +265,6 @@ public class DexOrderProcessor {
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
 
                 log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
-
                 TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, DEX_MAX_TIME_OF_ATOMIC_SWAP);
 
                 log.debug("DexOfferProcessor Step-1. User transferred money accountId: {} , txId: {}.", accountId, transferTxInfo);
