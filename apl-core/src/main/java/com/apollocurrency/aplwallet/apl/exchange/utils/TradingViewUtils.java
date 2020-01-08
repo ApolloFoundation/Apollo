@@ -209,6 +209,7 @@ public class TradingViewUtils {
     public static TradingDataOutputUpdated getUpdatedDataForIntervalFromOffers( String symbol, String resolution, Integer toTs, Integer fromTs, DexService service, TimeService timeService) {
 
         int initialTime = fromTs;// *  1000;// toTs - (interval*limit);
+        int finalTime = toTs;
         int startGraph = initialTime;
         
         long startTS = (long)fromTs * 1000L;
@@ -261,8 +262,9 @@ public class TradingViewUtils {
         
         // if (log.isTraceEnabled()) {
         log.debug("found {} orders", dexOrdersForInterval.size() );
-        
+/*        
         if (dexOrdersForInterval.size()==0) {
+
             
             TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
             tdo.setC(null);
@@ -272,12 +274,14 @@ public class TradingViewUtils {
             tdo.setT(null);
             tdo.setV(null);
             
-            tdo.setNextTime(fromTs);
+            tdo.setNextTime(toTs-interval);
             tdo.setS("no_data");
             return tdo;
+           
             
+
         }
-        
+ */       
         // } 
         for (DexOrder cr : dexOrdersForInterval) {
 //             if (log.isTraceEnabled()) {
@@ -296,24 +300,30 @@ public class TradingViewUtils {
         BigDecimal prevClose= BigDecimal.ZERO;
             
         if (log.isTraceEnabled()) {
-            log.trace("extracted: {} values", dexOrdersForInterval.size() );
-
-            
+            log.trace("extracted: {} values", dexOrdersForInterval.size() );            
         }
             
         for (int i=0; i< limit; i++) {                
-            long start = (long)initialTime * 1000L;
-            long finish = (interval * 1000L) + start ;                
+            // long start = (long)initialTime * 1000L;
+            // long finish = (interval * 1000L) + start ; 
+            
+            long finish = finalTime * 1000L;
+            long start = finish - (interval*1000L);
+            
+            log.debug("start: {}, finish: {} ", start, finish );
+            
             Integer startEpoch =  Convert2.toEpochTime(start);
             Integer finishEpoch =  Convert2.toEpochTime(finish);
                 
             SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch ); 
-            entryForPeriod.time = initialTime;
+            entryForPeriod.time = finalTime;
             
             if (dexOrdersForInterval.size() > 0 && !entryForPeriod.isZero()/*&& log.isTraceEnabled()*/) {
                 log.debug ("interval data added, i: {} ts: {}, lo: {}, hi: {}, open: {}, close : {}", i, entryForPeriod.time, entryForPeriod.low, entryForPeriod.high, entryForPeriod.open, entryForPeriod.close);
                 }
-            initialTime += interval;  
+            
+            // initialTime += interval;  
+            finalTime -= interval;
             
             // entryForPeriod.open = prevClose;
             // prevClose = entryForPeriod.close;
@@ -335,15 +345,7 @@ public class TradingViewUtils {
         tdo.setV(new ArrayList<>());
 
         
-        for (SimpleTradingEntry e : data) {
-                        
-//            tdo.setC(e.close);
-//            tdo.setH(null);
-//            tdo.setL(null);
-//            tdo.setO(null);
-//            tdo.setT(null);
-//            tdo.setV(null);
-//            
+        for (SimpleTradingEntry e : data) {                                    
             tdo.getT().add(e.time);
             tdo.getC().add(e.close);
             tdo.getH().add(e.high);
@@ -351,37 +353,13 @@ public class TradingViewUtils {
             tdo.getL().add(e.low);
             tdo.getV().add(e.volumefrom);
             
-            
-            
         }
-        tdo.setS("OK");
+        tdo.setS("ok");
         tdo.setNextTime(null);   
         return tdo;
         
         
-        // iterating
-        
-            
-//            if (!entryForPeriod.isZero()) {                
-//                data.add(entryForPeriod);
-//                } else {                
-//                if (i==limit-1) {                    
-//                    data.add(entryForPeriod);
-//                    }
-//                }
-//            }
-                
-//        tradingDataOutput.setData(data);
-//        tradingDataOutput.setTimeTo(toTs);
-//        tradingDataOutput.setTimeFrom(startGraph);
-//        tradingDataOutput.setFirstValueInArray(true);
-//        ConversionType conversionType = new ConversionType();
-//        conversionType.type = "force_direct";
-//        conversionType.conversionSymbol = "";
-//        tradingDataOutput.setConversionType(conversionType);
-//        tradingDataOutput.setHasWarning(false);
-            
-        //return tradingDataOutput;
+
         }
 
     

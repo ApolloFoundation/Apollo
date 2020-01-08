@@ -86,7 +86,9 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpd
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -620,8 +622,29 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
-        // TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers (fsym,  tsym,  toTs, limit,  60*60*24, service, timeService);
-        // TradingDataOutputUpdated tradingDataOutputUpdated = new TradingDataOutputUpdated();
+        
+//        Epoch timestamp: 1569888000
+//        Timestamp in milliseconds: 1569888000000
+//        Date and time (GMT): Tuesday, October 1, 2019 12:00:00 AM
+//        Date and time (your time zone): Tuesday, October 1, 2019 3:00:00 AM GMT+03:00
+
+        if (to <= 1569888000){
+             log.debug("flushing: ");
+            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+            tdo.setC(null);
+            tdo.setH(null);
+            tdo.setL(null);
+            tdo.setO(null);
+            tdo.setT(null);
+            tdo.setV(null);                       
+            tdo.setNextTime(null);
+            tdo.setS("no_data");
+            return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tdo) ) .build();
+
+            
+        }
+        
+        
         TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from,service, timeService);
         return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
     }
