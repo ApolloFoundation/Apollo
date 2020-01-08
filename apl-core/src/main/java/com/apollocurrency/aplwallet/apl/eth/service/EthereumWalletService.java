@@ -31,6 +31,7 @@ import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Response;
@@ -148,6 +149,8 @@ public class EthereumWalletService {
                     confirmations = Numeric.decodeQuantity(blockNumber).subtract(txBlockNumber).intValue();
                 }
             }
+        } catch (MessageDecodingException e) {
+            log.warn(e.getMessage(), e, "txHash: " + txHash);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
