@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,21 +219,27 @@ public class TradingViewUtils {
         // Integer toTS = Convert2.toEpochTime(startTS);
                                    
         byte currencyType = 0;
-        int interval=0; 
+        int intervalDiscretion=0, multiplier=1; 
         
-        if (resolution.equalsIgnoreCase("D")) {
-            interval = 60*60*24;
-        } else if (resolution.equals("H")) {
-            interval = 60*60; 
-        } else if (resolution.equals("M")) {
-            interval = 60;          
+        
+        if (resolution.endsWith("D")) {
+            intervalDiscretion = 60*60*24;
+        } else if (resolution.endsWith("H")) {
+            intervalDiscretion = 60*60; 
+        } else if (resolution.endsWith("M")) {
+            intervalDiscretion = 60;          
         }
         
+        if (resolution.length() > 1) {
+            String mutlStr = resolution.substring(0, resolution.length() - 1);
+            multiplier = Integer.valueOf(mutlStr,10);
+            
+        } 
         
-        
+        int interval = multiplier * intervalDiscretion;                
         int limit = (toTs - fromTs)/interval;
         
-        log.debug("interval: {}, limit: {} ", interval, limit);
+        log.debug("discr: {}, mult: {}, interval: {}, limit: {} ", intervalDiscretion, multiplier, interval, limit);
         
         if ( symbol.equalsIgnoreCase("ETH") ) {
             currencyType = 1;
@@ -334,6 +341,8 @@ public class TradingViewUtils {
             
         }
         
+        
+        Collections.reverse(data);
         
         TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
         
