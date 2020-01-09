@@ -91,18 +91,21 @@ public final class Vote {
 
     private static void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
         log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
-        int index = 0;
+        int index = 0; // index for affected Polls
+        int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
         for (Poll poll : polls) {
             pstmt.setLong(1, poll.getId());
-            log.trace("Vote trim: Before deleting Vote(s) [{}] by pollId={} at height = {}", index, poll.getId(), height);
+            log.trace("Vote trim: Before deleting votes, index=[{}] by pollId={} at height = {}", index, poll.getId(), height);
             int deletedRecords = pstmt.executeUpdate();
             if (deletedRecords > 0) {
-                log.trace("Vote trim: deleted [{}] Vote(s) by pollId = {} at finishHeight = {} / height = {}",
-                    deletedRecords, poll.getId(), poll.getFinishHeight(), height);
-                index++;
+                log.trace("Vote trim: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
+                    deletedRecords, index, poll.getId(), poll.getFinishHeight(), height);
+                totalDeletedVotes += deletedRecords;
             }
+            index++;
         }
-        log.trace("Vote trim common: REMOVED polls=[{}] at height = {}", index, height);
+        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
+            totalDeletedVotes, index, height, isSharding);
     }
 
     public static int getCount() {
