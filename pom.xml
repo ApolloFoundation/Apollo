@@ -112,8 +112,7 @@
     <weld.version>3.1.3.Final</weld.version>
     <weld-junit5.version>2.0.1.Final</weld-junit5.version>
     <rs-api.version>2.1.1</rs-api.version>
-    <resteasy.version>4.0.0.Beta8</resteasy.version>
-    <resteasy-validator.version>4.0.0.Beta8</resteasy-validator.version>
+    <resteasy.version>4.4.2.Final</resteasy.version>
     <swagger.version>2.1.0</swagger.version>
     <junit5-bom.version>5.5.2</junit5-bom.version>
     <mockito.version>3.0.0</mockito.version>
@@ -126,6 +125,12 @@
     <compile-plugin.version>3.8.1</compile-plugin.version>
     <guava.version>28.1-jre</guava.version>
     <janino.version>3.1.0</janino.version>
+    <hibernate-validator.version>6.1.0.Final</hibernate-validator.version>
+    <bean-validation-api.version>2.0.0.Final</bean-validation-api.version>
+    <el-api.version>3.0.0</el-api.version>
+    <el-glassfish-impl.version>2.2.6</el-glassfish-impl.version>
+    <paranamer.version>2.8</paranamer.version>
+
   </properties>
 
   <!-- We have following profiles: prod, dev, debug
@@ -344,13 +349,34 @@
       </dependency>
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-validator-provider-11</artifactId>
-        <version>${resteasy-validator.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-cdi</artifactId>
         <version>${resteasy.version}</version>
+      </dependency>
+<!--      Validation-->
+      <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>${bean-validation-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate.validator</groupId>
+        <artifactId>hibernate-validator-cdi</artifactId>
+        <version>${hibernate-validator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.thoughtworks.paranamer</groupId>
+        <artifactId>paranamer</artifactId>
+        <version>${paranamer.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.el</groupId>
+        <artifactId>javax.el-api</artifactId>
+        <version>${el-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.web</groupId>
+        <artifactId>javax.el</artifactId>
+        <version>${el-glassfish-impl.version}</version>
       </dependency>
 
       <dependency>
