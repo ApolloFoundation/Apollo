@@ -48,11 +48,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -61,6 +62,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
+    private static final String MV_STORE = "MV_STORE";
+    private static final String MVCC = "MVCC";
     private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
     private String shardId = "main-db";
 
@@ -140,29 +143,65 @@ public class DataSourceWrapper implements DataSource {
         if (maxCacheSize == 0) {
             maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128)/2)) * 1024;
         }
-        String dbUrl = dbProperties.getDbUrl();
-        if (StringUtils.isBlank(dbUrl)) {
+
+        //Even though dbUrl is no longer coming from apl-blockchain.properties,
+        //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
+        String dbUrlTemp = dbProperties.getDbUrl();
+        final String dbParams = dbProperties.getDbParams();
+        validateDbParams(dbParams);
+
+        if (StringUtils.isBlank(dbUrlTemp)) {
             String dbFileName = dbProperties.getDbFileName();
             Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
             if (m.find()) { // if found
                 shardId = m.group(); // store shard id
             }
-            dbUrl = String.format("jdbc:%s:file:%s;%s", dbProperties.getDbType(), dbProperties.getDbDir() + "/" + dbFileName, dbProperties.getDbParams());
+            dbUrlTemp = String.format(
+                    "jdbc:%s:file:%s/%s;%s",
+                    dbProperties.getDbType(),
+                    dbProperties.getDbDir(),
+                    dbFileName,
+                    dbProperties.getDbParams()
+            );
+        } else {
+            validateDbParams(dbUrlTemp);
         }
-        if (!dbUrl.contains("MV_STORE=")) {
-            dbUrl += ";MV_STORE=TRUE";
+
+        if (!dbUrlTemp.contains(MV_STORE + "=")) {
+            dbUrlTemp += ";" + MV_STORE + "=TRUE";
         }
-        if (!dbUrl.contains("CACHE_SIZE=")) {
-            dbUrl += ";CACHE_SIZE=" + maxCacheSize;
+        if (!dbUrlTemp.contains("CACHE_SIZE=")) {
+            dbUrlTemp += ";CACHE_SIZE=" + maxCacheSize;
         }
-        this.dbUrl = dbUrl;
-        dbProperties.dbUrl(dbUrl);
+        this.dbUrl = dbUrlTemp;
+        dbProperties.dbUrl(dbUrlTemp);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
         this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+    }
+
+    private void validateDbParams(String dbParams) {
+        if (Objects.nonNull(dbParams)) {
+            if (dbParams.contains(MVCC)) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "%s is not supported in the dbParams or dbUrl properties.",
+                                MVCC
+                        )
+                );
+            }
+            if (dbParams.contains(MV_STORE + "=FALSE")) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "%s should always be TRUE.",
+                                MV_STORE
+                        )
+                );
+            }
+        }
     }
 
     /**

@@ -116,7 +116,7 @@ public class DbMigrationExecutorTest {
         properties.put("apl.batchCommitSize", 100);
         properties.put("apl.dbPassword", "sa");
         properties.put("apl.dbUsername", "sa");
-        properties.put("apl.dbParams", "DB_CLOSE_ON_EXIT=FALSE;MV_STORE=TRUE;");
+        properties.put("apl.dbParams", "DB_CLOSE_ON_EXIT=FALSE;");
         PropertiesHolder ph = new PropertiesHolder();
         ph.init(properties);
         return ph;
