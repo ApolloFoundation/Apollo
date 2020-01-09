@@ -135,6 +135,11 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height), from, to);
     }
 
+    public static DbIterator<Poll> getPollsFinishingAt(int height, int from, int to) {
+        // select all Polls where 'finish_height' is LESS then specified height
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
+    }
+
     public static DbIterator<Poll> getAllPolls(int from, int to) {
         return pollTable.getAll(from, to);
     }
@@ -226,10 +231,10 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-            LOG.trace(":accept:PollObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
-                Poll.checkPolls(height);
-            LOG.trace(":accept:PollObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            Poll.checkPolls(height);
+            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 
@@ -238,8 +243,9 @@ public final class Poll extends AbstractPoll {
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
+                    LOG.trace("Poll = {} has PollOptionResult = {}", poll.getId(), results);
                     pollResultsTable.insert(results);
-                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
+                    LOG.trace("Poll = {} has been finished : {}", poll.getId(), poll);
                 } catch (RuntimeException e) {
                     LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()), e);
                 }
@@ -380,7 +386,10 @@ public final class Poll extends AbstractPoll {
         }
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
-            for (Vote vote : votes) {
+            List<Vote> voteList = CollectionUtil.toList(votes);
+            LOG.trace("count Vote result (h={}, votingModel='{}'): voteList = [{}]", height, votingModel, voteList.size());
+            LOG.trace("count Vote result: (pollId={}) voteList = \n{}", this.getId(), voteList);
+            for (Vote vote : voteList) {
                 long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 if (weight <= 0) {
                     continue;
@@ -396,6 +405,7 @@ public final class Poll extends AbstractPoll {
                     }
                 }
             }
+            LOG.trace("count Vote : pollId={} PollOptionResult = {}", this.getId(), result);
         }
         return Arrays.asList(result);
     }
@@ -413,4 +423,14 @@ public final class Poll extends AbstractPoll {
         return partialResult;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Poll{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", accountId=").append(accountId);
+        sb.append(", finishHeight=").append(finishHeight);
+        sb.append('}');
+        return sb.toString();
+    }
 }

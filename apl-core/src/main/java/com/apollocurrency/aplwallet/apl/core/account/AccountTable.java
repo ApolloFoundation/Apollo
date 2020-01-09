@@ -44,11 +44,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public static DbKey newKey(long id){
         return accountDbKeyFactory.newKey(id);
     }
-    
+
     public static DbKey newKey(Account a){
         return accountDbKeyFactory.newKey(a);
     }
-    
+
     public AccountTable() {
         super("account", accountDbKeyFactory, false);
     }
@@ -93,6 +93,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         super.trim(height);
     }
 
+    public void trim(int height, boolean isSharding) {
+        this.trim(height);
+    }
+
     @Override
     public void checkAvailable(int height) {
         if (height > Account.blockchainConfig.getGuaranteedBalanceConfirmations()) {
@@ -103,7 +107,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + Account.blockchain.getHeight());
         }
     }
- 
+
     public static long getTotalSupply(Connection con) throws SQLException {
         try (
                 PreparedStatement pstmt =con.prepareStatement("SELECT ABS(balance) AS total_supply FROM account WHERE id = ?")
@@ -126,7 +130,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             return getManyBy(con, pstmt, false);
     }
-     
+
     public static long getTotalAmountOnTopAccounts(Connection con, int numberOfTopAccounts) throws SQLException {
         try (
                 PreparedStatement pstmt =
@@ -142,7 +146,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
                 }
             }
         }
-    }  
+    }
 
     public static long getTotalNumberOfAccounts(Connection con) throws SQLException {
         try (

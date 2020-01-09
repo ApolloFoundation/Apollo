@@ -287,6 +287,10 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
+    public void trim(int height, boolean isSharding) {
+        this.trim(height);
+    }
+
     private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
         Connection con = null;
         Block block = null;

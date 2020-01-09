@@ -54,6 +54,10 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         }
     }
 
+    public void trim(int height, boolean isSharding) {
+        this.trim(height);
+    }
+
     @Override
     public AccountGuaranteedBalance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountGuaranteedBalance(rs, dbKey);

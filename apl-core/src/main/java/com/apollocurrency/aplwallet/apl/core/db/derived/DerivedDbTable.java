@@ -77,6 +77,9 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     @Override
     public void trim(int height) {}
 
+    @Override
+    public void trim(int height, boolean isSharding) {}
+
     @PostConstruct
     public void init() {
         lookupCdi();
