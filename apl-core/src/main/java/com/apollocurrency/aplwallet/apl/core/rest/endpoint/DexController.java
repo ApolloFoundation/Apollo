@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingViewExchangesDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingViewSymbolTypesDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
 import com.apollocurrency.aplwallet.api.trading.SymbolsOutput;
@@ -651,7 +654,7 @@ public class DexController {
     
     
     @GET
-    @Path("/symbol")
+    @Path("/symbols")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
     @ApiResponses(value = {
@@ -702,14 +705,69 @@ public class DexController {
         symbolsOutputDTO.supported_resolutions.add("3W");
         symbolsOutputDTO.supported_resolutions.add("M");
         symbolsOutputDTO.supported_resolutions.add("6M");
-
         symbolsOutputDTO.pricescale = 100;
         symbolsOutputDTO.ticker = "AAPL";
-        
-        
-        
         return Response.ok( symbolsOutputDTO ) .build();
     }
+    
+    
+    @GET
+    @Path("/config")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get configuration", description = "getting TV configuration")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getConfig( @Context HttpServletRequest req) throws NotFoundException {
+
+        log.debug("getConfig entry point");        
+        TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
+        tradingViewConfigDTO.supports_search = true;
+        tradingViewConfigDTO.supports_group_request = false;
+        tradingViewConfigDTO.supports_marks = true;
+        tradingViewConfigDTO.supports_timescale_marks = true;
+        tradingViewConfigDTO.supports_time = true;
+        // exchanges
+        tradingViewConfigDTO.exchanges = new ArrayList<>();        
+        TradingViewExchangesDTO tx1 = new TradingViewExchangesDTO();
+        tx1.name = "All Exchanges"; tx1.desc = ""; tx1.value = "";
+        tradingViewConfigDTO.exchanges.add(tx1);
+        TradingViewExchangesDTO tx2 = new TradingViewExchangesDTO();
+        tx2.name = "NasdaqNM"; tx2.desc = "NasdaqNM"; tx2.value = "NasdaqNM"; 
+        tradingViewConfigDTO.exchanges.add(tx2);
+        TradingViewExchangesDTO tx3 = new TradingViewExchangesDTO();
+        tx3.name = "NYSE"; tx3.desc = "NYSE"; tx3.value = "NYSE"; 
+        tradingViewConfigDTO.exchanges.add(tx3);
+        TradingViewExchangesDTO tx4 = new TradingViewExchangesDTO();
+        tx4.name = "NCM"; tx4.desc = "NCM"; tx4.value = "NCM"; 
+        tradingViewConfigDTO.exchanges.add(tx4);
+        TradingViewExchangesDTO tx5 = new TradingViewExchangesDTO();
+        tx5.name = "NGM"; tx5.desc = "NGM"; tx5.value = "NGM"; 
+        tradingViewConfigDTO.exchanges.add(tx5);   
+        // symbols_types
+        tradingViewConfigDTO.symbols_types =  new ArrayList<>(); 
+        TradingViewSymbolTypesDTO ts1 = new TradingViewSymbolTypesDTO();
+        ts1.name = "All types"; ts1.value = "";
+        tradingViewConfigDTO.symbols_types.add(ts1);
+        TradingViewSymbolTypesDTO ts2 = new TradingViewSymbolTypesDTO();
+        ts2.name = "Stock"; ts2.value = "stock";
+        tradingViewConfigDTO.symbols_types.add(ts2);
+        TradingViewSymbolTypesDTO ts3 = new TradingViewSymbolTypesDTO();
+        ts3.name = "Index"; ts3.value = "index";
+        tradingViewConfigDTO.symbols_types.add(ts3);
+        // resolutions
+        tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();         
+        tradingViewConfigDTO.supported_resolutions.add("D");
+        tradingViewConfigDTO.supported_resolutions.add("2D");
+        tradingViewConfigDTO.supported_resolutions.add("3D");
+        tradingViewConfigDTO.supported_resolutions.add("W");
+        tradingViewConfigDTO.supported_resolutions.add("3W");
+        tradingViewConfigDTO.supported_resolutions.add("M");
+        tradingViewConfigDTO.supported_resolutions.add("6M");
+       
+        return Response.ok( tradingViewConfigDTO ) .build();        
+    }
+              
     
 
     @GET
