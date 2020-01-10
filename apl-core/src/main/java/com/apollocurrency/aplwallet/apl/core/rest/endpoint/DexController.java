@@ -664,30 +664,10 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getSymbols:  fsym: {}", symbol );
-        
-        /*
-            name: "AAPL"
-            exchange-traded: "NasdaqNM"
-            exchange-listed: "NasdaqNM"
-            timezone: "America/New_York"
-            minmov: 1
-            minmov2: 0
-            pointvalue: 1
-            session: "0930-1630"
-            has_intraday: false
-            has_no_volume: false
-            description: "Apple Inc."
-            type: "stock"
-            supported_resolutions: ["D", "2D", "3D", "W", "3W", "M", "6M"]
-            pricescale: 100
-            ticker: "AAPL"
-        */
-        
         SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
-        
-        symbolsOutputDTO.name = "AAPL";
-        symbolsOutputDTO.exchange_traded = "NasdaqNM";
-        symbolsOutputDTO.exchange_listed = "NasdaqNM";
+        symbolsOutputDTO.name = symbol;
+        symbolsOutputDTO.exchange_traded = "Apollo Currency";
+        symbolsOutputDTO.exchange_listed = "Apollo Currency";
         symbolsOutputDTO.timezone = "America/New_York";
         symbolsOutputDTO.minmov = 1;
         symbolsOutputDTO.minmov2 = 0;
@@ -695,18 +675,14 @@ public class DexController {
         symbolsOutputDTO.session = "0930-1630";
         symbolsOutputDTO.has_intraday = false;
         symbolsOutputDTO.has_no_volume = false;
-        symbolsOutputDTO.description = "Apple Inc.";
+        symbolsOutputDTO.description = "Apollo Foundation.";
         symbolsOutputDTO.type = "stock";
         symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
         symbolsOutputDTO.supported_resolutions.add("D");
         symbolsOutputDTO.supported_resolutions.add("2D");
         symbolsOutputDTO.supported_resolutions.add("3D");
-        symbolsOutputDTO.supported_resolutions.add("W");
-        symbolsOutputDTO.supported_resolutions.add("3W");
-        symbolsOutputDTO.supported_resolutions.add("M");
-        symbolsOutputDTO.supported_resolutions.add("6M");
-        symbolsOutputDTO.pricescale = 100;
-        symbolsOutputDTO.ticker = "AAPL";
+        symbolsOutputDTO.pricescale = 1000000000;
+        symbolsOutputDTO.ticker = symbol;
         return Response.ok( symbolsOutputDTO ) .build();
     }
     
@@ -726,45 +702,12 @@ public class DexController {
         tradingViewConfigDTO.supports_group_request = false;
         tradingViewConfigDTO.supports_marks = true;
         tradingViewConfigDTO.supports_timescale_marks = true;
-        tradingViewConfigDTO.supports_time = true;
-        // exchanges
-        tradingViewConfigDTO.exchanges = new ArrayList<>();        
-        TradingViewExchangesDTO tx1 = new TradingViewExchangesDTO();
-        tx1.name = "All Exchanges"; tx1.desc = ""; tx1.value = "";
-        tradingViewConfigDTO.exchanges.add(tx1);
-        TradingViewExchangesDTO tx2 = new TradingViewExchangesDTO();
-        tx2.name = "NasdaqNM"; tx2.desc = "NasdaqNM"; tx2.value = "NasdaqNM"; 
-        tradingViewConfigDTO.exchanges.add(tx2);
-        TradingViewExchangesDTO tx3 = new TradingViewExchangesDTO();
-        tx3.name = "NYSE"; tx3.desc = "NYSE"; tx3.value = "NYSE"; 
-        tradingViewConfigDTO.exchanges.add(tx3);
-        TradingViewExchangesDTO tx4 = new TradingViewExchangesDTO();
-        tx4.name = "NCM"; tx4.desc = "NCM"; tx4.value = "NCM"; 
-        tradingViewConfigDTO.exchanges.add(tx4);
-        TradingViewExchangesDTO tx5 = new TradingViewExchangesDTO();
-        tx5.name = "NGM"; tx5.desc = "NGM"; tx5.value = "NGM"; 
-        tradingViewConfigDTO.exchanges.add(tx5);   
-        // symbols_types
-        tradingViewConfigDTO.symbols_types =  new ArrayList<>(); 
-        TradingViewSymbolTypesDTO ts1 = new TradingViewSymbolTypesDTO();
-        ts1.name = "All types"; ts1.value = "";
-        tradingViewConfigDTO.symbols_types.add(ts1);
-        TradingViewSymbolTypesDTO ts2 = new TradingViewSymbolTypesDTO();
-        ts2.name = "Stock"; ts2.value = "stock";
-        tradingViewConfigDTO.symbols_types.add(ts2);
-        TradingViewSymbolTypesDTO ts3 = new TradingViewSymbolTypesDTO();
-        ts3.name = "Index"; ts3.value = "index";
-        tradingViewConfigDTO.symbols_types.add(ts3);
+        tradingViewConfigDTO.supports_time = false;       
         // resolutions
         tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();         
         tradingViewConfigDTO.supported_resolutions.add("D");
         tradingViewConfigDTO.supported_resolutions.add("2D");
-        tradingViewConfigDTO.supported_resolutions.add("3D");
-        tradingViewConfigDTO.supported_resolutions.add("W");
-        tradingViewConfigDTO.supported_resolutions.add("3W");
-        tradingViewConfigDTO.supported_resolutions.add("M");
-        tradingViewConfigDTO.supported_resolutions.add("6M");
-       
+        tradingViewConfigDTO.supported_resolutions.add("3D");       
         return Response.ok( tradingViewConfigDTO ) .build();        
     }
               
