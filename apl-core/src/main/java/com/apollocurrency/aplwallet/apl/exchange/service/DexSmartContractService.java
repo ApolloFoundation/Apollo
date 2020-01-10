@@ -49,6 +49,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -203,6 +204,16 @@ public class DexSmartContractService {
             return swapDataInfo;
         } catch (Exception e){
             throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+    public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException, AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            DexContract.InitiatedEventResponse response = dexContract.initiatedEventFlowable(orderId).toFuture().get();
+            return response.log.getTransactionHash();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new AplException.ExecutiveProcessException("Unable to retrieve hash from event.", e);
         }
     }
 

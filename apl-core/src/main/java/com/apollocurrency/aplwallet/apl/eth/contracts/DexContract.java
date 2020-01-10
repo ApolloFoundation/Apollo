@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -18,6 +19,7 @@ import org.web3j.abi.datatypes.generated.Uint8;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -108,13 +110,14 @@ public class DexContract extends Contract {
     private EthereumWalletService ethereumWalletService;
 
     public static final Event INITIATED_EVENT = new Event("Initiated",
-            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {
-            }, new TypeReference<Bytes32>() {
+            Arrays.<TypeReference<?>>asList(
+                new TypeReference<Uint256>(true) {
+            }, new TypeReference<Bytes32>(true) {
             }, new TypeReference<Address>(true) {
-            }, new TypeReference<Address>(true) {
+            }, new TypeReference<Address>() {
             }, new TypeReference<Uint256>() {
             }, new TypeReference<Uint256>() {
-            }, new TypeReference<Address>(true) {
+            }, new TypeReference<Address>() {
             }, new TypeReference<Uint256>() {
             }));
     ;
@@ -501,9 +504,10 @@ public class DexContract extends Contract {
         });
     }
 
-    public Flowable<InitiatedEventResponse> initiatedEventFlowable(DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
-        EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
+    public Flowable<InitiatedEventResponse> initiatedEventFlowable(long orderId) {
+        EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST, getContractAddress());
         filter.addSingleTopic(EventEncoder.encode(INITIATED_EVENT));
+        filter.addOptionalTopics("0x" + TypeEncoder.encode(new Uint256(orderId)));
         return initiatedEventFlowable(filter);
     }
 
@@ -776,6 +780,7 @@ public class DexContract extends Contract {
 
     public static class InitiatedEventResponse {
         public Log log;
+
 
         public String initiator;
 

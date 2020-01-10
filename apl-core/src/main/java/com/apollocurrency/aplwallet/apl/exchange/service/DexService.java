@@ -42,13 +42,11 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
@@ -84,7 +82,6 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -95,8 +92,6 @@ import java.util.stream.Collectors;
 @Singleton
 public class DexService {
     private static final Logger LOG = LoggerFactory.getLogger(DexService.class);
-    private static final String ETH_SWAP_DESCRIPTION_FORMAT = "Account %s initiate atomic swap '%s' with %s under contract %d";
-    private static final String ETH_SWAP_DETAILS_FORMAT = "secretHash:%s;encryptedSecret:%s";
     private EthereumWalletService ethereumWalletService;
     private DexSmartContractService dexSmartContractService;
     private DexOrderDao dexOrderDao;
@@ -115,7 +110,6 @@ public class DexService {
     private PhasingPollService phasingPollService;
     private IDexMatcherInterface dexMatcherService;
     private BlockchainConfig blockchainConfig;
-    private DexOperationDao operationDao;
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
@@ -452,7 +446,7 @@ public class DexService {
      *
      * @return Tx hash id/link and non-broadcasted apl transaction if created
      */
-    public TransferTransactionInfo transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, long contractId, byte[] secretHash, byte[] encryptedSecret, int transferWithApprovalDuration) throws AplException.ExecutiveProcessException {
+    public TransferTransactionInfo transferMoneyWithApproval(CreateTransactionRequest createTransactionRequest, DexOrder order, String toAddress, long contractId, byte[] secretHash, int transferWithApprovalDuration) throws AplException.ExecutiveProcessException {
         TransferTransactionInfo result = new TransferTransactionInfo();
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
@@ -461,9 +455,7 @@ public class DexService {
             }
 
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
-                String rsAccount = Convert.defaultRsAccount(createTransactionRequest.getSenderAccount().getId());
-                String secretHashHex = Convert.toHexString(secretHash);
-                operationDao.add(new DexOperation(null, rsAccount, DexOperation.Stage.ETH_SWAP, String.format(ETH_SWAP_DESCRIPTION_FORMAT, rsAccount , secretHashHex , toAddress , contractId),String.format(ETH_SWAP_DETAILS_FORMAT, secretHashHex, Convert.toHexString(encryptedSecret) ), new Timestamp(System.currentTimeMillis()));
+
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
                         order.getFromAddress(), order.getId(), secretHash, toAddress, transferWithApprovalDuration / 60, null);
                 result.setTxId(txHash);

@@ -14,11 +14,12 @@ public class DexOperationMapper implements RowMapper<DexOperation> {
         return DexOperation.builder()
             .dbId(rs.getLong("db_id"))
             .account(rs.getString("account"))
-            .stage(DexOperation.Stage.from(rs.getInt("stage")))
+            .stage(DexOperation.Stage.from(rs.getByte("stage")))
             .description(rs.getString("description"))
-            .exchangeId(rs.getLong("exchange_id"))
-            .time(rs.getTimestamp("time"))
+            .eid(rs.getString("eid"))
             .details(rs.getString("details"))
+            .finished(rs.getBoolean("finished"))
+            .ts(rs.getTimestamp("ts"))
             .build();
     }
 }
