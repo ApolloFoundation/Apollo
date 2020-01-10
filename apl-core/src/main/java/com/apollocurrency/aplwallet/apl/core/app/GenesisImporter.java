@@ -56,6 +56,8 @@ public class GenesisImporter {
     private static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
     private static final String BALANCES_JSON_FIELD_NAME = "balances";
     private static final String GENESIS_PUBLIC_KEY_JSON_FIELD_NAME = "genesisPublicKey";
+    // store FLAG about started genesis import process that can be stopped and not completely finished
+    private static final String IS_GENESIS_DATA_IMPORT_STARTED = "isGenesisImportStarted";
     private static final String EPOCH_BEGINNING_JSON_FIELD_NAME = "epochBeginning";
     public static long CREATOR_ID;
     public static long EPOCH_BEGINNING;
@@ -124,6 +126,7 @@ public class GenesisImporter {
     }
 
     private void cleanUpGenesisData() {
+        log.debug("clean Up Incomplete Genesis data...");
         this.pkTable.truncate();
         this.genesisPublicKeyTable.truncate();
         this.accountGuaranteedBalanceTable.truncate();
@@ -258,6 +261,14 @@ public class GenesisImporter {
         if (!dataSource.isInTransaction()) {
             dataSource.begin();
         }
+        // check if 'incomplete genesis import' info exist
+        boolean isIncompleteImportExist = optionDAO.exist(IS_GENESIS_DATA_IMPORT_STARTED);
+        log.debug("Does Incomplete Genesis Import exist ? = {}", isIncompleteImportExist);
+        if (isIncompleteImportExist) {
+            cleanUpGenesisData(); // clean up previous incomplete genesis import
+        }
+        boolean result = optionDAO.set(IS_GENESIS_DATA_IMPORT_STARTED, Boolean.TRUE.toString());// save 'incomplete genesis import' info
+        log.debug("Does Incomplete Genesis Import saved ? = {}", result);
 
         final int publicKeyNumber = savePublicKeys(dataSource);
 
@@ -265,6 +276,8 @@ public class GenesisImporter {
         if (loadOnlyPublicKeys) {
             log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
                     (System.currentTimeMillis() - start) / 1000);
+            result = optionDAO.delete(IS_GENESIS_DATA_IMPORT_STARTED); // clean up 'incomplete genesis import' info
+            log.debug("Does Incomplete Genesis Import 1. cleared ? = {}", result);
             return;
         }
         // load 'balances' from JSON only
@@ -288,6 +301,9 @@ public class GenesisImporter {
         final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
         log.debug("ImportGenesisJson is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
                 usedBytes != null ? usedBytes / 1024 : "not calculated");
+
+        result = optionDAO.delete(IS_GENESIS_DATA_IMPORT_STARTED); // clean up 'incomplete genesis import' info
+        log.debug("Soes Incomplete Genesis Import 2. cleared ? = {}", result);
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})

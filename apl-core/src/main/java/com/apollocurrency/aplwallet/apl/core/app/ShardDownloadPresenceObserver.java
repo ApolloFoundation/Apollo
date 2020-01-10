@@ -137,11 +137,14 @@ public class ShardDownloadPresenceObserver {
                     dataSource.begin();
                 }
                 try (Connection con = dataSource.getConnection()) {
+                    // create first genesis block, but do not save it to db here
                     Block genesisBlock = genesisImporter.newGenesisBlock();
-                    addBlock(dataSource, genesisBlock);
                     long initialBlockId = genesisBlock.getId();
                     log.debug("Generated Genesis block with Id = {}", initialBlockId);
+                    // import other genesis data
                     genesisImporter.importGenesisJson(false);
+                    // first genesis block should be saved only after all genesis data has been imported before
+                    addBlock(dataSource, genesisBlock); // save first genesis block here
                     // create Lucene search indexes first
                     createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
