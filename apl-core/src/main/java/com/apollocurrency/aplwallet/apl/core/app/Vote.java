@@ -60,7 +60,8 @@ public final class Vote {
         public void trim(int height) {
             super.trim(height);
             try (Connection con = databaseManager.getDataSource().getConnection();
-                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
+//                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
+                 DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                 commonTrim(height, false, polls, pstmt);
             } catch (SQLException e) {
