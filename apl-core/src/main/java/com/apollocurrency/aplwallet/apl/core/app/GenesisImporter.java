@@ -6,11 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -75,6 +79,10 @@ public class GenesisImporter {
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
+    private PublicKeyTable pkTable;
+    private GenesisPublicKeyTable genesisPublicKeyTable;
+    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private OptionDAO optionDAO;
 
     @Inject
     public GenesisImporter(
@@ -83,6 +91,10 @@ public class GenesisImporter {
             DatabaseManager databaseManager,
             AplAppStatus aplAppStatus,
             GenesisImporterProducer genesisImporterProducer,
+            PublicKeyTable pkTable,
+            GenesisPublicKeyTable genesisPublicKeyTable,
+            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+            OptionDAO optionDAO,
             ApplicationJsonFactory jsonFactory,
             PropertiesHolder propertiesHolder
     ) {
@@ -99,12 +111,22 @@ public class GenesisImporter {
                 propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
                 propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+        this.pkTable = Objects.requireNonNull(pkTable, "pkTable is NULL");
+        this.genesisPublicKeyTable = Objects.requireNonNull(genesisPublicKeyTable, "genesisPublicKeyTable is NULL");
+        this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
+        this.optionDAO = Objects.requireNonNull(optionDAO, "optionDAO is NULL");
     }
 
     private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
         return Optional.ofNullable(genesisImporterProducer)
                 .map(GenesisImporterProducer::genesisParametersLocation)
                 .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
+    }
+
+    private void cleanUpGenesisData() {
+        this.pkTable.truncate();
+        this.genesisPublicKeyTable.truncate();
+        this.accountGuaranteedBalanceTable.truncate();
     }
 
     @PostConstruct
