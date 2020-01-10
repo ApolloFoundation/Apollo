@@ -25,7 +25,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -75,8 +74,8 @@ public final class Vote {
                 // trim when sharding process has been started
                 super.trim(height);
                 try (Connection con = databaseManager.getDataSource().getConnection();
-                     // all polls below or equal 'snapshot block' height
-                     DbIterator<Poll> polls = Poll.getPollsFinishingAt(height, 0, Integer.MAX_VALUE);
+                     // select all polls below or equal height value ('snapshot block' in our case)
+                     DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                      PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                     commonTrim(height, true, polls, pstmt);
                 } catch (SQLException e) {

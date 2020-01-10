@@ -135,8 +135,8 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height), from, to);
     }
 
-    public static DbIterator<Poll> getPollsFinishingAt(int height, int from, int to) {
-        // select all Polls where 'finish_height' is LESS then specified height
+    public static DbIterator<Poll> getPollsFinishingBelowHeight(int height, int from, int to) {
+        // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
     }
 
@@ -205,7 +205,7 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-        public static DbIterator<Poll> getPollsFinishingAt(int height) {
+        public static DbIterator<Poll> getPollsFinishingBelowHeight(int height) {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
     }
 
@@ -239,7 +239,8 @@ public final class Poll extends AbstractPoll {
     }
 
     private static void checkPolls(int currentHeight) {
-        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
+        // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
+        try (DbIterator<Poll> polls = getPollsFinishingBelowHeight(currentHeight)) {
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
