@@ -67,15 +67,6 @@ public class DexValidationServiceImpl implements IDexValidator {
         return hisAplBalance;
     }
 
-    private List<UserEthDepositInfo> getUserEthDeposits(String user) {
-        try {
-            return dexSmartContractService.getUserFilledDeposits(user);
-        } catch (AplException.ExecutiveProcessException ex) {
-           log.debug( "Exception caught while getting eth deposits: {} ", ex);
-        }
-        return null;
-    }
-
     BigInteger getUserEthDeposit(String user, DexCurrency currencyType) {
         return  ethereumWalletService.getEthOrPaxBalanceWei(user, currencyType);
     }
@@ -184,7 +175,15 @@ public class DexValidationServiceImpl implements IDexValidator {
         log.debug("validateOfferSellAplEth: ");
         String hisFromEthAddr = hisOrder.getFromAddress();
         log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId());
-        List<UserEthDepositInfo> hisEthDeposits = getUserEthDeposits(hisFromEthAddr);
+        List<UserEthDepositInfo> hisEthDeposits;
+
+        try {
+            hisEthDeposits = dexSmartContractService.getUserActiveDeposits(hisFromEthAddr);
+        } catch (AplException.ExecutiveProcessException e) {
+            log.error(e.getMessage(), e);
+            return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
+        }
+
         BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());
         log.debug("hasToPay: {} ", hasToPay);
         boolean depositDetected = false;
