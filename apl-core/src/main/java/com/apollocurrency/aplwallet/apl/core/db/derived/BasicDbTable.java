@@ -112,10 +112,6 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         }
     }
 
-    public void trim(int height, boolean isSharding) {
-        this.trim(height);
-    }
-
     /**
      * <p>Delete old data from db before target height. Leave last actual entry for each entity to allow rollback to target height</p>
      * <p>Also will delete blockchain 'deleted' entries with latest=false which not exist at height greater than target height</p>

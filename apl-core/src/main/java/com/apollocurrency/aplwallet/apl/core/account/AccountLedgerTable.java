@@ -73,7 +73,4 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
         }
     }
 
-    public void trim(int height, boolean isSharding) {
-        this.trim(height);
-    }
 }
