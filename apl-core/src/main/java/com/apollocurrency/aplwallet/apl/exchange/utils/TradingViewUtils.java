@@ -241,15 +241,15 @@ public class TradingViewUtils {
         
         log.debug("discr: {}, mult: {}, interval: {}, limit: {} ", intervalDiscretion, multiplier, interval, limit);
         
-        if ( symbol.equalsIgnoreCase("ETH") ) {
+        if ( symbol.endsWith("ETH") ) {
             currencyType = 1;
         } 
                 
-        if ( symbol.equalsIgnoreCase("PAX") ) {
-            currencyType = 0;
+        if ( symbol.endsWith("PAX") ) {
+            currencyType = 2;
         } 
         
-        currencyType = 1;
+        // currencyType = 1;
                                         
         // if (log.isTraceEnabled()) {
             log.debug("start: {}, finish: {}, currencyType: {}, requestedType: {}",  new java.util.Date(startTS), new java.util.Date(endTS), currencyType );
@@ -263,8 +263,10 @@ public class TradingViewUtils {
             log.trace("Epoch, start: {}, finish: {}", startTSEpoch, endTSEpoch );
         } 
             
-        DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, (byte)1, currencyType, 0 , Integer.MAX_VALUE);
-            
+        // DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, (byte)1, currencyType, 0 , Integer.MAX_VALUE);
+        DexOrderDBRequestForTrading dexOrderDBRequestForTrading = new DexOrderDBRequestForTrading(startTSEpoch, endTSEpoch, currencyType, (byte)1, 0 , Integer.MAX_VALUE);
+   
+        
         List<DexOrder> dexOrdersForInterval = service.getOrdersForTrading(dexOrderDBRequestForTrading); 
         
         // if (log.isTraceEnabled()) {
