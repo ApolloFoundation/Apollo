@@ -253,7 +253,7 @@ public class DexService {
     public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
         return dexOrderDao.getOrders(dexOrderDBRequest)
                 .stream()
-                .sorted(Comparator.comparingInt(DexOrder::getHeight))
+            .sorted(Comparator.comparingLong(DexOrder::getDbId))
                 .collect(Collectors.toList());
     }
 
@@ -522,8 +522,8 @@ public class DexService {
         return dexSmartContractService.approve(passphrase, secret, walletAddress, accountId);
     }
 
-    public String refund(String passphrase, String walletAddress, long accountId, byte[] secretHash) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.refund(secretHash, passphrase, walletAddress, accountId, false);
+    public String refundAndWithdraw(String passphrase, String walletAddress, long accountId, byte[] secretHash) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.refundAndWithdraw(secretHash, passphrase, walletAddress, accountId, false);
     }
 
     public boolean txExists(long aplTxId) {
@@ -845,8 +845,8 @@ public class DexService {
     }
 
 
-    public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.getUserFilledDeposits(user);
+    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserActiveDeposits(user);
     }
 
     public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {

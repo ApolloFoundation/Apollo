@@ -51,4 +51,13 @@ public final class PollOptionResult {
         this.weight += weight;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("PollOptionResult{");
+        sb.append("pollId=").append(pollId);
+        sb.append(", result=").append(result);
+        sb.append(", weight=").append(weight);
+        sb.append('}');
+        return sb.toString();
+    }
 }

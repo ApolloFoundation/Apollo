@@ -53,6 +53,9 @@
             <logger name="com.apollocurrency.aplwallet" level="debug" additivity="false">
                 <appender-ref ref="STDOUT" />
             </logger>
+            <logger name="com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderTest" level="trace" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
         </else>
     </if>
 </configuration>

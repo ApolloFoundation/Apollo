@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.41.4</version>
+    <version>1.41.5</version>
   </parent>
 
   <artifactId>apl-core</artifactId>
@@ -17,10 +17,6 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-validator-provider-11</artifactId>
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
@@ -111,6 +107,29 @@
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging-processor</artifactId>
+    </dependency>
+
+  <!--Validation dependencies-->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator-cdi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.thoughtworks.paranamer</groupId>
+      <artifactId>paranamer</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.el</groupId>
+      <artifactId>javax.el-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>javax.el</artifactId>
     </dependency>
 
     <!-- Swagger runtime dependencies -->

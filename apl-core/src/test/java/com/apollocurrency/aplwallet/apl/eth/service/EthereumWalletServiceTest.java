@@ -20,8 +20,8 @@ import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
-import org.web3j.protocol.core.methods.response.EthTransaction;
-import org.web3j.protocol.core.methods.response.Transaction;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
 import java.io.IOException;
@@ -55,14 +55,14 @@ class EthereumWalletServiceTest {
 
     @Test
     void testGetNumberOfConfirmationsWhenResponseAboutTransactionIsNull() {
-        mockTxRequest();
+        mockTxReceiptRequest();
 
         assertNoConfirmations();
     }
 
     @Test
     void testGetNumberOfConfirmationsWhenTransactionWithGivenHashWasNotFound() throws IOException {
-        mockTxRequestResponse();
+        mockTxReceiptRequestResponse();
 
         assertNoConfirmations();
     }
@@ -79,6 +79,12 @@ class EthereumWalletServiceTest {
     void testGetNumberOfConfirmationsWhenBlockNumberResponseIsEmpty() throws IOException {
         mockTxInResponse(BigInteger.valueOf(200));
         mockBlockNumberRequestResponse();
+
+        assertNoConfirmations();
+    }
+    @Test
+    void testGetNumberOfConfirmationsWhenBlockNumberResponseContainsError() throws IOException {
+        mockTxErrorInResponse("Node is not available");
 
         assertNoConfirmations();
     }
@@ -105,7 +111,7 @@ class EthereumWalletServiceTest {
 
     @Test
     void testGetNumberOfConfirmationsWhenIOErrorOccurred() throws IOException {
-        Request request = mockTxRequest();
+        Request request = mockTxReceiptRequest();
         doThrow(new IOException()).when(request).send();
 
         assertThrows(RuntimeException.class, () -> service.getNumberOfConfirmations(txHash));
@@ -117,9 +123,9 @@ class EthereumWalletServiceTest {
         assertEquals(-1, numberOfConfirmations);
     }
 
-    private Request mockTxRequest() {
+    private Request mockTxReceiptRequest() {
         Request mockRequest = mock(Request.class);
-        doReturn(mockRequest).when(web3j).ethGetTransactionByHash(txHash);
+        doReturn(mockRequest).when(web3j).ethGetTransactionReceipt(txHash);
         return mockRequest;
     }
     private Request mockEstimateGas() {
@@ -140,18 +146,24 @@ class EthereumWalletServiceTest {
         return ethEstimateGas;
     }
 
-    private EthTransaction mockTxRequestResponse() throws IOException {
-        Request request = mockTxRequest();
-        EthTransaction ethTransactionResponse = mock(EthTransaction.class);
+    private EthGetTransactionReceipt mockTxReceiptRequestResponse() throws IOException {
+        Request request = mockTxReceiptRequest();
+        EthGetTransactionReceipt ethTransactionResponse = mock(EthGetTransactionReceipt.class);
         doReturn(ethTransactionResponse).when(request).send();
         return ethTransactionResponse;
     }
 
     private void mockTxInResponse(BigInteger blockNumber) throws IOException {
-        EthTransaction ethTransaction = mockTxRequestResponse();
-        Transaction tx = mock(Transaction.class);
-        doReturn(tx).when(ethTransaction).getResult();
-        doReturn(blockNumber).when(tx).getBlockNumber();
+        EthGetTransactionReceipt ethTransaction = mockTxReceiptRequestResponse();
+        TransactionReceipt receipt = mock(TransactionReceipt.class);
+        doReturn(receipt).when(ethTransaction).getResult();
+        doReturn(blockNumber).when(receipt).getBlockNumber();
+    }
+    private void mockTxErrorInResponse(String error) throws IOException {
+        EthGetTransactionReceipt ethTransaction = mockTxReceiptRequestResponse();
+        Response.Error err = new Response.Error(0, error);
+        doReturn(err).when(ethTransaction).getError();
+        doReturn(true).when(ethTransaction).hasError();
     }
 
     private Request mockBlockNumberRequest() {

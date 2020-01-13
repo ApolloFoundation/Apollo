@@ -159,7 +159,7 @@ public class DexSmartContractService {
 
     }
 
-    public String refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
+    public String refundAndWithdraw(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
@@ -167,7 +167,7 @@ public class DexSmartContractService {
         if (txHash == null) {
             ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
             DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
-            txHash = dexContract.refund(secretHash, waitConfirmation);
+            txHash = dexContract.refundAndWithdraw(secretHash, waitConfirmation);
         }
         return txHash;
 
@@ -178,7 +178,7 @@ public class DexSmartContractService {
             return true;
         }
         try {
-            List<UserEthDepositInfo> deposits = getUserFilledDeposits(order.getFromAddress());
+            List<UserEthDepositInfo> deposits = getUserActiveDeposits(order.getFromAddress());
             BigDecimal expectedFrozenAmount = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
             for (UserEthDepositInfo deposit : deposits) {
                 if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().compareTo(expectedFrozenAmount) == 0) {
@@ -214,10 +214,10 @@ public class DexSmartContractService {
     }
 
 
-    public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
+    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserFilledDeposits(user);
+            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserActiveDeposits(user);
             Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> callResponse = call.send();
             return new ArrayList<>(UserEthDepositInfoMapper.map(callResponse));
         } catch (Exception e) {

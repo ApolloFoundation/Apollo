@@ -212,28 +212,33 @@ public class DexContract extends Contract {
                 });
     }
 
+    @Deprecated
+    /**
+     * If there are a lot of data function can froze.
+     * Use function getUserActiveDeposits.
+     */
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        },
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        },
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        }
-                ));
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
+            Arrays.<TypeReference<?>>asList(
+                new TypeReference<DynamicArray<Uint256>>() {
+                },
+                new TypeReference<DynamicArray<Uint256>>() {
+                },
+                new TypeReference<DynamicArray<Uint256>>() {
+                }
+            ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
-                new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
-                    @Override
-                    public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);
-                        return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
-                                convertToNative((List<Uint256>) results.get(0).getValue()),
-                            convertToNative((List<Uint256>) results.get(1).getValue()),
-                                convertToNative((List<Uint256>) results.get(2).getValue()));
-                    }
-                });
+            new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
+                @Override
+                public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
+                    List<Type> results = executeCallMultipleValueReturn(function);
+                    return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
+                        convertToNative((List<Uint256>) results.get(0).getValue()),
+                        convertToNative((List<Uint256>) results.get(1).getValue()),
+                        convertToNative((List<Uint256>) results.get(2).getValue()));
+                }
+            });
     }
 
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserActiveDeposits(String user) {
@@ -585,12 +590,12 @@ public class DexContract extends Contract {
         return refundedEventFlowable(filter);
     }
 
-    public String refundAndWithdraw(byte[] secretHash) {
+    public String refundAndWithdraw(byte[] secretHash, boolean waitConfirmation) {
         final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
                 FUNC_REFUNDANDWITHDRAW,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)),
                 Collections.<TypeReference<?>>emptyList());
-        return sendTx(function, BigInteger.ZERO);
+        return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
     public String refundAndWithdrawAll() {

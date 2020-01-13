@@ -838,7 +838,7 @@ public class DexOrderProcessor {
 
             for (String address : addresses) {
                 try {
-                    List<UserEthDepositInfo> deposits = dexService.getUserFilledDeposits(address);
+                    List<UserEthDepositInfo> deposits = dexService.getUserActiveDeposits(address);
 
                     for (UserEthDepositInfo deposit : deposits) {
                         DexOrder order = dexService.getOrder(deposit.getOrderId());
@@ -897,7 +897,7 @@ public class DexOrderProcessor {
                                                 log.debug("Swap {} have got refunding status {}", Convert.toHexString(swapData.getSecretHash()), r);
                                             }
                                             if (e != null) {
-                                                log.error("Unknown error occurred during refund", e);
+                                                log.error("Unknown error occurred during refundAndWithdraw", e);
                                             }
                                             return r;
                                         });
@@ -915,13 +915,13 @@ public class DexOrderProcessor {
 
     private boolean performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
         boolean success = true;
-        // refund + withdraw or just withdraw
+        // refundAndWithdraw + withdraw or just withdraw
         try {
             boolean depositExist = dexSmartContractService.isDepositForOrderExist(address, orderId);
             boolean refundCompleted = true;
             if (!depositExist) {
                 log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
-                refundCompleted = dexSmartContractService.refund(swapHash, passphrase, address, accountId, true) != null;
+                refundCompleted = dexSmartContractService.refundAndWithdraw(swapHash, passphrase, address, accountId, true) != null;
                 if (!refundCompleted) {
                     log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
                     success = false;
