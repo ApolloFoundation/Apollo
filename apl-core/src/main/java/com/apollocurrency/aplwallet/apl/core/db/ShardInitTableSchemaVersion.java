@@ -15,7 +15,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "DB_ID BIGINT not null, " +
                         "ID BIGINT not null, " +
                         "VERSION INTEGER not null, " +
-                        "TIMESTAMP INTEGER not null, " +
+                        "\"TIMESTAMP\" INTEGER not null, " +
                         "PREVIOUS_BLOCK_ID BIGINT, " +
                         "TOTAL_AMOUNT BIGINT not null, " +
                         "TOTAL_FEE BIGINT not null, " +

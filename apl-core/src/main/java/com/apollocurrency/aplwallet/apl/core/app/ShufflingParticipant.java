@@ -32,6 +32,8 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -132,10 +134,13 @@ public final class ShufflingParticipant {
 
         @Override
         public void save(Connection con, ShufflingData shufflingData) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement(
+            try (
+                    @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                    PreparedStatement pstmt = con.prepareStatement(
                     "INSERT INTO shuffling_data (shuffling_id, account_id, data, "
                             + "transaction_timestamp, height) "
-                            + "VALUES (?, ?, ?, ?, ?)")) {
+                            + "VALUES (?, ?, ?, ?, ?)")
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, shufflingData.getShufflingId());
                 pstmt.setLong(++i, shufflingData.getAccountId());
@@ -217,10 +222,13 @@ public final class ShufflingParticipant {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
                 + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest) "
                 + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.shufflingId);
             pstmt.setLong(++i, this.accountId);
