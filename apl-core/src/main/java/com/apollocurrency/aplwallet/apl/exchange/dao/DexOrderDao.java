@@ -91,7 +91,7 @@ public interface DexOrderDao {
             "AND (offer.type = :requestedType) " +
             "AND (offer.status = 5) " +
             "AND (offer.pair_currency = :pairCur) " +
-            "ORDER BY offer.finish_time ASC " +
+            "ORDER BY offer.height ASC " +
             "OFFSET :offset LIMIT :limit "
     )
     @RegisterRowMapper(DexOrderMapper.class)
