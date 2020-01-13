@@ -1,18 +1,14 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright © 2018-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TradingDataOutputUpdatedDTO;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 
 /**
  *
- * @author nemez
+ * @author Serhiy Lymar
  */
 public class TradingDataOutputUpdatedToDtoConverter implements Converter< TradingDataOutputUpdated, TradingDataOutputUpdatedDTO > {
 
