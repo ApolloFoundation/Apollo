@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
@@ -15,8 +16,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.Array;
 import java.sql.Connection;
@@ -27,12 +30,15 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -252,13 +258,9 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                         } else {
                                             throw new RuntimeException("Unsupported array type: " + item.getClass());
                                         }
-                                        final StringBuilder appendedValue = outputValue.append(objectValue);
-                                        if (j == objectArray.length - 1) {
-                                            outputValue.append(arrayEndToken);
-                                        } else {
-                                            appendedValue.append(fieldSeparatorWrite);
-                                        }
+                                        outputValue.append(objectValue);
                                     }
+                                    outputValue.append(arrayEndToken);
                                     o = outputValue.toString();
                                     break;
                                 } else {
