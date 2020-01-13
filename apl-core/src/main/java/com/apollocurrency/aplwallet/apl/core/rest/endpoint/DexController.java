@@ -555,12 +555,12 @@ public class DexController {
 
         log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
         
-//        Epoch timestamp: 1569888000
-//        Timestamp in milliseconds: 1569888000000
-//        Date and time (GMT): Tuesday, October 1, 2019 12:00:00 AM
-//        Date and time (your time zone): Tuesday, October 1, 2019 3:00:00 AM GMT+03:00
 
-        if (to <= 1569888000){
+        // the date of DEX release - 30.09.. taking 25 as an upper limit
+        //1569369600
+        //Is equivalent to: 09/25/2019 @ 12:00am (UTC)
+
+        if (to <= 1569369600){
              log.debug("flushing: ");
             TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
             tdo.setC(null);
