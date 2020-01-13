@@ -22,11 +22,11 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import java.util.Set;
-import java.util.UUID;
-
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import java.util.Set;
+import java.util.UUID;
 
 public interface Peer extends Comparable<Peer> {
 
@@ -47,7 +47,7 @@ public interface Peer extends Comparable<Peer> {
             return code;
         }
     }
-    
+
 
     boolean providesService(Service service);
 
@@ -56,9 +56,9 @@ public interface Peer extends Comparable<Peer> {
     String getHost();
 
     int getPort();
-    
+
     String getHostWithPort();
-    
+
     String getAnnouncedAddress();
 
     PeerState getState();
@@ -114,7 +114,7 @@ public interface Peer extends Comparable<Peer> {
     boolean isInboundSocket();
 
     boolean isOutboundSocket();
-    
+
     boolean isOpenAPI();
 
     boolean isApiConnectable();
@@ -128,8 +128,8 @@ public interface Peer extends Comparable<Peer> {
     JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
 
     public boolean isTrusted();
-    
+
     public PeerTrustLevel getTrustLevel();
-    
+
     public long getServices();
 }

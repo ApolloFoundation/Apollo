@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.AccountAssetOrderDTO;
-import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

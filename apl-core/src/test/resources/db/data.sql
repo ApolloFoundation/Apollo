@@ -35,7 +35,8 @@ delete from phasing_approval_tx;
 delete from dex_offer;
 delete from mandatory_transaction;
 delete from dex_contract;
-delete from dex_trade;
+delete from dex_transaction;
+delete from user_error_message;
 
 INSERT INTO PUBLIC.BLOCK
 (DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -168,9 +169,9 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458)
 ;
-INSERT into version values (314);
-INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
-INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
+INSERT into version values (325);
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+INSERT INTO FTL.INDEXES (schema, table, columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
 
 INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (1, -8446737619314270165, '5E8D43FF197F8B554A59007F9E6F73E10BFF4DDA9906F8389D015F31D0ABC433', 1000, true);
@@ -377,7 +378,12 @@ INSERT INTO dex_offer
 (1010      , 2               , 1    , 100        , 0,               200000      , 2              ,160000000  ,6500        , 3      , 110    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
 (1020      , 3               , 0    , 200        , 0,               100000      , 2              ,150000000  ,7000        , 0      , 121    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
 (1030      , 4               , 1    , 100        , 0,               400000      , 1              ,1000000    ,8000        , 4      , 121    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
-(1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   )
+(1040      , 5               , 0    , 100        , 0,               600000      , 1              ,1000000    ,11000       , 0      , 122    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1050      , 6               , 0    , 100        , 0,               400000      , 2              ,10000      ,13001       , 5      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1060      , 7               , 0    , 100        , 0,               500000      , 1              ,54000000   ,15001       , 4      , 123    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   ),
+(1070      , 8               , 0    , 200        , 0,               44000       , 2              ,430000     ,16001       , 1      , 123    ,'0x777BE94ea170AfD894Dd58e9634E442F6C5602EF' ,'APL-T69E-CTDG-8TYM-DKB5H'                     , TRUE   ),
+(1080      , 9               , 1    , 100        , 0,               43000       , 1              ,7600000    ,17001       , 5      , 124    ,'APL-K78W-Z7LR-TPJY-73HZK'                   ,'0x602242c68640e754677b683e20a2740f8f95f7d3'   , TRUE   ),
+(1090      , 10              , 0    , 100        , 0,               6550000     , 1              ,7400000    ,19001       , 5      , 124    ,'0x602242c68640e754677b683e20a2740f8f95f7d3' ,'APL-K78W-Z7LR-TPJY-73HZK'                     , TRUE   )
 ;
 
 INSERT INTO mandatory_transaction
@@ -389,10 +395,10 @@ INSERT INTO mandatory_transaction
 INSERT INTO dex_contract
 (db_id     , id                     , offer_id               , counter_offer_id         ,     secret_hash                                                       , height    , latest,  deadline_to_reply, status, sender                , recipient             , encrypted_secret                                                                                                                      ,   transfer_tx_id                                                      ,   counter_transfer_tx_id                                              ) VALUES
 (10        , -3625894990594689368   , -5227805726286506078   , -7138882269097972721     , 'F41A9D03745D78C8EFD682B4F6030FD70623E5C38AE2115D53F2C94F483AA121'    , 100       , false , 53497864          , 1     , -582612439131997299   , -582612439131997299   , 'B4F38C90AB6F36FC76013A7A69152186E2C44EF73D188A041770C253D6CCD1B88E24F37AB3C0BFD77FC74A4600C4090AEA1DC1A297A2AA3400A330CB6F670FEC'    , null                                                                  , '0x73949de85a63ed24457fc4188c8876726024a3f67fa673389a7aae47698e61bd'  ),
-(20        , -7277152511870517934   , 4066034979755747272   , 6794334481055229134       , '8E0F875179DD784241BABDC56E1380370620DB1C8AA1B7F765E2B98CD3FC2840'    , 200       , TRUE  , 53498868          , 2     , 7477442401604846627   , 7477442401604846627   , 'E670C46452E18FE2224EDF5FBA888AFFEF6060E0EFEEB10862BCFDEBFCFCF997DC37443B1FF44C79977F484E4B4E2E94404620145EBEEE5BCE7A2F609B453E13'    , '12380311258696115355'                                                , '0xe50bd6b4c62d8fb167de66c11a7a57cbcc97a2e945ddd3829d7cf0f09fda7b14'  ),
+(20        , -7277152511870517934   , 4066034979755747272   , 6794334481055229134       , '8E0F875179DD784241BABDC56E1380370620DB1C8AA1B7F765E2B98CD3FC2840'    , 200       , TRUE  , 53499868          , 2     , 7477442401604846627   , 7477442401604846627   , 'E670C46452E18FE2224EDF5FBA888AFFEF6060E0EFEEB10862BCFDEBFCFCF997DC37443B1FF44C79977F484E4B4E2E94404620145EBEEE5BCE7A2F609B453E13'    , '12380311258696115355'                                                , '0xe50bd6b4c62d8fb167de66c11a7a57cbcc97a2e945ddd3829d7cf0f09fda7b14'  ),
 (30        , 8455581613897449491    , 5339180579805180746   , -5842203753269117069      , '509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 300       , TRUE  , 53499882          , 2     , 7477442401604846627   , -582612439131997299   , 'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    , '0x8540339763b19265f394140544fe060711b1e0623860d8b99e21ffc769574f50'  , '4340657620930323843'                                                 ),
 (40        , 7952648026362992483    , 6735355323156389437   , 3332621836748752862       , null                                                                  , 400       , false , 53499983          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
-(50        , 7952648026362992483    , -3102348866139658976  , -4688237877525140429      , null                                                                  , 400       , false , 53500038          , 0     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
+(50        , 7952648026362992483    , 6735355323156389437   , 3332621836748752862       , '509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 401       , true  , 53500038          , 1     , 7477442401604846627   , -582612439131997299   , 'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    ,   null                                                                , '100'                                                                ),
 (60        , 8455581613897449491    , -2195048504635381606  , 6188327480147022018       , null                                                                  , 500       , false , 53500042          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (70        , -6988530272040477515   , -5716376597917953548  , 3332621836748752862       , null                                                                  , 500       , false , 53500057          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (80        , 4590047955464765433    , 6876238954523300917   , -4688237877525140429      , null                                                                  , 500       , false , 53497715          , 0     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
@@ -405,16 +411,18 @@ INSERT INTO dex_contract
 (150       , -2471101731518812718   , 8603248567538608464   , -6968465014361285240      , null                                                                  , 800       , TRUE  , 53497245          , 3     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  )
 ;
 
-INSERT INTO dex_trade
-(DB_ID  , TRANSACTION_ID        , SENDER_OFFER_ID       , RECEIVER_OFFER_ID     , SENDER_OFFER_TYPE , SENDER_OFFER_CURRENCY , SENDER_OFFER_AMOUNT   , PAIR_CURRENCY , PAIR_RATE , FINISH_TIME   , HEIGHT    ) VALUES
-(1      , -4051151109082391457  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409395      , 100       ),
-(2      , -2205141163302755096  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(3      , -1685152182717622930  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(4      , -2122633089739232717  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(5      , 7065684111058088763   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409447      , 200       ),
-(6      , -606154572201429269   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409448      , 300       ),
-(7      , 636192110663088186    , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409448      , 300       ),
-(8      , -7687407464048556007  , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409464      , 300       ),
-(9      , 3468015179521711523   , 7477442401604846627   , -582612439131997299   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409563      , 400       ),
-(10     , 6490420391026496458   , -582612439131997299   , 7477442401604846627   , 0                 , 0                     , 5000000               , 1             , 0.002     , 53409723      , 400       )
+
+
+
+INSERT INTO dex_transaction
+(db_id , hash ,                                                                                                                                 tx ,  operation , params , account , timestamp ) VALUES
+(100   , X'a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26' , X'ff', 0,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 250),
+(200   , X'203b36aac62037ac7c4502aa023887f7fcae843c456fde083e6a1dc70a29f3d61a73f57d79481f06e27ea279c74528e1ba6b1854d219b1e3b255729889ca5926' , X'ff', 1,        100,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 300),
+(300   , X'05ae03fd135de159cc512d0a34317d0c5270fc9d0c02ebc648828dec221272d8f20f83485bb16d0dc58acbc4a84ccc8363ef7413885936c8ee7cc943ef65cbd1' , X'ff', 0,        102,    '0x0398E119419E0D7792c53913d3f370f9202Ae137' , 400)
+;
+INSERT INTO user_error_message
+(db_id,           address,                                      error,              operation,   details,                                                            timestamp) VALUES
+(100,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Invalid transaction' ,'deposit',  '900'                                                             , 1000),
+(200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
+(300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
 ;

@@ -18,7 +18,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @DisplayName("TaggedData")
@@ -38,27 +37,29 @@ public class TestTaggedData extends TestBaseOld {
         this.Name = RandomStringUtils.randomAlphabetic(5);
         this.description = RandomStringUtils.randomAlphabetic(5);
         this.channel = RandomStringUtils.randomAlphabetic(5);
-        StringBuilder tags =  new StringBuilder();
+        StringBuilder tags = new StringBuilder();
         String symbols = "!@$^&*()_+{}:'./,\"";
-        for (int i = 0; i < RandomUtils.nextInt(2,5) ; i++) {
-            if (i > 0) {tags.append(symbols.charAt(RandomUtils.nextInt(0,symbols.length())));}
-            tags.append(RandomStringUtils.randomAlphabetic(3,5));
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
+            if (i > 0) {
+                tags.append(symbols.charAt(RandomUtils.nextInt(0, symbols.length())));
+            }
+            tags.append(RandomStringUtils.randomAlphabetic(3, 5));
         }
         this.tag = tags.toString();
 
-        log.info("Data Name: {}",Name);
-        log.info("Data Tag: {}",tag);
-        log.info("Data description: {}",description);
-        log.info("Data channel: {}",channel);
+        log.info("Data Name: {}", Name);
+        log.info("Data Tag: {}", tag);
+        log.info("Data description: {}", description);
+        log.info("Data channel: {}", channel);
     }
 
     @DisplayName("upload TaggedData")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    void TaggedDataTest(Wallet wallet){
+    void TaggedDataTest(Wallet wallet) {
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
         log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
-        CreateTransactionResponse uploadData =  uploadTaggedData(wallet, Name, description, tag, channel, image);
+        CreateTransactionResponse uploadData = uploadTaggedData(wallet, Name, description, tag, channel, image);
         verifyCreatingTransaction(uploadData);
         verifyTransactionInBlock(uploadData.getTransaction());
         int parsedTags = getTaggedData(uploadData.getTransaction()).getParsedTags().size();
@@ -66,7 +67,7 @@ public class TestTaggedData extends TestBaseOld {
         assertEquals(Name, getTaggedData(uploadData.getTransaction()).getName(), "names are not the same");
         assertEquals(description, getTaggedData(uploadData.getTransaction()).getDescription(), "descriptions are not the same");
         assertEquals(channel, getTaggedData(uploadData.getTransaction()).getChannel(), "channels are not the same");
-        assertEquals(tagsQuantity+parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
+        assertEquals(tagsQuantity + parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
         assertEquals(Name, searchTaggedDataByName(Name).getData().get(0).getName(), "search by name doesn't work");
         log.info(" Tag from getTaggedData =  {} ", getTaggedData(uploadData.getTransaction()).getParsedTags().get(0));
         assertEquals(getTaggedData(uploadData.getTransaction()).getParsedTags().get(0), searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0), "search by tag doesn't work");
@@ -77,10 +78,10 @@ public class TestTaggedData extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
     @Disabled
-    void extendTaggedDataTest(Wallet wallet){
+    void extendTaggedDataTest(Wallet wallet) {
         Long tagsQuantity = getDataTagCount().getNumberOfDataTags();
         log.info("Tags quantity: {} before uploading new TaggedData", tagsQuantity);
-        CreateTransactionResponse uploadData =  uploadTaggedData(wallet, Name, description, tag, channel, image);
+        CreateTransactionResponse uploadData = uploadTaggedData(wallet, Name, description, tag, channel, image);
         verifyCreatingTransaction(uploadData);
         verifyTransactionInBlock(uploadData.getTransaction());
         int parsedTags = getTaggedData(uploadData.getTransaction()).getParsedTags().size();
@@ -88,7 +89,7 @@ public class TestTaggedData extends TestBaseOld {
         assertEquals(Name, getTaggedData(uploadData.getTransaction()).getName(), "names are not the same");
         assertEquals(description, getTaggedData(uploadData.getTransaction()).getDescription(), "descriptions are not the same");
         assertEquals(channel, getTaggedData(uploadData.getTransaction()).getChannel(), "channels are not the same");
-        assertEquals(tagsQuantity+parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
+        assertEquals(tagsQuantity + parsedTags, getDataTagCount().getNumberOfDataTags(), "quantity of tags are different");
         assertEquals(Name, searchTaggedDataByName(Name).getData().get(0).getName(), "search by name doesn't work");
         log.info(" Tag from getTaggedData =  {} ", getTaggedData(uploadData.getTransaction()).getParsedTags().get(0));
         log.info(" Tag from searchTaggedData =  {} ", searchTaggedDataByTag(tag).getData().get(0).getParsedTags().get(0));

@@ -3,14 +3,14 @@
  */
 package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
-import java.math.BigInteger;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -109,7 +109,7 @@ public class PeerValidityDecisionMaker {
      * Gets all peers that have most probable hash value
      * @return list of peers with most probable hash value
      */
-    public Set<PeerFileHashSum> getValidPeers(){
+    public Set<PeerFileHashSum> getValidPeers() {
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getByHash(mp.getKey());
     }
@@ -118,7 +118,7 @@ public class PeerValidityDecisionMaker {
      * Gets all peers that have hash values different from most probale
      * @return list of bad peers
      */
-    public Set<PeerFileHashSum> getInvalidPeers(){
+    public Set<PeerFileHashSum> getInvalidPeers() {
         Map.Entry<String, ProbabInfo> mp = getMostProbable();
         return stats.getAllExceptHash(mp.getKey());      
     }

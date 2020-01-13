@@ -36,7 +36,7 @@ public class DurableTaskInfo {
     public String decription;
     @Schema(name="Is task critical", description="Taks is critical and should be displayed on top of UI window")
     public Boolean isCrititcal = false;
-    @Schema(name="Task state", description="Task state in one line in human readable form",
+    @Schema(name = "Task state", description = "Task state in one line in human readable form",
             allowableValues = {"Started","In progress","Finished","Cancelled","Paused"})
     public String stateOfTask;
     @Schema(name="Task start date", description="Task start date and time")
@@ -45,8 +45,8 @@ public class DurableTaskInfo {
     public Date finished;
     @Schema(name="Task run duration", description="Task run duration, milliseconds")
     public Long durationMS;
-    @Schema(name="Task completion percent", description="Task completion percent")
+    @Schema(name = "Task completion percent", description = "Task completion percent")
     public Double percentComplete;
-    @Schema(name="Task messages", description="Task messages list")
+    @Schema(name = "Task messages", description = "Task messages list")
     public List<String> messages=new ArrayList<>();
 }

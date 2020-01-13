@@ -18,8 +18,9 @@ import lombok.ToString;
 import java.util.List;
 import java.util.Set;
 
-@Schema(name="AccountDTO", description="Information about account, asset, lease, balance etc")
-@Getter @Setter
+@Schema(name = "AccountDTO", description = "Information about account, asset, lease, balance etc")
+@Getter
+@Setter
 @NoArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -52,7 +53,7 @@ public class AccountDTO extends BaseDTO {
     private String currentLessee;
     private Integer currentLeasingHeightFrom;
     private Integer currentLeasingHeightTo;
-    private String  nextLessee;
+    private String nextLessee;
     private Integer nextLeasingHeightFrom;
     private Integer nextLeasingHeightTo;
     //account lessors
@@ -74,7 +75,7 @@ public class AccountDTO extends BaseDTO {
     }
 
     @JsonIgnore
-    public long getId(){
+    public long getId() {
         return Long.parseLong(account);
     }
 

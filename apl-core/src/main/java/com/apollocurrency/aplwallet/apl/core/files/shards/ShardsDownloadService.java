@@ -4,32 +4,33 @@
 package com.apollocurrency.aplwallet.apl.core.files.shards;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
+import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.FileEventData;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import java.util.ArrayList;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfo;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.enterprise.event.Event;
+import javax.enterprise.event.ObservesAsync;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import com.apollocurrency.aplwallet.apl.core.files.FileDownloadEvent;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.enterprise.event.ObservesAsync;
 
 /**
  * Service for background downloading of shard files and related files
@@ -48,14 +49,15 @@ public class ShardsDownloadService {
     private final PropertiesHolder propertiesHolder;
     private final ShardNameHelper shardNameHelper = new ShardNameHelper();
     private final Map<Long, ShardDownloadStatus> shardDownloadStatuses = new HashMap<>();
-    private static final int MIN_SHARDING_PEERS=2;
+    private static final int MIN_SHARDING_PEERS = 2;
+    public static final String FORCED_SHARD_ID_ENV = "APOLLO_FORCE_IMPORT_SHARD_ID";
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
-            BlockchainConfig blockchainConfig,
-            Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
-            FileDownloadService fileDownloadService
+                                 BlockchainConfig blockchainConfig,
+                                 Event<ShardPresentData> presentDataEvent,
+                                 PropertiesHolder propertiesHolder,
+                                 FileDownloadService fileDownloadService
     ) {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
@@ -65,12 +67,12 @@ public class ShardsDownloadService {
     }
 
     public boolean getShardingInfoFromPeers() {
-        Map<String,ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
-        if(shardInfoByPeers.size()<MIN_SHARDING_PEERS){
+        Map<String, ShardingInfo> shardInfoByPeers = shardInfoDownloader.getShardInfoFromPeers();
+        if (shardInfoByPeers.size() < MIN_SHARDING_PEERS) {
             return false;
         }
         shardInfoDownloader.processAllPeersShardingInfo();
-        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId) -> 
+        shardInfoDownloader.getSortedByIdShards().keySet().forEach((sId) ->
         {
             ShardInfo si = shardInfoDownloader.getShardInfo(sId);
             Set<String> shardFiles = new HashSet<>();
@@ -84,7 +86,7 @@ public class ShardsDownloadService {
 
     public void onAnyFileDownloadEvent(@ObservesAsync @FileDownloadEvent FileEventData fileData) {
         //TODO: process events carefully
-        for(Long shardId: shardDownloadStatuses.keySet()){
+        for (Long shardId : shardDownloadStatuses.keySet()) {
             ShardDownloadStatus status = shardDownloadStatuses.get(shardId);
             if(fileData.fileOk){
               status.setStatus(fileData.fileId, ShardDownloadStatus.OK);
@@ -97,7 +99,7 @@ public class ShardsDownloadService {
                     fireShardPresentEvent(shardId);
                     status.setSigalFired(true);
                 }
-            }else if(status.isDownloadCompleted()) {                
+            }else if(status.isDownloadCompleted()) {
                 if(!status.isSigalFired()){
                     fireNoShardEvent(shardId,"SHARDING: shard download failed");
                     status.setSigalFired(true);
@@ -130,6 +132,10 @@ public class ShardsDownloadService {
         ShardNameHelper snh = new ShardNameHelper();
         String fileId = snh.getFullShardId(shardId, myChainId);
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
+
+        if(si==null){//forced shard import
+            si = new ShardInfo(); //TODO: forced additional files
+        }
         ShardPresentData shardPresentData = new ShardPresentData(
                 shardId,
                 fileId,
@@ -171,7 +177,7 @@ public class ShardsDownloadService {
             log.warn("Shard {} can not be loaded from peers", shardId);
             return result;
         }
-        
+
         // check if shard files exist on local node
         ShardInfo si = shardInfoDownloader.getShardInfo(shardId);
         List<String> filesToDownload = checkShardDownloadedAlready(si);
@@ -189,14 +195,27 @@ public class ShardsDownloadService {
         });
         return result;
     }
-    
+
     public static Map<Long, Double> sortByValue(final Map<Long, Double> w) {
         return w.entrySet()
                 .stream()
                 .sorted((Map.Entry.<Long, Double>comparingByValue().reversed()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
-    
+
+    private Long readForcedShardId(){
+        Long res = null;
+        String envVal = System.getProperty(FORCED_SHARD_ID_ENV);
+        if(envVal!=null){
+           try{
+             res = Long.parseLong(envVal);
+           }catch(NumberFormatException ex){
+               log.debug("Invalid shard ID:{}",envVal);
+           }
+        }
+        return res;
+    }
+
     public FileDownloadDecision tryDownloadLastGoodShard() {
         boolean goodShardFound = false;
         log.debug("SHARDING: prepare and start downloading of last good shard in the network...");
@@ -207,10 +226,16 @@ public class ShardsDownloadService {
             result = FileDownloadDecision.NoPeers;
             return result;
         }
+        Long forcedShardImportId = readForcedShardId();
+        if(forcedShardImportId!=null){
+            log.debug("Defined {} to {}. Reading shard from disk",FORCED_SHARD_ID_ENV,forcedShardImportId);
+            fireShardPresentEvent(forcedShardImportId);
+            return FileDownloadDecision.AbsOK;
+        }
         if(!getShardingInfoFromPeers()){
             fireNoShardEvent(-1L, "SHARDING: no good shards foud in the network");
             result = FileDownloadDecision.NoPeers;
-            return result;            
+            return result;
         }
         if (shardInfoDownloader.getSortedByIdShards().isEmpty()) {
             result = FileDownloadDecision.NoPeers;
@@ -226,7 +251,7 @@ public class ShardsDownloadService {
             });
             for (Long shardId : sortByValue(shardWeights).keySet()) {
                 double w = shardWeights.get(shardId);
-                if(w>0){
+                if (w > 0) {
                     result = tryDownloadShard(shardId);
                     goodShardFound = isAcceptable(result);
                     if (goodShardFound) {

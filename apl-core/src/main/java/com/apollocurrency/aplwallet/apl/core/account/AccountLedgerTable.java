@@ -53,27 +53,27 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
 
     /**
-         * Trim the account ledger table
-         *  @param   height                  Trim height
-         *
+     * Trim the account ledger table
+     *  @param   height                  Trim height
+     *
      */
-        @Override
-        public void trim(int height) {
-            if (trimKeep <= 0)
-                return;
-            TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
-            try (Connection con = dataSource.getConnection();
-                 @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
-                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
-                pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
-                int trimmed;
-                do {
-                    trimmed = pstmt.executeUpdate();
-                    dataSource.commit(false);
-                } while (trimmed >= propertiesHolder.BATCH_COMMIT_SIZE());
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
+    @Override
+    public void trim(int height) {
+        if (trimKeep <= 0)
+            return;
+        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
+        try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
+             PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
+            pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
+            int trimmed;
+            do {
+                trimmed = pstmt.executeUpdate();
+                dataSource.commit(false);
+            } while (trimmed >= propertiesHolder.BATCH_COMMIT_SIZE());
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
         }
-    
+    }
+
 }

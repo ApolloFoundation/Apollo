@@ -16,7 +16,8 @@
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 10000
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeight": 5000
     },
     "blockchainProperties": [
       {
@@ -43,12 +44,8 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 500000
-        },
-        "featuresHeightRequirement":{
-          "phasingApprovalTx": 1
         }
       }
     ]
   }
 ]
-

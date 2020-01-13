@@ -1,4 +1,5 @@
 package com.apollocurrency.aplwallet.api.response;
+
 import com.apollocurrency.aplwallet.api.dto.TaggedDataDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class AllTaggedDataResponse extends ResponseBase{
+public class AllTaggedDataResponse extends ResponseBase {
     private List<TaggedDataDTO> data;
 }

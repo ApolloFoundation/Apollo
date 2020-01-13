@@ -222,7 +222,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
                 }
             }
             if (rs.next() && dbKey!=null) {
-              log.debug("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
+              log.debug("Multiple records found. Table: {} Key: {}", table, dbKey.toString());
               throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
             }
             return t;
@@ -265,9 +265,9 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
-                    + "AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
+                    + " AND a.height <= ?" + (multiversion ? " AND (a.latest = TRUE OR (a.latest = FALSE "
+                    + " AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause() + " AND b.height > ?) "
+                    + " AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
                     + " AND b.height <= ? AND b.height > a.height))) "
                     : " ") + sort
                     + DbUtils.limitsClause(from, to));

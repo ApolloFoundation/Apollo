@@ -20,23 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -68,6 +51,23 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffling {
     /**
@@ -327,8 +327,8 @@ public final class Shuffling {
                     return;
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
-                List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
-                LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
+            List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
+            LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
@@ -349,7 +349,7 @@ public final class Shuffling {
                         shufflingTable.insert(shuffling);
                     }
                 }
-                LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
+            LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
         }
 
@@ -815,6 +815,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_DONE);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Done = {} , height = {}", Long.toUnsignedString(this.id), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was distributed", Long.toUnsignedString(id));
@@ -875,6 +876,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_CANCELLED);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Cancelled = {} , height = {} / {}", Long.toUnsignedString(this.id), block.getHeight(), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was cancelled, blaming account {}", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));
