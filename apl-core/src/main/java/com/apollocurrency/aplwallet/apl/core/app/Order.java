@@ -232,7 +232,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 
@@ -353,7 +353,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 

@@ -9,30 +9,28 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
  * @author al
  */
-@Singleton
-public class PublicKeyTable extends EntityDbTable<PublicKey> {
-    private static final PublicKeyDbFactory publicKeyDbKeyFactory = new PublicKeyDbFactory("account_id");
+public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDbTableInterface<PublicKey> {
 
     private final Blockchain blockchain;
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
+        private final Blockchain blockchain;
 
-        public PublicKeyDbFactory(String idColumn) {
+        public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
             super(idColumn);
+            this.blockchain = blockchain;
         }
 
         @Override
@@ -45,18 +43,12 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> {
 
         @Override
         public PublicKey newEntity(DbKey dbKey) {
-            Blockchain blockchain = CDI.current().select(Blockchain.class).get();
             return new PublicKey(((LongKey) dbKey).getId(), null, blockchain.getHeight());
         }
     }
 
-    public static DbKey newKey(long id){
-        return publicKeyDbKeyFactory.newKey(id);
-    }
-
-    @Inject
     public PublicKeyTable(Blockchain blockchain) {
-        super("public_key", publicKeyDbKeyFactory, true, null, false);
+        super("public_key", new PublicKeyDbFactory("account_id", blockchain), true, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 

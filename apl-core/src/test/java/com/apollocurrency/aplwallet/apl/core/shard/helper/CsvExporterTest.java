@@ -189,7 +189,7 @@ class CsvExporterTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            AccountTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
+            AccountTable.class, AccountGuaranteedBalanceTable.class, AccountLedgerTable.class, DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
             GenesisPublicKeyTable.class, DexOrderTable.class,
@@ -215,6 +215,9 @@ class CsvExporterTest {
     ShardDao shardDao;
     @Inject
     AccountTable accountTable;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+
     @Inject
     PrunableMessageTable messageTable;
     @Inject
@@ -259,7 +262,7 @@ class CsvExporterTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(),null, null, blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         PhasingOnly.get(7995581942006468815L); // works OK!

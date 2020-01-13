@@ -132,7 +132,7 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY block_timestamp DESC, db_id DESC ";
     }
 

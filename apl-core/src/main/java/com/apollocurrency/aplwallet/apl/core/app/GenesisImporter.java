@@ -255,7 +255,7 @@ public class GenesisImporter {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         final String message = String.format("Total balance %f %s", (double) total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        final Account creatorAccount = Account.addOrGetAccount(CREATOR_ID, true);
+        final Account creatorAccount = Account.addGenesisAccount(CREATOR_ID);
         creatorAccount.apply(CREATOR_PUBLIC_KEY, true);
         creatorAccount.addToBalanceAndUnconfirmedBalanceATM(null, 0, -total);
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
@@ -295,7 +295,7 @@ public class GenesisImporter {
                     final byte[] publicKey = Convert.parseHexString(jsonPublicKey);
                     final long id = Account.getId(publicKey);
                     log.trace("AccountId = '{}' by publicKey string = '{}'", id, jsonPublicKey);
-                    final Account account = Account.addOrGetAccount(id, true);
+                    final Account account = Account.addGenesisAccount(id);
                     account.apply(publicKey, true);
                     if (count++ % 100 == 0) {
                         dataSource.commit(false);
@@ -356,7 +356,7 @@ public class GenesisImporter {
                     jsonParser.nextToken();
                     final long balanceValue = jsonParser.getLongValue();
                     log.trace("Parsed json balance: {} - {}", currentName, balanceValue);
-                    final Account account = Account.addOrGetAccount(Long.parseUnsignedLong(currentName), true);
+                    final Account account = Account.addGenesisAccount(Long.parseUnsignedLong(currentName));
                     account.addToBalanceAndUnconfirmedBalanceATM(null, 0, balanceValue);
                     totalAmount += balanceValue;
                     if (count++ % 100 == 0) {

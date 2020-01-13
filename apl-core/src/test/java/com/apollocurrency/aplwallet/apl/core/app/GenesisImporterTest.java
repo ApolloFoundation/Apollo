@@ -118,14 +118,15 @@ class GenesisImporterTest {
         doReturn(100L).when(config).getInitialBaseTarget();
         genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         accountTable = new AccountTable();
-        publicKeyTable = new PublicKeyTable(blockchain);
-        publicKeyTable.init();
-        //TODO: propertiesHolder is never used in Account.init()
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null,
-                null, blockchain, null, publicKeyTable, accountTable, null, null);
+        accountTable.init();
         //TODO: propertiesHolder is empty, default values will be used
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
+        publicKeyTable = new PublicKeyTable(blockchain);
+        //TODO: propertiesHolder is never used in Account.init()
+        Account.init(extension.getDatabaseManager(), null,
+                null, blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
+
         testData = new BalancesPublicKeysTestData();
 
         propertiesHolder.init(

@@ -109,7 +109,7 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecrypt() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
+        Account.init(extension.getDatabaseManager(), null, null, blockchain, null,null, null,null);
         byte[] decryptedBytes = service.decrypt(data.MESSAGE_2, data.BOB_PASSPHRASE);
         assertEquals(data.DECRYPTED_MESSAGE_2, new String(decryptedBytes));
     }
@@ -133,14 +133,14 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecryptUsingKeySeedByRecipient() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
+        Account.init(extension.getDatabaseManager(), null, null, blockchain, null,null, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.BOB_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }
 
     @Test
     void testDecryptUsingKeySeedBySender() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
+        Account.init(extension.getDatabaseManager(), null, null, blockchain, null,null, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.CHUCK_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }

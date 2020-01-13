@@ -5,26 +5,25 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  *
  * @author al
  */
 public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
-    
+
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
         public AccountAssetDbKeyFactory(String idColumnA, String idColumnB) {
@@ -35,7 +34,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         public DbKey newKey(AccountAsset accountAsset) {
             return accountAsset.dbKey;
         }
-    } 
+    }
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
     private static final AccountAssetTable accountAssetTable = new AccountAssetTable();
 
@@ -43,7 +42,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
-    
+
     public static AccountAssetTable getInstance(){
         return accountAssetTable;
     }
@@ -66,9 +65,9 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             pstmt.setLong(++i, accountAsset.unconfirmedQuantityATU);
             pstmt.setInt(++i, Account.blockchain.getHeight());
             pstmt.executeUpdate();
-        }       
+        }
     }
-    
+
     public void save(AccountAsset accountAsset) {
         Account.checkBalance(accountAsset.accountId, accountAsset.quantityATU, accountAsset.unconfirmedQuantityATU);
         if (accountAsset.quantityATU > 0 || accountAsset.unconfirmedQuantityATU > 0) {
@@ -90,7 +89,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY quantity DESC, account_id, asset_id ";
     }
 
@@ -130,7 +129,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), from, to, " ORDER BY quantity DESC, account_id ");
     }
 
-  
+
     public static long getAssetBalanceATU(long accountId, long assetId, int height) {
         AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
         return accountAsset == null ? 0 : accountAsset.quantityATU;
@@ -149,5 +148,5 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     public static DbIterator<AccountAsset> getAssetAccounts(long assetId, int height, int from, int to) {
         return accountAssetTable.getManyBy(new DbClause.LongClause("asset_id", assetId), height, from, to, " ORDER BY quantity DESC, account_id ");
     }
-  
+
 }

@@ -69,7 +69,7 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY block_timestamp DESC, height DESC, db_id DESC ";
     }
 

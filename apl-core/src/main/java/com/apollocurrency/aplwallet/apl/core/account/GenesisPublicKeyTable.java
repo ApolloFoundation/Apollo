@@ -3,14 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.account;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -18,15 +10,21 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Objects;
+
 /**
  * @author al
  */
-@Singleton
+//@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
 
-        private Blockchain blockchain;
+        private final Blockchain blockchain;
 
         public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
             super(idColumn);
@@ -47,11 +45,11 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         }
     }
 
-    private Blockchain blockchain;
+    private final Blockchain blockchain;
 
-    @Inject
+    //@Inject
     public GenesisPublicKeyTable(Blockchain blockchain) {
-        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, false);
+        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
