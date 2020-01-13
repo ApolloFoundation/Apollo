@@ -507,11 +507,11 @@ public class DexService {
 
     public boolean swapIsRefundable(byte[] hash, String walletAddress) throws AplException.ExecutiveProcessException {
         SwapDataInfo swapData = dexSmartContractService.getSwapData(hash);
-        return swapData.getAmount() != null && swapData.getAddressFrom().equalsIgnoreCase(walletAddress) && timeService.systemTime() > swapData.getTimeDeadLine();
+        return swapData.getTimeStart() != 0 && swapData.getAddressFrom().equalsIgnoreCase(walletAddress) && timeService.systemTime() > swapData.getTimeDeadLine();
     }
     public boolean swapIsRedeemable(byte[] hash, String address) throws AplException.ExecutiveProcessException {
         SwapDataInfo swapData = dexSmartContractService.getSwapData(hash);
-        return swapData.getAmount() != null && swapData.getAddressTo().equalsIgnoreCase(address) && timeService.systemTime() < swapData.getTimeDeadLine();
+        return swapData.getTimeStart() != 0 && swapData.getAddressTo().equalsIgnoreCase(address) && timeService.systemTime() < swapData.getTimeDeadLine();
     }
 
     public String initiate(String passphrase, DexOrder order, String toAddress, int durationMinutes, byte[] secretHash) throws AplException.ExecutiveProcessException {

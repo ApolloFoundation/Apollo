@@ -266,7 +266,7 @@ public class DexOrderProcessor {
                     String details = op.getDetails();
                     String secretHashValue = extractValue(details, "secretHash", true);
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(Convert.parseHexString(secretHashValue));
-                    if (StringUtils.isNotBlank(swapData.getStatus())) {
+                    if (swapData.getTimeDeadLine() != 0) {
                         log.info("Will send new contract step2 transaction for already initiated eth swap {}, contract id {}", secretHashValue, contract.getId());
                         String encryptedSecretValue = extractValue(details, "encryptedSecret", true);
                         String txHashValue = extractValue(details, "ethTxHash", false);
@@ -490,7 +490,7 @@ public class DexOrderProcessor {
                     String details = op.getDetails();
                     String secretHashValue = extractValue(details, "secretHash", true);
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(Convert.parseHexString(secretHashValue));
-                    if (StringUtils.isNotBlank(swapData.getStatus())) {
+                    if (swapData.getTimeDeadLine() != 0) {
                         long timeLeft = swapData.getTimeDeadLine() - timeService.systemTime();
                         if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
                             log.info("Will not send dex contract transaction to recover exchange process, not enough time 'timeLeft'={} sec.", timeLeft);
@@ -530,7 +530,7 @@ public class DexOrderProcessor {
                 String contractHexHash = Convert.toHexString(contract.getSecretHash());
                 if (order.getType() == OrderType.SELL) {
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
-                    if (StringUtils.isBlank(swapData.getStatus())) {
+                    if (swapData.getTimeDeadLine() == 0) {
                         log.debug("Swap {} does not exist", contractHexHash);
                         continue;
                     }
@@ -882,7 +882,7 @@ public class DexOrderProcessor {
                             continue;
                         }
                         SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
-                        if (StringUtils.isBlank(swapData.getStatus())) { // eth swap is not exists (all fields are empty or zero)
+                        if (swapData.getTimeDeadLine() == 0) { // eth swap is not exists (all fields are empty or zero)
                             continue;
                         }
                         Long timeDeadLine = swapData.getTimeDeadLine();
