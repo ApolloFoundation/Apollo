@@ -207,14 +207,10 @@ public class DexSmartContractService {
         }
     }
 
-    public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException, AplException.ExecutiveProcessException {
+    public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
-        try {
-            DexContract.InitiatedEventResponse response = dexContract.initiatedEventFlowable(orderId).toFuture().get();
-            return response.log.getTransactionHash();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new AplException.ExecutiveProcessException("Unable to retrieve hash from event.", e);
-        }
+        DexContract.InitiatedEventResponse response = dexContract.initiatedEventFlowable(orderId).blockingSingle();
+        return response.log.getTransactionHash();
     }
 
 
