@@ -19,11 +19,11 @@ public class UserEthDepositInfoMapper {
             return userDeposits;
         }
 
-        for (int i = 0; i < data.getValue1().size(); i++) {
+        for (int i = 0; i < data.component1().size(); i++) {
             userDeposits.add(new UserEthDepositInfo(Long.parseUnsignedLong(
-                    data.getValue1().get(i).toString()),
-                            EthUtil.weiToEther(data.getValue2().get(i)),
-                            data.getValue3().get(i).longValue()
+                data.component1().get(i).toString()),
+                EthUtil.weiToEther(data.component2().get(i)),
+                data.component3().get(i).longValue()
                     )
             );
         }
