@@ -1,3 +1,7 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.util.annotation;
 
 import java.lang.annotation.ElementType;
