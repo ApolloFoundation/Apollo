@@ -33,6 +33,7 @@ public class ShardObserver {
     private final ShardService shardService;
     private final PropertiesHolder propertiesHolder;
     private int lastTrimHeight;
+    public static int SHARD_MIN_STEP_BLOCKS = 2000;
 
     @Inject
     public ShardObserver(BlockchainConfig blockchainConfig, ShardService shardService, PropertiesHolder propertiesHolder) {
@@ -51,7 +52,7 @@ public class ShardObserver {
 
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
-        if (blockHeight % 2000 == 0) {
+        if (blockHeight % SHARD_MIN_STEP_BLOCKS == 0) {
             tryCreateShardAsync(lastTrimHeight, blockHeight);
         }
     }
