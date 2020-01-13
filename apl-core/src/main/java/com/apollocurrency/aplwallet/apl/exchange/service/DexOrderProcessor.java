@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -271,8 +272,17 @@ public class DexOrderProcessor {
                         String txHashValue = extractValue(details, "ethTxHash", false);
                         boolean notFinishedOp = txHashValue == null;
                         if (notFinishedOp) { // query eth node
-                            txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(counterOrder.getId());
-                            log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
+                            try {
+                                txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(counterOrder.getId());
+                                log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
+                            } catch (NoSuchElementException e) {
+                                log.error("Initiated event was not found for order {} and account {}", counterOrder.getId(), Convert.defaultRsAccount(accountId));
+                                continue;
+                            }
+                            catch (Throwable e) {
+                                log.error("Unable to get atomic swap transaction hash from node event logs. Possible cause: filter rpc api is not supported. Will not proceed with exchange process recovering.", e);
+                                continue;
+                            }
                         }
                         Transaction transaction = createContractTransactionStep2(contract, passphrase, accountId, txHashValue, Convert.parseHexString(secretHashValue), Convert.parseHexString(encryptedSecretValue));
                         dexService.broadcast(transaction);
@@ -336,7 +346,8 @@ public class DexOrderProcessor {
                 return null;
             }
         }
-        return string.substring(string.indexOf(":", valueIndex), string.indexOf(";", valueIndex));
+        int endIndex = string.indexOf(";", valueIndex);
+        return string.substring(string.indexOf(":", valueIndex), endIndex == -1 ? string.length() : endIndex);
     }
 
     private Transaction createContractTransactionStep2(ExchangeContract contract, String passphrase, Long accountId, String transferTxId, byte[] secretHash, byte[] encryptedSecret) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException {
@@ -488,8 +499,17 @@ public class DexOrderProcessor {
                         String txHashValue = extractValue(details, "ethTxHash", false);
                         boolean notFinishedOp = txHashValue == null;
                         if (notFinishedOp) { // query eth node
-                            txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(order.getId());
-                            log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
+                            try {
+                                txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(order.getId());
+                                log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
+                            } catch (NoSuchElementException e) {
+                                log.error("Initiated event was not found for order {} and account {}", order.getId(), Convert.defaultRsAccount(accountId));
+                                continue;
+                            }
+                            catch (Throwable e) {
+                                log.error("Unable to get atomic swap transaction hash from node event logs. Possible cause: filter rpc api is not supported. Will not proceed with exchange process recovering.", e);
+                                continue;
+                            }
                         }
 
                         Transaction transaction = createContractTransactionStep3(contract,txHashValue, passphrase, accountId, timeLeft);

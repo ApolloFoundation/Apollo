@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Objects;
 
 @Singleton
@@ -20,14 +21,20 @@ import java.util.Objects;
 public class DexOperationService {
     private static final int DEFAULT_ENTRY_LIFETIME = 90 * 24 * 60 * 60; // 90 days in seconds
     private static final int MIN_ENTRY_LIFETIME = 12 * 60 * 60; // 12 hours in seconds
-    private static final int INITIAL_DELAY = 5 * 60; // 5 minutes in seconds
-    private static final int DELAY = 60 * 60; // 60 minutes in seconds
+    private static final int INITIAL_DELAY = 5 * 60 * 1000; // 5 minutes in ms
+    private static final int DELAY = 60 * 60 * 1000; // 60 minutes in ms
     private static final String SERVICE_NAME = "DexOperationService";
     private static final String TASK_NAME = "DexOperationCleaner";
+
     private DexOperationDao dao;
     private boolean deleteOldEntries;
-    private int entryLifetime;
+    private long entryLifetime; //ms
     private TaskDispatchManager dispatchManager;
+
+    @Transactional(readOnly = true)
+    public List<DexOperation> getAll(long fromDbId, int limit) {
+        return dao.getAll(fromDbId, limit);
+    }
 
     @Inject
     public DexOperationService(@Property(name = "apl.dex.operations.lifetime", defaultValue = "" + DEFAULT_ENTRY_LIFETIME)  int entryLifetime,
@@ -37,7 +44,7 @@ public class DexOperationService {
         this.dao = Objects.requireNonNull(dao);
         this.dispatchManager = Objects.requireNonNull(dispatchManager);
         this.deleteOldEntries = deleteOldEntries;
-        this.entryLifetime = Math.max(entryLifetime, MIN_ENTRY_LIFETIME); // do not let set less than specified limit to prevent confusing and complications related to this feature
+        this.entryLifetime = (long)Math.max(entryLifetime, MIN_ENTRY_LIFETIME) * 1000; // do not let set less than specified limit to prevent confusions and complications related to this feature
     }
 
     @PostConstruct
@@ -49,6 +56,7 @@ public class DexOperationService {
             .name(TASK_NAME)
             .task(this::deleteWithOffsetIfCleanerEnabled)
             .build());
+        log.info("{} was initialized", SERVICE_NAME);
     }
 
     private void deleteWithOffsetIfCleanerEnabled() {
@@ -56,7 +64,7 @@ public class DexOperationService {
             int deleted = deleteWithOffset(entryLifetime);
             log.info("Deleted {} dex_operation entries", deleted);
         } else {
-            log.debug(TASK_NAME + " is disabled");
+            log.debug("{} is disabled", TASK_NAME);
         }
     }
 
@@ -83,9 +91,9 @@ public class DexOperationService {
     }
 
     @Transactional
-    public int deleteWithOffset(int offsetSeconds) {
+    public int deleteWithOffset(long offsetMs) {
         long currentTime = System.currentTimeMillis();
-        long targetTime = currentTime - offsetSeconds * 1000;
+        long targetTime = currentTime - offsetMs;
         Timestamp targetTimestamp = new Timestamp(targetTime);
         log.info("Will delete all dex_operation entries before {}", targetTimestamp);
         return deleteAfterTimestamp(targetTimestamp);
