@@ -398,7 +398,7 @@ public class EthereumWalletService {
 
     private String execute(Credentials credentials, Function function, String contractToAddress, Long gasPrice) throws ExecutionException, InterruptedException {
         BigInteger gasPriceWei = EthUtil.gweiToWei(gasPrice);
-        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function,BigInteger.ZERO, gasPriceWei);
+        BigInteger gasLimitWei = validateBalanceAndReturnGasLimit(credentials.getAddress(), contractToAddress, function, BigInteger.ZERO, gasPriceWei);
         BigInteger nonce = getNonce(credentials.getAddress());
         String encodedFunction = FunctionEncoder.encode(function);
 

@@ -67,6 +67,10 @@ public class DexTransactionSendingController {
         this.dexService = dexService;
     }
 
+    //Not delete, required for RESTEASY
+    public DexTransactionSendingController() {
+    }
+
     @POST
     @Path("/orders")
     @Produces(MediaType.APPLICATION_JSON)
