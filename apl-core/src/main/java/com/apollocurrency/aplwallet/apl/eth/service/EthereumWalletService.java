@@ -31,6 +31,7 @@ import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Response;
@@ -43,7 +44,6 @@ import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Numeric;
 
@@ -139,16 +139,18 @@ public class EthereumWalletService {
         StringValidator.requireNonBlank(txHash);
         int confirmations = -1;
         try {
-            EthTransaction txResponse = web3j.ethGetTransactionByHash(txHash).send();
-            org.web3j.protocol.core.methods.response.Transaction tx = getResultFrom(txResponse);
+            EthGetTransactionReceipt txResponse = web3j.ethGetTransactionReceipt(txHash).send();
+            TransactionReceipt tx = getResultFrom(txResponse);
             if (tx != null) {
-                    BigInteger txBlockNumber = tx.getBlockNumber();
-                    EthBlockNumber blockNumberResponse = web3j.ethBlockNumber().send();
+                BigInteger txBlockNumber = tx.getBlockNumber();
+                EthBlockNumber blockNumberResponse = web3j.ethBlockNumber().send();
                 String blockNumber = getResultFrom(blockNumberResponse);
                 if (blockNumber != null) {
                     confirmations = Numeric.decodeQuantity(blockNumber).subtract(txBlockNumber).intValue();
                 }
             }
+        } catch (MessageDecodingException e) {
+            log.warn(e.getMessage(), e, "txHash: " + txHash);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -157,6 +159,10 @@ public class EthereumWalletService {
 
     private <T> T getResultFrom(Response<T> response) {
         if (response == null) {
+            return null;
+        }
+        if (response.hasError()) {
+            log.error("Error processing request: {}", response.getError().getMessage());
             return null;
         }
         if (response.getResult() == null) {
