@@ -16,14 +16,6 @@ import lombok.NoArgsConstructor;
  * @author Serhiy Lymar
  */
 
-//   Response":"Success",
-//   "Type":100,
-//   "Aggregated":false,
-//   "Data":[ 
-//      { 
-//         "time":1571553660,
-//         "close":7925,
-// ....
 
 @NoArgsConstructor
 @Data
