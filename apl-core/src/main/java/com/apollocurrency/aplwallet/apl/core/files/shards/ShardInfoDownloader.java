@@ -355,6 +355,9 @@ public class ShardInfoDownloader {
     public ShardInfo getShardInfo(Long shardId) {
         Objects.requireNonNull(shardId, "shardId is NULL");
         ShardInfo res = null;
+        if(goodPeersMap.isEmpty()){ //forced shard import
+            return res;
+        }
         PeerFileHashSum pfhs = goodPeersMap.get(shardId).iterator().next();
         if (pfhs == null) {
             return res;

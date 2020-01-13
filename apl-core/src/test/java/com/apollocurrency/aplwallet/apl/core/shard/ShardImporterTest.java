@@ -20,6 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvImporterImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.ValueParserImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.DataTag;
@@ -51,7 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -97,7 +98,7 @@ class ShardImporterTest {
     @Mock
     private GenesisImporter genesisImporter;
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class, ValueParserImpl.class)
+    WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class, ValueParserImpl.class, CsvEscaperImpl.class)
             .addBeans(
                     MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
                     MockBean.of(blockchainProcessor, BlockchainProcessor.class),
@@ -110,7 +111,8 @@ class ShardImporterTest {
     private DataTagDao dataTagDao;
     @Inject
     private ValueParser parser;
-
+    @Inject
+    private CsvEscaper translator;
     private CsvImporter csvImporter;
     private ShardImporter shardImporter;
 
@@ -125,7 +127,7 @@ class ShardImporterTest {
 
     @BeforeEach
     void setUp() {
-        csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus, parser);
+        csvImporter = new CsvImporterImpl(folder.newFolder("csv-import").toPath(), extension.getDatabaseManager(), aplAppStatus, parser, translator);
         shardImporter = spy(new ShardImporter(shardDao, blockchainConfig, genesisImporter,
                 blockchain, derivedTablesRegistry, csvImporter, zipComponent, dataTagDao, downloadableFilesManager, aplAppStatus));
     }

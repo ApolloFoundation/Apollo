@@ -232,7 +232,8 @@ public class TrimService {
                     table.trim(height);
                     dataSource.commit(false);
                     long duration = System.currentTimeMillis() - startTime;
-                    log.debug("Trim of {} took {} ms", table.getName(), duration);
+                    // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class
+                    //                    log.trace("Trim of {} took {} ms", table.getName(), duration);
                     onlyTrimTime += duration;
                 } finally {
                     globalSync.readUnlock();

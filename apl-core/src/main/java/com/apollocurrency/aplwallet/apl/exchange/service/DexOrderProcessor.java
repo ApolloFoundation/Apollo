@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -103,7 +102,7 @@ public class DexOrderProcessor {
     private TimeService timeService;
     private ExecutorService backgroundExecutor;
 
-    private volatile boolean processorEnabled = false;
+    private volatile boolean processorEnabled = true;
     @Getter
     private boolean initialized = false;
     private Blockchain blockchain;
@@ -325,64 +324,50 @@ public class DexOrderProcessor {
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
-        //TODO add validation.
-        log.debug("isContractStep1Valid entry point");
 
-        // everything should be vice-versa here since we return our orders back        
+        // everything should be vice-versa here since we return our orders back
         long counterOrderID = exchangeContract.getOrderId();
         long orderID = exchangeContract.getCounterOrderId();
 
-        log.debug("offerID: {}, counterOfferID: {}", orderID, counterOrderID);
-
         DexOrder mainOrder = dexService.getOrder(orderID);// getOfferByTransactionId(orderID);
-
-        if (mainOrder == null) {
-            log.debug("main offer search error: ");
-            return false;
-        } else {
-            log.debug("mainOffer search: ok, going further");
-        }
-
 
         DexOrder counterOrder = dexService.getOrder(counterOrderID);
 
-        if (counterOrder == null) {
-            log.debug("counterOffer search error: ");
-            return false;
-        } else {
-            log.debug("counterOffer search: ok, going further");
-        }
+        return validateAccountBalance(mainOrder, counterOrder);
+    }
 
+    private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
 
-        // DUMPING main offer : pay attention: should be vice-versa in comparison to ZERO step.. 
+        // everything should be vice-versa here since we return our orders back
+        long counterOrderID = exchangeContract.getOrderId();
+        long orderID = exchangeContract.getCounterOrderId();
 
-        log.debug("MainORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", mainOrder.getType(), mainOrder.getAccountId(),
-                mainOrder.getToAddress(), mainOrder.getFromAddress(), mainOrder.getPairCurrency(), mainOrder.getPairRate());
+        DexOrder ourOrder = dexService.getOrder(counterOrderID);
 
-        log.debug("CounterORDER, type:{} accountId: {}, to: {}, from: {}, pairCurrency: {}, pairRate: {} ", counterOrder.getType(), counterOrder.getAccountId(),
-                counterOrder.getToAddress(), counterOrder.getFromAddress(), counterOrder.getPairCurrency(), counterOrder.getPairRate());
+        DexOrder hisOrder = dexService.getOrder(orderID);
 
-        DexCurrency curr = counterOrder.getPairCurrency();
-
+        return validateAccountBalance(ourOrder, hisOrder) && dexService.hasConfirmations(hisOrder);
+    }
+    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder) {
         int rx;
 
-        switch (curr) {
+        switch (myOrder.getPairCurrency()) {
 
             case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
-                if (mainOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplEth(mainOrder, counterOrder);
+                if (myOrder.getType() == OrderType.SELL) {
+                    rx = dexValidator.validateOfferSellAplEth(myOrder, hisOrder);
                 } else {
-                    rx = dexValidator.validateOfferBuyAplEth(mainOrder, counterOrder);
+                    rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
                 }
                 break;
             }
 
             case PAX: {
-                if (mainOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplPax(mainOrder, counterOrder);
+                if (myOrder.getType() == OrderType.SELL) {
+                    rx = dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
                 } else {
-                    rx = dexValidator.validateOfferBuyAplPax(mainOrder, counterOrder);
+                    rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
                 }
                 break;
             }
@@ -396,6 +381,7 @@ public class DexOrderProcessor {
 
         return rx == OFFER_VALIDATE_OK;
     }
+
 
 
     /**
@@ -500,23 +486,6 @@ public class DexOrderProcessor {
                 log.error(e.getMessage(), e);
             }
         }
-    }
-
-    private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
-        //TODO add validation.
-
-        log.debug("Validation for step 2 entry point:");
-        DexOrder contractOrder1 = dexService.getOrder(exchangeContract.getOrderId());
-        DexOrder contractOrder2 = dexService.getOrder(exchangeContract.getCounterOrderId());
-        log.debug("Order1 txID: {}", contractOrder1.getId());
-        log.debug("Order2 txID: {}", contractOrder2.getId());
-        log.debug("Validation step 2: Order1: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder1.getType(),
-                contractOrder1.getToAddress(), contractOrder1.getFromAddress(), contractOrder1.getPairCurrency());
-        log.debug("Validation step 2: Order2: type: {}, hisOffer.getToAddress(): {}, hisOffer.fromToAddress(): {}, currency: {}", contractOrder2.getType(),
-                contractOrder2.getToAddress(), contractOrder2.getFromAddress(), contractOrder2.getPairCurrency());
-
-        // this validation seems to be redundant here.. commented it here so that not to get confused
-        return /*isContractStep1Valid(exchangeContract) &&*/ dexService.hasConfirmations(contractOrder1) && dexService.hasConfirmations(contractOrder2) /* && (exchangeContract.getTransferTxId() != null)*/;
     }
 
     /**

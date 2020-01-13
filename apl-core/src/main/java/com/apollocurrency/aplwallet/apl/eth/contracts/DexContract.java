@@ -44,7 +44,7 @@ import java.util.concurrent.Callable;
  * <p>Auto generated code.
  * <p><strong>Do not modify!</strong>
  * <p>Please use the <a href="https://docs.web3j.io/command_line.html">web3j command line tools</a>,
- * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
+ * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
  * <p>Generated with web3j version 4.2.0.
@@ -74,7 +74,7 @@ public class DexContract extends Contract {
 
     public static final String FUNC_REFUND = "refund";
 
-    public static final String FUNC_GETUSERDEPOSITSAMOUNT = "getUserDepositsAmount";
+    public static final String FUNC_GETUSERDEPOSITSAMOUNT = "getUserDepositIndex";
 
     public static final String FUNC_INITIATE = "initiate";
 
@@ -141,11 +141,11 @@ public class DexContract extends Contract {
             }));
     ;
 
-    public static final Event ASSETDEPOSITED_EVENT = new Event("AssetDeposited", 
+    public static final Event ASSETDEPOSITED_EVENT = new Event("AssetDeposited",
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}, new TypeReference<Address>(true) {}, new TypeReference<Address>(true) {}, new TypeReference<Uint256>() {}));
     ;
 
-    public static final Event ASSETWITHDRAWAL_EVENT = new Event("AssetWithdrawal", 
+    public static final Event ASSETWITHDRAWAL_EVENT = new Event("AssetWithdrawal",
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}, new TypeReference<Address>(true) {}, new TypeReference<Address>(true) {}, new TypeReference<Uint256>() {}));
     ;
 
@@ -179,8 +179,8 @@ public class DexContract extends Contract {
 
     public String withdraw(BigInteger orderId) {
         final Function function = new Function(
-                FUNC_WITHDRAW, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId)), 
+            FUNC_WITHDRAW,
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId)),
                 Collections.<TypeReference<?>>emptyList());
 
         return sendTx(function, BigInteger.ZERO);
@@ -201,9 +201,9 @@ public class DexContract extends Contract {
             public Tuple4<Boolean, String, BigInteger, Boolean> call() throws Exception {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple4<Boolean, String, BigInteger, Boolean>(
-                                (Boolean) results.get(0).getValue(), 
-                                (String) results.get(1).getValue(), 
-                                (BigInteger) results.get(2).getValue(), 
+                            (Boolean) results.get(0).getValue(),
+                            (String) results.get(1).getValue(),
+                            (BigInteger) results.get(2).getValue(),
                                 (Boolean) results.get(3).getValue());
                     }
                 });
@@ -227,7 +227,7 @@ public class DexContract extends Contract {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
                                 convertToNative((List<Uint256>) results.get(0).getValue()),
-                                convertToNative((List<Uint256>) results.get(1).getValue()), 
+                            convertToNative((List<Uint256>) results.get(1).getValue()),
                                 convertToNative((List<Uint256>) results.get(2).getValue()));
                     }
                 });
@@ -266,8 +266,8 @@ public class DexContract extends Contract {
                     public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
-                                convertToNative((List<Uint256>) results.get(0).getValue()), 
-                                convertToNative((List<Uint256>) results.get(1).getValue()), 
+                            convertToNative((List<Uint256>) results.get(0).getValue()),
+                            convertToNative((List<Uint256>) results.get(1).getValue()),
                                 convertToNative((List<Uint256>) results.get(2).getValue()));
                     }
                 });
@@ -285,7 +285,7 @@ public class DexContract extends Contract {
                     public Tuple2<BigInteger, BigInteger> call() throws Exception {
                         List<Type> results = executeCallMultipleValueReturn(function);
                         return new Tuple2<BigInteger, BigInteger>(
-                                (BigInteger) results.get(0).getValue(), 
+                            (BigInteger) results.get(0).getValue(),
                                 (BigInteger) results.get(1).getValue());
                     }
                 });
@@ -294,7 +294,7 @@ public class DexContract extends Contract {
     public RemoteCall<TransactionReceipt> renounceOwnership() {
         final Function function = new Function(
                 FUNC_RENOUNCEOWNERSHIP,
-                Arrays.<Type>asList(), 
+            Arrays.<Type>asList(),
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
     }
@@ -302,14 +302,14 @@ public class DexContract extends Contract {
     public String refund(byte[] secretHash, boolean waitConfirmation) {
         final Function function = new Function(
                 FUNC_REFUND,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)), 
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)),
                 Collections.<TypeReference<?>>emptyList());
         return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
-    public RemoteCall<BigInteger> getUserDepositsAmount(String user) {
-        final Function function = new Function(FUNC_GETUSERDEPOSITSAMOUNT, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)), 
+    public RemoteCall<BigInteger> getUserDepositIndex(String user) {
+        final Function function = new Function(FUNC_GETUSERDEPOSITSAMOUNT,
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
@@ -335,10 +335,10 @@ public class DexContract extends Contract {
 
     public String deposit(BigInteger orderId, BigInteger amount, String token) {
         final Function function = new Function(
-                FUNC_DEPOSIT, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId), 
-                new org.web3j.abi.datatypes.generated.Uint256(amount), 
-                new org.web3j.abi.datatypes.Address(token)), 
+            FUNC_DEPOSIT,
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(orderId),
+                new org.web3j.abi.datatypes.generated.Uint256(amount),
+                new org.web3j.abi.datatypes.Address(token)),
                 Collections.<TypeReference<?>>emptyList());
         return sendTx(function, BigInteger.ZERO);
     }
@@ -408,8 +408,8 @@ public class DexContract extends Contract {
     }
 
     public RemoteCall<Boolean> doesUserExist(String user) {
-        final Function function = new Function(FUNC_DOESUSEREXIST, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)), 
+        final Function function = new Function(FUNC_DOESUSEREXIST,
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<Bool>() {}));
         return executeRemoteCallSingleValueReturn(function, Boolean.class);
     }
@@ -417,7 +417,7 @@ public class DexContract extends Contract {
     public String redeem(byte[] secret) {
         final Function function = new Function(
                 FUNC_REDEEM,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secret)), 
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secret)),
                 Collections.<TypeReference<?>>emptyList());
         return sendTx(function, BigInteger.ZERO);
     }
@@ -425,7 +425,7 @@ public class DexContract extends Contract {
     public RemoteCall<TransactionReceipt> transferOwnership(String newOwner) {
         final Function function = new Function(
                 FUNC_TRANSFEROWNERSHIP,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(newOwner)), 
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(newOwner)),
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
     }
@@ -456,7 +456,7 @@ public class DexContract extends Contract {
                                 (String) results.get(4).getValue(),
                                 (String) results.get(5).getValue(),
                                 (String) results.get(6).getValue(),
-                                (BigInteger) results.get(7).getValue(), 
+                            (BigInteger) results.get(7).getValue(),
                                 (BigInteger) results.get(8).getValue());
                     }
                 });

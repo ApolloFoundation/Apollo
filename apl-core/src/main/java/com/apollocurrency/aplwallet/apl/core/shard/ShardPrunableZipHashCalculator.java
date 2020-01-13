@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.files.FileChangedEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -40,9 +41,10 @@ public class ShardPrunableZipHashCalculator {
     private final DirProvider dirProvider;
     private int lastPruningTime = 0;
     private final Event<ChunkedFileOps> fileChangedEvent;
+    private final CsvEscaper translator;
 
     @Inject
-    public ShardPrunableZipHashCalculator(Event<ChunkedFileOps> fileChangedEvent, DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider) {
+    public ShardPrunableZipHashCalculator(Event<ChunkedFileOps> fileChangedEvent, DerivedTablesRegistry registry, Zip zip, DatabaseManager databaseManager, ShardDao shardDao, BlockchainConfig blockchainConfig, DirProvider dirProvider, CsvEscaper translator) {
         this.registry = registry;
         this.zip = zip;
         this.databaseManager = databaseManager;
@@ -50,6 +52,7 @@ public class ShardPrunableZipHashCalculator {
         this.blockchainConfig = blockchainConfig;
         this.dirProvider = dirProvider;
         this.fileChangedEvent = fileChangedEvent;
+        this.translator = translator;
     }
 
     public void tryRecalculatePrunableArchiveHashes(int time) {
@@ -70,12 +73,12 @@ public class ShardPrunableZipHashCalculator {
                 .stream()
                 .filter(shard -> shard.getPrunableZipHash() != null)
                 .collect(Collectors.toList()); // TODO change to completed and imported
-        
+
         allCompletedShards.forEach(shard -> {
             try {
                 Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
                 // create new instance of CsvExporter for each directory
-                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory);
+                CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory, translator);
                 List<PrunableDbTable> prunableTables = registry.getDerivedTables()
                         .stream()
                         .filter(t -> t instanceof PrunableDbTable)

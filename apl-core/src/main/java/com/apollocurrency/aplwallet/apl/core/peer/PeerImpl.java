@@ -67,7 +67,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
-    
+
     private final String host;
     private volatile int port;
     private volatile Hallmark hallmark;
@@ -90,17 +90,17 @@ public final class PeerImpl implements Peer {
 
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
-    
+
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile TimeService timeService;
     private final PeersService peers;
-    
+
     private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final  ObjectMapper mapper = new ObjectMapper();
-    
+
     @Getter
     private final Peer2PeerTransport p2pTransport;
     @Getter
@@ -139,18 +139,18 @@ public final class PeerImpl implements Peer {
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
-    
+
     @Override
     public String getHost() {
         return host;
     }
-    
+
     @Override
     public String getHostWithPort(){
       PeerAddress pa = new PeerAddress(port,host);
       return pa.getAddrWithPort();
     }
-    
+
     @Override
     public PeerState getState() {
         return state;
@@ -403,6 +403,7 @@ public final class PeerImpl implements Peer {
         blacklistingCause = cause;
         deactivate("Blacklisting because of: "+cause);
         peers.notifyListeners(this, PeersService.Event.BLACKLIST);
+        LOG.debug("Peer {} blackisted. Cause: {}",getHostWithPort(),cause);
     }
 
     @Override
@@ -539,7 +540,7 @@ public final class PeerImpl implements Peer {
         }
         return getHostWithPort().compareTo(o.getHostWithPort());
     }
-    
+
     /**
      * first blacklist and then forget peers that are not connectable
      * or reset counter on success
@@ -603,7 +604,7 @@ public final class PeerImpl implements Peer {
                     blacklist("Bad hallmark");
                     return false;
                 }
-                
+
                 chainId.set(UUID.fromString(newPi.getChainId()));
                 String servicesString = (String)response.get("services");
 
@@ -667,7 +668,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
                 unsetHallmark();
                 return false;
-            }            
+            }
 
         return true;
     }
@@ -879,13 +880,13 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isTrusted() {
-        return  getTrustLevel().getCode() > PeerTrustLevel.REGISTERED.getCode();                
+        return  getTrustLevel().getCode() > PeerTrustLevel.REGISTERED.getCode();
     }
 
     @Override
     public PeerTrustLevel getTrustLevel() {
-        //TODO implement using Apollo ID 
-        return PeerTrustLevel.NOT_TRUSTED;    
+        //TODO implement using Apollo ID
+        return PeerTrustLevel.NOT_TRUSTED;
     }
 
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {
