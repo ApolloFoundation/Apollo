@@ -47,7 +47,7 @@ public class Helper2FA {
                         : new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource()),
                 propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
     }
-     
+
     public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
             findAplSecretBytes(accountId, passphrase);
             return service2FA.enable(accountId);
@@ -199,5 +199,5 @@ public class Helper2FA {
     }
 
 
-    
+
 }

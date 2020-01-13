@@ -9,12 +9,12 @@ public class DexTransaction {
     private Long dbId;
     private byte[] hash;
     private byte[] rawTransactionBytes;
-    private DexOperation operation;
+    private Op operation;
     private String params;
     private String account;
     private long timestamp;
 
-    public enum DexOperation {
+    public enum Op {
         DEPOSIT((byte) 0),INITIATE((byte)1), REDEEM((byte)2), REFUND((byte)3), WITHDRAW((byte)4);
         final byte code;
 
@@ -22,12 +22,12 @@ public class DexTransaction {
             return code;
         }
 
-        DexOperation(byte code) {
+        Op(byte code) {
             this.code = code;
         }
 
-        public static DexOperation from(byte code) {
-            for (DexOperation value : values()) {
+        public static Op from(byte code) {
+            for (Op value : values()) {
                 if (value.code == code) {
                     return value;
                 }

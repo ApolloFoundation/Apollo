@@ -45,7 +45,7 @@ public class PeerWebSocketClient extends PeerWebSocket{
             }
         }
     }
-    
+
     public boolean startClient(URI uri) {
         boolean connected = false;
         if (uri == null) {

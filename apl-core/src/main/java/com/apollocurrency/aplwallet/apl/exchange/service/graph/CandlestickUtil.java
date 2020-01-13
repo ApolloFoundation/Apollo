@@ -5,10 +5,12 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 
+import javax.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+@Vetoed
 public class CandlestickUtil {
     static final int BASE_TIME_INTERVAL = 15 * 60; // 15 minutes in seconds
 

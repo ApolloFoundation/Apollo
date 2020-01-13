@@ -57,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
@@ -155,7 +156,7 @@ class ShardMigrationExecutorTest {
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ZipImpl.class, AplAppStatus.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
-            AplAppStatus.class)
+            CsvEscaperImpl.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))

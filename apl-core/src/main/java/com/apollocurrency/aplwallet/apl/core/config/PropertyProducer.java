@@ -4,14 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.config;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
 
 public class PropertyProducer {
     private PropertiesHolder propertiesHolder;
@@ -78,9 +80,18 @@ public class PropertyProducer {
     }
 
     private String getKey(final InjectionPoint ip) {
-        return (ip.getAnnotated().isAnnotationPresent(Property.class)
-                && !ip.getAnnotated().getAnnotation(Property.class).value().isEmpty())
-                ? ip.getAnnotated().getAnnotation(Property.class).value()
-                : ip.getMember().getName();
+        Annotated annotated = ip.getAnnotated();
+        if (annotated.isAnnotationPresent(Property.class)) {
+            Property annotation = annotated.getAnnotation(Property.class);
+            String propertyName = annotation.name();
+            if (StringUtils.isNotBlank(propertyName)) {
+                return propertyName;
+            }
+            String value = annotation.value();
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return ip.getMember().getName();
     }
 }

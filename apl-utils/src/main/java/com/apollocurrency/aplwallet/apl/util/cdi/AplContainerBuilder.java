@@ -15,9 +15,9 @@ import java.util.stream.Collectors;
  */
 public class AplContainerBuilder {
     private static final Logger log = LoggerFactory.getLogger(AplContainerBuilder.class);
-    
+
     private boolean devMode = false;
-    
+
     private String containerId;
 
     private Boolean annotatedDiscoveryMode;
@@ -26,7 +26,7 @@ public class AplContainerBuilder {
 
     private List<Class<?>> interceptors;
 
-    private List<Class<?>> recursiveScanPackages;
+//    private List<Class<?>> recursiveScanPackages;
 
     public AplContainerBuilder containerId(String id) {
         containerId = id;
@@ -44,13 +44,13 @@ public class AplContainerBuilder {
         disableDiscovery = true;
         return this;
     }
-    
+
     public AplContainerBuilder devMode(){
         devMode=true;
         System.setProperty("org.jboss.weld.probe.jmxSupport", "true");
         return this;
     }
-        
+
     public AplContainerBuilder interceptors(Class<?>... interceptors) {
         if (interceptors != null && interceptors.length > 0) {
             this.interceptors = Arrays.stream(interceptors).collect(Collectors.toList());
@@ -58,12 +58,12 @@ public class AplContainerBuilder {
         return this;
     }
 
-    public AplContainerBuilder recursiveScanPackages(Class<?>... recursiveScanPackages) {
-        if (recursiveScanPackages != null && recursiveScanPackages.length > 0) {
-            this.recursiveScanPackages = Arrays.stream(recursiveScanPackages).collect(Collectors.toList());
-        }
-        return this;
-    }
+//    public AplContainerBuilder recursiveScanPackages(Class<?>... recursiveScanPackages) {
+//        if (recursiveScanPackages != null && recursiveScanPackages.length > 0) {
+//            this.recursiveScanPackages = Arrays.stream(recursiveScanPackages).collect(Collectors.toList());
+//        }
+//        return this;
+//    }
 
     public AplContainer build() {
         log.debug("Apollo DI container build()...");
@@ -85,14 +85,10 @@ public class AplContainerBuilder {
             interceptors.forEach(weld::addInterceptor);
         }
 
-        if (recursiveScanPackages != null && !recursiveScanPackages.isEmpty()) {
-            recursiveScanPackages.forEach(p -> weld.addPackage(true, p));
-        }
-
         if(devMode){
           weld.enableDevMode();
         }
-        
+
         WeldContainer newContainer = weld.initialize();
 
         if (newContainer.isUnsatisfied()) {

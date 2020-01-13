@@ -1143,7 +1143,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
-                log.debug("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
+                log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
                         commonBlockHeight, System.currentTimeMillis() - start);
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
@@ -1736,16 +1736,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (betterCumulativeDifficulty.equals(curCumulativeDifficulty)) {
                     return;
                 }
-                
+
                 long commonMilestoneBlockId = blockchain.getShardInitialBlock().getId();
-                
+
                 if (lookupBlockhain().getHeight() > 0) {
                     commonMilestoneBlockId = getCommonMilestoneBlockId(peer);
                 }
                 if (commonMilestoneBlockId == 0 || !peerHasMore) {
                     return;
                 }
-                
+
                 chainBlockIds = getBlockIdsAfterCommon(peer, commonMilestoneBlockId, false);
                 if (chainBlockIds.size() < 2 || !peerHasMore) {
                     if (commonMilestoneBlockId == blockchain.getShardInitialBlock().getId()) {
@@ -1754,7 +1754,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     return;
                 }
-                
+
                 final long commonBlockId = chainBlockIds.get(0);
                 final Block commonBlock = lookupBlockhain().getBlock(commonBlockId);
                 if (commonBlock == null || lookupBlockhain().getHeight() - commonBlock.getHeight() >= Constants.MAX_AUTO_ROLLBACK) {
@@ -1781,7 +1781,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (lookupBlockhain().getHeight() - commonBlock.getHeight() <= 10) {
                         return;
                     }
-                    
+
                     int confirmations = 0;
                     for (Peer otherPeer : connectedPublicPeers) {
                         if (confirmations >= numberOfForkConfirmations) {
@@ -1815,7 +1815,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         downloadBlockchain(otherPeer, otherPeerCommonBlock, commonBlock.getHeight());
                     }
                     log.debug("Got " + confirmations + " confirmations");
-                    
+
                     if (lookupBlockhain().getLastBlock().getId() != lastBlockId) {
                         long time = System.currentTimeMillis() - startTime;
                         totalTime += time;
@@ -1846,9 +1846,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
          * @return id of the first mutual block
          */
         private long getCommonMilestoneBlockId(Peer peer) {
-            
+
             String lastMilestoneBlockId = null;
-            
+
             while (true) {
                 JSONObject milestoneBlockIdsRequest = new JSONObject();
                 milestoneBlockIdsRequest.put("requestType", "getMilestoneBlockIds");
@@ -1858,7 +1858,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } else {
                     milestoneBlockIdsRequest.put("lastMilestoneBlockId", lastMilestoneBlockId);
                 }
-                
+
                 JSONObject response;
                 try {
                     response = peer.send(JSON.prepareRequest(milestoneBlockIdsRequest), blockchainConfig.getChain().getChainId());
@@ -1895,7 +1895,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     lastMilestoneBlockId = (String) milestoneBlockId;
                 }
             }
-            
+
         }
 
         private List<Long> getBlockIdsAfterCommon(final Peer peer, final long startBlockId, final boolean countFromStart) {
@@ -2056,7 +2056,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         slowestPeer = nextBlocks.getPeer();
                     }
                 }
-                
+
             }
             if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK / 2) {
                 log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
@@ -2099,15 +2099,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } finally {
                 globalSync.writeUnlock();
             }
-            
+
         }
 
         private void processFork(final Peer peer, final List<Block> forkBlocks, final Block commonBlock) {
-            
+
             BigInteger curCumulativeDifficulty = lookupBlockhain().getLastBlock().getCumulativeDifficulty();
-            
+
             List<Block> myPoppedOffBlocks = popOffToCommonBlock(commonBlock);
-            
+
             int pushedForkBlocks = 0;
             if (lookupBlockhain().getLastBlock().getId() == commonBlock.getId()) {
                 for (Block block : forkBlocks) {
@@ -2122,7 +2122,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                 }
             }
-            
+
             if (pushedForkBlocks > 0 && lookupBlockhain().getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
                 log.debug("Pop off caused by peer {}, blacklisting",peer.getHost());
                 peer.blacklist("Pop off");
@@ -2132,7 +2132,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
-            
+
             if (pushedForkBlocks == 0) {
                 log.debug("Didn't accept any blocks, pushing back my previous blocks");
                 for (int i = myPoppedOffBlocks.size() - 1; i >= 0; i--) {
@@ -2150,7 +2150,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     lookupTransactionProcessor().processLater(block.getOrLoadTransactions());
                 }
             }
-            
+
         }
     }
 

@@ -260,6 +260,9 @@ public class KeyStoreController {
 
         String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
         EthWalletKey ethKeyToExport = keysInfo.getEthWalletForAddress(ethAccountAddress);
+        if (ethKeyToExport == null) {
+            throw new ParameterException(JSONResponses.incorrect("ethAddress"));
+        }
         try {
             WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethKeyToExport.getCredentials().getEcKeyPair());
             return Response.ok(walletFile).build();

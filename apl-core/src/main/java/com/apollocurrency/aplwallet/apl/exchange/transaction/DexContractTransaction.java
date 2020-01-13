@@ -85,7 +85,7 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
-        if(attachment.getContractStatus().isStep2()){
+        if(attachment.getContractStatus().isStep2()) {
 
             if (contract == null) {
                 throw new AplException.NotValidException("Don't find contract.");

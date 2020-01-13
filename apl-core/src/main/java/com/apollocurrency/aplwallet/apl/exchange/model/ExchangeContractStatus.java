@@ -19,8 +19,8 @@ public enum ExchangeContractStatus {
     STEP_4;     // 3
 
     public static ExchangeContractStatus getType(int ordinal){
-        if (ordinal < 0 || ordinal > OrderType.values().length) {
-            return null;
+        if (ordinal < 0 || ordinal > ExchangeContractStatus.values().length) {
+            throw new IllegalArgumentException("Contract status does not exist for ordinal " + ordinal);
         }
         return ExchangeContractStatus.values()[ordinal];
     }

@@ -22,7 +22,7 @@ public class ShardRecovery {
     /**
      * tracked sharding state
      */
-    @Builder.Default
+ //   @Builder.Default
     private String state = MigrateState.INIT.name();
     /**
      * current object/table being processed
@@ -43,7 +43,7 @@ public class ShardRecovery {
     /**
      * automatically updated date-time in UTC zone
      */
-    @Builder.Default
+ //   @Builder.Default
     private Instant updated = Instant.now();
 
     /**
@@ -55,7 +55,7 @@ public class ShardRecovery {
         return height;
     }
 
-
+//TODO: rewirite all constructors to use one with all parameters and this() call
     public ShardRecovery(Long shardRecoveryId, MigrateState state, String objectName, String columnName,
                          Long lastColumnValue, String processedObject, Instant updated, Integer height) {
         Objects.requireNonNull(state);

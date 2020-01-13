@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractPlatformDependentUpdater implements PlatformDependentUpdater {
     private static final Logger LOG = getLogger(AbstractPlatformDependentUpdater.class);
-    private UpdaterMediator updaterMediator;
-    private UpdateInfo updateInfo;
+    private final UpdaterMediator updaterMediator;
+    private final UpdateInfo updateInfo;
     private int maxShutdownTimeOut = MAX_SHUTDOWN_TIMEOUT;
 
     public AbstractPlatformDependentUpdater(UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
@@ -59,7 +59,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
     }
 
     abstract Process runCommand(Path updateDirectory, Path workingDirectory, Path appDirectory,
-                                boolean userMode, boolean isShardingOn) throws IOException;
+                                boolean userMode, boolean isShardingOn, String chain) throws IOException;
 
     private void shutdownAndRunScript(Path updateDirectory) {
         Thread scriptRunner = new Thread(() -> {
@@ -86,7 +86,7 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
         try {
             LOG.debug("Starting platform dependent script");
             PropertiesHolder ph = updaterMediator.getPropertyHolder();
-            
+
             boolean isSharding = true; //node's sharding is on by default
             if(ph!=null){
                boolean isShardingOff = ph.getBooleanProperty("apl.noshardcreate", false);
@@ -94,8 +94,13 @@ public abstract class AbstractPlatformDependentUpdater implements PlatformDepend
             }else{
                LOG.warn("Can not access PeropertiesHolder");
             }
+            String chainId=updaterMediator.getChainId();
+            String chain="unknown";
+            if(chainId!=null && chainId.length()>=6){
+               chain = chainId.substring(0,6);
+            }
             runCommand(updateDir, Paths.get("").toAbsolutePath(), DirProvider.getBinDir(),
-                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding); 
+                    !RuntimeEnvironment.getInstance().isServiceMode(), isSharding, chain);
             LOG.debug("Platform dependent script was started");
         }
         catch (IOException e) {
