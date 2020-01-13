@@ -16,23 +16,23 @@ public interface DexTransactionDao {
     @Transactional(readOnly = true)
     @RegisterRowMapper(DexTransactionMapper.class)
     @SqlQuery("SELECT * FROM dex_transaction WHERE params =:params AND account =:account AND operation=:operation")
-    @RegisterArgumentFactory(DexOperationArgumentFactory.class)
-    DexTransaction get(@Bind("params") String params, @Bind("account") String account, @Bind("operation") DexTransaction.DexOperation operation);
+    @RegisterArgumentFactory(OpArgumentFactory.class)
+    DexTransaction get(@Bind("params") String params, @Bind("account") String account, @Bind("operation") DexTransaction.Op operation);
 
     @Transactional(readOnly = true)
     @RegisterRowMapper(DexTransactionMapper.class)
     @SqlQuery("SELECT * FROM dex_transaction WHERE db_id = :dbId")
-    @RegisterArgumentFactory(DexOperationArgumentFactory.class)
+    @RegisterArgumentFactory(OpArgumentFactory.class)
     DexTransaction get(@Bind("dbId") long dbId);
 
     @Transactional
     @SqlUpdate("INSERT INTO dex_transaction (hash, tx, operation, params, account, timestamp) VALUES (:hash, :rawTransactionBytes, :operation, :params, :account, :timestamp)")
-    @RegisterArgumentFactory(DexOperationArgumentFactory.class)
+    @RegisterArgumentFactory(OpArgumentFactory.class)
     void add(@BindBean DexTransaction tx);
 
     @Transactional
     @SqlUpdate("UPDATE dex_transaction SET hash = :hash, tx = :rawTransactionBytes, timestamp = :timestamp WHERE params =:params AND account =:account AND operation=:operation")
-    @RegisterArgumentFactory(DexOperationArgumentFactory.class)
+    @RegisterArgumentFactory(OpArgumentFactory.class)
     void update(@BindBean DexTransaction tx);
 
     @Transactional
