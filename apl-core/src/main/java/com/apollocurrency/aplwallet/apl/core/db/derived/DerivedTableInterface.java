@@ -29,6 +29,13 @@ public interface DerivedTableInterface<T> {
 
     void trim(int height);
 
+    /**
+     * Trim process can be different when it runs on usual way or in case sharding process
+     * @param height trim height
+     * @param isSharding true when called in sharding process, false otherwise (do the same as usual trim)
+     */
+    void trim(int height, boolean isSharding);
+
     void createSearchIndex(Connection con) throws SQLException;
 
     void prune(int time);
