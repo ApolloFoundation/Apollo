@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
@@ -84,7 +85,7 @@ public class GenesisImporter {
     private PublicKeyTable pkTable;
     private GenesisPublicKeyTable genesisPublicKeyTable;
     private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private OptionDAO optionDAO;
+    private AccountTable accountTable;
 
     @Inject
     public GenesisImporter(
@@ -96,7 +97,7 @@ public class GenesisImporter {
             PublicKeyTable pkTable,
             GenesisPublicKeyTable genesisPublicKeyTable,
             AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-            OptionDAO optionDAO,
+            AccountTable accountTable,
             ApplicationJsonFactory jsonFactory,
             PropertiesHolder propertiesHolder
     ) {
@@ -116,7 +117,7 @@ public class GenesisImporter {
         this.pkTable = Objects.requireNonNull(pkTable, "pkTable is NULL");
         this.genesisPublicKeyTable = Objects.requireNonNull(genesisPublicKeyTable, "genesisPublicKeyTable is NULL");
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
-        this.optionDAO = Objects.requireNonNull(optionDAO, "optionDAO is NULL");
+        this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
     }
 
     private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
@@ -130,6 +131,7 @@ public class GenesisImporter {
         this.pkTable.truncate();
         this.genesisPublicKeyTable.truncate();
         this.accountGuaranteedBalanceTable.truncate();
+        this.accountTable.truncate();
     }
 
     @PostConstruct
@@ -261,14 +263,8 @@ public class GenesisImporter {
         if (!dataSource.isInTransaction()) {
             dataSource.begin();
         }
-        // check if 'incomplete genesis import' info exist
-        boolean isIncompleteImportExist = optionDAO.exist(IS_GENESIS_DATA_IMPORT_STARTED);
-        log.debug("Does Incomplete Genesis Import exist ? = {}", isIncompleteImportExist);
-        if (isIncompleteImportExist) {
-            cleanUpGenesisData(); // clean up previous incomplete genesis import
-        }
-        boolean result = optionDAO.set(IS_GENESIS_DATA_IMPORT_STARTED, Boolean.TRUE.toString());// save 'incomplete genesis import' info
-        log.debug("Does Incomplete Genesis Import saved ? = {}", result);
+        // Always remove possibly previously 'incomplete genesis import' data
+        cleanUpGenesisData(); // clean up previous incomplete genesis import (if any)
 
         final int publicKeyNumber = savePublicKeys(dataSource);
 
@@ -276,8 +272,6 @@ public class GenesisImporter {
         if (loadOnlyPublicKeys) {
             log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
                     (System.currentTimeMillis() - start) / 1000);
-            result = optionDAO.delete(IS_GENESIS_DATA_IMPORT_STARTED); // clean up 'incomplete genesis import' info
-            log.debug("Does Incomplete Genesis Import 1. cleared ? = {}", result);
             return;
         }
         // load 'balances' from JSON only
@@ -301,9 +295,6 @@ public class GenesisImporter {
         final Long usedBytes = null; //Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory(); // to measure in unit tests
         log.debug("ImportGenesisJson is computed in {} milliSec, used {} Kb", System.currentTimeMillis() - start,
                 usedBytes != null ? usedBytes / 1024 : "not calculated");
-
-        result = optionDAO.delete(IS_GENESIS_DATA_IMPORT_STARTED); // clean up 'incomplete genesis import' info
-        log.debug("Soes Incomplete Genesis Import 2. cleared ? = {}", result);
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})

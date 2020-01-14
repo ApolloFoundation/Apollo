@@ -118,8 +118,6 @@ class GenesisImporterTest {
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .build();
 
-    @Inject
-    private OptionDAO optionDAO;
     private GenesisImporter genesisImporter;
 
     @BeforeEach
@@ -158,7 +156,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -189,7 +187,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -218,7 +216,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -246,7 +244,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             mockedPropertiesHolder
         );
@@ -254,7 +252,7 @@ class GenesisImporterTest {
 
         genesisImporter.importGenesisJson(false);
         int count = publicKeyTable.getCount();
-        assertEquals(10, count);
+        assertEquals(0, count);
         count = genesisPublicKeyTable.getCount();
         assertEquals(19, count);
         Account genesisAccount = Account.getAccount(GenesisImporter.CREATOR_ID);
@@ -281,7 +279,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -305,14 +303,14 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             mockedPropertiesHolder
         );
         dataSource.begin();
         genesisImporter.importGenesisJson(true);
         int count = publicKeyTable.getCount();
-        assertEquals(10, count);
+        assertEquals(0, count);
         count = genesisPublicKeyTable.getCount();
         assertEquals(10, count);
         checkImportedPublicKeys(10);
@@ -330,7 +328,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -347,7 +345,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -384,7 +382,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             mockedPropertiesHolder
         );
@@ -403,7 +401,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             weld.select(ApplicationJsonFactory.class).get(),
             propertiesHolder
         );
@@ -429,7 +427,7 @@ class GenesisImporterTest {
             databaseManager,
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             jsonFactory,
             propertiesHolder
         );
@@ -467,7 +465,7 @@ class GenesisImporterTest {
             databaseManager,
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             jsonFactory,
             mockedPropertiesHolder
         );
@@ -500,7 +498,7 @@ class GenesisImporterTest {
             extension.getDatabaseManager(),
             aplAppStatus,
             genesisImporterProducer,
-            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, optionDAO,
+            publicKeyTable, genesisPublicKeyTable, accountGuaranteedBalanceTable, accountTable,
             jsonFactory,
             mockedPropertiesHolder
         );
