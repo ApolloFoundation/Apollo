@@ -65,6 +65,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -346,17 +347,14 @@ public class DexController {
         ).build();
     }
 
-
     @GET
-    @Path("/order")
+    @Path("/orders/{orderId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Order"),
         @ApiResponse(responseCode = "200", description = "Unexpected error")})
-    public Response getOrder(
-        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String orderIdStr
-    ) throws NotFoundException {
+    public Response getOrder(@PathParam("orderId") String orderIdStr) throws NotFoundException {
         long orderId = Convert.parseLong(orderIdStr);
 
         DexOrder order = service.getOrder(orderId);
