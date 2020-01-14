@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.derived.CachedTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
@@ -32,7 +33,6 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTER
 @Slf4j
 @Singleton
 public class PublicKeyTableProducer {
-    private final PropertiesHolder propertiesHolder;
     private final InMemoryCacheManager cacheManager;
 
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
@@ -40,24 +40,23 @@ public class PublicKeyTableProducer {
 
     private final TaskDispatchManager taskManager;
 
-
     @Getter
-    private boolean cacheEnabled = false;
+    private final boolean cacheEnabled;
     private Cache<DbKey, PublicKey> publicKeyCache;
 
     @Inject
-    public PublicKeyTableProducer(PropertiesHolder propertiesHolder, Blockchain blockchain, InMemoryCacheManager cacheManager, TaskDispatchManager taskManager) {
-        this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "Properties holder is NULL");
+    public PublicKeyTableProducer(@Property("apl.enablePublicKeyCache") boolean cacheEnabled, Blockchain blockchain, InMemoryCacheManager cacheManager, TaskDispatchManager taskManager) {
+
         Objects.requireNonNull(blockchain, "Block chain is NULL.");
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         this.publicKeyTable = new PublicKeyTable(blockchain);
         this.genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         this.taskManager = taskManager;
+        this.cacheEnabled = cacheEnabled;
     }
 
     @PostConstruct
     private void init(){
-        cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
         if (isCacheEnabled()){
             log.info("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
@@ -94,11 +93,5 @@ public class PublicKeyTableProducer {
         }else {
             return genesisPublicKeyTable;
         }
-    }
-
-    @Produces
-    @Named("isPublicKeyCacheEnabled")
-    public boolean getPublicKeyCacheEnabled(){
-        return isCacheEnabled();
     }
 }

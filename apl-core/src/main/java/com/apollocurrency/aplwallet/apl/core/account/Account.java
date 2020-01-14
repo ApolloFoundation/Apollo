@@ -353,6 +353,12 @@ public class Account {
         return addAccount(id, false);
     }
 
+    /**
+     * Create new account
+     * @param id
+     * @param isGenesis
+     * @return
+     */
     private static Account addAccount(long id, boolean isGenesis) {
         Preconditions.checkArgument( id != 0, "Invalid accountId 0");
         DbKey dbKey = AccountTable.newKey(id);
@@ -387,7 +393,7 @@ public class Account {
         return decrypted;
     }
 
-    public static boolean setOrVerify(long accountId, byte[] key) {
+    public static boolean setOrVerifyPublicKey(long accountId, byte[] key) {
         DbKey dbKey = AccountTable.newKey(accountId);
         int height = blockchain.getHeight();
         return publicKeyService.setOrVerifyPublicKey(dbKey, key, height);
@@ -758,7 +764,6 @@ public class Account {
             }
         }
         this.publicKey = publicKey;
-        //publicKeyService.putInCache(dbKey, publicKey);
     }
 
     public void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {

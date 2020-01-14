@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
@@ -40,7 +41,7 @@ public class PublicKeyServiceImpl implements PublicKeyService {
     @Inject
     public PublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
                                 @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
-                                @Named("isPublicKeyCacheEnabled") boolean cacheEnabled,
+                                @Property("apl.enablePublicKeyCache") boolean cacheEnabled,
                                 @CacheProducer @CacheType("PUBLIC_KEY_CACHE") Cache<DbKey, PublicKey> publicKeyCache ) {
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;

@@ -82,7 +82,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (Account.setOrVerify(recipientAccount.getId(), publicKey)) {
+        if (Account.setOrVerifyPublicKey(recipientAccount.getId(), publicKey)) {
             recipientAccount.apply(this.publicKey);
         }
     }

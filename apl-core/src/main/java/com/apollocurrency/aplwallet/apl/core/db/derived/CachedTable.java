@@ -34,7 +34,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         super.rollback(height);
         final Map<DbKey, T> map = cache.asMap();
         map.values().forEach(v -> {
-            if(v.getHeight()>=height) {
+            if(v.getHeight()>height) {
                 log.trace("--cache-- remove  dbKey={} height={}", v.getDbKey(), v.getHeight());
                 cache.invalidate(v.getDbKey());
             }
