@@ -496,13 +496,13 @@ public class DexContract extends Contract {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(INITIATED_EVENT, log);
                 InitiatedEventResponse typedResponse = new InitiatedEventResponse();
                 typedResponse.log = log;
-                typedResponse.initiator = (String) eventValues.getIndexedValues().get(0).getValue();
-                typedResponse.recipient = (String) eventValues.getIndexedValues().get(1).getValue();
-                typedResponse.asset = (String) eventValues.getIndexedValues().get(2).getValue();
-                typedResponse.orderId = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
-                typedResponse.secretHash = (byte[]) eventValues.getNonIndexedValues().get(1).getValue();
-                typedResponse.initTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
-                typedResponse.refundTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(3).getValue();
+                typedResponse.orderId = (BigInteger) eventValues.getIndexedValues().get(0).getValue();
+                typedResponse.secretHash = (byte[]) eventValues.getIndexedValues().get(1).getValue();
+                typedResponse.initiator = (String) eventValues.getIndexedValues().get(2).getValue();
+                typedResponse.recipient = (String) eventValues.getNonIndexedValues().get(0).getValue();
+                typedResponse.initTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(1).getValue();
+                typedResponse.refundTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
+                typedResponse.asset = (String) eventValues.getNonIndexedValues().get(3).getValue();
                 typedResponse.amount = (BigInteger) eventValues.getNonIndexedValues().get(4).getValue();
                 return typedResponse;
             }
@@ -787,15 +787,15 @@ public class DexContract extends Contract {
         public Log log;
 
 
+        public BigInteger orderId;
+
+        public byte[] secretHash;
+
         public String initiator;
 
         public String recipient;
 
         public String asset;
-
-        public BigInteger orderId;
-
-        public byte[] secretHash;
 
         public BigInteger initTimestamp;
 

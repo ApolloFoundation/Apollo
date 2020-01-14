@@ -209,8 +209,7 @@ public class DexSmartContractService {
 
     public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
-        DexContract.InitiatedEventResponse response = dexContract.initiatedEventFlowable(orderId).blockingSingle();
-        return response.log.getTransactionHash();
+        return dexContract.initiatedEventFlowable(orderId).toObservable().blockingFirst().log.getTransactionHash();
     }
 
 
