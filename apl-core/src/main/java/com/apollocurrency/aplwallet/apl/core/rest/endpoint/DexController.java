@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
@@ -72,16 +73,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import java.util.ArrayList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -344,6 +344,24 @@ public class DexController {
                 .map(order -> order.getDexOrder().toDto(order.isHasFrozenMoney()))
                 .collect(Collectors.toList())
         ).build();
+    }
+
+
+    @GET
+    @Path("/order")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Order"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getOrder(
+        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String orderIdStr
+    ) throws NotFoundException {
+        long orderId = Convert.parseLong(orderIdStr);
+
+        DexOrder order = service.getOrder(orderId);
+
+        return Response.ok(order.toDto()).build();
     }
 
     @POST
