@@ -20,7 +20,7 @@ import org.json.simple.JSONObject;
  * @author al
  */
 public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
-    
+
     private static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
 
     public static TaggedDataExtendAttachment parse(JSONObject attachmentData) {
@@ -100,5 +100,19 @@ public final class TaggedDataExtendAttachment extends TaggedDataAttachment {
     @Override
     public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
     }
-    
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedDataExtendAttachment{");
+        sb.append("taggedDataId=").append(taggedDataId);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", channel='").append(channel).append('\'');
+        sb.append(", isText=").append(isText);
+        sb.append(", filename='").append(filename).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

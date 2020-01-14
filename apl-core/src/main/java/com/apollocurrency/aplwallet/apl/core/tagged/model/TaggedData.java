@@ -189,4 +189,23 @@ public class TaggedData {
         return result;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedData{");
+        sb.append("id=").append(id);
+        sb.append(", dbKey=").append(dbKey);
+        sb.append(", accountId=").append(accountId);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", channel='").append(channel).append('\'');
+        sb.append(", isText=").append(isText);
+        sb.append(", filename='").append(filename).append('\'');
+        sb.append(", transactionTimestamp=").append(transactionTimestamp);
+        sb.append(", blockTimestamp=").append(blockTimestamp);
+        sb.append(", height=").append(height);
+        sb.append('}');
+        return sb.toString();
+    }
 }

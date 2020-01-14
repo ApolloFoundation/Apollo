@@ -59,4 +59,14 @@ public class TaggedDataExtend extends VersionedDerivedEntity {
     public int hashCode() {
         return Objects.hash(super.hashCode(), taggedDataId, extendId);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedDataExtend{");
+        sb.append("taggedDataId=").append(taggedDataId);
+        sb.append(", extendId=").append(extendId);
+        sb.append(", latest=").append(super.isLatest());
+        sb.append('}');
+        return sb.toString();
+    }
 }

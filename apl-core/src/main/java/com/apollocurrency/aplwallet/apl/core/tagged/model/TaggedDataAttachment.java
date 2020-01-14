@@ -20,7 +20,7 @@ import org.json.simple.JSONObject;
  * @author al
  */
 public abstract class TaggedDataAttachment extends AbstractAttachment implements Prunable {
-    
+
     final String name;
     final String description;
     final String tags;
@@ -196,5 +196,19 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
     }
 
     public abstract long getTaggedDataId(Transaction transaction);
-    
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedDataAttachment{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", channel='").append(channel).append('\'');
+        sb.append(", isText=").append(isText);
+        sb.append(", filename='").append(filename).append('\'');
+        sb.append(", taggedData=").append(taggedData);
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -22,7 +22,7 @@ import org.json.simple.JSONObject;
  * @author al
  */
 public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
-    
+
     public static TaggedDataUploadAttachment parse(JSONObject attachmentData) {
         if (!Appendix.hasAppendix(Data.TAGGED_DATA_UPLOAD.getName(), attachmentData)) {
             return null;
@@ -95,5 +95,18 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
         TaggedDataService taggedDataService = CDI.current().select(TaggedDataService.class).get();
         taggedDataService.restore(transaction, this, blockTimestamp, height);
     }
-    
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedDataUploadAttachment{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", channel='").append(channel).append('\'');
+        sb.append(", isText=").append(isText);
+        sb.append(", filename='").append(filename).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }
