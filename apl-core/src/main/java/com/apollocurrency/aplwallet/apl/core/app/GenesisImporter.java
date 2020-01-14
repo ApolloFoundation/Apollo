@@ -57,8 +57,6 @@ public class GenesisImporter {
     private static final String LOADING_STRING_GENESIS_BALANCE = "Loading genesis amounts %d / %d...";
     private static final String BALANCES_JSON_FIELD_NAME = "balances";
     private static final String GENESIS_PUBLIC_KEY_JSON_FIELD_NAME = "genesisPublicKey";
-    // store FLAG about started genesis import process that can be stopped and not completely finished
-    private static final String IS_GENESIS_DATA_IMPORT_STARTED = "isGenesisImportStarted";
     private static final String EPOCH_BEGINNING_JSON_FIELD_NAME = "epochBeginning";
     public static long CREATOR_ID;
     public static long EPOCH_BEGINNING;
