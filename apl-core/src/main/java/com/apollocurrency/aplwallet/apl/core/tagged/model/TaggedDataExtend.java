@@ -65,7 +65,8 @@ public class TaggedDataExtend extends VersionedDerivedEntity {
         final StringBuffer sb = new StringBuffer("TaggedDataExtend{");
         sb.append("taggedDataId=").append(taggedDataId);
         sb.append(", extendId=").append(extendId);
-        sb.append(", latest=").append(super.isLatest());
+        sb.append(", height=").append(getHeight());
+        sb.append(", latest=").append(isLatest());
         sb.append('}');
         return sb.toString();
     }

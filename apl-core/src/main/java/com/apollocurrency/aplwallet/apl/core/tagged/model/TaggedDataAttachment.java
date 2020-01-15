@@ -200,6 +200,13 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("TaggedDataAttachment{");
+        printCommonFields(sb);
+        sb.append(", taggedData=").append(taggedData);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    protected void printCommonFields(StringBuffer sb) {
         sb.append("name='").append(name).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", tags='").append(tags).append('\'');
@@ -207,8 +214,5 @@ public abstract class TaggedDataAttachment extends AbstractAttachment implements
         sb.append(", channel='").append(channel).append('\'');
         sb.append(", isText=").append(isText);
         sb.append(", filename='").append(filename).append('\'');
-        sb.append(", taggedData=").append(taggedData);
-        sb.append('}');
-        return sb.toString();
     }
 }

@@ -92,6 +92,8 @@ public class DataTag extends VersionedDerivedEntity {
         return "DataTag{" +
                 "tag='" + tag + '\'' +
                 ", count=" + count +
+                ", height=" + getHeight() +
+                ", latest=" + isLatest() +
                 '}';
     }
 }

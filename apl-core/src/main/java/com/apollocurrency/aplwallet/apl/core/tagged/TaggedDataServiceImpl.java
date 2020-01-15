@@ -98,7 +98,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         log.debug("extend TaggedData: timestamp = {}", timestamp);
         int timestampInRecord = timestamp.getTimestamp();
         int minPrunableLifetime = blockchainConfig.getMinPrunableLifetime();
-        log.debug("extend TaggedData: timestamp cond ? = '{}' (trTs={}, minPrunableLifetime={}, timestampInRecor={})",
+        log.debug("extend TaggedData: timestamp cond ? = '{}' (trTs={}, minPrunableLifetime={}, timestampInRecord={})",
             transaction.getTimestamp() - minPrunableLifetime > timestampInRecord,
             transaction.getTimestamp(), minPrunableLifetime, timestampInRecord
             );

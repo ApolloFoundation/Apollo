@@ -99,13 +99,7 @@ public final class TaggedDataUploadAttachment extends TaggedDataAttachment {
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("TaggedDataUploadAttachment{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", description='").append(description).append('\'');
-        sb.append(", tags='").append(tags).append('\'');
-        sb.append(", type='").append(type).append('\'');
-        sb.append(", channel='").append(channel).append('\'');
-        sb.append(", isText=").append(isText);
-        sb.append(", filename='").append(filename).append('\'');
+        super.printCommonFields(sb);
         sb.append('}');
         return sb.toString();
     }

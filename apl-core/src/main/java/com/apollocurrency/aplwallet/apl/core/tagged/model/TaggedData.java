@@ -12,9 +12,10 @@ import java.util.Objects;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
-public class TaggedData {
+public class TaggedData extends VersionedDerivedEntity {
 
     private final long id;
     private DbKey dbKey;
@@ -30,9 +31,9 @@ public class TaggedData {
     private final String filename;
     private int transactionTimestamp;
     private int blockTimestamp;
-    private int height;
 
     public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
+        super(null, height);
         this.id = transaction.getId();
 //        this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
@@ -47,10 +48,12 @@ public class TaggedData {
         this.filename = attachment.getFilename();
         this.blockTimestamp = blockTimestamp;
         this.transactionTimestamp = transaction.getTimestamp();
-        this.height = height;
+        setHeight(height);
     }
 
     public TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
+        setDbKey(dbKey);
         this.id = rs.getLong("id");
         this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
@@ -65,10 +68,12 @@ public class TaggedData {
         this.filename = rs.getString("filename");
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
-        this.height = rs.getInt("height");
     }
 
-    public TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
+    public TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags,
+                      byte[] data, String type, String channel, boolean isText, String filename) {
+        super(null, null);
+        setDbKey(dbKey);
         this.id = id;
         this.dbKey = dbKey;
         this.accountId = accountId;
@@ -151,14 +156,6 @@ public class TaggedData {
         this.blockTimestamp = blockTimestamp;
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -169,7 +166,7 @@ public class TaggedData {
                 isText == that.isText &&
                 transactionTimestamp == that.transactionTimestamp &&
                 blockTimestamp == that.blockTimestamp &&
-                height == that.height &&
+                getHeight() == that.getHeight() &&
                 Objects.equals(dbKey, that.dbKey) &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(description, that.description) &&
@@ -183,7 +180,8 @@ public class TaggedData {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(id, dbKey, accountId, name, description, tags, type, channel, isText, filename, transactionTimestamp, blockTimestamp, height);
+        int result = Objects.hash(id, dbKey, accountId, name, description, tags, type, channel, isText, filename,
+            transactionTimestamp, blockTimestamp, getHeight());
         result = 31 * result + Arrays.hashCode(parsedTags);
         result = 31 * result + Arrays.hashCode(data);
         return result;
@@ -204,7 +202,8 @@ public class TaggedData {
         sb.append(", filename='").append(filename).append('\'');
         sb.append(", transactionTimestamp=").append(transactionTimestamp);
         sb.append(", blockTimestamp=").append(blockTimestamp);
-        sb.append(", height=").append(height);
+        sb.append(", height=").append(getHeight());
+        sb.append(", latest=").append(isLatest());
         sb.append('}');
         return sb.toString();
     }
