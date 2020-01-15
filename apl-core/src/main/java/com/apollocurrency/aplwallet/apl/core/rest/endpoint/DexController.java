@@ -615,17 +615,21 @@ public class DexController {
         symbolsOutputDTO.minmov = 1;
         symbolsOutputDTO.minmov2 = 0;
         symbolsOutputDTO.pointvalue = 1;
-        symbolsOutputDTO.session = "0930-1630";
-        symbolsOutputDTO.has_intraday = false;
+        symbolsOutputDTO.session = "24x7";
+        symbolsOutputDTO.has_intraday = true;
         symbolsOutputDTO.has_no_volume = false;
+        symbolsOutputDTO.has_daily = true;        
         symbolsOutputDTO.description = "Apollo Foundation.";
         symbolsOutputDTO.type = "stock";
-        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
+        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;        
+        symbolsOutputDTO.supported_resolutions.add("15");
+        symbolsOutputDTO.supported_resolutions.add("60");
+        symbolsOutputDTO.supported_resolutions.add("240");
         symbolsOutputDTO.supported_resolutions.add("D");
-        symbolsOutputDTO.supported_resolutions.add("2D");
-        symbolsOutputDTO.supported_resolutions.add("3D");
+        
         symbolsOutputDTO.pricescale = 1000000000;
         symbolsOutputDTO.ticker = symbol;
+        
         return Response.ok( symbolsOutputDTO ) .build();
     }
     
@@ -648,9 +652,11 @@ public class DexController {
         tradingViewConfigDTO.supports_time = false;       
         // resolutions
         tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();         
-        tradingViewConfigDTO.supported_resolutions.add("D");
-        tradingViewConfigDTO.supported_resolutions.add("2D");
-        tradingViewConfigDTO.supported_resolutions.add("3D");       
+        tradingViewConfigDTO.supported_resolutions.add("15");
+        tradingViewConfigDTO.supported_resolutions.add("60");
+        tradingViewConfigDTO.supported_resolutions.add("240");    
+        tradingViewConfigDTO.supported_resolutions.add("D");    
+                
         return Response.ok( tradingViewConfigDTO ) .build();        
     }
               

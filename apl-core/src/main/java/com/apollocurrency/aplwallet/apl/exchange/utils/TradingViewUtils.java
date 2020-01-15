@@ -113,25 +113,39 @@ public class TradingViewUtils {
         long startTS = (long)fromTs * 1000L;
         long endTS = (long)toTs * 1000L; 
             
-                                   
+                 
+        int interval = 0;
+        
         byte currencyType = 0;
         int intervalDiscretion=0, multiplier=1; 
                 
-        if (resolution.endsWith("D")) {
-            intervalDiscretion = 60*60*24;
-        } else if (resolution.endsWith("H")) {
-            intervalDiscretion = 60*60; 
-        } else if (resolution.endsWith("M")) {
-            intervalDiscretion = 60;          
+        boolean onlyNumericInput = true;
+        try {
+            interval = Integer.parseInt(resolution);                       
+        } catch (NumberFormatException e) {
+            onlyNumericInput = false;
         }
         
-        if (resolution.length() > 1) {
-            String mutlStr = resolution.substring(0, resolution.length() - 1);
-            multiplier = Integer.valueOf(mutlStr,10);
+        if(!onlyNumericInput) {   
             
-        } 
+            if (resolution.endsWith("D")) {
+                intervalDiscretion = 60*60*24;
+                } else if (resolution.endsWith("H")) {
+                intervalDiscretion = 60*60; 
+                } else if (resolution.endsWith("M")) {
+                intervalDiscretion = 60;          
+            }                    
+            
+            if (resolution.length() > 1) {
+                String mutlStr = resolution.substring(0, resolution.length() - 1);
+                multiplier = Integer.valueOf(mutlStr,10);                        
+            }                    
+            interval = multiplier * intervalDiscretion;
+        }
         
-        int interval = multiplier * intervalDiscretion;                
+          
+        
+        
         int limit = (toTs - fromTs)/interval;
         
         if (log.isTraceEnabled()) {
