@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.util.Search;
 public class TaggedData extends VersionedDerivedEntity {
 
     private final long id;
-    private DbKey dbKey;
     private final long accountId;
     private final String name;
     private final String description;
@@ -35,7 +34,6 @@ public class TaggedData extends VersionedDerivedEntity {
     public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
         super(null, height);
         this.id = transaction.getId();
-//        this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
@@ -55,7 +53,6 @@ public class TaggedData extends VersionedDerivedEntity {
         super(rs);
         setDbKey(dbKey);
         this.id = rs.getLong("id");
-        this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
         this.name = rs.getString("name");
         this.description = rs.getString("description");
@@ -75,7 +72,6 @@ public class TaggedData extends VersionedDerivedEntity {
         super(null, null);
         setDbKey(dbKey);
         this.id = id;
-        this.dbKey = dbKey;
         this.accountId = accountId;
         this.name = name;
         this.description = description;
@@ -140,14 +136,6 @@ public class TaggedData extends VersionedDerivedEntity {
         return blockTimestamp;
     }
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
     public void setTransactionTimestamp(int transactionTimestamp) {
         this.transactionTimestamp = transactionTimestamp;
     }
@@ -167,7 +155,7 @@ public class TaggedData extends VersionedDerivedEntity {
                 transactionTimestamp == that.transactionTimestamp &&
                 blockTimestamp == that.blockTimestamp &&
                 getHeight() == that.getHeight() &&
-                Objects.equals(dbKey, that.dbKey) &&
+                Objects.equals(this.getDbKey(), that.getDbKey()) &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(description, that.description) &&
                 Objects.equals(tags, that.tags) &&
@@ -180,7 +168,7 @@ public class TaggedData extends VersionedDerivedEntity {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(id, dbKey, accountId, name, description, tags, type, channel, isText, filename,
+        int result = Objects.hash(id, getDbKey(), accountId, name, description, tags, type, channel, isText, filename,
             transactionTimestamp, blockTimestamp, getHeight());
         result = 31 * result + Arrays.hashCode(parsedTags);
         result = 31 * result + Arrays.hashCode(data);
@@ -191,7 +179,7 @@ public class TaggedData extends VersionedDerivedEntity {
     public String toString() {
         final StringBuffer sb = new StringBuffer("TaggedData{");
         sb.append("id=").append(id);
-        sb.append(", dbKey=").append(dbKey);
+        sb.append(", dbKey=").append(getDbKey());
         sb.append(", accountId=").append(accountId);
         sb.append(", name='").append(name).append('\'');
         sb.append(", description='").append(description).append('\'');
