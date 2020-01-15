@@ -60,7 +60,8 @@ public class PublicKeyServiceImpl implements PublicKeyService {
     }
 
     void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        if (isCacheEnabled()) {
+        //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
+        /*if (isCacheEnabled()) {
             removeFromCache(AccountTable.newKey(block.getGeneratorId()));
             block.getOrLoadTransactions().forEach(transaction -> {
                 removeFromCache(AccountTable.newKey(transaction.getSenderId()));
@@ -74,7 +75,7 @@ public class PublicKeyServiceImpl implements PublicKeyService {
                     }
                 }
             });
-        }
+        }*/
     }
 
     @Override
@@ -193,15 +194,17 @@ public class PublicKeyServiceImpl implements PublicKeyService {
 
     private void refreshInCache(DbKey dbKey) {
         if ( isCacheEnabled()) {
-            PublicKey key = loadPublicKey(dbKey);
-            if (key != null) {
-                publicKeyCache.put(dbKey, key);
+            PublicKey publicKey = loadPublicKey(dbKey);
+            if (publicKey != null) {
+                log.trace("--cache-- refresh dbKey={} height={}", dbKey, publicKey.getHeight());
+                publicKeyCache.put(dbKey, publicKey);
             }
         }
     }
 
     private void putInCache(DbKey key, PublicKey value){
         if (isCacheEnabled()){
+            log.trace("--cache-- put  dbKey={} height={}", key, value.getHeight());
             publicKeyCache.put(key, value);
         }
     }

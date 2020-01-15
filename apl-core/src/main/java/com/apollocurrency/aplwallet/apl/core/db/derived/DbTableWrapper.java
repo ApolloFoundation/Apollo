@@ -196,6 +196,11 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
+    public void trim(int height, boolean isSharding) {
+        table.trim(height, isSharding);
+    }
+
+    @Override
     public void createSearchIndex(Connection con) throws SQLException {
         table.createSearchIndex(con);
     }
