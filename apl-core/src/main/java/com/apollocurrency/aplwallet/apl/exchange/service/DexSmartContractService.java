@@ -330,6 +330,7 @@ public class DexSmartContractService {
                             TransactionReceipt receipt = receiptOptional.get();
                             String status = receipt.getStatus();
                             if (Numeric.decodeQuantity(status).longValue() != 1) { // transaction was reverted
+                                log.info("Delete saved reverted transaction. New one will be sent. Hash {}", txHash);
                                 dexTransactionDao.delete(tx.getDbId());
                                 txHash = null;
                             }
