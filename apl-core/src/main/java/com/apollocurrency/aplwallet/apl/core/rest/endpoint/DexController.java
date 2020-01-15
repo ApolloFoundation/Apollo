@@ -633,6 +633,20 @@ public class DexController {
         return Response.ok( symbolsOutputDTO ) .build();
     }
     
+    @GET
+    @Path("/time")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get time for trading vies", description = "getting time")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getTime( @Context HttpServletRequest req) throws NotFoundException {
+        
+        Long time = System.currentTimeMillis()/1000L;
+        return Response.ok( time ) .build();
+    }
+
+    
     
     @GET
     @Path("/config")
