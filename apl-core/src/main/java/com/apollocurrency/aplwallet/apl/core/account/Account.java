@@ -47,8 +47,12 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
@@ -113,6 +117,8 @@ public class Account {
     final long id;
     DbKey dbKey;
     private PublicKey publicKey;
+    @Getter
+    @Setter
     long balanceATM;
     long unconfirmedBalanceATM;
     long forgedBalanceATM;
@@ -530,6 +536,7 @@ public class Account {
         int blockchainHeight = blockchain.getHeight();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.TEMP_TABLE_USE)
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
                      + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                      + (height < blockchainHeight ? " AND height <= ? " : "")

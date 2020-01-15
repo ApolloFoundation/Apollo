@@ -31,6 +31,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
@@ -79,13 +81,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         return defaultSort;
     }
 
-    @Override
-    public void clearCache() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        dataSource.clearCache(table);
-    }
-
-    @Override
     public void checkAvailable(int height) {
         if (multiversion) {
             if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
@@ -109,19 +104,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     @Deprecated
     @Override
     public final T newEntity(DbKey dbKey) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        boolean cache = dataSource.isInTransaction();
-        if (cache) {
-            T t = (T) dataSource.getCache(table).get(dbKey);
-            if (t != null) {
-                return t;
-            }
-        }
-        T t = keyFactory.newEntity(dbKey);
-        if (cache) {
-            dataSource.getCache(table).put(dbKey, t);
-        }
-        return t;
+        return keyFactory.newEntity(dbKey);
     }
 
     @Override
@@ -130,19 +113,13 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     }
 
     @Override
-    public final T get(DbKey dbKey, boolean cache) {
+    public final T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (cache && dataSource.isInTransaction()) {
-            T t = (T) dataSource.getCache(table).get(dbKey);
-            if (t != null) {
-                return t;
-            }
-        }
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
              + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbKey.setPK(pstmt);
-            return get(con, pstmt, cache);
+            return get(con, pstmt, createDbKey);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -209,26 +186,16 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     }
 
     @Override
-    public T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
+    public T get(Connection con, PreparedStatement pstmt, boolean createDbKey) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        final boolean doCache = cache && dataSource.isInTransaction();
         try (ResultSet rs = pstmt.executeQuery()) {
             if (!rs.next()) {
                 return null;
             }
-            T t = null;
-
-            DbKey dbKey = null;
-            if (doCache) {
-                dbKey = keyFactory.newKey(rs);
-                t = (T) dataSource.getCache(table).get(dbKey);
-            }
-            if (t == null) {
-                t = (T)load(con, rs, dbKey);
-                if (doCache) {
-                    dataSource.getCache(table).put(dbKey, t);
-                }
-            }
+            DbKey dbKey = createDbKey && dataSource.isInTransaction()
+                    ? keyFactory.newKey(rs)
+                    : null;
+            T t = load(con, rs, dbKey);
             if (rs.next() && dbKey!=null) {
               log.debug("Multiple records found. Table: {} Key: {}", table, dbKey.toString());
               throw new RuntimeException("Multiple records found. Table: "+table+" Key: "+dbKey.toString());
@@ -307,13 +274,9 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = keyFactory.newKey(rs);
-                t = (T) dataSource.getCache(table).get(dbKey);
             }
             if (t == null) {
                 t = (T) load(connection, rs, dbKey);
-                if (doCache) {
-                    dataSource.getCache(table).put(dbKey, t);
-                }
             }
             return t;
         });
@@ -330,9 +293,10 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
             PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
                     ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                    + " WHERE " + table + ".db_id = ft.keys[0] "
+                    + " WHERE " + table + ".db_id = ft.keys[1] "
                     + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
                     + " AND " + dbClause.getClause() + sort
                     + DbUtils.limitsClause(from, to));
@@ -453,10 +417,10 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
             }
             return getCount(pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);            
+            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }finally{
-            DbUtils.close(con);            
+            DbUtils.close(con);
         }
     }
 
@@ -490,18 +454,13 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        T cachedT = (T) dataSource.getCache(table).get(dbKey);
-        if (cachedT == null) {
-            dataSource.getCache(table).put(dbKey, t);
-        } else if (t != cachedT) { // not a bug
-            log.debug("In cache : " + cachedT.toString() + ", inserting " + t.toString());
-            throw new IllegalStateException("Different instance found in DatabaseManager cache, perhaps trying to save an object "
-                    + "that was read outside the current transaction");
-        }
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")) {
+                try (
+                        @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
+                        PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
+                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                ) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
                 }

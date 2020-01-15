@@ -21,12 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 public class OptionDAO {
     private DatabaseManager databaseManager;
 
-/*
-    public OptionDAO() {
-        databaseManager = CDI.current().select(DatabaseManager.class).get();
-    }
-*/
-
     @Inject
     public OptionDAO(DatabaseManager databaseManager) {
         Objects.requireNonNull(databaseManager, "Database Manager cannot be null");

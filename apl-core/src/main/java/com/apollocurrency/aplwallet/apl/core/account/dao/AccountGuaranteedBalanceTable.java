@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import java.sql.Connection;
@@ -43,6 +45,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     public void trim(int height) {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                      + "WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
             pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
