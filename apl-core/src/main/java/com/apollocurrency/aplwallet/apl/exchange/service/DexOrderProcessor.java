@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -48,7 +49,6 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -77,7 +77,6 @@ import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractSt
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_OFFER_PROCESSOR_DELAY;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
@@ -88,6 +87,8 @@ public class DexOrderProcessor {
     private static final String ETH_SWAP_S1_DETAILS_FORMAT = "secretHash:%s;encryptedSecret:%s";
     private static final String ETH_SWAP_S2_DETAILS_FORMAT = "secretHash:%s";
     private static final int ORDERS_SELECT_SIZE = 30;
+    public static final int DEFAULT_DEX_OFFER_PROCESSOR_DELAY = 3 * 60; // 3 min in seconds
+    public static final int MIN_DEX_OFFER_PROCESSOR_DELAY = 15; // 15 sec
 
     private static final String SERVICE_NAME = "DexOrderProcessor";
     private static final String BACKGROUND_SERVICE_NAME = SERVICE_NAME + "-background";
@@ -110,8 +111,9 @@ public class DexOrderProcessor {
     private DexOperationService operationService;
 
     private volatile boolean processorEnabled = true;
-    @Getter
-    private boolean initialized = false;
+    private boolean startProcessor;
+    private int processingDelay; // seconds
+
     private Blockchain blockchain;
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
@@ -123,7 +125,10 @@ public class DexOrderProcessor {
                              DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl,
                              DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService,
                              MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService,
-                             Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService) {
+                             Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
+                             @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
+                             @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay
+    ) {
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -137,41 +142,46 @@ public class DexOrderProcessor {
         this.blockchain = blockchain;
         this.phasingPollService = phasingPollService;
         this.operationService = Objects.requireNonNull(operationService);
+        this.startProcessor = startProcessor;
+        this.processingDelay = Math.max(MIN_DEX_OFFER_PROCESSOR_DELAY, processingDelay);
     }
 
     @PostConstruct
     public void init(){
-        taskDispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
-        Runnable task = () -> {
-            if (processorEnabled) {
-                long start = System.currentTimeMillis();
-                log.info("{}: start", BACKGROUND_SERVICE_NAME);
-                try {
-                    processContracts();
-                } catch (Throwable e) {
-                    log.warn("DexOrderProcessor error", e);
+        if (startProcessor) {
+            taskDispatcher = taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME);
+            Runnable task = () -> {
+                if (processorEnabled) {
+                    long start = System.currentTimeMillis();
+                    log.info("{}: start", BACKGROUND_SERVICE_NAME);
+                    try {
+                        processContracts();
+                    } catch (Throwable e) {
+                        log.warn("DexOrderProcessor error", e);
+                    }
+                    log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
+                } else {
+                    log.debug("Contracts processor is suspended.");
                 }
-                log.info("{}: finish in {} ms", BACKGROUND_SERVICE_NAME, System.currentTimeMillis() - start);
-            } else {
-                log.debug("Contracts processor is suspended.");
-            }
-        };
+            };
 
-        Task dexOrderProcessorTask = Task.builder()
+            Task dexOrderProcessorTask = Task.builder()
                 .name(SERVICE_NAME)
-                .delay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
-                .initialDelay((int) TimeUnit.MINUTES.toMillis(DEX_OFFER_PROCESSOR_DELAY))
+                .delay((int) TimeUnit.SECONDS.toMillis(processingDelay))
+                .initialDelay((int) TimeUnit.SECONDS.toMillis(processingDelay))
                 .task(task)
                 .build();
 
-        taskDispatcher.schedule(dexOrderProcessorTask);
+            taskDispatcher.schedule(dexOrderProcessorTask);
 
-        log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
+            log.debug("{} initialized. Periodical task configuration: initDelay={} milliseconds, delay={} milliseconds",
                 dexOrderProcessorTask.getName(),
                 dexOrderProcessorTask.getInitialDelay(),
                 dexOrderProcessorTask.getDelay());
-        backgroundExecutor = Executors.newFixedThreadPool(BACKGROUND_THREADS_NUMBER, new NamedThreadFactory(BACKGROUND_SERVICE_NAME));
-        initialized = true;
+            backgroundExecutor = Executors.newFixedThreadPool(BACKGROUND_THREADS_NUMBER, new NamedThreadFactory(BACKGROUND_SERVICE_NAME));
+        } else {
+            log.warn("Dex Order Processor is disabled. Exchange orders processing is not automatic and require a lot of manual operations.");
+        }
     }
 
     public void onResumeBlockchainEvent(@Observes @BlockchainEvent(BlockchainEventType.RESUME_DOWNLOADING) BlockchainConfig cfg) {
@@ -183,11 +193,15 @@ public class DexOrderProcessor {
     }
 
     public void suspendContractProcessor(){
-        taskDispatcher.suspend();
+        if (startProcessor) {
+            taskDispatcher.suspend();
+        }
     }
 
     public void resumeContractProcessor() {
-        taskDispatcher.resume();
+        if (startProcessor) {
+            taskDispatcher.resume();
+        }
     }
 
     @PreDestroy
@@ -214,7 +228,6 @@ public class DexOrderProcessor {
 
                     processIncomeContractsForUserStep3(account);
                     processOutcomeContractsForUserStep3(account);
-                    processMandatoryTransactions();
                 } catch (Throwable e) {
                     log.error("DexOrderProcessor error, user:" + account, e);
                 }
@@ -957,58 +970,6 @@ public class DexOrderProcessor {
 
     public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
         rollbackCachedOrderDbIds(block.getHeight());
-    }
-
-    void processMandatoryTransactions() {
-        try {
-            long dbId = 0;
-            while (true) {
-                List<MandatoryTransaction> all = mandatoryTransactionDao.getAll(dbId, ORDERS_SELECT_SIZE);
-                for (MandatoryTransaction currentTx : all) {
-                    try {
-                        dbId = currentTx.getDbEntryId();
-                        boolean expired = dexService.isExpired(currentTx);
-                        boolean confirmed = dexService.txExists(currentTx.getId());
-                        if (!expired) {
-                            if (!confirmed) {
-                                byte[] requiredTxHash = currentTx.getRequiredTxHash();
-                                MandatoryTransaction prevRequiredTx = null;
-                                boolean brodcast = true; // brodcast current tx
-                                while (requiredTxHash != null) {
-                                    long id = Convert.fullHashToId(requiredTxHash);
-                                    MandatoryTransaction requiredTx = mandatoryTransactionDao.get(id);
-                                    boolean hasConfirmations = dexService.hasAplConfirmations(requiredTx.getId(), 0);
-                                    if (hasConfirmations) {
-                                        if (prevRequiredTx != null) {
-                                            validateAndBroadcast(prevRequiredTx.getTransaction());
-                                            brodcast = false;
-                                        }
-                                        break;
-                                    } else if (requiredTx.getRequiredTxHash() == null) {
-                                        validateAndBroadcast(requiredTx.getTransaction());
-                                        break;
-                                    }
-                                    prevRequiredTx = requiredTx;
-                                    requiredTxHash = requiredTx.getRequiredTxHash();
-                                }
-                                if (brodcast) {
-                                    validateAndBroadcast(currentTx.getTransaction());
-                                }
-                            }
-                        } else {
-                            mandatoryTransactionDao.delete(currentTx.getId());
-                        }
-                    } catch (Throwable e) {
-                        log.warn("Unable to brodcast mandatory tx {}, reason - {}", currentTx.getId(), e.getMessage());
-                    }
-                }
-                if (all.size() < ORDERS_SELECT_SIZE) {
-                    break;
-                }
-            }
-        } catch (NotValidTransactionException ex) {
-            log.warn(ex.getMessage());
-        }
     }
 
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
