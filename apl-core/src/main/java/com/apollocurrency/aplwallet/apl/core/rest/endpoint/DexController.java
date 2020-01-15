@@ -621,6 +621,9 @@ public class DexController {
         symbolsOutputDTO.has_daily = true;        
         symbolsOutputDTO.description = "Apollo Foundation.";
         symbolsOutputDTO.type = "stock";
+        symbolsOutputDTO.has_daily = true;
+        symbolsOutputDTO.has_empty_bars = true;
+        symbolsOutputDTO.has_weekly_and_monthly = true;
         symbolsOutputDTO.supported_resolutions = new ArrayList<>();;        
         symbolsOutputDTO.supported_resolutions.add("15");
         symbolsOutputDTO.supported_resolutions.add("60");
