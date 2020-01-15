@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.eth.web3j.DefaultRawTransactionManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
@@ -339,7 +340,13 @@ public class DexSmartContractService {
                         }
                     }
                 } else {
-                    sendRawTransaction(Numeric.toHexString(tx.getRawTransactionBytes()), waitConfirmation); // broadcast existing tx
+                    try {
+                        sendRawTransaction(Numeric.toHexString(tx.getRawTransactionBytes()), waitConfirmation); // broadcast existing tx
+                    } catch (NotValidTransactionException e) {
+                        log.info("Stored previous transaction is incorrect, removing... New will be sent.", e);
+                        dexTransactionDao.delete(tx.getDbId());
+                        txHash = null;
+                    }
                 }
             } catch (IOException e) {
                 log.error("Unable to broadcast tx or get receipt " + Numeric.toHexString(tx.getHash()), e);
@@ -356,11 +363,11 @@ public class DexSmartContractService {
         return  web3j.ethGetTransactionReceipt(hash).send().getTransactionReceipt();
     }
 
-    String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException {
+    String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException, NotValidTransactionException {
         EthSendTransaction response = web3j.ethSendRawTransaction(encodedTx).send();
         if (response != null) {
             if (response.hasError()) {
-                throw new RuntimeException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
+                throw new NotValidTransactionException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
             }
         } else {
             throw new RuntimeException("Unable to broadcast eth transaction, null response:  " + encodedTx);
