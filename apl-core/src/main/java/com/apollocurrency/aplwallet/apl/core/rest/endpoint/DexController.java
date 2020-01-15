@@ -5,9 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
+import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -16,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
@@ -63,6 +65,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -71,13 +74,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getDataForIntervalFromOffers;
+import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -343,6 +347,21 @@ public class DexController {
         ).build();
     }
 
+    @GET
+    @Path("/orders/{orderId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Order"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getOrder(@PathParam("orderId") String orderIdStr) throws NotFoundException {
+        long orderId = Convert.parseLong(orderIdStr);
+
+        DexOrder order = service.getOrder(orderId);
+
+        return Response.ok(order.toDto()).build();
+    }
+
     @POST
     @Path("/offer/cancel")
     @Produces(MediaType.APPLICATION_JSON)
@@ -537,65 +556,105 @@ public class DexController {
         return Response.ok(contractConverter.convert(contracts)).build();
     }
 
-
-
     @GET
-    @Path("/histominute")
+    @Path("/history")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histominute", description = "getting histominute")
+    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistominute1(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+    public Response getHistoday2(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
+                                @Parameter(description = "resolution") @QueryParam("resolution") String resolution,                                
+                                @Parameter(description = "from") @QueryParam("from") Integer from,                                
+                                @Parameter(description = "to") @QueryParam("to") Integer to,                                
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistominute:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
-        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers(  fsym,  tsym,  toTs, limit,  60, service, timeService);
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+        log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
+        
 
+        // the date of DEX release - 30.09.. taking 25 as an upper limit
+        //1569369600
+        //Is equivalent to: 09/25/2019 @ 12:00am (UTC)
+
+        if (to <= 1569369600){
+             log.debug("flushing: ");
+            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+            tdo.setC(null);
+            tdo.setH(null);
+            tdo.setL(null);
+            tdo.setO(null);
+            tdo.setT(null);
+            tdo.setV(null);                       
+            tdo.setNextTime(null);
+            tdo.setS("no_data");
+            return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tdo) ) .build();
+        }
+        
+        
+        TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from,service, timeService);
+        return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
     }
-
+    
+    
     @GET
-    @Path("/histohour")
+    @Path("/symbols")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histohour", description = "getting histohour")
+    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistohour1(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
+    public Response getSymbols(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,                                                            
                                 @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistohour:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);            
-        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers(  fsym,  tsym,  toTs, limit,  60*60, service, timeService);
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+        log.debug("getSymbols:  fsym: {}", symbol );
+        SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
+        symbolsOutputDTO.name = symbol;
+        symbolsOutputDTO.exchange_traded = "Apollo Currency";
+        symbolsOutputDTO.exchange_listed = "Apollo Currency";
+        symbolsOutputDTO.timezone = "America/New_York";
+        symbolsOutputDTO.minmov = 1;
+        symbolsOutputDTO.minmov2 = 0;
+        symbolsOutputDTO.pointvalue = 1;
+        symbolsOutputDTO.session = "0930-1630";
+        symbolsOutputDTO.has_intraday = false;
+        symbolsOutputDTO.has_no_volume = false;
+        symbolsOutputDTO.description = "Apollo Foundation.";
+        symbolsOutputDTO.type = "stock";
+        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
+        symbolsOutputDTO.supported_resolutions.add("D");
+        symbolsOutputDTO.supported_resolutions.add("2D");
+        symbolsOutputDTO.supported_resolutions.add("3D");
+        symbolsOutputDTO.pricescale = 1000000000;
+        symbolsOutputDTO.ticker = symbol;
+        return Response.ok( symbolsOutputDTO ) .build();
     }
-
+    
+    
     @GET
-    @Path("/histoday")
+    @Path("/config")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get histoday", description = "getting histoday")
+    @Operation(tags = {"dex"}, summary = "Get configuration", description = "getting TV configuration")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistoday1(  @Parameter(description = "Type of exchange (coinbase)") @QueryParam("e") String e,
-                                @Parameter(description = "fsym") @QueryParam("fsym") String fsym,
-                                @Parameter(description = "tsym") @QueryParam("tsym") String tsym,                                
-                                @Parameter(description = "toTs") @QueryParam("toTs") Integer toTs,
-                                @Parameter(description = "limit") @QueryParam("limit") Integer limit,
-                                @Context HttpServletRequest req) throws NotFoundException {
+    public Response getConfig( @Context HttpServletRequest req) throws NotFoundException {
 
-        log.debug("getHistoday:  fsym: {}, tsym: {}, toTs: {}, limit: {}", fsym, tsym, toTs, limit);
-        TradingDataOutput tradingDataOutput = getDataForIntervalFromOffers (fsym,  tsym,  toTs, limit,  60*60*24, service, timeService);
-        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
+        log.debug("getConfig entry point");        
+        TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
+        tradingViewConfigDTO.supports_search = true;
+        tradingViewConfigDTO.supports_group_request = false;
+        tradingViewConfigDTO.supports_marks = false;
+        tradingViewConfigDTO.supports_timescale_marks = false;
+        tradingViewConfigDTO.supports_time = false;       
+        // resolutions
+        tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();         
+        tradingViewConfigDTO.supported_resolutions.add("D");
+        tradingViewConfigDTO.supported_resolutions.add("2D");
+        tradingViewConfigDTO.supported_resolutions.add("3D");       
+        return Response.ok( tradingViewConfigDTO ) .build();        
     }
+              
+    
 
     @GET
     @Path("/all-contracts")

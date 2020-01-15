@@ -67,6 +67,7 @@ public class DexTransactionSendingController {
         this.dexService = dexService;
     }
 
+    //Not delete, required for RESTEASY
     public DexTransactionSendingController() {
     }
 
@@ -372,7 +373,7 @@ public class DexTransactionSendingController {
         if (!dexService.swapIsRefundable(secretHashBytes, walletAddress)) {
             throw new ParameterException(JSONResponses.error("Swap is not refundable for address: " + walletAddress));
         }
-        String hash = dexService.refund(accountDetails.getPassphrase(), walletAddress, account.getId(), secretHashBytes);
+        String hash = dexService.refundAndWithdraw(accountDetails.getPassphrase(), walletAddress, account.getId(), secretHashBytes);
         return Response.ok(new TransactionHash(hash)).build();
     }
 

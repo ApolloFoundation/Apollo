@@ -37,7 +37,7 @@ class DexTransactionDaoTest {
 
     @Test
     void testAdd() {
-        td.TX_2.setOperation(DexTransaction.DexOperation.REFUND);
+        td.TX_2.setOperation(DexTransaction.Op.REFUND);
         td.TX_2.setDbId(td.TX_3.getDbId() + 1);
         dao.add(td.TX_2);
 

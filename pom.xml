@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.41.4</version>
+  <version>1.41.5</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -63,7 +63,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-      <web-wallet.version>2.5.35</web-wallet.version>
+      <web-wallet.version>2.5.37</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
