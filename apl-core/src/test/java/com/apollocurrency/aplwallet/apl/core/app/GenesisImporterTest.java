@@ -3,9 +3,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
@@ -26,11 +26,13 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BalancesPublicKeysTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParser;
@@ -79,9 +81,9 @@ class GenesisImporterTest {
     PropertiesHolder propertiesHolder;
     @Inject
     Blockchain blockchain;
+    @Inject
+    PublicKeyService publicKeyService;
     AccountTable accountTable;
-    PublicKeyTable publicKeyTable;
-    GenesisPublicKeyTable genesisPublicKeyTable;
     AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     BalancesPublicKeysTestData testData;
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -93,10 +95,12 @@ class GenesisImporterTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             AccountTable.class, FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-            ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, GenesisPublicKeyTable.class,
+            ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, PublicKeyServiceImpl.class, PublicKeyTableProducer.class,
             TransactionDaoImpl.class, BlockchainImpl.class,
             BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class, ApplicationJsonFactory.class)
             .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+            .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
+            .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(blockchainConfigUpdater, BlockchainConfigUpdater.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -116,16 +120,14 @@ class GenesisImporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
-        genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         accountTable = new AccountTable();
         accountTable.init();
         //TODO: propertiesHolder is empty, default values will be used
         accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
-        publicKeyTable = new PublicKeyTable(blockchain);
         //TODO: propertiesHolder is never used in Account.init()
         Account.init(extension.getDatabaseManager(), null,
-                null, blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
+                null, blockchain, null, accountTable, accountGuaranteedBalanceTable, publicKeyService);
 
         testData = new BalancesPublicKeysTestData();
 
@@ -238,9 +240,9 @@ class GenesisImporterTest {
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         genesisImporter.importGenesisJson(false);
-        int count = publicKeyTable.getCount();
+        int count = publicKeyService.getPublicKeysCount();
         assertEquals(10, count);
-        count = genesisPublicKeyTable.getCount();
+        count = publicKeyService.getGenesisPublicKeysCount();
         assertEquals(19, count);
         Account genesisAccount = Account.getAccount(GenesisImporter.CREATOR_ID);
         assertEquals(-43678392484062L, genesisAccount.getBalanceATM());
@@ -294,9 +296,9 @@ class GenesisImporterTest {
         );
         dataSource.begin();
         genesisImporter.importGenesisJson(true);
-        int count = publicKeyTable.getCount();
+        int count = publicKeyService.getPublicKeysCount();
         assertEquals(10, count);
-        count = genesisPublicKeyTable.getCount();
+        count = publicKeyService.getGenesisPublicKeysCount();
         assertEquals(10, count);
         checkImportedPublicKeys(10);
     }
@@ -336,15 +338,14 @@ class GenesisImporterTest {
     }
 
     private void checkImportedPublicKeys(int countExpected) {
-        DbIterator<PublicKey> result = genesisPublicKeyTable.getAll(0, 10);
+        List<PublicKey> result = publicKeyService.loadPublicKeyList(0, 10, true);
         int countActual = 0;
-        while (result.hasNext()) {
-            PublicKey publicKey = result.next();
+        for (PublicKey publicKey : result) {
             String toHexString = Convert.toHexString(publicKey.getPublicKey());
             log.trace("publicKeySet contains key = {} = {}", toHexString, testData.publicKeySet.contains(toHexString));
             assertTrue(testData.publicKeySet.contains(Convert.toHexString(publicKey.getPublicKey())),
-                    "ERROR, publicKeySet doesn't contain key = "
-                            + Convert.toHexString(publicKey.getPublicKey()));
+                "ERROR, publicKeySet doesn't contain key = "
+                    + Convert.toHexString(publicKey.getPublicKey()));
             countActual++;
         }
         assertEquals(countExpected, countActual);

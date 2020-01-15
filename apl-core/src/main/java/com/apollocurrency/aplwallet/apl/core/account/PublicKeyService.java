@@ -6,7 +6,15 @@ package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
+import java.util.List;
+
 public interface PublicKeyService {
+
+    int getPublicKeysCount();
+
+    int getGenesisPublicKeysCount();
+
+    List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis);
 
     /**
      * Returns the public key from cache, or load from the data base if necessary.

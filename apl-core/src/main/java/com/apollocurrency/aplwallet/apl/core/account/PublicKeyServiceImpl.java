@@ -5,35 +5,37 @@
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
-import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
-import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.Arrays;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 @Slf4j
 @Singleton
 public class PublicKeyServiceImpl implements PublicKeyService {
 
+    private final InMemoryCacheManager cacheManager;
     @Getter
     private final boolean cacheEnabled;
     @Getter
-    private final Cache<DbKey, PublicKey> publicKeyCache;
+    private Cache<DbKey, PublicKey> publicKeyCache;
 
     private EntityDbTableInterface<PublicKey> publicKeyTable;
     private EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
@@ -41,14 +43,20 @@ public class PublicKeyServiceImpl implements PublicKeyService {
     @Inject
     public PublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
                                 @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
-                                @Property("apl.enablePublicKeyCache") boolean cacheEnabled,
-                                @CacheProducer @CacheType("PUBLIC_KEY_CACHE") Cache<DbKey, PublicKey> publicKeyCache ) {
+                                PropertiesHolder propertiesHolder,
+                                InMemoryCacheManager cacheManager ) {
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;
-        this.cacheEnabled = cacheEnabled;
-        this.publicKeyCache = publicKeyCache;
+        this.cacheManager = cacheManager;
+        this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
+    }
 
-        log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
+    @PostConstruct
+    private void init(){
+        if (isCacheEnabled()){
+            publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
+            log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
+        }
     }
 
     void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
@@ -59,9 +67,10 @@ public class PublicKeyServiceImpl implements PublicKeyService {
         clearCache();
     }
 
+    //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
+    /*
     void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
-        /*if (isCacheEnabled()) {
+        if (isCacheEnabled()) {
             removeFromCache(AccountTable.newKey(block.getGeneratorId()));
             block.getOrLoadTransactions().forEach(transaction -> {
                 removeFromCache(AccountTable.newKey(transaction.getSenderId()));
@@ -75,12 +84,23 @@ public class PublicKeyServiceImpl implements PublicKeyService {
                     }
                 }
             });
-        }*/
+        }
     }
+    */
 
     @Override
     public int getCount(){
-        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
+        return getPublicKeysCount() + getGenesisPublicKeysCount();
+    }
+
+    @Override
+    public int getPublicKeysCount(){
+        return publicKeyTable.getCount();
+    }
+
+    @Override
+    public int getGenesisPublicKeysCount(){
+        return genesisPublicKeyTable.getCount();
     }
 
     @Override
@@ -114,6 +134,12 @@ public class PublicKeyServiceImpl implements PublicKeyService {
             publicKey = genesisPublicKeyTable.get(dbKey, height);
         }
         return publicKey;
+    }
+
+    @Override
+    public List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis) {
+        EntityDbTableInterface<PublicKey> table = isGenesis ? genesisPublicKeyTable : publicKeyTable;
+        return toList(table.getAll(from, to));
     }
 
     @Override

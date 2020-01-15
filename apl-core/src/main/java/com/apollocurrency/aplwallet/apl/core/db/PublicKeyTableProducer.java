@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.derived.CachedTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
@@ -45,14 +44,16 @@ public class PublicKeyTableProducer {
     private Cache<DbKey, PublicKey> publicKeyCache;
 
     @Inject
-    public PublicKeyTableProducer(@Property("apl.enablePublicKeyCache") boolean cacheEnabled, Blockchain blockchain, InMemoryCacheManager cacheManager, TaskDispatchManager taskManager) {
-
+    public PublicKeyTableProducer(PropertiesHolder propertiesHolder,
+                                  Blockchain blockchain,
+                                  InMemoryCacheManager cacheManager,
+                                  TaskDispatchManager taskManager) {
         Objects.requireNonNull(blockchain, "Block chain is NULL.");
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         this.publicKeyTable = new PublicKeyTable(blockchain);
         this.genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         this.taskManager = taskManager;
-        this.cacheEnabled = cacheEnabled;
+        this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }
 
     @PostConstruct
@@ -61,18 +62,16 @@ public class PublicKeyTableProducer {
             log.info("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
+            TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("PublicKeyProducer-periodics");
+            taskDispatcher.schedule( Task.builder()
+                .name("Cache-stats")
+                .initialDelay(HEALTH_CHECK_INTERVAL * 2)
+                .delay(HEALTH_CHECK_INTERVAL)
+                .task(()-> log.info("--cache-- PUBLIC Keys Cache size={} stats={}", publicKeyCache.size(), publicKeyCache.stats().toString()))
+                .build());
         }else{
             log.info("'{}' is TURNED OFF...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
         }
-        TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("PublicKeyProducer-periodics");
-        taskDispatcher.schedule( Task.builder()
-            .name("Cache-stats")
-            .initialDelay(HEALTH_CHECK_INTERVAL * 2)
-            .delay(HEALTH_CHECK_INTERVAL)
-            .task(()-> {
-                log.info("--cache-- PUBLIC Keys Cache size={} stats={}", publicKeyCache.size(), publicKeyCache.stats().toString());
-            })
-            .build());
     }
 
     @Produces
