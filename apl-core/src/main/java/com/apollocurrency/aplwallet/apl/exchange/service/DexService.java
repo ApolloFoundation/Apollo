@@ -258,8 +258,12 @@ public class DexService {
     }
 
 
-    private List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
-        return orders.stream().map(order -> new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney())).collect(Collectors.toList());
+    public List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
+        return orders.stream().map(this::mapToOrdersWithFreezing).collect(Collectors.toList());
+    }
+
+    public DexOrderWithFreezing mapToOrdersWithFreezing(DexOrder order) {
+        return new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney());
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {

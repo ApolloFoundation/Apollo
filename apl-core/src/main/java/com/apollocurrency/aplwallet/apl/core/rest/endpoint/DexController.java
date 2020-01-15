@@ -356,10 +356,14 @@ public class DexController {
         @ApiResponse(responseCode = "200", description = "Unexpected error")})
     public Response getOrder(@PathParam("orderId") String orderIdStr) throws NotFoundException {
         long orderId = Convert.parseLong(orderIdStr);
-
         DexOrder order = service.getOrder(orderId);
 
-        return Response.ok(order.toDto()).build();
+        if (order != null) {
+            DexOrderWithFreezing dexOrderWithFreezing = service.mapToOrdersWithFreezing(order);
+            return Response.ok(dexOrderWithFreezing.getDexOrder().toDto(dexOrderWithFreezing.isHasFrozenMoney())).build();
+        }
+
+        return Response.ok().build();
     }
 
     @POST
