@@ -190,7 +190,7 @@ public abstract class Data extends TransactionType {
         @Override
         public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
             TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
-            log.debug("applyAttach taggedDataUpload, trId = {}, att = {}", transaction.getId(), attachment);
+            log.debug("applyAttach taggedDataExtend, trId = {}, att = {}", transaction.getId(), attachment);
             lookupTaggedDataService().extend(transaction, attachment);
         }
 
