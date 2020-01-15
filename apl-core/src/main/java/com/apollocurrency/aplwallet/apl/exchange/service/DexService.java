@@ -263,7 +263,10 @@ public class DexService {
     }
 
     public DexOrderWithFreezing mapToOrdersWithFreezing(DexOrder order) {
-        return new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney());
+        if (order != null) {
+            return new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney());
+        }
+        return null;
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {
