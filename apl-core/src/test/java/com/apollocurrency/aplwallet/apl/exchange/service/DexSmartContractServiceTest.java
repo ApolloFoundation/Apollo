@@ -364,6 +364,7 @@ class DexSmartContractServiceTest {
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.ETH);
 
         assertEquals("hash", hash);
+        verify(dexTransactionDao).delete(1);
     }
 
     @Test
