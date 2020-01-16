@@ -178,10 +178,6 @@ public final class Constants {
     public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MIN_TIME_OF_ATOMIC_SWAP - (DEX_MIN_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
     public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MAX_TIME_OF_ATOMIC_SWAP + (DEX_MAX_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
 
-    //minutes
-    //TODO move it to property file
-    public static final int DEX_OFFER_PROCESSOR_DELAY = 3;
-
     //24 h
     public static final int DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
     //168h

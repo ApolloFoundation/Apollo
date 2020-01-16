@@ -243,6 +243,13 @@ public class DexService {
         return orders;
     }
 
+    @Transactional(readOnly = true)
+    public DexOrderWithFreezing getOrderWithFreezing(Long orderId) {
+        DexOrder order = getOrder(orderId);
+
+        return mapToOrdersWithFreezing(order);
+    }
+
 
     /**
      * Sorted by height. It's important for a cash.
@@ -259,7 +266,15 @@ public class DexService {
 
 
     private List<DexOrderWithFreezing> mapToOrdersWithFreezing(List<DexOrder> orders) {
-        return orders.stream().map(order -> new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney())).collect(Collectors.toList());
+        return orders.stream().map(this::mapToOrdersWithFreezing).collect(Collectors.toList());
+    }
+
+    private DexOrderWithFreezing mapToOrdersWithFreezing(DexOrder order) {
+        if (order == null) {
+            return null;
+        }
+
+        return new DexOrderWithFreezing(order, order.getType() == OrderType.SELL || orderFreezingCache.getUnchecked(order.getId()).isHasFrozenMoney());
     }
 
     public WalletsBalance getBalances(GetEthBalancesRequest getBalancesRequest) {
