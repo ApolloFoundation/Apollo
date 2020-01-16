@@ -83,6 +83,8 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import java.util.Calendar;
+import java.util.TimeZone;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -607,11 +609,12 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getSymbols:  fsym: {}", symbol );
+        TimeZone tz = Calendar.getInstance().getTimeZone();                
         SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
         symbolsOutputDTO.name = symbol;
         symbolsOutputDTO.exchange_traded = "Apollo Currency";
         symbolsOutputDTO.exchange_listed = "Apollo Currency";
-        symbolsOutputDTO.timezone = "America/New_York";
+        symbolsOutputDTO.timezone = tz.getID(); 
         symbolsOutputDTO.minmov = 1;
         symbolsOutputDTO.minmov2 = 0;
         symbolsOutputDTO.pointvalue = 1;
@@ -628,8 +631,7 @@ public class DexController {
         symbolsOutputDTO.supported_resolutions.add("15");
         symbolsOutputDTO.supported_resolutions.add("60");
         symbolsOutputDTO.supported_resolutions.add("240");
-        symbolsOutputDTO.supported_resolutions.add("D");
-        
+        symbolsOutputDTO.supported_resolutions.add("D");        
         symbolsOutputDTO.pricescale = 1000000000;
         symbolsOutputDTO.ticker = symbol;
         
