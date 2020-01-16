@@ -191,9 +191,9 @@ public final class Constants {
     public static final int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
     public static final int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 
-    public static final int DEX_INTERVAL_MIN = 60; 
-    public static final int DEX_INTERVAL_HOUR = 60 * 60;
-    public static final int DEX_INTERVAL_DAY = 60 * 60 * 24;
+    public static final int DEX_GRAPH_INTERVAL_MIN = 60; 
+    public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
+    public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
     
     private Constants() {
     } // never

@@ -130,11 +130,11 @@ public class TradingViewUtils {
         if(!onlyNumericInput) {   
             
             if (resolution.endsWith("D")) {
-                intervalDiscretion = Constants.DEX_INTERVAL_DAY; 
+                intervalDiscretion = Constants.DEX_GRAPH_INTERVAL_DAY; 
                 } else if (resolution.endsWith("H")) {
-                intervalDiscretion = Constants.DEX_INTERVAL_HOUR; 
+                intervalDiscretion = Constants.DEX_GRAPH_INTERVAL_HOUR; 
                 } else if (resolution.endsWith("M")) {
-                intervalDiscretion = Constants.DEX_INTERVAL_MIN;
+                intervalDiscretion = Constants.DEX_GRAPH_INTERVAL_MIN;
             }                    
             
             if (resolution.length() > 1) {
