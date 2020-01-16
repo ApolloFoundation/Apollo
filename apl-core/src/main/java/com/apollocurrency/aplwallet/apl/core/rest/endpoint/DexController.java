@@ -612,8 +612,8 @@ public class DexController {
         TimeZone tz = Calendar.getInstance().getTimeZone();                
         SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
         symbolsOutputDTO.name = symbol;
-        symbolsOutputDTO.exchange_traded = "Apollo Currency";
-        symbolsOutputDTO.exchange_listed = "Apollo Currency";
+        symbolsOutputDTO.exchange_traded = "Apollo DEX";
+        symbolsOutputDTO.exchange_listed = "Apollo DEX";
         symbolsOutputDTO.timezone = tz.getID(); 
         symbolsOutputDTO.minmov = 1;
         symbolsOutputDTO.minmov2 = 0;
@@ -622,11 +622,11 @@ public class DexController {
         symbolsOutputDTO.has_intraday = true;
         symbolsOutputDTO.has_no_volume = false;
         symbolsOutputDTO.has_daily = true;        
-        symbolsOutputDTO.description = "Apollo Foundation.";
-        symbolsOutputDTO.type = "decentralized exchange";
+        symbolsOutputDTO.description = symbol;
+        symbolsOutputDTO.type = "cryptocurrency";
         symbolsOutputDTO.has_daily = true;
         symbolsOutputDTO.has_empty_bars = true;
-        symbolsOutputDTO.has_weekly_and_monthly = true;
+        symbolsOutputDTO.has_weekly_and_monthly = false;
         symbolsOutputDTO.supported_resolutions = new ArrayList<>();;        
         symbolsOutputDTO.supported_resolutions.add("15");
         symbolsOutputDTO.supported_resolutions.add("60");
@@ -645,7 +645,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getTime( @Context HttpServletRequest req) throws NotFoundException {
+    public Response getTime(  ) throws NotFoundException {
         
         Long time = System.currentTimeMillis()/1000L;
         return Response.ok( time ) .build();
@@ -660,7 +660,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getConfig( @Context HttpServletRequest req) throws NotFoundException {
+    public Response getConfig(  ) throws NotFoundException {
 
         log.debug("getConfig entry point");        
         TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
