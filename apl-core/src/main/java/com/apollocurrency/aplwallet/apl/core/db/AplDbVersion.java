@@ -601,7 +601,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS account_control_phasing_height_id_idx ON account_control_phasing (height, account_id)");
             case 220:
                 apply("CREATE TABLE IF NOT EXISTS account_property (db_id IDENTITY, id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, setter_id BIGINT, "
-                        + "property VARCHAR NOT NULL, value VARCHAR, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
+                        + "property VARCHAR NOT NULL, \"VALUE\" VARCHAR, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE)");
             case 221:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS account_property_id_height_idx ON account_property (id, height DESC)");
             case 222:
@@ -668,9 +668,9 @@ public class AplDbVersion extends DbVersion {
                 );
 
             case 243:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, \"VALUE\" VARCHAR(250))");
             case 244:
-                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, value)");
+                apply("CREATE UNIQUE INDEX option_name_value_idx ON option(name, \"VALUE\")");
             case 245:
                 apply("ALTER TABLE block ADD timeout INT NOT NULL DEFAULT 0");
             case 246:
