@@ -389,6 +389,8 @@ public class DexOrderProcessor {
             MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTx, contractTx.getFullHash(), null);
             mandatoryTransactionDao.insert(transferMandatoryTx);
             broadcastWhenConfirmed(transferTx, contractTx);
+        } else {
+            dexService.broadcast(contractTx);
         }
     }
 
