@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -129,11 +130,11 @@ public class TradingViewUtils {
         if(!onlyNumericInput) {   
             
             if (resolution.endsWith("D")) {
-                intervalDiscretion = 60*60*24;
+                intervalDiscretion = Constants.DEX_INTERVAL_DAY; 
                 } else if (resolution.endsWith("H")) {
-                intervalDiscretion = 60*60; 
+                intervalDiscretion = Constants.DEX_INTERVAL_HOUR; 
                 } else if (resolution.endsWith("M")) {
-                intervalDiscretion = 60;          
+                intervalDiscretion = Constants.DEX_INTERVAL_MIN;
             }                    
             
             if (resolution.length() > 1) {
