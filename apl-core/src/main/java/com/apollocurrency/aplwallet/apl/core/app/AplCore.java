@@ -290,10 +290,6 @@ public final class AplCore {
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
 
-                if (!dexOrderProcessor.isInitialized()) {
-                    log.warn("DexOrder processor is not initialized.");
-                }
-
                 //start all background tasks
                 taskDispatchManager.dispatch();
 
