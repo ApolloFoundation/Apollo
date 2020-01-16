@@ -12,12 +12,12 @@ import java.util.Objects;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.util.Search;
 
-public class TaggedData {
+public class TaggedData extends VersionedDerivedEntity {
 
     private final long id;
-    private DbKey dbKey;
     private final long accountId;
     private final String name;
     private final String description;
@@ -30,11 +30,10 @@ public class TaggedData {
     private final String filename;
     private int transactionTimestamp;
     private int blockTimestamp;
-    private int height;
 
     public TaggedData(Transaction transaction, TaggedDataAttachment attachment, int blockTimestamp, int height) {
+        super(null, height);
         this.id = transaction.getId();
-//        this.dbKey = taggedDataKeyFactory.newKey(this.id);
         this.accountId = transaction.getSenderId();
         this.name = attachment.getName();
         this.description = attachment.getDescription();
@@ -47,12 +46,13 @@ public class TaggedData {
         this.filename = attachment.getFilename();
         this.blockTimestamp = blockTimestamp;
         this.transactionTimestamp = transaction.getTimestamp();
-        this.height = height;
+        setHeight(height);
     }
 
     public TaggedData(ResultSet rs, DbKey dbKey) throws SQLException {
+        super(rs);
+        setDbKey(dbKey);
         this.id = rs.getLong("id");
-        this.dbKey = dbKey;
         this.accountId = rs.getLong("account_id");
         this.name = rs.getString("name");
         this.description = rs.getString("description");
@@ -65,12 +65,13 @@ public class TaggedData {
         this.filename = rs.getString("filename");
         this.blockTimestamp = rs.getInt("block_timestamp");
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
-        this.height = rs.getInt("height");
     }
 
-    public TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags, byte[] data, String type, String channel, boolean isText, String filename) {
+    public TaggedData(long id, DbKey dbKey, long accountId, String name, String description, String tags, String[] parsedTags,
+                      byte[] data, String type, String channel, boolean isText, String filename) {
+        super(null, null);
+        setDbKey(dbKey);
         this.id = id;
-        this.dbKey = dbKey;
         this.accountId = accountId;
         this.name = name;
         this.description = description;
@@ -135,28 +136,12 @@ public class TaggedData {
         return blockTimestamp;
     }
 
-    public DbKey getDbKey() {
-        return dbKey;
-    }
-
-    public void setDbKey(DbKey dbKey) {
-        this.dbKey = dbKey;
-    }
-
     public void setTransactionTimestamp(int transactionTimestamp) {
         this.transactionTimestamp = transactionTimestamp;
     }
 
     public void setBlockTimestamp(int blockTimestamp) {
         this.blockTimestamp = blockTimestamp;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
     }
 
     @Override
@@ -169,8 +154,8 @@ public class TaggedData {
                 isText == that.isText &&
                 transactionTimestamp == that.transactionTimestamp &&
                 blockTimestamp == that.blockTimestamp &&
-                height == that.height &&
-                Objects.equals(dbKey, that.dbKey) &&
+                getHeight() == that.getHeight() &&
+                Objects.equals(this.getDbKey(), that.getDbKey()) &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(description, that.description) &&
                 Objects.equals(tags, that.tags) &&
@@ -183,10 +168,31 @@ public class TaggedData {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(id, dbKey, accountId, name, description, tags, type, channel, isText, filename, transactionTimestamp, blockTimestamp, height);
+        int result = Objects.hash(id, getDbKey(), accountId, name, description, tags, type, channel, isText, filename,
+            transactionTimestamp, blockTimestamp, getHeight());
         result = 31 * result + Arrays.hashCode(parsedTags);
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TaggedData{");
+        sb.append("id=").append(id);
+        sb.append(", dbKey=").append(getDbKey());
+        sb.append(", accountId=").append(accountId);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", channel='").append(channel).append('\'');
+        sb.append(", isText=").append(isText);
+        sb.append(", filename='").append(filename).append('\'');
+        sb.append(", transactionTimestamp=").append(transactionTimestamp);
+        sb.append(", blockTimestamp=").append(blockTimestamp);
+        sb.append(", height=").append(getHeight());
+        sb.append(", latest=").append(isLatest());
+        sb.append('}');
+        return sb.toString();
+    }
 }

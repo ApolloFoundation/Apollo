@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
@@ -64,6 +65,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -72,16 +74,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import java.util.ArrayList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -344,6 +345,20 @@ public class DexController {
                 .map(order -> order.getDexOrder().toDto(order.isHasFrozenMoney()))
                 .collect(Collectors.toList())
         ).build();
+    }
+
+    @GET
+    @Path("/orders/{orderId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get exchange offers", description = "dexGetOffers endpoint list of opened pending exchange orders")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Order"),
+        @ApiResponse(responseCode = "200", description = "Unexpected error")})
+    public Response getOrder(@PathParam("orderId") String orderIdStr) throws NotFoundException {
+        long orderId = Convert.parseLong(orderIdStr);
+        DexOrderWithFreezing dexOrderWithFreezing = service.getOrderWithFreezing(orderId);
+
+        return Response.ok(dexOrderWithFreezing.getDexOrder().toDto(dexOrderWithFreezing.isHasFrozenMoney())).build();
     }
 
     @POST
