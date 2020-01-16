@@ -83,6 +83,8 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
 import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
+import java.util.Calendar;
+import java.util.TimeZone;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -606,27 +608,48 @@ public class DexController {
                                 @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getSymbols:  fsym: {}", symbol );
+        TimeZone tz = Calendar.getInstance().getTimeZone();                
         SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
         symbolsOutputDTO.name = symbol;
-        symbolsOutputDTO.exchange_traded = "Apollo Currency";
-        symbolsOutputDTO.exchange_listed = "Apollo Currency";
-        symbolsOutputDTO.timezone = "America/New_York";
+        symbolsOutputDTO.exchange_traded = "Apollo DEX";
+        symbolsOutputDTO.exchange_listed = "Apollo DEX";
+        symbolsOutputDTO.timezone = tz.getID(); 
         symbolsOutputDTO.minmov = 1;
         symbolsOutputDTO.minmov2 = 0;
         symbolsOutputDTO.pointvalue = 1;
-        symbolsOutputDTO.session = "0930-1630";
-        symbolsOutputDTO.has_intraday = false;
+        symbolsOutputDTO.session = "24x7";
+        symbolsOutputDTO.has_intraday = true;
         symbolsOutputDTO.has_no_volume = false;
-        symbolsOutputDTO.description = "Apollo Foundation.";
-        symbolsOutputDTO.type = "stock";
-        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
-        symbolsOutputDTO.supported_resolutions.add("D");
-        symbolsOutputDTO.supported_resolutions.add("2D");
-        symbolsOutputDTO.supported_resolutions.add("3D");
+        symbolsOutputDTO.has_daily = true;        
+        symbolsOutputDTO.description = symbol;
+        symbolsOutputDTO.type = "cryptocurrency";
+        symbolsOutputDTO.has_daily = true;
+        symbolsOutputDTO.has_empty_bars = true;
+        symbolsOutputDTO.has_weekly_and_monthly = false;
+        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;        
+        symbolsOutputDTO.supported_resolutions.add("15");
+        symbolsOutputDTO.supported_resolutions.add("60");
+        symbolsOutputDTO.supported_resolutions.add("240");
+        symbolsOutputDTO.supported_resolutions.add("D");        
         symbolsOutputDTO.pricescale = 1000000000;
         symbolsOutputDTO.ticker = symbol;
+        
         return Response.ok( symbolsOutputDTO ) .build();
     }
+    
+    @GET
+    @Path("/time")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, summary = "Get time for trading vies", description = "getting time")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange offers"),
+            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    public Response getTime(  ) throws NotFoundException {
+        
+        Long time = System.currentTimeMillis()/1000L;
+        return Response.ok( time ) .build();
+    }
+
     
     
     @GET
@@ -636,7 +659,7 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getConfig( @Context HttpServletRequest req) throws NotFoundException {
+    public Response getConfig(  ) throws NotFoundException {
 
         log.debug("getConfig entry point");        
         TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
@@ -647,9 +670,11 @@ public class DexController {
         tradingViewConfigDTO.supports_time = false;       
         // resolutions
         tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();         
-        tradingViewConfigDTO.supported_resolutions.add("D");
-        tradingViewConfigDTO.supported_resolutions.add("2D");
-        tradingViewConfigDTO.supported_resolutions.add("3D");       
+        tradingViewConfigDTO.supported_resolutions.add("15");
+        tradingViewConfigDTO.supported_resolutions.add("60");
+        tradingViewConfigDTO.supported_resolutions.add("240");    
+        tradingViewConfigDTO.supported_resolutions.add("D");    
+                
         return Response.ok( tradingViewConfigDTO ) .build();        
     }
               
