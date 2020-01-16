@@ -623,7 +623,7 @@ public class DexController {
         symbolsOutputDTO.has_no_volume = false;
         symbolsOutputDTO.has_daily = true;        
         symbolsOutputDTO.description = "Apollo Foundation.";
-        symbolsOutputDTO.type = "stock";
+        symbolsOutputDTO.type = "decentralized exchange";
         symbolsOutputDTO.has_daily = true;
         symbolsOutputDTO.has_empty_bars = true;
         symbolsOutputDTO.has_weekly_and_monthly = true;
