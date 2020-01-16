@@ -373,7 +373,7 @@ public class DexSmartContractService {
                             log.warn("Expected, that tx {} should be confirmed", txHash);
                         }
                     } else {
-                        log.info("Tx {} is unconfirmed ", txHash);
+                        log.debug("Tx {} is unconfirmed, skip sending ", txHash);
                     }
                 } else {
                     try {
@@ -387,8 +387,6 @@ public class DexSmartContractService {
             } catch (IOException e) {
                 log.error("Unable to broadcast tx or get receipt " + Numeric.toHexString(tx.getHash()), e);
             }
-        } else {
-            log.info("SEND new transaction");
         }
         return txHash;
     }
