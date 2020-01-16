@@ -345,7 +345,7 @@ INSERT into trim
 (1    ,      1000,    true);
 
 INSERT into option
-(NAME,     VALUE) VALUES
+(NAME,     "VALUE") VALUES
 ('existingKey'    ,      'existingValue'),
 ('existingNullKey'    ,      null),
 ('existingEmptyKey'    ,      '');

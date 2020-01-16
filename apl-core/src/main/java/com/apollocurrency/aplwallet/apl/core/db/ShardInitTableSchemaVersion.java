@@ -66,9 +66,9 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, \"VALUE\" VARCHAR(250))");
             case 4:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, value)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, \"VALUE\")");
             case 5:
                 return 5;
             case 24:
