@@ -427,14 +427,13 @@ public class DexService {
     }
 
     public String freezeEthPax(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
-        String txHash;
-
         DexCurrencyValidator.requireEthOrPaxRefundable(order);
-
         BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
-        txHash = dexSmartContractService.deposit(passphrase, order.getId(), order.getAccountId(), order.getFromAddress(), EthUtil.etherToWei(haveToPay), null, order.getPairCurrency());
+        return freezeEthPax(passphrase, order.getAccountId(), order.getId(), order.getPairCurrency(), EthUtil.etherToWei(haveToPay), order.getFromAddress());
+    }
 
-
+    public String freezeEthPax(String passphrase, long accountId, long orderId,  DexCurrency currency, BigInteger amountWei, String walletAddress) throws AplException.ExecutiveProcessException {
+        String txHash = dexSmartContractService.deposit(passphrase, orderId, accountId, walletAddress, amountWei, null, currency);
         if (txHash == null) {
             throw new AplException.ExecutiveProcessException("Exception in the process of freezing money.");
         }
@@ -540,6 +539,13 @@ public class DexService {
     public String refundAndWithdraw(String passphrase, String walletAddress, long accountId, byte[] secretHash) throws AplException.ExecutiveProcessException {
         return dexSmartContractService.refundAndWithdraw(secretHash, passphrase, walletAddress, accountId, false);
     }
+
+    public String refund(String passphrase, String walletAddress, long accountId, byte[] secretHash) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.refund(secretHash, passphrase, walletAddress, accountId, false);
+    }
+
+
+
 
     public boolean txExists(long aplTxId) {
         return blockchain.hasTransaction(aplTxId);
