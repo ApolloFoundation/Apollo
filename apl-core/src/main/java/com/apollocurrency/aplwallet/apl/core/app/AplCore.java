@@ -136,7 +136,7 @@ public final class AplCore {
 
         LOG = getLogger(AplCore.class);
         LOG.debug("Application home folder '{}'", dirProvider.getAppBaseDir());
-//TODO: Do we really need this check?        
+//TODO: Do we really need this check?
 //        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
 //            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
 //            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
@@ -170,7 +170,7 @@ public final class AplCore {
             LOG.info("transport interaction service shutdown...");
             transportInteractionService.stop();
         }
-        
+
 
         LOG.info(Constants.APPLICATION + " server " + Constants.VERSION + " stopped.");
 
@@ -202,7 +202,7 @@ public final class AplCore {
                     String upnpTid=aplAppStatus.durableTaskStart("UPnP init", "Tryin to get UPnP router",false);
                     upnp.init();
                     aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
-                }                
+                }
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  1.0, "API initialization");
 
                 //try to start API as early as possible
@@ -216,11 +216,11 @@ public final class AplCore {
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
                 transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
                 transportInteractionService.start();
-                
+
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  6.0, "Database initialization");
-                
+
 //                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 databaseManager.getDataSource();
@@ -234,7 +234,7 @@ public final class AplCore {
                 migrationManager.executeDataMigration();
                 BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
                 blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
-                
+
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  50.0, "Apollo Data migration done");
 
                 databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
@@ -307,10 +307,6 @@ public final class AplCore {
                 migrator.migrate();
                 // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
                 recoverSharding();
-
-                if (!dexOrderProcessor.isInitialized()) {
-                    LOG.warn("DexOrder processor is not initialized.");
-                }
 
                 //start all background tasks
                 taskDispatchManager.dispatch();

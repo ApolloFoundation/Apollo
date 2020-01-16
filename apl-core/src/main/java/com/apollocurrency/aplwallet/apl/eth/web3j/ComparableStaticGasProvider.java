@@ -28,4 +28,8 @@ public class ComparableStaticGasProvider extends StaticGasProvider {
         return Objects.hash(getGasLimit(), getGasPrice());
     }
 
+    @Override
+    public String toString() {
+        return "GasPrice:" + getGasPrice() + ",GasLimit:" + getGasLimit();
+    }
 }
