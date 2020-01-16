@@ -191,6 +191,12 @@ public class PublicKeyServiceImpl implements PublicKeyService {
         clearCache();
     }
 
+    @Override
+    public void cleanUpPublicKeys() {
+        publicKeyTable.truncate();
+        genesisPublicKeyTable.truncate();
+    }
+
     private boolean isCacheEnabled() {
         return cacheEnabled;
     }

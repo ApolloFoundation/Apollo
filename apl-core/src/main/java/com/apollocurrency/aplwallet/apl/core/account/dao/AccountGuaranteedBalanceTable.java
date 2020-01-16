@@ -92,6 +92,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
                  + "WHERE account_id = ? and height = ?");
+             @DatabaseSpecificDml(DmlMarker.MERGE)
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
                  + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
             pstmtSelect.setLong(1, accountId);

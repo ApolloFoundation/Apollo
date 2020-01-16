@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -80,8 +81,7 @@ public class GenesisImporter {
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
-    private PublicKeyTable pkTable;
-    private GenesisPublicKeyTable genesisPublicKeyTable;
+    private PublicKeyService publicKeyService;
     private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private AccountTable accountTable;
 
@@ -92,8 +92,7 @@ public class GenesisImporter {
             DatabaseManager databaseManager,
             AplAppStatus aplAppStatus,
             GenesisImporterProducer genesisImporterProducer,
-            PublicKeyTable pkTable,
-            GenesisPublicKeyTable genesisPublicKeyTable,
+            PublicKeyService publicKeyService,
             AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
             AccountTable accountTable,
             ApplicationJsonFactory jsonFactory,
@@ -112,8 +111,7 @@ public class GenesisImporter {
                 propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
                 propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
-        this.pkTable = Objects.requireNonNull(pkTable, "pkTable is NULL");
-        this.genesisPublicKeyTable = Objects.requireNonNull(genesisPublicKeyTable, "genesisPublicKeyTable is NULL");
+        this.publicKeyService = Objects.requireNonNull(publicKeyService, "publicKeyService is NULL");
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
     }
@@ -126,8 +124,7 @@ public class GenesisImporter {
 
     private void cleanUpGenesisData() {
         log.debug("clean Up Incomplete Genesis data...");
-        this.pkTable.truncate();
-        this.genesisPublicKeyTable.truncate();
+        publicKeyService.cleanUpPublicKeys();
         this.accountGuaranteedBalanceTable.truncate();
         this.accountTable.truncate();
     }

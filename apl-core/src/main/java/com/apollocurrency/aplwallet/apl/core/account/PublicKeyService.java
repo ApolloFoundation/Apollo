@@ -56,4 +56,5 @@ public interface PublicKeyService {
      */
     void cleanUpPublicKeysInMemory();
 
+    void cleanUpPublicKeys();
 }

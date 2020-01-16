@@ -91,11 +91,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void clearCache() {
-        table.clearCache();
-    }
-
-    @Override
     public String defaultSort() {
         return table.defaultSort();
     }

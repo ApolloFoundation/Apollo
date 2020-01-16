@@ -360,10 +360,11 @@ public class Account {
     }
 
     /**
-     * Create new account
-     * @param id
-     * @param isGenesis
-     * @return
+     * Create a new account. This account is not saved into the database but the public key of that one is saved.
+     * This account will be saved during further operation of the balance changing. (The set of 'add to balance' operation).
+     * @param id account id
+     * @param isGenesis true if this account is a genesis account
+     * @return new account
      */
     private static Account addAccount(long id, boolean isGenesis) {
         Preconditions.checkArgument( id != 0, "Invalid accountId 0");

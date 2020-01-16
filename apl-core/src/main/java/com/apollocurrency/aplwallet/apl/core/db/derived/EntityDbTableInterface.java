@@ -18,8 +18,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     String defaultSort();
 
-    void clearCache();
-
     void checkAvailable(int height);
 
     @Deprecated
