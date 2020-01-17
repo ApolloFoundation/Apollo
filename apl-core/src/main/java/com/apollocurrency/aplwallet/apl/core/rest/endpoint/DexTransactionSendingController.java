@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,6 +47,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigInteger;
 
 import static com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexApiConstants.COUNTER_ORDER_ID;
 import static com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexApiConstants.ORDER_ID;
@@ -121,20 +123,35 @@ public class DexTransactionSendingController {
     @Path("/eth-deposits")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Operation(tags = {"dex"}, summary = "Make an ETH/PAX deposit for order", description = "Will send ETH transaction to create ETH or PAX deposit. For ERC20 will increase allowance firstly.",
+    @Operation(tags = {"dex"}, summary = "Make an ETH/PAX deposit for order", description = "Will send ETH transaction to create ETH or PAX deposit. For ERC20 will increase allowance firstly. " +
+        "There are two ways to make a deposit, first - extract required amount,senderAddress,currency from already sent order and perform validations, second - create a deposit directly for specified amount," +
+        "orderId, currency and walletAddress, such option can be used for node, which is downloading blockchain or order is not broadcasted/confirmed yet on this node." +
+        "For the first way, walletAddress, amountGwei,currency are not required, for the second these parameters are mandatory. By default first way followed, " +
+        "when walletAddress, amountGwei,currency are specified - second way activates",
             responses = @ApiResponse(description = "Deposit transaction hash", responseCode = "200",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response freezeEthPax(
             @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
             @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
             @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA")@DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Id of order for which money has to be frozen. Signed or unsigned int64/long", required = true) @FormParam("orderId") @NotBlank String orderId
+            @Parameter(description = "Id of order for which money has to be deposited. Signed or unsigned int64/long", required = true) @FormParam(ORDER_ID) String orderIdString,
+            @Parameter(description = "Amount of eth/pax to transfer in gwei") @FormParam("amount")  long amountGwei,
+            @Parameter(description = "Eth address, which will send eth deposit transaction.") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+            @Parameter(description = "Currency to deposit, ETH or PAX") @FormParam(DexApiConstants.PAIR_CURRENCY) DexCurrency cur
             ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails details = getAndVerifyAccount(accountString, passphrase, code2FA);
         Account account = details.getAccount();
-        DexOrder order = getAndVerifyAccountOrder(orderId, account.getId());
-        validator.validateEthAccountForDeposit(details.getPassphrase(), order);
-        String hash = dexService.freezeEthPax(details.getPassphrase(), order);
+        String hash;
+        if (amountGwei > 0 && StringUtils.isNotBlank(walletAddress) && cur != null) {
+            long orderId = Convert.parseLong(orderIdString);
+            BigInteger amountWei = EthUtil.gweiToWei(amountGwei);
+            validator.validateEthAccountForDeposit(account.getId(), passphrase, walletAddress, amountWei, cur);
+            hash = dexService.freezeEthPax(passphrase, account.getId(), orderId, cur, amountWei, walletAddress);
+        } else {
+            DexOrder order = getAndVerifyAccountOrder(orderIdString, account.getId());
+            validator.validateEthAccountForDeposit(details.getPassphrase(), order);
+            hash = dexService.freezeEthPax(details.getPassphrase(), order);
+        }
         return Response.ok(new TransactionHash(hash)).build();
     }
 
@@ -323,7 +340,7 @@ public class DexTransactionSendingController {
     }
 
     @POST
-    @Path("/eth-swap-redeem")
+    @Path("/eth-swap-approvals")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(tags = {"dex"}, summary = "Redeem ETH swap", description = "Call eth 'redeem' function on smart contract, which will transfer frozen eth/pax to the caller address, specified by 'walletAddress' parameter." +
@@ -352,10 +369,12 @@ public class DexTransactionSendingController {
 
 
     @POST
-    @Path("/eth-swap-refund")
+    @Path("/eth-swap-refunds")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Operation(tags = {"dex"}, summary = "Refund ETH swap", description = "Call eth 'refund' function on smart contract, which will transfer frozen eth/pax from expired atomic swap back to initiator",
+    @Operation(tags = {"dex"}, summary = "Refund ETH swap", description = "Call eth 'refund' or 'refundAndWithdraw' function on smart contract."
+        + "When 'fullRefund=true' specified 'refundAndWithdraw' function will be called, which will refund atomic swap and send eth/pax back to account, " +
+        "otherwise 'refund' will be called, which will withdraw money from atomic swap and transfer it to the deposit from which money were withdrawn, after that deposit is ready for another atomic swap",
             responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
     public Response refundAtomicSwap(
@@ -364,6 +383,7 @@ public class DexTransactionSendingController {
             @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
             @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
             @Parameter(description = "Eth address to which eth/pax will be transferred after successful refunding") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+            @Parameter(description = "Perform full refund of expired atomic swap or just renew deposit to prepare it for another possible atomic swap ") @FormParam("fullRefund") @DefaultValue("true") boolean fullRefund,
             @Context HttpServletRequest request
     ) throws ParameterException, AplException.ExecutiveProcessException {
         AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
@@ -373,7 +393,37 @@ public class DexTransactionSendingController {
         if (!dexService.swapIsRefundable(secretHashBytes, walletAddress)) {
             throw new ParameterException(JSONResponses.error("Swap is not refundable for address: " + walletAddress));
         }
-        String hash = dexService.refundAndWithdraw(accountDetails.getPassphrase(), walletAddress, account.getId(), secretHashBytes);
+        String hash;
+        if (fullRefund) {
+            hash = dexService.refundAndWithdraw(accountDetails.getPassphrase(), walletAddress, account.getId(), secretHashBytes);
+        } else {
+            hash = dexService.refund(accountDetails.getPassphrase(), walletAddress, account.getId(), secretHashBytes);
+        }
+        return Response.ok(new TransactionHash(hash)).build();
+    }
+    @POST
+    @Path("/eth-deposit-withdrawals")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Operation(tags = {"dex"}, summary = "Withdraw eth/pax deposits", description = "Call 'withdraw' function on smart contract, which will transfer deposit amount of eth/pax back to the account for specified order",
+        responses = @ApiResponse(description = "Eth transaction hash in hexadecimal format", responseCode = "200",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TransactionHash.class))))
+    public Response withdrawEthDeposit(
+        @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
+        @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
+        @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
+        @Parameter(description = "Id of order for which money should to be withdrawn. Signed or unsigned int64/long", required = true) @FormParam("orderId") @NotBlank String orderIdString,
+        @Parameter(description = "Eth address, which created deposit. Only deposit creator can get back money. If specified address pass the validation, money will be transferred to it after successful withdrawal") @FormParam(DexApiConstants.WALLET_ADDRESS) String walletAddress,
+        @Context HttpServletRequest request
+    ) throws ParameterException, AplException.ExecutiveProcessException {
+        AccountDetails accountDetails = getAndVerifyAccount(accountString, passphrase, code2FA);
+        Account account = accountDetails.getAccount();
+        validator.validateEthAccount(account.getId(), accountDetails.getPassphrase(), walletAddress);
+        long orderId = Convert.parseLong(orderIdString);
+        if (!dexService.depositExists(orderId, walletAddress)) {
+            throw new ParameterException(JSONResponses.error("Deposit can't be withdrawn for address: " + walletAddress));
+        }
+        String hash = dexService.refundEthPaxFrozenMoney(accountDetails.getPassphrase(), account.getId(), orderId, walletAddress);
         return Response.ok(new TransactionHash(hash)).build();
     }
 
