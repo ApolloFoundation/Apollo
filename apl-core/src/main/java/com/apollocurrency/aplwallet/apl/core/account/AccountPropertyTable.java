@@ -54,7 +54,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"value\", height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"VALUE\", height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.id);
