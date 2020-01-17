@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,7 +58,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * Extends H2 ARRAY SQL type by providing a proper precision and scale
      * as per Java type.
      */
-    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
+    private static Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
     private static final String DB_ARRAY_FILE_NAME = "db_arrays.csv";
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
@@ -315,26 +316,52 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     static {
-        try (Stream<String> stream = Files.lines(
-                Paths.get(
-                        Objects.requireNonNull(
-                                Thread.currentThread().getContextClassLoader().getResource(DB_ARRAY_FILE_NAME),
-                                String.format("A resource associated with a file: %s is null",DB_ARRAY_FILE_NAME)
-                        ).toURI()
+        try {
+            URL resource = Thread.currentThread().getContextClassLoader().getResource(DB_ARRAY_FILE_NAME);
+            try {
+                log.debug("URI to resource {}", resource.toURI());
+                Path pathToResource = Paths.get(resource.toURI());
+                try (Stream<String> stream = Files.lines(pathToResource)) {
+                    ARRAY_COLUMN_INDEX = stream
+                        .map(CsvWriterImpl::getArrayColumn)
+                        .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
+
+                }
+            } catch (URISyntaxException e) {
+                String error = String.format("Cannot load '%s' from classpath resources", DB_ARRAY_FILE_NAME);
+                log.debug(error);
+                log.error("Error resource '{}' loading", DB_ARRAY_FILE_NAME, e);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                String.format(
+                    "Cannot load %s from classpath resources",
+                    DB_ARRAY_FILE_NAME
                 )
+            );
+        }
+/*
+        try (Stream<String> stream = Files.lines(
+            Paths.get(
+                Objects.requireNonNull(
+                    Thread.currentThread().getContextClassLoader().getResource(DB_ARRAY_FILE_NAME),
+                    String.format("A resource associated with a file: %s is null",DB_ARRAY_FILE_NAME)
+                ).toURI()
+            )
         )) {
             ARRAY_COLUMN_INDEX = stream
-                    .map(CsvWriterImpl::getArrayColumn)
-                    .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
+                .map(CsvWriterImpl::getArrayColumn)
+                .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
 
         } catch (IOException | URISyntaxException e) {
             throw new IllegalStateException(
-                    String.format(
-                            "Cannot load %s from classpath resources",
-                            DB_ARRAY_FILE_NAME
-                    )
+                String.format(
+                    "Cannot load %s from classpath resources",
+                    DB_ARRAY_FILE_NAME
+                )
             );
         }
+*/
     }
 
     private static ArrayColumn getArrayColumn(final String line) {
