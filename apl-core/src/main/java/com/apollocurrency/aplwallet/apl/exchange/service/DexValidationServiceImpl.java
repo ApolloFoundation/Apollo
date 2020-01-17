@@ -197,17 +197,27 @@ public class DexValidationServiceImpl implements IDexValidator {
     public int validateOfferBuyAplEthPhasing(DexOrder myOffer, DexOrder hisOrder, Long txId) {
         PhasingPoll poll = phasingPollService.getPoll(txId);
         if (poll == null) {
+            log.debug("Account {} did not send transfer tx {}", hisOrder.getAccountId(), txId);
             return OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST;
         }
 
         PhasingPollResult result = phasingPollService.getResult(txId);
         if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
+            log.debug("Apl phasing transfer {} was already finished", txId);
             return OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED;
         }
 
         int timeLeft = poll.getFinishTime() - timeService.getEpochTime();
-
-        if (timeLeft < 0 || timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS || timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+        if (timeLeft < 0) {
+            log.debug("Contract expired, unable to proceed with exchange process, order - {}, phasing tx id - {}", hisOrder.getId(), txId);
+            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
+        }
+        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. order - {}, phasing tx id - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hisOrder.getId(), txId);
+            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
+        }
+        if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. order - {}, phasing tx id - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hisOrder.getId(), txId);
             return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
         }
 
@@ -282,6 +292,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         }
 
         if (swapData == null || swapData.getTimeDeadLine() == 0) {
+            log.debug("Swap {} does not exist", secretHash);
             return OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST;
         }
 
