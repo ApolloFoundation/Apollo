@@ -24,6 +24,15 @@ public interface IDexValidator {
     int validateOfferBuyAplEth(DexOrder myOffer, DexOrder hisOffer);
 
     /**
+     * currency-specific validation Phasing (Ethereum)
+     *
+     * @param DexOffer myOffer - created offer to validate
+     * @param DexOffer hisOffer - matched offer
+     * @return 1 if success, -1 if
+     */
+    int validateOfferBuyAplEthPhasing(DexOrder myOffer, DexOrder hisOffer, Long txId);
+
+    /**
      * currency-specific validation for active deposit (Ethereum)
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer

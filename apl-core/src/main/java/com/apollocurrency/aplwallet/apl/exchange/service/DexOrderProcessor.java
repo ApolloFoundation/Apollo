@@ -420,7 +420,7 @@ public class DexOrderProcessor {
         return validateAccountBalance(ourOrder, hisOrder, exchangeContract) && dexService.hasConfirmations(hisOrder);
     }
 
-    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContract contractStatus) {
+    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContract contract) {
         int rx;
 
         switch (myOrder.getPairCurrency()) {
@@ -428,26 +428,34 @@ public class DexOrderProcessor {
             case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
                 if (myOrder.getType() == OrderType.SELL) {
-                    if (contractStatus.getContractStatus().isStep1()) {
+                    if (contract.getContractStatus().isStep1()) {
                         rx = dexValidator.validateOfferSellAplEthActiveDeposit(myOrder, hisOrder);
                     } else {
-                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder, contractStatus.getSecretHash());
+                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder, contract.getSecretHash());
                     }
                 } else {
-                    rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferBuyAplEthPhasing(myOrder, hisOrder, Long.parseUnsignedLong(contract.getCounterTransferTxId()));
+                    }
                 }
                 break;
             }
 
             case PAX: {
                 if (myOrder.getType() == OrderType.SELL) {
-                    if (contractStatus.getContractStatus().isStep1()) {
+                    if (contract.getContractStatus().isStep1()) {
                         rx = dexValidator.validateOfferSellAplPaxActiveDeposit(myOrder, hisOrder);
                     } else {
-                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder, contractStatus.getSecretHash());
+                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder, contract.getSecretHash());
                     }
                 } else {
-                    rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferBuyAplEthPhasing(myOrder, hisOrder, Long.parseUnsignedLong(contract.getCounterTransferTxId()));
+                    }
                 }
                 break;
             }
@@ -496,7 +504,6 @@ public class DexOrderProcessor {
                 DexOperation op = operationService.getBy(Convert.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
                 if (op != null) {
                     String details = op.getDetails();
-
                     String secretHashValue = extractValue(details, "secretHash", true);
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(Convert.parseHexString(secretHashValue));
                     if (swapData.getTimeDeadLine() != 0) {
@@ -547,13 +554,13 @@ public class DexOrderProcessor {
                     long currentTime = timeService.systemTime();
                     timeLeft = swapDeadline - currentTime;
                 } else {
-
                     long id = Long.parseUnsignedLong(contract.getCounterTransferTxId());
                     PhasingPoll poll = phasingPollService.getPoll(id);
                     if (poll == null) {
                         log.debug("Account {} did not send transfer tx {}", contract.getRecipient(), id);
                         continue;
                     }
+
                     PhasingPollResult result = phasingPollService.getResult(id);
                     if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
                         log.debug("Apl phasing transfer {} was already finished", id);

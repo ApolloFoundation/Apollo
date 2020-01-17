@@ -5,7 +5,13 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
@@ -28,14 +34,19 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.APL_COMMISSION;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_GAS_MULTIPLIER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_COMMISSION;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_DEPOSIT;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_FREEZE;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_COMMISSION;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_SYSTEM;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 import static com.apollocurrency.aplwallet.apl.util.Constants.ONE_APL;
 
@@ -52,13 +63,18 @@ public class DexValidationServiceImpl implements IDexValidator {
     private EthereumWalletService ethereumWalletService;
     private EthGasStationInfoDao ethGasStationInfoDao;
     private TimeService timeService;
+    private PhasingPollService phasingPollService;
+    private Blockchain blockchain;
 
     @Inject
-    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao, TimeService timeService) {
+    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao, TimeService timeService,
+                             PhasingPollService phasingPollService, Blockchain blockchain) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
         this.ethGasStationInfoDao = Objects.requireNonNull(ethGasStationInfoDao, "ethGasStationInfoDao is null");
         this.timeService = Objects.requireNonNull(timeService, "timeService is null");
+        this.phasingPollService = Objects.requireNonNull(phasingPollService, "phasingPollService is null");
+        this.blockchain = Objects.requireNonNull(blockchain, "blockchain is null");
     }
 
     Long getAplUnconfirmedBalance(Long hisAccountID) {
@@ -173,6 +189,40 @@ public class DexValidationServiceImpl implements IDexValidator {
         if (!ethCheckResult) {
             return OFFER_VALIDATE_ERROR_ETH_COMMISSION;
         }
+        return OFFER_VALIDATE_OK;
+    }
+
+
+    @Override
+    public int validateOfferBuyAplEthPhasing(DexOrder myOffer, DexOrder hisOrder, Long txId) {
+        PhasingPoll poll = phasingPollService.getPoll(txId);
+        if (poll == null) {
+            return OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST;
+        }
+
+        PhasingPollResult result = phasingPollService.getResult(txId);
+        if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
+            return OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED;
+        }
+
+        int timeLeft = poll.getFinishTime() - timeService.getEpochTime();
+
+        if (timeLeft < 0 || timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS || timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
+        }
+
+        try {
+            Transaction transaction = blockchain.getTransaction(txId);
+            DexControlOfFrozenMoneyAttachment attachment = (DexControlOfFrozenMoneyAttachment) transaction.getAttachment();
+            if (hisOrder.getOrderAmount() == null || hisOrder.getOrderAmount().compareTo(attachment.getOfferAmount()) != 0) {
+                log.debug("Apl deposit is not right.");
+                return OFFER_VALIDATE_ERROR_APL_DEPOSIT;
+            }
+        } catch (Exception ex) {
+            log.warn(ex.getMessage(), ex);
+            return OFFER_VALIDATE_ERROR_APL_DEPOSIT;
+        }
+
         return OFFER_VALIDATE_OK;
     }
 
