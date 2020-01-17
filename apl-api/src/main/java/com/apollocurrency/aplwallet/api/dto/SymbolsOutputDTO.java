@@ -44,5 +44,11 @@ public class SymbolsOutputDTO {
     @Schema(name="pricescale", description="price scale")     
     public Integer pricescale;  
     @Schema(name="ticker", description="ticker value")     
-    public String ticker;    
+    public String ticker;  
+    @Schema(name="has_empty_bars", description="has empty bars") 
+    public boolean has_empty_bars;
+    @Schema(name="has_weekly_and_monthly", description="has weekly and monthly") 
+    public boolean has_weekly_and_monthly;
+    @Schema(name="has_daily", description="has daily") 
+    public boolean has_daily;
 }
