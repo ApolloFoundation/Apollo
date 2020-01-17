@@ -288,6 +288,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         long timeLeft = swapData.getTimeDeadLine() - timeService.systemTime();
         if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
             log.info("Will not send dex contract transaction to recover exchange process, not enough time 'timeLeft'={} sec.", timeLeft);
+            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
         }
 
         BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());
