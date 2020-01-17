@@ -48,7 +48,7 @@ public class OptionDAO {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!exist(optionName)) {
             try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, value) VALUES (?, ?)");
+                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, \"VALUE\") VALUES (?, ?)");
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
                 stmt.execute();

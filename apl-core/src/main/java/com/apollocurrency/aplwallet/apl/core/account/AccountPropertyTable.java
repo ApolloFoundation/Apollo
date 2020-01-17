@@ -22,7 +22,7 @@ import java.sql.SQLException;
  * @author al
  */
 public class AccountPropertyTable extends VersionedDeletableEntityDbTable<AccountProperty> {
-    
+
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
         @Override
@@ -31,16 +31,16 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         }
 
     };
-    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable(); 
-    
+    private static final AccountPropertyTable accountPropertyTable = new AccountPropertyTable();
+
     public static AccountPropertyTable getInstance(){
         return accountPropertyTable;
     }
-    
+
     public static DbKey newKey(long id){
         return accountPropertyDbKeyFactory.newKey(id);
     }
-    
+
     private AccountPropertyTable() {
         super("account_property", accountPropertyDbKeyFactory);
     }
@@ -54,7 +54,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, value, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"value\", height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.id);
@@ -66,7 +66,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
             pstmt.executeUpdate();
         }
     }
-    
+
     public static AccountProperty getProperty(long propertyId) {
         return accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
     }
@@ -112,5 +112,5 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         return accountPropertyTable.getBy(dbClause);
     }
 
-    
+
 }

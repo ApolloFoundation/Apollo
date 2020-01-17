@@ -186,19 +186,23 @@ public class DataSourceWrapper implements DataSource {
     private void validateDbParams(String dbParams) {
         if (Objects.nonNull(dbParams)) {
             if (dbParams.contains(MVCC)) {
+                final String message = String.format(
+                    "%s is not supported in the dbParams or dbUrl properties.",
+                    MVCC
+                );
+                log.error(message);
                 throw new IllegalArgumentException(
-                        String.format(
-                                "%s is not supported in the dbParams or dbUrl properties.",
-                                MVCC
-                        )
+                    message
                 );
             }
             if (dbParams.contains(MV_STORE + "=FALSE")) {
+                final String message = String.format(
+                    "%s should always be TRUE.",
+                    MV_STORE
+                );
+                log.error(message);
                 throw new IllegalArgumentException(
-                        String.format(
-                                "%s should always be TRUE.",
-                                MV_STORE
-                        )
+                    message
                 );
             }
         }

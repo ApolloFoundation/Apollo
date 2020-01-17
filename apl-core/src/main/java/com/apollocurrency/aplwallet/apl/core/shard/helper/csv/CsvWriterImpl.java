@@ -11,15 +11,16 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.Array;
 import java.sql.Connection;
@@ -57,7 +58,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * Extends H2 ARRAY SQL type by providing a proper precision and scale
      * as per Java type.
      */
-    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
+    private static Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
     private static final String DB_ARRAY_FILE_NAME = "db_arrays.csv";
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
@@ -70,7 +71,26 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
             }
         }
+        log.debug("CwrWriterImpl init ARRAY_COLUMN_INDEX...");
+        if (ARRAY_COLUMN_INDEX != null && ARRAY_COLUMN_INDEX.size() > 0) {
+            log.debug("CwrWriterImpl postConstruct = [{}]", ARRAY_COLUMN_INDEX.size());
+            return;
+        }
+        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(DB_ARRAY_FILE_NAME);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(in))
+        ) {
+            Stream<String> stream = reader.lines();
+            ARRAY_COLUMN_INDEX = stream
+                .map(CsvWriterImpl::getArrayColumn)
+                .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
+
+        } catch (IOException e) {
+            String error = String.format("Cannot load %s from classpath resources", DB_ARRAY_FILE_NAME);
+            log.error("Read resource '{}'", DB_ARRAY_FILE_NAME, e);
+            throw new IllegalStateException( error );
+        }
     }
+
 
     /**
      * {@inheritDoc}
@@ -311,29 +331,6 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 close();
             }
             DbUtils.closeSilently(rs);
-        }
-    }
-
-    static {
-        try (Stream<String> stream = Files.lines(
-                Paths.get(
-                        Objects.requireNonNull(
-                                Thread.currentThread().getContextClassLoader().getResource(DB_ARRAY_FILE_NAME),
-                                String.format("A resource associated with a file: %s is null",DB_ARRAY_FILE_NAME)
-                        ).toURI()
-                )
-        )) {
-            ARRAY_COLUMN_INDEX = stream
-                    .map(CsvWriterImpl::getArrayColumn)
-                    .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
-
-        } catch (IOException | URISyntaxException e) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Cannot load %s from classpath resources",
-                            DB_ARRAY_FILE_NAME
-                    )
-            );
         }
     }
 
