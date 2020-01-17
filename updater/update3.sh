@@ -7,7 +7,8 @@ cd $1
 mkdir tmpdir
 cd tmpdir
 rm -rfv "$5".tar.gz
-curl --retry 100 https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz -o $5.tar.gz
+echo https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz
+wget -v https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz || curl --retry 100 https://s3.amazonaws.com/updates.apollowallet.org/database/$5.tar.gz -o $5.tar.gz
 echo Unpacking...
 tar -zxvf $5.tar.gz
 
