@@ -320,27 +320,30 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         ArrayColumn arrayColumn5 =
             new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
         ArrayColumn arrayColumn6 =
-            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS" ,10, 0);
         ArrayColumn arrayColumn7 =
-            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
         ArrayColumn arrayColumn8 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
         ArrayColumn arrayColumn9 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
         ArrayColumn arrayColumn10 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+        ArrayColumn arrayColumn11 =
             new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
 
-        return Map.of(
-            arrayColumn1, arrayColumn1,
-            arrayColumn2, arrayColumn2,
-            arrayColumn3, arrayColumn3,
-            arrayColumn4, arrayColumn4,
-            arrayColumn5, arrayColumn5,
-            arrayColumn6, arrayColumn6,
-            arrayColumn7, arrayColumn7,
-            arrayColumn8, arrayColumn8,
-            arrayColumn9, arrayColumn9,
-            arrayColumn10, arrayColumn10
+        return Map.ofEntries(
+            Map.entry(arrayColumn1, arrayColumn1),
+            Map.entry(arrayColumn2, arrayColumn2),
+            Map.entry(arrayColumn3, arrayColumn3),
+            Map.entry(arrayColumn4, arrayColumn4),
+            Map.entry(arrayColumn5, arrayColumn5),
+            Map.entry(arrayColumn6, arrayColumn6),
+            Map.entry(arrayColumn7, arrayColumn7),
+            Map.entry(arrayColumn8, arrayColumn8),
+            Map.entry(arrayColumn9, arrayColumn9),
+            Map.entry(arrayColumn10, arrayColumn10),
+            Map.entry(arrayColumn11, arrayColumn11)
         );
     }
 
@@ -386,14 +389,15 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             ARRAY_COLUMN_INDEX.get(
                 ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
             )
-        ).orElseThrow(
-            () -> new IllegalStateException(
-                String.format(
+        ).orElseThrow(() -> {
+                final String message = String.format(
                     "Cannot find tableName: %s and columnName: %s.",
                     tableName,
                     columnName
-                )
-            )
+                );
+                log.error(message);
+                return new IllegalStateException(message);
+            }
         );
     }
 
