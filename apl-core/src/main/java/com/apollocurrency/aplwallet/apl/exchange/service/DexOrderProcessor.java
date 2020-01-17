@@ -404,7 +404,7 @@ public class DexOrderProcessor {
 
         DexOrder counterOrder = dexService.getOrder(counterOrderID);
 
-        return validateAccountBalance(mainOrder, counterOrder, ExchangeContractStatus.STEP_1);
+        return validateAccountBalance(mainOrder, counterOrder, exchangeContract);
     }
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
@@ -417,10 +417,10 @@ public class DexOrderProcessor {
 
         DexOrder hisOrder = dexService.getOrder(orderID);
 
-        return validateAccountBalance(ourOrder, hisOrder, ExchangeContractStatus.STEP_2) && dexService.hasConfirmations(hisOrder);
+        return validateAccountBalance(ourOrder, hisOrder, exchangeContract) && dexService.hasConfirmations(hisOrder);
     }
 
-    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContractStatus contractStatus) {
+    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContract contractStatus) {
         int rx;
 
         switch (myOrder.getPairCurrency()) {
@@ -428,10 +428,10 @@ public class DexOrderProcessor {
             case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
                 if (myOrder.getType() == OrderType.SELL) {
-                    if (contractStatus.isStep1()) {
+                    if (contractStatus.getContractStatus().isStep1()) {
                         rx = dexValidator.validateOfferSellAplEthActiveDeposit(myOrder, hisOrder);
                     } else {
-                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder);
+                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder, contractStatus.getSecretHash());
                     }
                 } else {
                     rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
@@ -441,10 +441,10 @@ public class DexOrderProcessor {
 
             case PAX: {
                 if (myOrder.getType() == OrderType.SELL) {
-                    if (contractStatus.isStep1()) {
+                    if (contractStatus.getContractStatus().isStep1()) {
                         rx = dexValidator.validateOfferSellAplPaxActiveDeposit(myOrder, hisOrder);
                     } else {
-                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder);
+                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder, contractStatus.getSecretHash());
                     }
                 } else {
                     rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
@@ -496,6 +496,7 @@ public class DexOrderProcessor {
                 DexOperation op = operationService.getBy(Convert.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
                 if (op != null) {
                     String details = op.getDetails();
+
                     String secretHashValue = extractValue(details, "secretHash", true);
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(Convert.parseHexString(secretHashValue));
                     if (swapData.getTimeDeadLine() != 0) {
@@ -546,6 +547,7 @@ public class DexOrderProcessor {
                     long currentTime = timeService.systemTime();
                     timeLeft = swapDeadline - currentTime;
                 } else {
+
                     long id = Long.parseUnsignedLong(contract.getCounterTransferTxId());
                     PhasingPoll poll = phasingPollService.getPoll(id);
                     if (poll == null) {

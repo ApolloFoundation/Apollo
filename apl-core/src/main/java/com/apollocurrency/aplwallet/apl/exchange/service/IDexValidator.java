@@ -38,7 +38,7 @@ public interface IDexValidator {
      * @param DexOffer hisOffer - matched offer
      * @return 1 if success, -1 if
      */
-    int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOffer);
+    int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOffer, byte[] secretHash);
 
     /**
      * currency-specific validation (Pax)
@@ -61,6 +61,6 @@ public interface IDexValidator {
      * @param DexOffer myOffer - created offer to validate
      * @param DexOffer hisOffer - matched offer
      */
-    int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer);
+    int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer, byte[] secretHash);
     
 }

@@ -5,14 +5,15 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
+import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
@@ -27,11 +28,14 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.APL_COMMISSION;
+import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.ETH_GAS_MULTIPLIER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_COMMISSION;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_APL_FREEZE;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_COMMISSION;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
+import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_ETH_SYSTEM;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 import static com.apollocurrency.aplwallet.apl.util.Constants.ONE_APL;
 
@@ -47,13 +51,14 @@ public class DexValidationServiceImpl implements IDexValidator {
     private DexSmartContractService dexSmartContractService;
     private EthereumWalletService ethereumWalletService;
     private EthGasStationInfoDao ethGasStationInfoDao;
+    private TimeService timeService;
 
     @Inject
-    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao) {
+    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao, TimeService timeService) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
-        this.ethGasStationInfoDao = Objects.requireNonNull( ethGasStationInfoDao, "ethGasStationInfoDao is null");
-
+        this.ethGasStationInfoDao = Objects.requireNonNull(ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.timeService = Objects.requireNonNull(timeService, "timeService is null");
     }
 
     Long getAplUnconfirmedBalance(Long hisAccountID) {
@@ -214,18 +219,31 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
 
-    public int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOrder) {
+    public int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOrder, byte[] secretHash) {
         log.debug("validateOfferSellAplEthActiveDeposit: ");
         String hisFromEthAddr = hisOrder.getFromAddress();
         log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId());
 
+        SwapDataInfo swapData;
+        try {
+            swapData = dexSmartContractService.getSwapData(secretHash);
+        } catch (AplException.ExecutiveProcessException e) {
+            return OFFER_VALIDATE_ERROR_ETH_SYSTEM;
+        }
 
-        DepositedOrderDetails depositedOrderDetails = dexSmartContractService.getDepositedOrderDetails(hisFromEthAddr, hisOrder.getId());
+        if (swapData == null || swapData.getTimeDeadLine() == 0) {
+            return OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST;
+        }
+
+        long timeLeft = swapData.getTimeDeadLine() - timeService.systemTime();
+        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            log.info("Will not send dex contract transaction to recover exchange process, not enough time 'timeLeft'={} sec.", timeLeft);
+        }
 
         BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());
         log.debug("hasToPay: {} ", hasToPay);
 
-        if ((hasToPay.compareTo(depositedOrderDetails.getAmount()) != 0)) {
+        if ((hasToPay.compareTo(swapData.getAmount()) != 0)) {
             log.debug("Eth deposit is not right. ");
             return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
         }
@@ -247,8 +265,8 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
     @Override
-    public int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer) {
+    public int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer, byte[] secretHash) {
         log.debug("validateOfferSellAplPaxAtomicSwap: ");
-        return validateOfferSellAplEthAtomicSwap(myOffer, hisOffer);
+        return validateOfferSellAplEthAtomicSwap(myOffer, hisOffer, secretHash);
     }
 }
