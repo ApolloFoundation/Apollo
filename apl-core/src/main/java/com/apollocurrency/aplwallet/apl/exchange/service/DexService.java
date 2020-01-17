@@ -861,10 +861,9 @@ public class DexService {
         }
     }
 
-    public boolean isExpired(Transaction tx) {
-        return timeService.getEpochTime() > tx.getExpiration();
+    public void broadcastWhenConfirmed(Transaction tx, Transaction uncTx) {
+        transactionProcessor.broadcastWhenConfirmed(tx, uncTx);
     }
-
 
     public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
         return dexSmartContractService.getUserActiveDeposits(user);
