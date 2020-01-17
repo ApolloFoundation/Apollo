@@ -388,26 +388,10 @@ public class DexOrderProcessor {
         if (transferTx != null) {
             MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTx, contractTx.getFullHash(), null);
             mandatoryTransactionDao.insert(transferMandatoryTx);
-            broadcastWhenConfirmed(transferTx, contractTx);
+            dexService.broadcastWhenConfirmed(transferTx, contractTx);
         } else {
             dexService.broadcast(contractTx);
         }
-    }
-
-    private void broadcastWhenConfirmed(Transaction txToBroadcast, Transaction unconfirmedTx) {
-        CompletableFuture.runAsync(() -> {
-            while (!dexService.txExists(unconfirmedTx.getId())) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(250);
-                } catch (InterruptedException ignored) {
-                }
-            }
-            try {
-                dexService.broadcast(txToBroadcast);
-            } catch (Exception e) {
-                log.error(e.toString(), e);
-            }
-        });
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
