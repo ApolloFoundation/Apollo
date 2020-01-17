@@ -404,7 +404,7 @@ public class DexOrderProcessor {
 
         DexOrder counterOrder = dexService.getOrder(counterOrderID);
 
-        return validateAccountBalance(mainOrder, counterOrder);
+        return validateAccountBalance(mainOrder, counterOrder, ExchangeContractStatus.STEP_1);
     }
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
@@ -417,9 +417,10 @@ public class DexOrderProcessor {
 
         DexOrder hisOrder = dexService.getOrder(orderID);
 
-        return validateAccountBalance(ourOrder, hisOrder) && dexService.hasConfirmations(hisOrder);
+        return validateAccountBalance(ourOrder, hisOrder, ExchangeContractStatus.STEP_2) && dexService.hasConfirmations(hisOrder);
     }
-    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder) {
+
+    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContractStatus contractStatus) {
         int rx;
 
         switch (myOrder.getPairCurrency()) {
@@ -427,7 +428,11 @@ public class DexOrderProcessor {
             case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
                 if (myOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplEth(myOrder, hisOrder);
+                    if (contractStatus.isStep1()) {
+                        rx = dexValidator.validateOfferSellAplEthActiveDeposit(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder);
+                    }
                 } else {
                     rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
                 }
@@ -436,7 +441,11 @@ public class DexOrderProcessor {
 
             case PAX: {
                 if (myOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
+                    if (contractStatus.isStep1()) {
+                        rx = dexValidator.validateOfferSellAplPaxActiveDeposit(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder);
+                    }
                 } else {
                     rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
                 }

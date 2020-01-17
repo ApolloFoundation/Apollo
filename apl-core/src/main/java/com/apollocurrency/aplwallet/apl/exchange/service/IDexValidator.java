@@ -24,12 +24,21 @@ public interface IDexValidator {
     int validateOfferBuyAplEth(DexOrder myOffer, DexOrder hisOffer);
 
     /**
-     * currency-specific validation (Ethereum)
+     * currency-specific validation for active deposit (Ethereum)
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
      * @return 1 if success, -1 if 
-    */     
-    int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOffer);
+     */
+    int validateOfferSellAplEthActiveDeposit(DexOrder myOffer, DexOrder hisOffer);
+
+    /**
+     * currency-specific validation for atomic swap (Ethereum)
+     *
+     * @param DexOffer myOffer - created offer to validate
+     * @param DexOffer hisOffer - matched offer
+     * @return 1 if success, -1 if
+     */
+    int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOffer);
 
     /**
      * currency-specific validation (Pax)
@@ -39,10 +48,19 @@ public interface IDexValidator {
     int validateOfferBuyAplPax(DexOrder myOffer, DexOrder hisOffer);
 
     /**
-     * currency-specific validation (Pax)
+     * currency-specific validation for active deposit (Pax)
      * @param DexOffer  myOffer - created offer to validate
      * @param DexOffer  hisOffer - matched offer
-    */ 
-    int validateOfferSellAplPax( DexOrder myOffer, DexOrder hisOffer);
+     */
+    int validateOfferSellAplPaxActiveDeposit(DexOrder myOffer, DexOrder hisOffer);
+
+
+    /**
+     * currency-specific validation for atomic swap (Pax)
+     *
+     * @param DexOffer myOffer - created offer to validate
+     * @param DexOffer hisOffer - matched offer
+     */
+    int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer);
     
 }

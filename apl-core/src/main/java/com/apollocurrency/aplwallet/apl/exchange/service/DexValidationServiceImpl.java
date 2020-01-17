@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
@@ -171,8 +172,8 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
     @Override
-    public int validateOfferSellAplEth(DexOrder myOffer, DexOrder hisOrder) {
-        log.debug("validateOfferSellAplEth: ");
+    public int validateOfferSellAplEthActiveDeposit(DexOrder myOffer, DexOrder hisOrder) {
+        log.debug("validateOfferSellAplEthActiveDeposit: ");
         String hisFromEthAddr = hisOrder.getFromAddress();
         log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId());
         List<UserEthDepositInfo> hisEthDeposits;
@@ -212,6 +213,26 @@ public class DexValidationServiceImpl implements IDexValidator {
         return OFFER_VALIDATE_OK;
     }
 
+
+    public int validateOfferSellAplEthAtomicSwap(DexOrder myOffer, DexOrder hisOrder) {
+        log.debug("validateOfferSellAplEthActiveDeposit: ");
+        String hisFromEthAddr = hisOrder.getFromAddress();
+        log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId());
+
+
+        DepositedOrderDetails depositedOrderDetails = dexSmartContractService.getDepositedOrderDetails(hisFromEthAddr, hisOrder.getId());
+
+        BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());
+        log.debug("hasToPay: {} ", hasToPay);
+
+        if ((hasToPay.compareTo(depositedOrderDetails.getAmount()) != 0)) {
+            log.debug("Eth deposit is not right. ");
+            return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
+        }
+
+        return OFFER_VALIDATE_OK;
+    }
+
     @Override
     public int validateOfferBuyAplPax(DexOrder myOrder, DexOrder hisOrder) {
         log.debug("validateOfferBuyAplPax: ");
@@ -220,9 +241,14 @@ public class DexValidationServiceImpl implements IDexValidator {
     }
 
     @Override
-    public int validateOfferSellAplPax(DexOrder myOrder, DexOrder hisOrder) {
-        log.debug("validateOfferSellAplPax: ");
-        return validateOfferSellAplEth(myOrder, hisOrder);
+    public int validateOfferSellAplPaxActiveDeposit(DexOrder myOrder, DexOrder hisOrder) {
+        log.debug("validateOfferSellAplPaxActiveDeposit: ");
+        return validateOfferSellAplEthActiveDeposit(myOrder, hisOrder);
     }
 
+    @Override
+    public int validateOfferSellAplPaxAtomicSwap(DexOrder myOffer, DexOrder hisOffer) {
+        log.debug("validateOfferSellAplPaxAtomicSwap: ");
+        return validateOfferSellAplEthAtomicSwap(myOffer, hisOffer);
+    }
 }
