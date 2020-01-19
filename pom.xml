@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-wallet</artifactId>
-  <version>1.41.4</version>
+  <version>1.41.6</version>
   <packaging>pom</packaging>
   <name>Apollo wallet</name>
 
@@ -19,7 +19,7 @@
       <id>central</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
-      <url>http://repo1.maven.org/maven2</url>
+      <url>https://repo1.maven.org/maven2</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
@@ -29,6 +29,15 @@
       <id>apl</id>
       <name>arti.firstbridge.work-releases</name>
       <url>https://arti.firstbridge.work/artifactory/apl</url>
+    </repository>
+    <repository>
+      <id>aplsys</id>
+      <name>Artifactory APLSYS</name>
+      <layout>default</layout>
+      <url>https://arti.firstbridge.work/artifactory/aplsys</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
   <modules>
@@ -63,7 +72,7 @@
         <!-- cross-platform zip distribution -->
         <zipname>apollo-wallet</zipname>
         <!--Dependency Versions-->
-      <web-wallet.version>2.5.35</web-wallet.version>
+      <web-wallet.version>2.5.39</web-wallet.version>
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
@@ -93,7 +102,7 @@
     <lucene.version>7.5.0</lucene.version>
 
     <!--Db-->
-    <h2.version>1.4.196</h2.version>
+    <h2.version>1.4.200</h2.version>
 
     <!--Logging-->
     <slf4j.version>1.7.22</slf4j.version>

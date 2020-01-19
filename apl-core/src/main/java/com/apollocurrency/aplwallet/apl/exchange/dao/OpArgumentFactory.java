@@ -7,14 +7,14 @@ import org.jdbi.v3.core.config.ConfigRegistry;
 
 import java.sql.Types;
 
-public class DexOperationArgumentFactory extends AbstractArgumentFactory<DexTransaction.DexOperation> {
+public class OpArgumentFactory extends AbstractArgumentFactory<DexTransaction.Op> {
 
-    public DexOperationArgumentFactory() {
+    public OpArgumentFactory() {
         super(Types.TINYINT);
     }
 
     @Override
-    public Argument build(final DexTransaction.DexOperation dexOperation, ConfigRegistry config) {
-        return (position, statement, ctx) -> statement.setByte(position, dexOperation.getCode());
+    public Argument build(final DexTransaction.Op op, ConfigRegistry config) {
+        return (position, statement, ctx) -> statement.setByte(position, op.getCode());
     }
 }

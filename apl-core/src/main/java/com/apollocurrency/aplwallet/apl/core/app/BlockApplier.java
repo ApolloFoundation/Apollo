@@ -25,8 +25,6 @@ public class BlockApplier {
     private ShardDao shardDao;
 
     public void apply(Block block) {
-        Account generatorAccount = Account.addOrGetAccount(block.getGeneratorId());
-        generatorAccount.apply(block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
         if (height > 3) {
@@ -64,6 +62,9 @@ public class BlockApplier {
         if (totalBackFees != 0) {
             log.trace("Fee reduced by {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, height);
         }
+        //fetch generatorAccount after a possible change in previousGeneratorAccount
+        Account generatorAccount = Account.addOrGetAccount(block.getGeneratorId());
+        generatorAccount.apply(block.getGeneratorPublicKey());
         generatorAccount.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         generatorAccount.addToForgedBalanceATM(block.getTotalFeeATM() - totalBackFees);
     }

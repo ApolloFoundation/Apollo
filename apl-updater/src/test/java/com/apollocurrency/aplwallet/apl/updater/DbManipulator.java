@@ -13,7 +13,7 @@ import java.sql.SQLException;
 
 public class DbManipulator {
     protected final DataSourceWrapper dataSourceWrapper =
-            new DataSourceWrapper(new DbProperties().dbUrl("jdbc:h2:mem:test").dbPassword("").dbUsername("sa").maxConnections(10).loginTimeout(10).maxMemoryRows(100000).defaultLockTimeout(10 * 1000));
+            new DataSourceWrapper(new DbProperties().dbUrl("jdbc:h2:mem:test;MV_STORE=TRUE;CACHE_SIZE=16000").dbPassword("").dbUsername("sa").maxConnections(10).loginTimeout(10).maxMemoryRows(100000).defaultLockTimeout(10 * 1000));
 
     private DbPopulator populator = new DbPopulator(dataSourceWrapper, "db/schema.sql", "db/data.sql");
 

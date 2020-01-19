@@ -5,6 +5,7 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
@@ -18,6 +19,7 @@ import org.web3j.abi.datatypes.generated.Uint8;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -108,13 +110,14 @@ public class DexContract extends Contract {
     private EthereumWalletService ethereumWalletService;
 
     public static final Event INITIATED_EVENT = new Event("Initiated",
-            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {
-            }, new TypeReference<Bytes32>() {
+            Arrays.<TypeReference<?>>asList(
+                new TypeReference<Uint256>(true) {
+            }, new TypeReference<Bytes32>(true) {
             }, new TypeReference<Address>(true) {
-            }, new TypeReference<Address>(true) {
+            }, new TypeReference<Address>() {
             }, new TypeReference<Uint256>() {
             }, new TypeReference<Uint256>() {
-            }, new TypeReference<Address>(true) {
+            }, new TypeReference<Address>() {
             }, new TypeReference<Uint256>() {
             }));
     ;
@@ -209,28 +212,33 @@ public class DexContract extends Contract {
                 });
     }
 
+    @Deprecated
+    /**
+     * If there are a lot of data function can froze.
+     * Use function getUserActiveDeposits.
+     */
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledDeposits(String user) {
         final Function function = new Function(FUNC_GETUSERFILLEDDEPOSITS,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        },
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        },
-                        new TypeReference<DynamicArray<Uint256>>() {
-                        }
-                ));
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
+            Arrays.<TypeReference<?>>asList(
+                new TypeReference<DynamicArray<Uint256>>() {
+                },
+                new TypeReference<DynamicArray<Uint256>>() {
+                },
+                new TypeReference<DynamicArray<Uint256>>() {
+                }
+            ));
         return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
-                new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
-                    @Override
-                    public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);
-                        return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
-                                convertToNative((List<Uint256>) results.get(0).getValue()),
-                            convertToNative((List<Uint256>) results.get(1).getValue()),
-                                convertToNative((List<Uint256>) results.get(2).getValue()));
-                    }
-                });
+            new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
+                @Override
+                public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
+                    List<Type> results = executeCallMultipleValueReturn(function);
+                    return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
+                        convertToNative((List<Uint256>) results.get(0).getValue()),
+                        convertToNative((List<Uint256>) results.get(1).getValue()),
+                        convertToNative((List<Uint256>) results.get(2).getValue()));
+                }
+            });
     }
 
     public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserActiveDeposits(String user) {
@@ -488,22 +496,23 @@ public class DexContract extends Contract {
                 Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(INITIATED_EVENT, log);
                 InitiatedEventResponse typedResponse = new InitiatedEventResponse();
                 typedResponse.log = log;
-                typedResponse.initiator = (String) eventValues.getIndexedValues().get(0).getValue();
-                typedResponse.recipient = (String) eventValues.getIndexedValues().get(1).getValue();
-                typedResponse.asset = (String) eventValues.getIndexedValues().get(2).getValue();
-                typedResponse.orderId = (BigInteger) eventValues.getNonIndexedValues().get(0).getValue();
-                typedResponse.secretHash = (byte[]) eventValues.getNonIndexedValues().get(1).getValue();
-                typedResponse.initTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
-                typedResponse.refundTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(3).getValue();
+                typedResponse.orderId = (BigInteger) eventValues.getIndexedValues().get(0).getValue();
+                typedResponse.secretHash = (byte[]) eventValues.getIndexedValues().get(1).getValue();
+                typedResponse.initiator = (String) eventValues.getIndexedValues().get(2).getValue();
+                typedResponse.recipient = (String) eventValues.getNonIndexedValues().get(0).getValue();
+                typedResponse.initTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(1).getValue();
+                typedResponse.refundTimestamp = (BigInteger) eventValues.getNonIndexedValues().get(2).getValue();
+                typedResponse.asset = (String) eventValues.getNonIndexedValues().get(3).getValue();
                 typedResponse.amount = (BigInteger) eventValues.getNonIndexedValues().get(4).getValue();
                 return typedResponse;
             }
         });
     }
 
-    public Flowable<InitiatedEventResponse> initiatedEventFlowable(DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
-        EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
+    public Flowable<InitiatedEventResponse> initiatedEventFlowable(long orderId) {
+        EthFilter filter = new EthFilter(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST, getContractAddress());
         filter.addSingleTopic(EventEncoder.encode(INITIATED_EVENT));
+        filter.addOptionalTopics("0x" + TypeEncoder.encode(new Uint256(orderId)));
         return initiatedEventFlowable(filter);
     }
 
@@ -581,12 +590,12 @@ public class DexContract extends Contract {
         return refundedEventFlowable(filter);
     }
 
-    public String refundAndWithdraw(byte[] secretHash) {
+    public String refundAndWithdraw(byte[] secretHash, boolean waitConfirmation) {
         final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(
                 FUNC_REFUNDANDWITHDRAW,
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(secretHash)),
                 Collections.<TypeReference<?>>emptyList());
-        return sendTx(function, BigInteger.ZERO);
+        return sendTx(function, BigInteger.ZERO, waitConfirmation);
     }
 
     public String refundAndWithdrawAll() {
@@ -777,15 +786,16 @@ public class DexContract extends Contract {
     public static class InitiatedEventResponse {
         public Log log;
 
+
+        public BigInteger orderId;
+
+        public byte[] secretHash;
+
         public String initiator;
 
         public String recipient;
 
         public String asset;
-
-        public BigInteger orderId;
-
-        public byte[] secretHash;
 
         public BigInteger initTimestamp;
 

@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.eth.web3j.DefaultRawTransactionManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
@@ -48,7 +49,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -67,6 +72,8 @@ public class DexSmartContractService {
     private DexTransactionDao dexTransactionDao;
     private TransactionReceiptProcessor receiptProcessor;
     private ReceiptProcessorProducer receiptProcessorProducer;
+    private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
+
 
     private static final String ACCOUNT_TO_READ_DATA = "1234";
 
@@ -162,14 +169,35 @@ public class DexSmartContractService {
         EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
-        String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.DexOperation.REFUND), true);
-        if (txHash == null) {
-            ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REFUND, params, fromAddress), ethWalletKey.getCredentials());
-            txHash = dexContract.refund(secretHash, waitConfirmation);
+        String identifier = fromAddress + params + DexTransaction.Op.REFUND;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
+            if (txHash == null) {
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
+                txHash = dexContract.refund(secretHash, waitConfirmation);
+            }
+            return txHash;
         }
-        return txHash;
 
+    }
+
+    public String refundAndWithdraw(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
+        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+
+        String params = Numeric.toHexString(secretHash);
+        String identifier = fromAddress + params + DexTransaction.Op.REFUND;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
+            if (txHash == null) {
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
+                txHash = dexContract.refundAndWithdraw(secretHash, waitConfirmation);
+            }
+            return txHash;
+        }
     }
 
     public boolean hasFrozenMoney(DexOrder order) {
@@ -177,7 +205,7 @@ public class DexSmartContractService {
             return true;
         }
         try {
-            List<UserEthDepositInfo> deposits = getUserFilledDeposits(order.getFromAddress());
+            List<UserEthDepositInfo> deposits = getUserActiveDeposits(order.getFromAddress());
             BigDecimal expectedFrozenAmount = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
             for (UserEthDepositInfo deposit : deposits) {
                 if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().compareTo(expectedFrozenAmount) == 0) {
@@ -206,11 +234,16 @@ public class DexSmartContractService {
         }
     }
 
+    public String getHashForAtomicSwapTransaction(long orderId) throws NoSuchElementException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        return dexContract.initiatedEventFlowable(orderId).toObservable().blockingFirst().log.getTransactionHash();
+    }
 
-    public List<UserEthDepositInfo> getUserFilledDeposits(String user) throws AplException.ExecutiveProcessException {
+
+    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserFilledDeposits(user);
+            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserActiveDeposits(user);
             Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> callResponse = call.send();
             return new ArrayList<>(UserEthDepositInfoMapper.map(callResponse));
         } catch (Exception e) {
@@ -259,16 +292,20 @@ public class DexSmartContractService {
                 .collect(Collectors.toList());
     }
 
-    private String approve(Credentials credentials, byte[] secret, Long gasPrice){
+    private String approve(Credentials credentials, byte[] secret, Long gasPrice) {
         String params = Numeric.toHexString(secret);
-        String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.DexOperation.REDEEM));
-        if (txHash == null) {
-            ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-            DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.DexOperation.REDEEM,params, credentials.getAddress()) ,credentials);
-            txHash = dexContract.redeem(secret);
-        }
+        String identifier = credentials.getAddress() + params + DexTransaction.Op.REDEEM;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.REDEEM));
+            if (txHash == null) {
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REDEEM, params, credentials.getAddress()), credentials);
+                txHash = dexContract.redeem(secret);
+            }
 
-        return txHash;
+            return txHash;
+        }
     }
 
     private TransactionManager createTransactionManager(DexTransaction dexTransaction, Credentials credentials) {
@@ -283,24 +320,28 @@ public class DexSmartContractService {
      */
     private String deposit(Credentials credentials, Long orderId, BigInteger weiValue, Long gasPrice, String token) {
         String params = orderId.toString(); // assume that order id is unique
-        DexTransaction existingTx = dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.DexOperation.DEPOSIT);
-        String txHash = checkExistingTx(existingTx);
-        if (txHash == null) {
-            ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-            BigInteger orderIdUnsign = new BigInteger(Long.toUnsignedString(orderId));
-            DexTransaction dexTransaction = createDexTransaction(DexTransaction.DexOperation.DEPOSIT, params, credentials.getAddress());
-            DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
-            try {
-                if (token == null) {
-                    txHash = dexContract.deposit(orderIdUnsign, weiValue);
-                } else {
-                    txHash = dexContract.deposit(orderIdUnsign, weiValue, token);
+        String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.DEPOSIT;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            DexTransaction existingTx = dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.DEPOSIT);
+            String txHash = checkExistingTx(existingTx);
+            if (txHash == null) {
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                BigInteger orderIdUnsign = new BigInteger(Long.toUnsignedString(orderId));
+                DexTransaction dexTransaction = createDexTransaction(DexTransaction.Op.DEPOSIT, params, credentials.getAddress());
+                DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
+                try {
+                    if (token == null) {
+                        txHash = dexContract.deposit(orderIdUnsign, weiValue);
+                    } else {
+                        txHash = dexContract.deposit(orderIdUnsign, weiValue, token);
+                    }
+                } catch (Exception e) {
+                    LOG.error(e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
             }
+            return txHash;
         }
-        return txHash;
     }
 
     DexContract createDexContract(ContractGasProvider gasProvider, DexTransaction dexTransaction, Credentials credentials) {
@@ -324,15 +365,24 @@ public class DexSmartContractService {
                             TransactionReceipt receipt = receiptOptional.get();
                             String status = receipt.getStatus();
                             if (Numeric.decodeQuantity(status).longValue() != 1) { // transaction was reverted
+                                log.info("Delete saved reverted transaction. New one will be sent. Hash {}", txHash);
                                 dexTransactionDao.delete(tx.getDbId());
                                 txHash = null;
                             }
                         } else {
                             log.warn("Expected, that tx {} should be confirmed", txHash);
                         }
+                    } else {
+                        log.debug("Tx {} is unconfirmed, skip sending ", txHash);
                     }
                 } else {
-                    sendRawTransaction(Numeric.toHexString(tx.getRawTransactionBytes()), waitConfirmation); // broadcast existing tx
+                    try {
+                        sendRawTransaction(Numeric.toHexString(tx.getRawTransactionBytes()), waitConfirmation); // broadcast existing tx
+                    } catch (NotValidTransactionException e) {
+                        log.info("Stored previous transaction is incorrect, removing... New will be sent.", e);
+                        dexTransactionDao.delete(tx.getDbId());
+                        txHash = null;
+                    }
                 }
             } catch (IOException e) {
                 log.error("Unable to broadcast tx or get receipt " + Numeric.toHexString(tx.getHash()), e);
@@ -349,11 +399,11 @@ public class DexSmartContractService {
         return  web3j.ethGetTransactionReceipt(hash).send().getTransactionReceipt();
     }
 
-    String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException {
+    String sendRawTransaction(String encodedTx, boolean waitConfirmation) throws IOException, NotValidTransactionException {
         EthSendTransaction response = web3j.ethSendRawTransaction(encodedTx).send();
         if (response != null) {
             if (response.hasError()) {
-                throw new RuntimeException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
+                throw new NotValidTransactionException(response.getError().getMessage() + ", data - " + response.getError().getData() + ", tx: " + encodedTx);
             }
         } else {
             throw new RuntimeException("Unable to broadcast eth transaction, null response:  " + encodedTx);
@@ -375,16 +425,20 @@ public class DexSmartContractService {
 
     private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.DexOperation.WITHDRAW));
-        if (txHash == null) {
-            DexTransaction dexTransaction = createDexTransaction(DexTransaction.DexOperation.WITHDRAW, orderId.toString(), credentials.getAddress());
-            DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
-            txHash = dexContract.withdraw(orderId);
+        String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.WITHDRAW;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.WITHDRAW));
+            if (txHash == null) {
+                DexTransaction dexTransaction = createDexTransaction(DexTransaction.Op.WITHDRAW, orderId.toString(), credentials.getAddress());
+                DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
+                txHash = dexContract.withdraw(orderId);
+            }
+            return txHash;
         }
-        return txHash;
     }
 
-    private DexTransaction createDexTransaction(DexTransaction.DexOperation op, String params, String address) {
+    private DexTransaction createDexTransaction(DexTransaction.Op op, String params, String address) {
         return new DexTransaction(null, null, null, op, params, address, 0);
     }
 
@@ -394,14 +448,18 @@ public class DexSmartContractService {
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.DexOperation.INITIATE));
-        if (txHash == null) {
-            DexContract dexContract = createDexContract(contractGasProvider,
-                            createDexTransaction(DexTransaction.DexOperation.INITIATE, orderId.toString(), credentials.getAddress())
-                            , credentials);
-            txHash = dexContract.initiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp));
+        String identifier = credentials.getAddress() + orderId.toString()  + DexTransaction.Op.INITIATE;
+        idLocks.putIfAbsent(identifier, new Object());
+        synchronized (idLocks.get(identifier)) {
+            String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
+            if (txHash == null) {
+                DexContract dexContract = createDexContract(contractGasProvider,
+                    createDexTransaction(DexTransaction.Op.INITIATE, orderId.toString(), credentials.getAddress())
+                    , credentials);
+                txHash = dexContract.initiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp));
+            }
+            return txHash;
         }
-        return txHash;
     }
 
     public DepositedOrderDetails getDepositedOrderDetails(String address, Long orderId) {

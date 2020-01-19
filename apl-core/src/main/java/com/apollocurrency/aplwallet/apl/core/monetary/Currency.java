@@ -42,6 +42,8 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntity
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Observes;
@@ -111,9 +113,12 @@ public final class Currency {
         }
 
         private void save(Connection con) throws SQLException {
-            try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
+            try (
+                    @DatabaseSpecificDml(DmlMarker.MERGE)
+                    PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_supply (id, current_supply, "
                     + "current_reserve_per_unit_atm, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")) {
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, TRUE)")
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, this.currencyId);
                 pstmt.setLong(++i, this.currentSupply);
@@ -304,10 +309,14 @@ public final class Currency {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
-                + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
+                        + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
+                        + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest) "
+                        + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);
@@ -321,8 +330,8 @@ public final class Currency {
             pstmt.setInt(++i, this.creationHeight);
             pstmt.setInt(++i, this.issuanceHeight);
             pstmt.setLong(++i, this.minReservePerUnitATM);
-            pstmt.setByte(++i, (byte)this.minDifficulty);
-            pstmt.setByte(++i, (byte)this.maxDifficulty);
+            pstmt.setByte(++i, (byte) this.minDifficulty);
+            pstmt.setByte(++i, (byte) this.maxDifficulty);
             pstmt.setByte(++i, this.ruleset);
             pstmt.setByte(++i, this.algorithm);
             pstmt.setByte(++i, this.decimals);

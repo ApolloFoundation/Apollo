@@ -72,6 +72,7 @@ import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -511,7 +512,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
-                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", ".h2.db"}, new String[]{"-shard-"});
+                    FileUtils.deleteFilesByPattern(dirProvider.getDbDir(), new String[]{".zip", DbProperties.DB_EXTENSION_WITH_DOT}, new String[]{"-shard-"});
                     dataSource.commit(false);
                     lookupBlockhainConfigUpdater().rollback(0);
                 }
@@ -1147,7 +1148,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         commonBlockHeight, System.currentTimeMillis() - start);
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
-            dataSource.clearCache();
             dataSource.commit(false); // should happen definitely otherwise
             log.debug("<< popOffToInTransaction() blocks=[{}] at commonBlockHeight={}", poppedOffBlocks.size(), commonBlockHeight);
         }
@@ -1459,7 +1459,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     }
                     aplAppStatus.durableTaskUpdate(scanTaskId, "Rollback finished for table \'" + table.toString() + "\' to height " + height, percentsPerTable);
                 }
-                dataSource.clearCache();
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
                 Block currentBlock = blockchain.getBlockAtHeight(height);
@@ -1535,7 +1534,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                     blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(currentBlock);
                                     blockchain.setLastBlock(currentBlock);
                                     accept(currentBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                                    dataSource.clearCache();
                                     dataSource.commit(false);
                                     blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(currentBlock);
                                 }

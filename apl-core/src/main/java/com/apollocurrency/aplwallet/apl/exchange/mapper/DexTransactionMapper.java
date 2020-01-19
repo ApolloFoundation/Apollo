@@ -17,6 +17,6 @@ public class DexTransactionMapper implements RowMapper<DexTransaction> {
         String params = rs.getString("params");
         String account = rs.getString("account");
         long timestamp = rs.getLong("timestamp");
-        return new DexTransaction(dbId, hash, rawTransactionBytes, DexTransaction.DexOperation.from(operation), params, account, timestamp);
+        return new DexTransaction(dbId, hash, rawTransactionBytes, DexTransaction.Op.from(operation), params, account, timestamp);
     }
 }
