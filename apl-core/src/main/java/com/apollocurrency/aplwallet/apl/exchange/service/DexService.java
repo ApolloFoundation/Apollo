@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
@@ -59,7 +60,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -464,10 +464,6 @@ public class DexService {
         TransferTransactionInfo result = new TransferTransactionInfo();
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
-            if (dexSmartContractService.isUserTransferMoney(order.getFromAddress(), order.getId())) {
-                throw new AplException.ExecutiveProcessException("User has already started exchange process with another user. OrderId: " + order.getId());
-            }
-
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
 
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
@@ -866,12 +862,12 @@ public class DexService {
     }
 
 
-    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.getUserActiveDeposits(user);
+    public EthDepositsWithOffset getUserActiveDeposits(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserActiveDeposits(user, offset, limit);
     }
 
-    public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.getUserFilledOrders(user);
+    public EthDepositsWithOffset getUserFilledOrders(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserFilledOrders(user, offset, limit);
     }
 
     public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
