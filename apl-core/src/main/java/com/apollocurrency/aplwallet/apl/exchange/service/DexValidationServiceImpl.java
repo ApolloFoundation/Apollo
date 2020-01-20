@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.APL_COMMISSION;
@@ -138,7 +136,7 @@ public class DexValidationServiceImpl implements IDexValidator {
             hisAddress = hisOrder.getFromAddress();
         else hisAddress = hisOrder.getToAddress();
         log.debug("selected: {}",hisAddress);
-        // here we have double conversion, gw-eth-wei        
+        // here we have double conversion, gw-eth-wei
         Long averageGasPriceGw = ethGasInfo.getAverageSpeedPrice();
 
         if (averageGasPriceGw == null) {
@@ -162,7 +160,7 @@ public class DexValidationServiceImpl implements IDexValidator {
     public int validateOfferBuyAplEth(DexOrder myOrder, DexOrder hisOrder) {
         log.debug("validateOfferBuyAplEth: ");
 
-        // 1) Checking out whether HE has the corresponding amount on his APL balance        
+        // 1) Checking out whether HE has the corresponding amount on his APL balance
         Long hisAccountID = hisOrder.getAccountId();
         log.debug("hisAccountID(apl): {}, his fromAddr : {}, his toAddr: {}", hisAccountID,hisOrder.getFromAddress(),hisOrder.getToAddress());
 
@@ -241,25 +239,10 @@ public class DexValidationServiceImpl implements IDexValidator {
         log.debug("validateOfferSellAplEthActiveDeposit: ");
         String hisFromEthAddr = hisOrder.getFromAddress();
         log.debug("hisToEthAddr: {},  transactionid: {}", hisFromEthAddr, hisOrder.getId());
-        List<UserEthDepositInfo> hisEthDeposits;
-
-        try {
-            hisEthDeposits = dexSmartContractService.getUserActiveDeposits(hisFromEthAddr);
-        } catch (AplException.ExecutiveProcessException e) {
-            log.error(e.getMessage(), e);
-            return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
-        }
 
         BigDecimal hasToPay = EthUtil.atmToEth(hisOrder.getOrderAmount()).multiply(hisOrder.getPairRate());
         log.debug("hasToPay: {} ", hasToPay);
-        boolean depositDetected = false;
-        for (UserEthDepositInfo current : hisEthDeposits) {
-            if ( (hasToPay.compareTo( current.getAmount())==0) && current.getOrderId().equals(hisOrder.getId()) ) {
-                log.debug("Eth deposit is detected");
-                depositDetected = true;
-                break;
-            }
-        }
+        boolean depositDetected = dexSmartContractService.isDepositForOrderExist(hisFromEthAddr, hisOrder.getId(), hasToPay);
         log.debug("deposit detected: {}", depositDetected);
         if (!depositDetected) return OFFER_VALIDATE_ERROR_ETH_DEPOSIT;
 
