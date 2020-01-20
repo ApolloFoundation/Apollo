@@ -393,29 +393,25 @@ public class DexOrderProcessor {
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
-
         // everything should be vice-versa here since we return our orders back
-        long counterOrderID = exchangeContract.getOrderId();
         long orderID = exchangeContract.getCounterOrderId();
+        long counterOrderID = exchangeContract.getOrderId();
 
-        DexOrder mainOrder = dexService.getOrder(orderID);// getOfferByTransactionId(orderID);
+        DexOrder myOrder = dexService.getOrder(counterOrderID);
+        DexOrder hisOrder = dexService.getOrder(orderID);
 
-        DexOrder counterOrder = dexService.getOrder(counterOrderID);
-
-        return validateAccountBalance(mainOrder, counterOrder, exchangeContract);
+        return validateAccountBalance(myOrder, hisOrder, exchangeContract);
     }
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
-
         // everything should be vice-versa here since we return our orders back
-        long counterOrderID = exchangeContract.getOrderId();
         long orderID = exchangeContract.getCounterOrderId();
+        long counterOrderID = exchangeContract.getOrderId();
 
-        DexOrder ourOrder = dexService.getOrder(counterOrderID);
+        DexOrder myOrder = dexService.getOrder(orderID);
+        DexOrder hisOrder = dexService.getOrder(counterOrderID);
 
-        DexOrder hisOrder = dexService.getOrder(orderID);
-
-        return validateAccountBalance(ourOrder, hisOrder, exchangeContract) && dexService.hasConfirmations(hisOrder);
+        return validateAccountBalance(myOrder, hisOrder, exchangeContract) && dexService.hasConfirmations(hisOrder);
     }
 
     private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContract contract) {
