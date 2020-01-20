@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
@@ -20,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthStationGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -45,7 +45,6 @@ import org.web3j.utils.Numeric;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -127,8 +126,8 @@ class DexSmartContractServiceTest {
 
     @Test
     void testHasFrozenMoneyForBuyOrder() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of(new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000126), 2L), new UserEthDepositInfo(1L, BigDecimal.valueOf(0.000127), 1L), new UserEthDepositInfo(order.getId(), BigDecimal.valueOf(0.000127), 1L));
-        doReturn(userDeposits).when(service).getUserActiveDeposits(order.getFromAddress());
+        DepositedOrderDetails depositedOrderDetails = new DepositedOrderDetails(true, null, new BigDecimal("0.0001270"), false);
+        doReturn(depositedOrderDetails).when(service).getDepositedOrderDetails(order.getFromAddress(), order.getId());
 
         boolean result = service.hasFrozenMoney(order);
 
@@ -137,22 +136,14 @@ class DexSmartContractServiceTest {
 
     @Test
     void testHasFrozenMoneyForBuyOrderWithoutUserDeposits() throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposits = List.of();
-        doReturn(userDeposits).when(service).getUserActiveDeposits(order.getFromAddress());
+        DepositedOrderDetails depositedOrderDetails = new DepositedOrderDetails(false, null, null, false);
+        doReturn(depositedOrderDetails).when(service).getDepositedOrderDetails(order.getFromAddress(), order.getId());
 
         boolean result = service.hasFrozenMoney(order);
 
         assertFalse(result);
     }
 
-    @Test
-    void testHasFrozenMoneyForBuyOrderWithException() throws AplException.ExecutiveProcessException {
-        doThrow(new AplException.ExecutiveProcessException()).when(service).getUserActiveDeposits(order.getFromAddress());
-
-        boolean result = service.hasFrozenMoney(order);
-
-        assertFalse(result);
-    }
 
     @Test
     void testDepositEth() throws ExecutionException, AplException.ExecutiveProcessException {
