@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
@@ -75,7 +74,6 @@ import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractSt
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
@@ -395,31 +393,28 @@ public class DexOrderProcessor {
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
-
         // everything should be vice-versa here since we return our orders back
-        long counterOrderID = exchangeContract.getOrderId();
         long orderID = exchangeContract.getCounterOrderId();
+        long counterOrderID = exchangeContract.getOrderId();
 
-        DexOrder mainOrder = dexService.getOrder(orderID);// getOfferByTransactionId(orderID);
+        DexOrder myOrder = dexService.getOrder(counterOrderID);
+        DexOrder hisOrder = dexService.getOrder(orderID);
 
-        DexOrder counterOrder = dexService.getOrder(counterOrderID);
-
-        return validateAccountBalance(mainOrder, counterOrder);
+        return validateAccountBalance(myOrder, hisOrder, exchangeContract);
     }
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
-
         // everything should be vice-versa here since we return our orders back
-        long counterOrderID = exchangeContract.getOrderId();
         long orderID = exchangeContract.getCounterOrderId();
+        long counterOrderID = exchangeContract.getOrderId();
 
-        DexOrder ourOrder = dexService.getOrder(counterOrderID);
+        DexOrder myOrder = dexService.getOrder(orderID);
+        DexOrder hisOrder = dexService.getOrder(counterOrderID);
 
-        DexOrder hisOrder = dexService.getOrder(orderID);
-
-        return validateAccountBalance(ourOrder, hisOrder) && dexService.hasConfirmations(hisOrder);
+        return validateAccountBalance(myOrder, hisOrder, exchangeContract) && dexService.hasConfirmations(hisOrder);
     }
-    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder) {
+
+    private boolean validateAccountBalance(DexOrder myOrder, DexOrder hisOrder, ExchangeContract contract) {
         int rx;
 
         switch (myOrder.getPairCurrency()) {
@@ -427,18 +422,34 @@ public class DexOrderProcessor {
             case ETH: {
                 // return validateOfferETH(myOffer,hisOffer);
                 if (myOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplEth(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferSellAplEthActiveDeposit(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferSellAplEthAtomicSwap(myOrder, hisOrder, contract.getSecretHash());
+                    }
                 } else {
-                    rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferBuyAplEth(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferBuyAplEthPhasing(myOrder, hisOrder, Long.parseUnsignedLong(contract.getCounterTransferTxId()));
+                    }
                 }
                 break;
             }
 
             case PAX: {
                 if (myOrder.getType() == OrderType.SELL) {
-                    rx = dexValidator.validateOfferSellAplPax(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferSellAplPaxActiveDeposit(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferSellAplPaxAtomicSwap(myOrder, hisOrder, contract.getSecretHash());
+                    }
                 } else {
-                    rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
+                    if (contract.getContractStatus().isStep1()) {
+                        rx = dexValidator.validateOfferBuyAplPax(myOrder, hisOrder);
+                    } else {
+                        rx = dexValidator.validateOfferBuyAplEthPhasing(myOrder, hisOrder, Long.parseUnsignedLong(contract.getCounterTransferTxId()));
+                    }
                 }
                 break;
             }
@@ -525,42 +536,18 @@ public class DexOrderProcessor {
                     //TODO do something
                     continue;
                 }
+
                 long timeLeft;
-                String contractHexHash = Convert.toHexString(contract.getSecretHash());
                 if (order.getType() == OrderType.SELL) {
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(contract.getSecretHash());
-                    if (swapData.getTimeDeadLine() == 0) {
-                        log.debug("Swap {} does not exist", contractHexHash);
-                        continue;
-                    }
+
                     Long swapDeadline = swapData.getTimeDeadLine();
                     long currentTime = timeService.systemTime();
                     timeLeft = swapDeadline - currentTime;
                 } else {
                     long id = Long.parseUnsignedLong(contract.getCounterTransferTxId());
                     PhasingPoll poll = phasingPollService.getPoll(id);
-                    if (poll == null) {
-                        log.debug("Account {} did not send transfer tx {}", contract.getRecipient(), id);
-                        continue;
-                    }
-                    PhasingPollResult result = phasingPollService.getResult(id);
-                    if (result != null || poll.getFinishTime() <= timeService.getEpochTime()) {
-                        log.debug("Apl phasing transfer {} was already finished", id);
-                        continue;
-                    }
                     timeLeft = poll.getFinishTime() - timeService.getEpochTime();
-                }
-                if (timeLeft < 0) {
-                    log.debug("Contract expired, unable to proceed with exchange process, order - {}, counterOrder - {}, contract id - {}, hash - {}", order.getId(), counterOrder.getId(), contract.getId(), contractHexHash);
-                    continue;
-                }
-                if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. Hash - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, contractHexHash);
-                    continue;
-                }
-                if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-                    log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. Hash - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, contractHexHash);
-                    continue;
                 }
                 long transferWithApprovalDuration = timeLeft / 2;
 

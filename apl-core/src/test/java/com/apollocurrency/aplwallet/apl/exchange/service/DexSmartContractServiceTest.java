@@ -106,7 +106,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer));
+        service = spy(new DexSmartContractService(web3j, holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, receiptProcessor, receiptProcessorProducer, null));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
