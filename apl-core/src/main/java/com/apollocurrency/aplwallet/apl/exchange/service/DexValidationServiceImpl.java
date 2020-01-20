@@ -206,16 +206,8 @@ public class DexValidationServiceImpl implements IDexValidator {
         }
 
         int timeLeft = poll.getFinishTime() - timeService.getEpochTime();
-        if (timeLeft < 0) {
-            log.debug("Contract expired, unable to proceed with exchange process, order - {}, phasing tx id - {}", hisOrder.getId(), txId);
-            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
-        }
-        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-            log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. order - {}, phasing tx id - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hisOrder.getId(), txId);
-            return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
-        }
-        if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-            log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. order - {}, phasing tx id - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, hisOrder.getId(), txId);
+        if (!isTimeLeftValid(timeLeft, hisOrder.getId())) {
+            log.info("Timeleft is not correct order:{}, txId: {}", hisOrder.getId(), txId);
             return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
         }
 
@@ -280,8 +272,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         }
 
         long timeLeft = swapData.getTimeDeadLine() - timeService.systemTime();
-        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
-            log.info("Will not send dex contract transaction to recover exchange process, not enough time 'timeLeft'={} sec.", timeLeft);
+        if (!isTimeLeftValid(timeLeft, hisOrder.getId())) {
             return OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
         }
 
@@ -294,6 +285,23 @@ public class DexValidationServiceImpl implements IDexValidator {
         }
 
         return OFFER_VALIDATE_OK;
+    }
+
+
+    public boolean isTimeLeftValid(long timeLeft, long orderID) {
+        if (timeLeft < 0) {
+            log.debug("Time is expired, unable to proceed with exchange process, order - {}", orderID);
+            return false;
+        }
+        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            log.warn("Will not participate in atomic swap (not enough time), timeLeft {} min, expected at least {} min. order - {}", timeLeft / 60, DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, orderID);
+            return false;
+        }
+        if (timeLeft > DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+            log.warn("Will not participate in atomic swap (duration is too long), timeLeft {} min, expected not above {} min. order - {}", timeLeft / 60, DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS / 60, orderID);
+            return false;
+        }
+        return true;
     }
 
     @Override
