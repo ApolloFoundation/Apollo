@@ -23,7 +23,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.41.6");
+    public static final Version VERSION = new Version("1.41.7");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -43,6 +43,12 @@ public final class Constants {
     public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3;
     public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
     public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_ETH_SYSTEM = -6;
+    public static final int OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST = -7;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST = -8;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED = -9;
+    public static final int OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT = -10;
+    public static final int OFFER_VALIDATE_ERROR_APL_DEPOSIT = -11;
     public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
 
     public static final int ONE_DAY_SECS = 24 * 3600;
