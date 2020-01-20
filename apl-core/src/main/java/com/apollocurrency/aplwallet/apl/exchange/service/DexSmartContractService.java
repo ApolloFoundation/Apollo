@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
@@ -26,6 +27,8 @@ import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.task.Task;
+import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.util.blockchain.EtherUtil;
 import org.slf4j.Logger;
@@ -45,6 +48,7 @@ import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.response.TransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -52,16 +56,24 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
 public class DexSmartContractService {
+    private static final String SERVICE_NAME = "SmartContractAdapter";
+    private static final String LOCK_MAP_CLEANER_NAME = "SCLockMapCleaner";
+    private static final int LOCK_MAP_CLEANER_DELAY = 60 * 1000; // 1 min in ms
+    private static final String ACCOUNT_TO_READ_DATA = "1234";
+
     private static final Logger LOG = LoggerFactory.getLogger(DexSmartContractService.class);
 
     private Web3j web3j;
@@ -73,15 +85,17 @@ public class DexSmartContractService {
     private DexTransactionDao dexTransactionDao;
     private TransactionReceiptProcessor receiptProcessor;
     private ReceiptProcessorProducer receiptProcessorProducer;
+    private TaskDispatchManager taskManager;
+
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
+    private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
 
 
-    private static final String ACCOUNT_TO_READ_DATA = "1234";
 
     @Inject
     public DexSmartContractService(Web3j web3j, PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao, TransactionReceiptProcessor receiptProcessor,
-                                   ReceiptProcessorProducer receiptProcessorProducer) {
+                                   ReceiptProcessorProducer receiptProcessorProducer, TaskDispatchManager taskDispatchManager) {
         this.web3j = web3j;
         this.keyStoreService = keyStoreService;
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
@@ -91,6 +105,27 @@ public class DexSmartContractService {
         this.dexTransactionDao = dexTransactionDao;
         this.receiptProcessor = receiptProcessor;
         this.receiptProcessorProducer = receiptProcessorProducer;
+        this.taskManager = taskDispatchManager;
+    }
+
+    @PostConstruct
+    public void init() {
+        TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher(SERVICE_NAME);
+        taskDispatcher.schedule(Task.builder()
+            .name(LOCK_MAP_CLEANER_NAME)
+            .task(this::removeLocks)
+            .delay(LOCK_MAP_CLEANER_DELAY)
+            .initialDelay(LOCK_MAP_CLEANER_DELAY)
+            .build());
+    }
+
+    void removeLocks() {
+        Iterator<String> iterator = locksToRemoveLater.iterator();
+        while (iterator.hasNext()) {
+            String id = iterator.next();
+            idLocks.remove(id);
+            iterator.remove();
+        }
     }
 
     /**
@@ -171,14 +206,14 @@ public class DexSmartContractService {
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
                 txHash = dexContract.refund(secretHash, waitConfirmation);
             }
+            locksToRemoveLater.add(identifier);
             return txHash;
         }
 
@@ -189,14 +224,14 @@ public class DexSmartContractService {
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
                 txHash = dexContract.refundAndWithdraw(secretHash, waitConfirmation);
             }
+            locksToRemoveLater.add(identifier);
             return txHash;
         }
     }
@@ -265,11 +300,13 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn() || depositedOrderDetails.getAmount().equals(BigInteger.ZERO)) {
-            return false;
-        }
+        return depositedOrderDetails != null && !depositedOrderDetails.isWithdrawn() && !depositedOrderDetails.getAmount().equals(BigDecimal.ZERO);
+    }
 
-        return true;
+    public boolean isDepositForOrderExist(String userAddress, Long orderId, BigDecimal amountEth) {
+        DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
+
+        return depositedOrderDetails != null && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().equals(amountEth);
     }
 
     public List<String> getEthUserAddresses(String passphrase, Long accountId) {
@@ -283,14 +320,14 @@ public class DexSmartContractService {
     private String approve(Credentials credentials, byte[] secret, Long gasPrice) {
         String params = Numeric.toHexString(secret);
         String identifier = credentials.getAddress() + params + DexTransaction.Op.REDEEM;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.REDEEM));
             if (txHash == null) {
                 ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REDEEM, params, credentials.getAddress()), credentials);
                 txHash = dexContract.redeem(secret);
             }
+            locksToRemoveLater.add(identifier);
 
             return txHash;
         }
@@ -309,8 +346,7 @@ public class DexSmartContractService {
     private String deposit(Credentials credentials, Long orderId, BigInteger weiValue, Long gasPrice, String token) {
         String params = orderId.toString(); // assume that order id is unique
         String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.DEPOSIT;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             DexTransaction existingTx = dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.DEPOSIT);
             String txHash = checkExistingTx(existingTx);
             if (txHash == null) {
@@ -328,6 +364,7 @@ public class DexSmartContractService {
                     LOG.error(e.getMessage(), e);
                 }
             }
+            locksToRemoveLater.add(identifier);
             return txHash;
         }
     }
@@ -414,14 +451,15 @@ public class DexSmartContractService {
     private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.WITHDRAW;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.WITHDRAW));
             if (txHash == null) {
                 DexTransaction dexTransaction = createDexTransaction(DexTransaction.Op.WITHDRAW, orderId.toString(), credentials.getAddress());
                 DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
                 txHash = dexContract.withdraw(orderId);
             }
+            locksToRemoveLater.add(identifier);
             return txHash;
         }
     }
@@ -437,8 +475,7 @@ public class DexSmartContractService {
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         String identifier = credentials.getAddress() + orderId.toString()  + DexTransaction.Op.INITIATE;
-        idLocks.putIfAbsent(identifier, new Object());
-        synchronized (idLocks.get(identifier)) {
+        synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
             if (txHash == null) {
                 DexContract dexContract = createDexContract(contractGasProvider,
@@ -446,6 +483,7 @@ public class DexSmartContractService {
                     , credentials);
                 txHash = dexContract.initiate(orderId, secretHash, recipient, BigInteger.valueOf(refundTimestamp));
             }
+            locksToRemoveLater.add(identifier);
             return txHash;
         }
     }
@@ -487,7 +525,4 @@ public class DexSmartContractService {
         }
         return gasPrice;
     }
-
-
-
 }
