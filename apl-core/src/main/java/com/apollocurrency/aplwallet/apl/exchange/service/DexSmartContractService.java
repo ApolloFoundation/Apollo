@@ -267,11 +267,13 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        if (depositedOrderDetails == null || depositedOrderDetails.isWithdrawn() || depositedOrderDetails.getAmount().equals(BigInteger.ZERO)) {
-            return false;
-        }
+        return depositedOrderDetails != null && !depositedOrderDetails.isWithdrawn() && !depositedOrderDetails.getAmount().equals(BigDecimal.ZERO);
+    }
 
-        return true;
+    public boolean isDepositForOrderExist(String userAddress, Long orderId, BigDecimal amountEth) {
+        DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
+
+        return depositedOrderDetails != null && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().equals(amountEth);
     }
 
     public boolean isUserTransferMoney(String user, Long orderId) throws AplException.ExecutiveProcessException {
