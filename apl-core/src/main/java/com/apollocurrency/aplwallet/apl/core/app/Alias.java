@@ -123,7 +123,7 @@ public final class Alias {
         }
 
         @Override
-        protected String defaultSort() {
+        public String defaultSort() {
             return " ORDER BY alias_name_lower ";
         }
 

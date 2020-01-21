@@ -37,11 +37,16 @@ public class DexApiValidator {
         BigInteger haveToPayWei = BigInteger.valueOf(orderAmountGwei).multiply(BigInteger.valueOf(pairRateGwei));
         validateEthPaxAccountBalance(haveToPayWei, walletAddress, currency);
     }
+
     public void validateEthAccountForDeposit(String passphrase, DexOrder order) throws ParameterException {
-        validateVaultAccount(order.getAccountId(), passphrase);
-        validateEthAccount(order.getAccountId(), passphrase, order.getFromAddress());
         BigInteger haveToPayWei = EthUtil.etherToWei(EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate()));
-        validateEthPaxAccountBalance(haveToPayWei, order.getFromAddress(), order.getPairCurrency());
+        validateEthAccountForDeposit(order.getAccountId(), passphrase, order.getFromAddress(), haveToPayWei, order.getPairCurrency());
+    }
+
+    public void validateEthAccountForDeposit(long account, String passphrase, String walletAddress, BigInteger amountWei, DexCurrency currency) throws ParameterException {
+        validateVaultAccount(account, passphrase);
+        validateEthAccount(account, passphrase, walletAddress);
+        validateEthPaxAccountBalance(amountWei, walletAddress, currency);
     }
 
 

@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.derived;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
@@ -37,13 +35,15 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.enterprise.inject.spi.CDI;
 
-public abstract class EntityDbTable<T> extends BasicDbTable<T> {
+import static org.slf4j.LoggerFactory.getLogger;
+
+public abstract class EntityDbTable<T> extends BasicDbTable<T> implements EntityDbTableInterface<T>{
     private static final Logger log = getLogger(EntityDbTable.class);
 
     private final String defaultSort;
@@ -76,7 +76,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
 
     public abstract void save(Connection con, T entity) throws SQLException;
 
-    protected String defaultSort() {
+    @Override
+    public String defaultSort() {
         return defaultSort;
     }
 
@@ -101,14 +102,17 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
      * Should be removed asap
      */
     @Deprecated
+    @Override
     public final T newEntity(DbKey dbKey) {
         return keyFactory.newEntity(dbKey);
     }
 
+    @Override
     public final T get(DbKey dbKey) {
         return get(dbKey, true);
     }
 
+    @Override
     public final T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -121,6 +125,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final T get(DbKey dbKey, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return get(dbKey);
@@ -143,6 +148,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final T getBy(DbClause dbClause) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -155,6 +161,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final T getBy(DbClause dbClause, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return getBy(dbClause);
@@ -178,7 +185,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    protected T get(Connection con, PreparedStatement pstmt, boolean createDbKey) throws SQLException {
+    @Override
+    public T get(Connection con, PreparedStatement pstmt, boolean createDbKey) throws SQLException {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (ResultSet rs = pstmt.executeQuery()) {
             if (!rs.next()) {
@@ -196,10 +204,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int from, int to) {
         return getManyBy(dbClause, from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -218,10 +228,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to) {
         return getManyBy(dbClause, height, from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to, String sort) {
         if (height < 0 || doesNotExceed(height)) {
             return getManyBy(dbClause, from, to, sort);
@@ -253,6 +265,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getManyBy(Connection con, PreparedStatement pstmt, boolean cache) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
@@ -269,10 +282,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         });
     }
 
+    @Override
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to) {
         return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
     }
 
+    @Override
     public final DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -296,10 +311,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public DbIterator<T> getAll(int from, int to) {
         return getAll(from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getAll(int from, int to, String sort) {
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -316,10 +333,12 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final DbIterator<T> getAll(int height, int from, int to) {
         return getAll(height, from, to, defaultSort());
     }
 
+    @Override
     public final DbIterator<T> getAll(int height, int from, int to, String sort) {
         if (height < 0 || doesNotExceed(height)) {
             return getAll(from, to, sort);
@@ -349,6 +368,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public int getCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -372,6 +392,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
+    @Override
     public final int getCount(DbClause dbClause, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return getCount(dbClause);
@@ -396,13 +417,14 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
             }
             return getCount(pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);            
+            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }finally{
-            DbUtils.close(con);            
+            DbUtils.close(con);
         }
     }
 
+    @Override
     public final int getRowCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -413,7 +435,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    protected int getCount(PreparedStatement pstmt) throws SQLException {
+    @Override
+    public int getCount(PreparedStatement pstmt) throws SQLException {
         try (ResultSet rs = pstmt.executeQuery()) {
             rs.next();
             return rs.getInt(1);
@@ -460,7 +483,8 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> {
         }
     }
 
-    private boolean doesNotExceed(int height) {
+    @Override
+    public boolean doesNotExceed(int height) {
         if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
         if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
         return blockchain.getHeight() <= height;

@@ -66,8 +66,7 @@ public class ReferencedTransactionServiceTest {
             FullTextConfigImpl.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class,
-            GenesisPublicKeyTable.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
