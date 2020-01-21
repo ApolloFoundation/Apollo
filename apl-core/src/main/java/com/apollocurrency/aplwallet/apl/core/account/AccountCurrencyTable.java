@@ -67,7 +67,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY units DESC, account_id, currency_id ";
     }
      public static AccountCurrency getAccountCurrency(long accountId, long currencyId) {

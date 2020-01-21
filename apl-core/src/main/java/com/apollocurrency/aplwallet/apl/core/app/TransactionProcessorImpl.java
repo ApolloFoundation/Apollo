@@ -170,7 +170,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     }
 
                     @Override
-                    protected String defaultSort() {
+                    public String defaultSort() {
                         return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
                     }
 

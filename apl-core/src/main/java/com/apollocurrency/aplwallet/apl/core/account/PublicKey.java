@@ -56,4 +56,14 @@ public final class PublicKey extends VersionedDerivedEntity {
         result = 31 * result + Arrays.hashCode(publicKey);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "PublicKey{" +
+            "accountId=" + accountId +
+            ", publicKey=" + (publicKey != null ? "[...]" : "null") +
+            ", height=" + getHeight() +
+            ", latest=" + isLatest() +
+            "} ";
+    }
 }
