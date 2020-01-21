@@ -17,6 +17,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -60,6 +63,54 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     @Override
     public AccountGuaranteedBalance load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
         return new AccountGuaranteedBalance(rs, dbKey);
+    }
+
+    public Long getSumOfAdditions(long accountId, int height, int currentHeight) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
+                 + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
+            pstmt.setLong(1, accountId);
+            pstmt.setInt(2, height);
+            pstmt.setInt(3, currentHeight);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return rs.getLong("additions");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public void addToGuaranteedBalanceATM(long accountId, long amountATM, int blockchainHeight) {
+        if (amountATM <= 0) {
+            return;
+        }
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
+                 + "WHERE account_id = ? and height = ?");
+             @DatabaseSpecificDml(DmlMarker.MERGE)
+             PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
+                 + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
+            pstmtSelect.setLong(1, accountId);
+            pstmtSelect.setInt(2, blockchainHeight);
+            try (ResultSet rs = pstmtSelect.executeQuery()) {
+                long additions = amountATM;
+                if (rs.next()) {
+                    additions = Math.addExact(additions, rs.getLong("additions"));
+                }
+                pstmtUpdate.setLong(1, accountId);
+                pstmtUpdate.setLong(2, additions);
+                pstmtUpdate.setInt(3, blockchainHeight);
+                pstmtUpdate.executeUpdate();
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Inject

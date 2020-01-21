@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
@@ -81,7 +80,6 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 public class DGSServiceTest {
 
-
     @RegisterExtension
     DbExtension extension = new DbExtension();
     Blockchain blockchain = mock(Blockchain.class);
@@ -98,8 +96,7 @@ public class DGSServiceTest {
             AccountTable.class,
             DGSPurchaseTable.class,
             DGSServiceImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            GenesisPublicKeyTable.class)
+            DerivedDbTablesRegistryImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -107,7 +104,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
             .addBeans(MockBean.of(mock(FullTextSearchService.class), FullTextSearchService.class))
             .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
-            .addBeans(MockBean.of(AccountGuaranteedBalanceTable.class, AccountGuaranteedBalanceTable.class))
+            .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -119,6 +116,8 @@ public class DGSServiceTest {
 
     @Inject
     AccountTable accountTable;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
     DGSTestData dtd;
 
@@ -1157,7 +1156,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseForDelistedGoods() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1173,7 +1172,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceNotMatch() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1187,7 +1186,7 @@ public class DGSServiceTest {
 
     @Test
     void testPurchaseWhenPriceQuantityExceedGoodsQuantity() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction purchaseTransaction = mock(Transaction.class);
         int height = 100_000;
         doReturn(height).when(blockchain).getHeight();
@@ -1201,7 +1200,7 @@ public class DGSServiceTest {
 
     @Test
     void testDeliver() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         Transaction deliverTransaction = mock(Transaction.class);
         int height = 1_000_000;
         long txId = 100L;
@@ -1231,7 +1230,7 @@ public class DGSServiceTest {
 
     @Test
     void testRefund() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), new BlockchainConfig(), blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         EncryptedData refundNote = new EncryptedData("Refund node".getBytes(), new byte[32]);
         doReturn(1_500_000).when(blockchain).getHeight();
         DbUtils.inTransaction(extension, (con)-> {

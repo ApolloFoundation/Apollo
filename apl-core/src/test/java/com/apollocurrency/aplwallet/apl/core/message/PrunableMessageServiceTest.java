@@ -5,15 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.message;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.account.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.account.PublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.db.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -22,11 +24,13 @@ import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -55,18 +59,27 @@ class PrunableMessageServiceTest {
             TimeServiceImpl.class,
             NtpTime.class,
             BlockchainConfig.class,
-            PublicKeyTable.class,
             PropertiesHolder.class,
-            GenesisPublicKeyTable.class
+            PublicKeyServiceImpl.class,
+            PublicKeyTableProducer.class
     )
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
-            .build();
+            .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
+            .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
+        .build();
     @Inject
     PrunableMessageService service;
     @Inject
-    PublicKeyTable publicKeyTable;
+    PublicKeyService publicKeyService;
+
     PrunableMessageTestData data = new PrunableMessageTestData();
+
+    @BeforeEach
+    void setUp() {
+        Account.init(extension.getDatabaseManager(), null,
+            null, blockchain, null, null, null, publicKeyService);
+    }
 
     @Test
     void testGetCount() {
@@ -109,7 +122,6 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecrypt() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
         byte[] decryptedBytes = service.decrypt(data.MESSAGE_2, data.BOB_PASSPHRASE);
         assertEquals(data.DECRYPTED_MESSAGE_2, new String(decryptedBytes));
     }
@@ -133,14 +145,12 @@ class PrunableMessageServiceTest {
 
     @Test
     void testDecryptUsingKeySeedByRecipient() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.BOB_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }
 
     @Test
     void testDecryptUsingKeySeedBySender() {
-        Account.init(extension.getDatabaseManager(), new PropertiesHolder(), null, null, blockchain, null, publicKeyTable, null, null, null);
         byte[] decryptedBytes = service.decryptUsingKeySeed(data.MESSAGE_9, Crypto.getKeySeed(data.CHUCK_PASSPHRASE));
         assertEquals(data.DECRYPTED_MESSAGE_9, new String(decryptedBytes));
     }
