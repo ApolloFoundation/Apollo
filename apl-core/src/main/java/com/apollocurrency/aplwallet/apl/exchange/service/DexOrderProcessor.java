@@ -51,6 +51,7 @@ import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
+import org.web3j.utils.Numeric;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -862,6 +863,7 @@ public class DexOrderProcessor {
             try {
                 List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
                 for (ExpiredSwap expiredSwap : expiredSwaps) {
+                    log.info("Refunding atomic swap {}, id {}", Numeric.toHexString(expiredSwap.getSecretHash()), expiredSwap.getOrderId());
                     dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
                 }
             } catch (AplException.ExecutiveProcessException e) {
