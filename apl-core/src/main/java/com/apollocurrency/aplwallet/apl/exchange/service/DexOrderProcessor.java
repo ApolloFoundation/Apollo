@@ -395,9 +395,8 @@ public class DexOrderProcessor {
     }
 
     private boolean isContractStep1Valid(ExchangeContract exchangeContract) {
-        // everything should be vice-versa here since we return our orders back
-        long orderID = exchangeContract.getCounterOrderId();
-        long counterOrderID = exchangeContract.getOrderId();
+        long orderID = exchangeContract.getOrderId();
+        long counterOrderID = exchangeContract.getCounterOrderId();
 
         DexOrder myOrder = dexService.getOrder(counterOrderID);
         DexOrder hisOrder = dexService.getOrder(orderID);
@@ -406,9 +405,8 @@ public class DexOrderProcessor {
     }
 
     private boolean isContractStep2Valid(ExchangeContract exchangeContract) {
-        // everything should be vice-versa here since we return our orders back
-        long orderID = exchangeContract.getCounterOrderId();
-        long counterOrderID = exchangeContract.getOrderId();
+        long orderID = exchangeContract.getOrderId();
+        long counterOrderID = exchangeContract.getCounterOrderId();
 
         DexOrder myOrder = dexService.getOrder(orderID);
         DexOrder hisOrder = dexService.getOrder(counterOrderID);
