@@ -6,7 +6,11 @@ package com.apollocurrency.aplwallet.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -16,7 +20,8 @@ import lombok.*;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Getter @Setter
+@Getter
+@Setter
 public class AplWalletKeyDTO {
     private String account;
     private String accountRS;

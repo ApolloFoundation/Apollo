@@ -7,7 +7,8 @@ import lombok.Setter;
 import java.util.List;
 
 @Deprecated
-@Getter @Setter
+@Getter
+@Setter
 public class SSEDataHolder{
     private List<JSONTransaction> transactions;
     private int aliasCount;

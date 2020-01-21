@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
+import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
@@ -66,6 +63,10 @@ import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 @EnableWeld
 public class DGSObserverTest {
     @RegisterExtension
@@ -108,6 +109,8 @@ public class DGSObserverTest {
 
     @Inject
     AccountService accountService;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     @Inject
     Event<Block> event;
 

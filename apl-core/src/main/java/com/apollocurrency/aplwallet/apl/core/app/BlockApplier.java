@@ -33,8 +33,6 @@ public class BlockApplier {
     private AccountPublicKeyService accountPublicKeyService;
 
     public void apply(Block block) {
-        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
-        accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         long totalBackFees = 0;
         int height = block.getHeight();
         if (height > 3) {
@@ -72,7 +70,10 @@ public class BlockApplier {
         if (totalBackFees != 0) {
             log.trace("Fee reduced by {} at height {}", ((double)totalBackFees)/Constants.ONE_APL, height);
         }
-        accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
+        //fetch generatorAccount after a possible change in previousGeneratorAccount
+        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
+        accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
+        accountService.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         generatorAccount.addToForgedBalanceATM(block.getTotalFeeATM() - totalBackFees);
     }
 

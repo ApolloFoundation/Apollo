@@ -35,6 +35,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -153,8 +155,11 @@ public final class CurrencyMint {
 
     private void save(Connection con) throws SQLException {
         Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest) "
+                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.currencyId);
             pstmt.setLong(++i, this.accountId);

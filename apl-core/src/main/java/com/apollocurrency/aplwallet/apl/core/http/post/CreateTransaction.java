@@ -53,7 +53,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
@@ -213,10 +213,10 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
             try {
                 if (Math.addExact(txRequest.getAmountATM(), transaction.getFeeATM()) > txRequest.getSenderAccount().getUnconfirmedBalanceATM()) {
-                    throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
+                    throw new AplException.NotValidException(NOT_ENOUGH_APL);
                 }
             } catch (ArithmeticException e) {
-                throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
+                throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
 
             if (txRequest.isBroadcast()) {

@@ -977,7 +977,7 @@ public class TransactionImpl implements Transaction {
 
     public boolean verifySignature() {
         lookupAndInjectAccountService();
-        return checkSignature() && lookupAndInjectAccountService().setOrVerify(getSenderId(), getSenderPublicKey());
+        return checkSignature() && lookupAndInjectAccountService().setOrVerifyPublicKey(getSenderId(), getSenderPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;

@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -141,7 +141,7 @@ class DexTransferMoneyTransactionTest {
         doReturn(100L).when(tx).getId();
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
-        DexOrder offer = new DexOrder(300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrencies.APL, 100L, DexCurrencies.PAX, BigDecimal.ONE, 500);
+        DexOrder offer = new DexOrder(300L, 0L, "", "", OrderType.SELL, OrderStatus.OPEN, DexCurrency.APL, 100L, DexCurrency.PAX, BigDecimal.ONE, 500);
         doReturn(offer).when(dexService).getOrder(200L);
         assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
 
@@ -179,7 +179,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(accountService).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).finishExchange(0, 300);
+        verify(dexService).closeOrder( 300);
     }
 
     @Test
@@ -196,7 +196,7 @@ class DexTransferMoneyTransactionTest {
 
         verify(accountService).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
         verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
-        verify(dexService).finishExchange(0, 200);
+        verify(dexService).closeOrder( 200);
     }
 
     @Test

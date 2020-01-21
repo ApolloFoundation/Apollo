@@ -144,7 +144,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
             return response;
 
         } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_FUNDS;
+            return JSONResponses.NOT_ENOUGH_APL;
         }
     }
 

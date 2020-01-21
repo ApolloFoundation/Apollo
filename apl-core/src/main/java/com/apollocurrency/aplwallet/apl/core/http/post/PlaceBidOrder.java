@@ -31,7 +31,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
@@ -53,7 +53,7 @@ public final class PlaceBidOrder extends CreateTransaction {
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_FUNDS;
+            return NOT_ENOUGH_APL;
         }
     }
 

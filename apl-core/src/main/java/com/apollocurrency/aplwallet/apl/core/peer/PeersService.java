@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -72,7 +73,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import lombok.Getter;
 
 @Singleton
 public class PeersService {
@@ -537,14 +537,14 @@ public class PeersService {
     public List<Peer> getOutboundPeers() {
         return getPeers(Peer::isOutbound);
     }
-    
+
     public Set<Peer> getAllConnectedPeers() {
         Set<Peer> res = new HashSet<>();
         Collection<? extends Peer> knownPeers = getActivePeers();
         res.addAll(knownPeers);
         return res;
     }
-    
+
     public boolean hasTooManyInboundPeers() {
         return getPeers(Peer::isInbound, maxNumberOfInboundConnections).size() >= maxNumberOfInboundConnections;
     }
@@ -654,7 +654,7 @@ public class PeersService {
     }
 
     public boolean addPeer(Peer peer) {
-        
+
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
             connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
@@ -701,16 +701,16 @@ public class PeersService {
     public boolean connectPeer(Peer peer) {
         Objects.requireNonNull(peer, "peer is NULL");
         boolean res = false;
-        if(peer.getState() == PeerState.CONNECTED){
+        if (peer.getState() == PeerState.CONNECTED) {
             return true;
         }
         peer.unBlacklist();
         PeerAddress pa = resolveAnnouncedAddress(peer.getAnnouncedAddress());
         if (pa != null && !isMyAddress(pa)) {
-           res = ((PeerImpl)peer).handshake();
+            res = ((PeerImpl) peer).handshake();
         }
         if (res) {
-            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl)peer);
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl) peer);
         }
         return res;
     }
@@ -760,12 +760,12 @@ public class PeersService {
                     continue;
                 }
 
-                if ( !peer.isBlacklisted() 
+                if ( !peer.isBlacklisted()
                      && peer.getState() == PeerState.CONNECTED // skip not connected peers
                      && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
                    ) {
                     LOG.trace("Prepare send to peer = {}", peer);
-                    Future<JSONObject> futureResponse = peersExecutorService.submit(() -> 
+                    Future<JSONObject> futureResponse = peersExecutorService.submit(() ->
                         peer.send(jsonRequest, blockchainConfig.getChain().getChainId())
                     );
                     expectedResponses.add(futureResponse);

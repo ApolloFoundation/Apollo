@@ -11,17 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Objects;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Interface for shard data downloading management. It does following:
@@ -64,7 +64,14 @@ public class ShardDownloadPresenceObserver {
      */
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
-        try {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            // create Lucene search indexes first
+            createLuceneSearchIndexes(con);
+            // import data so it gets into search indexes as well
             shardImporter.importShardByFileId(shardPresentData);
         } catch (Exception e) {
             log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
@@ -82,6 +89,17 @@ public class ShardDownloadPresenceObserver {
         blockchainConfigUpdater.updateToLatestConfig();
         blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
         log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
+    }
+
+    /**
+     * Travers Derived tables and create Lucene search indexes
+     * @param con connection should be opened
+     * @throws SQLException possible error
+     */
+    private void createLuceneSearchIndexes(Connection con) throws SQLException {
+        for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+            table.createSearchIndex(con);
+        }
     }
 
     /**
@@ -120,14 +138,16 @@ public class ShardDownloadPresenceObserver {
                     dataSource.begin();
                 }
                 try (Connection con = dataSource.getConnection()) {
+                    // create first genesis block, but do not save it to db here
                     Block genesisBlock = genesisImporter.newGenesisBlock();
-                    addBlock(dataSource, genesisBlock);
                     long initialBlockId = genesisBlock.getId();
                     log.debug("Generated Genesis block with Id = {}", initialBlockId);
+                    // import other genesis data
                     genesisImporter.importGenesisJson(false);
-                    for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-                        table.createSearchIndex(con);
-                    }
+                    // first genesis block should be saved only after all genesis data has been imported before
+                    addBlock(dataSource, genesisBlock); // save first genesis block here
+                    // create Lucene search indexes first
+                    createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
                     dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);

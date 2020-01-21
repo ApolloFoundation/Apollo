@@ -70,7 +70,11 @@ import java.util.function.Consumer;
 
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_0;
 import static com.apollocurrency.aplwallet.apl.data.IndexTestData.TRANSACTION_INDEX_1;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -314,7 +318,7 @@ public class PhasingPollServiceTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        //Account.init(extension.getDatabaseManager(), mock(PropertiesHolder.class), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), publicKeyTable, accountTable, null);
+        //Account.init(extension.getDatabaseManager(), mock(BlockchainProcessor.class), mock(BlockchainConfig.class), blockchain, mock(GlobalSync.class), accountTable, accountGuaranteedBalanceTable, null);
         inTransaction(connection -> transactionDao.saveTransactions(connection, Collections.singletonList(ttd.NOT_SAVED_TRANSACTION)));
         long votes = service.countVotes(ptd.POLL_3);
 

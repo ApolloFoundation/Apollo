@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -81,6 +82,9 @@ public class GenesisImporter {
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
+    private PublicKeyService publicKeyService;
+    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private AccountTable accountTable;
 
     @Inject
     public GenesisImporter(
@@ -89,6 +93,9 @@ public class GenesisImporter {
             DatabaseManager databaseManager,
             AplAppStatus aplAppStatus,
             GenesisImporterProducer genesisImporterProducer,
+            PublicKeyService publicKeyService,
+            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+            AccountTable accountTable,
             ApplicationJsonFactory jsonFactory,
             PropertiesHolder propertiesHolder,
             AccountService accountService,
@@ -109,12 +116,22 @@ public class GenesisImporter {
                 propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
                 propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+        this.publicKeyService = Objects.requireNonNull(publicKeyService, "publicKeyService is NULL");
+        this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
+        this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
     }
 
     private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
         return Optional.ofNullable(genesisImporterProducer)
                 .map(GenesisImporterProducer::genesisParametersLocation)
                 .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
+    }
+
+    private void cleanUpGenesisData() {
+        log.debug("clean Up Incomplete Genesis data...");
+        publicKeyService.cleanUpPublicKeys();
+        this.accountGuaranteedBalanceTable.truncate();
+        this.accountTable.truncate();
     }
 
     @PostConstruct
@@ -246,6 +263,8 @@ public class GenesisImporter {
         if (!dataSource.isInTransaction()) {
             dataSource.begin();
         }
+        // Always remove possibly previously 'incomplete genesis import' data
+        cleanUpGenesisData(); // clean up previous incomplete genesis import (if any)
 
         final int publicKeyNumber = savePublicKeys(dataSource);
 
@@ -265,7 +284,7 @@ public class GenesisImporter {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         final String message = String.format("Total balance %f %s", (double) total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
-        final Account creatorAccount = accountService.addOrGetAccount(CREATOR_ID, true);
+        final Account creatorAccount = accountService.addGenesisAccount(CREATOR_ID);
         accountPublicKeyService.apply(creatorAccount, CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
@@ -305,7 +324,7 @@ public class GenesisImporter {
                     final byte[] publicKey = Convert.parseHexString(jsonPublicKey);
                     final long id = AccountService.getId(publicKey);
                     log.trace("AccountId = '{}' by publicKey string = '{}'", id, jsonPublicKey);
-                    final Account account = accountService.addOrGetAccount(id, true);
+                    final Account account = accountService.addGenesisAccount(id, true);
                     accountPublicKeyService.apply(account, publicKey, true);
                     if (count++ % 100 == 0) {
                         dataSource.commit(false);
@@ -366,7 +385,7 @@ public class GenesisImporter {
                     jsonParser.nextToken();
                     final long balanceValue = jsonParser.getLongValue();
                     log.trace("Parsed json balance: {} - {}", currentName, balanceValue);
-                    final Account account = accountService.addOrGetAccount(Long.parseUnsignedLong(currentName), true);
+                    final Account account = accountService.addGenesisAccount(Long.parseUnsignedLong(currentName));
                     accountService.addToBalanceAndUnconfirmedBalanceATM(account, null, 0, balanceValue);
                     totalAmount += balanceValue;
                     if (count++ % 100 == 0) {
@@ -456,12 +475,6 @@ public class GenesisImporter {
                     )
             );
         }
-    }
-
-    @Produces
-    @Named("CREATOR_ID")
-    public long getCreatorId() {
-        return CREATOR_ID;
     }
 
     public byte[] getCreatorPublicKey() {

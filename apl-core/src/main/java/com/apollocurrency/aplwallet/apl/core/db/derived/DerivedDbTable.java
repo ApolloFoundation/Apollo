@@ -26,6 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.spi.CDI;
@@ -76,6 +78,13 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
 
     @Override
     public void trim(int height) {}
+
+    @Override
+    public void trim(int height, boolean isSharding) {
+        // default implementation for most of derived successor
+        // 'Vote' is only one exception in that case
+        this.trim(height);
+    }
 
     @PostConstruct
     public void init() {
@@ -201,6 +210,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
         Objects.requireNonNull(column, "column is NULL");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
              PreparedStatement pstmt = con.prepareStatement(String.format("SELECT IFNULL(min(%s), 0) as min_id, IFNULL(max(%s), 0) as max_id, IFNULL(count(*), 0) as count, max(height) as max_height from %s where HEIGHT <= ?", column, column, table))) {
             pstmt.setInt(1, height);
             MinMaxValue minMaxValue = getMinMaxValue(pstmt);
@@ -220,7 +230,7 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(
-                        min ,
+                        min,
                         max,
                         null,
                         rowCount,

@@ -72,49 +72,122 @@ import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
-import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.*;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.addParameters;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstanse;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallGet;
+import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallPost;
+import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.cancelAskOrder;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.cancelBidOrder;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyBuy;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyMint;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyReserveClaim;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyReserveIncrease;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencySell;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.deleteAssetShares;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.deleteCurrency;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsDelisting;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsDelivery;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsFeedback;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsListing;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsPriceChange;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsPurchase;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsQuantityChange;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsRefund;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dividendPayment;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.extendTaggedData;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountAssetCount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountAssets;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlockCount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlockIds;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlocks;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrencies;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentAskOrderIds;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentAskOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentBidOrderIds;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentBidOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountId;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountLedger;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountLedgerEntry;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountProperties;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllAssets;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllCurrencies;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllOpenAskOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllOpenBidOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllTaggedData;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllTrades;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrder;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrderIds;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAsset;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetAccountCount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetAccounts;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetDeletes;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetIds;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBalance;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBidOrders;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlock;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlockId;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlockchainStatus;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlocks;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getCurrency;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getCurrencyAccounts;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getDGSGood;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getDataTagCount;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getECBlock;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getExpectedAssetDeletes;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getForging;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPoll;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPollResult;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPollVotes;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getShuffling;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getTaggedData;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.issueAsset;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.placeAskOrder;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.placeBidOrder;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.publishExchangeOffer;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.scheduleCurrencyBuy;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.searchTaggedData;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingCancel;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingCreate;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingProcess;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingRegister;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingVerify;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startForging;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startShuffler;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.stopForging;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.transferAsset;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.transferCurrency;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.uploadTaggedData;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestBaseOld extends TestBase {
     public static final Logger log = LoggerFactory.getLogger(TestBaseOld.class);
 
     @Step
-    public boolean verifyTransactionInBlock(String transaction)
-    {
+    public boolean verifyTransactionInBlock(String transaction) {
         boolean inBlock = false;
         try {
             inBlock = Failsafe.with(retryPolicy).get(() -> getTransaction(transaction).getConfirmations() >= 0);
+        } catch (Exception e) {
+            fail("Transaction does't add to block. Transaction " + transaction + " Exception: " + e.getMessage());
         }
-        catch (Exception e)
-        {
-            fail("Transaction does't add to block. Transaction "+ transaction+" Exception: "+e.getMessage());
-        }
-        assertTrue(inBlock,String.format("Transaction %s in block: ",transaction));
+        assertTrue(inBlock, String.format("Transaction %s in block: ", transaction));
         return inBlock;
     }
 
     @Step
-    public boolean waitForHeight(int height)
-    {
-      log.info("Wait For Height: {}",height);
-      RetryPolicy retry = new RetryPolicy()
+    public boolean waitForHeight(int height) {
+        log.info("Wait For Height: {}", height);
+        RetryPolicy retry = new RetryPolicy()
                 .retryWhen(false)
                 .withMaxRetries(15)
                 .withDelay(10, TimeUnit.SECONDS);
@@ -122,12 +195,10 @@ public class TestBaseOld extends TestBase {
 
         try {
             isHeight = Failsafe.with(retry).get(() -> getBlock().getHeight() >= height);
+        } catch (Exception e) {
+            fail(String.format("Height %s  not reached. Exception msg: %s", height, e.getMessage()));
         }
-        catch (Exception e)
-        {
-            fail(String.format("Height %s  not reached. Exception msg: %s",height,e.getMessage()));
-        }
-        assertTrue(isHeight,String.format("Height %s not reached: %s",height,getBlock().getHeight()));
+        assertTrue(isHeight, String.format("Height %s not reached: %s", height, getBlock().getHeight()));
         return isHeight;
     }
     @Step
@@ -136,6 +207,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.transaction, transaction);
         return getInstanse(TransactionDTO.class);
     }
+
     @Step
     public BlockListInfoResponse getAccountBlocks(String account) {
         addParameters(RequestType.requestType, getAccountBlocks);
@@ -156,73 +228,83 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.account, account);
         return getInstanse(GetAccountBlockCountResponse.class);
     }
+
     @Step
     public AccountBlockIdsResponse getAccountBlockIds(String account) {
         addParameters(RequestType.requestType, getAccountBlockIds);
         addParameters(Parameters.account, account);
         return getInstanse(AccountBlockIdsResponse.class);
     }
+
     @Step
     public AccountDTO getAccountId(String secretPhrase) {
         addParameters(RequestType.requestType, getAccountId);
-        addParameters(Parameters.secretPhrase,secretPhrase);
+        addParameters(Parameters.secretPhrase, secretPhrase);
         return getInstanse(AccountDTO.class);
     }
+
     @Step
     public AccountLedgerResponse getAccountLedger(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountLedger);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountLedgerResponse.class);
     }
+
     @Step
     public AccountPropertiesResponse getAccountProperties(String account) {
         addParameters(RequestType.requestType, getAccountProperties);
         addParameters(Parameters.recipient, account);
         return getInstanse(AccountPropertiesResponse.class);
     }
+
     @Step
-    public SearchAccountsResponse  searchAccounts(String searchQuery) {
-        addParameters(RequestType.requestType,RequestType.searchAccounts);
+    public SearchAccountsResponse searchAccounts(String searchQuery) {
+        addParameters(RequestType.requestType, RequestType.searchAccounts);
         addParameters(Parameters.query, searchQuery);
-        return  getInstanse(SearchAccountsResponse.class);
+        return getInstanse(SearchAccountsResponse.class);
     }
+
     @Step
     public TransactionListResponse getUnconfirmedTransactions(Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getUnconfirmedTransactions);
-        addParameters(Parameters.wallet,wallet);
+        addParameters(RequestType.requestType, RequestType.getUnconfirmedTransactions);
+        addParameters(Parameters.wallet, wallet);
         return getInstanse(TransactionListResponse.class);
     }
+
     @Step
     public AccountTransactionIdsResponse getUnconfirmedTransactionIds(String account) {
-        addParameters(RequestType.requestType,RequestType.getUnconfirmedTransactionIds);
-        addParameters(Parameters.account,account);
+        addParameters(RequestType.requestType, RequestType.getUnconfirmedTransactionIds);
+        addParameters(Parameters.account, account);
         return getInstanse(AccountTransactionIdsResponse.class);
     }
+
     @Step
     public BalanceDTO getGuaranteedBalance(String account, int confirmations) {
-        addParameters(RequestType.requestType,RequestType.getGuaranteedBalance);
+        addParameters(RequestType.requestType, RequestType.getGuaranteedBalance);
         addParameters(Parameters.account, account);
         addParameters(Parameters.numberOfConfirmations, confirmations);
         return getInstanse(BalanceDTO.class);
     }
+
     @Step
     public BalanceDTO getBalance(Wallet wallet) {
         addParameters(RequestType.requestType, getBalance);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(BalanceDTO.class);
     }
+
     @Step
     public EntryDTO getAccountLedgerEntry(String ledgerId) {
         addParameters(RequestType.requestType, getAccountLedgerEntry);
-        addParameters(Parameters.ledgerId,ledgerId);
+        addParameters(Parameters.ledgerId, ledgerId);
         return getInstanse(EntryDTO.class);
     }
 
     @Step
-    public CreateTransactionResponse sendMoney(Wallet wallet,String recipient, int moneyAmount) {
-        addParameters(RequestType.requestType,RequestType.sendMoney);
+    public CreateTransactionResponse sendMoney(Wallet wallet, String recipient, int moneyAmount) {
+        addParameters(RequestType.requestType, RequestType.sendMoney);
         addParameters(Parameters.recipient, recipient);
-        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.amountATM, moneyAmount + "00000000");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
@@ -230,73 +312,79 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public AccountDTO getAccountPublicKey (Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getAccountPublicKey);
+    public AccountDTO getAccountPublicKey(Wallet wallet) {
+        addParameters(RequestType.requestType, RequestType.getAccountPublicKey);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountDTO.class);
     }
+
     @Step
-    public BlockchainTransactionsResponse getAccountTransaction (Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getBlockchainTransactions);
+    public BlockchainTransactionsResponse getAccountTransaction(Wallet wallet) {
+        addParameters(RequestType.requestType, RequestType.getBlockchainTransactions);
         addParameters(Parameters.wallet, wallet);
-        return  getInstanse(BlockchainTransactionsResponse.class);
-    }
-    @Step
-    public CreateTransactionResponse  setAccountInfo(Wallet wallet,String accountName,String accountDescription) {
-        addParameters(RequestType.requestType,RequestType.setAccountInfo);
-        addParameters(Parameters.name, accountName);
-        addParameters(Parameters.description, accountDescription);
-        addParameters(Parameters.wallet, wallet);
-       // addParameters(Parameters.recipient, accountID);
-        addParameters(Parameters.deadline, 1440);
-        addParameters(Parameters.feeATM, 300000000);
-        return   getInstanse(CreateTransactionResponse.class);
-    }
-    @Step
-    public CreateTransactionResponse  setAccountProperty(Wallet wallet, String property ) {
-        addParameters(RequestType.requestType,RequestType.setAccountProperty);
-        addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.recipient, wallet.getUser());
-        addParameters(Parameters.property, property);
-        addParameters(Parameters.deadline, 1440);
-        addParameters(Parameters.feeATM, 100000000);
-        return   getInstanse(CreateTransactionResponse.class);
+        return getInstanse(BlockchainTransactionsResponse.class);
     }
 
     @Step
-    public CreateTransactionResponse  deleteAccountProperty(Wallet wallet,String property) {
-        addParameters(RequestType.requestType,RequestType.deleteAccountProperty);
+    public CreateTransactionResponse setAccountInfo(Wallet wallet, String accountName, String accountDescription) {
+        addParameters(RequestType.requestType, RequestType.setAccountInfo);
+        addParameters(Parameters.name, accountName);
+        addParameters(Parameters.description, accountDescription);
+        addParameters(Parameters.wallet, wallet);
+        // addParameters(Parameters.recipient, accountID);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.feeATM, 300000000);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse setAccountProperty(Wallet wallet, String property) {
+        addParameters(RequestType.requestType, RequestType.setAccountProperty);
+        addParameters(Parameters.wallet, wallet);
+        addParameters(Parameters.recipient, wallet.getUser());
+        addParameters(Parameters.property, property);
+        addParameters(Parameters.deadline, 1440);
+        addParameters(Parameters.feeATM, 100000000);
+        return getInstanse(CreateTransactionResponse.class);
+    }
+
+    @Step
+    public CreateTransactionResponse deleteAccountProperty(Wallet wallet, String property) {
+        addParameters(RequestType.requestType, RequestType.deleteAccountProperty);
         addParameters(Parameters.property, property);
         addParameters(Parameters.deadline, 1440);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, 100000000);
-        return   getInstanse(CreateTransactionResponse.class);
+        return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public AccountPropertiesResponse getAccountProperty(Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getAccountProperties);
+        addParameters(RequestType.requestType, RequestType.getAccountProperties);
         addParameters(Parameters.recipient, wallet.getUser());
-        return  getInstanse(AccountPropertiesResponse.class);
+        return getInstanse(AccountPropertiesResponse.class);
     }
+
     @Step
     //Skrypchenko Serhii
-    public AccountAliasesResponse getAliases  (Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getAliases);
+    public AccountAliasesResponse getAliases(Wallet wallet) {
+        addParameters(RequestType.requestType, RequestType.getAliases);
         addParameters(Parameters.wallet, wallet);
-        return  getInstanse(AccountAliasesResponse.class);
+        return getInstanse(AccountAliasesResponse.class);
     }
 
     //Skrypchenko Serhii
     @Step
     public AccountCountAliasesResponse getAliasCount(Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.getAliasCount);
+        addParameters(RequestType.requestType, RequestType.getAliasCount);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountCountAliasesResponse.class);
     }
+
     @Step
     //Skrypchenko Serhii
     public AccountAliasDTO getAlias(String aliasname) {
-        addParameters(RequestType.requestType,RequestType.getAlias);
+        addParameters(RequestType.requestType, RequestType.getAlias);
         addParameters(Parameters.aliasName, aliasname);
         return getInstanse(AccountAliasDTO.class);
     }
@@ -304,8 +392,8 @@ public class TestBaseOld extends TestBase {
 
     //Skrypchenko Serhii
     @Step
-    public  CreateTransactionResponse setAlias (Wallet wallet,String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
-        addParameters(RequestType.requestType,RequestType.setAlias);
+    public CreateTransactionResponse setAlias(Wallet wallet, String aliasURL, String aliasName, Integer feeATM, Integer deadline) {
+        addParameters(RequestType.requestType, RequestType.setAlias);
         addParameters(Parameters.aliasURI, aliasURL);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
@@ -314,10 +402,11 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
 
     }
+
     @Step
     //Skrypchenko Serhii
     public CreateTransactionResponse deleteAlias(Wallet wallet, String aliasname) {
-        addParameters(RequestType.requestType,RequestType.deleteAlias);
+        addParameters(RequestType.requestType, RequestType.deleteAlias);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.aliasName, aliasname);
         addParameters(Parameters.feeATM, 100000000);
@@ -325,10 +414,11 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
 
     }
+
     @Step
     //Serhii Skrypchenko
     public AccountAliasesResponse getAliasesLike(String aliasename) {
-        addParameters(RequestType.requestType,RequestType.getAliasesLike);
+        addParameters(RequestType.requestType, RequestType.getAliasesLike);
         addParameters(Parameters.aliasPrefix, aliasename);
         return getInstanse(AccountAliasesResponse.class);
     }
@@ -336,7 +426,7 @@ public class TestBaseOld extends TestBase {
 
     //Serhii Skrypchenko (sell Alias)
     @Step
-    public CreateTransactionResponse sellAlias (Wallet wallet,String aliasName) {
+    public CreateTransactionResponse sellAlias(Wallet wallet, String aliasName) {
         addParameters(RequestType.requestType, RequestType.sellAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
@@ -345,8 +435,9 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
-    public CreateTransactionResponse buyAlias (Wallet wallet,String aliasName) {
+    public CreateTransactionResponse buyAlias(Wallet wallet, String aliasName) {
         addParameters(RequestType.requestType, RequestType.buyAlias);
         addParameters(Parameters.aliasName, aliasName);
         addParameters(Parameters.wallet, wallet);
@@ -355,11 +446,12 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
-    public CreateTransactionResponse sendMoneyPrivate(Wallet wallet,String recipient, int moneyAmount) {
-        addParameters(RequestType.requestType,RequestType.sendMoneyPrivate);
+    public CreateTransactionResponse sendMoneyPrivate(Wallet wallet, String recipient, int moneyAmount) {
+        addParameters(RequestType.requestType, RequestType.sendMoneyPrivate);
         addParameters(Parameters.recipient, recipient);
-        addParameters(Parameters.amountATM, moneyAmount+"00000000");
+        addParameters(Parameters.amountATM, moneyAmount + "00000000");
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "500000000");
         addParameters(Parameters.deadline, 1440);
@@ -368,46 +460,48 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public Account2FAResponse generateNewAccount() {
-        addParameters(RequestType.requestType,RequestType.generateAccount);
+        addParameters(RequestType.requestType, RequestType.generateAccount);
         return getInstanse(Account2FAResponse.class);
     }
 
     @Step
-     public Account2FAResponse deleteSecretFile(Wallet wallet) {
-         try {
-         addParameters(RequestType.requestType,RequestType.deleteKey);
-         addParameters(Parameters.wallet, wallet);
-          return mapper.readValue(httpCallPost().body().string(), Account2FAResponse.class);
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
-         return null;
-     }
+    public Account2FAResponse deleteSecretFile(Wallet wallet) {
+        try {
+            addParameters(RequestType.requestType, RequestType.deleteKey);
+            addParameters(Parameters.wallet, wallet);
+            return mapper.readValue(httpCallPost().body().string(), Account2FAResponse.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     @Step
     public VaultWalletResponse exportSecretFile(Wallet wallet) {
-        addParameters(RequestType.requestType,RequestType.exportKey);
+        addParameters(RequestType.requestType, RequestType.exportKey);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(VaultWalletResponse.class);
     }
+
     @Step
     public boolean importSecretFile(String pathToSecretFile, String pass) {
-       // addParameters(RequestType.requestType, importKey);
-      //  addParameters(Parameters.wallet, wallet);
-      //  return getInstanse(Account2FAResponse.class);
+        // addParameters(RequestType.requestType, importKey);
+        //  addParameters(Parameters.wallet, wallet);
+        //  return getInstanse(Account2FAResponse.class);
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
     @Override
     @Step
-    public  List<ShardDTO> getShards(String ip) {
+    public List<ShardDTO> getShards(String ip) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
+
     @Step
     public AccountDTO enable2FA(Wallet wallet) {
-       // addParameters(RequestType.requestType,RequestType.enable2FA);
-      //  addParameters(Parameters.wallet, wallet);
-       // return getInstanse(AccountDTO.class);
+        // addParameters(RequestType.requestType,RequestType.enable2FA);
+        //  addParameters(Parameters.wallet, wallet);
+        // return getInstanse(AccountDTO.class);
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -449,13 +543,13 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet){
+    public CreateTransactionResponse dexCancelOrder(String orderId, Wallet wallet) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
     @Override
     @Step
-    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth){
+    public String createDexOrder(String pairRate, String offerAmount, Wallet wallet, boolean isBuyOrder, boolean isEth) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -473,7 +567,7 @@ public class TestBaseOld extends TestBase {
 
     @Override
     @Step
-    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth){
+    public WithdrawResponse dexWidthraw(String fromAddress, Wallet wallet, String toAddress, String amount, String transferFee, boolean isEth) {
         throw new NotImplementedException("Already implemented in TestBaseNew");
     }
 
@@ -485,7 +579,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step("Create Poll with param: votingModel: {2}")
-    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue){
+    public CreateTransactionResponse createPoll(Wallet wallet, int votingModel, String name, int plusFinishHeight, String holding, int minBalance, int maxRangeValue) {
         int currentHeight = getBlock().getHeight();
         int finishHeight = currentHeight + plusFinishHeight;
 
@@ -508,15 +602,15 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.option02, "MAYBE");
         addParameters(Parameters.deadline, 1440);
 
-        if (votingModel==0) {
+        if (votingModel == 0) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 0);
-            addParameters(Parameters.minBalance ,0 );
+            addParameters(Parameters.minBalance, 0);
             addParameters(Parameters.description, "poll by account");
             addParameters(Parameters.holding, "");
         }
 
-        if (votingModel==1) {
+        if (votingModel == 1) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 1);
             addParameters(Parameters.minBalance, minBalance);
@@ -524,7 +618,7 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.holding, "");
         }
 
-        if (votingModel==2) {
+        if (votingModel == 2) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 2);
             addParameters(Parameters.minBalance, minBalance);
@@ -532,7 +626,7 @@ public class TestBaseOld extends TestBase {
             addParameters(Parameters.description, "poll by asset");
         }
 
-        if (votingModel==3) {
+        if (votingModel == 3) {
             addParameters(Parameters.votingModel, votingModel);
             addParameters(Parameters.minBalanceModel, 3);
             addParameters(Parameters.minBalance, minBalance);
@@ -543,7 +637,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
     }
 
-    public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote){
+    public CreateTransactionResponse castVote(Wallet wallet, String poll, int vote) {
 
         addParameters(RequestType.requestType, RequestType.castVote);
         addParameters(Parameters.feeATM, 2000000000);
@@ -560,23 +654,25 @@ public class TestBaseOld extends TestBase {
     @Step
     public List<String> getPeers() {
         try {
-        addParameters(RequestType.requestType, RequestType.getPeers);
-        addParameters(Parameters.active, true);
-        Response response = httpCallGet();
-        Assertions.assertEquals(200, response.code());
-        GetPeersIpResponse peers = mapper.readValue(response.body().string(), GetPeersIpResponse.class);
-        return peers.getPeers();
+            addParameters(RequestType.requestType, RequestType.getPeers);
+            addParameters(Parameters.active, true);
+            Response response = httpCallGet();
+            Assertions.assertEquals(200, response.code());
+            GetPeersIpResponse peers = mapper.readValue(response.body().string(), GetPeersIpResponse.class);
+            return peers.getPeers();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
+
     @Step
     public PeerDTO getPeer(String peer) {
         addParameters(RequestType.requestType, RequestType.getPeer);
         addParameters(Parameters.peer, peer);
         return getInstanse(PeerDTO.class);
     }
+
     @Step
     public PeerDTO addPeer(String ip) {
         addParameters(RequestType.requestType, RequestType.addPeer);
@@ -584,11 +680,13 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
         return getInstanse(PeerDTO.class);
     }
+
     @Step
     public PeerInfo getMyInfo() {
         addParameters(RequestType.requestType, RequestType.getMyInfo);
         return getInstanse(PeerInfo.class);
     }
+
     @Step
     public BlockDTO getBlock(String block) {
         addParameters(RequestType.requestType, getBlock);
@@ -604,6 +702,7 @@ public class TestBaseOld extends TestBase {
         return getInstanse(BlockDTO.class);
 
     }
+
     @Step
     public GetBlockIdResponse getBlockId(String height) {
         addParameters(RequestType.requestType, getBlockId);
@@ -611,11 +710,13 @@ public class TestBaseOld extends TestBase {
         return getInstanse(GetBlockIdResponse.class);
 
     }
+
     @Step
     public BlockchainInfoDTO getBlockchainStatus() {
         addParameters(RequestType.requestType, getBlockchainStatus);
         return getInstanse(BlockchainInfoDTO.class);
     }
+
     @Step
     public AccountBlocksResponse getBlocks() {
         addParameters(RequestType.requestType, getBlocks);
@@ -623,10 +724,10 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public void verifyCreatingTransaction (CreateTransactionResponse transaction) {
+    public void verifyCreatingTransaction(CreateTransactionResponse transaction) {
         assertNotNull(transaction);
         assertNotNull(transaction.getTransaction(), transaction.errorDescription);
-        assertNotNull(transaction.getTransactionJSON(),transaction.errorDescription);
+        assertNotNull(transaction.getTransactionJSON(), transaction.errorDescription);
         assertNotNull(transaction.getTransactionJSON().getSenderPublicKey());
         assertNotNull(transaction.getTransactionJSON().getSignature());
         assertNotNull(transaction.getTransactionJSON().getFullHash());
@@ -642,7 +743,7 @@ public class TestBaseOld extends TestBase {
     //AssetExchange
     //issueAsset
     @Step
-    public  CreateTransactionResponse issueAsset (Wallet wallet,String assetName, String description, Integer quantityATU) {
+    public CreateTransactionResponse issueAsset(Wallet wallet, String assetName, String description, Integer quantityATU) {
         addParameters(RequestType.requestType, issueAsset);
         addParameters(Parameters.name, assetName);
         addParameters(Parameters.description, description);
@@ -656,7 +757,7 @@ public class TestBaseOld extends TestBase {
 
     //placeBidOrder
     @Step
-    public  CreateTransactionResponse placeBidOrder (Wallet wallet,String assetID, String priceATM, Integer quantityATU) {
+    public CreateTransactionResponse placeBidOrder(Wallet wallet, String assetID, String priceATM, Integer quantityATU) {
         addParameters(RequestType.requestType, placeBidOrder);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.priceATM, priceATM);
@@ -667,9 +768,10 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
 
     }
+
     //placeAskOrder
     @Step
-    public  CreateTransactionResponse placeAskOrder (Wallet wallet,String assetID, String priceATM, Integer quantityATU) {
+    public CreateTransactionResponse placeAskOrder(Wallet wallet, String assetID, String priceATM, Integer quantityATU) {
         addParameters(RequestType.requestType, placeAskOrder);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.priceATM, priceATM);
@@ -682,10 +784,9 @@ public class TestBaseOld extends TestBase {
     }
 
 
-
     //cancelBidOrder
     @Step
-    public  CreateTransactionResponse cancelBidOrder (Wallet wallet,String bidOrder) {
+    public CreateTransactionResponse cancelBidOrder(Wallet wallet, String bidOrder) {
         addParameters(RequestType.requestType, cancelBidOrder);
         addParameters(Parameters.order, bidOrder);
         addParameters(Parameters.wallet, wallet);
@@ -697,7 +798,7 @@ public class TestBaseOld extends TestBase {
 
     //cancelAskOrder
     @Step
-    public  CreateTransactionResponse cancelAskOrder (Wallet wallet,String askOrder) {
+    public CreateTransactionResponse cancelAskOrder(Wallet wallet, String askOrder) {
         addParameters(RequestType.requestType, cancelAskOrder);
         addParameters(Parameters.order, askOrder);
         addParameters(Parameters.wallet, wallet);
@@ -708,7 +809,7 @@ public class TestBaseOld extends TestBase {
 
     //deleteAssetShares
     @Step
-    public  CreateTransactionResponse deleteAssetShares (Wallet wallet,String assetID, String quantityATU) {
+    public CreateTransactionResponse deleteAssetShares(Wallet wallet, String assetID, String quantityATU) {
         addParameters(RequestType.requestType, deleteAssetShares);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.wallet, wallet);
@@ -720,7 +821,7 @@ public class TestBaseOld extends TestBase {
 
     //dividendPayment
     @Step
-    public  CreateTransactionResponse dividendPayment (Wallet wallet,String assetID, Integer amountATMPerATU, Integer height) {
+    public CreateTransactionResponse dividendPayment(Wallet wallet, String assetID, Integer amountATMPerATU, Integer height) {
         addParameters(RequestType.requestType, dividendPayment);
         addParameters(Parameters.asset, assetID);
         addParameters(Parameters.wallet, wallet);
@@ -734,7 +835,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountAssets
     @Step
-    public AccountAssetsResponse getAccountAssets (Wallet wallet) {
+    public AccountAssetsResponse getAccountAssets(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountAssets);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountAssetsResponse.class);
@@ -742,7 +843,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountAssetCount
     @Step
-    public AccountAssetsCountResponse getAccountAssetCount (Wallet wallet) {
+    public AccountAssetsCountResponse getAccountAssetCount(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountAssetCount);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountAssetsCountResponse.class);
@@ -750,7 +851,7 @@ public class TestBaseOld extends TestBase {
 
     //getAsset
     @Step
-    public AccountAssetDTO getAsset (String asset) {
+    public AccountAssetDTO getAsset(String asset) {
         addParameters(RequestType.requestType, getAsset);
         addParameters(Parameters.asset, asset);
         return getInstanse(AccountAssetDTO.class);
@@ -759,7 +860,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountCurrentAskOrderIds
     @Step
-    public AccountCurrentAssetAskOrderIdsResponse getAccountCurrentAskOrderIds (Wallet wallet) {
+    public AccountCurrentAssetAskOrderIdsResponse getAccountCurrentAskOrderIds(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountCurrentAskOrderIds);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountCurrentAssetAskOrderIdsResponse.class);
@@ -767,7 +868,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountCurrentBidOrderIds
     @Step
-    public AccountCurrentAssetBidOrderIdsResponse getAccountCurrentBidOrderIds (Wallet wallet) {
+    public AccountCurrentAssetBidOrderIdsResponse getAccountCurrentBidOrderIds(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountCurrentBidOrderIds);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountCurrentAssetBidOrderIdsResponse.class);
@@ -776,7 +877,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountCurrentAskOrders
     @Step
-    public AccountCurrentAssetAskOrdersResponse getAccountCurrentAskOrders (Wallet wallet) {
+    public AccountCurrentAssetAskOrdersResponse getAccountCurrentAskOrders(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountCurrentAskOrders);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountCurrentAssetAskOrdersResponse.class);
@@ -784,7 +885,7 @@ public class TestBaseOld extends TestBase {
 
     //getAccountCurrentBidOrders
     @Step
-    public AccountCurrentAssetBidOrdersResponse getAccountCurrentBidOrders (Wallet wallet) {
+    public AccountCurrentAssetBidOrdersResponse getAccountCurrentBidOrders(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountCurrentBidOrders);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(AccountCurrentAssetBidOrdersResponse.class);
@@ -792,14 +893,14 @@ public class TestBaseOld extends TestBase {
 
     //getAllAssets
     @Step
-    public AssetsResponse getAllAssets () {
+    public AssetsResponse getAllAssets() {
         addParameters(RequestType.requestType, getAllAssets);
         return getInstanse(AssetsResponse.class);
     }
 
     //getAllOpenAskOrders
     @Step
-    public AccountOpenAssetOrdersResponse getAllOpenAskOrders () {
+    public AccountOpenAssetOrdersResponse getAllOpenAskOrders() {
         addParameters(RequestType.requestType, getAllOpenAskOrders);
         return getInstanse(AccountOpenAssetOrdersResponse.class);
     }
@@ -807,21 +908,21 @@ public class TestBaseOld extends TestBase {
 
     //getAllOpenBidOrders
     @Step
-    public AccountOpenAssetOrdersResponse getAllOpenBidOrders () {
+    public AccountOpenAssetOrdersResponse getAllOpenBidOrders() {
         addParameters(RequestType.requestType, getAllOpenBidOrders);
         return getInstanse(AccountOpenAssetOrdersResponse.class);
     }
 
     //getAllTrades
     @Step
-    public AssetTradeResponse getAllTrades () {
+    public AssetTradeResponse getAllTrades() {
         addParameters(RequestType.requestType, getAllTrades);
         return getInstanse(AssetTradeResponse.class);
     }
 
     //getAskOrder
     @Step
-    public AccountAssetOrderDTO getAskOrder (String askOrder) {
+    public AccountAssetOrderDTO getAskOrder(String askOrder) {
         addParameters(RequestType.requestType, getAskOrder);
         addParameters(Parameters.order, askOrder);
         return getInstanse(AccountAssetOrderDTO.class);
@@ -829,7 +930,7 @@ public class TestBaseOld extends TestBase {
 
     //getAskOrderIds
     @Step
-    public AccountCurrentAssetAskOrderIdsResponse getAskOrderIds (String assetID) {
+    public AccountCurrentAssetAskOrderIdsResponse getAskOrderIds(String assetID) {
         addParameters(RequestType.requestType, getAskOrderIds);
         addParameters(Parameters.asset, assetID);
         return getInstanse(AccountCurrentAssetAskOrderIdsResponse.class);
@@ -837,7 +938,7 @@ public class TestBaseOld extends TestBase {
 
     //getAskOrders
     @Step
-    public AccountCurrentAssetAskOrdersResponse getAskOrders (String assetID) {
+    public AccountCurrentAssetAskOrdersResponse getAskOrders(String assetID) {
         addParameters(RequestType.requestType, getAskOrders);
         addParameters(Parameters.asset, assetID);
 
@@ -846,7 +947,7 @@ public class TestBaseOld extends TestBase {
 
     //getBidOrders
     @Step
-    public AccountCurrentAssetBidOrdersResponse getBidOrders (String assetID) {
+    public AccountCurrentAssetBidOrdersResponse getBidOrders(String assetID) {
         addParameters(RequestType.requestType, getBidOrders);
         addParameters(Parameters.asset, assetID);
 
@@ -856,7 +957,7 @@ public class TestBaseOld extends TestBase {
 
     //getAssetAccountCount
     @Step
-    public AssetsAccountsCountResponse getAssetAccountCount (String assetID) {
+    public AssetsAccountsCountResponse getAssetAccountCount(String assetID) {
         addParameters(RequestType.requestType, getAssetAccountCount);
         addParameters(Parameters.asset, assetID);
         return getInstanse(AssetsAccountsCountResponse.class);
@@ -864,7 +965,7 @@ public class TestBaseOld extends TestBase {
 
     //getAssetAccounts
     @Step
-    public  AccountAssetsResponse getAssetAccounts (String assetID) {
+    public AccountAssetsResponse getAssetAccounts(String assetID) {
         addParameters(RequestType.requestType, getAssetAccounts);
         addParameters(Parameters.asset, assetID);
         return getInstanse(AccountAssetsResponse.class);
@@ -872,7 +973,7 @@ public class TestBaseOld extends TestBase {
 
     //getAssetDeletes
     @Step
-    public ExpectedAssetDeletes getAssetDeletes (Wallet wallet) {
+    public ExpectedAssetDeletes getAssetDeletes(Wallet wallet) {
         addParameters(RequestType.requestType, getAssetDeletes);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(ExpectedAssetDeletes.class);
@@ -880,7 +981,7 @@ public class TestBaseOld extends TestBase {
 
     //getExpectedAssetDeletes
     @Step
-    public  ExpectedAssetDeletes getExpectedAssetDeletes (Wallet wallet) {
+    public ExpectedAssetDeletes getExpectedAssetDeletes(Wallet wallet) {
         addParameters(RequestType.requestType, getExpectedAssetDeletes);
         addParameters(Parameters.wallet, wallet);
         return getInstanse(ExpectedAssetDeletes.class);
@@ -895,14 +996,14 @@ public class TestBaseOld extends TestBase {
 
     //getAssetIds
     @Step
-    public AccountAssetsIdsResponse getAssetIds () {
+    public AccountAssetsIdsResponse getAssetIds() {
         addParameters(RequestType.requestType, getAssetIds);
         return getInstanse(AccountAssetsIdsResponse.class);
     }
 
     //transferAsset
     @Step
-    public  CreateTransactionResponse transferAsset (Wallet wallet, String asset, Integer quantityATU, String recipient) {
+    public CreateTransactionResponse transferAsset(Wallet wallet, String asset, Integer quantityATU, String recipient) {
         addParameters(RequestType.requestType, transferAsset);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.asset, asset);
@@ -914,35 +1015,39 @@ public class TestBaseOld extends TestBase {
     }
 
 
-
     @Step
     public ECBlockDTO getECBlock() {
         addParameters(RequestType.requestType, getECBlock);
         return getInstanse(ECBlockDTO.class);
     }
+
     @Step
-    public ForgingResponse getForging(){
+    public ForgingResponse getForging() {
         addParameters(RequestType.requestType, getForging);
-        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
         return getInstanse(ForgingResponse.class);
     }
+
     @Step
-    public ForgingDetails startForging(Wallet wallet){
+    public ForgingDetails startForging(Wallet wallet) {
         addParameters(RequestType.requestType, startForging);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
         return getInstanse(ForgingDetails.class);
     }
+
     @Step
-    public ForgingDetails stopForging(Wallet wallet){
+    public ForgingDetails stopForging(Wallet wallet) {
         addParameters(RequestType.requestType, stopForging);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.adminPassword,  getTestConfiguration().getAdminPass());
+        addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
         return getInstanse(ForgingDetails.class);
     }
+
     @Step
-    public CreateTransactionResponse sendMessage(Wallet wallet,String recipient, String testMessage) { ;
-        addParameters(RequestType.requestType,RequestType.sendMessage);
+    public CreateTransactionResponse sendMessage(Wallet wallet, String recipient, String testMessage) {
+        ;
+        addParameters(RequestType.requestType, RequestType.sendMessage);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.recipient, recipient);
         addParameters(Parameters.message, testMessage);
@@ -951,11 +1056,12 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.messageIsPrunable, true);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
-    public AccountMessageDTO readMessage(Wallet wallet,String transaction) {
-        addParameters(RequestType.requestType,RequestType.readMessage);
+    public AccountMessageDTO readMessage(Wallet wallet, String transaction) {
+        addParameters(RequestType.requestType, RequestType.readMessage);
         addParameters(Parameters.wallet, wallet);
-        addParameters(Parameters.transaction,transaction);
+        addParameters(Parameters.transaction, transaction);
         return getInstanse(AccountMessageDTO.class);
     }
 
@@ -968,7 +1074,7 @@ public class TestBaseOld extends TestBase {
      total ATU for models 2 and 3
      the number of transactions for model 4  1 for model 5
     */
-    public void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum, Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding){
+    public void createPhasingVote(long phasingFinishHeight, Parameters votingModel, int phasingQuorum, Long phasingMinBalance, Long phasingMinBalanceModel, String phasingHolding) {
         addParameters(Parameters.phased, true);
         addParameters(Parameters.phasingFinishHeight, phasingFinishHeight);
         addParameters(Parameters.votingModel, votingModel);
@@ -980,7 +1086,7 @@ public class TestBaseOld extends TestBase {
 
 
     @Step("Issue Currency with param: Type: {2}")
-    public CreateTransactionResponse issueCurrency(Wallet wallet,int type, String name, String description, String code, int initialSupply,int maxSupply, int decimals){
+    public CreateTransactionResponse issueCurrency(Wallet wallet, int type, String name, String description, String code, int initialSupply, int maxSupply, int decimals) {
         int currentHeight = getBlock().getHeight();
         int issuanceHeight = currentHeight + 11;
 
@@ -991,9 +1097,9 @@ public class TestBaseOld extends TestBase {
         final int MINTABLE = 16;
         final int NON_SHUFFLEABLE = 32;
 
-        addParameters(RequestType.requestType,RequestType.issueCurrency);
+        addParameters(RequestType.requestType, RequestType.issueCurrency);
         addParameters(Parameters.name, name);
-        addParameters(Parameters.code ,code );
+        addParameters(Parameters.code, code);
         addParameters(Parameters.description, description);
         addParameters(Parameters.type, type);
         addParameters(Parameters.initialSupply, initialSupply);
@@ -1005,25 +1111,25 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.maxSupply, maxSupply);
         addParameters(Parameters.reserveSupply, 0);
 
-        if ((type&RESERVABLE) == RESERVABLE){
-            addParameters(Parameters.maxSupply, maxSupply+50);
-            addParameters(Parameters.reserveSupply, maxSupply+50);
+        if ((type & RESERVABLE) == RESERVABLE) {
+            addParameters(Parameters.maxSupply, maxSupply + 50);
+            addParameters(Parameters.reserveSupply, maxSupply + 50);
             addParameters(Parameters.issuanceHeight, issuanceHeight);
-            addParameters(Parameters.minReservePerUnitATM,1);
+            addParameters(Parameters.minReservePerUnitATM, 1);
         }
-        if ((type&CLAIMABLE) == CLAIMABLE){
+        if ((type & CLAIMABLE) == CLAIMABLE) {
             addParameters(Parameters.initialSupply, 0);
         }
-        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) == RESERVABLE){
-            addParameters(Parameters.algorithm,  2);
+        if ((type & MINTABLE) == MINTABLE && (type & RESERVABLE) == RESERVABLE) {
+            addParameters(Parameters.algorithm, 2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
-            addParameters(Parameters.maxSupply, maxSupply+50);
-            addParameters(Parameters.reserveSupply, maxSupply+10);
+            addParameters(Parameters.maxSupply, maxSupply + 50);
+            addParameters(Parameters.reserveSupply, maxSupply + 10);
         }
 
-        if ((type&MINTABLE) == MINTABLE && (type&RESERVABLE) != RESERVABLE){
-            addParameters(Parameters.algorithm,  2);
+        if ((type & MINTABLE) == MINTABLE && (type & RESERVABLE) != RESERVABLE) {
+            addParameters(Parameters.algorithm, 2);
             addParameters(Parameters.minDifficulty, 1);
             addParameters(Parameters.maxDifficulty, 2);
             addParameters(Parameters.reserveSupply, 0);
@@ -1033,10 +1139,8 @@ public class TestBaseOld extends TestBase {
     }
 
 
-
-
     @Step
-    public  CreateTransactionResponse deleteCurrency(Wallet wallet,String CurrencyId) {
+    public CreateTransactionResponse deleteCurrency(Wallet wallet, String CurrencyId) {
         addParameters(RequestType.requestType, deleteCurrency);
         addParameters(Parameters.currency, CurrencyId);
         addParameters(Parameters.wallet, wallet);
@@ -1113,7 +1217,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM,int sellRateATM, int initialBuySupply, int initialSellSupply) {
+    public CreateTransactionResponse publishExchangeOffer(String currency, Wallet wallet, int buyRateATM, int sellRateATM, int initialBuySupply, int initialSellSupply) {
         addParameters(RequestType.requestType, publishExchangeOffer);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.buyRateATM, buyRateATM);
@@ -1130,7 +1234,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units,int rate) {
+    public CreateTransactionResponse currencySell(String currency, Wallet wallet, int units, int rate) {
         addParameters(RequestType.requestType, currencySell);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);
@@ -1142,7 +1246,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units,int rate) {
+    public CreateTransactionResponse currencyBuy(String currency, Wallet wallet, int units, int rate) {
         addParameters(RequestType.requestType, currencyBuy);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);
@@ -1154,7 +1258,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units,int rate,String offerIssuer) {
+    public CreateTransactionResponse scheduleCurrencyBuy(String currency, Wallet wallet, int units, int rate, String offerIssuer) {
         addParameters(RequestType.requestType, scheduleCurrencyBuy);
         addParameters(Parameters.currency, currency);
         addParameters(Parameters.wallet, wallet);
@@ -1167,8 +1271,9 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
-    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet){
+    public AccountCurrencyResponse getAccountCurrencies(Wallet wallet) {
         addParameters(RequestType.requestType, getAccountCurrencies);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.includeCurrencyInfo, true);
@@ -1178,15 +1283,15 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse shufflingCreate( Wallet wallet, int registrationPeriod, int participantCount,int amount,String holding, int holdingType ) {
+    public CreateTransactionResponse shufflingCreate(Wallet wallet, int registrationPeriod, int participantCount, int amount, String holding, int holdingType) {
         addParameters(RequestType.requestType, shufflingCreate);
         addParameters(Parameters.wallet, wallet);
         if (holdingType > 0) {
             addParameters(Parameters.holding, holding);
             addParameters(Parameters.holdingType, holdingType);
             addParameters(Parameters.amount, amount);
-        }else{
-            addParameters(Parameters.amount, amount+"00000000");
+        } else {
+            addParameters(Parameters.amount, amount + "00000000");
         }
         addParameters(Parameters.registrationPeriod, registrationPeriod);
         addParameters(Parameters.participantCount, participantCount);
@@ -1195,12 +1300,13 @@ public class TestBaseOld extends TestBase {
         return getInstanse(CreateTransactionResponse.class);
 
     }
+
     @Step
-    public CreateTransactionResponse shufflingCancel( Wallet wallet, String shuffling, String cancellingAccount, String shufflingStateHash) {
+    public CreateTransactionResponse shufflingCancel(Wallet wallet, String shuffling, String cancellingAccount, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingCancel);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.shuffling, shuffling);
-        if (cancellingAccount !=null) {
+        if (cancellingAccount != null) {
             addParameters(Parameters.cancellingAccount, cancellingAccount);
         }
         addParameters(Parameters.shufflingStateHash, shufflingStateHash);
@@ -1212,7 +1318,8 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public ShufflingDTO getShuffling(String shuffling) {
-        addParameters(RequestType.requestType, getShuffling);;
+        addParameters(RequestType.requestType, getShuffling);
+        ;
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.includeHoldingInfo, false);
         addParameters(Parameters.feeATM, "100000000000");
@@ -1222,7 +1329,8 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public CreateTransactionResponse shufflingRegister(Wallet wallet, String shufflingFullHash) {
-        addParameters(RequestType.requestType, shufflingRegister);;
+        addParameters(RequestType.requestType, shufflingRegister);
+        ;
         addParameters(Parameters.shufflingFullHash, shufflingFullHash);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "100000000000");
@@ -1231,7 +1339,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse shufflingProcess(Wallet wallet,String shuffling, String recipientSecretPhrase) {
+    public CreateTransactionResponse shufflingProcess(Wallet wallet, String shuffling, String recipientSecretPhrase) {
         addParameters(RequestType.requestType, shufflingProcess);
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
@@ -1242,7 +1350,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public CreateTransactionResponse startShuffler(Wallet wallet,String shufflingFullHash, String recipientSecretPhrase) {
+    public CreateTransactionResponse startShuffler(Wallet wallet, String shufflingFullHash, String recipientSecretPhrase) {
         addParameters(RequestType.requestType, startShuffler);
         addParameters(Parameters.shufflingFullHash, shufflingFullHash);
         addParameters(Parameters.recipientSecretPhrase, recipientSecretPhrase);
@@ -1251,8 +1359,9 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
-    public CreateTransactionResponse shufflingVerify(Wallet wallet,String shuffling, String shufflingStateHash) {
+    public CreateTransactionResponse shufflingVerify(Wallet wallet, String shuffling, String shufflingStateHash) {
         addParameters(RequestType.requestType, shufflingVerify);
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.shufflingStateHash, shufflingStateHash);
@@ -1273,23 +1382,25 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.quantity, quantity);
         addParameters(Parameters.messageIsText, false);
         addParameters(Parameters.messageIsPrunable, true);
-        addParameters(Parameters.priceATM, priceATM +"00000000");
+        addParameters(Parameters.priceATM, priceATM + "00000000");
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsDelisting(Wallet wallet, String goods) {
-        addParameters(RequestType.requestType, dgsDelisting );
+        addParameters(RequestType.requestType, dgsDelisting);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.goods, goods);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsQuantityChange(Wallet wallet, String goods, int deltaQuantity) {
-        addParameters(RequestType.requestType, dgsQuantityChange );
+        addParameters(RequestType.requestType, dgsQuantityChange);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.goods, goods);
         addParameters(Parameters.feeATM, "100000000000");
@@ -1297,9 +1408,10 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deltaQuantity, deltaQuantity);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsPriceChange(Wallet wallet, String goods, int priceATM) {
-        addParameters(RequestType.requestType, dgsPriceChange );
+        addParameters(RequestType.requestType, dgsPriceChange);
         addParameters(Parameters.priceATM, priceATM);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.goods, goods);
@@ -1307,9 +1419,10 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsPurchase(Wallet wallet, String goods, long priceATM, int quantity, int deliveryDeadlineTimeInHours) {
-        addParameters(RequestType.requestType, dgsPurchase );
+        addParameters(RequestType.requestType, dgsPurchase);
         addParameters(Parameters.priceATM, priceATM);
         addParameters(Parameters.quantity, quantity);
         addParameters(Parameters.deliveryDeadlineTimestamp, deliveryDeadlineTimeInHours * 3600000);
@@ -1319,9 +1432,10 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsDelivery(Wallet wallet, String purchase, String delivery, int discountATM) {
-        addParameters(RequestType.requestType, dgsDelivery );
+        addParameters(RequestType.requestType, dgsDelivery);
         addParameters(Parameters.purchase, purchase);
         addParameters(Parameters.discountATM, discountATM);
         addParameters(Parameters.goodsToEncrypt, delivery);
@@ -1330,6 +1444,7 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.deadline, 1440);
         return getInstanse(CreateTransactionResponse.class);
     }
+
     @Step
     public CreateTransactionResponse dgsFeedback(Wallet wallet, String purchase, String message) {
         addParameters(RequestType.requestType, dgsFeedback);
@@ -1363,7 +1478,7 @@ public class TestBaseOld extends TestBase {
 
     @Step
     public CreateTransactionResponse dgsRefund(Wallet wallet, String purchase, int refundATM, String message) {
-        addParameters(RequestType.requestType, dgsRefund );
+        addParameters(RequestType.requestType, dgsRefund);
         addParameters(Parameters.purchase, purchase);
         addParameters(Parameters.refundATM, refundATM);
         addParameters(Parameters.message, message);
@@ -1424,7 +1539,7 @@ public class TestBaseOld extends TestBase {
     }
 
     @Step
-    public PollVotesResponse getPollVotes (String poll) {
+    public PollVotesResponse getPollVotes(String poll) {
         addParameters(RequestType.requestType, getPollVotes);
         addParameters(Parameters.poll, poll);
         return getInstanse(PollVotesResponse.class);
@@ -1432,14 +1547,15 @@ public class TestBaseOld extends TestBase {
 
     //get poll results
     @Step
-    public PollResultResponse getPollResult (String poll) {
+    public PollResultResponse getPollResult(String poll) {
         addParameters(RequestType.requestType, getPollResult);
         addParameters(Parameters.poll, poll);
         return getInstanse(PollResultResponse.class);
     }
+
     @Step
-    public void messagePrunable(){
-        String message = RandomStringUtils.randomAlphabetic(3,5);
+    public void messagePrunable() {
+        String message = RandomStringUtils.randomAlphabetic(3, 5);
         addParameters(Parameters.messageIsPrunable, true);
         addParameters(Parameters.messageIsText, true);
         addParameters(Parameters.messageToEncrypt, message);

@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -51,7 +51,7 @@ class DexCloseOrderTransactionTest {
             1L, 10L, 200L, 300L, 1000L, 2000L,
             ExchangeContractStatus.STEP_2, new byte[32], null, null, new byte[32],
             Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, null, true);
-    DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrencies.APL, 250L, DexCurrencies.ETH, BigDecimal.ONE, 500);
+    DexOrder order = new DexOrder(200L, 100L, "from", "to", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 250L, DexCurrency.ETH, BigDecimal.ONE, 500);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()

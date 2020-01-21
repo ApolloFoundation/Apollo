@@ -415,7 +415,7 @@ public final class BlockImpl implements Block {
 
     @Override
     public boolean verifyBlockSignature() {
-        return checkSignature() && lookupAccountService().setOrVerify(getGeneratorId(), getGeneratorPublicKey());
+        return checkSignature() && lookupAccountService().setOrVerifyPublicKey(getGeneratorId(), getGeneratorPublicKey());
     }
 
     private volatile boolean hasValidSignature = false;

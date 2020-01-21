@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
@@ -22,10 +22,11 @@ import java.util.Objects;
 /**
  * @author al
  */
-@Singleton
+//@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     private static class PublicKeyDbFactory extends LongKeyFactory<PublicKey> {
-        private Blockchain blockchain;
+
+        private final Blockchain blockchain;
 
         public PublicKeyDbFactory(String idColumn, Blockchain blockchain) {
             super(idColumn);
@@ -46,11 +47,11 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
         }
     }
 
-    private Blockchain blockchain;
+    private final Blockchain blockchain;
 
-    @Inject
+    //@Inject
     public GenesisPublicKeyTable(Blockchain blockchain) {
-        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, false);
+        super("genesis_public_key", new PublicKeyDbFactory("account_id", blockchain), false, null, true);
         this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
@@ -62,7 +63,10 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.setHeight(blockchain.getHeight());
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());
             DbUtils.setBytes(pstmt, ++i, publicKey.getPublicKey());

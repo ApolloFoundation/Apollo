@@ -34,5 +34,9 @@ public class TimeServiceImpl implements TimeService {
         log.trace("ntpTime : long = {}, toEpochTime = {}", ntpTime, toEpochTime);
         return toEpochTime;
     }
-    
+
+    @Override
+    public long systemTime() {
+        return ntpTime.getTime() / 1000;
+    }
 }

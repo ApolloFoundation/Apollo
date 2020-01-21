@@ -103,8 +103,7 @@ public class DGSServiceTest {
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
             BlockchainConfig.class,
-            AccountServiceImpl.class, AccountTable.class
-    )
+            AccountServiceImpl.class, AccountTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -126,6 +125,8 @@ public class DGSServiceTest {
 
     @Inject
     AccountService accountService;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
     DGSTestData dtd;
 

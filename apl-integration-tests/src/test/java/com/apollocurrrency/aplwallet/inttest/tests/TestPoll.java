@@ -15,7 +15,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @DisplayName("Poll")
 @Epic(value = "Poll")
 public class TestPoll extends TestBaseOld {
@@ -26,6 +27,7 @@ public class TestPoll extends TestBaseOld {
     private final int POLL_BY_CURRENCY = 3;
 
     private final ArrayList<Wallet> wallets = new ArrayList<>();
+
     @BeforeEach
     @Override
     public void setUp(TestInfo testInfo) {
@@ -36,7 +38,7 @@ public class TestPoll extends TestBaseOld {
 
     @DisplayName("Poll flow. Creating. Voting.")
     @ParameterizedTest(name = "{displayName} votingModel: {0}")
-    @ValueSource(ints = { 0,1,2,3 })
+    @ValueSource(ints = {0, 1, 2, 3})
     public void pollTest(int votingModel) {
 
         String name = RandomStringUtils.randomAlphabetic(7);
@@ -50,7 +52,7 @@ public class TestPoll extends TestBaseOld {
         long weight = 1;
         long result = 0;
 
-        for (Wallet wallet: wallets) {
+        for (Wallet wallet : wallets) {
             switch (votingModel) {
                 case POLL_BY_ACCOUNT:
                     poll = createPoll(wallet, votingModel, name, plusFinishHeight, "", 0, maxRangeValue);
@@ -69,7 +71,7 @@ public class TestPoll extends TestBaseOld {
                 case POLL_BY_CURRENCY:
                     int initialSupply = 100;
                     weight = initialSupply;
-                    CreateTransactionResponse currency = issueCurrency(wallet, 1, RandomStringUtils.randomAlphabetic(5), "description of currency for poll", RandomStringUtils.randomAlphabetic(4).toUpperCase(), initialSupply, 100,1);
+                    CreateTransactionResponse currency = issueCurrency(wallet, 1, RandomStringUtils.randomAlphabetic(5), "description of currency for poll", RandomStringUtils.randomAlphabetic(4).toUpperCase(), initialSupply, 100, 1);
                     verifyCreatingTransaction(currency);
                     verifyTransactionInBlock(currency.getTransaction());
                     poll = createPoll(wallet, votingModel, name, plusFinishHeight, currency.getTransaction(), 1, maxRangeValue);

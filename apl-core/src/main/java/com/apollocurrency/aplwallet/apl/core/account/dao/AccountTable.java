@@ -15,6 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.Setter;
 
 import javax.inject.Inject;
@@ -52,7 +54,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public static DbKey newKey(long id){
         return accountDbKeyFactory.newKey(id);
     }
-    
+
     public static DbKey newKey(Account a){
         return accountDbKeyFactory.newKey(a);
     }
@@ -79,7 +81,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public void save(Connection con, Account account) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
             pstmt.setLong(++i, account.getBalanceATM());
@@ -146,6 +151,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
         try(Connection con = dataSource.getConnection();
                 PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
@@ -162,7 +168,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }  
+    }
 
     public long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();

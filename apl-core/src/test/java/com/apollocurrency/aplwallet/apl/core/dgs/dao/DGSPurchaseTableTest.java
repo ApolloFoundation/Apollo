@@ -53,8 +53,7 @@ public class DGSPurchaseTableTest extends VersionedEntityDbTableTest<DGSPurchase
             FullTextConfigImpl.class,
             DGSPurchaseTable.class,
             DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-            GenesisPublicKeyTable.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

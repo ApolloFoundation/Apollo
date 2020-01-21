@@ -20,10 +20,11 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.utils.RuntimeUtils;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -140,8 +141,7 @@ public class ShardService {
                     FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                         Path fileName = p.getFileName();
                         int shardIndex = fileName.toString().indexOf("-shard-");
-                        if ( (fileName.toString().endsWith("h2.db") || fileName.toString().endsWith("trace.db")
-                                || fileName.toString().endsWith("lock.db"))
+                        if ( (fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
                                 && shardIndex != -1) {
                             String idString = fileName.toString().substring(shardIndex + 7);
                             String id = idString.substring(0, idString.indexOf("-"));

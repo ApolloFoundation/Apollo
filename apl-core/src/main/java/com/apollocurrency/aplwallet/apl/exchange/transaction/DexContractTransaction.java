@@ -64,7 +64,7 @@ public class DexContractTransaction extends DEX {
 
         if (attachment.getContractStatus().isStep1()) {
             if (contract != null) {
-                throw new AplException.NotValidException("Contract was created earlier");
+                throw new AplException.NotCurrentlyValidException("Contract was created earlier");
             }
             if (attachment.getEncryptedSecret() != null) {
                 throw new AplException.NotValidException("Encrypted secret should not present at step1");
@@ -79,19 +79,19 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotValidException("Contract step1 can be send only by order creator");
             }
             if (counterOrder.getStatus() != OrderStatus.OPEN) {
-                throw new AplException.NotValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
             }
             if (order.getStatus() != OrderStatus.PENDING) {
-                throw new AplException.NotValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
-        if(attachment.getContractStatus().isStep2()){
+        if(attachment.getContractStatus().isStep2()) {
 
             if (contract == null) {
-                throw new AplException.NotValidException("Don't find contract.");
+                throw new AplException.NotCurrentlyValidException("Don't find contract.");
             }
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_1) {
-                throw new AplException.NotValidException("Incorrect status of contract, expected step1, got " + contract.getContractStatus());
+                throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step1, got " + contract.getContractStatus());
             }
             if (attachment.getEncryptedSecret() == null) {
                 throw new AplException.NotValidException("Encrypted secret should be specified");
@@ -115,19 +115,19 @@ public class DexContractTransaction extends DEX {
                 throw new AplException.NotValidException("Contract step2 can be send only by counterOrder creator");
             }
             if (counterOrder.getStatus() != OrderStatus.OPEN) {
-                throw new AplException.NotValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
             }
             if (order.getStatus() != OrderStatus.PENDING) {
-                throw new AplException.NotValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
+                throw new AplException.NotCurrentlyValidException("Unable to create contract for order in status " + order.getStatus() + ", expected PENDING");
             }
         }
 
         if (attachment.getContractStatus().isStep3()) {
             if (contract == null) {
-                throw new AplException.NotValidException("Don't find contract.");
+                throw new AplException.NotCurrentlyValidException("Don't find contract.");
             }
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_2) {
-                throw new AplException.NotValidException("Incorrect status of contract, expected step2, got " + contract.getContractStatus());
+                throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step2, got " + contract.getContractStatus());
             }
             if (attachment.getEncryptedSecret() != null) {
                 throw new AplException.NotValidException("Encrypted secret should not be specified");
@@ -162,14 +162,6 @@ public class DexContractTransaction extends DEX {
         DexOrder order = dexService.getOrder(attachment.getOrderId());
         DexOrder counterOrder = dexService.getOrder(attachment.getCounterOrderId());
 
-        if (attachment.getContractStatus().isStep2() && counterOrder.getStatus().isOpen()) {
-            order.setStatus(OrderStatus.WAITING_APPROVAL);
-            dexService.saveOrder(order);
-
-            counterOrder.setStatus(OrderStatus.WAITING_APPROVAL);
-            dexService.saveOrder(counterOrder);
-        }
-
         ExchangeContract contract = dexService.getDexContractByOrderAndCounterOrder(attachment.getOrderId(), attachment.getCounterOrderId());
 
         // contract == null it means, that it's a first step.
@@ -182,6 +174,12 @@ public class DexContractTransaction extends DEX {
 
             dexService.saveDexContract(contract);
         } else if (attachment.getContractStatus().isStep2() && contract.getContractStatus().isStep1()) {
+            order.setStatus(OrderStatus.WAITING_APPROVAL);
+            dexService.saveOrder(order);
+
+            counterOrder.setStatus(OrderStatus.WAITING_APPROVAL);
+            dexService.saveOrder(counterOrder);
+
             contract.setEncryptedSecret(attachment.getEncryptedSecret());
             contract.setSecretHash(attachment.getSecretHash());
             contract.setCounterTransferTxId(attachment.getCounterTransferTxId());

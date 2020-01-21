@@ -37,6 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -151,10 +153,14 @@ public final class Asset {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
                 + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest) "
                 + "KEY(id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.assetId);
             pstmt.setLong(++i, this.accountId);

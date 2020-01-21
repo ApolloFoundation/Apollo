@@ -76,7 +76,6 @@ import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.util.task.TaskOrder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -177,11 +176,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     @Override
                     public void truncate() {
                         super.truncate();
-                        clearCache();
                     }
 
                     @Override
-                    protected String defaultSort() {
+                    public String defaultSort() {
                         return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
                     }
 
@@ -401,8 +399,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     .build());
             dispatcher.schedule(Task.builder()
                     .name("ProcessTransactionsToBroadcastWhenConfirmed")
-                    .delay(10000)
-                    .task(this::processTxsToBrodcastWhenConfirmed)
+                    .delay(15000)
+                    .task(this::processTxsToBroadcastWhenConfirmed)
                     .build());
         }
     }
@@ -905,7 +903,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         if (foundAllData) {
                             processed.add(myTransaction);
                         }
-                        dataSource.clearCache();
                         dataSource.commit(false);
                     }
                 }
@@ -921,23 +918,39 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return processed;
     }
 
-    public void processTxsToBrodcastWhenConfirmed() {
+    public void processTxsToBroadcastWhenConfirmed() {
         List<Transaction> txsToDelete = new ArrayList<>();
-        txToBroadcastWhenConfirmed.forEach((tx, uncTx)-> {
-            if (blockchain.hasTransaction(uncTx.getId())) {
-                if (getUnconfirmedTransaction(tx.getId()) == null) {
+        txToBroadcastWhenConfirmed.forEach((tx, uncTx) -> {
+            try {
+                if (uncTx.getExpiration() < timeService.getEpochTime() || tx.getExpiration() < timeService.getEpochTime()) {
+                    LOG.debug("Remove expired tx {}, unctx {}", tx.getId(), uncTx.getId());
                     txsToDelete.add(tx);
-                    if (!blockchain.hasTransaction(tx.getId())) {
+                } else if (!hasTransaction(uncTx)) {
+                    try {
+                        broadcast(uncTx);
+                    } catch (AplException.ValidationException e) {
+                        LOG.debug("Unable to broadcast invalid unctx {}, reason {}", tx.getId(), e.getMessage());
+                        txsToDelete.add(tx);
+                    }
+                } else if (blockchain.hasTransaction(uncTx.getId())) {
+                    if (!hasTransaction(tx)) {
                         try {
                             broadcast(tx);
                         } catch (AplException.ValidationException e) {
-                            LOG.debug("Unable to broadcast tx {}, reason {}", tx.getId(), e.getMessage());
+                            LOG.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
                         }
                     }
+                    txsToDelete.add(tx);
                 }
+            } catch (Throwable e) {
+                LOG.error("Unknown error during broadcasting {}", tx.getId());
             }
         });
         txsToDelete.forEach(txToBroadcastWhenConfirmed::remove);
+    }
+
+    private boolean hasTransaction(Transaction tx) {
+        return getUnconfirmedTransaction(tx.getId()) != null || blockchain.hasTransaction(tx.getId());
     }
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {

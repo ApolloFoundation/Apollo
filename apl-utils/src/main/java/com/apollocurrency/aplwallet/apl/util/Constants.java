@@ -14,19 +14,16 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util;
 
 import java.math.BigInteger;
 
 public final class Constants {
 
-
-    public static final Version VERSION = new Version("1.39.0");
-
+    public static final Version VERSION = new Version("1.41.7");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -46,16 +43,21 @@ public final class Constants {
     public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3;
     public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
     public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_ETH_SYSTEM = -6;
+    public static final int OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST = -7;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST = -8;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED = -9;
+    public static final int OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT = -10;
+    public static final int OFFER_VALIDATE_ERROR_APL_DEPOSIT = -11;
     public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
 
-    public static final int ONE_DAY_SECS=24*3600;
-    
+    public static final int ONE_DAY_SECS = 24 * 3600;
+
     public static final int MIN_TRANSACTION_SIZE = 176;
     public static final int BASE_TARGET_GAMMA = 64;
     public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
-
 
     public static final byte MAX_PHASING_VOTE_TRANSACTIONS = 10;
     public static final byte MAX_PHASING_WHITELIST_SIZE = 10;
@@ -121,7 +123,7 @@ public final class Constants {
     public static final int MAX_MINTING_RATIO = 10000; // per mint units not more than 0.01% of total supply
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51
-    public static final short MAX_SHUFFLING_REGISTRATION_PERIOD = (short)1440 * 7;
+    public static final short MAX_SHUFFLING_REGISTRATION_PERIOD = (short) 1440 * 7;
 
     public static final int MAX_TAGGED_DATA_NAME_LENGTH = 100;
     public static final int MAX_TAGGED_DATA_DESCRIPTION_LENGTH = 1000;
@@ -148,11 +150,14 @@ public final class Constants {
     public static final Version MIN_PROXY_VERSION = new Version(1, 0, 0);
 
     public static final int DEFAULT_PEER_PORT = 47874;
-    public static final int PEER_RECONNECT_ATTMEPT_DELAY=60; //now 1 min, was 600 or 10 min 
-    /**blacklist on 1/10 of this number and forget peer if it is can not be connected such number of times*/
-    public static final int PEER_RECONNECT_ATTMEPTS_MAX=80;
-    public static final int PEER_UPDATE_INTERVAL=1800; //now 30 min, was 3600, one hour
-    
+    public static final int PEER_RECONNECT_ATTMEPT_DELAY = 60; //now 1 min, was 600 or 10 min
+    /**
+     * blacklist on 1/10 of this number and forget peer if it is can not be
+     * connected such number of times
+     */
+    public static final int PEER_RECONNECT_ATTMEPTS_MAX = 80;
+    public static final int PEER_UPDATE_INTERVAL = 1800; //now 30 min, was 3600, one hour
+
     public static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
     public static final String ALLOWED_CURRENCY_CODE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -165,26 +170,36 @@ public final class Constants {
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
 
     //DEX
-
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";
     public static String ETH_CHAIN_GAS_INFO_URL = "https://www.etherchain.org/api/gasPriceOracle";
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
-    //24 h
-    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_1 = 24 * 60 * 60;
-    //24 h TODO CHANGe time
-    public static Integer DEX_TIME_OF_WAITING_TX_WITH_APPROVAL_STEP_2 = 24 * 60 * 60;
-    //minutes
-    public static Integer DEX_OFFER_PROCESSOR_DELAY = 10;
+
+    public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
+    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP = 2 * 60 * 60;
+    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP = 48 * 60 * 60;
+
+    public static final int DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP = 10;
+
+    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MIN_TIME_OF_ATOMIC_SWAP - (DEX_MIN_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
+    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MAX_TIME_OF_ATOMIC_SWAP + (DEX_MAX_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
 
     //24 h
-    public static Integer DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = 24 * 60 * 60;
+    public static final int DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
     //168h
-    public static Integer DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
+    public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
 
-    public static int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
-    public static int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
-    public static int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
+    public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
+    public static final int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
+    public static final int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 
-    private Constants() {} // never
+    public static final int DEX_GRAPH_INTERVAL_MIN = 60;
+    public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
+    public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
+
+    public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
+
+    private Constants() {
+    } // never
 
 }

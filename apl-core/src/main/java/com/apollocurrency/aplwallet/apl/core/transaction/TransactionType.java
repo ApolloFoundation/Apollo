@@ -54,6 +54,7 @@ import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 public abstract class TransactionType {
@@ -353,6 +354,10 @@ public abstract class TransactionType {
             lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
+            //refresh balance in case a debit account is equal to a credit one
+            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())){
+                recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
+            }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);

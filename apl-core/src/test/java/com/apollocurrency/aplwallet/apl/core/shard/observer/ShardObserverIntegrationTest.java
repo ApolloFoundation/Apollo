@@ -47,10 +47,11 @@ public class ShardObserverIntegrationTest {
     void testDoShardByAsyncEvent() {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
-        trimEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(new TrimData(100, 100, 0));
+        trimEvent.select(new AnnotationLiteral<TrimEvent>() {
+        }).fireAsync(new TrimData(100, 100, 0));
         try {
             Thread.sleep(200);
-        } catch (InterruptedException ex) {           
+        } catch (InterruptedException ex) {
         }
         Mockito.verify(heightConfig, times(1)).isShardingEnabled();
     }

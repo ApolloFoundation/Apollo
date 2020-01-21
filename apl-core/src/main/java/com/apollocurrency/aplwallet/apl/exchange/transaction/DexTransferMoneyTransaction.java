@@ -101,7 +101,7 @@ public class DexTransferMoneyTransaction extends DEX {
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         long orderToClose = dexContract.getSender() == sender.getId() ? dexContract.getCounterOrderId() : dexContract.getOrderId(); // close order which was approved
-        dexService.finishExchange(tx.getId(), orderToClose);
+        dexService.closeOrder(orderToClose);
     }
 
     @Override

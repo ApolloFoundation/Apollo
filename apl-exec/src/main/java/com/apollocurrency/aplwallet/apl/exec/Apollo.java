@@ -12,20 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextTrigger;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.endpoint.NodeInfoController;
-import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardEngineImpl;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -94,7 +83,7 @@ public class Apollo {
     private PropertiesHolder propertiesHolder;
     private TaskDispatchManager taskDispatchManager;
     private static AplCoreRuntime aplCoreRuntime;
-    
+
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
@@ -102,14 +91,14 @@ public class Apollo {
         String packageName = "com.apollocurrency.aplwallet.apl";
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
-        }   
+        }
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
             ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
             System.out.println(packageName + " current logger level: " + logger.getLevel()
                     + " New level: " + VALID_LOG_LEVELS[logLevel]);
 
-            logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));        
+            logger.setLevel(Level.toLevel(VALID_LOG_LEVELS[logLevel]));
         // otherwise we want to load usual logback.xml settings
     }
 
@@ -269,29 +258,16 @@ public class Apollo {
 
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
-                .recursiveScanPackages(AplCore.class)
-                .recursiveScanPackages(PropertiesHolder.class)
-                .recursiveScanPackages(TaskDispatchManager.class)
-                .recursiveScanPackages(Updater.class)
-                .recursiveScanPackages(NodeInfoController.class)
-                .recursiveScanPackages(ServerInfoService.class)
-                .recursiveScanPackages(AccountService.class)
-                .recursiveScanPackages(TransactionType.class)
-                .recursiveScanPackages(FullTextTrigger.class)
-                .recursiveScanPackages(BlockchainConfig.class)
-                .recursiveScanPackages(DatabaseManager.class)
-                .recursiveScanPackages(DerivedTablesRegistry.class)
-                .recursiveScanPackages(FullTextConfig.class)
-                .recursiveScanPackages(PeerConverter.class)
-                .recursiveScanPackages(DirProvider.class)
-                .annotatedDiscoveryMode()
+            // do not use recursive scan because it violates the restriction to
+            // deploy one bean for all deployment archives
+            // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
+            // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
 // we already have it in beans.xml in core
-                .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
                 // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
                 // run with ./bin/apl-run-jmx.sh
-                //.devMode() 
+                //.devMode()
                 .build();
         log.debug("Weld CDI container build done");
         // init config holders

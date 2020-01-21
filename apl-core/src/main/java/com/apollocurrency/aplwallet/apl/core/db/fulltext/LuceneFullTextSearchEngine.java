@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.db.fulltext;
 
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
@@ -43,6 +45,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
 

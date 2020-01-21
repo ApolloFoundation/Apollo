@@ -236,6 +236,7 @@ public class Chain {
                 ", prefix='" + prefix + '\'' +
                 ", project='" + project + '\'' +
                 ", genesisLocation='" + genesisLocation + '\'' +
+                ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
                 ", blockchainProperties=" + blockchainProperties +
                 '}';
     }

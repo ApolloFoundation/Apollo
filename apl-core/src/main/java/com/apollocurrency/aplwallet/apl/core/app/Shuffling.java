@@ -20,23 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -68,8 +51,27 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
+
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Shuffling {
     /**
@@ -301,7 +303,7 @@ public final class Shuffling {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    
+
     public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                         .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
@@ -331,8 +333,8 @@ public final class Shuffling {
                     return;
                 }
                 List<Shuffling> shufflings = new ArrayList<>();
-                List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
-                LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
+            List<Shuffling> activeShufflings = getActiveShufflings();//CollectionUtil.toList(getActiveShufflings(0, -1));
+            LOG.trace("Got {} active shufflings at {} in {} ms", activeShufflings.size(), block.getHeight(), System.currentTimeMillis() - startTime);
                 for (Shuffling shuffling : activeShufflings) {
                     if (!shuffling.isFull(block)) {
                         shufflings.add(shuffling);
@@ -353,7 +355,7 @@ public final class Shuffling {
                         shufflingTable.insert(shuffling);
                     }
                 }
-                LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
+            LOG.trace(":accept: Shuffling observer, inserted [{}], cancelled [{}] in time: {} msec", inserted, cancelled, System.currentTimeMillis() - startTime);
             }
         }
 
@@ -416,11 +418,15 @@ public final class Shuffling {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
                 + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
                 + "recipient_public_keys, registrant_count, height, latest) "
                 + "KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             DbUtils.setLongZeroToNull(pstmt, ++i, this.holdingId);
@@ -744,7 +750,7 @@ public final class Shuffling {
         lookupAccountService();
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = AccountService.getId(recipientPublicKey);
-            if (lookupAccountPublickKeyService().setOrVerify(recipientId, recipientPublicKey)) {
+            if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
                 Account account = accountService.addOrGetAccount(recipientId);
                 lookupAccountPublickKeyService().apply(account, recipientPublicKey);
             }
@@ -818,6 +824,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_DONE);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Done = {} , height = {}", Long.toUnsignedString(this.id), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was distributed", Long.toUnsignedString(id));
@@ -879,6 +886,7 @@ public final class Shuffling {
         insert(this);
         listeners.notify(this, Event.SHUFFLING_CANCELLED);
         if (deleteFinished) {
+            LOG.debug("Deleting Shuffling Cancelled = {} , height = {} / {}", Long.toUnsignedString(this.id), block.getHeight(), this.getHeight());
             delete();
         }
         LOG.debug("Shuffling {} was cancelled, blaming account {}", Long.toUnsignedString(id), Long.toUnsignedString(blamedAccountId));

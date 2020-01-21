@@ -55,6 +55,8 @@ import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
@@ -155,7 +157,8 @@ class CsvWriterReaderDerivedTablesTest {
             PhasingPollResultTable.class,
             PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
             PhasingVoteTable.class, PhasingPollTable.class,
-            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
+            TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
+            CsvEscaperImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -177,6 +180,8 @@ class CsvWriterReaderDerivedTablesTest {
     private Blockchain blockchain;
     @Inject
     DerivedTablesRegistry registry;
+    @Inject
+    private CsvEscaper translator;
 
     public CsvWriterReaderDerivedTablesTest() throws Exception {}
 
@@ -241,7 +246,7 @@ class CsvWriterReaderDerivedTablesTest {
             // prepare connection + statement + writer
             try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmt = con.prepareStatement("select * from " + item.toString() + " where db_id BETWEEN ? and  ? limit ?");
-                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames);
+                 CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), excludeColumnNames, translator);
                  ) {
                 csvWriter.setOptions("fieldDelimiter="); // do not put ""
                 // select Min, Max DbId + rows count
@@ -297,10 +302,10 @@ class CsvWriterReaderDerivedTablesTest {
         int importedCount = 0;
         int columnsCount = 0;
         PreparedStatement preparedInsertStatement = null;
-        ValueParser parser = new ValueParserImpl();
+        ValueParser parser = new ValueParserImpl(translator);
 
         // open CSV Reader and db connection
-        try (CsvReader csvReader = new CsvReaderImpl(dataExportDir);
+        try (CsvReader csvReader = new CsvReaderImpl(dataExportDir, translator);
              ResultSet rs = csvReader.read(itemName + CSV_FILE_EXTENSION, null, null);
              Connection con = extension.getDatabaseManager().getDataSource().getConnection()
         ) {
@@ -400,10 +405,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            CsvReader csvReader = new CsvReaderImpl(null);
+            CsvReader csvReader = new CsvReaderImpl(null, translator);
         });
 
-        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir(), translator);
         csvReader.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
@@ -422,10 +427,10 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
 
         assertThrows(NullPointerException.class, () -> {
-            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet());
+            CsvWriter csvWriter = new CsvWriterImpl(null, Collections.emptySet(), translator);
         });
 
-        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet());
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Collections.emptySet(), translator);
         csvWriter.setOptions("fieldDelimiter="); // do not put ""
 
         String tableName = "unknown_table_name";
@@ -436,7 +441,7 @@ class CsvWriterReaderDerivedTablesTest {
     void testAppendWithDefaultParameters() throws SQLException {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
-        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Set.of("DB_ID"));
+        CsvWriter csvWriter = new CsvWriterImpl(dirProvider.getDataExportDir(), Set.of("DB_ID"), translator);
         csvWriter.setOptions("fieldDelimiter=");
 
         CsvExportData csvExportData = csvWriter.append("public_key", extension.getDatabaseManager().getDataSource().getConnection().createStatement().executeQuery("select * from public_key where height<= 8000"), Map.of("account_id", "batman", "public_key", "null"));
@@ -445,7 +450,7 @@ class CsvWriterReaderDerivedTablesTest {
         assertEquals(8, processCount);
         assertEquals(Map.of("PUBLIC_KEY", "null", "ACCOUNT_ID", "batman", "HEIGHT", 8000, "LATEST", Boolean.TRUE, "DB_ID", 8L), csvExportData.getLastRow());
 
-        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir());
+        CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir(), translator);
         ResultSet rs = csvReader.read("public_key", null, null);
         while (rs.next()) {
             Object publicKey = rs.getObject("public_key");
