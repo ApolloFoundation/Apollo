@@ -306,7 +306,7 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId, BigDecimal amountEth) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        return depositedOrderDetails != null && depositedOrderDetails.isCreated() && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().equals(amountEth);
+        return depositedOrderDetails != null && depositedOrderDetails.isCreated() && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().compareTo(amountEth) == 0;
     }
 
     public List<String> getEthUserAddresses(String passphrase, Long accountId) {
