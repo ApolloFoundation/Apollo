@@ -46,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -870,35 +869,6 @@ public class DexOrderProcessor {
                 log.error(e.getMessage(), e);
             }
         }
-    }
-
-    private boolean performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
-        boolean success = true;
-        // refundAndWithdraw + withdraw or just withdraw
-        try {
-            boolean depositExist = dexSmartContractService.isDepositForOrderExist(address, orderId);
-            boolean refundCompleted = true;
-            if (!depositExist) {
-                log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
-                refundCompleted = dexSmartContractService.refundAndWithdraw(swapHash, passphrase, address, accountId, true) != null;
-                if (!refundCompleted) {
-                    log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
-                    success = false;
-                }
-            }
-            if (refundCompleted) {
-                String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, orderId, address);
-                if (StringUtils.isNotBlank(hash)) {
-                    log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), orderId);
-                } else {
-                    success = false;
-                    log.warn("Refund was not finished, unable to withdraw: order - {} ", orderId);
-                }
-            }
-        } catch (AplException.ExecutiveProcessException e) {
-            log.error(e.toString(), e);
-        }
-        return success;
     }
 
 
