@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.observer;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
@@ -11,15 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServic
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -27,7 +21,6 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author al
@@ -58,40 +51,6 @@ public class AccountObserver {
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountLeaseEvent = accountLeaseEvent;
         this.accountLedgerService = accountLedgerService;
-    }
-
-    public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        clearCache();
-    }
-
-    public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
-        clearCache();
-    }
-
-    private void clearCache() {
-        if (accountPublicKeyService.isCacheEnabled()) {
-            accountPublicKeyService.clearCache();
-        }
-    }
-
-    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        log.trace("Catch event (BLOCK_POPPED) {}", block);
-        if (accountPublicKeyService.isCacheEnabled()) {
-            //TODO: make cache injectable
-            accountPublicKeyService.removeFromCache(AccountTable.newKey(block.getGeneratorId()));
-            block.getOrLoadTransactions().forEach(transaction -> {
-                accountPublicKeyService.removeFromCache(AccountTable.newKey(transaction.getSenderId()));
-                if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                    accountPublicKeyService.removeFromCache(AccountTable.newKey(transaction.getRecipientId()));
-                }
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                    ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                    for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        accountPublicKeyService.removeFromCache(AccountTable.newKey(AccountService.getId(publicKey)));
-                    }
-                }
-            });
-        }
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {

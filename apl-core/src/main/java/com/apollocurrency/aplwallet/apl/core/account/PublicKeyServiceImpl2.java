@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
@@ -29,7 +30,7 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 @Slf4j
 @Singleton
-public class PublicKeyServiceImpl implements PublicKeyService {
+public class PublicKeyServiceImpl2 implements PublicKeyService2 {
 
     private final InMemoryCacheManager cacheManager;
     @Getter
@@ -41,7 +42,7 @@ public class PublicKeyServiceImpl implements PublicKeyService {
     private EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
 
     @Inject
-    public PublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
+    public PublicKeyServiceImpl2(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
                                 @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
                                 PropertiesHolder propertiesHolder,
                                 InMemoryCacheManager cacheManager ) {
@@ -148,13 +149,13 @@ public class PublicKeyServiceImpl implements PublicKeyService {
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
+        if (publicKey.getPublicKey() == null) {
+            publicKey.setPublicKey(key);
             publicKey.setHeight(height);
             putInCache(dbKey, publicKey);
             return true;
         }
-        return Arrays.equals(publicKey.publicKey, key);
+        return Arrays.equals(publicKey.getPublicKey(), key);
     }
 
     @Override

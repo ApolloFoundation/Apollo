@@ -118,17 +118,17 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
      */
     @Deprecated
     @Override
-    public final T newEntity(DbKey dbKey) {
+    public T newEntity(DbKey dbKey) {
         return keyFactory.newEntity(dbKey);
     }
 
     @Override
-    public final T get(DbKey dbKey) {
+    public T get(DbKey dbKey) {
         return get(dbKey, true);
     }
 
     @Override
-    public final T get(DbKey dbKey, boolean createDbKey) {
+    public T get(DbKey dbKey, boolean createDbKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
@@ -141,7 +141,7 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     }
 
     @Override
-    public final T get(DbKey dbKey, int height) {
+    public T get(DbKey dbKey, int height) {
         if (height < 0 || doesNotExceed(height)) {
             return get(dbKey);
         }

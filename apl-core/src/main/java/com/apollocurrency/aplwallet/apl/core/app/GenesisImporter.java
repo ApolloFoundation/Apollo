@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
@@ -13,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -27,9 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,7 +81,6 @@ public class GenesisImporter {
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
-    private PublicKeyService publicKeyService;
     private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private AccountTable accountTable;
 
@@ -93,7 +91,6 @@ public class GenesisImporter {
             DatabaseManager databaseManager,
             AplAppStatus aplAppStatus,
             GenesisImporterProducer genesisImporterProducer,
-            PublicKeyService publicKeyService,
             AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
             AccountTable accountTable,
             ApplicationJsonFactory jsonFactory,
@@ -116,7 +113,6 @@ public class GenesisImporter {
                 propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
         this.balanceNumberTotal =
                 propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
-        this.publicKeyService = Objects.requireNonNull(publicKeyService, "publicKeyService is NULL");
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
     }
@@ -129,7 +125,7 @@ public class GenesisImporter {
 
     private void cleanUpGenesisData() {
         log.debug("clean Up Incomplete Genesis data...");
-        publicKeyService.cleanUpPublicKeys();
+        accountPublicKeyService.cleanUpPublicKeys();
         this.accountGuaranteedBalanceTable.truncate();
         this.accountTable.truncate();
     }
@@ -324,7 +320,7 @@ public class GenesisImporter {
                     final byte[] publicKey = Convert.parseHexString(jsonPublicKey);
                     final long id = AccountService.getId(publicKey);
                     log.trace("AccountId = '{}' by publicKey string = '{}'", id, jsonPublicKey);
-                    final Account account = accountService.addGenesisAccount(id, true);
+                    final Account account = accountService.addGenesisAccount(id);
                     accountPublicKeyService.apply(account, publicKey, true);
                     if (count++ % 100 == 0) {
                         dataSource.commit(false);

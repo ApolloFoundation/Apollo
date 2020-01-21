@@ -6,11 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -27,7 +28,7 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
  */
 @Singleton
 public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAsset> {
-    
+
     private static class AccountAssetDbKeyFactory extends LinkKeyFactory<AccountAsset> {
 
         public AccountAssetDbKeyFactory(String idColumnA, String idColumnB) {
@@ -38,9 +39,9 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
         public DbKey newKey(AccountAsset accountAsset) {
             return accountAsset.getDbKey() == null ? newKey(accountAsset.getAccountId(), accountAsset.getAssetId()) : accountAsset.getDbKey();
         }
-    } 
+    }
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory("account_id", "asset_id");
-    
+
     public static DbKey newKey(long idA, long idB){
         return accountAssetDbKeyFactory.newKey(idA,idB);
     }
@@ -56,7 +57,10 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
 
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
-         try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+         try (
+             @DatabaseSpecificDml(DmlMarker.MERGE)
+             final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset " + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest) " + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")
+         ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.getAccountId());
             pstmt.setLong(++i, accountAsset.getAssetId());
@@ -64,7 +68,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             pstmt.setLong(++i, accountAsset.getUnconfirmedQuantityATU());
             pstmt.setInt(++i, accountAsset.getHeight());
             pstmt.executeUpdate();
-        }       
+        }
     }
 
     @Override
@@ -78,7 +82,7 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY quantity DESC, account_id, asset_id ";
     }
 

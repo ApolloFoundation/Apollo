@@ -20,10 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
@@ -48,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
@@ -55,7 +54,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 
 public abstract class TransactionType {
 
@@ -123,10 +121,11 @@ public abstract class TransactionType {
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
-    public static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static AccountService accountService; // = CDI.current().select(AccountServiceImpl.class).get();
-    private static AccountCurrencyService accountCurrencyService; // = CDI.current().select(AccountCurrencyServiceImpl.class).get();
-    private static AccountLeaseService accountLeaseService; // = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    public static  TimeService timeService = CDI.current().select(TimeService.class).get();
+    @Setter
+    private static AccountService accountService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountLeaseService accountLeaseService;
     private static AccountAssetService accountAssetService;
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;

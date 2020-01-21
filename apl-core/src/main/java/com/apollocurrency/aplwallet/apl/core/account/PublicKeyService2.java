@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.account;
 
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 
 import java.util.List;
 
-public interface PublicKeyService {
+public interface PublicKeyService2 {
 
     int getPublicKeysCount();
 

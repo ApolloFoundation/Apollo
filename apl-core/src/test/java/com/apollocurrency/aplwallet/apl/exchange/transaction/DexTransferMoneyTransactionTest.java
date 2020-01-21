@@ -72,6 +72,7 @@ class DexTransferMoneyTransactionTest {
     @BeforeEach
     void setUp() {
         transactionType = new DexTransferMoneyTransaction();
+        transactionType.lookupAccountService();
     }
 
     @Test

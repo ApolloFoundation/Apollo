@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
@@ -15,6 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
@@ -73,7 +73,7 @@ public class BlockApplier {
         //fetch generatorAccount after a possible change in previousGeneratorAccount
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
-        accountService.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
+        accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         generatorAccount.addToForgedBalanceATM(block.getTotalFeeATM() - totalBackFees);
     }
 

@@ -4,25 +4,34 @@
 
 package com.apollocurrency.aplwallet.apl.core.account.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.cache.Cache;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.Arrays;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -32,72 +41,67 @@ import java.util.Arrays;
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     private InMemoryCacheManager cacheManager;
-    private Cache<DbKey, PublicKey> publicKeyCache = null;
+    @Getter
+    private final boolean cacheEnabled;
+    @Getter
+    private Cache<DbKey, PublicKey> publicKeyCache;
 
-    private boolean cacheEnabled = false;
-
-    private PropertiesHolder propertiesHolder;
     private Blockchain blockchain;
-    private PublicKeyTable publicKeyTable;
-    private GenesisPublicKeyTable genesisPublicKeyTable;
+    private EntityDbTableInterface<PublicKey> publicKeyTable;
+    private EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
 
     @Inject
-    public AccountPublicKeyServiceImpl(PropertiesHolder propertiesHolder, Blockchain blockchain, PublicKeyTable publicKeyTable, GenesisPublicKeyTable genesisPublicKeyTable, InMemoryCacheManager cacheManager) {
-        this.propertiesHolder = propertiesHolder;
+    public AccountPublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
+                                       @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
+                                       PropertiesHolder propertiesHolder,
+                                       Blockchain blockchain,
+                                       InMemoryCacheManager cacheManager) {
         this.blockchain = blockchain;
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;
         this.cacheManager = cacheManager;
+        this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }
 
     @PostConstruct
     void init(){
-        if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
+        if (isCacheEnabled()){
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
-            cacheEnabled = true;
+            log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
         }
     }
+    void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+        clearCache();
+    }
+
+    void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
+        clearCache();
+    }
+
+    //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
+    /*
+    void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        if (isCacheEnabled()) {
+            removeFromCache(AccountTable.newKey(block.getGeneratorId()));
+            block.getOrLoadTransactions().forEach(transaction -> {
+                removeFromCache(AccountTable.newKey(transaction.getSenderId()));
+                if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
+                    removeFromCache(AccountTable.newKey(transaction.getRecipientId()));
+                }
+                if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
+                    ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
+                    for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
+                        removeFromCache(AccountTable.newKey(Account.getId(publicKey)));
+                    }
+                }
+            });
+        }
+    }
+    */
 
     @Override
-    public boolean isCacheEnabled() {
-        return cacheEnabled;
-    }
-
-    @Override
-    public void clearCache() {
-        if ( isCacheEnabled()) {
-            publicKeyCache.invalidateAll();
-        }
-    }
-
-    @Override
-    public void removeFromCache(DbKey key) {
-        if ( isCacheEnabled()) {
-            publicKeyCache.invalidate(key);
-        }
-    }
-
-    private void putInCache(DbKey key, PublicKey value){
-        if (isCacheEnabled()){
-            publicKeyCache.put(key, value);
-        }
-    }
-
-    private void updateInCache(DbKey dbKey) {
-        if ( isCacheEnabled()) {
-            PublicKey key = publicKeyTable.get(dbKey, true);
-            if (key != null) {
-                publicKeyCache.put(dbKey, key);
-            }
-        }
-    }
-
-    private PublicKey getFromCache(DbKey key){
-        if (isCacheEnabled()){
-            return publicKeyCache.getIfPresent(key);
-        }else{
-            return null;
-        }
+    public PublicKey newEntity(DbKey dbKey){
+        return publicKeyTable.newEntity(dbKey);
     }
 
     @Override
@@ -106,8 +110,18 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
+    public int getPublicKeysCount(){
+        return publicKeyTable.getCount();
+    }
+
+    @Override
+    public int getGenesisPublicKeysCount(){
+        return genesisPublicKeyTable.getCount();
+    }
+
+    @Override
     public byte[] getPublicKey(long id) {
-        DbKey dbKey = publicKeyTable.newKey(id);
+        DbKey dbKey = AccountTable.newKey(id);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null || publicKey.getPublicKey() == null) {
             return null;
@@ -130,12 +144,36 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         return publicKey;
     }
 
-    private PublicKey getPublicKey(DbKey dbKey, boolean cache) {
+    private PublicKey getPublicKey2(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
             publicKey = genesisPublicKeyTable.get(dbKey, cache);
         }
         return publicKey;
+    }
+
+    @Override
+    public PublicKey loadPublicKey(DbKey dbKey) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, false);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, false);
+        }
+        return publicKey;
+    }
+
+    @Override
+    public PublicKey loadPublicKey(DbKey dbKey, int height) {
+        PublicKey publicKey = publicKeyTable.get(dbKey, height);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, height);
+        }
+        return publicKey;
+    }
+
+    @Override
+    public List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis) {
+        EntityDbTableInterface<PublicKey> table = isGenesis ? genesisPublicKeyTable : publicKeyTable;
+        return toList(table.getAll(from, to));
     }
 
     @Override
@@ -183,15 +221,20 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public boolean setOrVerify(long accountId, byte[] key) {
-        DbKey dbKey = publicKeyTable.newKey(accountId);
+    public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
+        DbKey dbKey = AccountTable.newKey(accountId);
+        return setOrVerifyPublicKey(dbKey, key, blockchain.getHeight());
+    }
+
+    @Override
+    public boolean setOrVerifyPublicKey(DbKey dbKey, byte[] key, int height) {
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null) {
             publicKey = publicKeyTable.newEntity(dbKey);
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
-            publicKey.setHeight(blockchain.getHeight());
+            publicKey.setHeight(height);
             putInCache(dbKey, publicKey);
             return true;
         }
@@ -211,34 +254,92 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
-            if (isGenesis) {
-                genesisPublicKeyTable.insert(publicKey);
-            } else {
-                publicKeyTable.insert(publicKey);
-            }
-            updateInCache(account.getDbKey());
+            insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
-            PublicKey dbPublicKey = getPublicKey(account.getDbKey(), false);
+            PublicKey dbPublicKey = loadPublicKey(account.getDbKey());
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
-                publicKeyTable.insert(publicKey);
-                updateInCache(account.getDbKey());
+                insertPublicKey(publicKey, isGenesis);
             }
-        } else {
-            putInCache(account.getDbKey(), publicKey);
         }
         account.setPublicKey(publicKey);
     }
 
     @Override
-    public PublicKey insertNewPublicKey(DbKey dbKey, boolean isGenesis) {
-        EntityDbTable<PublicKey> table = isGenesis ? genesisPublicKeyTable: publicKeyTable;
-        PublicKey publicKey = table.newEntity(dbKey);
-        table.insert(publicKey);
-        if ( isCacheEnabled()) {
-            publicKeyCache.put(dbKey, table.get(dbKey, true));
+    public PublicKey insertNewPublicKey(DbKey dbKey) {
+        PublicKey publicKey = publicKeyTable.newEntity(dbKey);
+        publicKeyTable.insert(publicKey);
+        return publicKey;
+    }
+
+    @Override
+    public PublicKey insertGenesisPublicKey(DbKey dbKey) {
+        PublicKey publicKey = genesisPublicKeyTable.newEntity(dbKey);
+        genesisPublicKeyTable.insert(publicKey);
+        return publicKey;
+    }
+
+    @Override
+    public PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis) {
+        if(isGenesis){
+            genesisPublicKeyTable.insert(publicKey);
+        }else{
+            publicKeyTable.insert(publicKey);
         }
         return publicKey;
+    }
+
+    public void cleanUpPublicKeysInMemory() {
+        clearCache();
+    }
+
+    public void cleanUpPublicKeys() {
+        publicKeyTable.truncate();
+        genesisPublicKeyTable.truncate();
+    }
+
+    private boolean isCacheEnabled() {
+        return cacheEnabled;
+    }
+
+    private void clearCache() {
+        if ( isCacheEnabled()) {
+            publicKeyCache.invalidateAll();
+        }
+    }
+
+    private void removeFromCache(DbKey key) {
+        if ( isCacheEnabled()) {
+            log.trace("--cache-- remove dbKey={}", key);
+            publicKeyCache.invalidate(key);
+        }
+    }
+
+    private PublicKey getFromCache(DbKey key){
+        if (isCacheEnabled()){
+            PublicKey pkey = publicKeyCache.getIfPresent(key);
+            log.trace("--cache-- get dbKey={}, from cache pkey={}", key, pkey);
+            return pkey;
+        }else{
+            return null;
+        }
+    }
+
+    private void refreshInCache(DbKey dbKey) {
+        if ( isCacheEnabled()) {
+            PublicKey publicKey = loadPublicKey(dbKey);
+            if (publicKey != null) {
+                log.trace("--cache-- refresh dbKey={} height={}", dbKey, publicKey.getHeight());
+                publicKeyCache.put(dbKey, publicKey);
+            }
+        }
+    }
+
+    private void putInCache(DbKey key, PublicKey value){
+        if (isCacheEnabled()){
+            log.trace("--cache-- put  dbKey={} height={}", key, value.getHeight());
+            publicKeyCache.put(key, value);
+        }
     }
 }

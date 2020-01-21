@@ -151,8 +151,8 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
         try(Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
                 PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
                                 " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {

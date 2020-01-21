@@ -22,10 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -60,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -103,7 +101,7 @@ public final class AplCore {
     private TaskDispatchManager taskDispatchManager;
     @Inject
     @Setter
-    private PublicKeyService publicKeyService;
+    private AccountPublicKeyService accountPublicKeyService;
     @Inject @Setter
     private InMemoryCacheManager cacheManager;
 
@@ -201,20 +199,17 @@ public final class AplCore {
                 //try to start API as early as possible
                 apiServer = CDI.current().select(API.class).get();
                 apiServer.start();
-
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.0, "API initialization done");
 
 
-//                CDI.current().select(NtpTime.class).get().start();
-                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization");
                 transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
                 transportInteractionService.start();
+                aplAppStatus.durableTaskUpdate(initCoreTaskID,  5.5, "Transport control service initialization done");
 
                 AplCoreRuntime.logSystemProperties();
                 Thread secureRandomInitThread = initSecureRandom();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  6.0, "Database initialization");
 
-//                DbProperties dbProperties = CDI.current().select(DbProperties.class).get();
                 databaseManager = CDI.current().select(DatabaseManager.class).get();
                 databaseManager.getDataSource();
                 CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
@@ -244,19 +239,12 @@ public final class AplCore {
                 TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-                blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
-                GlobalSync sync = CDI.current().select(GlobalSync.class).get();
                 peers.init();
                 transactionProcessor.init();
-                //Account initialization
-                AccountTable accountTable = CDI.current().select(AccountTable.class).get();
-                AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = CDI.current().select(AccountGuaranteedBalanceTable.class).get();
-                Account.init(databaseManager, blockchainProcessor, blockchainConfig, blockchain, sync, accountTable, accountGuaranteedBalanceTable, publicKeyService);
                 GenesisAccounts.init();
                 AccountRestrictions.init();
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
-                AccountLedger.init(databaseManager);
                 Alias.init();
                 Asset.init();
                 Order.init();
