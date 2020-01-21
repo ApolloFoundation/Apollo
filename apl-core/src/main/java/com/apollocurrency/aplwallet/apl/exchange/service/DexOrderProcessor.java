@@ -35,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
@@ -46,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -65,6 +65,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,7 @@ public class DexOrderProcessor {
     private static final String ETH_SWAP_S1_DETAILS_FORMAT = "secretHash:%s;encryptedSecret:%s";
     private static final String ETH_SWAP_S2_DETAILS_FORMAT = "secretHash:%s";
     private static final int ORDERS_SELECT_SIZE = 30;
+    private static final int CONTRACT_FETCH_SIZE = 50;
     public static final int DEFAULT_DEX_OFFER_PROCESSOR_DELAY = 3 * 60; // 3 min in seconds
     public static final int MIN_DEX_OFFER_PROCESSOR_DELAY = 15; // 15 sec
 
@@ -116,6 +118,7 @@ public class DexOrderProcessor {
 
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
+    private final Set<String> expiredSwaps = ConcurrentHashMap.newKeySet();
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -826,7 +829,7 @@ public class DexOrderProcessor {
                     long offset = 0;
                     EthDepositsWithOffset withOffset;
                     do  {
-                        withOffset = dexService.getUserActiveDeposits(address, offset, ORDERS_SELECT_SIZE);
+                        withOffset = dexService.getUserActiveDeposits(address, offset, CONTRACT_FETCH_SIZE);
                         List<UserEthDepositInfo> deposits = withOffset.getDeposits();
                         offset = withOffset.getOffset();
                         for (UserEthDepositInfo deposit : deposits) {
@@ -834,7 +837,7 @@ public class DexOrderProcessor {
                             if (order == null) {
                                 long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();
 
-                                if (timeDiff > Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) {
+                                if (timeDiff > Constants.DEX_MAX_ETH_ORPHAN_DEPOSIT_LIFETIME) {
                                     try {
                                         dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
                                     } catch (AplException.ExecutiveProcessException e) {
@@ -843,7 +846,7 @@ public class DexOrderProcessor {
                                 }
                             }
                         }
-                    } while (withOffset.getDeposits().size() == ORDERS_SELECT_SIZE);
+                    } while (withOffset.getDeposits().size() == CONTRACT_FETCH_SIZE);
                 } catch (AplException.ExecutiveProcessException e) {
                     log.error(e.getMessage(), e);
                 }
@@ -860,15 +863,84 @@ public class DexOrderProcessor {
 
         for (String address : addresses) {
             try {
-                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
-                for (ExpiredSwap expiredSwap : expiredSwaps) {
-                    dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
-                }
+                long offset = 0;
+                List<UserEthDepositInfo> deposits;
+                do {
+                    EthDepositsWithOffset withOffset = dexSmartContractService.getUserFilledOrders(address, offset, CONTRACT_FETCH_SIZE);
+                    deposits = withOffset.getDeposits();
+                    offset = withOffset.getOffset();
+
+                    for (UserEthDepositInfo deposit : deposits) {
+                        Long orderId = deposit.getOrderId();
+                        List<ExchangeContract> contracts = dexService.getContractsByAccountOrderFromStatus(accountId, orderId, (byte) 1); // do not check contracts without atomic swap hash
+
+                        for (ExchangeContract contract : contracts) {
+                            byte[] swapHash = contract.getSecretHash();
+                            if (swapHash == null) { // swap hash may be not exist for STEP4 contracts (e.i. STEP4 contract was an expired 'STEP1' contract earlier)
+                                continue;
+                            }
+                            SwapDataInfo swapData = dexSmartContractService.getSwapData(swapHash);
+                            if (swapData.getTimeDeadLine() == 0) { // eth swap is not exists (all fields are empty or zero)
+                                continue;
+                            }
+                            Long timeDeadLine = swapData.getTimeDeadLine();
+                            if (timeDeadLine + SWAP_EXPIRATION_OFFSET < timeService.systemTime()) {
+                                String swapHashHex = Convert.toHexString(swapHash);
+                                if (!expiredSwaps.contains(swapHashHex)) { // skip swaps under processing
+                                    expiredSwaps.add(swapHashHex);
+                                    CompletableFuture.supplyAsync(() -> performFullRefund(swapData.getSecretHash(), passphrase, address, accountId, orderId, contract.getId()), backgroundExecutor)
+                                        .handle((r, e) -> {
+                                            expiredSwaps.remove(swapHashHex);
+                                            if (r != null) {
+                                                log.debug("Swap {} have got refunding status {}", Convert.toHexString(swapData.getSecretHash()), r);
+                                            }
+                                            if (e != null) {
+                                                log.error("Unknown error occurred during refundAndWithdraw", e);
+                                            }
+                                            return r;
+                                        });
+                                } else {
+                                    log.debug("Swap {} is processing now ", swapHashHex);
+                                }
+                            }
+                        }
+                    }
+                } while (deposits.size() == CONTRACT_FETCH_SIZE);
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.getMessage(), e);
             }
         }
     }
+
+    private boolean performFullRefund(byte[] swapHash, String passphrase, String address, long accountId, long orderId, long contractId) {
+        boolean success = true;
+        // refundAndWithdraw + withdraw or just withdraw
+        try {
+            boolean depositExist = dexSmartContractService.isDepositForOrderExist(address, orderId);
+            boolean refundCompleted = true;
+            if (!depositExist) {
+                log.debug("Refund initiated for order {}, contract {}", orderId, contractId);
+                refundCompleted = dexSmartContractService.refundAndWithdraw(swapHash, passphrase, address, accountId, true) != null;
+                if (!refundCompleted) {
+                    log.warn("Unable to send refund tx for order {}, contract {}", orderId, contractId);
+                    success = false;
+                }
+            }
+            if (refundCompleted) {
+                String hash = dexService.refundEthPaxFrozenMoney(passphrase, accountId, orderId, address);
+                if (StringUtils.isNotBlank(hash)) {
+                    log.debug("Finished refund for atomic swap {} , order - {}", Convert.toHexString(swapHash), orderId);
+                } else {
+                    success = false;
+                    log.warn("Refund was not finished, unable to withdraw: order - {} ", orderId);
+                }
+            }
+        } catch (AplException.ExecutiveProcessException e) {
+            log.error(e.toString(), e);
+        }
+        return success;
+    }
+
 
     public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
         rollbackCachedOrderDbIds(block.getHeight());
