@@ -23,7 +23,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.41.5");
+    public static final Version VERSION = new Version("1.41.7");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -43,6 +43,12 @@ public final class Constants {
     public static final int OFFER_VALIDATE_ERROR_ETH_COMMISSION = -3;
     public static final int OFFER_VALIDATE_ERROR_ETH_DEPOSIT = -4;
     public static final int OFFER_VALIDATE_ERROR_IN_PARAMETER = -5;
+    public static final int OFFER_VALIDATE_ERROR_ETH_SYSTEM = -6;
+    public static final int OFFER_VALIDATE_ERROR_ATOMIC_SWAP_IS_NOT_EXIST = -7;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_IS_NOT_EXIST = -8;
+    public static final int OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED = -9;
+    public static final int OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT = -10;
+    public static final int OFFER_VALIDATE_ERROR_APL_DEPOSIT = -11;
     public static final int OFFER_VALIDATE_ERROR_UNKNOWN = -99;
 
     public static final int ONE_DAY_SECS = 24 * 3600;
@@ -186,6 +192,10 @@ public final class Constants {
     public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
     public static final int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
     public static final int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
+
+    public static final int DEX_GRAPH_INTERVAL_MIN = 60;
+    public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
+    public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
 
     public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
 

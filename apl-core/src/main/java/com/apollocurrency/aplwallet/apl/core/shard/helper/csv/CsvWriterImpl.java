@@ -11,11 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -37,9 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -58,8 +52,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      * Extends H2 ARRAY SQL type by providing a proper precision and scale
      * as per Java type.
      */
-    private static Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
-    private static final String DB_ARRAY_FILE_NAME = "db_arrays.csv";
+    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
 
     public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
         super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL.");
@@ -71,26 +64,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
             }
         }
-        log.debug("CwrWriterImpl init ARRAY_COLUMN_INDEX...");
-        if (ARRAY_COLUMN_INDEX != null && ARRAY_COLUMN_INDEX.size() > 0) {
-            log.debug("CwrWriterImpl postConstruct = [{}]", ARRAY_COLUMN_INDEX.size());
-            return;
-        }
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(DB_ARRAY_FILE_NAME);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in))
-        ) {
-            Stream<String> stream = reader.lines();
-            ARRAY_COLUMN_INDEX = stream
-                .map(CsvWriterImpl::getArrayColumn)
-                .collect(Collectors.toUnmodifiableMap(Function.identity(), Function.identity()));
-
-        } catch (IOException e) {
-            String error = String.format("Cannot load %s from classpath resources", DB_ARRAY_FILE_NAME);
-            log.error("Read resource '{}'", DB_ARRAY_FILE_NAME, e);
-            throw new IllegalStateException( error );
-        }
     }
-
 
     /**
      * {@inheritDoc}
@@ -334,23 +308,47 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         }
     }
 
-    private static ArrayColumn getArrayColumn(final String line) {
-        final String[] values = line.split(",");
-        final int valuesNumber = 4;
-        if (values.length != valuesNumber) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "%d values describing H2 arrays are supposed to be here",
-                            valuesNumber
-                    )
-            );
-        }
-        return ArrayColumn.builder()
-                .tableName(values[0])
-                .columnName(values[1])
-                .precision(Integer.parseInt(values[2]))
-                .scale(Integer.parseInt(values[3]))
-                .build();
+    private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
+        ArrayColumn arrayColumn1 =
+            new ArrayColumn("ACCOUNT_CONTROL_PHASING", "WHITELIST", 19, 0);
+        ArrayColumn arrayColumn2 =
+            new ArrayColumn("GOODS", "PARSED_TAGS", 2147483647, 0);
+        ArrayColumn arrayColumn3 =
+            new ArrayColumn("POLL", "OPTIONS", 2147483647, 0);
+        ArrayColumn arrayColumn4 =
+            new ArrayColumn("SHARD", "BLOCK_TIMEOUTS", 10, 0);
+        ArrayColumn arrayColumn5 =
+            new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
+        ArrayColumn arrayColumn6 =
+            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS" ,10, 0);
+        ArrayColumn arrayColumn7 =
+            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+        ArrayColumn arrayColumn8 =
+            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+        ArrayColumn arrayColumn9 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+        ArrayColumn arrayColumn10 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+        ArrayColumn arrayColumn11 =
+            new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
+
+        return Map.ofEntries(
+            Map.entry(arrayColumn1, arrayColumn1),
+            Map.entry(arrayColumn2, arrayColumn2),
+            Map.entry(arrayColumn3, arrayColumn3),
+            Map.entry(arrayColumn4, arrayColumn4),
+            Map.entry(arrayColumn5, arrayColumn5),
+            Map.entry(arrayColumn6, arrayColumn6),
+            Map.entry(arrayColumn7, arrayColumn7),
+            Map.entry(arrayColumn8, arrayColumn8),
+            Map.entry(arrayColumn9, arrayColumn9),
+            Map.entry(arrayColumn10, arrayColumn10),
+            Map.entry(arrayColumn11, arrayColumn11)
+        );
+    }
+
+    static {
+        ARRAY_COLUMN_INDEX = getArrayColumnIndex();
     }
 
     /**
@@ -388,18 +386,18 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
     private ArrayColumn getArrayColumn(String tableName, String columnName) {
         return Optional.ofNullable(
-                ARRAY_COLUMN_INDEX.get(
-                        ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
-                )
-        ).orElseThrow(
-                () -> new IllegalStateException(
-                        String.format(
-                                "Cannot find tableName: %s and columnName: %s in the file: %s",
-                                tableName,
-                                columnName,
-                                DB_ARRAY_FILE_NAME
-                        )
-                )
+            ARRAY_COLUMN_INDEX.get(
+                ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
+            )
+        ).orElseThrow(() -> {
+                final String message = String.format(
+                    "Cannot find tableName: %s and columnName: %s.",
+                    tableName,
+                    columnName
+                );
+                log.error(message);
+                return new IllegalStateException(message);
+            }
         );
     }
 
