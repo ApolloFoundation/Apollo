@@ -247,6 +247,7 @@ public class DexContract extends Contract {
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
+                }, new TypeReference<Uint256>() {
                 }));
         return new RemoteCall<>(
             () -> {
@@ -266,6 +267,7 @@ public class DexContract extends Contract {
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
+                }, new TypeReference<Uint256>() {
                 }));
         return new RemoteCall<>(
             () -> {
