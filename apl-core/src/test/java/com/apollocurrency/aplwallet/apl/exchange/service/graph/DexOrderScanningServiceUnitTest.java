@@ -34,8 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.apl;
-import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.eCandlestick;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.dec;
+import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.eCandlestick;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.eOrder;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.pCandlestick;
 import static com.apollocurrency.aplwallet.apl.exchange.service.graph.CandlestickTestUtil.pOrder;
@@ -206,7 +206,7 @@ class DexOrderScanningServiceUnitTest {
     private static class InMemoryOrderDao implements DexOrderDao {
         List<DexOrder> orders = Collections.synchronizedList(new ArrayList<>());
         @Override
-        public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
+        public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest, String sortBy, String sort) {
             throw new UnsupportedOperationException();
         }
 

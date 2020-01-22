@@ -28,10 +28,12 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -651,6 +653,7 @@ public class DexOrderProcessor {
         DexOrderDBRequest dexOrderDBRequest = new DexOrderDBRequest();
         dexOrderDBRequest.setAccountId(accountId);
         dexOrderDBRequest.setStatus(OrderStatus.WAITING_APPROVAL);
+
         List<DexOrder> outComeOrders = dexService.getOrders(dexOrderDBRequest);
 
         for (DexOrder outcomeOrder : outComeOrders) {
@@ -751,6 +754,8 @@ public class DexOrderProcessor {
                         .status(OrderStatus.CANCEL)
                         .type(OrderType.BUY.ordinal())
                         .limit(ORDERS_SELECT_SIZE)
+                    .sortBy(DexOrderSortBy.HEIGHT)
+                    .sortOrder(DBSortOrder.ASC)
                         .build());
                 for (DexOrder order : orders) {
                     fromDbId = order.getDbId();
@@ -791,6 +796,8 @@ public class DexOrderProcessor {
                         .status(OrderStatus.EXPIRED)
                         .type(OrderType.BUY.ordinal())
                         .limit(ORDERS_SELECT_SIZE)
+                    .sortBy(DexOrderSortBy.HEIGHT)
+                    .sortOrder(DBSortOrder.ASC)
                         .build());
                 for (DexOrder order : orders) {
                     fromDbId = order.getDbId();

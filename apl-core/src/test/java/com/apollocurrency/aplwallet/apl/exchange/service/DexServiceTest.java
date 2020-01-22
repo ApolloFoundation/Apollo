@@ -17,9 +17,11 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -178,7 +180,7 @@ class DexServiceTest {
         DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
         DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
         DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request);
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
 
         List<DexOrderWithFreezing> ordersWithFreezing = dexService.getOrdersWithFreezing(request);
@@ -189,9 +191,9 @@ class DexServiceTest {
     @Test
     void testGetOrdersWithFrozenMoney() {
         DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(true).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
         DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(true).build();
-        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2);
+        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
         doReturn(new OrderFreezing(6L, true)).when(cache).getUnchecked(6L);
@@ -205,11 +207,11 @@ class DexServiceTest {
     @Test
     void testGetOrdersWithoutFrozenMoney() {
         DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
         DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2);
+        doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
         DexOrderDBRequest request3 = DexOrderDBRequest.builder().offset(5).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order)).when(dexOrderDao).getOrders(request3);
+        doReturn(List.of(order)).when(dexOrderDao).getOrders(request3, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
 
         doReturn(new OrderFreezing(2L, true)).when(cache).getUnchecked(2L);
         doReturn(new OrderFreezing(6L, true)).when(cache).getUnchecked(6L);
@@ -223,9 +225,9 @@ class DexServiceTest {
     @Test
     void testGetOrdersWithoutOffset() {
         DexOrderDBRequest request1 = DexOrderDBRequest.builder().limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1);
+        doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
         DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(2).limit(2).hasFrozenMoney(false).build();
-        doReturn(List.of()).when(dexOrderDao).getOrders(request2);
+        doReturn(List.of()).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE.name(), DBSortOrder.DESC.name());
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
 

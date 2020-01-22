@@ -38,11 +38,11 @@ public interface DexOrderDao {
             "AND (:status is NULL OR offer.status = :status) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
-            "ORDER BY offer.pair_rate DESC " +
+        "ORDER BY <sortBy> <sortOrder> " +
             "OFFSET :offset LIMIT :limit"
     )
     @RegisterRowMapper(DexOrderMapper.class)
-    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest);
+    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest, @Define("sortBy") String sortBy, @Define("sortOrder") String sortOrder);
 
     @AllowUnusedBindings
     @Transactional(readOnly = true)
