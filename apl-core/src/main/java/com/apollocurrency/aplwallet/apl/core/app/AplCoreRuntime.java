@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2018 Apollo Foundation
  */
@@ -50,7 +49,7 @@ public class AplCoreRuntime {
     private final DatabaseManager databaseManager;
     private final AplAppStatus aplAppStatus;
     private final PeersService peers;
-    //TODO:  check and debug minting    
+    //TODO:  check and debug minting
     private MintWorker mintworker;
     private Thread mintworkerThread;
     public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds

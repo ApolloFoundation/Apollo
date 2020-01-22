@@ -115,7 +115,7 @@ public class ReferencedTransactionServiceTest {
     }
     @Test
     void testHasNotAllReferencedTransactionsWhenTransactionHeightIsLessThanHeightOfReferencedTransactions() {
-        TransactionTestData td = new TransactionTestData();        
+        TransactionTestData td = new TransactionTestData();
         doReturn(20_000).when(config).getReferencedTransactionHeightSpan();
         boolean hasAll = service.hasAllReferencedTransactions(td.TRANSACTION_11, td.TRANSACTION_11.getHeight());
 

@@ -487,7 +487,7 @@ public final class BlockImpl implements Block {
             transaction.getAppendages();
         }
     }
-    
+
     private void calculateBaseTarget(Block previousBlock) {
         long prevBaseTarget = previousBlock.getBaseTarget();
         int blockchainHeight = previousBlock.getHeight();

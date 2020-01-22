@@ -83,4 +83,3 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
         return get(KEY_FACTORY.newKey(purchaseId));
     }
 }
-

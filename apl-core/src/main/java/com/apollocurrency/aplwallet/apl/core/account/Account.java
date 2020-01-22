@@ -14,10 +14,9 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.core.account;
 
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
@@ -113,7 +112,6 @@ public class Account {
 
     private static Cache<DbKey, PublicKey> publicKeyCache = null;
 
-
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
     private static final Listeners<AccountCurrency, Event> currencyListeners = new Listeners<>();
@@ -132,15 +130,15 @@ public class Account {
     Set<ControlType> controls;
 
     public static void init(DatabaseManager databaseManagerParam,
-                            PropertiesHolder propertiesHolder,
-                            BlockchainProcessor blockchainProcessorParam,
-                            BlockchainConfig blockchainConfigParam,
-                            Blockchain blockchainParam,
-                            GlobalSync globalSync,
-                            PublicKeyTable pkTable,
-                            AccountTable accTable,
-                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-                            Cache<DbKey, PublicKey> cache
+            PropertiesHolder propertiesHolder,
+            BlockchainProcessor blockchainProcessorParam,
+            BlockchainConfig blockchainConfigParam,
+            Blockchain blockchainParam,
+            GlobalSync globalSync,
+            PublicKeyTable pkTable,
+            AccountTable accTable,
+            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
+            Cache<DbKey, PublicKey> cache
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
@@ -161,7 +159,6 @@ public class Account {
         publicKeyCache = cache;
         //}
     }
-
 
     @Singleton
     @Slf4j
@@ -203,7 +200,7 @@ public class Account {
             log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
             List<AccountLease> changingLeases = new ArrayList<>();
-            try (DbIterator<AccountLease> leases =accountLeaseTable.getLeaseChangingAccounts(height)) {
+            try (DbIterator<AccountLease> leases = accountLeaseTable.getLeaseChangingAccounts(height)) {
                 while (leases.hasNext()) {
                     changingLeases.add(leases.next());
                 }
@@ -220,7 +217,7 @@ public class Account {
                         lease.currentLeasingHeightFrom = 0;
                         lease.currentLeasingHeightTo = 0;
                         lease.currentLesseeId = 0;
-                       accountLeaseTable.delete(lease);
+                        accountLeaseTable.delete(lease);
                     } else {
                         lease.currentLeasingHeightFrom = lease.nextLeasingHeightFrom;
                         lease.currentLeasingHeightTo = lease.nextLeasingHeightTo;
@@ -228,7 +225,7 @@ public class Account {
                         lease.nextLeasingHeightFrom = 0;
                         lease.nextLeasingHeightTo = 0;
                         lease.nextLesseeId = 0;
-                       accountLeaseTable.insert(lease);
+                        accountLeaseTable.insert(lease);
                         if (height == lease.currentLeasingHeightFrom) {
                             lessor.activeLesseeId = lease.currentLesseeId;
                             leaseListeners.notify(lease, Event.LEASE_STARTED);
@@ -240,7 +237,6 @@ public class Account {
             log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
-
 
     public Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
@@ -343,10 +339,9 @@ public class Account {
 
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
+        try (Connection con = dataSource.getConnection()) {
             return AccountTable.getTotalAmountOnTopAccounts(con, numberOfTopAccounts);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -355,31 +350,28 @@ public class Account {
         return getTotalAmountOnTopAccounts(100);
     }
 
-
     public static long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
+        try (Connection con = dataSource.getConnection()) {
             return AccountTable.getTotalNumberOfAccounts(con);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    public  static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
+
+    public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
         try {
             return accountTable.getTopHolders(con, numberOfTopAccounts);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     public static long getTotalSupply() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try(Connection con = dataSource.getConnection()) {
+        try (Connection con = dataSource.getConnection()) {
             return AccountTable.getTotalSupply(con);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -605,8 +597,7 @@ public class Account {
                 effectiveBalanceATM += getGuaranteedBalanceATM(blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
             return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
-        }
-        finally {
+        } finally {
             if (lock) {
                 sync.readUnlock();
             }
@@ -629,11 +620,10 @@ public class Account {
         int blockchainHeight = blockchain.getHeight();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             @DatabaseSpecificDml(DmlMarker.TEMP_TABLE_USE)
-             PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
-                     + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
-                     + (height < blockchainHeight ? " AND height <= ? " : "")
-                     + " GROUP BY account_id ORDER BY account_id")) {
+                @DatabaseSpecificDml(DmlMarker.TEMP_TABLE_USE) PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
+                        + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
+                        + (height < blockchainHeight ? " AND height <= ? " : "")
+                        + " GROUP BY account_id ORDER BY account_id")) {
             pstmt.setObject(1, lessorIds);
             pstmt.setInt(2, height - blockchainConfig.getGuaranteedBalanceConfirmations());
             if (height < blockchainHeight) {
@@ -656,8 +646,7 @@ public class Account {
                 total += balances[i++];
             }
             return total;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -687,8 +676,8 @@ public class Account {
             }
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
-                         + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
+                    PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
+                            + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
                 pstmt.setLong(1, this.id);
                 pstmt.setInt(2, height);
                 pstmt.setInt(3, currentHeight);
@@ -698,12 +687,10 @@ public class Account {
                     }
                     return Math.max(Math.subtractExact(balanceATM, rs.getLong("additions")), 0);
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
-        }
-        finally {
+        } finally {
             sync.readUnlock();
         }
     }
@@ -786,7 +773,7 @@ public class Account {
 
     public void leaseEffectiveBalance(long lesseeId, int period) {
         int height = blockchain.getHeight();
-        AccountLease accountLease =accountLeaseTable.get(AccountTable.newKey(this));
+        AccountLease accountLease = accountLeaseTable.get(AccountTable.newKey(this));
         int leasingDelay = blockchainConfig.getLeasingDelay();
         if (accountLease == null) {
             accountLease = new AccountLease(id,
@@ -805,7 +792,7 @@ public class Account {
             accountLease.nextLeasingHeightTo = accountLease.nextLeasingHeightFrom + period;
             accountLease.nextLesseeId = lesseeId;
         }
-       accountLeaseTable.insert(accountLease);
+        accountLeaseTable.insert(accountLease);
         leaseListeners.notify(accountLease, Event.LEASE_SCHEDULED);
     }
 
@@ -842,7 +829,7 @@ public class Account {
         propertyListeners.notify(accountProperty, Event.SET_PROPERTY);
     }
 
-   public  void deleteProperty(long propertyId) {
+    public void deleteProperty(long propertyId) {
         AccountProperty accountProperty = accountPropertyTable.get(AccountPropertyTable.newKey(propertyId));
         if (accountProperty == null) {
             return;
@@ -1067,11 +1054,11 @@ public class Account {
         }
     }
 
-   public  void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
-       if (LOG.isTraceEnabled()) {
-           LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
-       }
-       addToBalanceATM(event, eventId, amountATM, 0);
+    public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
+        }
+        addToBalanceATM(event, eventId, amountATM, 0);
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
@@ -1182,11 +1169,10 @@ public class Account {
         int blockchainHeight = blockchain.getHeight();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
-                     + "WHERE account_id = ? and height = ?");
-             @DatabaseSpecificDml(DmlMarker.MERGE)
-             PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
-                     + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
+                PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
+                        + "WHERE account_id = ? and height = ?");
+                @DatabaseSpecificDml(DmlMarker.MERGE) PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
+                        + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
             pstmtSelect.setLong(1, this.id);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {
@@ -1199,8 +1185,7 @@ public class Account {
                 pstmtUpdate.setInt(3, blockchainHeight);
                 pstmtUpdate.executeUpdate();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }

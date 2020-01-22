@@ -297,7 +297,7 @@ public final class Shuffling {
             throw new RuntimeException(e.toString(), e);
         }
     }
-    
+
     public static DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return shufflingTable.getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                         .and(new DbClause.ByteClause("stage", Stage.PROCESSING.getCode())), from, to,
