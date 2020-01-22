@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
@@ -74,8 +75,6 @@ import java.util.stream.Collectors;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
@@ -93,7 +92,6 @@ public class DexOrderProcessor {
     private static final String SERVICE_NAME = "DexOrderProcessor";
     private static final String BACKGROUND_SERVICE_NAME = SERVICE_NAME + "-background";
     private static final int BACKGROUND_THREADS_NUMBER = 10;
-    private static final int SWAP_EXPIRATION_OFFSET = 60; // in seconds
 
     private final SecureStorageService secureStorageService;
     private final DexService dexService;
@@ -113,6 +111,7 @@ public class DexOrderProcessor {
     private volatile boolean processorEnabled = true;
     private boolean startProcessor;
     private int processingDelay; // seconds
+    private DexConfig dexConfig;
 
     private Blockchain blockchain;
 
@@ -126,8 +125,10 @@ public class DexOrderProcessor {
                              MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager, TimeService timeService,
                              Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
-                             @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay
+                             @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
+                             DexConfig dexConfig
     ) {
+
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
@@ -143,6 +144,7 @@ public class DexOrderProcessor {
         this.operationService = Objects.requireNonNull(operationService);
         this.startProcessor = startProcessor;
         this.processingDelay = Math.max(MIN_DEX_OFFER_PROCESSOR_DELAY, processingDelay);
+        this.dexConfig = dexConfig;
     }
 
     @PostConstruct
@@ -324,7 +326,7 @@ public class DexOrderProcessor {
                 }
                 log.debug("DexOfferProcessor Step-1. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
                 CreateTransactionRequest transferMoneyReq = buildRequest(passphrase, accountId, null, null);
-                TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, DEX_MAX_TIME_OF_ATOMIC_SWAP);
+                TransferTransactionInfo transferTxInfo = dexService.transferMoneyWithApproval(transferMoneyReq, counterOrder, order.getToAddress(), contract.getId(), secretHash, dexConfig.getMaxAtomicSwapDuration());
                 if (transferTxInfo.getTxId() == null) {
                     throw new AplException.ExecutiveProcessException("Transfer money wasn't sent. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
                 }
@@ -368,7 +370,7 @@ public class DexOrderProcessor {
         contractAttachment.setCounterTransferTxId(transferTxId);
         contractAttachment.setSecretHash(secretHash);
         contractAttachment.setEncryptedSecret(encryptedSecret);
-        contractAttachment.setTimeToReply(DEX_MAX_TIME_OF_ATOMIC_SWAP);
+        contractAttachment.setTimeToReply(dexConfig.getMaxAtomicSwapDuration());
 
         //TODO move it to some util
         CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
@@ -501,7 +503,7 @@ public class DexOrderProcessor {
                     SwapDataInfo swapData = dexSmartContractService.getSwapData(Convert.parseHexString(secretHashValue));
                     if (swapData.getTimeDeadLine() != 0) {
                         long timeLeft = swapData.getTimeDeadLine() - timeService.systemTime();
-                        if (timeLeft < DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS) {
+                        if (timeLeft < dexConfig.getMinAtomicSwapDurationWithDeviation()) {
                             log.info("Will not send dex contract transaction to recover exchange process, not enough time 'timeLeft'={} sec.", timeLeft);
                         }
                         log.info("Will send new contract step3 transaction for already initiated eth swap {}, contract id {}", secretHashValue, contract.getId());
@@ -834,7 +836,7 @@ public class DexOrderProcessor {
                             if (order == null) {
                                 long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();
 
-                                if (timeDiff > Constants.DEX_MAX_ETH_ORPHAN_DEPOSIT_LIFETIME) {
+                                if (timeDiff > dexConfig.getOrphanDepositLifetime()) {
                                     try {
                                         dexService.refundEthPaxFrozenMoney(passphrase, accountId, deposit.getOrderId(), address);
                                     } catch (AplException.ExecutiveProcessException e) {
