@@ -26,6 +26,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
 
 /**
  * Runtime environment for AplCores (singleton) TODO: make it injectable
@@ -40,7 +41,6 @@ public class AplCoreRuntime {
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
     private RuntimeMode runtimeMode;
-    //private final ScheduledExecutorService schedulerOfPeridics;
 
     //TODO: may be it is better to take below variables from here instead of getting it from CDI
     // in every class?
@@ -52,7 +52,6 @@ public class AplCoreRuntime {
     //TODO:  check and debug minting
     private MintWorker mintworker;
     private Thread mintworkerThread;
-    public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
 
 
     private TaskDispatchManager taskManager;

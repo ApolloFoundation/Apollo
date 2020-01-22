@@ -743,7 +743,7 @@ public final class Shuffling {
         // last participant announces all valid recipient public keys
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             long recipientId = Account.getId(recipientPublicKey);
-            if (Account.setOrVerify(recipientId, recipientPublicKey)) {
+            if (Account.setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
                 Account.addOrGetAccount(recipientId).apply(recipientPublicKey);
             }
         }

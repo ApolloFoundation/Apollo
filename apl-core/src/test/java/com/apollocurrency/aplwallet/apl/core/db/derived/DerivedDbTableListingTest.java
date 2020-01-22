@@ -112,7 +112,7 @@ class DerivedDbTableListingTest {
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
-            AccountTable.class,
+            AccountTable.class, AccountGuaranteedBalanceTable.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
@@ -149,6 +149,8 @@ class DerivedDbTableListingTest {
     @Inject
     AccountTable accountTable;
     @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    @Inject
     DerivedTablesRegistry registry;
 
     public DerivedDbTableListingTest() throws Exception {}
@@ -164,11 +166,11 @@ class DerivedDbTableListingTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable.getInstance().init();
-        Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null, null);
+        Account.init(extension.getDatabaseManager(),null, null, blockchain, null, accountTable, accountGuaranteedBalanceTable,null);
         AccountInfoTable.getInstance().init();
         Alias.init();
         AccountAssetTable.getInstance().init();
-        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
+        //GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
         PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
         publicKeyTable.init();
         AccountLedgerTable accountLedgerTable = new AccountLedgerTable();

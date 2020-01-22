@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
@@ -35,16 +34,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -54,14 +49,13 @@ import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.google.common.cache.Cache;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -100,17 +94,18 @@ public class Account {
     private static BlockchainProcessor blockchainProcessor;
     private static DatabaseManager databaseManager;
     private static GlobalSync sync;
-    private static PublicKeyTable publicKeyTable;
-    private static GenesisPublicKeyTable genesisPublicKeyTable;
+
     private static AccountTable accountTable;
     private static AccountInfoTable accountInfoTable;
     private static AccountAssetTable accountAssetTable;
     private static AccountCurrencyTable accountCurrencyTable;
     private static AccountLeaseTable accountLeaseTable;
-    private static AccountGuaranteedBalanceTable guaranteedBalanceTable;
     private static AccountPropertyTable accountPropertyTable;
+    private static AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
-    private static Cache<DbKey, PublicKey> publicKeyCache = null;
+
+    @Getter
+    private static PublicKeyService publicKeyService = null;
 
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
@@ -130,72 +125,32 @@ public class Account {
     Set<ControlType> controls;
 
     public static void init(DatabaseManager databaseManagerParam,
-            PropertiesHolder propertiesHolder,
-            BlockchainProcessor blockchainProcessorParam,
-            BlockchainConfig blockchainConfigParam,
-            Blockchain blockchainParam,
-            GlobalSync globalSync,
-            PublicKeyTable pkTable,
-            AccountTable accTable,
-            AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-            Cache<DbKey, PublicKey> cache
+                            BlockchainProcessor blockchainProcessorParam,
+                            BlockchainConfig blockchainConfigParam,
+                            Blockchain blockchainParam,
+                            GlobalSync globalSync,
+                            AccountTable accTable,
+                            AccountGuaranteedBalanceTable accountGuaranteedBalanceTableParam,
+                            PublicKeyService publicKeyServiceParam
     ) {
         databaseManager = databaseManagerParam;
         blockchainProcessor = blockchainProcessorParam;
         blockchainConfig = blockchainConfigParam;
         blockchain = blockchainParam;
-        publicKeyTable = pkTable;
         sync = globalSync;
         accountTable = accTable;
-        guaranteedBalanceTable = accountGuaranteedBalanceTable;
         accountAssetTable = AccountAssetTable.getInstance();
         accountInfoTable = AccountInfoTable.getInstance();
         accountCurrencyTable = AccountCurrencyTable.getInstance();
         accountLeaseTable = AccountLeaseTable.getInstance();
         accountPropertyTable = AccountPropertyTable.getInstance();
-        genesisPublicKeyTable = CDI.current().select(GenesisPublicKeyTable.class).get();
-
-        //if (propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache")) {
-        publicKeyCache = cache;
-        //}
+        publicKeyService = publicKeyServiceParam;
+        accountGuaranteedBalanceTable = accountGuaranteedBalanceTableParam;
     }
 
     @Singleton
     @Slf4j
     public static class AccountObserver {
-
-        public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-            clearCache();
-        }
-
-        public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
-            clearCache();
-        }
-
-        private void clearCache() {
-            if (publicKeyCache != null) {
-                publicKeyCache.cleanUp();
-            }
-        }
-
-        public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-            if (publicKeyCache != null) {
-                publicKeyCache.invalidate(AccountTable.newKey(block.getGeneratorId()));
-                block.getOrLoadTransactions().forEach(transaction -> {
-                    publicKeyCache.invalidate(AccountTable.newKey(transaction.getSenderId()));
-                    if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                        publicKeyCache.invalidate(AccountTable.newKey(transaction.getRecipientId()));
-                    }
-                    if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                        ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                        for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                            publicKeyCache.invalidate(AccountTable.newKey(Account.getId(publicKey)));
-                        }
-                    }
-                });
-            }
-        }
-
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
             log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
             int height = block.getHeight();
@@ -240,7 +195,7 @@ public class Account {
 
     public Account(long id) {
         if (id != Crypto.rsDecode(Crypto.rsEncode(id))) {
-            LOG.info("CRITICAL ERROR: Reed-Solomon encoding fails for " + id);
+            LOG.info("CRITICAL ERROR: Reed-Solomon encoding fails for {}", id);
         }
         this.id = id;
         this.dbKey = AccountTable.newKey(this.id);
@@ -288,7 +243,7 @@ public class Account {
     }
 
     public static int getCount() {
-        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
+        return publicKeyService.getCount();
     }
 
     public static int getActiveLeaseCount() {
@@ -299,7 +254,7 @@ public class Account {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
-            PublicKey publicKey = getPublicKey(dbKey);
+            PublicKey publicKey = publicKeyService.getPublicKey(dbKey);
             if (publicKey != null) {
                 account = accountTable.newEntity(dbKey);
                 account.publicKey = publicKey;
@@ -312,7 +267,7 @@ public class Account {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = getPublicKey(dbKey, height);
+            PublicKey publicKey = publicKeyService.loadPublicKey(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id);
                 account.publicKey = publicKey;
@@ -328,7 +283,7 @@ public class Account {
             return null;
         }
         if (account.publicKey == null) {
-            account.publicKey = getPublicKey(AccountTable.newKey(account));
+            account.publicKey = publicKeyService.getPublicKey(AccountTable.newKey(account));
         }
         if (account.publicKey == null || account.publicKey.publicKey == null || Arrays.equals(account.publicKey.publicKey, publicKey)) {
             return account;
@@ -359,7 +314,7 @@ public class Account {
         }
     }
 
-    public static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
+    public  static DbIterator<Account> getTopHolders(Connection con, int numberOfTopAccounts) {
         try {
             return accountTable.getTopHolders(con, numberOfTopAccounts);
         } catch (SQLException e) {
@@ -382,80 +337,46 @@ public class Account {
     }
 
     public static byte[] getPublicKey(long id) {
-        DbKey dbKey = PublicKeyTable.newKey(id);
-        PublicKey publicKey = getPublicKey(dbKey);
+        DbKey dbKey = AccountTable.newKey(id);
+        PublicKey publicKey = publicKeyService.getPublicKey(dbKey);
         if (publicKey == null || publicKey.publicKey == null) {
             return null;
         }
         return publicKey.publicKey;
     }
 
-    public static Account addOrGetAccount(long id) {
-        return addOrGetAccount(id, false);
+    public static Account addGenesisAccount(long id) {
+        return addAccount(id, true);
     }
 
-    public static Account addOrGetAccount(long id, boolean isGenesis) {
-        if (id == 0) {
-            throw new IllegalArgumentException("Invalid accountId 0");
-        }
+    public static Account addOrGetAccount(long id) {
+        return addAccount(id, false);
+    }
+
+    /**
+     * Create a new account. This account is not saved into the database but the public key of that one is saved.
+     * This account will be saved during further operation of the balance changing. (The set of 'add to balance' operation).
+     * @param id account id
+     * @param isGenesis true if this account is a genesis account
+     * @return new account
+     */
+    private static Account addAccount(long id, boolean isGenesis) {
+        Preconditions.checkArgument( id != 0, "Invalid accountId 0");
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = accountTable.newEntity(dbKey);
-            PublicKey publicKey = getPublicKey(dbKey);
+            PublicKey publicKey = publicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                if (isGenesis) {
-                    publicKey = genesisPublicKeyTable.newEntity(dbKey);
-                    genesisPublicKeyTable.insert(publicKey);
-                } else {
-                    publicKey = publicKeyTable.newEntity(dbKey);
-                    publicKeyTable.insert(publicKey);
-                }
-                if (publicKeyCache != null) {
-                    //TODO: what if insert above fails?
-                    if (isGenesis) {
-                        publicKeyCache.put(dbKey, genesisPublicKeyTable.get(dbKey, true));
-                    } else {
-                        publicKeyCache.put(dbKey, publicKeyTable.get(dbKey, true));
-                    }
+                if(isGenesis){
+                    publicKey = publicKeyService.insertGenesisPublicKey(dbKey);
+                }else {
+                    publicKey = publicKeyService.insertNewPublicKey(dbKey);
                 }
             }
             account.publicKey = publicKey;
         }
         return account;
-    }
-
-    private static PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = null;
-        if (publicKeyCache != null) {
-            publicKey = publicKeyCache.getIfPresent(dbKey);
-        }
-        if (publicKey == null) {
-            publicKey = publicKeyTable.get(dbKey);
-            if (publicKey == null) {
-                publicKey = genesisPublicKeyTable.get(dbKey);
-            }
-            if (publicKey != null && publicKeyCache != null) {
-                publicKeyCache.put(dbKey, publicKey);
-            }
-        }
-        return publicKey;
-    }
-
-    private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, cache);
-        }
-        return publicKey;
-    }
-
-    private static PublicKey getPublicKey(DbKey dbKey, int height) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, height);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, height);
-        }
-        return publicKey;
     }
 
     public static EncryptedData encryptTo(byte[] publicKey, byte[] data, byte[] keySeed, boolean compress) {
@@ -473,21 +394,10 @@ public class Account {
         return decrypted;
     }
 
-    public static boolean setOrVerify(long accountId, byte[] key) {
-        DbKey dbKey = PublicKeyTable.newKey(accountId);
-        PublicKey publicKey = getPublicKey(dbKey);
-        if (publicKey == null) {
-            publicKey = publicKeyTable.newEntity(dbKey);
-        }
-        if (publicKey.publicKey == null) {
-            publicKey.publicKey = key;
-            publicKey.setHeight(blockchain.getHeight());
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, publicKey);
-            }
-            return true;
-        }
-        return Arrays.equals(publicKey.publicKey, key);
+    public static boolean setOrVerifyPublicKey(long accountId, byte[] key) {
+        DbKey dbKey = AccountTable.newKey(accountId);
+        int height = blockchain.getHeight();
+        return publicKeyService.setOrVerifyPublicKey(dbKey, key, height);
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
@@ -576,7 +486,7 @@ public class Account {
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (this.publicKey == null) {
-            this.publicKey = getPublicKey(AccountTable.newKey(this));
+            this.publicKey = publicKeyService.getPublicKey(AccountTable.newKey(this));
         }
         if (this.publicKey == null || this.publicKey.publicKey == null || height - this.publicKey.getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             if (LOG.isTraceEnabled()) {
@@ -674,23 +584,13 @@ public class Account {
                         height, blockchain.getHeight());
                 throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation, blockchain.Height=" + blockchain.getHeight());
             }
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            try (Connection con = dataSource.getConnection();
-                    PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
-                            + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
-                pstmt.setLong(1, this.id);
-                pstmt.setInt(2, height);
-                pstmt.setInt(3, currentHeight);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (!rs.next()) {
-                        return balanceATM;
-                    }
-                    return Math.max(Math.subtractExact(balanceATM, rs.getLong("additions")), 0);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
+            Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(getId(), height, currentHeight);
+            if (sum == null) {
+                return getBalanceATM();
             }
-        } finally {
+            return Math.max(Math.subtractExact(getBalanceATM(), sum), 0);
+        }
+        finally {
             sync.readUnlock();
         }
     }
@@ -846,54 +746,23 @@ public class Account {
         apply(key, false);
     }
 
-    public static void addGenesisPublicKey(byte[] key) {
-        long accountId = Convert.getId(key);
-        PublicKey t = new PublicKey(accountId, key, 0);
-        t.setDbKey(new LongKey(accountId));
-        genesisPublicKeyTable.insert(t);
-        if (publicKeyCache != null) {
-            publicKeyCache.put(t.getDbKey(), t);
-        }
-    }
-
     public void apply(byte[] key, boolean isGenesis) {
-        PublicKey publicKey = getPublicKey(dbKey);
+        PublicKey publicKey = publicKeyService.getPublicKey(dbKey);
         if (publicKey == null) {
-            publicKey = publicKeyTable.newEntity(dbKey);
+            publicKey = publicKeyService.newEntity(dbKey);
         }
         if (publicKey.publicKey == null) {
             publicKey.publicKey = key;
-            if (isGenesis) {
-                genesisPublicKeyTable.insert(publicKey);
-            } else {
-                publicKeyTable.insert(publicKey);
-            }
-            if (publicKeyCache != null) {
-                updateInCache(dbKey);
-            }
+            publicKeyService.insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.publicKey, key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
-            PublicKey dbPublicKey = getPublicKey(dbKey, false);
+            PublicKey dbPublicKey = publicKeyService.loadPublicKey(dbKey);
             if (dbPublicKey == null || dbPublicKey.publicKey == null) {
-                publicKeyTable.insert(publicKey);
-                if (publicKeyCache != null) {
-                    updateInCache(dbKey);
-                }
-            }
-        } else {
-            if (publicKeyCache != null) {
-                publicKeyCache.put(dbKey, publicKey);
+                publicKeyService.insertPublicKey(publicKey, isGenesis);
             }
         }
         this.publicKey = publicKey;
-    }
-
-    private void updateInCache(DbKey dbKey) {
-        PublicKey key = publicKeyTable.get(dbKey, true);
-        if (key != null) {
-            publicKeyCache.put(dbKey, key);
-        }
     }
 
     public void addToAssetBalanceATU(LedgerEvent event, long eventId, long assetId, long quantityATU) {
@@ -1054,11 +923,11 @@ public class Account {
         }
     }
 
-    public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
-        }
-        addToBalanceATM(event, eventId, amountATM, 0);
+    public  void addToBalanceATM(LedgerEvent event, long eventId, long amountATM) {
+       if (LOG.isTraceEnabled()) {
+           LOG.trace("Add c balance for {} from {} , amount - {}, total conf- {}, height -{}", id, last3Stacktrace(), amountATM, amountATM + balanceATM, blockchain.getHeight());
+       }
+       addToBalanceATM(event, eventId, amountATM, 0);
     }
 
     public void addToBalanceATM(LedgerEvent event, long eventId, long amountATM, long feeATM) {
@@ -1070,7 +939,7 @@ public class Account {
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
-        addToGuaranteedBalanceATM(totalAmountATM);
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(getId(), totalAmountATM, blockchain.getHeight());
         checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.BALANCE);
@@ -1129,7 +998,7 @@ public class Account {
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         this.balanceATM = Math.addExact(this.balanceATM, totalAmountATM);
         this.unconfirmedBalanceATM = Math.addExact(this.unconfirmedBalanceATM, totalAmountATM);
-        addToGuaranteedBalanceATM(totalAmountATM);
+        accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(getId(), totalAmountATM, blockchain.getHeight());
         checkBalance(this.id, this.balanceATM, this.unconfirmedBalanceATM);
         save();
         listeners.notify(this, Event.BALANCE);
@@ -1160,34 +1029,6 @@ public class Account {
         }
         this.forgedBalanceATM = Math.addExact(this.forgedBalanceATM, amountATM);
         save();
-    }
-
-    private void addToGuaranteedBalanceATM(long amountATM) {
-        if (amountATM <= 0) {
-            return;
-        }
-        int blockchainHeight = blockchain.getHeight();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-                PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
-                        + "WHERE account_id = ? and height = ?");
-                @DatabaseSpecificDml(DmlMarker.MERGE) PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
-                        + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
-            pstmtSelect.setLong(1, this.id);
-            pstmtSelect.setInt(2, blockchainHeight);
-            try (ResultSet rs = pstmtSelect.executeQuery()) {
-                long additions = amountATM;
-                if (rs.next()) {
-                    additions = Math.addExact(additions, rs.getLong("additions"));
-                }
-                pstmtUpdate.setLong(1, this.id);
-                pstmtUpdate.setLong(2, additions);
-                pstmtUpdate.setInt(3, blockchainHeight);
-                pstmtUpdate.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     public void payDividends(final long transactionId, ColoredCoinsDividendPayment attachment) {

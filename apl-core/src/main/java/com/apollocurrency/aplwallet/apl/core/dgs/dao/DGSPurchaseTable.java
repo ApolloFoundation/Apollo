@@ -85,7 +85,7 @@ public class DGSPurchaseTable extends VersionedDeletableEntityDbTable<DGSPurchas
 
     @Override
     @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY timestamp DESC, id ASC ";
     }
 

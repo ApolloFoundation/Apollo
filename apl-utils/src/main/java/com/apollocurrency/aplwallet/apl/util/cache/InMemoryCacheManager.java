@@ -92,7 +92,7 @@ public class InMemoryCacheManager {
         int size = Math.max((int) (availableMemory / sumPriority * config.getCachePriority() / (config.getExpectedElementSize() + extra)), 1) + 1;
         log.debug("Recalculate and set maxSize={} for cache {}", size, config.getCacheName());
         config.setMaxSize(size);
-        return config.cacheBuilder().maximumSize(size);
+        return config.cacheBuilder().maximumSize(size).recordStats();
     }
 
     public List<String> getAllocatedCacheNames() {
