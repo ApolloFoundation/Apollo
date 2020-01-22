@@ -116,8 +116,8 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
                     byte[] decrypted = null;
                     if (keySeed != null) {
                         byte[] readerPublicKey = Crypto.getPublicKey(keySeed);
-                        byte[] senderPublicKey = lookupAccountService().getPublicKey(transaction.getSenderId());
-                        byte[] recipientPublicKey = lookupAccountService().getPublicKey(transaction.getRecipientId());
+                        byte[] senderPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getSenderId());
+                        byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
                         byte[] publicKey = Arrays.equals(senderPublicKey, readerPublicKey) ? recipientPublicKey : senderPublicKey;
                         if (publicKey != null) {
                             decrypted = lookupAccountPublickKeyService().decryptFrom(publicKey, encryptedData, keySeed, uncompress);

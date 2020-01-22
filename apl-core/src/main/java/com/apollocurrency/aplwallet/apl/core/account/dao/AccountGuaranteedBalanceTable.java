@@ -10,9 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -22,14 +23,14 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class AccountGuaranteedBalanceTable extends DerivedDbTable {
+
     private static final String TABLE_NAME = "account_guaranteed_balance";
-    private BlockchainConfig blockchainConfig;
-    private int batchCommitSize;
+
+    private final BlockchainConfig blockchainConfig;
+    private final int batchCommitSize;
 
     private static final LongKeyFactory<AccountGuaranteedBalance>
             accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {

@@ -111,8 +111,8 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public T get(DbKey dbKey, boolean cache) {
-        return table.get(dbKey, cache);
+    public T get(DbKey dbKey, boolean createDbKey) {
+        return table.get(dbKey, createDbKey);
     }
 
     @Override

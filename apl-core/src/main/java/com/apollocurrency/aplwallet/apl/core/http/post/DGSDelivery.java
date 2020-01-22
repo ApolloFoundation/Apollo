@@ -103,7 +103,7 @@ public final class DGSDelivery extends CreateTransaction {
 
         Attachment attachment = encryptedGoods == null ?
                 new UnencryptedDigitalGoodsDelivery(purchase.getId(), goodsBytes,
-                        goodsIsText, discountATM, lookupAccountService().getPublicKey(buyerAccount.getId())) :
+                        goodsIsText, discountATM, lookupAccountService().getPublicKeyByteArray(buyerAccount.getId())) :
                 new DigitalGoodsDelivery(purchase.getId(), encryptedGoods,
                         goodsIsText, discountATM);
         return createTransaction(req, sellerAccount, buyerAccount.getId(), 0, attachment);

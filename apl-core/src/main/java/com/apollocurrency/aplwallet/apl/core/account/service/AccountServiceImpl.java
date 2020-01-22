@@ -50,14 +50,14 @@ public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
 
-    private AccountTable accountTable;
-    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private Blockchain blockchain;
-    private BlockchainConfig blockchainConfig;
-    private GlobalSync sync;
-    private AccountPublicKeyService accountPublicKeyService;
-    private Event<Account> accountEvent;
-    private Event<LedgerEntry> logLedgerEvent;
+    private final AccountTable accountTable;
+    private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private final Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final GlobalSync sync;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final Event<Account> accountEvent;
+    private final Event<LedgerEntry> logLedgerEvent;
     private BlockchainProcessor blockchainProcessor;
 
     @Inject
@@ -108,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.loadPublicKey(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -474,8 +474,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public byte[] getPublicKey(long id) {
-        return accountPublicKeyService.getPublicKey(id);
+    public byte[] getPublicKeyByteArray(long id) {
+        return accountPublicKeyService.getPublicKeyByteArray(id);
     }
 }
 

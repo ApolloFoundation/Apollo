@@ -28,9 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
-import java.util.Arrays;
-import javax.enterprise.inject.spi.CDI;
-
 public final class Token {
     private static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
     private static AccountService accountService = CDI.current().select(AccountServiceImpl.class).get();
@@ -113,7 +110,7 @@ public final class Token {
         byte[] data = new byte[messageBytes.length + 36];
         System.arraycopy(messageBytes, 0, data, 0, messageBytes.length);
         System.arraycopy(tokenBytes, 0, data, messageBytes.length, 36);
-        byte[] announcedPublicKey = accountService.getPublicKey(AccountService.getId(publicKey));
+        byte[] announcedPublicKey = accountService.getPublicKeyByteArray(AccountService.getId(publicKey));
         boolean isValid = Crypto.verify(signature, data, publicKey)
                 && (announcedPublicKey == null || Arrays.equals(publicKey, announcedPublicKey));
 

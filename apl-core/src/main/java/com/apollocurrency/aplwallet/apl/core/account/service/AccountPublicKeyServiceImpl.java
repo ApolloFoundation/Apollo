@@ -40,15 +40,14 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    private InMemoryCacheManager cacheManager;
+    private final Blockchain blockchain;
+    private final EntityDbTableInterface<PublicKey> publicKeyTable;
+    private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
+    private final InMemoryCacheManager cacheManager;
     @Getter
     private final boolean cacheEnabled;
     @Getter
     private Cache<DbKey, PublicKey> publicKeyCache;
-
-    private Blockchain blockchain;
-    private EntityDbTableInterface<PublicKey> publicKeyTable;
-    private EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
 
     @Inject
     public AccountPublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
@@ -106,7 +105,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public int getCount(){
-        return publicKeyTable.getCount() + genesisPublicKeyTable.getCount();
+        return getPublicKeysCount() + getGenesisPublicKeysCount();
     }
 
     @Override
@@ -120,7 +119,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public byte[] getPublicKey(long id) {
+    public byte[] getPublicKeyByteArray(long id) {
         DbKey dbKey = AccountTable.newKey(id);
         PublicKey publicKey = getPublicKey(dbKey);
         if (publicKey == null || publicKey.getPublicKey() == null) {
@@ -140,14 +139,6 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             if (publicKey != null) {
                 putInCache(dbKey, publicKey);
             }
-        }
-        return publicKey;
-    }
-
-    private PublicKey getPublicKey2(DbKey dbKey, boolean cache) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, cache);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, cache);
         }
         return publicKey;
     }
@@ -177,17 +168,8 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public PublicKey getPublicKey(DbKey dbKey, int height) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, height);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, height);
-        }
-        return publicKey;
-    }
-
-    @Override
     public EncryptedData encryptTo(long id, byte[] data, byte[] keySeed, boolean compress) {
-        byte[] key = getPublicKey(id);
+        byte[] key = getPublicKeyByteArray(id);
         if (key == null) {
             throw new IllegalArgumentException("Recipient account doesn't have a public key set");
         }
@@ -196,7 +178,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public byte[] decryptFrom(long id, EncryptedData encryptedData, byte[] recipientKeySeed, boolean uncompress) {
-        byte[] key = getPublicKey(id);
+        byte[] key = getPublicKeyByteArray(id);
         if (key == null) {
             throw new IllegalArgumentException("Sender account doesn't have a public key set");
         }

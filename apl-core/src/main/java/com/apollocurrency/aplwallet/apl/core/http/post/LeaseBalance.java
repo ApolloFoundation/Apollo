@@ -48,7 +48,7 @@ public final class LeaseBalance extends CreateTransaction {
         Account account = ParameterParser.getSenderAccount(req);
         long recipient = ParameterParser.getAccountId(req, "recipient", true);
         Account recipientAccount = lookupAccountService().getAccount(recipient);
-        if (recipientAccount == null || lookupAccountService().getPublicKey(recipientAccount.getId()) == null) {
+        if (recipientAccount == null || lookupAccountService().getPublicKeyByteArray(recipientAccount.getId()) == null) {
             JSONObject response = new JSONObject();
             response.put("errorCode", 8);
             response.put("errorDescription", "recipient account does not have public key");

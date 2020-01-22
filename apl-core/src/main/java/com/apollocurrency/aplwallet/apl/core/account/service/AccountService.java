@@ -95,5 +95,5 @@ public interface AccountService {
 
     //Delegated from  AccountPublicKeyService
     boolean setOrVerifyPublicKey(long accountId, byte[] key);
-    byte[] getPublicKey(long id);
+    byte[] getPublicKeyByteArray(long id);
 }

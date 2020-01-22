@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
@@ -35,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -44,7 +43,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class Generator implements Comparable<Generator> {
     private static final Logger LOG = getLogger(Generator.class);
@@ -81,7 +81,7 @@ public final class Generator implements Comparable<Generator> {
     static{
 
         fakeForgingPublicKey = propertiesHolder.getBooleanProperty("apl.enableFakeForging") ?
-                accountService.getPublicKey(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
+                accountService.getPublicKeyByteArray(Convert.parseAccountId(propertiesHolder.getStringProperty("apl.fakeForgingAccount"))) : null;
     }
 
     private static final Runnable generateBlocksThread = new Runnable() {
@@ -173,7 +173,7 @@ public final class Generator implements Comparable<Generator> {
                             .delay(500)
                             .task(generateBlocksThread)
                             .build());
-        }        
+        }
     }
 
     public static boolean addListener(Listener<Generator> listener, Event eventType) {

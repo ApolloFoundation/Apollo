@@ -25,7 +25,7 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     T get(DbKey dbKey);
 
-    T get(DbKey dbKey, boolean cache);
+    T get(DbKey dbKey, boolean createDbKey);
 
     T get(DbKey dbKey, int height);
 

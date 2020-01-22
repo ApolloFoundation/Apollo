@@ -69,7 +69,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
         response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
-        byte[] publicKey = lookupAccountService().getPublicKey(account.getId());
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }

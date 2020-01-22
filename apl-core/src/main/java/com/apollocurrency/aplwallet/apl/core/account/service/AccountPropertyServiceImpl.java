@@ -26,10 +26,10 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountPropertyServiceImpl implements AccountPropertyService {
 
-    private Blockchain blockchain;
-    private AccountPropertyTable accountPropertyTable;
-    private Event<Account> accountEvent;
-    private Event<AccountProperty> accountPropertyEvent;
+    private final Blockchain blockchain;
+    private final AccountPropertyTable accountPropertyTable;
+    private final Event<Account> accountEvent;
+    private final Event<AccountProperty> accountPropertyEvent;
 
     @Inject
     public AccountPropertyServiceImpl(Blockchain blockchain, AccountPropertyTable accountPropertyTable, Event<Account> accountEvent, Event<AccountProperty> accountPropertyEvent) {
@@ -64,9 +64,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             accountProperty.setValue(value);
         }
         accountPropertyTable.insert(accountProperty);
-        //accountService.listeners.notify(account, AccountEventType.SET_PROPERTY);
         accountEvent.select(literal(AccountEventType.SET_PROPERTY)).fire(account);
-        //propertyListeners.notify(accountProperty, AccountEventType.SET_PROPERTY);
         accountPropertyEvent.select(literal(AccountEventType.SET_PROPERTY)).fire(accountProperty);
 
     }
@@ -81,9 +79,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(account.getId()));
         }
         accountPropertyTable.delete(accountProperty);
-        //accountService.listeners.notify(account, AccountEventType.DELETE_PROPERTY);
         accountEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(account);
-        //propertyListeners.notify(accountProperty, AccountEventType.DELETE_PROPERTY);
         accountPropertyEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(accountProperty);
     }
 

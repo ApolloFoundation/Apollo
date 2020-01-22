@@ -32,9 +32,9 @@ import java.util.List;
 @Singleton
 public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
-    private GlobalSync globalSync;
-    private Blockchain blockchain;
-    private PropertiesHolder propertiesHolder;
+    private final GlobalSync globalSync;
+    private final Blockchain blockchain;
+    private final PropertiesHolder propertiesHolder;
 
     /** Number of blocks to keep when trimming */
     private int trimKeep;

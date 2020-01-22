@@ -49,7 +49,7 @@ public class ActiveGenerator implements Comparable<ActiveGenerator> {
 
     public void setLastBlock(Block lastBlock) {
         if (publicKey == null) {
-            publicKey = lookupAccountService().getPublicKey(accountId);
+            publicKey = lookupAccountService().getPublicKeyByteArray(accountId);
             if (publicKey == null) {
                 hitTime = Long.MAX_VALUE;
                 return;

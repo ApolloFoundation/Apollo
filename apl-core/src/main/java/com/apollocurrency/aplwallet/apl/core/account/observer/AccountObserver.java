@@ -30,15 +30,11 @@ import java.util.List;
 @Singleton
 public class AccountObserver {
 
-    private AccountService accountService;
-
-    private AccountLeaseService accountLeaseService;
-
-    private AccountPublicKeyService accountPublicKeyService;
-
-    private Event<AccountLease> accountLeaseEvent;
-
-    private AccountLedgerService accountLedgerService;
+    private final AccountService accountService;
+    private final AccountLeaseService accountLeaseService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final Event<AccountLease> accountLeaseEvent;
+    private final AccountLedgerService accountLedgerService;
 
     @Inject
     public AccountObserver(AccountService accountService,

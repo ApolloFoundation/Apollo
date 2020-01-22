@@ -23,8 +23,8 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountInfoServiceImpl implements AccountInfoService {
 
-    private Blockchain blockchain;
-    private AccountInfoTable accountInfoTable;
+    private final Blockchain blockchain;
+    private final AccountInfoTable accountInfoTable;
 
     @Inject
     public AccountInfoServiceImpl(Blockchain blockchain, AccountInfoTable accountInfoTable) {

@@ -573,7 +573,7 @@ public class DexService {
             CreateTransactionRequest templatTransactionRequest = CreateTransactionRequest
                     .builder()
                     .passphrase(passphrase)
-                    .publicKey(accountService.getPublicKey(userAccountId))
+                    .publicKey(accountService.getPublicKeyByteArray(userAccountId))
                     .senderAccount(accountService.getAccount(userAccountId))
                     .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(userAccountId, passphrase)))
                     .deadlineValue("1440")

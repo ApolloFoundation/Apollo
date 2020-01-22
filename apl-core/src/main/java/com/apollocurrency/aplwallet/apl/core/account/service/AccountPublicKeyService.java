@@ -57,9 +57,7 @@ public interface AccountPublicKeyService {
 
     PublicKey insertGenesisPublicKey(DbKey dbKey);
 
-    byte[] getPublicKey(long id);
-
-    PublicKey getPublicKey(DbKey dbKey, int height);
+    byte[] getPublicKeyByteArray(long id);
 
     EncryptedData encryptTo(long id, byte[] data, byte[] keySeed, boolean compress);
 

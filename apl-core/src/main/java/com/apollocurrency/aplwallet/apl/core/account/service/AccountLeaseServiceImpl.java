@@ -26,10 +26,10 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountLeaseServiceImpl implements AccountLeaseService {
 
-    private AccountLeaseTable accountLeaseTable;
-    private Blockchain blockchain;
-    private BlockchainConfig blockchainConfig;
-    private Event<AccountLease> accountLeaseEvent;
+    private final AccountLeaseTable accountLeaseTable;
+    private final Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final Event<AccountLease> accountLeaseEvent;
 
     @Inject
     public AccountLeaseServiceImpl(AccountLeaseTable accountLeaseTable, Blockchain blockchain, BlockchainConfig blockchainConfig, Event<AccountLease> accountLeaseEvent) {

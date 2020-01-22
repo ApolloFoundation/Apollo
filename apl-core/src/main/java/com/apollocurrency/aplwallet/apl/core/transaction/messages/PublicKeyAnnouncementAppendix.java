@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -88,7 +87,7 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         if (AccountService.getId(this.publicKey) != recipientId) {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
-        byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKeyByteArray(recipientId);
         if (recipientPublicKey != null && ! Arrays.equals(publicKey, recipientPublicKey)) {
             throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
         }

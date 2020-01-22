@@ -189,7 +189,7 @@ public final class BlockImpl implements Block {
     @Override
     public byte[] getGeneratorPublicKey() {
         if (generatorPublicKey == null) {
-            generatorPublicKey = lookupAccountService().getPublicKey(generatorId);
+            generatorPublicKey = lookupAccountService().getPublicKeyByteArray(generatorId);
         }
         return generatorPublicKey;
     }

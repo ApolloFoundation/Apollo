@@ -124,7 +124,7 @@ public class BlockEventSourceProcessor implements Runnable {
         JSONObject response = JSONData.accountBalance(account, false);
         JSONData.putAccount(response, "account", account.getId());
 
-        byte[] publicKey = accountService.getPublicKey(account.getId());
+        byte[] publicKey = accountService.getPublicKeyByteArray(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));
         }

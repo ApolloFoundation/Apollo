@@ -64,15 +64,15 @@ class AccountPublicKeyServiceTest {
     void getPublicKey() {
         long accountId = 2728325718715804811L;
 
-        assertNull(accountPublicKeyService.getPublicKey(accountId));
+        assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         PublicKey expectedPublicKey = new PublicKey(accountId,null,1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
-        assertNull(accountPublicKeyService.getPublicKey(accountId));
+        assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
-        assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKey(accountId));
+        assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKeyByteArray(accountId));
     }
 
     @Test

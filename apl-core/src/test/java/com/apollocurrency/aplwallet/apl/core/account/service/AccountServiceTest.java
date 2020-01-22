@@ -90,7 +90,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(dbKey, height);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKey(dbKey, height);
         account = accountService.getAccount(accountId, height);
         assertEquals(newAccount, account);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());

@@ -597,7 +597,7 @@ public final class Shuffling {
         byte[] nonce = Convert.toBytes(this.id);
         for (int i = shufflingParticipants.size() - 1; i > participantIndex; i--) {
             ShufflingParticipant participant = shufflingParticipants.get(i);
-            byte[] participantPublicKey = lookupAccountService().getPublicKey(participant.getAccountId());
+            byte[] participantPublicKey = lookupAccountService().getPublicKeyByteArray(participant.getAccountId());
             AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.encrypt(bytesToEncrypt, secretBytes, participantPublicKey, nonce);
             bytesToEncrypt = encryptedData.getBytes();
         }
@@ -661,7 +661,7 @@ public final class Shuffling {
             }
             final byte[] nonce = Convert.toBytes(this.id);
             final List<byte[]> keySeeds = new ArrayList<>();
-            byte[] nextParticipantPublicKey = lookupAccountService().getPublicKey(participants.next().getAccountId());
+            byte[] nextParticipantPublicKey = lookupAccountService().getPublicKeyByteArray(participants.next().getAccountId());
             byte[] keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
             keySeeds.add(keySeed);
             byte[] publicKey = Crypto.getPublicKey(keySeed);
@@ -681,7 +681,7 @@ public final class Shuffling {
             }
             // decrypt all iteratively, adding the key seeds to the result
             while (participants.hasNext()) {
-                nextParticipantPublicKey = accountService.getPublicKey(participants.next().getAccountId());
+                nextParticipantPublicKey = accountService.getPublicKeyByteArray(participants.next().getAccountId());
                 keySeed = Crypto.getKeySeed(secretBytes, nextParticipantPublicKey, nonce);
                 keySeeds.add(keySeed);
                 AnonymouslyEncryptedData encryptedData = AnonymouslyEncryptedData.readEncryptedData(decryptedBytes);
@@ -794,7 +794,7 @@ public final class Shuffling {
         }
         lookupAccountService();
         for (byte[] recipientPublicKey : recipientPublicKeys) {
-            byte[] publicKey = accountService.getPublicKey(AccountService.getId(recipientPublicKey));
+            byte[] publicKey = accountService.getPublicKeyByteArray(AccountService.getId(recipientPublicKey));
             if (publicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
                 // distribution not possible, do a cancellation on behalf of last participant instead
                 cancelBy(getLastParticipant());
@@ -946,7 +946,7 @@ public final class Shuffling {
             }
             for (int k = i + 1; k < participantCount; k++) {
                 ShufflingParticipant nextParticipant = participants.get(k);
-                byte[] nextParticipantPublicKey = accountService.getPublicKey(nextParticipant.getAccountId());
+                byte[] nextParticipantPublicKey = accountService.getPublicKeyByteArray(nextParticipant.getAccountId());
                 byte[] keySeed = keySeeds[k - i - 1];
                 byte[] participantBytes;
                 try {
@@ -965,7 +965,7 @@ public final class Shuffling {
                         return participant.getAccountId();
                     }
                     // check for collisions and assume they are intentional
-                    byte[] currentPublicKey = accountService.getPublicKey(AccountService.getId(participantBytes));
+                    byte[] currentPublicKey = accountService.getPublicKeyByteArray(AccountService.getId(participantBytes));
                     if (currentPublicKey != null && !Arrays.equals(currentPublicKey, participantBytes)) {
                         LOG.debug("Participant {} submitted colliding recipient public key", Long.toUnsignedString(participant.getAccountId()));
                         return participant.getAccountId();

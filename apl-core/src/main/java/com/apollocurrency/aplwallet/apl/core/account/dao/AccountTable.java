@@ -62,8 +62,8 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Setter //for tests only
     private long creatorId;
 
-    private BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
 
     @Inject
     //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored

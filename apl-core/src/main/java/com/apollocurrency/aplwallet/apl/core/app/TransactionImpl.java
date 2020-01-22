@@ -425,7 +425,7 @@ public class TransactionImpl implements Transaction {
     public byte[] getSenderPublicKey() {
         if (senderPublicKey == null) {
             lookupAndInjectAccountService();
-            senderPublicKey = lookupAndInjectAccountService().getPublicKey(senderId);
+            senderPublicKey = lookupAndInjectAccountService().getPublicKeyByteArray(senderId);
         }
         return senderPublicKey;
     }

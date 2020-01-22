@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeySer
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.Poll;
 import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
@@ -896,7 +895,7 @@ public final class ParameterParser {
                 }
             }
             if (recipient != null) {
-                recipientPublicKey = accountService.getPublicKey(recipient.getId());
+                recipientPublicKey = accountService.getPublicKeyByteArray(recipient.getId());
             }
             if (recipientPublicKey == null) {
                 recipientPublicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter("recipientPublicKey")));

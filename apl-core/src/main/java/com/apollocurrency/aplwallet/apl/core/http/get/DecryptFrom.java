@@ -49,7 +49,7 @@ public final class DecryptFrom extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte[] publicKey = lookupAccountService().getPublicKey(ParameterParser.getAccountId(req, "participantAccount",true));
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(ParameterParser.getAccountId(req, "participantAccount",true));
         if (publicKey == null) {
             return INCORRECT_ACCOUNT;
         }
