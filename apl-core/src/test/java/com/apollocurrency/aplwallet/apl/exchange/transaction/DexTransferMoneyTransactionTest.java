@@ -178,8 +178,8 @@ class DexTransferMoneyTransactionTest {
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(accountService).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder( 300);
     }
 
@@ -195,8 +195,8 @@ class DexTransferMoneyTransactionTest {
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(accountService).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder( 200);
     }
 
