@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Observes;
@@ -100,7 +99,6 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-//    private static final ValuesDbTable<Poll, PollOptionResult> pollResultsTable = new ValuesDbTable<Poll, PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
     private static final ValuesDbTable<PollOptionResult> pollResultsTable = new ValuesDbTable<PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
 
         @Override
@@ -208,7 +206,8 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-        public static DbIterator<Poll> getPollsFinishingBelowHeight(int height) {
+    public static DbIterator<Poll> getPollsFinishingAtHeight(int height) {
+        // EXACT matching to Poll finish height
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
     }
 
@@ -242,8 +241,8 @@ public final class Poll extends AbstractPoll {
     }
 
     private static void checkPolls(int currentHeight) {
-        // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
-        try (DbIterator<Poll> polls = getPollsFinishingBelowHeight(currentHeight)) {
+        // select all Polls where 'finish_height' is EQUAL (DbClause.Op.EQ) then specified height value
+        try (DbIterator<Poll> polls = getPollsFinishingAtHeight(currentHeight)) {
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
@@ -394,8 +393,13 @@ public final class Poll extends AbstractPoll {
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
             List<Vote> voteList = CollectionUtil.toList(votes);
-            LOG.trace("count Vote result (h={}, votingModel='{}'): voteList = [{}]", height, votingModel, voteList.size());
-            LOG.trace("count Vote result: (pollId={}) voteList = \n{}", this.getId(), voteList);
+            if (voteList.size() <= 0) {
+                // stop further processing because there are no votes found
+                return Arrays.asList(result);
+            }
+            LOG.trace("count Vote result: h={}, votingModel='{}', pollId={}, voteList = [{}]",
+                height, votingModel, this.getId(), voteList.size());
+            LOG.trace("count Vote result: pollId={}, voteList = \n{}", this.getId(), voteList);
             for (Vote vote : voteList) {
                 long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 if (weight <= 0) {
