@@ -75,7 +75,7 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY timestamp DESC, id ASC ";
     }
 
@@ -83,4 +83,3 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
         return get(KEY_FACTORY.newKey(purchaseId));
     }
 }
-

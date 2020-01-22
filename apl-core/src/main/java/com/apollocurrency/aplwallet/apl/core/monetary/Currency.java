@@ -74,7 +74,7 @@ public final class Currency {
     };
 
     private static final VersionedDeletableEntityDbTable<Currency> currencyTable = new VersionedDeletableEntityDbTable<Currency>("currency", currencyDbKeyFactory, "code,name,description") {
- 
+
         @Override
         public Currency load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
             return new Currency(rs, dbKey);
