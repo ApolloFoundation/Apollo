@@ -87,6 +87,13 @@ class DexOrderDaoTest {
     }
 
     @Test
+    void testGetLastOrderBeforeTimestamp() {
+        DexOrder order = dexOrderDao.getLastClosedOrderBeforeTimestamp(DexCurrency.PAX, td.ORDER_BEA_6.getFinishTime());
+
+        assertEquals(td.ORDER_BPA_5, order);
+    }
+
+    @Test
     void testGetNoClosedBuyOrdersBetweenTimestamps() {
         List<DexOrder> orders = dexOrderDao.getOrdersFromDbIdBetweenTimestamps(OrderDbIdPaginationDbRequest.builder()
                 .limit(3)

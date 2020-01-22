@@ -5,11 +5,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
-import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
-import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -19,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
@@ -80,16 +76,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -596,131 +588,6 @@ public class DexController {
             return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage()).build();
         }
     }
-
-
-
-
-    @GET
-    @Path("/history")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getHistoday2(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                @Parameter(description = "resolution") @QueryParam("resolution") String resolution,
-                                @Parameter(description = "from") @QueryParam("from") Integer from,
-                                @Parameter(description = "to") @QueryParam("to") Integer to,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
-
-
-        // the date of DEX release - 30.09.. taking 25 as an upper limit
-        //1569369600
-        //Is equivalent to: 09/25/2019 @ 12:00am (UTC)
-
-        if (to <= 1569369600){
-             log.debug("flushing: ");
-            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
-            tdo.setC(null);
-            tdo.setH(null);
-            tdo.setL(null);
-            tdo.setO(null);
-            tdo.setT(null);
-            tdo.setV(null);
-            tdo.setNextTime(null);
-            tdo.setS("no_data");
-            return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tdo) ) .build();
-        }
-
-
-        TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from,service, timeService);
-        return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
-    }
-
-
-    @GET
-    @Path("/symbols")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getSymbols(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                @Context HttpServletRequest req) throws NotFoundException {
-
-        log.debug("getSymbols:  fsym: {}", symbol );
-        TimeZone tz = Calendar.getInstance().getTimeZone();
-        SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
-        symbolsOutputDTO.name = symbol;
-        symbolsOutputDTO.exchange_traded = "Apollo DEX";
-        symbolsOutputDTO.exchange_listed = "Apollo DEX";
-        symbolsOutputDTO.timezone = tz.getID();
-        symbolsOutputDTO.minmov = 1;
-        symbolsOutputDTO.minmov2 = 0;
-        symbolsOutputDTO.pointvalue = 1;
-        symbolsOutputDTO.session = "24x7";
-        symbolsOutputDTO.has_intraday = true;
-        symbolsOutputDTO.has_no_volume = false;
-        symbolsOutputDTO.has_daily = true;
-        symbolsOutputDTO.description = symbol;
-        symbolsOutputDTO.type = "cryptocurrency";
-        symbolsOutputDTO.has_daily = true;
-        symbolsOutputDTO.has_empty_bars = true;
-        symbolsOutputDTO.has_weekly_and_monthly = false;
-        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
-        symbolsOutputDTO.supported_resolutions.add("15");
-        symbolsOutputDTO.supported_resolutions.add("60");
-        symbolsOutputDTO.supported_resolutions.add("240");
-        symbolsOutputDTO.supported_resolutions.add("D");
-        symbolsOutputDTO.pricescale = 1000000000;
-        symbolsOutputDTO.ticker = symbol;
-
-        return Response.ok( symbolsOutputDTO ) .build();
-    }
-
-    @GET
-    @Path("/time")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get time for trading vies", description = "getting time")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getTime(  ) throws NotFoundException {
-
-        Long time = System.currentTimeMillis()/1000L;
-        return Response.ok( time ) .build();
-    }
-
-
-
-    @GET
-    @Path("/config")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get configuration", description = "getting TV configuration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getConfig(  ) throws NotFoundException {
-
-        log.debug("getConfig entry point");
-        TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
-        tradingViewConfigDTO.supports_search = true;
-        tradingViewConfigDTO.supports_group_request = false;
-        tradingViewConfigDTO.supports_marks = false;
-        tradingViewConfigDTO.supports_timescale_marks = false;
-        tradingViewConfigDTO.supports_time = false;
-        // resolutions
-        tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();
-        tradingViewConfigDTO.supported_resolutions.add("15");
-        tradingViewConfigDTO.supported_resolutions.add("60");
-        tradingViewConfigDTO.supported_resolutions.add("240");
-        tradingViewConfigDTO.supported_resolutions.add("D");
-
-        return Response.ok( tradingViewConfigDTO ) .build();
-    }
-
 
 
     @GET

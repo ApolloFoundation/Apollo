@@ -37,8 +37,7 @@ class TradingDataControllerTest {
     @BeforeEach
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
-        TradingDataController tradingDataController = new TradingDataController();
-        tradingDataController.setService(service);
+        TradingDataController tradingDataController = new TradingDataController(service, null, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);
         dispatcher.getProviderFactory().registerProvider(LegacyParameterExceptionMapper.class);
         tradingDataOutput.setData(List.of(CandlestickTestUtil.fromRawData("100", "200", "150", "180", "659400.34", "325000.025", 14400)));
@@ -46,7 +45,7 @@ class TradingDataControllerTest {
 
     @Test
     void testGetCandlesticks() throws URISyntaxException, IOException {
-        doReturn(tradingDataOutput).when(service).getForTimeFrame(15000, 1, DexCurrency.ETH, TimeFrame.HOUR);
+        doReturn(tradingDataOutput).when(service).getBars(15000, 1, DexCurrency.ETH, TimeFrame.HOUR);
 
         MockHttpRequest request = MockHttpRequest.get("/dex/chart?fsym=APL&tsym=ETH&toTs=15000&limit=1&timeFrame=HOUR").contentType(MediaType.APPLICATION_JSON_TYPE);
         MockHttpResponse response = new MockHttpResponse();

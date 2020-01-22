@@ -18,12 +18,12 @@ public enum DexCurrency {
     public String getCurrencyCode() {
         return currencyCode;
     }
-    
+
     public static Integer getValue( DexCurrency i ) {
         switch (i) {
             case APL : return 0;
             case ETH : return 1;
-            case PAX : return 2; 
+            case PAX : return 2;
         }
         return -1;
     }
@@ -48,5 +48,14 @@ public enum DexCurrency {
     }
     public boolean isPax(){
         return this == DexCurrency.PAX;
+    }
+
+    public static DexCurrency fromString(String value) {
+        for (DexCurrency dexCurrency : values()) {
+            if (dexCurrency.currencyCode.equalsIgnoreCase(value) || value.toLowerCase().endsWith(dexCurrency.currencyCode)) {
+                return dexCurrency;
+            }
+        }
+        throw new IllegalArgumentException("Incorrect DexCurrency value: " + value);
     }
 }

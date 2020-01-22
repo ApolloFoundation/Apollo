@@ -58,7 +58,7 @@ public interface DexOrderDao {
             " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOffersForMatchingPure(@BindBean DexOrderDBMatchingRequest dexOrderDBMatchingRequest, @Define("orderby") String orderBy);
-    
+
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
             "WHERE latest = true " +
@@ -82,6 +82,18 @@ public interface DexOrderDao {
             "LIMIT 1")
     @RegisterRowMapper(DexOrderMapper.class)
     DexOrder getLastClosedOrderBeforeHeight(@Bind("coin") DexCurrency coin, @Bind("toHeight") int toHeight);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+        "WHERE latest = true " +
+        "AND offer.status = 5 " + // CLOSED
+        "AND offer.type = 0 " + // only autocloseable buy orders
+        "AND offer.pair_currency = :coin " +
+        "AND offer.finish_time < :timestamp " +
+        " ORDER BY finish_time DESC " +
+        "LIMIT 1")
+    @RegisterRowMapper(DexOrderMapper.class)
+    DexOrder getLastClosedOrderBeforeTimestamp(@Bind("coin") DexCurrency coin, @Bind("timestamp") int timestamp);
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM dex_offer AS offer " +
