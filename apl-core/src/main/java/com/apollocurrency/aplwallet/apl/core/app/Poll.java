@@ -141,6 +141,11 @@ public final class Poll extends AbstractPoll {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
     }
 
+    public static DbIterator<Poll> getPollsFinishingAtHeight(int height) {
+        // EXACT matching to Poll finish height
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
+    }
+
     public static DbIterator<Poll> getAllPolls(int from, int to) {
         return pollTable.getAll(from, to);
     }
@@ -204,11 +209,6 @@ public final class Poll extends AbstractPoll {
             DbUtils.close(connection);
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    public static DbIterator<Poll> getPollsFinishingAtHeight(int height) {
-        // EXACT matching to Poll finish height
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
     }
 
     public static DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to) {
