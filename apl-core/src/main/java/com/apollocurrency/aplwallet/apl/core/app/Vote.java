@@ -58,11 +58,11 @@ public final class Vote {
 
         @Override
         public void trim(int height) {
-            log.debug("Vote trim: NO_Sharding, height = {}", height);
+            log.trace("Vote trim: NO_Sharding, height = {}", height);
             super.trim(height);
             try (Connection con = databaseManager.getDataSource().getConnection();
 //                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
-                 DbIterator<Poll> polls = Poll.getPollsFinishingAtHeight(height, 0, Integer.MAX_VALUE);
+                 DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                 commonTrim(height, false, polls, pstmt);
             } catch (SQLException e) {
@@ -71,13 +71,13 @@ public final class Vote {
         }
 
         public void trim(int height, boolean isSharding) {
-            log.debug("Vote trim: isSharding={}, height = {}", isSharding, height);
+            log.trace("Vote trim: isSharding={}, height = {}", isSharding, height);
             if (isSharding) {
                 // trim when sharding process has been started
                 super.trim(height);
                 try (Connection con = databaseManager.getDataSource().getConnection();
                      // select all polls below or equal height value ('snapshot block' in our case)
-                     DbIterator<Poll> polls = Poll.getPollsFinishingAtHeight(height, 0, Integer.MAX_VALUE);
+                     DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                      PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
                     commonTrim(height, true, polls, pstmt);
                 } catch (SQLException e) {
@@ -91,7 +91,7 @@ public final class Vote {
     };
 
     private static void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
-        log.debug("Vote trim common: isSharding={}, height = {}", isSharding, height);
+        log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
         int index = 0; // index for affected Polls
         int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
         for (Poll poll : polls) {
@@ -99,13 +99,13 @@ public final class Vote {
             log.trace("Vote trim common: Before deleting votes, index=[{}] by pollId={} at height = {}", index, poll.getId(), height);
             int deletedRecords = pstmt.executeUpdate();
             if (deletedRecords > 0) {
-                log.debug("Vote trim common: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
+                log.trace("Vote trim common: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
                     deletedRecords, index, poll.getId(), poll.getFinishHeight(), height);
                 totalDeletedVotes += deletedRecords;
             }
             index++;
         }
-        log.debug("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
+        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
             totalDeletedVotes, index, height, isSharding);
     }
 
