@@ -112,8 +112,8 @@ public class Account {
     private static AccountPropertyTable accountPropertyTable;
 
     private static Cache<DbKey, PublicKey> publicKeyCache = null;
-           
-    
+
+
     private static final Listeners<Account, Event> listeners = new Listeners<>();
     private static final Listeners<AccountAsset, Event> assetListeners = new Listeners<>();
     private static final Listeners<AccountCurrency, Event> currencyListeners = new Listeners<>();
@@ -340,7 +340,7 @@ public class Account {
         throw new RuntimeException("DUPLICATE KEY for account " + Long.toUnsignedString(accountId)
                 + " existing key " + Convert.toHexString(account.publicKey.publicKey) + " new key " + Convert.toHexString(publicKey));
     }
-    
+
     public static long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -353,9 +353,9 @@ public class Account {
 
     public static long getTotalAmountOnTopAccounts() {
         return getTotalAmountOnTopAccounts(100);
-    } 
+    }
 
-    
+
     public static long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection()) {
@@ -449,7 +449,7 @@ public class Account {
         }
         return publicKey;
     }
-    
+
     private static PublicKey getPublicKey(DbKey dbKey, boolean cache) {
         PublicKey publicKey = publicKeyTable.get(dbKey, cache);
         if (publicKey == null) {
