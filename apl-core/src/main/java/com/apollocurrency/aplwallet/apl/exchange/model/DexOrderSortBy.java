@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 
 public enum DexOrderSortBy {
 
-    PAIR_RATE("offer.pair_rate"),
+    PAIR_RATE("pair_rate"),
     HEIGHT("db_id");
 
     String value;

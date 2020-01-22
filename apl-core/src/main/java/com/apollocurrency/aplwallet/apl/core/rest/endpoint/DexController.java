@@ -299,7 +299,7 @@ public class DexController {
                               @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                               @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
                               @Parameter(description = "Sorted by (pairRate = 0, height = 1)") @DefaultValue(value = "0") @QueryParam("sortBy") Integer sortBy,
-                              @Parameter(description = "Sorted (ASC = 0, DESC = 1)") @DefaultValue(value = "1") @QueryParam("sortOrder") Integer sortOrder,
+                              @Parameter(description = "Sorted order (ASC = 0, DESC = 1)") @DefaultValue(value = "1") @QueryParam("sortOrder") Integer sortOrder,
                               @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
