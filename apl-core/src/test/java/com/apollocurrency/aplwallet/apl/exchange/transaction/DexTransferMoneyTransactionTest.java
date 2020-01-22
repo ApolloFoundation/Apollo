@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -22,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -51,11 +51,12 @@ class DexTransferMoneyTransactionTest {
     ExchangeContract contract = new ExchangeContract(
             1L, 64L, 200L, 300L, 1000L, 2000L,
             ExchangeContractStatus.STEP_3, new byte[32], null, null,
-            new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, 1, false);
+            new byte[32], 7200, 1, false);
     DexService dexService = mock(DexService.class);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from()
             .addBeans(
+                    MockBean.of(mock(DexConfig.class), DexConfig.class),
                     MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
                     MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
                     MockBean.of(dexService, DexService.class),

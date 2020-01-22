@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -26,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +62,7 @@ class DexServiceTest {
     @Mock DexContractDao dexContractDao;
     @Mock Blockchain blockchain;
     @Mock PhasingPollServiceImpl phasingPollService;
-    @Mock DexMatcherServiceImpl dexMatcherService;    
+    @Mock DexMatcherServiceImpl dexMatcherService;
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
@@ -71,6 +71,8 @@ class DexServiceTest {
     BlockchainConfig blockchainConfig;
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
+    @Mock
+    DexConfig dexConfig;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
     DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
@@ -81,7 +83,7 @@ class DexServiceTest {
             0L, 2L, 1L, 3L, 200L, 100L,
             ExchangeContractStatus.STEP_3, new byte[32], "123",
             "0x86d5bc08c2eba828a8e3588e25ad26a312ce77f6ecc02e3500ba05607f49c935",
-            new byte[32], Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY, null, true);
+            new byte[32], 100, null, true);
 
     DexService dexService;
 
@@ -89,13 +91,14 @@ class DexServiceTest {
     void setUp() {
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
                 dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache);
+                approvedResultTable, mandatoryTransactionDao, blockchainConfig, cache, dexConfig);
     }
 
     @Test
     void testNotEnoughConfirmationsForAplTransaction() {
         doReturn(60).when(blockchain).getHeight();
         doReturn(false).when(blockchain).hasTransaction(123, 30);
+        doReturn(30).when(dexConfig).getAplConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
@@ -106,6 +109,7 @@ class DexServiceTest {
     void testHasEnoughConfirmationsForAplTransaction() {
         doReturn(60).when(blockchain).getHeight();
         doReturn(true).when(blockchain).hasTransaction(123, 30);
+        doReturn(30).when(dexConfig).getAplConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
@@ -116,6 +120,7 @@ class DexServiceTest {
     void testNotEnoughConfirmationsForEthTransaction() {
         order.setType(OrderType.SELL);
         doReturn(9).when(ethWalletService).getNumberOfConfirmations(contract.getTransferTxId());
+        doReturn(10).when(dexConfig).getEthConfirmations();
 
         boolean hasEnoughConfirmations = dexService.hasConfirmations(contract, order);
 
