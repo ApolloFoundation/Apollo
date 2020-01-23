@@ -6,12 +6,14 @@ import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
@@ -206,7 +208,7 @@ class DexOrderScanningServiceUnitTest {
     private static class InMemoryOrderDao implements DexOrderDao {
         List<DexOrder> orders = Collections.synchronizedList(new ArrayList<>());
         @Override
-        public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest, String sortBy, String sort) {
+        public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest, DexOrderSortBy sortBy, DBSortOrder sort) {
             throw new UnsupportedOperationException();
         }
 
