@@ -298,8 +298,8 @@ public class DexController {
                               @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
                               @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
                               @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
-                              @Parameter(description = "Sorted by (pairRate = 0, height = 1)") @DefaultValue(value = "0") @QueryParam("sortBy") Integer sortBy,
-                              @Parameter(description = "Sorted order (ASC = 0, DESC = 1)") @DefaultValue(value = "1") @QueryParam("sortOrder") Integer sortOrder,
+                              @Parameter(description = "Sorted by (PAIR_RATE , DB_ID)") @DefaultValue(value = "PAIR_RATE") @QueryParam("sortBy") DexOrderSortBy sortBy,
+                              @Parameter(description = "Sorted order (ASC, DESC)") @DefaultValue(value = "ASC") @QueryParam("sortOrder") DBSortOrder sortOrder,
                               @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
@@ -350,8 +350,8 @@ public class DexController {
                 .offset(firstIndex)
                 .limit(limit)
                 .hasFrozenMoney(hasFrozenMoney)
-            .sortBy(DexOrderSortBy.ordinal(sortBy))
-            .sortOrder(DBSortOrder.ordinal(sortOrder))
+            .sortBy(sortBy)
+            .sortOrder(sortOrder)
                 .build();
 
         List<DexOrderWithFreezing> orders = service.getOrdersWithFreezing(dexOrderDBRequest);

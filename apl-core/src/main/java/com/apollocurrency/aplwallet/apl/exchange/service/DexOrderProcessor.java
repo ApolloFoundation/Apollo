@@ -754,7 +754,7 @@ public class DexOrderProcessor {
                         .status(OrderStatus.CANCEL)
                         .type(OrderType.BUY.ordinal())
                         .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.HEIGHT)
+                    .sortBy(DexOrderSortBy.DB_ID)
                     .sortOrder(DBSortOrder.ASC)
                         .build());
                 for (DexOrder order : orders) {
@@ -796,7 +796,7 @@ public class DexOrderProcessor {
                         .status(OrderStatus.EXPIRED)
                         .type(OrderType.BUY.ordinal())
                         .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.HEIGHT)
+                    .sortBy(DexOrderSortBy.DB_ID)
                     .sortOrder(DBSortOrder.ASC)
                         .build());
                 for (DexOrder order : orders) {
