@@ -98,7 +98,7 @@ public class PrunableArchiveMigrator {
                         log.debug("Firing 'FILE_CHANDED' event {}", fops.getFileId());
                     } else {
                         log.error("Can not comperess prunable zip: {}", zipName);
-                    }        
+                    }
                     FileUtils.clearDirectorySilently(tempDirectory); // clean is not mandatory, but desirable
                 }
                 catch (IOException e) {
