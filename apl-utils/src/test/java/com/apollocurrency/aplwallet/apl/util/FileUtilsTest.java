@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -15,6 +11,10 @@ import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileUtilsTest {
     @RegisterExtension
@@ -88,5 +88,18 @@ class FileUtilsTest {
         FileUtils.deleteFilesByPattern(directory, new String[]{"tt"}, new String[]{"file"});
         assertTrue(Files.exists(directory));
         assertEquals(3, Files.list(directory).count());
+    }
+
+    @Test
+    void testDeletebyFilter() throws IOException {
+        Path directory = temporaryFolderExtension.newFolder().toPath();
+        Files.createFile(directory.resolve("file1.txt"));
+        Files.createFile(directory.resolve("file2.txt"));
+        Path existingFile = directory.resolve("file3.tt");
+        Files.createFile(existingFile);
+        FileUtils.deleteFilesByFilter(directory, (p) -> p.toString().endsWith(".txt"));
+        long filesCount = Files.list(directory).count();
+        assertEquals(1, filesCount);
+        assertTrue(Files.exists(existingFile));
     }
 }

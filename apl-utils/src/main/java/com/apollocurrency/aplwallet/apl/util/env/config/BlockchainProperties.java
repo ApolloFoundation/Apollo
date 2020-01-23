@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({"height","maxNumberOfTransactions", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-        "consensusSettings"})
+        "consensusSettings", "featuresHeightRequirement"})
 public class BlockchainProperties {
     private int height;
     private int maxNumberOfTransactions;

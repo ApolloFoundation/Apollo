@@ -15,7 +15,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "DB_ID BIGINT not null, " +
                         "ID BIGINT not null, " +
                         "VERSION INTEGER not null, " +
-                        "TIMESTAMP INTEGER not null, " +
+                        "\"TIMESTAMP\" INTEGER not null, " +
                         "PREVIOUS_BLOCK_ID BIGINT, " +
                         "TOTAL_AMOUNT BIGINT not null, " +
                         "TOTAL_FEE BIGINT not null, " +
@@ -66,9 +66,9 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                         "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, value VARCHAR(250))");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, \"VALUE\" VARCHAR(250))");
             case 4:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, value)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, \"VALUE\")");
             case 5:
                 return 5;
             case 24:
@@ -92,5 +92,10 @@ public class ShardInitTableSchemaVersion extends DbVersion {
     @Override
     public String toString() {
         return "ShardInitTableSchemaVersion";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj.getClass() == this.getClass();
     }
 }

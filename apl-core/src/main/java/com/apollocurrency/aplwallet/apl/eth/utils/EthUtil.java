@@ -9,10 +9,13 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Convert;
 
+import javax.enterprise.inject.Vetoed;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
+@Vetoed
 public class EthUtil {
+
+    private static final String ETH_ADDRESS_PATTERN = "^0x[0-9a-f]{40}$";
 
     /**
      * Generate new account with random key.
@@ -50,24 +53,26 @@ public class EthUtil {
         return weiToEther(gweiToWei(gwei));
     }
 
-    public static BigDecimal aplToEth(Long apl) {
-        return weiToEther(gweiToWei(aplToGwei(apl)));
+    public static BigDecimal atmToEth(Long apl) {
+        return weiToEther(gweiToWei(atmToGwei(apl)));
     }
 
-    public static Long aplToGwei(Long apl) {
+    public static Long atmToGwei(Long apl) {
         return apl * 10;
     }
 
-    public static Long gweiToApl(Long gwei) {
-        return weiToEther(gweiToWei(gwei)).multiply(BigDecimal.valueOf(Constants.ONE_APL)).longValue();
+    public static Long gweiToAtm(Long gwei) {
+        return gwei / 10;
     }
 
-
+    public static BigDecimal fromAtm(BigDecimal ix) {
+        return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));
+    }
 
     public static boolean isAddressValid(String address){
-        String regex = "^0x[0-9a-f]{40}$";
-
-        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(regex);
+        return  StringUtils.isNotBlank(address) && address.toLowerCase().matches(ETH_ADDRESS_PATTERN);
     }
+
+    private EthUtil() {}
 
 }

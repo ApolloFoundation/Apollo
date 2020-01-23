@@ -52,21 +52,11 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
     public final List<T> get(DbKey dbKey) {
         List<T> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        if (dataSource.isInTransaction()) {
-            values = (List<T>) dataSource.getCache(table).get(dbKey);
-            if (values != null) {
-                return values;
-            }
-        }
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
                      + (multiversion ? " AND latest = TRUE" : "") + " ORDER BY db_id")) {
             dbKey.setPK(pstmt);
-            values = get(con, pstmt);
-            if (dataSource.isInTransaction()) {
-                dataSource.getCache(table).put(dbKey, values);
-            }
-            return values;
+            return get(con, pstmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -101,7 +91,6 @@ public abstract class ValuesDbTable<T> extends BasicDbTable<T> {
             throw new RuntimeException("DbKey not set");
         }
         checkKeys(dbKey, values);
-        dataSource.getCache(table).put(dbKey, values);
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE " + table

@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -67,7 +68,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
-    
+
     private final String host;
     private volatile int port;
     private volatile Hallmark hallmark;
@@ -78,6 +79,7 @@ public final class PeerImpl implements Peer {
     private volatile int blacklistingTime;
     private volatile String blacklistingCause;
     private volatile PeerState state;
+    private final TimeLimiter limiter;
 
     private volatile int lastUpdated;
     private volatile int lastConnectAttempt;
@@ -89,29 +91,30 @@ public final class PeerImpl implements Peer {
 
     private volatile BlockchainState blockchainState;
     private final AtomicReference<UUID> chainId = new AtomicReference<>();
-    
+
     private final boolean isLightClient;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private volatile TimeService timeService;
     private final PeersService peers;
 
-    private PeerInfo pi = new PeerInfo();
+    private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final  ObjectMapper mapper = new ObjectMapper();
-    
+
     @Getter
     private final Peer2PeerTransport p2pTransport;
     @Getter
     private volatile int  failedConnectAttempts = 0;
 
     PeerImpl(PeerAddress addrByFact,
-            PeerAddress announcedAddress,
-            BlockchainConfig blockchainConfig,
-            Blockchain blockchain,
-            TimeService timeService,
-            PeerServlet peerServlet,
-            PeersService peers
+             PeerAddress announcedAddress,
+             BlockchainConfig blockchainConfig,
+             Blockchain blockchain,
+             TimeService timeService,
+             PeerServlet peerServlet,
+             PeersService peers,
+             TimeLimiter timeLimiter
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -131,49 +134,49 @@ public final class PeerImpl implements Peer {
         this.blockchainConfig=blockchainConfig;
         this.blockchain = blockchain;
         this.timeService=timeService;
-        this.peers=peers;
-        isLightClient=peers.isLightClient;
-        this.p2pTransport = new Peer2PeerTransport(this, peerServlet);
+        this.peers = peers;
+        isLightClient = peers.isLightClient;
+        this.limiter = timeLimiter;
+        this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
     }
-    
+
     @Override
     public String getHost() {
         return host;
     }
-    
+
     @Override
     public String getHostWithPort(){
       PeerAddress pa = new PeerAddress(port,host);
       return pa.getAddrWithPort();
     }
-    
+
     @Override
     public PeerState getState() {
-        PeerState res;
-        Lock lock = stateLock.readLock();
-        lock.lock();
-        try{
-            res=state;
-        }finally{
-            lock.unlock();
-        }
-        return res;
+        return state;
     }
 
     private void setState(PeerState newState) {
         // if we are even not connected and some routine say to disconnect
-        // we should close all because possily we alread tried to connect and have
+        // we should close all because possible we already tried to connect and have
         // client thread running
         PeerState oldState=getState();
         Lock lock = stateLock.writeLock();
         lock.lock();
         try{
           if (newState != PeerState.CONNECTED) {
-            p2pTransport.disconnect();
+              p2pTransport.disconnect();
+              // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
           }
-          this.state = newState;
-        }finally{
+//        } catch (InterruptedException e) {
+//            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
+//            Thread.currentThread().interrupt();
+//        } catch (TimeoutException e) {
+//            LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
+        } finally{
+            //we have to change state anyway
+            this.state = newState;
             lock.unlock();
         }
         if (newState == PeerState.CONNECTED && oldState!=PeerState.CONNECTED) {
@@ -181,7 +184,6 @@ public final class PeerImpl implements Peer {
         } else if (newState == PeerState.NON_CONNECTED) {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
-        //we have to change state anyway
     }
 
     @Override
@@ -226,7 +228,7 @@ public final class PeerImpl implements Peer {
 
     public boolean setApplication(String application) {
         boolean res = true;
-        if (application == null 
+        if (application == null
                 || application.length() > PeersService.MAX_APPLICATION_LENGTH
                 || ! application.equalsIgnoreCase(Constants.APPLICATION)
            ) {
@@ -328,7 +330,7 @@ public final class PeerImpl implements Peer {
     }
     /**
      * Sets address of peer for outbound connections
- Shoul not be used directly but from PeersService service only
+     * Should not be used directly but from PeersService service only
      * @param announcedAddress address with port  optionally
      */
     void setAnnouncedAddress(String announcedAddress) {
@@ -401,6 +403,7 @@ public final class PeerImpl implements Peer {
         blacklistingCause = cause;
         deactivate("Blacklisting because of: "+cause);
         peers.notifyListeners(this, PeersService.Event.BLACKLIST);
+        LOG.debug("Peer {} blackisted. Cause: {}",getHostWithPort(),cause);
     }
 
     @Override
@@ -504,7 +507,7 @@ public final class PeerImpl implements Peer {
             String rq = wsWriter.toString();
             String resp = p2pTransport.sendAndWaitResponse(rq);
             if(resp==null){
-                LOG.trace("Null response from: ",getHostWithPort());
+                LOG.trace("Null response from: {}", getHostWithPort());
                 return response;
             }
             response = (JSONObject) JSONValue.parseWithException(resp);
@@ -537,7 +540,7 @@ public final class PeerImpl implements Peer {
         }
         return getHostWithPort().compareTo(o.getHostWithPort());
     }
-    
+
     /**
      * first blacklist and then forget peers that are not connectable
      * or reset counter on success
@@ -555,9 +558,9 @@ public final class PeerImpl implements Peer {
         }
         return failedConnectAttempts;
     }
-    
-    @Override   
-    public synchronized boolean handshake(UUID targetChainId) {
+
+    public synchronized boolean handshake() {
+        UUID targetChainId = peers.blockchainConfig.getChain().getChainId();
         if(getState()==PeerState.CONNECTED){
             LOG.trace("Peers {} is already connected.",getHostWithPort());
             return true;
@@ -601,7 +604,7 @@ public final class PeerImpl implements Peer {
                     blacklist("Bad hallmark");
                     return false;
                 }
-                
+
                 chainId.set(UUID.fromString(newPi.getChainId()));
                 String servicesString = (String)response.get("services");
 
@@ -616,7 +619,7 @@ public final class PeerImpl implements Peer {
 
                 setPlatform(newPi.getPlatform());
                 setShareAddress(newPi.getShareAddress());
- 
+
                 if (!PeersService.ignorePeerAnnouncedAddress) {
                     if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
                             if (!verifyAnnouncedAddress(newPi.getAnnouncedAddress())) {
@@ -665,7 +668,7 @@ public final class PeerImpl implements Peer {
                 LOG.debug("Announced port " + announcedPort + " does not match hallmark " + hallmark.getPort() + ", ignoring hallmark for " + host);
                 unsetHallmark();
                 return false;
-            }            
+            }
 
         return true;
     }
@@ -877,13 +880,13 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isTrusted() {
-        return  getTrustLevel().getCode() > PeerTrustLevel.REGISTERED.getCode();                
+        return  getTrustLevel().getCode() > PeerTrustLevel.REGISTERED.getCode();
     }
 
     @Override
     public PeerTrustLevel getTrustLevel() {
-        //TODO implement using Apollo ID 
-        return PeerTrustLevel.NOT_TRUSTED;    
+        //TODO implement using Apollo ID
+        return PeerTrustLevel.NOT_TRUSTED;
     }
 
     public void setApiServerIdleTimeout(Integer apiServerIdleTimeout) {

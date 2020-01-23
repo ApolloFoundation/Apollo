@@ -16,43 +16,44 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Getter;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Maintain a ledger of changes to selected accounts
  */
+@Slf4j
 @Singleton
 public class AccountLedgerServiceImpl implements AccountLedgerService {
-    private static final Logger LOG = getLogger(AccountLedgerService.class);
-
     /** Account ledger is enabled */
-    private boolean ledgerEnabled;
+    private final boolean ledgerEnabled;
 
     /** Track all accounts */
-    private boolean trackAllAccounts;
+    private final boolean trackAllAccounts;
 
     /** Accounts to track */
     private final SortedSet<Long> trackAccounts = new TreeSet<>();
 
     /** Unconfirmed logging */
-    private int logUnconfirmed;
+    private final int logUnconfirmed;
 
     /** Blockchain */
-    private Blockchain blockchain;
+    private final Blockchain blockchain;
 
     /** Blockchain processor */
-    private BlockchainProcessor blockchainProcessor;
+    private final BlockchainProcessor blockchainProcessor;
 
-    private BlockchainConfig blockchainConfig;
+    private final BlockchainConfig blockchainConfig;
 
-    private AccountLedgerTable accountLedgerTable;
+    private final AccountLedgerTable accountLedgerTable;
 
     /** Pending ledger entries */
     @Getter
@@ -73,19 +74,19 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
         trackAllAccounts = ledgerAccounts.contains("*");
         if (ledgerEnabled) {
             if (trackAllAccounts) {
-                LOG.info("Account ledger is tracking all accounts");
+                log.info("Account ledger is tracking all accounts");
             } else {
                 for (String account : ledgerAccounts) {
                     try {
                         trackAccounts.add(Convert.parseAccountId(account));
-                        LOG.info("Account ledger is tracking account " + account);
+                        log.info("Account ledger is tracking account " + account);
                     } catch (RuntimeException e) {
-                        LOG.error("Account " + account + " is not valid; ignored");
+                        log.error("Account " + account + " is not valid; ignored");
                     }
                 }
             }
         } else {
-            LOG.info("Account ledger is not enabled");
+            log.info("Account ledger is not enabled");
         }
         int temp = propertiesHolder.getIntProperty("apl.ledgerLogUnconfirmed", 1);
         logUnconfirmed = (temp >= 0 && temp <= 2 ? temp : 1);
@@ -179,7 +180,6 @@ public class AccountLedgerServiceImpl implements AccountLedgerService {
     public void commitEntries() {
         for (LedgerEntry ledgerEntry : pendingEntries) {
             accountLedgerTable.insert(ledgerEntry);
-            //listeners.notify(ledgerEntry, AccountLedgerService.Event.ADD_ENTRY);
             accountLedgerEntryEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.ADD_ENTRY)).fire(ledgerEntry);
         }
         pendingEntries.clear();

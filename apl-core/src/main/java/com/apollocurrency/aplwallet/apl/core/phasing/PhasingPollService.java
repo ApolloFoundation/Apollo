@@ -11,12 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface PhasingPollService {
@@ -44,7 +46,7 @@ public interface PhasingPollService {
 
     List<Transaction> getFinishingTransactions(int height);
 
-    List<Transaction> getFinishingTransactionsByTime(int time);
+    List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime);
 
     DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 
@@ -61,9 +63,13 @@ public interface PhasingPollService {
 
     void addPoll(Transaction transaction, PhasingAppendix appendix);
 
-    void finish(PhasingPoll phasingPoll, long result);
-
     List<byte[]> getAndSetLinkedFullHashes(PhasingPoll phasingPoll);
+
+    void reject(Transaction transaction);
+
+    void countVotesAndRelease(Transaction transaction);
+
+    void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates);
 
     long countVotes(PhasingPoll phasingPoll);
 
@@ -74,6 +80,8 @@ public interface PhasingPollService {
     List<TransactionDbInfo> getActivePhasedTransactionDbInfoAtHeight(int height);
 
     long getVoteCount(long phasedTransactionId);
+
+    List<PhasingVote> getVotes(long phasedTransactionId);
 
     void addVote(Transaction transaction, Account voter, long phasedTransactionId);
 

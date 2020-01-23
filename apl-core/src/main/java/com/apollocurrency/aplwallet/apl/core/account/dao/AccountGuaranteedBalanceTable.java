@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.inject.Inject;
@@ -24,9 +26,11 @@ import java.util.Map;
 
 @Singleton
 public class AccountGuaranteedBalanceTable extends DerivedDbTable {
+
     private static final String TABLE_NAME = "account_guaranteed_balance";
-    private BlockchainConfig blockchainConfig;
-    private int batchCommitSize;
+
+    private final BlockchainConfig blockchainConfig;
+    private final int batchCommitSize;
 
     private static final LongKeyFactory<AccountGuaranteedBalance>
             accountGuaranteedBalanceLongKeyFactory = new LongKeyFactory<>("account_id") {
@@ -44,6 +48,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     public void trim(int height) {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM account_guaranteed_balance "
                      + "WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
             pstmtDelete.setInt(1, height - blockchainConfig.getGuaranteedBalanceConfirmations());
@@ -67,7 +72,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
-                     + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
+                 + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
             pstmt.setLong(1, accountId);
             pstmt.setInt(2, height);
             pstmt.setInt(3, currentHeight);
@@ -88,9 +93,9 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
-                     + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
-                     + (height < blockchainHeight ? " AND height <= ? " : "")
-                     + " GROUP BY account_id ORDER BY account_id")
+                 + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
+                 + (height < blockchainHeight ? " AND height <= ? " : "")
+                 + " GROUP BY account_id ORDER BY account_id")
         ) {
             pstmt.setObject(1, lessorIds);
             pstmt.setInt(2, height - blockchainConfig.getGuaranteedBalanceConfirmations());
@@ -118,9 +123,10 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelect = con.prepareStatement("SELECT additions FROM account_guaranteed_balance "
-                     + "WHERE account_id = ? and height = ?");
+                 + "WHERE account_id = ? and height = ?");
+             @DatabaseSpecificDml(DmlMarker.MERGE)
              PreparedStatement pstmtUpdate = con.prepareStatement("MERGE INTO account_guaranteed_balance (account_id, "
-                     + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
+                 + " additions, height) KEY (account_id, height) VALUES(?, ?, ?)")) {
             pstmtSelect.setLong(1, accountId);
             pstmtSelect.setInt(2, blockchainHeight);
             try (ResultSet rs = pstmtSelect.executeQuery()) {

@@ -13,7 +13,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.Setter;
 
 import javax.inject.Inject;
@@ -51,7 +54,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public static DbKey newKey(long id){
         return accountDbKeyFactory.newKey(id);
     }
-    
+
     public static DbKey newKey(Account a){
         return accountDbKeyFactory.newKey(a);
     }
@@ -59,8 +62,8 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Setter //for tests only
     private long creatorId;
 
-    private BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
 
     @Inject
     //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
@@ -78,7 +81,13 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public void save(Connection con, Account account) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+                    + "balance, unconfirmed_balance, forged_balance, "
+                    + "active_lessee_id, has_control_phasing, height, latest) "
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
             pstmt.setLong(++i, account.getBalanceATM());
@@ -146,6 +155,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
+                @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
                 PreparedStatement pstmt =
                         con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
                                 " ORDER BY balance desc "+ DbUtils.limitsClause(0, numberOfTopAccounts - 1)+")") ) {
@@ -161,7 +171,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }  
+    }
 
     public long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
@@ -177,6 +187,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public MinMaxValue getMinMaxValue(int height) {
+        return super.getMinMaxValue(height, "id");
     }
 
 }

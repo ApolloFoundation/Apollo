@@ -3,26 +3,23 @@
  */
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
-import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 
 /**
  *
  * @author Serhiy Lymar
  */
-
-@Singleton
 public interface IDexMatcherInterface {
      /** 
      * Start transport interaction service
      */
-     
-    public void initialize();
+     void initialize();
    
     /** 
      * Stop transport interaction service
      */
-     
-    public void deinitialize();
-    
+    void deinitialize();
+
+    DexOrder findCounterOffer(DexOrder createdOffer);
 }

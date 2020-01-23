@@ -43,7 +43,7 @@ import javax.inject.Inject;
  * That class should be used only by retrieving from {@link DatabaseManager}. Should not be retrieved from CDI directly.
  */
 @Vetoed
-public class TransactionalDataSource extends DataSourceWrapper implements TableCache, TransactionManagement {
+public class TransactionalDataSource extends DataSourceWrapper implements TransactionManagement {
     private static final Logger log = getLogger(TransactionalDataSource.class);
 
     // TODO: YL remove static instance later
@@ -55,7 +55,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
     private boolean enableSqlLogs;
 
     private final ThreadLocal<DbConnectionWrapper> localConnection = new ThreadLocal<>();
-    private final ThreadLocal<Map<String,Map<DbKey,Object>>> transactionCaches = new ThreadLocal<>();
     private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
 
     private volatile long txTimes = 0;
@@ -103,7 +102,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             return enableSqlLogs ? new ConnectionSpy(con) : con;
         }
         DbConnectionWrapper realConnection = new DbConnectionWrapper(super.getConnection(), factory,
-                localConnection, transactionCaches, transactionCallback);
+                localConnection, transactionCallback);
         return enableSqlLogs ? new ConnectionSpy(realConnection) : realConnection;
     }
 
@@ -139,10 +138,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            DbConnectionWrapper wcon = new DbConnectionWrapper(con, factory, localConnection, transactionCaches, transactionCallback);
+            DbConnectionWrapper wcon = new DbConnectionWrapper(con, factory, localConnection, transactionCallback);
             wcon.txStart = System.currentTimeMillis();
             localConnection.set(wcon);
-            transactionCaches.set(new HashMap<>());
             return wcon;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -202,7 +200,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             log.error("Rollback data error with close = '{}'", closeConnection, e);
             throw new RuntimeException(e.toString(), e);
         } finally {
-            transactionCaches.get().clear();
             cleanupTransactionCallback(TransactionCallback::rollback);
             if (closeConnection) {
                 endTransaction();
@@ -227,7 +224,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             throw new IllegalStateException("Not in transaction");
         }
         localConnection.set(null);
-        transactionCaches.set(null);
         long now = System.currentTimeMillis();
         long elapsed = now - ((DbConnectionWrapper)con).txStart;
         if (elapsed >= txThreshold) {
@@ -264,41 +260,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements TableC
             transactionCallback.set(callbacks);
         }
         callbacks.add(callback);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Map<DbKey,Object> getCache(String tableName) {
-        if (!isInTransaction()) {
-            throw new IllegalStateException("Not in transaction");
-        }
-        Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
-        if (cacheMap == null) {
-            cacheMap = new HashMap<>();
-            transactionCaches.get().put(tableName, cacheMap);
-        }
-        return cacheMap;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void clearCache(String tableName) {
-        Map<DbKey,Object> cacheMap = transactionCaches.get().get(tableName);
-        if (cacheMap != null) {
-            cacheMap.clear();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void clearCache() {
-        transactionCaches.get().values().forEach(Map::clear);
     }
 
     private static void logThreshold(String msg) {

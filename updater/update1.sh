@@ -20,6 +20,54 @@ function notify
     fi
 }
 
+function getNetwork()
+{
+    NETWORK=0
+    if [ $(cat ~/.apl-blockchain/apl.cmdline | grep "\-n" | wc -l) -eq 1 ]
+    then
+        NETWORK=$(cat ~/.apl-blockchain/apl.cmdline | grep -oE "(\-n|\-\-net)\s{1,}[0-9]{1}" | cut -f2 -d' ')
+    else
+        NETWORK=0
+    fi
+    
+
+}
+
+function getConfigPath()
+{
+    getNetwork
+    if  [ ${NETWORK} -eq 0 ]
+    then
+	CONFIGDIR=conf
+    else
+	CONFIGDIR=conf-tn${NETWORK}
+    fi
+    
+    if [ $3 == "true" ]
+    then
+	CONFIGDIR=~/.apl-blockchain/${CONFIGDIR}
+    else
+	CONFIGDIR=$1/${CONFIGDIR}
+    fi
+}
+
+function isSharding()
+{
+    NOSHARD=false
+    if [ $(cat ~/.apl-blockchain/apl.cmdline |  grep -oE "\--no-shards-create\s{1,}true" | wc -l) -eq 1 ]
+    then
+	NOSHARD=true
+    else
+	if [ $(cat ${CONFIGDIR}/apl-blockchain.properties | grep apl.noshardcreate | grep -v "#" | wc -l ) -eq 1 ]
+	then
+    	    NOSHARD=$(cat ${CONFIGDIR}/apl-blockchain.properties | grep apl.noshardcreate | grep -v "#" | cut -f2 -d'=')
+	else
+	    NOSHARD=false
+        fi
+    fi
+}
+
+
 VERSION=$(head -n1 ${2}/VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
@@ -37,7 +85,7 @@ then
     fi
 
     kill $(ps -ef | grep apl-de | awk '{ print $2 }')
-
+    $1/bin/apl-stop.sh
     until [ $(ps aux | grep ${APOLLO_JAR} | grep -v grep | wc -l) -eq 0 ] || [ $NEXT_WAIT_TIME -eq 10 ]; do
 	NEXT_WAIT_TIME=`expr $NEXT_WAIT_TIME '+' 1`
 	sleep $NEXT_WAIT_TIME
@@ -112,7 +160,9 @@ then
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
-
+    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
+    rm -rf apollo-wallet-deps-*
+    echo Version = $VERSION
     curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
     tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
     cp apollo-wallet-deps-${VERSION}/* $1/lib
@@ -123,7 +173,50 @@ then
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
+#determine, if shrding was performed or not
+
+    
+    
+    
+
+# Download db with shards
+    getNetwork
+    getConfigPath $1 $2 $3
+    isSharding
+    
+    case ${NETWORK} in
+	0)
+	    NETID=b5d7b6
+	    ;;
+	1)
+	    NETID=a2e9b9
+	    ;;
+	2)
+	    NETID=2f2b61
+	    ;;
+	*)
+	    NETID=b5d7b6
+	    
+    esac    
+
+    if [ "$#" -eq 3 ]
+    then
+	if [ ${NOSHARD} == false ]
+	then
+	    bash ./update3.sh $1 $2 $3 true ${NETID}
+	fi
+    elif [ $4 == false ]
+    then
+	bash ./update3.sh $1 $2 $3 $4 $5
+    fi
+
+    
+
+    notify "Downloading db shards..."
+    
+
     cd $1 
+
     chmod 755 bin/*.sh
 
     cd $1 

@@ -10,6 +10,8 @@ import java.util.UUID;
 
 @Vetoed
 public final class DbProperties implements Cloneable {
+    public static final String DB_EXTENSION = "mv.db";
+    public static final String DB_EXTENSION_WITH_DOT = "." + DbProperties.DB_EXTENSION;
 
     private long maxCacheSize;
     private String dbUrl;
@@ -151,8 +153,12 @@ public final class DbProperties implements Cloneable {
         return this;
     }
 
-    public DbProperties deepCopy() throws CloneNotSupportedException {
-        return (DbProperties) super.clone();
+    public DbProperties deepCopy() {
+        try {
+            return (DbProperties) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

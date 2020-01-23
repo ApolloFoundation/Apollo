@@ -29,6 +29,13 @@ public interface DerivedTableInterface<T> {
 
     void trim(int height);
 
+    /**
+     * Trim process can be different when it runs on usual way or in case sharding process
+     * @param height trim height
+     * @param isSharding true when called in sharding process, false otherwise (do the same as usual trim)
+     */
+    void trim(int height, boolean isSharding);
+
     void createSearchIndex(Connection con) throws SQLException;
 
     void prune(int time);
@@ -52,13 +59,13 @@ public interface DerivedTableInterface<T> {
      *
      * @param con sql connection to use for sql statement
      * @param pstmt select sql to execute for selecting with pagination
-     * @param minMaxDbId object to keep track on latest ID during pagination
+     * @param minMaxValue object to keep track on latest ID during pagination
      * @param limit batch pagination limit
      * @return sql result set
      * @throws SQLException
      */
     ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt,
-                             MinMaxDbId minMaxDbId, int limit) throws SQLException;
+                             MinMaxValue minMaxValue, int limit) throws SQLException;
 
     /**
      * Request min, max DB_ID, rows count on current table for later use by retrieving logic
@@ -67,7 +74,7 @@ public interface DerivedTableInterface<T> {
      * @return object with internal values for min, max DB_ID and count of rows
      * @throws SQLException
      */
-    MinMaxDbId getMinMaxDbId(int height);
+    MinMaxValue getMinMaxValue(int height);
 
     /**
      * @return table db name

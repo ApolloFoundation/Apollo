@@ -3,6 +3,8 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.BlockIndexRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -54,7 +56,7 @@ public interface BlockIndexDao {
     Integer getLastHeight();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT block_id FROM block_index WHERE block_height > :height ORDER BY block_height asc LIMIT :limit")
+    @SqlQuery("SELECT block_id FROM block_index WHERE block_height > :height ORDER BY block_height asc FETCH FIRST :limit ROWS ONLY")
     List<Long> getBlockIdsAfter(@Bind("height") int height, @Bind("limit") int limit);
 
 
@@ -64,6 +66,7 @@ public interface BlockIndexDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT count(*) FROM block_index where block_height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND block_height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY shard_height desc LIMIT 1),0)")
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long countBlockIndexByShard(@Bind("shardId") long shardId);
 
     @Transactional
@@ -77,7 +80,7 @@ public interface BlockIndexDao {
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index where block_id =:blockId")
-    int hardBlockIndex(@BindBean BlockIndex blockIndex);
+    int hardDeleteBlockIndex(@BindBean BlockIndex blockIndex);
 
     @Transactional
     @SqlUpdate("DELETE FROM block_index")

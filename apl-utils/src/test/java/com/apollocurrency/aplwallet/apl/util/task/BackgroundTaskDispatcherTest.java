@@ -26,7 +26,7 @@ class BackgroundTaskDispatcherTest {
     private TaskDispatcher taskDispatcher;
     private Runnable runnable;
     private Task task;
-    private static int SLEEP_DELAY = 160;
+    private static int SLEEP_DELAY = 180;
     @BeforeEach
     void setUp() {
         runnable = mock(Runnable.class);
@@ -50,7 +50,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher.schedule(task);
 
         taskDispatcher.dispatch();
-        log.info("Thread dispatch");
+        log.debug("Thread dispatch");
 
         try {
             Thread.sleep(SLEEP_DELAY);
@@ -70,20 +70,20 @@ class BackgroundTaskDispatcherTest {
         final Count count = new Count(0);
         task = Task.builder()
                 .name("task-1")
-                .task(()-> {count.inc(); log.info("task-body: task running");})
+                .task(()-> {count.inc(); log.debug("task-body: task running");})
                 .initialDelay(0)
                 .delay(10)
                 .build();
 
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
-        log.info("Thread dispatch");
+        log.debug("Thread dispatch");
         Thread.sleep(SLEEP_DELAY);
-        log.info("Suspend dispatcher");
+        log.debug("Suspend dispatcher");
         taskDispatcher.suspend();
         int val1 = count.value;
         Thread.sleep(SLEEP_DELAY);
-        log.info("Resume dispatcher");
+        log.debug("Resume dispatcher");
         int val2 = count.value;
         taskDispatcher.resume();
         Thread.sleep(SLEEP_DELAY);
@@ -103,28 +103,28 @@ class BackgroundTaskDispatcherTest {
 
         Task task0 = Task.builder()
                 .name("task-INIT1")
-                .task(()-> {count0.dec(); log.info("task-body: INIT task running");})
+                .task(()-> {count0.dec(); log.debug("task-body: INIT task running");})
                 .initialDelay(0)
                 .build();
 
         Task task1 = Task.builder()
                 .name("task-BEFORE1")
-                .task(()-> {count0.dec(); log.info("task-body: BEFORE task 1 running");})
+                .task(()-> {count0.dec(); log.debug("task-body: BEFORE task 1 running");})
                 .initialDelay(10)
                 .build();
         Task task12 = Task.builder()
                 .name("task-BEFORE12")
-                .task(()-> {count0.dec(); log.info("task-body: BEFORE task 12 running");})
+                .task(()-> {count0.dec(); log.debug("task-body: BEFORE task 12 running");})
                 .initialDelay(20)
                 .build();
         Task task2 = Task.builder()
                 .name("task-AFTER1")
-                .task(()-> {count0.dec();log.info("task-body: AFTER task 1 running");})
+                .task(()-> {count0.dec();log.debug("task-body: AFTER task 1 running");})
                 .delay(10)
                 .build();
         Task task22 = Task.builder()
                 .name("task-AFTER12")
-                .task(()-> {count0.dec();log.info("task-body: AFTER task 2 running");})
+                .task(()-> {count0.dec();log.debug("task-body: AFTER task 2 running");})
                 .delay(20)
                 .build();
         Task taskMain = Task.builder()
@@ -132,9 +132,9 @@ class BackgroundTaskDispatcherTest {
                 .task(()->{
                     for (;;){
                         assertTrue(count0.get()<=7);//10-3 = 7; 3 tasks={INIT, BEFORE1, BEFORE12}
-                        log.info("task-body: MAIN task running, thread={}", getThreadInfo());
+                        log.debug("task-body: MAIN task running, thread={}", getThreadInfo());
                         count1.dec();
-                        log.info("task-body: count0={} count1={}", count0.get(), count1.get());
+                        log.debug("task-body: count0={} count1={}", count0.get(), count1.get());
                         try {
                             Thread.sleep(SLEEP_DELAY);
                         } catch (InterruptedException e) {
@@ -145,18 +145,18 @@ class BackgroundTaskDispatcherTest {
                 .delay(20)
                 .build();
 
-        taskDispatcher.schedule(taskMain, TaskOrder.TASK);
-        taskDispatcher.schedule(task0, TaskOrder.INIT);
-        taskDispatcher.schedule(task1, TaskOrder.BEFORE);
-        taskDispatcher.schedule(task12, TaskOrder.BEFORE);
-        taskDispatcher.schedule(task2, TaskOrder.AFTER);
-        taskDispatcher.schedule(task22, TaskOrder.AFTER);
+        taskDispatcher.schedule(taskMain);
+        taskDispatcher.invokeInit(task0);
+        taskDispatcher.invokeBefore(task1);
+        taskDispatcher.invokeBefore(task12);
+        taskDispatcher.invokeAfter(task2);
+        taskDispatcher.invokeAfter(task22);
 
         taskDispatcher.dispatch();
-        log.info("Thread dispatch");
+        log.debug("Thread dispatch");
 
         try {
-            Thread.sleep(250);
+            Thread.sleep(300);
         } catch (InterruptedException ignored) {}
 
         assertTrue(count1.get()<9, "Exception was occurred in the Main task.");
@@ -169,7 +169,7 @@ class BackgroundTaskDispatcherTest {
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfo");
         taskDispatcher.schedule(task);
         taskDispatcher.dispatch();
-        log.info("Thread dispatch");
+        log.debug("Thread dispatch");
         try {
             Thread.sleep(SLEEP_DELAY);
         } catch (InterruptedException ignored) {}
@@ -208,4 +208,47 @@ class BackgroundTaskDispatcherTest {
         }
 
     }
+
+    @Test
+    void scheduleBeforeAndAfterScheduleTasksWithExceptions() {
+        taskDispatcher = TaskDispatcherFactory.newBackgroundDispatcher("TestServiceWithInitException");
+
+        Task task0 = Task.builder()
+                .name("task-INIT")
+                .task(new SimpleTask())
+                .initialDelay(1)
+                .build();
+
+        Task taskMain = Task.builder()
+                .name("MainTask-sleep-main")
+                .task(() -> {
+                    log.debug("main task is called.");
+                })
+                .delay(10)
+                .build();
+
+        taskDispatcher.schedule(taskMain);
+        taskDispatcher.invokeInit(task0);
+
+        taskDispatcher.dispatch();
+        log.debug("Thread dispatch");
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {
+        }
+
+    }
+
+    static class SimpleTask implements Runnable {
+        @Override
+        public void run() {
+            Task exceptionGenerator = new Task(() -> {
+                throw new RuntimeException("Special exception to check the stack trace logging.");
+            }, "exceptionGenerator", 0, 10);
+
+            exceptionGenerator.run();
+        }
+    }
+
 }

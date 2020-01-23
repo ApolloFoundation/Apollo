@@ -14,9 +14,10 @@ import lombok.Setter;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountAssetsResponse extends ResponseBase{
+public class AccountAssetsResponse extends ResponseBase {
     private List<AccountAssetDTO> accountAssets;
 
     public AccountAssetsResponse(List<AccountAssetDTO> accountAssets) {

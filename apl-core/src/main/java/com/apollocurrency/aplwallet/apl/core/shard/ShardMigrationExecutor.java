@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.Generator;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
@@ -34,13 +32,15 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeSt
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
 import org.slf4j.Logger;
 
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Component for starting sharding process which contains several steps/states.
@@ -103,7 +103,7 @@ public class ShardMigrationExecutor {
     @Transactional
     public void createAllCommands(int height, long shardId, MigrateState state) {
         int shardStartHeight = getShardStartHeight();
-        log.info("Create commands for shard between heights[{},{}]", shardStartHeight, height);
+        log.info("Create commands for shard '{}' between heights[{},{}]", shardId, shardStartHeight, height);
         List<TableInfo> tableInfoList = null;
         ExcludeInfo excludeInfo = null;
         switch (state) {
@@ -174,7 +174,10 @@ public class ShardMigrationExecutor {
                 .filter(t -> !t.getName().equalsIgnoreCase(ACCOUNT_LEDGER))
                 .map(t -> new TableInfo(t.getName(), t instanceof PrunableDbTable))
                 .collect(Collectors.toList());
-        List<TableInfo> coreTableInfoList = List.of(new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME), new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME), new TableInfo(ShardConstants.SHARD_TABLE_NAME));
+        List<TableInfo> coreTableInfoList = List.of(
+                new TableInfo(ShardConstants.BLOCK_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_TABLE_NAME),
+                new TableInfo(ShardConstants.BLOCK_INDEX_TABLE_NAME), new TableInfo(ShardConstants.TRANSACTION_INDEX_TABLE_NAME),
+                new TableInfo(ShardConstants.SHARD_TABLE_NAME));
         tableInfoList.addAll(coreTableInfoList);
         return tableInfoList;
     }
@@ -199,16 +202,19 @@ public class ShardMigrationExecutor {
         log.debug("Add {}", shardOperation);
         dataMigrateOperations.add(shardOperation);
     }
-    private void stopNetOperations(){
+
+    private void stopNetOperations() {
         peers.suspend();
         Generator.suspendForging();
-        blockchainProcessor.setGetMoreBlocks(false);
+        blockchainProcessor.suspendBlockchainDownloading();
     }
-    private void resumeNetOperations(){
+
+    private void resumeNetOperations() {
         peers.resume();
-        blockchainProcessor.setGetMoreBlocks(true);
+        blockchainProcessor.resumeBlockchainDownloading();
         Generator.resumeForging();
     }
+
     public MigrateState executeAllOperations() {
         stopNetOperations();
         log.debug("START SHARDING...");

@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.observer;
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
@@ -11,13 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServic
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -34,15 +30,11 @@ import java.util.List;
 @Singleton
 public class AccountObserver {
 
-    private AccountService accountService;
-
-    private AccountLeaseService accountLeaseService;
-
-    private AccountPublicKeyService accountPublicKeyService;
-
-    private Event<AccountLease> accountLeaseEvent;
-
-    private AccountLedgerService accountLedgerService;
+    private final AccountService accountService;
+    private final AccountLeaseService accountLeaseService;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final Event<AccountLease> accountLeaseEvent;
+    private final AccountLedgerService accountLedgerService;
 
     @Inject
     public AccountObserver(AccountService accountService,
@@ -57,34 +49,8 @@ public class AccountObserver {
         this.accountLedgerService = accountLedgerService;
     }
 
-    public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        if (accountPublicKeyService.isCacheEnabled()) {//TODO: make cache injectable
-            accountPublicKeyService.getPublicKeyCache().clear();
-        }
-    }
-
-    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        log.trace("Catch event (BLOCK_POPPED) {}", block);
-        if (accountPublicKeyService.isCacheEnabled()) {
-            accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(block.getGeneratorId()));
-            block.getOrLoadTransactions().forEach(transaction -> {
-                accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getSenderId()));
-                if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                    accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(transaction.getRecipientId()));
-                }
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                    ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                    for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        //TODO: make cache injectable
-                        accountPublicKeyService.getPublicKeyCache().remove(AccountTable.newKey(AccountService.getId(publicKey)));
-                    }
-                }
-            });
-        }
-    }
-
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-        log.trace("Catch event (AFTER_BLOCK_APPLY) {}", block);
+        log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
         int height = block.getHeight();
         List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
         for (AccountLease lease : changingLeases) {
@@ -119,6 +85,7 @@ public class AccountObserver {
             }
             accountService.update(lessor);
         }
+        log.trace(":accept:AccountObserver: END onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
     }
 
     public void onLedgerCommitEntries(@Observes @AccountLedgerEvent(AccountLedgerEventType.COMMIT_ENTRIES) AccountLedgerEventType event ){

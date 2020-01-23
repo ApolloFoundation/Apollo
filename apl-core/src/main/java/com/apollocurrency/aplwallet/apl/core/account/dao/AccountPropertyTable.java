@@ -1,12 +1,17 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation.
+ * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.db.*;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,7 +24,7 @@ import java.sql.SQLException;
  */
 @Singleton
 public class AccountPropertyTable extends VersionedDeletableEntityDbTable<AccountProperty> {
-    
+
     private static final LongKeyFactory<AccountProperty> accountPropertyDbKeyFactory = new LongKeyFactory<AccountProperty>("id") {
 
         @Override
@@ -32,7 +37,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     public static DbKey newKey(long id){
         return accountPropertyDbKeyFactory.newKey(id);
     }
-    
+
     private AccountPropertyTable() {
         super("account_property", accountPropertyDbKeyFactory);
     }
@@ -44,7 +49,10 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
 
     @Override
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, value, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_property " + "(id, recipient_id, setter_id, property, \"VALUE\", height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountProperty.getId());
             pstmt.setLong(++i, accountProperty.getRecipientId());
@@ -93,5 +101,5 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
         return getBy(dbClause);
     }
 
-    
+
 }

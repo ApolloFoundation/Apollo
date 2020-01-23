@@ -18,9 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req,
-                                                   Account senderAccount, long recipientId, long amountATM,
-                                                   Attachment attachment,
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
+                                                   Attachment attachment, boolean broadcast,
                                                    AccountService accountService) throws AplException.ValidationException, ParameterException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
@@ -34,7 +33,9 @@ public class HttpRequestToCreateTransactionRequestConverter {
         }
 
         CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
-                .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && (secretPhrase != null || passphrase != null))
+                .broadcast(!"false".equalsIgnoreCase(req.getParameter("broadcast")) && broadcast && (secretPhrase != null || passphrase != null))
+                .secretPhrase(secretPhrase)
+                .passphrase(passphrase)
                 .deadlineValue(req.getParameter("deadline"))
                 .referencedTransactionFullHash(Convert.emptyToNull(req.getParameter("referencedTransactionFullHash")))
                 .publicKeyValue(Convert.emptyToNull(req.getParameter("publicKey")))

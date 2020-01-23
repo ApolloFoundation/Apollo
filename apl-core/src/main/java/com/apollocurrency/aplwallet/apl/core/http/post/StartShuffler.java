@@ -75,7 +75,7 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
             if (e.getCause() instanceof AplException.InsufficientBalanceException) {
                 Shuffling shuffling = Shuffling.getShuffling(shufflingFullHash);
                 if (shuffling == null) {
-                    return JSONResponses.NOT_ENOUGH_FUNDS;
+                    return JSONResponses.NOT_ENOUGH_APL;
                 }
                 return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
             }

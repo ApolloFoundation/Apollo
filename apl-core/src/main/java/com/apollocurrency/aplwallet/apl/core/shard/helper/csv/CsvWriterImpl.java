@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
+import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
 import org.slf4j.Logger;
 
 import java.io.BufferedOutputStream;
@@ -29,30 +28,41 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
  */
 public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     private static final Logger log = getLogger(CsvWriterImpl.class);
-    private Writer output;
-    private StringBuffer outputBuffer = new StringBuffer(400);
-    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final String EMPTY_ARRAY = "()";
-    private Set<String> excludeColumn = new HashSet<>();
 
-    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames) {
-        super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL");
-        if (excludeColumnNames != null && excludeColumnNames.size() > 0) {
+    private Writer output;
+    private final StringBuilder outputBuffer = new StringBuilder(400);
+    private final Set<String> excludeColumn = new HashSet<>();
+    /**
+     * Extends H2 ARRAY SQL type by providing a proper precision and scale
+     * as per Java type.
+     */
+    private static final Map<ArrayColumn, ArrayColumn> ARRAY_COLUMN_INDEX;
+
+    public CsvWriterImpl(Path dataExportPath, Set<String> excludeColumnNames, CsvEscaper translator) {
+        super.dataExportPath = Objects.requireNonNull(dataExportPath, "dataExportPath is NULL.");
+        super.translator = Objects.requireNonNull(translator, "Csv escaper is NULL.");
+        if (excludeColumnNames != null && !excludeColumnNames.isEmpty()) {
             // assign non empty Set
-            this.excludeColumn = excludeColumnNames;
-            log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+            this.excludeColumn.addAll(excludeColumnNames);
+            if(log.isDebugEnabled()) {
+                log.debug("Config Excluded columns = {}", Arrays.toString(excludeColumnNames.toArray()));
+            }
         }
     }
 
@@ -76,8 +86,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         try {
             initWrite(false);
             return writeResultSet(rs, true, Map.of());
-        } catch (IOException e) {
-            throw new SQLException("IOException writing " + outputFileName, e);
+        } catch (Exception e) {
+            throw new CsvException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -96,13 +106,12 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     public CsvExportData append(String outputFileName, ResultSet rs, Map<String, String> defaultValues) throws SQLException {
         Objects.requireNonNull(outputFileName, "outputFileName is NULL");
         Objects.requireNonNull(rs, "resultSet is NULL");
-//        Objects.requireNonNull(minMaxDbId, "minMaxDbId is NULL");
         assignNewFileName(outputFileName);
         try {
             initWrite(true);
             return writeResultSet(rs, false, defaultValues);
-        } catch (IOException e) {
-            throw new SQLException("IOException writing " + outputFileName, e);
+        } catch (Exception e) {
+            throw new CsvException("IOException writing " + outputFileName, e);
         }
     }
 
@@ -112,17 +121,17 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
      */
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
-        Statement stat = conn.createStatement();
-        ResultSet rs = stat.executeQuery(sql);
-        CsvExportData exportData = write(outputFileName, rs);
-        stat.close();
+        CsvExportData exportData;
+        try (Statement stat = conn.createStatement()) {
+            ResultSet rs = stat.executeQuery(sql);
+            exportData = write(outputFileName, rs);
+        }
         return exportData;
     }
 
-    private void initWrite(boolean appendMode) throws IOException {
+    private void initWrite(boolean appendMode){
         if (output == null) {
             try {
-
                 Path filePath = this.dataExportPath.resolve(!this.fileName.endsWith(CSV_FILE_EXTENSION) ? this.fileName + CSV_FILE_EXTENSION : this.fileName);
                 boolean fileExist = Files.exists(filePath);
                 if (!fileExist && appendMode) { // check CSV file in dataExport folder
@@ -139,8 +148,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                 output = new BufferedWriter(new OutputStreamWriter(out, characterSet));
             } catch (Exception e) {
                 close();
-                log.error("initWrite() exception, appendMode=" + appendMode, e);
-                throw e;
+                throw new CsvException("initWrite() exception, appendMode=" + appendMode, e);
             }
         }
     }
@@ -168,13 +176,15 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             for (int i = 0; i < columnCount; i++) {
                 rowColumnNames[i] = meta.getColumnLabel(i + 1);
                 // fill in meta data
-                columnsMetaData[i] = new ColumnMetaData(meta.getColumnLabel(i + 1),
-                        meta.getColumnTypeName(i + 1), meta.getColumnType(i + 1),
-                        meta.getPrecision(i + 1), meta.getScale(i + 1));
+                columnsMetaData[i] = getColumnMetaData(meta, i+1);
             }
-            log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            if(log.isTraceEnabled()) {
+                log.trace("Table/File = '{}', MetaData = {}", this.fileName, Arrays.toString(columnsMetaData));
+            }
             if (writeColumnHeader) {
-                log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
+                if(log.isDebugEnabled()) {
+                    log.debug("Header columns = {}", Arrays.toString(rowColumnNames));
+                }
                 writeHeaderRow(columnsMetaData);
                 this.writeColumnHeader = false;// write header columns only once after fileName/tableName has been changed
             }
@@ -218,7 +228,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 if (date == null) {
                                     o = nullString;
                                 } else {
-                                    o = "TO_DATE('" + dateFormat.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
+                                    o = "TO_DATE('" + DATE_FORMAT.format(date) + "', 'YYYY/MM/DD HH24:MI:SS')";
                                 }
                                 break;
                             case Types.ARRAY:
@@ -226,49 +236,46 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                                 if (array != null && array.getArray() instanceof Object[] && ((Object[]) array.getArray()).length > 0) {
                                     Object[] objectArray = (Object[]) array.getArray();
                                     StringBuilder outputValue = new StringBuilder();
+                                    outputValue.append(arrayStartToken);
                                     for (int j = 0; j < objectArray.length; j++) {
-                                        Object o1 = objectArray[j];
-                                        if (j == 0) {
-                                            outputValue.append("(");
+                                        if (j>0){
+                                            outputValue.append(fieldSeparatorWrite);
                                         }
+                                        Object item = objectArray[j];
                                         String objectValue;
-                                        if (o1 instanceof byte[]) {
-                                            objectValue = "b\'" + Base64.getEncoder().encodeToString((byte[]) o1) + "\'";
-                                        } else if (o1 instanceof String) {
-                                            objectValue = "\'" + o1.toString() + "\'";
-                                        } else if (o1 instanceof Long || o1 instanceof Integer) {
-                                            objectValue = o1.toString();
+                                        if (item instanceof byte[]) {
+                                            objectValue = translator.translate((byte[]) item);
+                                        } else if (item instanceof String) {
+                                            objectValue = translator.quotedText((String)item);
+                                        } else if (item instanceof Long || item instanceof Integer) {
+                                            objectValue = item.toString();
                                         } else {
-                                            throw new RuntimeException("Unsupported array type: " + o1.getClass());
+                                            throw new RuntimeException("Unsupported array type: " + item.getClass());
                                         }
-                                        outputValue.append(objectValue).append(",");
-                                        if (j == objectArray.length - 1) {
-                                            // there is a bug in H2 parser, so let's make one extra comma at the end
-                                            // line is left for future DB versions //outputValue.deleteCharAt(outputValue.lastIndexOf(",")).append(")"); // remove latest "comma" then  append ")"
-                                            outputValue.append(")");
-                                        }
+                                        outputValue.append(objectValue);
                                     }
+                                    outputValue.append(arrayEndToken);
                                     o = outputValue.toString();
                                     break;
                                 } else {
                                     o = array != null ? EMPTY_ARRAY : nullString;
                                 }
                                 break;
-                            case Types.NVARCHAR:
                             case Types.VARBINARY:
                             case Types.BINARY:
                                 o = rs.getBytes(i + 1);
                                 if (o != null) {
-                                    o = Base64.getEncoder().encodeToString(((byte[]) o));
+                                    o = translator.translate((byte[]) o);
                                 } else {
                                     o = nullString;
                                 }
                                 break;
+                            case Types.NVARCHAR:
                             case Types.VARCHAR:
                             default:
                                 o = rs.getString(i + 1);
                                 if (o != null) {
-                                    o = "'" + ((String) o).replaceAll("'", "''") + "'";
+                                    o = translator.quotedText((String) o);
                                 } else {
                                     o = nullString;
                                 }
@@ -277,17 +284,13 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     }
                     rowColumnNames[i] = o == null ? null : o.toString();
                 }
-                log.trace("Row = {}", Arrays.toString(rowColumnNames));
+                if(log.isTraceEnabled()) {
+                    log.trace("Row = {}", Arrays.toString(rowColumnNames));
+                }
                 writeRow(rowColumnNames);
                 rows++;
+            }
 
-                //                minMaxDbId.setMinDbId(rs.getLong(defaultPaginationColumnName));
-            }
-/*
-            if (rows == 1) {
-                minMaxDbId.incrementMin(); // increase by one in order to advance further on result set
-            }
-*/
             if (closeWhenNotAppend) {
                 output.close(); // close file on 'write mode'
             } else {
@@ -296,14 +299,106 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
             log.trace("CSV file '{}' written rows=[{}]", fileName, rows);
             return new CsvExportData(rows, lastRow);
         } catch (IOException e) {
-            log.error("IO exception", e);
-            throw new SQLException(e);
+            throw new CsvException("IO exception, file="+fileName, e);
         } finally {
             if (closeWhenNotAppend) {
                 close();
             }
             DbUtils.closeSilently(rs);
         }
+    }
+
+    private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
+        ArrayColumn arrayColumn1 =
+            new ArrayColumn("ACCOUNT_CONTROL_PHASING", "WHITELIST", 19, 0);
+        ArrayColumn arrayColumn2 =
+            new ArrayColumn("GOODS", "PARSED_TAGS", 2147483647, 0);
+        ArrayColumn arrayColumn3 =
+            new ArrayColumn("POLL", "OPTIONS", 2147483647, 0);
+        ArrayColumn arrayColumn4 =
+            new ArrayColumn("SHARD", "BLOCK_TIMEOUTS", 10, 0);
+        ArrayColumn arrayColumn5 =
+            new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
+        ArrayColumn arrayColumn6 =
+            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS" ,10, 0);
+        ArrayColumn arrayColumn7 =
+            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+        ArrayColumn arrayColumn8 =
+            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+        ArrayColumn arrayColumn9 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+        ArrayColumn arrayColumn10 =
+            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+        ArrayColumn arrayColumn11 =
+            new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
+
+        return Map.ofEntries(
+            Map.entry(arrayColumn1, arrayColumn1),
+            Map.entry(arrayColumn2, arrayColumn2),
+            Map.entry(arrayColumn3, arrayColumn3),
+            Map.entry(arrayColumn4, arrayColumn4),
+            Map.entry(arrayColumn5, arrayColumn5),
+            Map.entry(arrayColumn6, arrayColumn6),
+            Map.entry(arrayColumn7, arrayColumn7),
+            Map.entry(arrayColumn8, arrayColumn8),
+            Map.entry(arrayColumn9, arrayColumn9),
+            Map.entry(arrayColumn10, arrayColumn10),
+            Map.entry(arrayColumn11, arrayColumn11)
+        );
+    }
+
+    static {
+        ARRAY_COLUMN_INDEX = getArrayColumnIndex();
+    }
+
+    /**
+     * Gets a ColumnMetaData object as per an index in ResultSetMetaData.
+     * When it comes to the ARRAY SQL type, this method asks a prepopulated index map
+     * for a proper precision and scale. This is because, H2 has no concrete types for arrays
+     * and the precision of arrays may change (as it was from 196 to 200).
+     *
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private ColumnMetaData getColumnMetaData(
+            final ResultSetMetaData meta,
+            final int index
+    ) throws SQLException {
+        final int columnType = meta.getColumnType(index);
+        final String columnLabel = meta.getColumnLabel(index);
+        final String columnTypeName = meta.getColumnTypeName(index);
+        int precision;
+        int scale;
+        if (columnType == Types.ARRAY) {
+            final String tableName = meta.getTableName(index);
+            final String columnName = meta.getColumnName(index);
+            final ArrayColumn arrayColumn = getArrayColumn(tableName, columnName);
+            precision = arrayColumn.getPrecision();
+            scale = arrayColumn.getScale();
+        } else {
+            precision = meta.getPrecision(index);
+            scale = meta.getScale(index);
+        }
+        return new ColumnMetaData(columnLabel, columnTypeName, columnType, precision, scale);
+    }
+
+    private ArrayColumn getArrayColumn(String tableName, String columnName) {
+        return Optional.ofNullable(
+            ARRAY_COLUMN_INDEX.get(
+                ArrayColumn.builder().tableName(tableName).columnName(columnName).build()
+            )
+        ).orElseThrow(() -> {
+                final String message = String.format(
+                    "Cannot find tableName: %s and columnName: %s.",
+                    tableName,
+                    columnName
+                );
+                log.error(message);
+                return new IllegalStateException(message);
+            }
+        );
     }
 
     /**
@@ -375,21 +470,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
                     isSkippedColumn = true; // do not put not needed comma
                     continue;
                 }
-                String s;
-                if (rowColumnValues[i] instanceof Object[]) {
-                    int index = 0;
-                    for (int j = 0; j < rowColumnValues.length; j++) {
-                        Object rowColumnValue = rowColumnValues[j];
-                        if (j == 0) {
-                            outputBuffer.append("(");
-                        }
-                        outputBuffer.append(rowColumnValue).append(",");
-                    }
-                    outputBuffer.append(")");
-                } else {
-                    s = rowColumnValues[i].toString(); // column value
-                    outputEscapedValueWithDelimiter(s);
-                }
+                String s = rowColumnValues[i].toString(); // column value
+                outputEscapedValueWithDelimiter(s);
             } else if (nullString != null && nullString.length() > 0 && !nullString.equalsIgnoreCase("null")) {
                 outputBuffer.append(nullString);
             }
@@ -404,7 +486,21 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
         outputBuffer.setLength(0); // reset
     }
 
-    private void outputEscapedValueWithDelimiter(String s) throws IOException {
+    private String arrayToString(Object[] data){
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("(");
+        for (int j = 0; j < data.length; j++) {
+                if(j>0){
+                    buffer.append(",");
+                }
+                Object rowColumnValue = data[j];
+                buffer.append(rowColumnValue);
+        }
+        buffer.append(")");
+        return buffer.toString();
+    }
+
+    private void outputEscapedValueWithDelimiter(String s) {
         if (escapeCharacter != 0) {
             if (fieldDelimiter != 0) {
                 outputBuffer.append(fieldDelimiter);
@@ -419,21 +515,7 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     }
 
     private String escape(String data) {
-        if (data.indexOf(fieldDelimiter) < 0) {
-            if (escapeCharacter == fieldDelimiter || data.indexOf(escapeCharacter) < 0) {
-                return data;
-            }
-        }
-        int length = data.length();
-        StringBuilder buff = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            char ch = data.charAt(i);
-            if (ch == fieldDelimiter || ch == escapeCharacter) {
-                buff.append(escapeCharacter);
-            }
-            buff.append(ch);
-        }
-        return buff.toString();
+        return translator.escape(data);
     }
 
     @Override

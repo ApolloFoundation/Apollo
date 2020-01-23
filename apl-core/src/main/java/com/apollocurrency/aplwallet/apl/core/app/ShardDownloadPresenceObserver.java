@@ -11,16 +11,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardPresentData;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.ObservesAsync;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Interface for shard data downloading management. It does following:
@@ -61,14 +62,21 @@ public class ShardDownloadPresenceObserver {
      *
      * @param shardPresentData shard present data contains downloaded ZIP name
      */
-    public void onShardPresent(@Observes @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
-        String fileId = shardPresentData.getFileIdValue();
-        try {
-            shardImporter.importShardByFileId(fileId);
+    public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
+        log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
+        try (Connection con = dataSource.getConnection()) {
+            // create Lucene search indexes first
+            createLuceneSearchIndexes(con);
+            // import data so it gets into search indexes as well
+            shardImporter.importShardByFileId(shardPresentData);
         } catch (Exception e) {
-            log.error("Error on Shard # {}. Zip/CSV importing...", fileId);
+            log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
             log.error("Node has encountered serious error and import CSV shard data. " +
-                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", fileId);
+                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
             // truncate all partial data potentially imported into database
             cleanUpPreviouslyImportedData();
             // fall back to importing Genesis and starting from beginning
@@ -84,15 +92,29 @@ public class ShardDownloadPresenceObserver {
     }
 
     /**
+     * Travers Derived tables and create Lucene search indexes
+     * @param con connection should be opened
+     * @throws SQLException possible error
+     */
+    private void createLuceneSearchIndexes(Connection con) throws SQLException {
+        for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
+            table.createSearchIndex(con);
+        }
+    }
+
+    /**
      * Remove all previously imported data from db
      */
     private void cleanUpPreviouslyImportedData() {
         log.debug("start CleanUp after UNSUCCESSFUL zip import...");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
+        if (!dataSource.isInTransaction()) {
+            dataSource.begin();
+        }
         try (Connection connection = dataSource.getConnection()) {
             blockchain.deleteAll();
             derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
-            dataSource.commit();
+            dataSource.commit(false);
             log.debug("Finished CleanUp after UNSUCCESSFUL zip import");
         } catch (Exception e) {
             log.error("Error cleanUp after UNSUCCESSFUL zip import", e);
@@ -112,15 +134,20 @@ public class ShardDownloadPresenceObserver {
         try {
                 log.info("Genesis block not in database, starting from scratch");
                 TransactionalDataSource dataSource = databaseManager.getDataSource();
-                try (Connection con = dataSource.begin()) {
+                if (!dataSource.isInTransaction()) {
+                    dataSource.begin();
+                }
+                try (Connection con = dataSource.getConnection()) {
+                    // create first genesis block, but do not save it to db here
                     Block genesisBlock = genesisImporter.newGenesisBlock();
-                    addBlock(dataSource, genesisBlock);
                     long initialBlockId = genesisBlock.getId();
                     log.debug("Generated Genesis block with Id = {}", initialBlockId);
+                    // import other genesis data
                     genesisImporter.importGenesisJson(false);
-                    for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-                        table.createSearchIndex(con);
-                    }
+                    // first genesis block should be saved only after all genesis data has been imported before
+                    addBlock(dataSource, genesisBlock); // save first genesis block here
+                    // create Lucene search indexes first
+                    createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
                     dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);

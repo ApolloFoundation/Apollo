@@ -12,11 +12,17 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +32,9 @@ import java.util.List;
 @Singleton
 public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
 
-    private GlobalSync globalSync;
-    private Blockchain blockchain;
-    private PropertiesHolder propertiesHolder;
+    private final GlobalSync globalSync;
+    private final Blockchain blockchain;
+    private final PropertiesHolder propertiesHolder;
 
     /** Number of blocks to keep when trimming */
     private int trimKeep;
@@ -79,6 +85,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
             return;
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM account_ledger WHERE height <= ? LIMIT " + propertiesHolder.BATCH_COMMIT_SIZE())) {
             pstmt.setInt(1, Math.max(blockchain.getHeight() - trimKeep, 0));
             int trimmed;

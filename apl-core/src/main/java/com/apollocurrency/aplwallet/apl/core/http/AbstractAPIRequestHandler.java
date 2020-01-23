@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -37,32 +38,32 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.json.simple.JSONStreamAware;
 
-@Vetoed
 public abstract class AbstractAPIRequestHandler {
 
     private List<String> parameters;
     private String fileParameter;
     private Set<APITag> apiTags;
     private Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
+    protected BlockchainProcessor blockchainProcessor;
     private BlockchainConfig blockchainConfig;
     private TransactionProcessor transactionProcessor;
-    protected static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private DatabaseManager databaseManager;
-    protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
+    protected AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
     protected ElGamalEncryptor elGamal = CDI.current().select(ElGamalEncryptor.class).get();
-    protected static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static AccountService accountService;
-    private static AccountPublicKeyService accountPublicKeyService;
-    private static AccountLedgerService accountLedgerService;
-    private static AccountAssetService accountAssetService;
-    private static AccountCurrencyService accountCurrencyService;
-    private static AccountInfoService accountInfoService;
-    private static AccountLeaseService accountLeaseService;
-    private static AccountPropertyService accountPropertyService;
+    protected PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private AccountService accountService;
+    private AccountPublicKeyService accountPublicKeyService;
+    private AccountLedgerService accountLedgerService;
+    private AccountAssetService accountAssetService;
+    private AccountCurrencyService accountCurrencyService;
+    private AccountInfoService accountInfoService;
+    private AccountLeaseService accountLeaseService;
+    private AccountPropertyService accountPropertyService;
+    protected TrimService trimService;
     private PeersService peers;
 
-    protected PeersService lookupPeersService(){
+    protected PeersService lookupPeersService() {
         if (peers == null) peers = CDI.current().select(PeersService.class).get();
         return peers;
     }
@@ -150,6 +151,11 @@ public abstract class AbstractAPIRequestHandler {
         return databaseManager.getDataSource();
     }
 
+    protected TrimService lookupTrimService() {
+        if (trimService == null) trimService = CDI.current().select(TrimService.class).get();
+        return trimService;
+    }
+
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
     }
@@ -172,7 +178,7 @@ public abstract class AbstractAPIRequestHandler {
         if (is2FAProtected()) {
             parameters.add("code2FA");
         }
-       
+
         this.parameters = Collections.unmodifiableList(parameters);
         this.apiTags = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(apiTags)));
         this.fileParameter = fileParameter;

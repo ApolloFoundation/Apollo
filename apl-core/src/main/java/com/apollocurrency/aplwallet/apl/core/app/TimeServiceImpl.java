@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -11,6 +13,7 @@ import javax.inject.Singleton;
  *
  * @author al
  */
+@Slf4j
 @Singleton
 public class TimeServiceImpl implements TimeService {
     
@@ -26,7 +29,14 @@ public class TimeServiceImpl implements TimeService {
      * @return int (time in seconds).
      */
     public int getEpochTime() {
-        return Convert2.toEpochTime(ntpTime.getTime());
+        long ntpTime = this.ntpTime.getTime();
+        int toEpochTime = Convert2.toEpochTime(ntpTime);
+        log.trace("ntpTime : long = {}, toEpochTime = {}", ntpTime, toEpochTime);
+        return toEpochTime;
     }
-    
+
+    @Override
+    public long systemTime() {
+        return ntpTime.getTime() / 1000;
+    }
 }

@@ -4,19 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.BlockDao;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -25,15 +19,23 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class BlockchainConfigTest {
@@ -52,12 +54,12 @@ public class BlockchainConfigTest {
 
 
 
-    private static final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
+    private final Chain chain = new Chain(UUID.randomUUID(), true, Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(),
             "test",
             "test",
             "TEST",
-            "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES);
+            "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100));
 
     @Inject
     BlockchainConfig blockchainConfig;
@@ -72,6 +74,18 @@ public class BlockchainConfigTest {
         assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
         assertEquals(1209600, blockchainConfig.getMaxPrunableLifetime());
         assertEquals(1209600, blockchainConfig.getMinPrunableLifetime());
+    }
+
+    @Test
+    void testInitBlockchainConfigForFeatureHeightRequirement() {
+        blockchainConfig.updateChain(chain);
+        assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
+
+        chain.setFeaturesHeightRequirement(null);
+        assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
+        assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
     }
 
     @Test

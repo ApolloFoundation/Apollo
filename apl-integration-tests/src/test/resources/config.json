@@ -1,0 +1,63 @@
+{
+  "host": "localhost",
+  "port": "7876",
+  "adminPassword": "1",
+  "defaultImage": "Icon.jpeg",
+  "standartWallet": {
+    "user": "APL-AKU5-JP6B-Y42V-H5X8U",
+    "pass": "111",
+    "publicKey": "02a16b0e1e01a451ba2904ccc0c6d4ed88e3d8e2294b2099580d801eecb34e1c",
+    "vault": "false"
+  },
+  "vaultWallet": {
+    "user": "APL-MK35-9X23-YQ5E-8QBKH",
+    "pass": "1",
+    "publicKey": "226361039b9906728c21b3a43b9b2cbc746b0cf06d97bbca6b6054805edf131c",
+    "vault": true,
+    "ethAddress": "0xf346af16af998332fa938b018e48a4263f080711",
+    "accountId": "7477442401604846627"
+  },
+  "genesisWallet": {
+    "user": "APL-NZKH-MZRE-2CTT-98NPZ",
+    "pass": "0",
+    "publicKey": "226361039b9906728c21b3a43b9b2cbc746b0cf06d97bbca6b6054805edf131c",
+    "vault": false,
+    "accountId": "9211698109297098287"
+  },
+  "net": {
+    "n1": {
+      "peers": [
+        "51.15.235.41",
+        "51.15.69.39",
+        "51.15.59.37",
+        "51.15.114.68",
+        "51.15.140.80",
+        "51.15.100.44",
+        "51.15.233.93"
+      ],
+      "chainId": "a2e9b946-290b-48b6-9985-dc2e5a5860a1"
+    },
+    "n2": {
+      "peers": [
+        "51.15.37.165",
+        "51.15.209.252",
+        "51.15.228.90",
+        "51.15.228.126",
+        "51.15.228.171",
+        "51.15.46.25",
+        "51.15.72.23"
+      ],
+      "chainId": "2f2b6149-d29e-41ca-8c0d-f3343f5540c6"
+    },
+    "n3": {
+      "peers": [
+        "51.15.250.32",
+        "51.15.253.171",
+        "51.15.210.116",
+        "51.15.242.197",
+        "51.15.218.241"
+      ],
+      "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"
+    }
+  }
+}

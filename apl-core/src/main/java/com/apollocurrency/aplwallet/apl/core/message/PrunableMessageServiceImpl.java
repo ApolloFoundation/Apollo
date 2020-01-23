@@ -78,7 +78,7 @@ public class PrunableMessageServiceImpl implements PrunableMessageService {
             return null;
         }
         byte[] publicKey = message.getSenderId() == AccountService.getId(Crypto.getPublicKey(keySeed))
-                ? accountPublicKeyService.getPublicKey(message.getRecipientId()) : accountPublicKeyService.getPublicKey(message.getSenderId());
+                ? accountPublicKeyService.getPublicKeyByteArray(message.getRecipientId()) : accountPublicKeyService.getPublicKeyByteArray(message.getSenderId());
         return accountPublicKeyService.decryptFrom(publicKey, message.getEncryptedData(), keySeed, message.isCompressed());
     }
 

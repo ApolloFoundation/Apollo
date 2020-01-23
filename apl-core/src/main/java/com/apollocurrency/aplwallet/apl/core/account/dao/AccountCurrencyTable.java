@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -25,17 +27,17 @@ import java.sql.SQLException;
 public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<AccountCurrency> {
 
     private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
-    
+
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
             return accountCurrency.getDbKey() == null ? newKey(accountCurrency.getAccountId(), accountCurrency.getCurrencyId()) : accountCurrency.getDbKey();
         }
 
-    };  
+    };
 
     public static DbKey newKey(long idA, long idB){
         return accountCurrencyDbKeyFactory.newKey(idA,idB);
-    } 
+    }
 
     public AccountCurrencyTable() {
         super("account_currency", accountCurrencyDbKeyFactory);
@@ -48,7 +50,10 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
 
     @Override
     public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
-        try (final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")) {
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.getAccountId());
             pstmt.setLong(++i, accountCurrency.getCurrencyId());
@@ -60,7 +65,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY units DESC, account_id, currency_id ";
     }
 

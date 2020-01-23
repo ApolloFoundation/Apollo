@@ -6,6 +6,9 @@ package com.apollocurrency.aplwallet.apl.udpater.intfce;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class UpdateInfo implements Cloneable{
     private long id;
     private boolean isUpdate;
@@ -85,7 +88,7 @@ public class UpdateInfo implements Cloneable{
         this.id = id;
     }
 
-    public void setDownloadInfo(DownloadInfo downloadInfo) {
+    public synchronized void setDownloadInfo(DownloadInfo downloadInfo) {
         this.downloadInfo = downloadInfo;
     }
 

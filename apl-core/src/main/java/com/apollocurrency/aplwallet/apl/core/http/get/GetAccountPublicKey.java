@@ -43,7 +43,7 @@ public final class GetAccountPublicKey extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
         long accountId = ParameterParser.getAccountId(req, true);
-        byte[] publicKey = lookupAccountService().getPublicKey(accountId);
+        byte[] publicKey = lookupAccountService().getPublicKeyByteArray(accountId);
         if (publicKey != null) {
             JSONObject response = new JSONObject();
             response.put("publicKey", Convert.toHexString(publicKey));

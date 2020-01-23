@@ -57,8 +57,6 @@ public class UpdaterCoreTest {
     @Mock
     private PropertiesHolder propertiesHolder;
     @Mock
-    private DbProperties dbProperties;
-    @Mock
     private UpdaterMediator updaterMediatorInstance;
     @Mock
     private PlatformDependentUpdater fakePlatformDependentUpdaterInstance;
@@ -75,7 +73,7 @@ public class UpdaterCoreTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        when(updaterMediator.getDataSource()).thenReturn(new TransactionalDataSource(dbProperties, propertiesHolder));
+        doReturn(new TransactionalDataSource(new DbProperties(), propertiesHolder)).when(updaterMediator).getDataSource();
         attachment = UpdateAttachment.getAttachment(
                 Platform.current(),
                 Architecture.current(),
@@ -95,7 +93,9 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+
         UpdaterCore spy = spy(updaterCore);
 
         spy.init(null, false);
@@ -103,7 +103,6 @@ public class UpdaterCoreTest {
         verify(spy, times(1)).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(transactionVerifier, times(1)).process(any(Transaction.class));
-        verify(updaterMediatorInstance, never()).addUpdateListener(any(Listener.class));
     }
 
     @Test
@@ -113,7 +112,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier,updateInfo);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -121,12 +121,12 @@ public class UpdaterCoreTest {
         verify(spy, never()).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(transactionVerifier, times(1)).process(any(Transaction.class));
-        verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
     }
 
     @Test
     public void testInitNullUpdateTransaction() throws Exception {
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -134,7 +134,6 @@ public class UpdaterCoreTest {
         verify(spy, never()).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(transactionVerifier, never()).process(any(Transaction.class));
-        verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
     }
 
 
@@ -143,7 +142,8 @@ public class UpdaterCoreTest {
         Transaction mockTransaction = new SimpleTransaction(1L, Update.MINOR);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -152,7 +152,6 @@ public class UpdaterCoreTest {
         verify(updaterService, times(1)).getLast();
         verify(updaterService, times(1)).clear();
         verify(transactionVerifier, times(1)).process(any(Transaction.class));
-        verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
     }
 
     @Test
@@ -161,7 +160,8 @@ public class UpdaterCoreTest {
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
@@ -170,8 +170,6 @@ public class UpdaterCoreTest {
         verify(spy, never()).startUpdate(any(UpdateData.class));
         verify(updaterService, times(1)).getLast();
         verify(updaterMediatorInstance, times(1)).suspendBlockchain();
-        verify(updaterMediatorInstance, never()).addUpdateListener(any(Listener.class));
-        UpdateInfo updateInfo = spy.getUpdateInfo();
         assertEquals(UpdateInfo.UpdateState.REQUIRED_MANUAL_INSTALL, updateInfo.getUpdateState());
         assertEquals(Level.CRITICAL, updateInfo.getLevel());
     }
@@ -182,14 +180,14 @@ public class UpdaterCoreTest {
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
         spy.init();
 
         verify(updaterService, times(1)).getLast();
-        verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
         verify(updaterMediatorInstance, never()).suspendBlockchain();
     }
 
@@ -199,14 +197,14 @@ public class UpdaterCoreTest {
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier);
+        UpdateInfo updateInfo = new UpdateInfo();
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(attachment.getAppVersion());
 
         spy.init();
 
         verify(updaterService, times(1)).getLast();
-        verify(updaterMediatorInstance, times(1)).addUpdateListener(any(Listener.class));
         verify(spy, never()).startUpdate(any(UpdateData.class));
         verify(updaterMediatorInstance, never()).suspendBlockchain();
     }
@@ -217,8 +215,9 @@ public class UpdaterCoreTest {
         SimpleTransaction mockTransaction = new SimpleTransaction(3L, Update.MINOR);
         mockTransaction.setAttachment(attachment);
         UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
+        UpdateInfo updateInfo = new UpdateInfo();
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
-                transactionVerifier);
+                transactionVerifier, updateInfo);
         doReturn(new UpdateTransaction(mockTransaction.getId(), false)).when(updaterService).getLast();
         doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
@@ -229,7 +228,6 @@ public class UpdaterCoreTest {
         TimeUnit.SECONDS.sleep(1);
         Mockito.verify(updaterMediatorInstance, times(1)).suspendBlockchain();
         Mockito.verify(updaterMediatorInstance, times(1)).resumeBlockchain();
-        UpdateInfo updateInfo = updaterCore.getUpdateInfo();
         assertEquals(updateInfo.getLevel(), Level.MINOR);
         assertEquals(updateInfo.getUpdateState(), UpdateInfo.UpdateState.FAILED_REQUIRED_START);
 

@@ -88,7 +88,7 @@ public abstract class AccountControl extends TransactionType {
             if (attachment.getPeriod() < blockchainConfig.getLeasingDelay() || attachment.getPeriod() > 65535) {
                 throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
             }
-            byte[] recipientPublicKey = lookupAccountService().getPublicKey(transaction.getRecipientId());
+            byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(transaction.getRecipientId());
             if (recipientPublicKey == null) {
                 throw new AplException.NotCurrentlyValidException("Invalid effective balance leasing: " + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
             }
@@ -185,5 +185,5 @@ public abstract class AccountControl extends TransactionType {
             return false;
         }
     };
-    
+
 }

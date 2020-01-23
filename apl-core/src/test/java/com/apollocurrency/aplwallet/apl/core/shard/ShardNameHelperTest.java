@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit test for class used for generating shard name file by specified pattern.
@@ -33,13 +33,33 @@ class ShardNameHelperTest {
     }
 
     @Test
-    void getShardArchiveName() {
+    void getCoreShardArchiveName() {
         ShardNameHelper shardNameHelper = new ShardNameHelper();
         String result = shardNameHelper.getCoreShardArchiveNameByShardId(001L,chainId);
         assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
 
         result = shardNameHelper.getCoreShardArchiveNameByShardId(2001L,chainId);
         assertEquals("apl-blockchain-shard-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
+    }
+
+    @Test
+    void getPrunableShardArchiveName() {
+        ShardNameHelper shardNameHelper = new ShardNameHelper();
+        String result = shardNameHelper.getPrunableShardArchiveNameByShardId(001L, chainId);
+        assertEquals("apl-blockchain-shardprun-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
+
+        result = shardNameHelper.getPrunableShardArchiveNameByShardId(2001L, chainId);
+        assertEquals("apl-blockchain-shardprun-2001-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", result);
+    }
+
+    @Test
+    void getFullPrunableShardId() {
+        ShardNameHelper shardNameHelper = new ShardNameHelper();
+        String result = shardNameHelper.getFullShardPrunId(001L, chainId);
+        assertEquals("shardprun::1;chain::b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
+
+        result = shardNameHelper.getFullShardPrunId(2001L, chainId);
+        assertEquals("shardprun::2001;chain::b5d7b697-f359-4ce5-a619-fa34b6fb01a5", result);
     }
 
     @Test

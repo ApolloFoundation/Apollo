@@ -55,7 +55,7 @@ public class DividendPayment extends CreateTransaction {
         try {
             return this.createTransaction(request, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_FUNDS;
+            return JSONResponses.NOT_ENOUGH_APL;
         }
     }
 

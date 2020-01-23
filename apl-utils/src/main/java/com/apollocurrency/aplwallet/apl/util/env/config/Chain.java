@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-        "prefix", "project", "genesisLocation", "blockchainProperties"})
+        "prefix", "project", "genesisLocation", "featuresHeightRequirement", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -33,6 +33,7 @@ public class Chain {
     private String prefix;
     private String project;
     private String genesisLocation;
+    private FeaturesHeightRequirement featuresHeightRequirement;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
     @JsonCreator
@@ -47,7 +48,7 @@ public class Chain {
                  @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(), name, description, symbol, prefix, project, genesisLocation,
-                blockchainProperties);
+                blockchainProperties, null);
     }
     public Chain(UUID chainId,
                  boolean active,
@@ -60,7 +61,8 @@ public class Chain {
                  String prefix,
                  String project,
                  String genesisLocation,
-                 List<BlockchainProperties> blockchainProperties
+                 List<BlockchainProperties> blockchainProperties,
+                 FeaturesHeightRequirement featuresHeightRequirement
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -80,6 +82,15 @@ public class Chain {
                         .collect(
                                 Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
                                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        this.featuresHeightRequirement = featuresHeightRequirement;
+    }
+
+    public FeaturesHeightRequirement getFeaturesHeightRequirement() {
+        return featuresHeightRequirement;
+    }
+
+    public void setFeaturesHeightRequirement(FeaturesHeightRequirement featuresHeightRequirement) {
+        this.featuresHeightRequirement = featuresHeightRequirement;
     }
 
     public Chain() {
@@ -193,12 +204,13 @@ public class Chain {
                 Objects.equals(prefix, chain.prefix) &&
                 Objects.equals(project, chain.project) &&
                 Objects.equals(genesisLocation, chain.genesisLocation) &&
-                Objects.equals(blockchainProperties, chain.blockchainProperties);
+                Objects.equals(blockchainProperties, chain.blockchainProperties) &&
+                Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties);
+        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties, featuresHeightRequirement);
     }
 
     public Chain copy() {
@@ -207,7 +219,7 @@ public class Chain {
         List<String> blacklistedPeersCopy = new ArrayList<>(blacklistedPeers);
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy, name, description, symbol, prefix, project,
-                genesisLocation, blockchainPropertiesCopy);
+                genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
     }
 
     @Override
@@ -224,6 +236,7 @@ public class Chain {
                 ", prefix='" + prefix + '\'' +
                 ", project='" + project + '\'' +
                 ", genesisLocation='" + genesisLocation + '\'' +
+                ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
                 ", blockchainProperties=" + blockchainProperties +
                 '}';
     }

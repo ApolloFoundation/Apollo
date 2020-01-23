@@ -90,7 +90,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(dbKey, height);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKey(dbKey, height);
         account = accountService.getAccount(accountId, height);
         assertEquals(newAccount, account);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
@@ -127,14 +127,14 @@ class AccountServiceTest {
 
     @Test
     void testAddOrGetAccount() {
-        assertThrows(IllegalArgumentException.class, () -> accountService.addOrGetAccount(0, false));
+        assertThrows(IllegalArgumentException.class, () -> accountService.addOrGetAccount(0));
         long accountId = testData.PUBLIC_KEY1.getAccountId();
         DbKey dbKey = AccountTable.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         doReturn(newAccount).when(accountTable).newEntity(dbKey);
-        Account account = accountService.addOrGetAccount(accountId, false);
+        Account account = accountService.addOrGetAccount(accountId);
         assertEquals(newAccount, account);
-        verify(accountPublicKeyService).insertNewPublicKey(dbKey, false);
+        verify(accountPublicKeyService).insertNewPublicKey(dbKey);
     }
 
     @Test

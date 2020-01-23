@@ -4,30 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.dgs;
 
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_1_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_2_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_1_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_2_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
-import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
@@ -37,8 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -67,7 +50,6 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
@@ -81,9 +63,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_1_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.BUYER_2_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_1_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_2_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class DGSServiceTest {
@@ -105,9 +103,7 @@ public class DGSServiceTest {
             DGSServiceImpl.class,
             DerivedDbTablesRegistryImpl.class,
             BlockchainConfig.class,
-            AccountServiceImpl.class, EntityProducer.class, AccountTable.class,
-            AccountPublicKeyServiceImpl.class, PublicKeyTable.class, GenesisPublicKeyTable.class
-    )
+            AccountServiceImpl.class, AccountTable.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
             .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -119,6 +115,7 @@ public class DGSServiceTest {
             .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
+            .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
             .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
             .build();
     @Inject
@@ -128,6 +125,8 @@ public class DGSServiceTest {
 
     @Inject
     AccountService accountService;
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
 
     DGSTestData dtd;
 
@@ -1365,9 +1364,3 @@ public class DGSServiceTest {
 
 
 }
-
-
-
-
-
-

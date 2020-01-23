@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -122,7 +123,7 @@ public final class PassphraseRecovery {
 
     static Map<Long, byte[]> getPublicKeys() {
         DbProperties dbProperties = CDI.current().select(DbProperties.class).get(); // it should be present and initialized
-        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder);
+        databaseManager = new DatabaseManagerImpl(dbProperties, propertiesHolder, new JdbiHandleFactory());
         Map<Long, byte[]> publicKeys = new HashMap<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement selectBlocks = con.prepareStatement("SELECT * FROM public_key WHERE latest=TRUE");

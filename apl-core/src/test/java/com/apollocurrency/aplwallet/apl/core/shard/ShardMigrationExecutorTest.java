@@ -83,6 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.commands.ZipArchiveCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.hash.ShardHashCalculatorImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
@@ -144,8 +145,7 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-            BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ReferencedTransactionDao.class,
+            BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
             PropertyProducer.class,
             GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
             DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
@@ -158,10 +158,11 @@ class ShardMigrationExecutorTest {
             DerivedTablesRegistry.class,
             ShardEngineImpl.class, CsvExporterImpl.class, ZipImpl.class, AplAppStatus.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ShardMigrationExecutor.class,
-            AplAppStatus.class)
+            CsvEscaperImpl.class)
             .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(PeersService.class), PeersService.class))
             .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -175,6 +176,7 @@ class ShardMigrationExecutorTest {
             .addBeans(MockBean.of(transactionProcessor, TransactionProcessorImpl.class))
             .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
             .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
     @Inject
     private ShardEngine shardEngine;
@@ -315,7 +317,9 @@ class ShardMigrationExecutorTest {
             assertEquals(td.TRANSACTION_2, tx); // check that transaction was ignored and left in main db
 
 //8-9.      // export 'derived', shard, secondary block + transaction indexes
-        List<TableInfo> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME, BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME).stream().map(TableInfo::new).collect(Collectors.toList());
+        List<TableInfo> tables = List.of(BLOCK_TABLE_NAME, TRANSACTION_TABLE_NAME, TRANSACTION_INDEX_TABLE_NAME,
+                BLOCK_INDEX_TABLE_NAME, SHARD_TABLE_NAME, GOODS_TABLE_NAME, PHASING_POLL_TABLE_NAME)
+                .stream().map(TableInfo::new).collect(Collectors.toList());
 
         CsvExportCommand csvExportCommand = new CsvExportCommand(shardEngine, 1, snapshotBlockHeight, tables, excludeInfo);
             state = shardMigrationExecutor.executeOperation(csvExportCommand);

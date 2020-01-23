@@ -45,11 +45,14 @@ import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
@@ -58,6 +61,8 @@ import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
+import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
@@ -112,14 +117,13 @@ class DerivedDbTableListingTest {
             PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
             PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
             EntityProducer.class, AccountTable.class,
-            JdbiHandleFactory.class,
             TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
             GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
             ReferencedTransactionDaoImpl.class,
             TaggedDataDao.class,
             PropertyBasedFileConfig.class,
             DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
             KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
             TaggedDataTimestampDao.class,
             TaggedDataExtendDao.class,
@@ -128,6 +132,7 @@ class DerivedDbTableListingTest {
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
             .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
             .addBeans(MockBean.of(time, NtpTime.class))
@@ -140,6 +145,7 @@ class DerivedDbTableListingTest {
             .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
             .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
             .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
 
     @Inject
@@ -178,6 +184,10 @@ class DerivedDbTableListingTest {
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder);
         accountGuaranteedBalanceTable.init();
         DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+        DexContractTable dexContractTable = new DexContractTable();
+        registry.registerDerivedTable(dexContractTable);
+        DexOrderTable dexOrderTable = new DexOrderTable();
+        registry.registerDerivedTable(dexOrderTable);
         purchaseTable.init();
     }
 
@@ -191,9 +201,9 @@ class DerivedDbTableListingTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-                MinMaxDbId minMaxDbId = item.getMinMaxDbId(targetHeight);
-                assertTrue(minMaxDbId.getMaxDbId() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxDbId.getMaxDbId());
-                log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxDbId, targetHeight);
+            MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
+            assertTrue(minMaxValue.getMax() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
+            log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
         });
     }
 }

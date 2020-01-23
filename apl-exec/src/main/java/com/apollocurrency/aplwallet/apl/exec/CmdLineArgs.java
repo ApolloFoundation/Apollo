@@ -30,6 +30,8 @@ public class CmdLineArgs {
     public String dbDir = "";
     @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
+    @Parameter(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
+    public String dexKeystoreDir = "";
     @Parameter(names = {"--no-shards-import"}, description = "Start from Genesis block, do not try to import last shard", arity = 1)
     public Boolean noShardImport=null;
     @Parameter(names = {"--no-shards-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources", arity = 1)

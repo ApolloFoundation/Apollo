@@ -8,7 +8,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 @NoArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -21,4 +22,5 @@ public class TransactionDTO extends UnconfirmedTransactionDTO {
     public TransactionDTO(UnconfirmedTransactionDTO o) {
         super(o);
     }
+
 }

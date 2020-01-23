@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 
 public class CriticalUpdater extends AbstractUpdater {
 
-    public CriticalUpdater(UpdateData updateDataHolder, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait) {
-        super(updateDataHolder, updaterMediator, updaterService, blocksWait, secondsWait);
+    public CriticalUpdater(UpdateData updateDataHolder, UpdaterMediator updaterMediator, UpdaterService updaterService, int blocksWait, int secondsWait, UpdateInfo updateInfo) {
+        super(updateDataHolder, updaterMediator, updaterService, blocksWait, secondsWait, updateInfo);
     }
 
     @Override

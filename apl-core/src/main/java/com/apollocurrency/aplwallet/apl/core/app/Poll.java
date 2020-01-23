@@ -19,28 +19,32 @@
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
+
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.derived.ValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
@@ -52,10 +56,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class Poll extends AbstractPoll {
@@ -97,7 +99,6 @@ public final class Poll extends AbstractPoll {
         }
     };
 
-//    private static final ValuesDbTable<Poll, PollOptionResult> pollResultsTable = new ValuesDbTable<Poll, PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
     private static final ValuesDbTable<PollOptionResult> pollResultsTable = new ValuesDbTable<PollOptionResult>("poll_result", pollResultsDbKeyFactory) {
 
         @Override
@@ -133,6 +134,16 @@ public final class Poll extends AbstractPoll {
 
     public static DbIterator<Poll> getPollsFinishingAtOrBefore(int height, int from, int to) {
         return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LTE, height), from, to);
+    }
+
+    public static DbIterator<Poll> getPollsFinishingBelowHeight(int height, int from, int to) {
+        // select all Polls where 'finish_height' is LESS (DbClause.Op.LT) then specified height value
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), from, to);
+    }
+
+    public static DbIterator<Poll> getPollsFinishingAtHeight(int height) {
+        // EXACT matching to Poll finish height
+        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
     }
 
     public static DbIterator<Poll> getAllPolls(int from, int to) {
@@ -200,10 +211,6 @@ public final class Poll extends AbstractPoll {
         }
     }
 
-        public static DbIterator<Poll> getPollsFinishingAt(int height) {
-        return pollTable.getManyBy(new DbClause.IntClause("finish_height", height), 0, Integer.MAX_VALUE);
-    }
-
     public static DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to) {
         DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause("finish_height",
                 DbClause.Op.GT, blockchain.getHeight());
@@ -226,18 +233,22 @@ public final class Poll extends AbstractPoll {
     @Singleton
     public static class PollObserver {
         public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-                int height = block.getHeight();
-                Poll.checkPolls(height);
+            LOG.trace(":accept:PollObserver: START onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
+            int height = block.getHeight();
+            Poll.checkPolls(height);
+            LOG.trace(":accept:PollObserver: END onBlockApplied AFTER_BLOCK_APPLY. block={}", block.getHeight());
         }
     }
 
     private static void checkPolls(int currentHeight) {
-        try (DbIterator<Poll> polls = getPollsFinishingAt(currentHeight)) {
+        // select all Polls where 'finish_height' is EQUAL (DbClause.Op.EQ) then specified height value
+        try (DbIterator<Poll> polls = getPollsFinishingAtHeight(currentHeight)) {
             for (Poll poll : polls) {
                 try {
                     List<PollOptionResult> results = poll.countResults(poll.getVoteWeighting(), currentHeight);
+                    LOG.trace("Poll = {} has PollOptionResult = {}", poll.getId(), results);
                     pollResultsTable.insert(results);
-                    LOG.debug("Poll " + Long.toUnsignedString(poll.getId()) + " has been finished");
+                    LOG.trace("Poll = {} has been finished : {}", poll.getId(), poll);
                 } catch (RuntimeException e) {
                     LOG.error("Couldn't count votes for poll " + Long.toUnsignedString(poll.getId()), e);
                 }
@@ -281,10 +292,13 @@ public final class Poll extends AbstractPoll {
     }
 
     private void save(Connection con) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
+                PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
                 + "name, description, options, finish_height, voting_model, min_balance, min_balance_model, "
                 + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, id);
             pstmt.setLong(++i, accountId);
@@ -378,7 +392,15 @@ public final class Poll extends AbstractPoll {
         }
         VoteWeighting.VotingModel votingModel = voteWeighting.getVotingModel();
         try (DbIterator<Vote> votes = Vote.getVotes(this.getId(), 0, -1)) {
-            for (Vote vote : votes) {
+            List<Vote> voteList = CollectionUtil.toList(votes);
+            if (voteList.size() <= 0) {
+                // stop further processing because there are no votes found
+                return Arrays.asList(result);
+            }
+            LOG.trace("count Vote result: h={}, votingModel='{}', pollId={}, voteList = [{}]",
+                height, votingModel, this.getId(), voteList.size());
+            LOG.trace("count Vote result: pollId={}, voteList = \n{}", this.getId(), voteList);
+            for (Vote vote : voteList) {
                 long weight = votingModel.calcWeight(voteWeighting, vote.getVoterId(), height);
                 if (weight <= 0) {
                     continue;
@@ -394,6 +416,7 @@ public final class Poll extends AbstractPoll {
                     }
                 }
             }
+            LOG.trace("count Vote : pollId={} PollOptionResult = {}", this.getId(), result);
         }
         return Arrays.asList(result);
     }
@@ -411,4 +434,14 @@ public final class Poll extends AbstractPoll {
         return partialResult;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Poll{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", accountId=").append(accountId);
+        sb.append(", finishHeight=").append(finishHeight);
+        sb.append('}');
+        return sb.toString();
+    }
 }

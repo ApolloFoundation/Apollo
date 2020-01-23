@@ -49,7 +49,7 @@ public class Helper2FA {
                         : new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource()),
                 propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
     }
-     
+
     public static TwoFactorAuthDetails enable2FA(long accountId, String passphrase) throws ParameterException {
             findAplSecretBytes(accountId, passphrase);
             return service2FA.enable(accountId);
@@ -94,6 +94,14 @@ public class Helper2FA {
                 status2FA = auth2FA(params2FA.getSecretPhrase(), code);
                 accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
             }
+            validate2FAStatus(status2FA, accountId);
+        }
+    }
+
+    public static void verifyVault2FA(long accountId, int code2FA) throws ParameterException {
+
+        if (isEnabled2FA(accountId)) {
+            Status2FA status2FA = service2FA.tryAuth(accountId, code2FA);
             validate2FAStatus(status2FA, accountId);
         }
     }
@@ -193,5 +201,5 @@ public class Helper2FA {
     }
 
 
-    
+
 }

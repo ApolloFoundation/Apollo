@@ -77,7 +77,8 @@ public interface CsvExporter {
 
 
     /**
-     * Export derived table entries ordered by custom sort
+     * Export derived table entries ordered by custom sort. Custom sort may include few columns. Note, that it is a slow method for export, because it uses
+     * LIMIT + OFFSET pagination model, so that should be used when really necessary
      * Will exclude columns specified in excludeColumns parameter
      * @param derivedTableInterface table to export
      * @param targetHeight target blockchain height
@@ -89,12 +90,13 @@ public interface CsvExporter {
     long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn);
 
     /**
-     * Export transactions specified by db_id list and return number of exported transactions
+     * Export transactions specified by db_id list and block height then return number of exported transactions
      * @param dbIds collection of transaction db_ids
+     * @param height transactions for snapshot block height
      * @return number of exported transactions
 
      */
-    long exportTransactions(Collection<Long> dbIds);
+    long exportTransactions(Collection<Long> dbIds, int height);
 
     /**
      * Export block with transactions at given height

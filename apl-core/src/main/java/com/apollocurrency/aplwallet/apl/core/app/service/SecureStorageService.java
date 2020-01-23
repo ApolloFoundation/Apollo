@@ -2,6 +2,9 @@ package com.apollocurrency.aplwallet.apl.core.app.service;
 
 import com.apollocurrency.aplwallet.apl.util.AplException;
 
+import java.nio.file.Path;
+import java.util.List;
+
 public interface SecureStorageService {
 
     /**
@@ -15,6 +18,11 @@ public interface SecureStorageService {
     String getUserPassPhrase(Long accountId);
 
     /**
+     * Get list of users in the storage.
+     */
+    List<Long> getAccounts();
+
+    /**
      * Save encrypted by passphrase secretStore in the json format.
      * @return true - if secretStore were saved successfully, otherwise returned false
      */
@@ -23,15 +31,27 @@ public interface SecureStorageService {
     /**
      * Restore user keys from secure storage.
      */
-    boolean restoreSecretStorage();
+    boolean restoreSecretStorage(Path path);
 
     /**
      * Delete secure storage file.
      */
-    boolean deleteSecretStorage();
+    boolean deleteSecretStorage(Path path);
 
     /**
      * Create private key for application.
      */
     String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
+   
+    
+    /**
+     * Flushing keys after decentralized exchange routine
+     * @param accountID   id of the corresponding account
+     * @param passPhrase  passphrase of the particular wallet
+     * @return flag whether the corresponding pair was found
+     */
+    boolean flushAccountKeys(Long accountID, String passPhrase);
+
+
+    boolean isEnabled();
 }

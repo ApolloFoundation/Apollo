@@ -17,6 +17,10 @@
     "prefix": "APL",
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 300000,
+      "dexExpiredContractWithFinishedPhasingHeight": 800000
+    },
     "blockchainProperties": [
       {
         "height": 0,
@@ -41,11 +45,11 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 50000
+          "frequency": 100000
         }
       },
       {
-        "height": 360000,
+        "height": 600000,
         "maxNumberOfTransactions": 255,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
@@ -59,7 +63,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 8000
+          "frequency": 10000
         }
       }
     ]

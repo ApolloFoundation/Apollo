@@ -14,8 +14,9 @@ import lombok.Setter;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountBlocksResponse extends ResponseBase{
-    List<BlockDTO> blocks;
+public class AccountBlocksResponse extends ResponseBase {
+    private List<BlockDTO> blocks;
 }

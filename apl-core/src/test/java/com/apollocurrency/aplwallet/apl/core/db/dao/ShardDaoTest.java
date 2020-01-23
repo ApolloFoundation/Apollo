@@ -4,21 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db.dao;
 
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.NOT_SAVED_SHARD;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARDS;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_0;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
-import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -28,6 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -39,10 +30,21 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.inject.Inject;
+
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.NOT_SAVED_SHARD;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARDS;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_0;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
+import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
 @EnableWeld
 class ShardDaoTest {
@@ -51,15 +53,16 @@ class ShardDaoTest {
     static DbExtension extension = new DbExtension();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(NtpTime.class,
-            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            JdbiHandleFactory.class, ShardDao.class,
+            PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardDao.class,
             GlobalSync.class,
             GlobalSyncImpl.class,
             DerivedDbTablesRegistryImpl.class,
             TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class)
             .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
+            .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
             .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
             .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+            .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
             .build();
 
     @Inject
@@ -190,5 +193,11 @@ class ShardDaoTest {
     void testGetAllCompletedOrArchivedShards() {
         List<Shard> result = dao.getAllCompletedOrArchivedShards();
         assertEquals(Arrays.asList(SHARD_2, SHARD_1), result);
+    }
+
+    @Test
+    void testGetLatestShardHeight() {
+        int latestShardHeight = dao.getLatestShardHeight();
+        assertEquals(SHARD_2.getShardHeight(), latestShardHeight);
     }
 }

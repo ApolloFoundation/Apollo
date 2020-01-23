@@ -38,6 +38,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -148,8 +150,11 @@ public abstract class Order {
     }
 
     private void save(Connection con, String table) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
-                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
+                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, this.id);
             pstmt.setLong(++i, this.accountId);
@@ -238,7 +243,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 
@@ -359,7 +364,7 @@ public abstract class Order {
             }
 
             @Override
-            protected String defaultSort() {
+            public String defaultSort() {
                 return " ORDER BY creation_height DESC ";
             }
 

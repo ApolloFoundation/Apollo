@@ -44,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-import java.util.Arrays;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -54,13 +53,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_EC_BLOCK;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_DEADLINE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_FUNDS;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
 
 public abstract class CreateTransaction extends AbstractAPIRequestHandler {
-    private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-    private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
+    private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
             "deadline", "referencedTransactionFullHash", "broadcast",
             "message", "messageIsText", "messageIsPrunable",
@@ -104,22 +103,21 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
     }
     public JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
             throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT);
+        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT, true).getJson();
     }
 
-
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
+        return createTransaction(req, senderAccount, recipientId, amountATM, attachment, true).getJson();
+    }
+
+    public TransactionResponse createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws AplException.ValidationException, ParameterException {
         CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-                .convert(req, senderAccount, recipientId, amountATM, attachment, lookupAccountService());
+                .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, lookupAccountService());
 
 
-        Transaction transaction;
         JSONObject response = new JSONObject();
-        try {
-            transaction = createTransaction(createTransactionRequest);
-        } catch (AplException.ValidationException e) {
-            return e.getJsonResponce();
-        }
+//do not eat exception here, it is used for error message displying in UI
+        Transaction transaction = createTransaction(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
         response.put("transactionJSON", transactionJSON);
@@ -138,7 +136,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             response.put("broadcasted", false);
         }
 
-        return response;
+        return new TransactionResponse(transaction, response);
     }
 
     public Transaction createTransaction(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
@@ -215,22 +213,20 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
             try {
                 if (Math.addExact(txRequest.getAmountATM(), transaction.getFeeATM()) > txRequest.getSenderAccount().getUnconfirmedBalanceATM()) {
-                    throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
+                    throw new AplException.NotValidException(NOT_ENOUGH_APL);
                 }
             } catch (ArithmeticException e) {
-                throw new AplException.NotValidException(NOT_ENOUGH_FUNDS);
+                throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
 
             if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);
-            } else {
+            } else if (txRequest.isValidate()){
                 validator.validate(transaction);
             }
         } catch (AplException.NotYetEnabledException e) {
             throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
         } catch (AplException.InsufficientBalanceException e) {
-            throw e;
-        } catch (AplException.ValidationException e) {
             throw e;
         }
 

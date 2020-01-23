@@ -6,13 +6,16 @@
 package com.apollocurrency.aplwallet.api.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountAssetsCountResponse extends ResponseBase{
-    Integer numberOfAssets;
+@AllArgsConstructor
+public class AccountAssetsCountResponse extends ResponseBase {
+    private Integer numberOfAssets;
 }

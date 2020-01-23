@@ -48,7 +48,7 @@ public final class EncryptTo extends AbstractAPIRequestHandler {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         long senderAccountId = ParameterParser.getAccountId(req, "account", false);
         long recipientId = ParameterParser.getAccountId(req, "recipient", true);
-        byte[] recipientPublicKey = lookupAccountService().getPublicKey(recipientId);
+        byte[] recipientPublicKey = lookupAccountService().getPublicKeyByteArray(recipientId);
         if (recipientPublicKey == null) {
             return INCORRECT_RECIPIENT;
         }

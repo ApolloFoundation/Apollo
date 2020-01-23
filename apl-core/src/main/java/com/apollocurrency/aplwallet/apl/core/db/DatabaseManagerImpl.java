@@ -4,25 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.util.StringValidator;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,11 +33,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Class is used for high level database and shard management.
@@ -48,7 +48,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     private DbProperties baseDbProperties; // main database properties
     private PropertiesHolder propertiesHolder;
-    private TransactionalDataSource currentTransactionalDataSource; // main/shard database
+    private volatile TransactionalDataSource currentTransactionalDataSource; // main/shard database
 
     /**
      * Shard data sources cache loader
@@ -74,7 +74,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
             dataSource.getValue().shutdown();
         }
     };
-
     private Map<Long, TransactionalDataSource> connectedShardDataSourceMap = new ConcurrentHashMap<>(); // secondary shards
     /**
      * Cached shard data sources with timed eviction policy
@@ -89,18 +88,25 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 */
 
     private Jdbi jdbi;
-
+    private JdbiHandleFactory jdbiHandleFactory;
+    private Set<Long> fullShardIds = new CopyOnWriteArraySet<>(); // store full shard ids
+    private boolean available; // required for db hot swap
+    private final Object lock = new Object(); // required to sync creation of shard datasources
     /**
      * Create, initialize and return main database source.
      * @return main data source
      */
     @Override
     public TransactionalDataSource getDataSource() {
+        waitAvailability();
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
-            jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
+            initDatasource();
         }
         return currentTransactionalDataSource;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 
     /**
@@ -109,71 +115,39 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * @param propertiesHolderParam the rest global properties in holder from CDI
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam) {
-        baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties cannot be null");
-        propertiesHolder = propertiesHolderParam;
-        // init internal data source stuff only one time till next shutdown() will be called
+    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, JdbiHandleFactory jdbiHandleFactory) {
+        this.baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties is NULL");
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolderParam, "Properties holder is NULL");
+        this.jdbiHandleFactory = Objects.requireNonNull(jdbiHandleFactory, "jdbiHandleFactory is NULL");
+        initDatasource();
+        this.available = true;
+    }
+
+    private void initDatasource() {
         currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
         jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
-//        openAllShards(); // it's not needed in most cases, because any shard opened 'lazy' by shardId
+        jdbiHandleFactory.setJdbi(jdbi);
     }
-//not used yet
 
-//    /**
-//     * Try to open all shard database sources specified in main db. If
-//     */
-//    private void openAllShards() {
-//        List<Long> shardList = findAllShards(currentTransactionalDataSource);
-//        log.debug("Found [{}] shards...", shardList.size());
-//        for (Long shardId : shardList) {
-//            String shardName = shardNameHelper.getShardNameByShardId(shardId,null); // shard's file name formatted from Id
-//            DbProperties shardDbProperties = null;
-//            try {
-//                // create copy instance, change file name, nullify dbUrl intentionally!
-//                shardDbProperties = baseDbProperties.deepCopy().dbFileName(shardName).dbUrl(null);
-//            } catch (CloneNotSupportedException e) {
-//                log.error("Db props clone error", e);
-//            }
-//            try {
-//                TransactionalDataSource shardDb = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-//                shardDb.init(new ShardInitTableSchemaVersion());
-//                connectedShardDataSourceMap.put(shardId, shardDb);
-//            } catch (Exception e) {
-//                log.error("Error opening shard db by name = " + shardName, e);
-//            }
-//            log.debug("Prepared '{}' shard...", shardName);
-//        }
-//    }
+    private void waitAvailability() {
+        while (!available) {
+            ThreadUtils.sleep(100);
+        }
+    }
 
     @Override
     @Produces
     public Jdbi getJdbi() {
-        if (jdbi == null) {
+//        if (jdbi == null) {
             // should never happen, but happens sometimes in unit tests because of CDI
-            jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
-        }
+//            jdbi = currentTransactionalDataSource.initWithJdbi(new AplDbVersion());
+//        }
         return jdbi;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public List<Long> findAllShards(TransactionalDataSource transactionalDataSource) {
-        Objects.requireNonNull(transactionalDataSource, "DataSource cannot be null");
-        String shardSelect = "SELECT shard_id from shard";
-        List<Long> result = new ArrayList<>();
-        try (Connection con = transactionalDataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(shardSelect)) {
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(rs.getLong("shard_id"));
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Error retrieve shards...", e);
-        }
-        return result;
+    public JdbiHandleFactory getJdbiHandleFactory() {
+        return jdbiHandleFactory;
     }
 
     private Set<Long> findAllFullShardId() {
@@ -192,12 +166,9 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TransactionalDataSource createAndAddShard(Long shardId) {
+    private TransactionalDataSource createAndAddShard(Long shardId) {
         long start = System.currentTimeMillis();
+        waitAvailability();
         ShardDataSourceCreateHelper shardDataSourceCreateHelper =
                 new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
         TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
@@ -211,25 +182,32 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public TransactionalDataSource createAndAddShard(Long shardId, DbVersion dbVersion) {
+    public TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
         long start = System.currentTimeMillis();
+        waitAvailability();
 //        if (connectedShardDataSourceMap.getIfPresent(shardId) == null) {
 //            TransactionalDataSource dataSource = connectedShardDataSourceMap.getUnchecked(shardId);
         if (connectedShardDataSourceMap.containsKey(shardId)) {
             TransactionalDataSource dataSource = connectedShardDataSourceMap.get(shardId);
-            dataSource.init(dbVersion);
+            dataSource.update(dbVersion);
             log.debug("Init existing SHARD using db version'{}' in {} ms", dbVersion, System.currentTimeMillis() - start);
             return dataSource;
         } else {
-            ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-                    new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
-            TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-            shardDb.init(dbVersion);
-            connectedShardDataSourceMap.put(shardId, shardDb);
-            log.debug("new SHARD '{}' is CREATED in {} ms", shardDataSourceCreateHelper.getShardName(), System.currentTimeMillis() - start);
-            return shardDb;
+            return createShardDatasource(shardId, dbVersion);
         }
+    }
+
+    private TransactionalDataSource createShardDatasource(Long shardId, DbVersion dbVersion) {
+        long start = System.currentTimeMillis();
+        waitAvailability();
+        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
+                new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
+        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
+        shardDb.init(dbVersion);
+        connectedShardDataSourceMap.put(shardId, shardDb);
+        log.debug("new SHARD datasource'{}' is ADDED in {} ms", shardDataSourceCreateHelper.getShardName(), System.currentTimeMillis() - start);
+        return shardDb;
     }
 
 
@@ -238,14 +216,14 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public synchronized List<TransactionalDataSource> getAllFullDataSources(Long numberOfShards) {
-        Set<Long> allFullShards = findAllFullShardId();
         List<TransactionalDataSource> dataSources;
         if (numberOfShards != null) {
-            dataSources = allFullShards.stream().limit(numberOfShards).sorted(
+            dataSources = fullShardIds.stream().limit(numberOfShards).sorted(
                     Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
                     id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
         } else {
-            dataSources = allFullShards.stream().sorted(
+            fullShardIds = findAllFullShardId();
+            dataSources = fullShardIds.stream().sorted(
                     Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
                     id, new ShardAddConstraintsSchemaVersion())).collect(Collectors.toList());
         }
@@ -288,23 +266,15 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
-        Objects.requireNonNull(temporaryDatabaseName, "temporary Database Name is NULL");
+        StringValidator.requireNonBlank(temporaryDatabaseName, "temporary database name");
+        waitAvailability();
         long start = System.currentTimeMillis();
         log.debug("Create new SHARD '{}'", temporaryDatabaseName);
-        if (temporaryDatabaseName.isEmpty() || temporaryDatabaseName.length() > 255) {
-            String error = String.format(
-                    "Parameter for temp database name is EMPTY or TOO LONG (>255 symbols) = '%s'", temporaryDatabaseName.length());
-            log.error(error);
-            throw new RuntimeException(error);
-        }
-        DbProperties shardDbProperties = null;
-        try {
-            shardDbProperties = baseDbProperties.deepCopy().dbFileName(temporaryDatabaseName)
+        DbProperties shardDbProperties = baseDbProperties.deepCopy()
+                .dbFileName(temporaryDatabaseName)
                     .dbUrl(null) // nullify dbUrl intentionally!;
                     .dbIdentity(TEMP_DB_IDENTITY);
-        } catch (CloneNotSupportedException e) {
-            log.error("DbProperties cloning error", e);
-        }
+
         TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
         temporaryDataSource.init(new AplDbVersion());
         connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
@@ -314,8 +284,20 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public /*synchronized*/ TransactionalDataSource getShardDataSourceById(long shardId) {
+        waitAvailability();
 //        return connectedShardDataSourceMap.getUnchecked(shardId);
         return connectedShardDataSourceMap.get(shardId);
+    }
+
+    @Override
+    public void initFullShards(Collection<Long> ids) {
+        fullShardIds.clear();
+        fullShardIds.addAll(ids);
+    }
+
+    @Override
+    public void addFullShard(Long shard) {
+        fullShardIds.add(shard);
     }
 
     /**
@@ -323,27 +305,28 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public synchronized TransactionalDataSource getOrCreateShardDataSourceById(Long shardId) {
-//        if (shardId != null && connectedShardDataSourceMap.getIfPresent(shardId) == null) {
-//            return connectedShardDataSourceMap.getUnchecked(shardId);
+/*
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
         } else {
             return createAndAddShard(shardId);
         }
+*/
+        return getOrCreateShardDataSourceById(shardId, new ShardInitTableSchemaVersion());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public synchronized TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion) {
+    public TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion) {
         Objects.requireNonNull(dbVersion, "dbVersion is null");
 //        if (shardId != null && connectedShardDataSourceMap.getIfPresent(shardId) == null) {
 //            return connectedShardDataSourceMap.getUnchecked(shardId);
         if (shardId != null && connectedShardDataSourceMap.containsKey(shardId)) {
             return connectedShardDataSourceMap.get(shardId);
         } else {
-            return createAndAddShard(shardId, dbVersion);
+            return createOrUpdateShard(shardId, dbVersion);
         }
     }
 
@@ -352,6 +335,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      */
     @Override
     public /*synchronized*/ TransactionalDataSource getOrInitFullShardDataSourceById(long shardId) {
+        waitAvailability();
         Set<Long> fullShards = findAllFullShardId();
         if (fullShards.contains(shardId)) {
             return getOrCreateShardDataSourceById(shardId, new ShardAddConstraintsSchemaVersion());
@@ -374,27 +358,19 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
      * {@inheritDoc}
      */
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         try {
-            closeAllShardDataSources();
-            if (currentTransactionalDataSource != null) {
-                currentTransactionalDataSource.shutdown();
-                currentTransactionalDataSource = null;
-                jdbi = null;
+            synchronized (lock) {
+                closeAllShardDataSources();
+                if (currentTransactionalDataSource != null) {
+                    currentTransactionalDataSource.shutdown();
+                    currentTransactionalDataSource = null;
+                    jdbi = null;
+                }
             }
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
-    }
-
-    /**
-     * Be CAREFUL using this method. It's better to use it for explicit DataSources (like temporary)
-     * @param dataSource not null data source to be closed
-     */
-    @Override
-    public void shutdown(TransactionalDataSource dataSource) {
-        Objects.requireNonNull(dataSource, "dataSource is NULL");
-        dataSource.shutdown();
     }
 
     @Override
@@ -406,13 +382,11 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("DatabaseManager{");
-        sb.append("baseDbProperties=").append(baseDbProperties);
-        sb.append(", propertiesHolder=[{}]").append(propertiesHolder != null ? propertiesHolder : -1);
-        sb.append(", currentTransactionalDataSource={}").append(currentTransactionalDataSource != null ? "initialized" : "NULL");
-        sb.append(", connectedShardDataSourceMap=[{}]").append(connectedShardDataSourceMap != null ? connectedShardDataSourceMap.size() : -1);
-        sb.append('}');
-        return sb.toString();
+        return "DatabaseManager{" + "baseDbProperties=" + baseDbProperties +
+                ", propertiesHolder=" + propertiesHolder +
+                ", currentTransactionalDataSource=" + currentTransactionalDataSource +
+                ", connectedShardDataSourceMap=" + connectedShardDataSourceMap.size() +
+                '}';
     }
 
 }

@@ -30,13 +30,13 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountAssetServiceImpl implements AccountAssetService {
 
-    private Blockchain blockchain;
-    private AccountAssetTable accountAssetTable;
-    private AccountService accountService;
-    private Event<Account> accountEvent;
-    private Event<AccountAsset> accountAssetEvent;
-    private Event<LedgerEntry> logLedgerEvent;
-    private AssetDividendService assetDividendService;
+    private final Blockchain blockchain;
+    private final AccountAssetTable accountAssetTable;
+    private final AccountService accountService;
+    private final Event<Account> accountEvent;
+    private final Event<AccountAsset> accountAssetEvent;
+    private final Event<LedgerEntry> logLedgerEvent;
+    private final AssetDividendService assetDividendService;
 
     @Inject
     public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, Event<LedgerEntry> logLedgerEvent, AssetDividendService assetDividendService) {
@@ -146,9 +146,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setQuantityATU(assetBalance);
         }
         update(accountAsset);
-        //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
-        //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
                 quantityATU, assetBalance, blockchain.getLastBlock());
@@ -169,9 +167,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
         update(accountAsset);
-        //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
-        //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
 
         if (event == null) {
@@ -210,14 +206,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
         }
         update(accountAsset);
-        //accountService.listeners.notify(account, AccountEventType.ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
-        //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
 
-        //assetListeners.notify(accountAsset, AccountEventType.ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
-        //assetListeners.notify(accountAsset, AccountEventType.UNCONFIRMED_ASSET_BALANCE);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
                 quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock());

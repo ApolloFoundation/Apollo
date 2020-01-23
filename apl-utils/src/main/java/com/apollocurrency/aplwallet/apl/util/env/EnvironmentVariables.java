@@ -10,6 +10,7 @@ public class EnvironmentVariables {
     public String logDir = "";
     public String dbDir = "";
     public String vaultKeystoreDir = "";
+    public String dexKeystoreDir = "";
     public String twoFactorAuthDir = "";
     public String pidFile = "";
     private String applicationName;
@@ -28,6 +29,7 @@ public class EnvironmentVariables {
         logDir = System.getenv(applicationName + "_LOG_DIR");
         dbDir = System.getenv(applicationName + "_DB_DIR");
         vaultKeystoreDir = System.getenv(applicationName + "_VAULT_KEY_DIR");
+        dexKeystoreDir = System.getenv(applicationName + "_DEX_KEY_DIR");
         pidFile = System.getenv(applicationName + "_PID_FILE");
         twoFactorAuthDir = System.getenv(applicationName + "_2FA_DIR");
         configDir = System.getenv(applicationName + "_CONFIG_DIR");

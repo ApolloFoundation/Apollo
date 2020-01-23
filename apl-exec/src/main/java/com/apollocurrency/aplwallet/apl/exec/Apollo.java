@@ -28,9 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.updater.core.Updater;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -55,6 +53,7 @@ import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -65,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import javax.enterprise.inject.spi.CDI;
 
 /**
  * Main Apollo startup class
@@ -99,15 +97,12 @@ public class Apollo {
     private PropertiesHolder propertiesHolder;
     private TaskDispatchManager taskDispatchManager;
     private static AplCoreRuntime aplCoreRuntime;
-    
+
     private final static String[] VALID_LOG_LEVELS = {"ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
-        String packageName = "com.apollocurrency.aplwallet";
-        if(logLevel<0){
-            return;
-        }
+        String packageName = "com.apollocurrency.aplwallet.apl";
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
@@ -172,7 +167,8 @@ public class Apollo {
                 customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
                 StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
                 StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir
+                StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+                StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
 
@@ -208,6 +204,11 @@ public class Apollo {
 //            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
 //        }
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+
+        System.setProperty("javax.net.ssl.trustStore", "cacerts");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+
 //cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
@@ -271,34 +272,23 @@ public class Apollo {
 
         //init CDI container
         container = AplContainer.builder().containerId("MAIN-APL-CDI")
-                .recursiveScanPackages(AplCore.class)
-                .recursiveScanPackages(PropertiesHolder.class)
-                .recursiveScanPackages(TaskDispatchManager.class)
-                .recursiveScanPackages(Updater.class)
-                .recursiveScanPackages(NodeInfoController.class)
-                .recursiveScanPackages(ServerInfoService.class)
-                .recursiveScanPackages(AccountService.class)
-                .recursiveScanPackages(BaseDTO.class)
-                .recursiveScanPackages(TransactionType.class)
-                .recursiveScanPackages(FullTextTrigger.class)
-                .recursiveScanPackages(BlockchainConfig.class)
-                .recursiveScanPackages(DatabaseManager.class)
-                .recursiveScanPackages(DerivedTablesRegistry.class)
-                .recursiveScanPackages(FullTextConfig.class)
-                .recursiveScanPackages(PeerConverter.class)
-                .recursiveScanPackages(DirProvider.class)
-                .recursiveScanPackages(SecurityInterceptor.class, RestSecurityConfig.class)
-                .annotatedDiscoveryMode()
+            // do not use recursive scan because it violates the restriction to
+            // deploy one bean for all deployment archives
+            // Recursive scan will trigger base synthetic archive to load JdbiTransactionalInterceptor, which was already loaded by apl-core archive
+            // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
 // we already have it in beans.xml in core
-                .recursiveScanPackages(JdbiHandleFactory.class)
                 .annotatedDiscoveryMode()
                 //TODO:  turn it on periodically in development process to check CDI errors
-//                .devMode() // enable for dev only
+                // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
+                // run with ./bin/apl-run-jmx.sh
+                //.devMode()
                 .build();
-
+        log.debug("Weld CDI container build done");
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
+        if (log != null) log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+
         app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
@@ -314,7 +304,7 @@ public class Apollo {
 
         try {
             // updated shutdown hook explicitly created with instances
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime, secureStorageService));
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
 //            Runtime.getRuntime().addShutdownHook(new Thread(Apollo::shutdown, "ShutdownHookThread:"));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);

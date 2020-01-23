@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dgs.mapper.DGSGoodsMapper;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,9 +50,13 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
 
     @Override
     public void save(Connection con, DGSGoods goods) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
+        try (
+                @DatabaseSpecificDml(DmlMarker.MERGE)
+                @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+                PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
                 + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+        ) {
             int i = 0;
             pstmt.setLong(++i, goods.getId());
             pstmt.setLong(++i, goods.getSellerId());
@@ -69,7 +75,7 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
     }
 
     @Override
-    protected String defaultSort() {
+    public String defaultSort() {
         return " ORDER BY timestamp DESC, id ASC ";
     }
 
@@ -77,4 +83,3 @@ public class DGSGoodsTable extends VersionedDeletableEntityDbTable<DGSGoods> {
         return get(KEY_FACTORY.newKey(purchaseId));
     }
 }
-

@@ -1,27 +1,27 @@
- /*
+/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util;
 
  import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+ import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-import javax.inject.Singleton;
+ import javax.inject.Singleton;
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileOutputStream;
+ import java.io.FilenameFilter;
+ import java.io.IOException;
+ import java.nio.file.attribute.FileTime;
+ import java.time.Instant;
+ import java.util.ArrayList;
+ import java.util.Comparator;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipInputStream;
+ import java.util.zip.ZipOutputStream;
 
 /**
  * Class is used for zip-unzip filtered files in specified directory
@@ -32,12 +32,12 @@ import javax.inject.Singleton;
 public class ZipImpl implements Zip {
     private static final Logger log = LoggerFactory.getLogger(ZipImpl.class);
 
-    public final static int FILE_CHUNK_SIZE = 32768; // magic constant copied from DownloadableFilesManager class
+    // magic constant copied from DownloadableFilesManager class
     private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
     private List<File> fileList = new ArrayList<>();
     private static final int ZIP_COMPRESSION_LEVEL=9;
-    
+
     public ZipImpl() {
     }
 
@@ -95,39 +95,33 @@ public class ZipImpl implements Zip {
             }
 
         } catch (IOException ex) {
-            log.error("Error extractiong zip file: {}", zipFile, ex);
+            log.error("Error extracting zip file: {}", zipFile, ex);
             res = false;
         }
         return res;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public byte[] compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
+    public ChunkedFileOps compressAndHash(String zipFile, String inputFolder, Long filesTimeFromEpoch,
                             FilenameFilter filenameFilter, boolean recursive) {
         long start = System.currentTimeMillis();
         boolean compressed = compress(zipFile, inputFolder, filesTimeFromEpoch, filenameFilter, recursive);
         if (compressed) {
             // compute CRC/hash sum on zip file
-            byte[] zipCrcHash = calculateHash(zipFile);
+            ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
+            byte[] zipCrcHash = chunkedFileOps.getFileHashSums();
 
             log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
                     zipFile, zipCrcHash.length,
                     fileList.size(), (System.currentTimeMillis() - start) / 1000);
-            return zipCrcHash;
+            return chunkedFileOps;
         } else {
-            return null;
+            return new ChunkedFileOps("");
         }
     }
-
-    @Override
-    public byte[] calculateHash(String zipFile) {
-        ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
-        return chunkedFileOps.getFileHashSums(FILE_CHUNK_SIZE);
-    }
-
 
     /**
      * {@inheritDoc}
@@ -164,7 +158,7 @@ public class ZipImpl implements Zip {
                 zos.setComment("");
                 zos.setLevel(ZIP_COMPRESSION_LEVEL);
                 zos.setMethod(ZipOutputStream.DEFLATED);
-                
+
             for (File file: fl) {
 
                 String name = file.getName();
@@ -198,7 +192,7 @@ public class ZipImpl implements Zip {
             return false;
         }
     }
-    
+
     private List<File> getFileList(File directory, FilenameFilter filenameFilter, boolean recursive) {
 
         fileList.clear();

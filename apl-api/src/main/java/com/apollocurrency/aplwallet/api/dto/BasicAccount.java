@@ -16,15 +16,18 @@ import lombok.Setter;
  *
  * @author al
  */
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
-public class BasicAccount extends BaseDTO{
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BasicAccount extends BaseDTO {
     @JsonAlias({"account"}) // from json
     @JsonProperty("account") //to json
-    private long id;
+    protected long id;
+    public String accountRS;
 
     public BasicAccount(String account) {
         this.id = Convert.parseAccountId(account);
     }
-    
+
 }

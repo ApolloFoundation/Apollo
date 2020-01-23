@@ -21,15 +21,25 @@
 package com.apollocurrency.aplwallet.apldesktop;
 
 //import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
+
 import com.apollocurrency.aplwallet.apl.core.http.API;
-import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.Region;
+import javafx.stage.FileChooser;
 import org.slf4j.Logger;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -89,9 +99,37 @@ public class JavaScriptBridge {
             return JSON.toJSONString(response);
         }
     }*/
-//TODO: why?
-    public String getAdminPassword() {
-        return AdminPasswordVerifier.adminPassword;
+////TODO: why?
+//    public String getAdminPassword() {
+//        return AdminPasswordVerifier.adminPassword;
+//    }
+
+
+    public void downloadFile(String content, String fileName) {
+        Platform.runLater(() -> {
+            String home = System.getProperty("user.home");
+            Path downloadDir = Paths.get(home).resolve("Downloads");
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialDirectory(downloadDir.toFile());
+            fileChooser.setInitialFileName(fileName);
+            File chosenFile = fileChooser.showSaveDialog(DesktopApplication.mainStage);
+
+            if (chosenFile != null) {
+                LOG.info("Save file to {}", chosenFile);
+                try {
+                    Files.write(chosenFile.toPath(), Base64.getDecoder().decode(content));
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "File successfully downloaded to \'" + chosenFile + "\'", ButtonType.OK);
+                    alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+
+                    Platform.runLater(alert::show);
+                } catch (IOException e) {
+                    LOG.error("Unable to write file to " + chosenFile, e);
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "I/O error occurred during saving file: " + e.getMessage(), ButtonType.OK);
+                    alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+                    Platform.runLater(alert::show);
+                }
+            }
+        });
     }
 
     @SuppressWarnings("unused")

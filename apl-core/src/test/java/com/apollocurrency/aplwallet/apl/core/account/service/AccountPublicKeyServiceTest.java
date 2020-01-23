@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +33,7 @@ class AccountPublicKeyServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private PublicKeyTable publicKeyTable = mock(PublicKeyTable.class);
     private GenesisPublicKeyTable genesisPublicKeyTable = mock(GenesisPublicKeyTable.class);
+    private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -41,16 +42,13 @@ class AccountPublicKeyServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(
+                publicKeyTable,
+                genesisPublicKeyTable,
                 propertiesHolder,
                 blockchain,
-                publicKeyTable,
-                genesisPublicKeyTable
+                cacheManager
         ));
 
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
@@ -66,15 +64,15 @@ class AccountPublicKeyServiceTest {
     void getPublicKey() {
         long accountId = 2728325718715804811L;
 
-        assertNull(accountPublicKeyService.getPublicKey(accountId));
+        assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         PublicKey expectedPublicKey = new PublicKey(accountId,null,1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
-        assertNull(accountPublicKeyService.getPublicKey(accountId));
+        assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
-        assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKey(accountId));
+        assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKeyByteArray(accountId));
     }
 
     @Test
@@ -83,15 +81,15 @@ class AccountPublicKeyServiceTest {
         PublicKey expectedPublicKey = new PublicKey(accountId,null,1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //set new key
-        assertTrue(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR.getBytes()));
+        assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
 
         //verify
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(),1000);
         doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
         //true, the same keys
-        assertTrue(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR.getBytes()));
+        assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
         //false, different keys
-        assertFalse(accountPublicKeyService.setOrVerify(accountId, testData.PUBLIC_KEY_STR2.getBytes()));
+        assertFalse(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR2.getBytes()));
     }
 
     @Test

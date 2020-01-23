@@ -33,9 +33,9 @@ public interface AccountService {
 
     Account getAccount(byte[] publicKey);
 
-    Account addOrGetAccount(long id);
+    Account addGenesisAccount(long id);
 
-    Account addOrGetAccount(long id, boolean isGenesis);
+    Account addOrGetAccount(long id);
 
     void update(Account account);
 
@@ -97,6 +97,6 @@ public interface AccountService {
     int getBlockchainHeight();
 
     //Delegated from  AccountPublicKeyService
-    boolean setOrVerify(long accountId, byte[] key);
-    byte[] getPublicKey(long id);
+    boolean setOrVerifyPublicKey(long accountId, byte[] key);
+    byte[] getPublicKeyByteArray(long id);
 }

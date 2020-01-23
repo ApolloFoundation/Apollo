@@ -33,11 +33,11 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountCurrencyServiceImpl implements AccountCurrencyService {
 
-    private Blockchain blockchain;
-    private AccountCurrencyTable accountCurrencyTable;
-    private Event<LedgerEntry> logLedgerEvent;
-    private Event<Account> accountEvent;
-    private Event<AccountCurrency> accountCurrencyEvent;
+    private final Blockchain blockchain;
+    private final AccountCurrencyTable accountCurrencyTable;
+    private final Event<LedgerEntry> logLedgerEvent;
+    private final Event<Account> accountEvent;
+    private final Event<AccountCurrency> accountCurrencyEvent;
 
     @Inject
     public AccountCurrencyServiceImpl(Blockchain blockchain, AccountCurrencyTable accountCurrencyTable, Event<LedgerEntry> logLedgerEvent, Event<Account> accountEvent, Event<AccountCurrency> accountCurrencyEvent) {
@@ -180,9 +180,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.setUnits(currencyUnits);
         }
         update(accountCurrency);
-        //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
-        //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.CURRENCY_BALANCE, currencyId,
                 units, currencyUnits, blockchain.getLastBlock());
@@ -203,9 +201,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
         update(accountCurrency);
-        //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
-        //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
                 units, unconfirmedCurrencyUnits, blockchain.getLastBlock());
@@ -230,13 +226,9 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
         }
         update(accountCurrency);
-        //accountService.listeners.notify(account, AccountEventType.CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
-        //accountService.listeners.notify(account, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
-        //currencyListeners.notify(accountCurrency, AccountEventType.CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(accountCurrency);
-        //currencyListeners.notify(accountCurrency, AccountEventType.UNCONFIRMED_CURRENCY_BALANCE);
         accountCurrencyEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(accountCurrency);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_CURRENCY_BALANCE, currencyId,
                 units, unconfirmedCurrencyUnits, blockchain.getLastBlock());

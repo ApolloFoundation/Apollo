@@ -16,11 +16,12 @@ import lombok.ToString;
 /**
  * @author <andrew.zinchenko@gmail.com>
  */
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AccountAssetDTO extends BaseDTO{
+public class AccountAssetDTO extends BaseDTO {
     private String account;
     private String accountRS;
     @JsonIgnore

@@ -26,13 +26,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -40,6 +41,9 @@ import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -51,9 +55,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -62,20 +64,23 @@ public class BlockchainImpl implements Blockchain {
      * Specify offset from current height to retrieve block generators [currentHeight - offset; currentHeight] for further tracking generator hitTime
      */
     private static final int MAX_BLOCK_GENERATOR_OFFSET = 10_000;
-    private BlockDao blockDao;
-    private TransactionDao transactionDao;
-    private BlockchainConfig blockchainConfig;
-    private TimeService timeService;
-    private PropertiesHolder propertiesHolder;
-    private TransactionIndexDao transactionIndexDao;
-    private BlockIndexDao blockIndexDao;
-    private DatabaseManager databaseManager;
-    private ShardDao shardDao;
-    private ShardRecoveryDao shardRecoveryDao;
+    private final BlockDao blockDao;
+    private final TransactionDao transactionDao;
+    private final BlockchainConfig blockchainConfig;
+    private final TimeService timeService;
+    private final PropertiesHolder propertiesHolder;
+    private final TransactionIndexDao transactionIndexDao;
+    private final BlockIndexService blockIndexService;
+    private final DatabaseManager databaseManager;
+    private final ShardDao shardDao;
+    private final ShardRecoveryDao shardRecoveryDao;
+
+    private final AtomicReference<Block> lastBlock;
+    private final AtomicReference<Block> shardInitialBlock;
 
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
-                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexDao blockIndexDao,
+                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
                           DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
@@ -83,15 +88,13 @@ public class BlockchainImpl implements Blockchain {
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
         this.transactionIndexDao = transactionIndexDao;
-        this.blockIndexDao = blockIndexDao;
+        this.blockIndexService = blockIndexService;
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        lastBlock = new AtomicReference<>();
+        shardInitialBlock = new AtomicReference<>();
     }
-
-    private final AtomicReference<Block> lastBlock = new AtomicReference<>();
-    private final AtomicReference<Block> shardInitialBlock = new AtomicReference<>();
-
 
     @Override
     public Block getLastBlock() {
@@ -103,6 +106,8 @@ public class BlockchainImpl implements Blockchain {
     public void update() {
         this.lastBlock.set(findLastBlock());
         this.shardInitialBlock.set(findFirstBlock());
+        ((ShardManagement) this.databaseManager).initFullShards(
+                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
     }
 
     @Override
@@ -179,7 +184,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     @Override
-    @Transactional(readOnly = true)    
+    @Transactional(readOnly = true)
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         Block block = blockDao.loadBlock(con, rs);
         if (loadTransactions) {
@@ -233,9 +238,9 @@ public class BlockchainImpl implements Blockchain {
 //                return result;
 //            }
 //        }
-        Integer height = blockIndexDao.getHeight(blockId);
+        Integer height = blockIndexService.getHeight(blockId);
         if (height != null) {
-            result.addAll(blockIndexDao.getBlockIdsAfter(height, limit));
+            result.addAll(blockIndexService.getBlockIdsAfter(height, limit));
         }
         if (result.size() < limit) {
             long lastBlockId = blockId;
@@ -256,7 +261,7 @@ public class BlockchainImpl implements Blockchain {
 
 
     private Integer getBlockHeight(long blockId) {
-        Integer height = blockIndexDao.getHeight(blockId);
+        Integer height = blockIndexService.getHeight(blockId);
         if (height == null) {
             Block block = blockDao.findBlock(blockId, databaseManager.getDataSource());
             if (block != null) {
@@ -273,7 +278,7 @@ public class BlockchainImpl implements Blockchain {
 
 
     @Override
-    @Transactional(readOnly = true)    
+    @Transactional(readOnly = true)
     public List<Block> getBlocksAfter(long blockId, List<Long> blockIdList) {
         // Check the block cache
         if (blockIdList.isEmpty()) {
@@ -319,7 +324,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block.getId();
         }
-        BlockIndex blockIndex = blockIndexDao.getByBlockHeight(height);
+        BlockIndex blockIndex = blockIndexService.getByBlockHeight(height);
         if (blockIndex != null) {
             return blockIndex.getBlockId();
         }
@@ -368,6 +373,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional
     @Override
     public void deleteBlocksFromHeight(int height) {
+        log.debug("deleteBlocksFromHeight ({})", height);
         blockDao.deleteBlocksFromHeight(height);
     }
 
@@ -385,7 +391,7 @@ public class BlockchainImpl implements Blockchain {
         shardRecoveryDao.hardDeleteAllShardRecovery();
         shardDao.hardDeleteAllShards();
         transactionIndexDao.hardDeleteAllTransactionIndex();
-        blockIndexDao.hardDeleteAllBlockIndex();
+        blockIndexService.hardDeleteAllBlockIndex();
         log.debug("finished deleteAll()");
     }
 
@@ -615,7 +621,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public boolean hasBlockInShards(long blockId) {
-        return hasBlock(blockId) || blockIndexDao.getByBlockId(blockId) != null;
+        return hasBlock(blockId) || blockIndexService.getByBlockId(blockId) != null;
     }
 
     @Transactional(readOnly = true)
@@ -655,8 +661,18 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.getTransactionsBeforeHeight(height);
     }
 
+    @Override
+    public boolean hasConfirmations(long id, int confirmations) {
+        return hasTransaction(id, getHeight() - confirmations);
+    }
+
+    @Override
+    public boolean isExpired(Transaction tx) {
+        return timeService.getEpochTime() > tx.getExpiration();
+    }
+
     private TransactionalDataSource getDataSourceWithSharding(long blockId) {
-        Long shardId = blockIndexDao.getShardIdByBlockId(blockId);
+        Long shardId = blockIndexService.getShardIdByBlockId(blockId);
         return getShardDataSourceOrDefault(shardId);
     }
 
@@ -673,7 +689,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
-        Long shardId = blockIndexDao.getShardIdByBlockHeight(blockHeight);
+        Long shardId = blockIndexService.getShardIdByBlockHeight(blockHeight);
         return getShardDataSourceOrDefault(shardId);
     }
 

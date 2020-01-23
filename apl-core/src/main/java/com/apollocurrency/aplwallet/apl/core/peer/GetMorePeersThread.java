@@ -28,16 +28,15 @@ class GetMorePeersThread implements Runnable {
     private final TimeService timeService;
     private final PeersService peers;
     private final JSONStreamAware getPeersRequest;
-      
+
     public GetMorePeersThread(TimeService timeService, PeersService peers) {
         this.timeService = timeService;
         this.peers = peers;
         JSONObject request = new JSONObject();
         request.put("requestType", "getPeers");
         request.put("chainId", peers.blockchainConfig.getChain().getChainId());
-        getPeersRequest = JSON.prepareRequest(request);        
+        getPeersRequest = JSON.prepareRequest(request);
     }
-       
 
 
     private volatile boolean updatedPeer;
@@ -65,7 +64,7 @@ class GetMorePeersThread implements Runnable {
                     int now = timeService.getEpochTime();
                     for (int i = 0; i < peersArray.size(); i++) {
                         String announcedAddress = (String) peersArray.get(i);
-                        PeerImpl newPeer = peers.findOrCreatePeer(null,announcedAddress, true);
+                        PeerImpl newPeer = peers.findOrCreatePeer(null, announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);
@@ -99,7 +98,12 @@ class GetMorePeersThread implements Runnable {
                     request.put("peers", myPeers);
                     request.put("services", myServices); // Separate array for backwards compatibility
                     request.put("chainId", peers.blockchainConfig.getChain().getChainId());
-                    peer.send(JSON.prepareRequest(request), peers.blockchainConfig.getChain().getChainId());
+                    if (peer.getState() != PeerState.CONNECTED) {
+                        peers.connectPeer(peer);
+                    }
+                    if (peer.getState() == PeerState.CONNECTED) {
+                        peer.send(JSON.prepareRequest(request), peers.blockchainConfig.getChain().getChainId());
+                    }
                 }
             } catch (Exception e) {
                 LOG.debug("Error requesting peers from a peer", e);
@@ -127,9 +131,9 @@ class GetMorePeersThread implements Runnable {
         UUID chainId = peers.blockchainConfig.getChain().getChainId();
         peers.getPeers(
                 peer->peer.getAnnouncedAddress()!= null
-             && !peer.isBlacklisted() 
-             && chainId.equals(peer.getChainId()) 
-             && now - peer.getLastUpdated() < 7 * 24 * 3600 
+             && !peer.isBlacklisted()
+             && chainId.equals(peer.getChainId())
+             && now - peer.getLastUpdated() < 7 * 24 * 3600
         ).forEach((peer) -> {
             currentPeers.put(peer.getAnnouncedAddress(), new PeerDb.Entry(peer.getAnnouncedAddress(), peer.getServices(), peer.getLastUpdated()));
         });
@@ -166,5 +170,5 @@ class GetMorePeersThread implements Runnable {
             throw e;
         }
     }
-    
+
 }

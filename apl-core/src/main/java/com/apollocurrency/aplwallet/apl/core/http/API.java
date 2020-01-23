@@ -20,18 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
-import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
-import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -55,8 +51,12 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
+import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.MultipartConfigElement;
 import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -70,10 +70,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.MultipartConfigElement;
-import org.jboss.weld.environment.servlet.Listener;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 @Singleton
@@ -84,7 +82,7 @@ public final class API {
     static PropertiesHolder propertiesHolder;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-  
+
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -102,7 +100,7 @@ public final class API {
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
-    private static List<Integer> externalPorts=new ArrayList<>(); 
+    private static List<Integer> externalPorts=new ArrayList<>();
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
     final int port;
@@ -173,7 +171,7 @@ public final class API {
             openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
             isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
-    
+
     public static String findWebUiDir(){
         String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
         dir=dir+ File.separator+"build";
@@ -184,18 +182,18 @@ public final class API {
         }
         return res.getAbsolutePath();
     }
-    
+
     public final void start() {
 
 
         if (enableAPIServer) {
-            
+
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
-            
+
             //
             // Create the HTTP connector
             //
@@ -287,9 +285,11 @@ public final class API {
                             .add(ConstraintViolationExceptionMapper.class.getName())
                             .add(ClientErrorExceptionMapper.class.getName())
                             .add(ParameterExceptionMapper.class.getName())
-                            .add(RestParameterExceptionMapper.class.getName())
+                            .add(LegacyParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())
                             .add(Secured2FAInterceptor.class.getName())
+                            .add(RestParameterExceptionMapper.class.getName())
+                            .add(DefaultGlobalExceptionMapper.class.getName())
                             .toString()
             );
 

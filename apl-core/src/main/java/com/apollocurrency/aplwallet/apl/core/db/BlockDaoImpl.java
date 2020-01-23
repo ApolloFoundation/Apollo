@@ -20,17 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import org.jboss.resteasy.cdi.i18n.LogMessages_$logger;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,38 +37,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
 
-    /**
-     * Block cache
-     */
+//    @Inject
+//    @CacheProducer
+//    @CacheType(PUBLIC_KEY_CACHE_NAME)
+//    private Cache<Long, BlockIndex> publicKeyCache;
 
-    private static final int DEFAULT_BLOCK_CACHE_SIZE = 10;
-    private int blockCacheSize;
-    private DatabaseManager databaseManager;
-
-
-    public BlockDaoImpl(int blockCacheSize, DatabaseManager databaseManager) {
-        this.blockCacheSize = blockCacheSize;
-        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
-    }
+    private final DatabaseManager databaseManager;
 
     @Inject
     public BlockDaoImpl(DatabaseManager databaseManager) {
-        this(DEFAULT_BLOCK_CACHE_SIZE, databaseManager);
+        // this.blockCacheSize = blockCacheSize;
+        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
     }
-
 
     private void clearBlockCache() {
 //        synchronized (blockCache) {
@@ -175,7 +165,7 @@ public class BlockDaoImpl implements BlockDao {
                 if (rs.next()) {
                     block = loadBlock(con, rs);
                 } else {
-                    throw new RuntimeException("Block at height " + height + " not found in database!");
+                    throw new BlockNotFoundException("Block at height " + height + " not found in database!");
                 }
                 return block;
             }
@@ -189,6 +179,7 @@ public class BlockDaoImpl implements BlockDao {
     public Block findLastBlock() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              PreparedStatement pstmt = con.prepareStatement(
                      "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
             Block block = null;
@@ -586,6 +577,8 @@ public class BlockDaoImpl implements BlockDao {
             return lastBlock;
         }
         try (Connection con = dataSource.getConnection();
+             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+             @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
              PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
                      + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
@@ -610,7 +603,12 @@ public class BlockDaoImpl implements BlockDao {
                     }
                 }
                 Block lastBlock = findLastBlock();
-                lastBlock.setNextBlockId(0);
+                if (lastBlock == null) {
+                    // should never happen, but possible in rare error cases
+                    LOG.warn("Block was not found in 'main db' by blockId = {}", blockId);
+                } else {
+                    lastBlock.setNextBlockId(0);
+                }
                 try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
                     pstmt.setLong(1, lastBlock.getId());
                     pstmt.executeUpdate();

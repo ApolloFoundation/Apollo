@@ -24,12 +24,16 @@ import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import java.util.Arrays;
 
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
+import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import java.util.Arrays;
 
 public final class JSONResponses {
 
@@ -166,12 +170,28 @@ public final class JSONResponses {
     public static final JSONStreamAware INCORRECT_EC_BLOCK = incorrect("ecBlockId", "ecBlockId does not match the block id at ecBlockHeight");
     public static final JSONStreamAware MISSING_SECRET_PHRASE_AND_PUBLIC_KEY = missing("Secret phrase", "Public key");
 
-    public static final JSONStreamAware NOT_ENOUGH_FUNDS;
+    public static final JSONStreamAware NOT_ENOUGH_APL;
     static {
         JSONObject response = new JSONObject();
         response.put("errorCode", 6);
-        response.put("errorDescription", "Not enough funds");
-        NOT_ENOUGH_FUNDS = JSON.prepare(response);
+        response.put("errorDescription", "Not enough apl");
+        NOT_ENOUGH_APL = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware NOT_ENOUGH_ETH;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 6);
+        response.put("errorDescription", "Not enough eth");
+        NOT_ENOUGH_ETH = JSON.prepare(response);
+    }
+
+    public static final JSONStreamAware NOT_ENOUGH_PAX;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 6);
+        response.put("errorDescription", "Not enough pax");
+        NOT_ENOUGH_PAX = JSON.prepare(response);
     }
 
     public static final JSONStreamAware NOT_ENOUGH_ASSETS;
@@ -470,6 +490,15 @@ public final class JSONResponses {
         PRIVATE_TRANSACTIONS_ACCESS_DENIED = JSON.prepare(response);
     }
 
+    public static final JSONStreamAware DEX_SELF_ORDER_MATCHING_DENIED;
+    static {
+        JSONObject response = new JSONObject();
+        response.put("errorCode", 5001);
+        response.put("errorDescription", "Unable to match dex order. Self order matching is not allowed");
+        DEX_SELF_ORDER_MATCHING_DENIED = JSON.prepare(response);
+    }
+
+
     public static JSONStreamAware missing(String... paramNames) {
         JSONObject response = new JSONObject();
         response.put("errorCode", 3);
@@ -548,13 +577,24 @@ public final class JSONResponses {
     public static JSONStreamAware notEnoughHolding(HoldingType holdingType) {
         switch (holdingType) {
             case APL:
-                return JSONResponses.NOT_ENOUGH_FUNDS;
+                return JSONResponses.NOT_ENOUGH_APL;
             case ASSET:
                 return JSONResponses.NOT_ENOUGH_ASSETS;
             case CURRENCY:
                 return JSONResponses.NOT_ENOUGH_CURRENCY;
             default:
                 throw new RuntimeException();
+        }
+    }
+
+    public static JSONStreamAware notEnoughCurrency(DexCurrency currency) {
+        switch (currency) {
+            case PAX:
+                return JSONResponses.NOT_ENOUGH_PAX;
+            case ETH:
+                return JSONResponses.NOT_ENOUGH_ETH;
+            default:
+                throw new RuntimeException("Error not found for currency: " + currency);
         }
     }
 

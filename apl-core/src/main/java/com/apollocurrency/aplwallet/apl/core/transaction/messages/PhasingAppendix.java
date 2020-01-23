@@ -16,14 +16,10 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -32,19 +28,15 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.enterprise.inject.spi.CDI;
 
 public class PhasingAppendix extends AbstractAppendix {
     private static final Logger LOG = getLogger(PhasingAppendix.class);
     private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
-    private static AccountService accountService;
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-
 
     private static final Fee PHASING_FEE = (transaction, appendage) -> {
         long fee = 0;
@@ -299,80 +291,6 @@ public class PhasingAppendix extends AbstractAppendix {
         return PHASING_FEE;
     }
 
-    private void release(Transaction transaction) {
-        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
-        Account recipientAccount = transaction.getRecipientId() == 0 ? null : lookupAccountService().getAccount(transaction.getRecipientId());
-        transaction.getAppendages().forEach(appendage -> {
-            if (appendage.isPhasable()) {
-                appendage.apply(transaction, senderAccount, recipientAccount);
-            }
-        });
-
-        TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-
-        transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.RELEASE_PHASED_TRANSACTION);
-        LOG.trace("Phased transaction " + transaction.getStringId() + " has been released");
-    }
-
-    public void reject(Transaction transaction) {
-        Account senderAccount = lookupAccountService().getAccount(transaction.getSenderId());
-
-        transaction.getType().undoAttachmentUnconfirmed(transaction, senderAccount);
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.REJECT_PHASED_TRANSACTION, transaction.getId(),
-                transaction.getAmountATM());
-
-        TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
-
-        transactionProcessor.notifyListeners(Collections.singletonList(transaction), TransactionProcessor.Event.REJECT_PHASED_TRANSACTION);
-        LOG.trace("Phased transaction " + transaction.getStringId() + " has been rejected");
-    }
-
-    /**
-     * Recalculate Account balance. (Method "release();")
-     * @param transaction
-     */
-    public void countVotesAndRelease(Transaction transaction) {
-        if (phasingPollService.getResult(transaction.getId()) != null) {
-            return;
-        }
-        PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
-        long result = phasingPollService.countVotes(poll);
-        phasingPollService.finish(poll, result);
-        if (result >= poll.getQuorum()) {
-            try {
-                release(transaction);
-            } catch (RuntimeException e) {
-                LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
-                reject(transaction);
-            }
-        } else {
-            reject(transaction);
-        }
-    }
-
-    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
-        PhasingPoll poll = phasingPollService.getPoll(transaction.getId());
-        long result = phasingPollService.countVotes(poll);
-        lookupBlockchain();
-        if (result >= poll.getQuorum()) {
-            if (!transaction.attachmentIsDuplicate(duplicates, false)) {
-                try {
-                    release(transaction);
-                    phasingPollService.finish(poll, result);
-                    LOG.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
-                } catch (RuntimeException e) {
-                    LOG.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
-                }
-            } else {
-                LOG.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
-                        + " is duplicate, cannot finish early");
-            }
-        } else {
-            LOG.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
-                    + " does not yet meet quorum, cannot finish early");
-        }
-    }
-
     public int getFinishHeight() {
         return finishHeight;
     }
@@ -412,10 +330,4 @@ public class PhasingAppendix extends AbstractAppendix {
         return blockchain;
     }
 
-    private AccountService lookupAccountService(){
-        if ( accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
 }

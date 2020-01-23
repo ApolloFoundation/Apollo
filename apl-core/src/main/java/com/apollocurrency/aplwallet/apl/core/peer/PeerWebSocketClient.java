@@ -3,10 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.google.common.util.concurrent.Monitor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.eclipse.jetty.websocket.client.common.WebSocketSession;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,40 +22,58 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PeerWebSocketClient extends PeerWebSocket{
 
-    private WebSocketClient client;
-    private boolean connected = false;
-    
-    public PeerWebSocketClient(Peer2PeerTransport peer) {
-        super(peer);
+    private static WebSocketClient client = null;
+    private Monitor startMonitor = new Monitor();
+    private Session session = null;
+
+    private static void init() throws Exception {
         client = new WebSocketClient();
         client.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
+        client.setConnectTimeout(PeersService.connectTimeout);
         client.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
-        client.setStopAtShutdown(true);        
+        client.setStopAtShutdown(true);
+        client.start();
     }
-    
-    public synchronized boolean startClient(URI uri) {
+
+    public PeerWebSocketClient(Peer2PeerTransport peer) {
+        super(peer);
+        if (client == null) {
+            try {
+                init();
+            } catch (Exception ex) {
+                log.error("Can not start wesocket client", ex);
+            }
+        }
+    }
+
+    public boolean startClient(URI uri) {
+        boolean connected = false;
         if (uri == null) {
             return false;
         }
-        if(connected){ //we want just one session, not more
+        if (isConnected()) { //we want just one session, not more
             return true;
         }
+        //synchronizing here
+        startMonitor.enter();
         try {
-            client.start();
+
             Future<Session> conn = client.connect(this, uri);
-            Session session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
+            session = conn.get(PeersService.connectTimeout + 100, TimeUnit.MILLISECONDS);
             connected = session.isOpen();
         } catch (InterruptedException ex) {
-            log.trace("Interruped while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Interrupted while connecting as client to: {}", which());
             Thread.currentThread().interrupt();
         } catch (ExecutionException ex) {
-            log.trace("Execution failed while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Execution failed while connecting as client to: {}", which());
         } catch (TimeoutException ex) {
-            log.trace("Timeout exceeded while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Timeout exceeded while connecting as client to: {}", which());
         } catch (IOException ex) {
-            log.trace("I/O error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("I/O error while connecting as client to: {}", which());
         } catch (Exception ex) {
-            log.trace("Generic error while connecting as client to: {} \n Exception: {}",which());
+            log.trace("Generic error while connecting as client to: {}", which());
+        }finally {
+            startMonitor.leave();
         }
 
         return connected;
@@ -63,28 +81,27 @@ public class PeerWebSocketClient extends PeerWebSocket{
 
     @Override
     public void close() {
-        super.close();
-        connected = false;
-        if (client != null) {
-          for(WebSocketSession wss: client.getOpenSessions()){
-              wss.disconnect();
-              wss.close();
-              if(wss!=null){
-                wss.destroy();
-              }
-          }
-          destroyClient();
+        try {
+            super.close();
+            if (isClientConnected()) {
+                session.disconnect();
+                session.close();
+                session = null;
+            }
+        } catch (IOException ex) {
+            log.warn("Can not close websocket");
         }
     }
-    
-    private synchronized void destroyClient() {
+
+    public static void destroyClient() {
         if (client == null) {
             return;
         }
         try {
-            if (client.isRunning()) {
+            //if (client.isRunning()) {
+            //need to stop the client anyway
                 client.stop();
-            }
+            //}
 
         } catch (Exception ex) {
             log.trace("Exception on websocket client stop", ex);
@@ -93,11 +110,10 @@ public class PeerWebSocketClient extends PeerWebSocket{
             client.destroy();
         }
         client = null;
-        log.trace("WebSocketClient: {} destroyed.", which());
     }
 
     boolean isClientConnected() {
-        return connected;
+        return session != null && session.isOpen();
     }
 
 }

@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
 import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
+import static com.apollocurrency.aplwallet.apl.util.ThreadUtils.last3Stacktrace;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -50,14 +52,14 @@ public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
 
-    private AccountTable accountTable;
-    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private Blockchain blockchain;
-    private BlockchainConfig blockchainConfig;
-    private GlobalSync sync;
-    private AccountPublicKeyService accountPublicKeyService;
-    private Event<Account> accountEvent;
-    private Event<LedgerEntry> logLedgerEvent;
+    private final AccountTable accountTable;
+    private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private final Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
+    private final GlobalSync sync;
+    private final AccountPublicKeyService accountPublicKeyService;
+    private final Event<Account> accountEvent;
+    private final Event<LedgerEntry> logLedgerEvent;
     private BlockchainProcessor blockchainProcessor;
 
     @Inject
@@ -108,7 +110,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.loadPublicKey(dbKey, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -136,22 +138,35 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account addOrGetAccount(long id) {
-        return addOrGetAccount(id, false);
+    public Account addGenesisAccount(long id) {
+        return addAccount(id, true);
     }
 
     @Override
-    public Account addOrGetAccount(long id, boolean isGenesis) {
-        if (id == 0) {
-            throw new IllegalArgumentException("Invalid accountId 0");
-        }
+    public Account addOrGetAccount(long id) {
+        return addAccount(id, false);
+    }
+
+    /**
+     * Create a new account. This account is not saved into the database but the public key of that one is saved.
+     * This account will be saved during further operation of the balance changing. (The set of 'add to balance' operation).
+     * @param id account id
+     * @param isGenesis true if this account is a genesis account
+     * @return new account
+     */
+    private Account addAccount(long id, boolean isGenesis) {
+        Preconditions.checkArgument( id != 0, "Invalid accountId 0");
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = accountTable.newEntity(dbKey);
             PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
             if (publicKey == null) {
-                publicKey = accountPublicKeyService.insertNewPublicKey(dbKey, isGenesis);
+                if(isGenesis){
+                    publicKey = accountPublicKeyService.insertGenesisPublicKey(dbKey);
+                }else {
+                    publicKey = accountPublicKeyService.insertNewPublicKey(dbKey);
+                }
             }
             account.setPublicKey(publicKey);
         }
@@ -198,6 +213,13 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+            if(log.isTraceEnabled()) {
+                log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+                        height,
+                        account.getPublicKey()!=null?account.getPublicKey().getHeight():null,
+                        height - (account.getPublicKey()!=null?account.getPublicKey().getHeight():0),
+                        EFFECTIVE_BALANCE_CONFIRMATIONS);
+            }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -233,7 +255,13 @@ public class AccountServiceImpl implements AccountService {
             int height = currentHeight - numberOfConfirmations;
             if (height + blockchainConfig.getGuaranteedBalanceConfirmations() < lookupBlockchainProcessor().getMinRollbackHeight()
                     || height > blockchain.getHeight()) {
-                throw new IllegalArgumentException("Height " + height + " not available for guaranteed balance calculation");
+                if(log.isDebugEnabled()) {
+                    log.debug("GuaranteedBalance Restriction: if ({} < {} || {} > {}) throw ex.",
+                        height + blockchainConfig.getGuaranteedBalanceConfirmations(), blockchainProcessor.getMinRollbackHeight(),
+                        height, blockchain.getHeight());
+                }
+                throw new IllegalArgumentException("Height " + height +
+                        " not available for guaranteed balance calculation, blockchain.Height="+blockchain.getHeight());
             }
             Long sum = accountGuaranteedBalanceTable.getSumOfAdditions(account.getId(), height, currentHeight);
             if (sum == null) {
@@ -344,16 +372,6 @@ public class AccountServiceImpl implements AccountService {
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
 
-    private String last3Stacktrace() {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        return String.join("->", getStacktraceSpec(stackTraceElements[5]), getStacktraceSpec(stackTraceElements[4]), getStacktraceSpec(stackTraceElements[3]));
-    }
-
-    private String getStacktraceSpec(StackTraceElement element) {
-        String className = element.getClassName();
-        return className.substring(className.lastIndexOf(".") + 1) + "." + element.getMethodName();
-    }
-
     @Override
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
@@ -460,13 +478,14 @@ public class AccountServiceImpl implements AccountService {
 
     //Delegated from AccountPublicKeyService
     @Override
-    public boolean setOrVerify(long accountId, byte[] key) {
-        return accountPublicKeyService.setOrVerify(accountId, key);
+    public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
+
+        return accountPublicKeyService.setOrVerifyPublicKey(accountId, key);
     }
 
     @Override
-    public byte[] getPublicKey(long id) {
-        return accountPublicKeyService.getPublicKey(id);
+    public byte[] getPublicKeyByteArray(long id) {
+        return accountPublicKeyService.getPublicKeyByteArray(id);
     }
 }
 

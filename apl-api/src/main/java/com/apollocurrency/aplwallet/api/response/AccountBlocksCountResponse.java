@@ -11,8 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
-public class AccountBlocksCountResponse extends ResponseBase{
+public class AccountBlocksCountResponse extends ResponseBase {
     Integer numberOfBlocks;
 }

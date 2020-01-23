@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpResponse;
+import org.jboss.resteasy.spi.Dispatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public class NetworkControllerTest extends AbstractEndpointTest {
     private static final String PEER_ADDRESS = "192.168.2.68";
     private static final String WRONG_PEER_ADDRESS = "10.0.0.1";

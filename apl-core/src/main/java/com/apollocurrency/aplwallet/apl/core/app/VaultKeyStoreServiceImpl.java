@@ -4,7 +4,6 @@
 
  package com.apollocurrency.aplwallet.apl.core.app;
 
- import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
  import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
  import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
@@ -22,7 +21,6 @@
  import org.apache.commons.collections4.CollectionUtils;
  import org.slf4j.Logger;
 
- import javax.enterprise.inject.spi.CDI;
  import javax.inject.Inject;
  import javax.inject.Named;
  import javax.inject.Singleton;
@@ -238,7 +236,6 @@
     @Override
     public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
         Objects.requireNonNull(passphrase);
-        Objects.requireNonNull(accountId);
 
         Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
@@ -260,10 +257,7 @@
             byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
 
             fbWallet.openFile(secretPath.toString(), key);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            return null;
-        } catch (CryptoNotValidException e) {
+        } catch (IOException | CryptoNotValidException e) {
             LOG.error(e.getMessage(), e);
             return null;
         }

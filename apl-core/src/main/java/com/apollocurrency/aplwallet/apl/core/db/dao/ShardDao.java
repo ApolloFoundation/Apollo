@@ -4,6 +4,8 @@ import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -34,10 +36,12 @@ public interface ShardDao {
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) + 1 as shard_id FROM shard")
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long getNextShardId();
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT IFNULL(max(SHARD_ID), 0) FROM shard")
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long getMaxShardId();
 
     @Transactional
@@ -73,6 +77,11 @@ public interface ShardDao {
     @SqlQuery("SELECT * FROM shard WHERE shard_height = (SELECT MAX(shard_height) FROM shard)")
     @RegisterRowMapper(ShardRowMapper.class)
     Shard getLastShard();
+
+    @Transactional(readOnly = true)
+    @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
+    @SqlQuery("SELECT IFNULL(max(shard_height), 0) FROM shard")
+    int getLatestShardHeight();
 
     @Transactional(readOnly = true)
     @SqlQuery("SELECT * FROM shard WHERE shard_state = 100 ORDER BY shard_height DESC LIMIT 1")

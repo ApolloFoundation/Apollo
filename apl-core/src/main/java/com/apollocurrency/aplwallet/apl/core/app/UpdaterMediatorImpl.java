@@ -5,25 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-
-import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.slf4j.Logger;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.List;
 
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Listener;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class UpdaterMediatorImpl implements UpdaterMediator {
@@ -32,9 +29,9 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     private TransactionProcessor transactionProcessor;
     private BlockchainProcessor blockchainProcessor;
     private Blockchain blockchain;
-    private PeersService peers = CDI.current().select(PeersService.class).get(); 
-
-//    @Inject
+    private final PeersService peers = CDI.current().select(PeersService.class).get();
+    private final PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    //    @Inject
 /*
     public UpdaterMediatorImpl(Blockchain blockchain) {
         this.blockchain = blockchain;
@@ -92,16 +89,6 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     }
 
     @Override
-    public void addUpdateListener(Listener<List<? extends Transaction>> listener) {
-        lookupTransactionProcessor().addListener(listener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
-    }
-
-    @Override
-    public void removeUpdateListener(Listener<List<? extends Transaction>> listener) {
-        lookupTransactionProcessor().removeListener(listener, TransactionProcessor.Event.ADDED_CONFIRMED_TRANSACTIONS);
-    }
-
-    @Override
     public boolean isUpdateTransaction(Transaction transaction) {
         return Update.isUpdate(transaction.getType());
     }
@@ -130,5 +117,15 @@ public class UpdaterMediatorImpl implements UpdaterMediator {
     @Override
     public Transaction loadTransaction(Connection connection, ResultSet rs) throws AplException.NotValidException {
         return lookupBlockchain().loadTransaction(connection, rs);
+    }
+
+    @Override
+    public PropertiesHolder getPropertyHolder() {
+       return propertiesHolder;
+    }
+
+    @Override
+    public String getChainId() {
+        return peers.getMyPeerInfo().getChainId();
     }
 }

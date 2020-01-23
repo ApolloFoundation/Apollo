@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.phasing.dao;
 
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -17,9 +18,13 @@ import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.phasing.mapper.PhasingPollMapper;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,8 +32,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
@@ -107,15 +110,16 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<Transaction> getFinishingTransactionsByTime(int time) {
+    public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
         Connection con = null;
         List<Transaction> transactions = new ArrayList<>();
         try {
             con = getDatabaseManager().getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time <= ? " +
+                    "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
                     "ORDER BY transaction.height, transaction.transaction_index"); // ASC, not DESC
-            pstmt.setInt(1, time);
+            pstmt.setInt(1, startTime);
+            pstmt.setInt(2, finishTime);
             blockchain.getTransactions(con, pstmt).forEach(transactions::add);
 
             return transactions;
@@ -220,6 +224,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
              PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
@@ -263,7 +268,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         super.trim(height);
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
-             DbIterator<PhasingPoll> pollsToTrim = getManyBy(new DbClause.IntClause("finish_height", DbClause.Op.LT, height), 0, -1);
+             DbIterator<PhasingPoll> pollsToTrim = getAllFinishedPolls(height);
              PreparedStatement pstmt1 = con.prepareStatement("DELETE FROM phasing_poll WHERE id = ?");
              PreparedStatement pstmt2 = con.prepareStatement("DELETE FROM phasing_poll_voter WHERE transaction_id = ?");
              PreparedStatement pstmt3 = con.prepareStatement("DELETE FROM phasing_vote WHERE transaction_id = ?");
@@ -282,6 +287,32 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private DbIterator<PhasingPoll> getAllFinishedPolls(int height) {
+        Connection con = null;
+        Block block = null;
+        try{
+            block = blockchain.getBlockAtHeight(height);
+        }catch (BlockNotFoundException e){
+            LOG.warn("{}, use short query for trimming the {} table.", e.getMessage(), TABLE_NAME);
+        }
+        try {
+            con = databaseManager.getDataSource().getConnection();
+            String query = "SELECT * FROM phasing_poll WHERE finish_height < ? and finish_height <> -1";
+            if(block != null){
+                query += " or finish_time < ? and finish_time <> -1";
+            }
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.setInt(1, height);
+            if(block != null) {
+                pstmt.setInt(2, block.getTimestamp());
+            }
+            return getManyBy(con, pstmt, false);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e);
         }
     }
 }

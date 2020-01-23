@@ -20,10 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
@@ -37,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.account.service.AccountPropertyServ
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.Fee;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingTransaction;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
@@ -49,17 +46,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.Setter;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import javax.enterprise.inject.spi.CDI;
-
+import java.util.Objects;
 
 public abstract class TransactionType {
-    private static final Logger LOG = getLogger(TransactionType.class);
 
     public static final byte TYPE_PAYMENT = 0;
     public static final byte TYPE_MESSAGING = 1;
@@ -116,18 +112,20 @@ public abstract class TransactionType {
     public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
     public static final byte SUBTYPE_UPDATE_MINOR = 2;
 
-    public static final byte SUBTYPE_DEX_OFFER = 0;
-    public static final byte SUBTYPE_DEX_OFFER_CANCEL = 1;
+    public static final byte SUBTYPE_DEX_ORDER = 0;
+    public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
     public static final byte SUBTYPE_DEX_CONTRACT = 2;
     public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
+    public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
 
 
     public static final BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-    protected static Blockchain blockchain = CDI.current().select(BlockchainImpl.class).get();
-    public static volatile TimeService timeService = CDI.current().select(TimeService.class).get();
-    private static AccountService accountService; // = CDI.current().select(AccountServiceImpl.class).get();
-    private static AccountCurrencyService accountCurrencyService; // = CDI.current().select(AccountCurrencyServiceImpl.class).get();
-    private static AccountLeaseService accountLeaseService; // = CDI.current().select(AccountLeaseServiceImpl.class).get();
+    protected static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    public static  TimeService timeService = CDI.current().select(TimeService.class).get();
+    @Setter
+    private static AccountService accountService;
+    private static AccountCurrencyService accountCurrencyService;
+    private static AccountLeaseService accountLeaseService;
     private static AccountAssetService accountAssetService;
     private static AccountPropertyService accountPropertyService;
     private static AccountInfoService accountInfoService;
@@ -291,14 +289,18 @@ public abstract class TransactionType {
                 }
             case TYPE_DEX:
                 switch (subtype) {
-                    case SUBTYPE_DEX_OFFER :
-                        return DEX.DEX_OFFER_TRANSACTION;
-                    case SUBTYPE_DEX_OFFER_CANCEL :
-                        return DEX.DEX_CANCEL_OFFER_TRANSACTION;
+                    case SUBTYPE_DEX_ORDER:
+                        return DEX.DEX_ORDER_TRANSACTION;
+                    case SUBTYPE_DEX_ORDER_CANCEL:
+                        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
                     case SUBTYPE_DEX_CONTRACT :
                         return DEX.DEX_CONTRACT_TRANSACTION;
                     case SUBTYPE_DEX_TRANSFER_MONEY :
                         return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
+                    case SUBTYPE_DEX_CLOSE_ORDER:
+                        return DEX.DEX_CLOSE_ORDER;
+                    default:
+                        return null;
                 }
 
             default:
@@ -334,7 +336,7 @@ public abstract class TransactionType {
         }
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
             return false;
         }
         return true;
@@ -351,7 +353,11 @@ public abstract class TransactionType {
             lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
-            lookupAccountService().addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
+            //refresh balance in case a debit account is equal to a credit one
+            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())){
+                recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
+            }
+            accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -363,7 +369,7 @@ public abstract class TransactionType {
         lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
                 transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
-            lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
                     blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
     }
