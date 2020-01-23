@@ -1145,11 +1145,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             long rollbackStartTime = System.currentTimeMillis();
             log.debug("Start rollback for tables=[{}]", dbTables.getDerivedTables().size());
+            if (log.isTraceEnabled()){
+                log.trace("popOffToInTransaction rollback: {}", dbTables.toString());
+            }
             for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
-                log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
+                if (log.isTraceEnabled()) {
+                    log.trace("rollback for table={} to commonBlockHeight={} in {} ms", table.getName(),
                         commonBlockHeight, System.currentTimeMillis() - start);
+                }
             }
             log.debug("Total rollback time: {} ms", System.currentTimeMillis() - rollbackStartTime);
             dataSource.commit(false); // should happen definitely otherwise

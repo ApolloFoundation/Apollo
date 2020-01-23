@@ -22,12 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
+import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -111,6 +114,15 @@ public final class AplCore {
     @Inject @Setter
     private PrunableArchiveMonitor prunableArchiveMonitor;
 
+    @Inject @Setter
+    private DerivedTablesRegistry dbRegistry;
+
+    @Inject @Setter
+    private AccountPropertyTable accountPropertyTable; //TODO yes, it's neve accessed but keep it until the DerivedTablesRegistry refactoring will be done
+
+    @Inject @Setter
+    private AccountLedgerTable accountLedgerTable; //TODO yes, it's neve accessed but keep it until the DerivedTablesRegistry refactoring will be done
+
     @Inject
     @Setter
     PeersService peers;
@@ -125,14 +137,9 @@ public final class AplCore {
     }
 
     public void init() {
-
         log.debug("Application home folder '{}'", dirProvider.getAppBaseDir());
-//TODO: Do we really need this check?
-//        if (!Constants.VERSION.equals(Version.from(propertiesHolder.getStringProperty("apl.version")))) {
-//            LOG.warn("Versions don't match = {} and {}", Constants.VERSION, propertiesHolder.getStringProperty("apl.version"));
-//            throw new RuntimeException("Using an apl-default.properties file from a version other than " + Constants.VERSION + " is not supported!!!");
-//        }
-        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init", "Apollo core initialization task",true);
+        initCoreTaskID=aplAppStatus.durableTaskStart("AplCore Init",
+            "Apollo core initialization task",true);
         startUp();
     }
 
@@ -288,6 +295,10 @@ public final class AplCore {
                 } catch (InterruptedException ignore) {}
                 testSecureRandom();
 
+                if (log.isDebugEnabled()){
+                    log.debug("AplCore setUp: {}", dbRegistry.toString());
+                }
+
                 long currentTime = System.currentTimeMillis();
                 log.info("Initialization took " + (currentTime - startTime) / 1000 + " seconds");
                 String message = Constants.APPLICATION + " server " + Constants.VERSION + " started successfully.";
@@ -369,9 +380,6 @@ public final class AplCore {
             ports.add(peerServerPort);
             return ports;
         }
-
-
-
 
     private static Thread initSecureRandom() {
         Thread secureRandomInitThread = new Thread(() -> Crypto.getSecureRandom().nextBytes(new byte[1024]));

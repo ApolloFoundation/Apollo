@@ -83,7 +83,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     public void save(Connection con, Account account) throws SQLException {
         try (
                 @DatabaseSpecificDml(DmlMarker.MERGE)
-                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, " + "balance, unconfirmed_balance, forged_balance, " + "active_lessee_id, has_control_phasing, height, latest) " + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")
+                final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+                    + "balance, unconfirmed_balance, forged_balance, "
+                    + "active_lessee_id, has_control_phasing, height, latest) "
+                    + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)")
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
