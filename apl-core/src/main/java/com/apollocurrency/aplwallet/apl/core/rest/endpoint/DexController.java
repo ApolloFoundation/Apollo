@@ -26,9 +26,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancel
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
@@ -288,15 +290,17 @@ public class DexController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getOffers(  @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
-                                @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
-                                @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
-                                @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
-                                @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
-                                @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
-                                @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
-                                @Context HttpServletRequest req) throws NotFoundException {
+    public Response getOffers(@Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
+                              @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
+                              @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
+                              @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
+                              @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
+                              @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
+                              @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
+                              @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
+                              @Parameter(description = "Sorted by (PAIR_RATE , DB_ID)") @DefaultValue(value = "PAIR_RATE") @QueryParam("sortBy") DexOrderSortBy sortBy,
+                              @Parameter(description = "Sorted order (ASC, DESC)") @DefaultValue(value = "ASC") @QueryParam("sortOrder") DBSortOrder sortOrder,
+                              @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
 
@@ -346,6 +350,8 @@ public class DexController {
                 .offset(firstIndex)
                 .limit(limit)
                 .hasFrozenMoney(hasFrozenMoney)
+            .sortBy(sortBy)
+            .sortOrder(sortOrder)
                 .build();
 
         List<DexOrderWithFreezing> orders = service.getOrdersWithFreezing(dexOrderDBRequest);

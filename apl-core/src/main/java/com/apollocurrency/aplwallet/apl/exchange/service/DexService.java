@@ -224,7 +224,7 @@ public class DexService {
             List<DexOrder> fetchedOrders;
             orders = new ArrayList<>();
             do {
-                fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+                fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest, dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder());
                 Integer offset = dexOrderDBRequest.getOffset();
                 if (offset != null) {
                     dexOrderDBRequest.setOffset(dexOrderDBRequest.getOffset() + dexOrderDBRequest.getLimit());
@@ -240,7 +240,8 @@ public class DexService {
             }
             while (orders.size() < dexOrderDBRequest.getLimit() && fetchedOrders.size() == dexOrderDBRequest.getLimit());
         } else {
-            List<DexOrder> fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+            List<DexOrder> fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest,
+                dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder());
             orders = mapToOrdersWithFreezing(fetchedOrders);
         }
         return orders;
@@ -261,7 +262,8 @@ public class DexService {
      */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
-        return dexOrderDao.getOrders(dexOrderDBRequest)
+        return dexOrderDao.getOrders(dexOrderDBRequest,
+            dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder())
                 .stream()
             .sorted(Comparator.comparingLong(DexOrder::getDbId))
                 .collect(Collectors.toList());

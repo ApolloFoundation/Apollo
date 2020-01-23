@@ -6,11 +6,13 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -38,11 +40,11 @@ public interface DexOrderDao {
             "AND (:status is NULL OR offer.status = :status) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
-            "ORDER BY offer.pair_rate DESC " +
+        "ORDER BY <sortBy> <sortOrder> " +
             "OFFSET :offset LIMIT :limit"
     )
     @RegisterRowMapper(DexOrderMapper.class)
-    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest);
+    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest, @Define("sortBy") DexOrderSortBy sortBy, @Define("sortOrder") DBSortOrder sortOrder);
 
     @AllowUnusedBindings
     @Transactional(readOnly = true)
