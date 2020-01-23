@@ -10,11 +10,11 @@ package com.apollocurrency.aplwallet.apl.util;
 public class ModWatcher {
     int modulos_m;
     long prevH=0;
-    
+
     ModWatcher(int modulos) {
         this.modulos_m=modulos;
     }
-    
+
     public int watch(int minutes){
         int late=-1;
         int m = minutes % modulos_m;

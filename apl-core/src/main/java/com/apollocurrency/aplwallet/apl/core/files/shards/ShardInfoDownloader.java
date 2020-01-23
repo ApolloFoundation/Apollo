@@ -101,7 +101,7 @@ public class ShardInfoDownloader {
         shardInfoByPeers = testData;
 
     }
-    
+
     public void processAllPeersShardingInfo(){
         //remove not-sharding peers
         shardInfoByPeers.entrySet().removeIf(
@@ -189,7 +189,7 @@ public class ShardInfoDownloader {
              }
          }else{
              log.debug("Can not create peer: {}", addr);
-         }  
+         }
          return res;
     }
 
@@ -198,10 +198,10 @@ public class ShardInfoDownloader {
         Collections.shuffle(sl);
         return sl;
     }
-    
+
     public Map<String,ShardingInfo> getShardInfoFromPeers() {
         log.debug(">> Requesting ShardingInfo from Peers...");
-        int counterTotal = 0;        
+        int counterTotal = 0;
 
         Set<Peer> kp = peers.getAllConnectedPeers();
         Set<String> knownPeers = new HashSet<>();
@@ -415,7 +415,7 @@ public class ShardInfoDownloader {
      * Weight is less for older shard
      *
      * @return map of relative weight of each shard.
-  */   
+  */
     public Map<Long, Double> getShardRelativeWeights() {
         Map<Long,Double> res = new HashMap<>();
         if(sortedByIdShards.isEmpty()){

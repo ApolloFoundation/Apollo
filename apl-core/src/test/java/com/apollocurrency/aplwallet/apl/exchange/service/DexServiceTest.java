@@ -62,7 +62,7 @@ class DexServiceTest {
     @Mock DexContractDao dexContractDao;
     @Mock Blockchain blockchain;
     @Mock PhasingPollServiceImpl phasingPollService;
-    @Mock DexMatcherServiceImpl dexMatcherService;    
+    @Mock DexMatcherServiceImpl dexMatcherService;
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock

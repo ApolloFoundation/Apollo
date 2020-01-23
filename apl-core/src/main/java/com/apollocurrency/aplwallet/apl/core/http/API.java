@@ -82,7 +82,7 @@ public final class API {
     static PropertiesHolder propertiesHolder;
 
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
-  
+
     public static int openAPIPort;
     public static int openAPISSLPort;
     public static boolean isOpenAPI;
@@ -100,7 +100,7 @@ public final class API {
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
-    private static List<Integer> externalPorts=new ArrayList<>(); 
+    private static List<Integer> externalPorts=new ArrayList<>();
     private final UPnP upnp;
     private final JettyConnectorCreator jettyConnectorCreator;
     final int port;
@@ -171,7 +171,7 @@ public final class API {
             openAPISSLPort = !propertiesHolder.isLightClient() && "0.0.0.0".equals(host) && allowedBotHosts == null && enableSSL ? sslPort : 0;
             isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
-    
+
     public static String findWebUiDir(){
         String dir = DirProvider.getBinDir()+ File.separator+WEB_UI_DIR;
         dir=dir+File.separator+"build";
@@ -182,18 +182,18 @@ public final class API {
         }
         return res.getAbsolutePath();
     }
-    
+
     public final void start() {
 
 
         if (enableAPIServer) {
-            
+
             org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
             threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
             threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
             threadPool.setName("APIThreadPool");
             apiServer = new Server(threadPool);
-            
+
             //
             // Create the HTTP connector
             //

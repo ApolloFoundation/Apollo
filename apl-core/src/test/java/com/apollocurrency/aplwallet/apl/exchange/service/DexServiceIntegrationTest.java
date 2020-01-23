@@ -63,7 +63,7 @@ class DexServiceIntegrationTest {
             DexContractDao.class,
             Blockchain.class,
             PhasingPollServiceImpl.class,
-            IDexMatcherInterface.class,            
+            IDexMatcherInterface.class,
             PhasingApprovedResultTable.class,
             BlockchainConfig.class,
             BlockchainImpl.class))

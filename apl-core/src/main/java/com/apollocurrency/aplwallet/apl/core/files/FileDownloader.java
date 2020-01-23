@@ -59,7 +59,7 @@ public class FileDownloader {
     private String taskId;
     private final ReadWriteLock fileChunksLock = new ReentrantReadWriteLock();
     private final AtomicLong lastPercent = new AtomicLong(0L);
-            
+
     ExecutorService executor;
     List<Future<Boolean>> runningDownloaders = new ArrayList<>();
     private final Event<FileEventData> fileEvent;
@@ -134,18 +134,18 @@ public class FileDownloader {
         fileEvent.select(new AnnotationLiteral<FileDownloadEvent>() {
         }).fireAsync(data);
     }
-    //TODO: change to more general signal, not shard   
+    //TODO: change to more general signal, not shard
 
     private void signalFailed(String reason) {
         FileEventData data = new FileEventData(
                 fileID,
                 false,
                 reason
-        );      
+        );
         fileEvent.select(new AnnotationLiteral<FileDownloadEvent>(){}).fireAsync(data);
         this.aplAppStatus.durableTaskFinished(this.taskId, true, "File downloading failed: " + fileID);
-    } 
-      
+    }
+
     private void setFileChunkState(FileChunkState state, FileChunkInfo fci){
         fileChunksLock.writeLock().lock();
         try {
@@ -158,7 +158,7 @@ public class FileDownloader {
             fileChunksLock.writeLock().unlock();
         }
     }
-    
+
     private boolean downloadAndSaveChunk(FileChunkInfo fci, PeerClient p, ChunkedFileOps fops) {
         boolean isLast=false;
         FileChunk fc = p.downloadChunk(fci);
@@ -186,7 +186,7 @@ public class FileDownloader {
         }
         return isLast;
     }
-    
+
     private boolean doPeerDownload(PeerClient p) throws IOException {
         boolean res = true;
         FileChunkInfo fci;
@@ -220,7 +220,7 @@ public class FileDownloader {
             runningDownloaders.add(dn_res);
             peerCount++;
             if (peerCount > DOWNLOAD_THREADS) {
-                break; 
+                break;
             }
         }
         //it is not important that some task fails, other trasks should do the job

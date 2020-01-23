@@ -24,23 +24,23 @@ import java.sql.SQLException;
 public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<AccountCurrency> {
 
     private static final LinkKeyFactory<AccountCurrency> accountCurrencyDbKeyFactory = new LinkKeyFactory<AccountCurrency>("account_id", "currency_id") {
-    
+
         @Override
         public DbKey newKey(AccountCurrency accountCurrency) {
             return accountCurrency.dbKey;
         }
 
-    };  
+    };
     private static final AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
-    
+
     public static DbKey newKey(long idA, long idB){
         return accountCurrencyDbKeyFactory.newKey(idA,idB);
-    } 
-    
+    }
+
     public static AccountCurrencyTable getInstance(){
         return accountCurrencyTable;
     }
-    
+
     private AccountCurrencyTable() {
         super("account_currency", accountCurrencyDbKeyFactory);
     }
@@ -107,7 +107,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
 
     public static int getAccountCurrencyCount(long accountId, int height) {
         return accountCurrencyTable.getCount(new DbClause.LongClause("account_id", accountId), height);
-    }  
+    }
 
     public static long getCurrencyUnits(long accountId, long currencyId, int height) {
         AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId), height);
@@ -122,5 +122,5 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     public static long getUnconfirmedCurrencyUnits(long accountId, long currencyId) {
         AccountCurrency accountCurrency = accountCurrencyTable.get(AccountCurrencyTable.newKey(accountId, currencyId));
         return accountCurrency == null ? 0 : accountCurrency.unconfirmedUnits;
-    }    
+    }
 }

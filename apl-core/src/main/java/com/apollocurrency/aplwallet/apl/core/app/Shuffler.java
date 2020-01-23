@@ -57,7 +57,7 @@ public final class Shuffler {
 
     // TODO: YL remove static instance later
 
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();    
+    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private static final int MAX_SHUFFLERS = propertiesLoader.getIntProperty("apl.maxNumberOfShufflers");
     private static final Map<String, Map<Long, Shuffler>> shufflingsMap = new HashMap<>();
     private static final Map<Integer, Set<String>> expirations = new HashMap<>();
