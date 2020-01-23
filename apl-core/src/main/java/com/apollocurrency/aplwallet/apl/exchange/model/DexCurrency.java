@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.exchange.model;
 
+import java.util.Objects;
+
 public enum DexCurrency {
 
     APL("apl"),
@@ -50,7 +52,14 @@ public enum DexCurrency {
         return this == DexCurrency.PAX;
     }
 
+    /**
+     * Resteasy currency parsing method. Please note, that APL/ETH will be parsed to ETH
+     * @param value request parameter in standard format 'apl','eth' or 'APL_ETH','APL/ETH' (end with currency code)
+     * @return currency parsed from input
+     * @throws IllegalArgumentException when currency was not parsed from input
+     */
     public static DexCurrency fromString(String value) {
+        Objects.requireNonNull(value, "Dex currency is null");
         for (DexCurrency dexCurrency : values()) {
             if (dexCurrency.currencyCode.equalsIgnoreCase(value) || value.toLowerCase().endsWith(dexCurrency.currencyCode)) {
                 return dexCurrency;

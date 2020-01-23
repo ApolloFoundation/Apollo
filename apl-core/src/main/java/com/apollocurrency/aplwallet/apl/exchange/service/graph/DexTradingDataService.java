@@ -68,7 +68,11 @@ public class DexTradingDataService {
     private int ceilTo(TimeFrame timeFrame, int time) {
         int interval = timeFrame.muliplier * BASE_TIME_INTERVAL;
         int remainder = time % interval;
-        return time + (interval - remainder);
+        if (remainder == 0) {
+            return time;
+        } else {
+            return time + (interval - remainder);
+        }
     }
 
     private int floorTo(TimeFrame timeFrame, int time) {
@@ -140,7 +144,7 @@ public class DexTradingDataService {
             if (entries.isEmpty()) {
                 continue;
             }
-            SimpleTradingEntry compressed = compress(entries, candlestickTime);
+            SimpleTradingEntry compressed = pack(entries, candlestickTime);
             result.add(compressed);
         }
         return result;
@@ -151,19 +155,14 @@ public class DexTradingDataService {
         TradingDataOutputUpdated tradingDataOutput = new TradingDataOutputUpdated();
         if (data.isEmpty()) {
             tradingDataOutput.setS("no_data");
-            DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, fromTimestamp);
+            DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, Convert2.toEpochTime((long)fromTimestamp * 1000));
             if (order != null) {
-                int nextTime = (int) (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
+                int nextTime =(int)  (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
                 tradingDataOutput.setNextTime(floorTo(timeFrame, nextTime));
             }
         } else {
+            tradingDataOutput.init();
             tradingDataOutput.setS("ok");
-            tradingDataOutput.setC(new ArrayList<>());
-            tradingDataOutput.setV(new ArrayList<>());
-            tradingDataOutput.setL(new ArrayList<>());
-            tradingDataOutput.setH(new ArrayList<>());
-            tradingDataOutput.setO(new ArrayList<>());
-            tradingDataOutput.setT(new ArrayList<>());
             for (SimpleTradingEntry tradingEntry : data) {
                 tradingDataOutput.getC().add(tradingEntry.getClose());
                 tradingDataOutput.getO().add(tradingEntry.getOpen());
@@ -176,7 +175,7 @@ public class DexTradingDataService {
         return tradingDataOutput;
     }
 
-    private SimpleTradingEntry compress(List<SimpleTradingEntry> entries, int time) {
+    private SimpleTradingEntry pack(List<SimpleTradingEntry> entries, int time) {
             BigDecimal totalVolumeFrom = BigDecimal.ZERO;
             BigDecimal totalVolumeTo = BigDecimal.ZERO;
             BigDecimal maxPrice = BigDecimal.ZERO;

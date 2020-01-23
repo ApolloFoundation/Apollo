@@ -5,11 +5,13 @@ package com.apollocurrency.aplwallet.api.trading;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.math.BigDecimal;
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -34,7 +36,16 @@ public class TradingDataOutputUpdated {
     @JsonProperty("v")
     List<BigDecimal> v;
     @JsonProperty("s")
-    String s; 
+    String s;
     @JsonProperty("nextTime")
     Integer nextTime;
+
+    public void init() {
+        t = new ArrayList<>();
+        l = new ArrayList<>();
+        h = new ArrayList<>();
+        o = new ArrayList<>();
+        c = new ArrayList<>();
+        v = new ArrayList<>();
+    }
 }
