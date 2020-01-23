@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.TradingDataOutputUpdatedDTO;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
@@ -31,7 +31,7 @@ class TradingDataControllerTest {
     private Dispatcher dispatcher;
     @Mock
     private DexTradingDataService service;
-    private TradingDataOutputUpdated tradingDataOutput = new TradingDataOutputUpdated();
+    private TradingDataOutput tradingDataOutput = new TradingDataOutput();
 
     @BeforeEach
     void setup(){
@@ -59,8 +59,8 @@ class TradingDataControllerTest {
         assertEquals(200, response.getStatus());
 
         String json = response.getContentAsString();
-        TradingDataOutputUpdatedDTO dto = mapper.readValue(json, TradingDataOutputUpdatedDTO.class);
-        assertEquals(new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutput), dto);
+        TradingDataOutputDTO dto = mapper.readValue(json, TradingDataOutputDTO.class);
+        assertEquals(new TradingDataOutputToDtoConverter().apply(tradingDataOutput), dto);
     }
 
     @Test

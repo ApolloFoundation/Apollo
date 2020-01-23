@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
@@ -81,7 +81,7 @@ public class DexTradingDataService {
         return time - remainder;
     }
 
-    public TradingDataOutputUpdated getBars(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
+    public TradingDataOutput getBars(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
         int lastCandlestickTimestamp = getLastCandlestickTimestamp(currency);
         List<SimpleTradingEntry> data = new ArrayList<>();
         if (lastCandlestickTimestamp == -1 ||
@@ -151,8 +151,8 @@ public class DexTradingDataService {
     }
 
 
-    private TradingDataOutputUpdated buildTradingDataOutput(DexCurrency currency, TimeFrame timeFrame, int fromTimestamp, List<SimpleTradingEntry> data) {
-        TradingDataOutputUpdated tradingDataOutput = new TradingDataOutputUpdated();
+    private TradingDataOutput buildTradingDataOutput(DexCurrency currency, TimeFrame timeFrame, int fromTimestamp, List<SimpleTradingEntry> data) {
+        TradingDataOutput tradingDataOutput = new TradingDataOutput();
         if (data.isEmpty()) {
             tradingDataOutput.setS("no_data");
             DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, Convert2.toEpochTime((long)fromTimestamp * 1000));

@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
-import com.apollocurrency.aplwallet.api.dto.TradingDataOutputUpdatedDTO;
+import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -61,14 +61,14 @@ public class TradingDataController {
         this.dexService = dexService;
     }
 
-    private TradingDataOutputUpdatedToDtoConverter converter = new TradingDataOutputUpdatedToDtoConverter();
+    private TradingDataOutputToDtoConverter converter = new TradingDataOutputToDtoConverter();
     @GET
     @Path("/chart")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, summary = "Get candlesticks, APL/ETH, APL/PAX",
             description = "Retrieve candlesticks using buy orders history and stored candlesticks for specified currency pair. Time bounds are represented by unix seconds. Entirely UDF compatible.",
             responses = @ApiResponse(description = "trading data output with request parameters and candlesticks data",
-                    content = @Content(schema = @Schema(implementation = TradingDataOutputUpdatedDTO.class), mediaType = "application/json"))
+                    content = @Content(schema = @Schema(implementation = TradingDataOutputDTO.class), mediaType = "application/json"))
     )
     public Response getCandlesticks(
                                     @Parameter(description = "Second currency symbol in the trading pair, for example - ETH, PAX OR entire currency pair, for example APL_ETH or APL/ETH (second symbol will be resolved as paired currency)", required = true) @QueryParam("symbol") DexCurrency symbol,
@@ -83,7 +83,7 @@ public class TradingDataController {
         if (fromTs >= toTs) {
             return ResponseBuilder.apiError(ApiErrors.PARAM_GREATER_OR_EQUAL_ERROR, FROM_PARAM, TO_PARAM).build();
         }
-        TradingDataOutputUpdated tradingDataOutput = dataService.getBars(fromTs, toTs, symbol, timeFrame);
+        TradingDataOutput tradingDataOutput = dataService.getBars(fromTs, toTs, symbol, timeFrame);
         return Response.ok( converter.apply(tradingDataOutput) ) .build();
 
     }
@@ -110,7 +110,7 @@ public class TradingDataController {
 
         if (to <= 1569369600){
             log.debug("flushing: ");
-            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
+            TradingDataOutput tdo = new TradingDataOutput();
             tdo.setC(null);
             tdo.setH(null);
             tdo.setL(null);
@@ -123,8 +123,8 @@ public class TradingDataController {
         }
 
 
-        TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from, dexService, timeService);
-        return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
+        TradingDataOutput tradingDataOutput = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from, dexService, timeService);
+        return Response.ok( new TradingDataOutputToDtoConverter().apply(tradingDataOutput) ) .build();
     }
 
 

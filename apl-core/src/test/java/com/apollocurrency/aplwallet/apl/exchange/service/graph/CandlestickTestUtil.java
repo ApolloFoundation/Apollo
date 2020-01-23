@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
+import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -53,7 +53,7 @@ public class CandlestickTestUtil {
         return new DexOrder(dbId, 1L, OrderType.BUY, 1L, DexCurrency.APL, amount, DexCurrency.PAX, pairRate, finishTime, OrderStatus.CLOSED, height, null, null);
     }
 
-    public static List<SimpleTradingEntry> fromTable(TradingDataOutputUpdated table) {
+    public static List<SimpleTradingEntry> fromTable(TradingDataOutput table) {
         List<SimpleTradingEntry> entries = new ArrayList<>();
         for (int i = 0; i < table.getC().size(); i++) {
             entries.add(new SimpleTradingEntry(table.getT().get(i), table.getO().get(i), table.getC().get(i), table.getL().get(i), table.getH().get(i), table.getV().get(i), null));
