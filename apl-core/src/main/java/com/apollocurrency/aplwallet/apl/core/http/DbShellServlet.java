@@ -38,7 +38,7 @@ import java.sql.SQLException;
 
 public final class DbShellServlet extends HttpServlet {
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
-    
+
     private static final String JAVASCRIPT_SECTION = "    <script type=\"text/javascript\">\n" +
             "        function submitForm(form, adminPassword) {\n" +
             "            var url = '/dbshell';\n" +
@@ -126,7 +126,7 @@ public final class DbShellServlet extends HttpServlet {
         if (apw.disableAdminPassword) {
             body = FORM;
         } else {
-            if (apw.adminPassword.isEmpty()) {
+            if (apw.isBlankAdminPassword()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 body = PASSWORD_FORM;
@@ -152,7 +152,7 @@ public final class DbShellServlet extends HttpServlet {
 
         String body = null;
         if (!apw.disableAdminPassword) {
-            if (apw.adminPassword.isEmpty()) {
+            if (apw.isBlankAdminPassword()) {
                 body = ERROR_NO_PASSWORD_IS_CONFIGURED;
             } else {
                 try {

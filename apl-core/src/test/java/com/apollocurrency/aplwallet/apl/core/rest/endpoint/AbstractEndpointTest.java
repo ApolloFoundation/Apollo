@@ -7,11 +7,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorException
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.jboss.resteasy.core.Dispatcher;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.junit.jupiter.api.BeforeEach;
+import org.jboss.resteasy.spi.Dispatcher;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

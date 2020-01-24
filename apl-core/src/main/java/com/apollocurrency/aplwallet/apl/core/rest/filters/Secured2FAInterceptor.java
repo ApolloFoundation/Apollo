@@ -7,7 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.rest.filters;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
@@ -16,11 +18,16 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.*;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.CODE2FA_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.PASSPHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.SECRET_PHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.parseRequestParameters;
 
 
 @Secured2FA
 @Provider
+@Priority(Priorities.AUTHORIZATION)
 public class Secured2FAInterceptor implements ContainerRequestFilter {
 
     @Inject

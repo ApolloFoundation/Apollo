@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexTransactionSendingController;

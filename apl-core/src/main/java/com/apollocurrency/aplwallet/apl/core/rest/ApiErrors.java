@@ -22,9 +22,7 @@ public enum ApiErrors implements ErrorInfo {
     ACCOUNT_GENERATION_ERROR(6, 2009, "Error occurred during account generation."),
     ONLY_ONE_OF_PARAM_LIST(6, 2010, "Not more than one of [%s] can be specified."),
     INCORRECT_PARAM_VALUE(4, 2011, "Incorrect %s"),
-    ACCOUNT_2FA_ERROR(22, 2012, "%s")
-
-    FAILED_TO_ADD(8, 2008, "Failed to add peer %s"),
+    ACCOUNT_2FA_ERROR(22, 2012, "%s"),
     NO_PASSWORD_IN_CONFIG(8, 2010, "Administrator's password is not configured. Please set apl.adminPassword"),
     INCORRECT_PARAM(4, 2011, "Incorrect {0}, {1}"),
     UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: \'%s\', see stacktrace for details"),

@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
@@ -28,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMa
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -287,6 +289,7 @@ public final class API {
                             .add(ParameterExceptionMapper.class.getName())
                             .add(LegacyParameterExceptionMapper.class.getName())
                             .add(SecurityInterceptor.class.getName())
+                            .add(com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor.class.getName())
                             .add(Secured2FAInterceptor.class.getName())
                             .add(RestParameterExceptionMapper.class.getName())
                             .add(DefaultGlobalExceptionMapper.class.getName())

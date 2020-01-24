@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.PeerConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.NetworkService;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.resteasy.spi.Dispatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

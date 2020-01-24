@@ -5,45 +5,44 @@
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.core.Headers;
 import org.jboss.resteasy.core.ServerResponse;
-import org.jboss.resteasy.core.interception.PostMatchContainerRequestContext;
 
+import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier.ADMIN_ROLE;
 
 @Provider
+@Priority(Priorities.AUTHORIZATION)
 public class SecurityInterceptor implements ContainerRequestFilter {
-    private static final ServerResponse ACCESS_DENIED = new ServerResponse("Access denied for this resource", 401, new Headers<Object>());;
-    private static final ServerResponse ACCESS_FORBIDDEN = new ServerResponse("Nobody can access this resource", 403, new Headers<Object>());;
+    private static final ServerResponse ACCESS_DENIED = new ServerResponse("Access denied for this resource", 401, new Headers<Object>());
+    private static final ServerResponse ACCESS_FORBIDDEN = new ServerResponse("Nobody can access this resource", 403, new Headers<Object>());
 
     @Context
     private UriInfo uriInfo;
-
     @Context
     ResourceInfo info;
+    @Context
+    private HttpServletRequest request;
 
     @Inject
     private AdminPasswordVerifier apw;
@@ -75,59 +74,22 @@ public class SecurityInterceptor implements ContainerRequestFilter {
             return;
         }
 
-        if(apw.isBlankAdminPassword()) {
-            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION,
-                    "Administrator's password is not configured. Please set 'apl.adminPassword' property value.");
-        }
-
-        String remoteHost = null;
-        //Get remoteHost
-        if ( apw.getForwardedForHeader() != null ) {
-            remoteHost = requestContext.getHeaders().getFirst(apw.getForwardedForHeader());
-        }
-        if (remoteHost == null){
-            remoteHost = uriInfo.getRequestUri().getHost();
-        }
-
-        //Get parameters, retrieve password param
-        MultivaluedMap<String, String> params;
-        String username = "user";
-        String password = null;
-        params = ((PostMatchContainerRequestContext) requestContext).getHttpRequest().getDecodedFormParameters();
-        params.putAll(requestContext.getUriInfo().getQueryParameters(true));
-
-        List<String> passwords = params.get(AdminPasswordVerifier.ADMIN_PASSWORD_PARAMETER_NAME);
-        if (!passwords.isEmpty()){
-            password = passwords.get(0);
-        }
-
-        //If no authorization information present; block access
-        if(StringUtils.isBlank(password)) {
-            requestContext.abortWith(ACCESS_DENIED);
-            return;
-        }
-
         //Verify user access
         if(method.isAnnotationPresent(RolesAllowed.class)){
             RolesAllowed rolesAnnotation = method.getAnnotation(RolesAllowed.class);
             String[] roles = rolesAnnotation.value();
             Set<String> rolesSet = new HashSet<String>();
             Arrays.stream(roles).forEach(role-> rolesSet.add(role.toLowerCase()));
-            if( ! isUserAllowed(remoteHost, username, password, rolesSet)){
+            Response response = apw.verifyPasswordWithoutException(request);
+            if (response != null){
+                requestContext.abortWith(response);
+                return;
+            }
+            if ( !rolesSet.contains(ADMIN_ROLE) ) {
                 requestContext.abortWith(ACCESS_DENIED);
                 return;
             }
         }
     }
 
-    private boolean isUserAllowed(final String remoteHost, final String username, final String password, final Set<String> rolesSet){
-        boolean isAllowed;
-        try {
-            apw.checkOrLockPassword(password, remoteHost);
-            isAllowed = rolesSet.contains(ADMIN_ROLE);
-        } catch (ParameterException e) {
-            return false;
-        }
-        return isAllowed;
-    }
 }

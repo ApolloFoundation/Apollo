@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.jboss.resteasy.core.interception.PostMatchContainerRequestContext;
+import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;

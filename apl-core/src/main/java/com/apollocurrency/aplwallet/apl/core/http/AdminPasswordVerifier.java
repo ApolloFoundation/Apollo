@@ -3,44 +3,40 @@
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
-
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.LOCKED_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ADMIN_PASSWORD;
+import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWORD_IN_CONFIG;
 
 /**
  * @author al
  */
+@Slf4j
 @Singleton
 public class AdminPasswordVerifier {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminPasswordVerifier.class);
     public static final String ADMIN_ROLE = "admin";
     public static final String ADMIN_PASSWORD_PARAMETER_NAME="adminPassword";
-    private final PropertiesHolder propertiesHolder;
-    //TODO need to be non-static and private (still being used in the JavaScriptBridge class)
-    public static String adminPassword = "";
+    private final String adminPassword;
     @Getter
     public final boolean disableAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
@@ -50,9 +46,7 @@ public class AdminPasswordVerifier {
 
     @Inject
     public AdminPasswordVerifier(PropertiesHolder propertiesHolder, TimeService timeService) {
-        this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
-
         adminPassword = propertiesHolder.getStringProperty("apl.adminPassword", "", true);
         String host = propertiesHolder.getStringProperty("apl.apiServerHost");
         disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
@@ -60,7 +54,7 @@ public class AdminPasswordVerifier {
     }
 
     public boolean isBlankAdminPassword(){
-        return StringUtils.isBlank(adminPassword);
+        return adminPassword.isBlank();
     }
 
     public void verifyPassword(HttpServletRequest req) throws ParameterException {
@@ -78,6 +72,7 @@ public class AdminPasswordVerifier {
                 throw new ParameterException(INCORRECT_ADMIN_PASSWORD);
             case 3:
                 throw new ParameterException(MISSING_ADMIN_PASSWORD);
+            default:
         }
     }
 
@@ -85,33 +80,25 @@ public class AdminPasswordVerifier {
         if (disableAdminPassword) {
             return null;
         }
-        if (adminPassword.isBlank()) {
+        if (isBlankAdminPassword()) {
             return ResponseBuilder.apiError(ApiErrors.NO_PASSWORD_IN_CONFIG).build();
         }
         int validationResult = checkOrLockPassword(req);
         switch (validationResult) {
             case 1:
-                return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "adminPassword", "locked for 1 hour, too many incorrect password attempts").build();
+                return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, ADMIN_PASSWORD_PARAMETER_NAME, "locked for 1 hour, too many incorrect password attempts").build();
             case 2:
-                return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "adminPassword", "the specified password does not match apl.adminPassword").build();
+                return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, ADMIN_PASSWORD_PARAMETER_NAME, "the specified password does not match apl.adminPassword").build();
             case 3:
-                return ResponseBuilder.apiError(ApiErrors.MISSING_PARAM, "adminPassword").build();
+                return ResponseBuilder.apiError(ApiErrors.MISSING_PARAM, ADMIN_PASSWORD_PARAMETER_NAME).build();
+            default:
+                return null;
         }
-        return null;
     }
 
     public boolean checkPassword(HttpServletRequest req) {
-        if (disableAdminPassword) {
-            return true;
-        }
-        if (isBlankAdminPassword()) {
-            return false;
-        }
-        if (Convert.emptyToNull(req.getParameter(ADMIN_PASSWORD_PARAMETER_NAME)) == null) {
-            return false;
-        }
-        int validationResult = checkOrLockPassword(req);
-        return validationResult == 0;
+        Response response = verifyPasswordWithoutException(req);
+        return response == null;
     }
 
     @Vetoed
@@ -127,7 +114,6 @@ public class AdminPasswordVerifier {
      * @return 0, if password is valid, 1 - if too many attemps, 2 - when password is incorrect, 3 - when password is missing
      */
     private int checkOrLockPassword(HttpServletRequest req) {
-        int now = timeService.getEpochTime();
         String remoteHost = null;
         if (forwardedForHeader != null) {
             remoteHost = req.getHeader(forwardedForHeader);
@@ -135,15 +121,22 @@ public class AdminPasswordVerifier {
         if (remoteHost == null) {
             remoteHost = req.getRemoteHost();
         }
+
+        return checkOrLockPassword(req.getParameter(ADMIN_PASSWORD_PARAMETER_NAME), remoteHost);
+    }
+
+    public int checkOrLockPassword(String adminPasswordParam, String remoteHost) {
+        int now = timeService.getEpochTime();
+        String password = Convert.nullToEmpty(adminPasswordParam);
+
         synchronized (incorrectPasswords) {
             PasswordCount passwordCount = incorrectPasswords.get(remoteHost);
             if (passwordCount != null && passwordCount.count >= 25 && now - passwordCount.time < 60 * 60) {
-                LOG.warn("Too many incorrect admin password attempts from " + remoteHost);
+                log.warn("Too many incorrect admin password attempts from " + remoteHost);
                 return 1;
             }
-            String adminPassword = Convert.nullToEmpty(req.getParameter("adminPassword"));
-            if (!adminPassword.equals(this.adminPassword)) {
-                if (adminPassword.length() > 0) {
+            if (!password.equals(this.adminPassword)) {
+                if (password.length() > 0) {
                     if (passwordCount == null) {
                         passwordCount = new PasswordCount();
                         incorrectPasswords.put(remoteHost, passwordCount);
@@ -156,7 +149,7 @@ public class AdminPasswordVerifier {
                     }
                     passwordCount.count++;
                     passwordCount.time = now;
-                    LOG.warn("Incorrect adminPassword from " + remoteHost);
+                    log.warn("Incorrect adminPassword from " + remoteHost);
                     return 2;
                 } else {
                     return 3;
@@ -167,19 +160,6 @@ public class AdminPasswordVerifier {
             }
         }
         return 0;
-    }
-
-    private void checkOrLockPassword(HttpServletRequest req) throws ParameterException {
-        String remoteHost = null;
-        if (forwardedForHeader != null) {
-            remoteHost = req.getHeader(forwardedForHeader);
-        }
-        if (remoteHost == null) {
-            remoteHost = req.getRemoteHost();
-        }
-        String adminPasswd = Convert.nullToEmpty(req.getParameter(ADMIN_PASSWORD_PARAMETER_NAME));
-
-        checkOrLockPassword(adminPasswd, remoteHost);
     }
 
 }
