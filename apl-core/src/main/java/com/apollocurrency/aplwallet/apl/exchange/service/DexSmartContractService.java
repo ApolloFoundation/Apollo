@@ -21,7 +21,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwapsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -285,10 +285,10 @@ public class DexSmartContractService {
         }
     }
 
-    public List<ExpiredSwap> getExpiredSwaps(String user) throws AplException.ExecutiveProcessException {
+    public ExpiredSwapsWithOffset getExpiredSwaps(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user).sendAsync().get());
+            return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user, offset, limit).sendAsync().get());
         } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }

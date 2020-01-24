@@ -8,6 +8,6 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class EthDepositsWithOffset  extends OffsetModel{
-    private List<UserEthDepositInfo> deposits = new ArrayList<>();
+public class ExpiredSwapsWithOffset extends OffsetModel {
+    List<ExpiredSwap> swaps = new ArrayList<>();
 }

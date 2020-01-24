@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwapsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
@@ -867,11 +868,17 @@ public class DexOrderProcessor {
         List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
         for (String address : addresses) {
             try {
-                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
-                for (ExpiredSwap expiredSwap : expiredSwaps) {
-                    log.info("Refunding atomic swap {}, id {}", Numeric.toHexString(expiredSwap.getSecretHash()), expiredSwap.getOrderId());
-                    dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
-                }
+                long offset = 0;
+                ExpiredSwapsWithOffset swapsWithOffset;
+                do {
+                    swapsWithOffset = dexSmartContractService.getExpiredSwaps(address, offset, CONTRACT_FETCH_SIZE);
+                    offset = swapsWithOffset.getOffset();
+                    for (ExpiredSwap expiredSwap : swapsWithOffset.getSwaps()) {
+                        log.info("Refunding atomic swap {}, id {}", Numeric.toHexString(expiredSwap.getSecretHash()), expiredSwap.getOrderId());
+                        dexSmartContractService.refundAndWithdraw(expiredSwap.getSecretHash(), passphrase, address, accountId, false);
+                    }
+                } while (swapsWithOffset.getSwaps().size() == CONTRACT_FETCH_SIZE);
+
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.getMessage(), e);
             }
