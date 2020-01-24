@@ -86,6 +86,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease.setNextLeasingHeightTo(accountLease.getNextLeasingHeightFrom() + period);
             accountLease.setNextLesseeId(lesseeId);
         }
+        accountLease.setHeight(blockchain.getHeight());
         accountLeaseTable.insert(accountLease);
         //leaseListeners.notify(accountLease, AccountEventType.LEASE_SCHEDULED);
         accountLeaseEvent.select(literal(AccountEventType.LEASE_SCHEDULED)).fire(accountLease);

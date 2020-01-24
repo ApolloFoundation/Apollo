@@ -170,6 +170,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency = new AccountCurrency(account.getId(), currencyId, currencyUnits, 0, blockchain.getHeight());
         } else {
             accountCurrency.setUnits(currencyUnits);
+            accountCurrency.setHeight(blockchain.getHeight());
         }
         update(accountCurrency);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);
@@ -191,6 +192,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
             accountCurrency = new AccountCurrency(account.getId(), currencyId, 0, unconfirmedCurrencyUnits, blockchain.getHeight());
         } else {
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
+            accountCurrency.setHeight(blockchain.getHeight());
         }
         update(accountCurrency);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_CURRENCY_BALANCE)).fire(account);
@@ -216,6 +218,7 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
         } else {
             accountCurrency.setUnits(currencyUnits);
             accountCurrency.setUnconfirmedUnits(unconfirmedCurrencyUnits);
+            accountCurrency.setHeight(blockchain.getHeight());
         }
         update(accountCurrency);
         accountEvent.select(literal(AccountEventType.CURRENCY_BALANCE)).fire(account);

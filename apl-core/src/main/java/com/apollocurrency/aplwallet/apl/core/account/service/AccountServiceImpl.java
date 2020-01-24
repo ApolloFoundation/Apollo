@@ -469,7 +469,6 @@ public class AccountServiceImpl implements AccountService {
     //Delegated from AccountPublicKeyService
     @Override
     public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
-
         return accountPublicKeyService.setOrVerifyPublicKey(accountId, key);
     }
 

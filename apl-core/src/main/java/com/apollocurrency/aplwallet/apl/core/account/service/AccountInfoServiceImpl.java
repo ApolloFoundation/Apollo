@@ -56,6 +56,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         } else {
             accountInfo.setName(name);
             accountInfo.setDescription(description);
+            accountInfo.setHeight(blockchain.getHeight());
         }
         update(accountInfo);
     }

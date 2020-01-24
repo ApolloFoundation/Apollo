@@ -144,6 +144,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, 0, blockchain.getHeight());
         } else {
             accountAsset.setQuantityATU(assetBalance);
+            accountAsset.setHeight(blockchain.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
@@ -165,6 +166,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             accountAsset = new AccountAsset(account.getId(), assetId, 0, unconfirmedAssetBalance, blockchain.getHeight());
         } else {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
+            accountAsset.setHeight(blockchain.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
@@ -204,6 +206,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         } else {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
+            accountAsset.setHeight(blockchain.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
