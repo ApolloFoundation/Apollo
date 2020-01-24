@@ -39,7 +39,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     }
 
     private AccountPropertyTable() {
-        super("account_property", accountPropertyDbKeyFactory);
+        super("account_property", accountPropertyDbKeyFactory, false);
     }
 
     @Override

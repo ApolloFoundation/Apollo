@@ -62,6 +62,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
             accountProperty = new AccountProperty(transaction.getId(), account.getId(), setterAccount.getId(), property, value, blockchain.getHeight());
         } else {
             accountProperty.setValue(value);
+            accountProperty.setHeight(blockchain.getHeight());
         }
         accountPropertyTable.insert(accountProperty);
         accountEvent.select(literal(AccountEventType.SET_PROPERTY)).fire(account);
@@ -78,6 +79,7 @@ public class AccountPropertyServiceImpl implements AccountPropertyService {
         if (accountProperty.getSetterId() != account.getId() && accountProperty.getRecipientId() != account.getId()) {
             throw new RuntimeException("Property " + Long.toUnsignedString(propertyId) + " cannot be deleted by " + Long.toUnsignedString(account.getId()));
         }
+        accountProperty.setHeight(blockchain.getHeight());
         accountPropertyTable.delete(accountProperty);
         accountEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(account);
         accountPropertyEvent.select(literal(AccountEventType.DELETE_PROPERTY)).fire(accountProperty);
