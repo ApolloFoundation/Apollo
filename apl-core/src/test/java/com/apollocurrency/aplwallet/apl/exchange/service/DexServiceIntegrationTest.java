@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -66,6 +67,7 @@ class DexServiceIntegrationTest {
             IDexMatcherInterface.class,
             PhasingApprovedResultTable.class,
             BlockchainConfig.class,
+            DexConfig.class,
             BlockchainImpl.class))
             .build();
     @Inject

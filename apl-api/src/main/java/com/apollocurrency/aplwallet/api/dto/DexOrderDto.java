@@ -38,6 +38,8 @@ public class DexOrderDto {
     public Integer status;
     @Schema(name="Finish time", description="Order finish time")
     public Integer finishTime;
+    @Schema(name = "Block height", description = "Block height")
+    public Integer height;
 
     @Schema(name = "Has frozen money", description = "Determine existence of money freezing for order. For fully initialized orders should be true")
     public Boolean hasFrozenMoney;

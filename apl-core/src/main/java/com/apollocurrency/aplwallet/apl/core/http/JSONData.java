@@ -102,6 +102,8 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -109,8 +111,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 
 @Vetoed
 public final class JSONData {
@@ -427,10 +427,10 @@ public final class JSONData {
             }
         }
         catch (SQLException e) {
-            DbUtils.close(con);                        
+            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }finally{
-            DbUtils.close(con);            
+            DbUtils.close(con);
         }
     }
 

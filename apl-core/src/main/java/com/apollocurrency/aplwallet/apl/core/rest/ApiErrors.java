@@ -21,8 +21,11 @@ public enum ApiErrors implements ErrorInfo {
     FAILED_TO_ADD(8, 2008, "Failed to add peer %s"),
     NO_PASSWORD_IN_CONFIG(8, 2010, "Administrator's password is not configured. Please set apl.adminPassword"),
     INCORRECT_PARAM(4, 2011, "Incorrect {0}, {1}"),
-    UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: \'%s\', see stacktrace for details"),
-    WEB3J_CRYPTO_ERROR(-1, 2013, "Web3j crypto error: \'%s\', see stacktrace for details"),
+    UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: '%s', see stacktrace for details"),
+    WEB3J_CRYPTO_ERROR(-1, 2013, "Web3j crypto error: '%s', see stacktrace for details"),
+    ETH_NODE_ERROR(-1, 2014, "Unable to query eth node: '%s'"),
+    PARAM_GREATER_OR_EQUAL_ERROR(4, 2015, "''{0}'' is greater or equal to ''{1}''"),
+
     ;
     public static final Long CONSTRAINT_VIOLATION_ERROR_CODE = 2014L;
 

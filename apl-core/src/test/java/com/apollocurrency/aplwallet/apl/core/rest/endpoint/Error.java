@@ -6,4 +6,7 @@ import lombok.Data;
 public class Error {
     private String errorDescription;
     private int errorCode;
+    private int protocol;
+    private int newErrorCode;
+    private int requestProcessingTime;
 }

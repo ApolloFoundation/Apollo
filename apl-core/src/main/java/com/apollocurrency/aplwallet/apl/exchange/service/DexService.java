@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
@@ -51,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
@@ -59,7 +61,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -110,6 +111,7 @@ public class DexService {
     private PhasingPollService phasingPollService;
     private IDexMatcherInterface dexMatcherService;
     private BlockchainConfig blockchainConfig;
+    private DexConfig dexConfig;
 
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
@@ -118,7 +120,7 @@ public class DexService {
                       IDexMatcherInterface dexMatcherService, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
-                      @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache) {
+                      @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache, DexConfig dexConfig) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -136,6 +138,7 @@ public class DexService {
         this.mandatoryTransactionDao = mandatoryTransactionDao;
         this.orderFreezingCache = (LoadingCache<Long, OrderFreezing>) cache;
         this.blockchainConfig = blockchainConfig;
+        this.dexConfig = dexConfig;
     }
 
 
@@ -221,7 +224,7 @@ public class DexService {
             List<DexOrder> fetchedOrders;
             orders = new ArrayList<>();
             do {
-                fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+                fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest, dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder());
                 Integer offset = dexOrderDBRequest.getOffset();
                 if (offset != null) {
                     dexOrderDBRequest.setOffset(dexOrderDBRequest.getOffset() + dexOrderDBRequest.getLimit());
@@ -237,7 +240,8 @@ public class DexService {
             }
             while (orders.size() < dexOrderDBRequest.getLimit() && fetchedOrders.size() == dexOrderDBRequest.getLimit());
         } else {
-            List<DexOrder> fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest);
+            List<DexOrder> fetchedOrders = dexOrderDao.getOrders(dexOrderDBRequest,
+                dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder());
             orders = mapToOrdersWithFreezing(fetchedOrders);
         }
         return orders;
@@ -258,7 +262,8 @@ public class DexService {
      */
     @Transactional(readOnly = true)
     public List<DexOrder> getOrders(DexOrderDBRequest dexOrderDBRequest) {
-        return dexOrderDao.getOrders(dexOrderDBRequest)
+        return dexOrderDao.getOrders(dexOrderDBRequest,
+            dexOrderDBRequest.getSortBy(), dexOrderDBRequest.getSortOrder())
                 .stream()
             .sorted(Comparator.comparingLong(DexOrder::getDbId))
                 .collect(Collectors.toList());
@@ -464,10 +469,6 @@ public class DexService {
         TransferTransactionInfo result = new TransferTransactionInfo();
 
         if (DexCurrencyValidator.isEthOrPaxAddress(toAddress)) {
-            if (dexSmartContractService.isUserTransferMoney(order.getFromAddress(), order.getId())) {
-                throw new AplException.ExecutiveProcessException("User has already started exchange process with another user. OrderId: " + order.getId());
-            }
-
             if (dexSmartContractService.isDepositForOrderExist(order.getFromAddress(), order.getId())) {
 
                 String txHash = dexSmartContractService.initiate(createTransactionRequest.getPassphrase(), createTransactionRequest.getSenderAccount().getId(),
@@ -642,7 +643,7 @@ public class DexService {
             order.setId(orderTx.getId());
 
             // 2. Create contract.
-            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY);
+            DexContractAttachment contractAttachment = new DexContractAttachment(order.getId(), counterOffer.getId(), null, null, null, null, ExchangeContractStatus.STEP_1, dexConfig.getMinAtomicSwapDuration());
             TransactionResponse transactionResponse = dexOrderTransactionCreator.createTransaction(requestWrapper, account, 0L, 0L, contractAttachment, false);
             contractTx = transactionResponse.getTx();
 
@@ -754,9 +755,9 @@ public class DexService {
 
     public boolean hasConfirmations(ExchangeContract contract, DexOrder dexOrder) {
         if (dexOrder.getType() == OrderType.BUY) {
-            return hasAplConfirmations(Convert.parseUnsignedLong(contract.getTransferTxId()), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
+            return hasAplConfirmations(Convert.parseUnsignedLong(contract.getTransferTxId()), dexConfig.getAplConfirmations());
         } else if (dexOrder.getPairCurrency().isEthOrPax()) { // for now this check is useless, but for future can be used to separate other currencies
-            return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= Constants.DEX_ETH_NUMBER_OF_CONFIRMATIONS;
+            return ethereumWalletService.getNumberOfConfirmations(contract.getTransferTxId()) >= dexConfig.getEthConfirmations();
         } else {
             throw new IllegalArgumentException("Unable to calculate number of confirmations for paired currency - " + dexOrder.getPairCurrency());
         }
@@ -766,7 +767,7 @@ public class DexService {
         log.debug("DexService: HasConfirmations reached");
         if (dexOrder.getType() == OrderType.BUY) {
          log.debug("desService: HasConfirmations reached");
-            return hasAplConfirmations(dexOrder.getId(), Constants.DEX_APL_NUMBER_OF_CONFIRMATIONS);
+            return hasAplConfirmations(dexOrder.getId(), dexConfig.getAplConfirmations());
         }
         else if (dexOrder.getPairCurrency().isEthOrPax()){
             log.debug("Just a sell Sell Order, add eth confirmations check here...");
@@ -865,12 +866,12 @@ public class DexService {
         transactionProcessor.broadcastWhenConfirmed(tx, uncTx);
     }
 
-    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.getUserActiveDeposits(user);
+    public EthDepositsWithOffset getUserActiveDeposits(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserActiveDeposits(user, offset, limit);
     }
 
-    public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
-        return dexSmartContractService.getUserFilledOrders(user);
+    public EthDepositsWithOffset getUserFilledOrders(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
+        return dexSmartContractService.getUserFilledOrders(user, offset, limit);
     }
 
     public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
