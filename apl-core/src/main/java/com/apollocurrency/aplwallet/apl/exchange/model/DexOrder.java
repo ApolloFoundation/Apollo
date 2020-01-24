@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Builder
 public class DexOrder extends VersionedDerivedEntity {
 

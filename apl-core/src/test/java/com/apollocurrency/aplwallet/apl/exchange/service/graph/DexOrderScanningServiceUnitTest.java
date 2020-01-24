@@ -156,6 +156,11 @@ class DexOrderScanningServiceUnitTest {
         }
 
         @Override
+        public DexCandlestick getLast(DexCurrency pairedCoin, int beforeTimestamp) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public int removeAll() {
             throw new UnsupportedOperationException();
         }
@@ -232,6 +237,11 @@ class DexOrderScanningServiceUnitTest {
         @Override
         public DexOrder getLastClosedOrderBeforeHeight(DexCurrency coin, int toHeight) {
             return orders.stream().filter(o -> o.getHeight() < toHeight && o.getPairCurrency() == coin).max(Comparator.comparing(DexOrder::getDbId)).get();
+        }
+
+        @Override
+        public DexOrder getLastClosedOrderBeforeTimestamp(DexCurrency coin, int timestamp) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
