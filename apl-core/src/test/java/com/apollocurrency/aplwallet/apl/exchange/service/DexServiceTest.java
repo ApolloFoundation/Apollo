@@ -184,7 +184,7 @@ class DexServiceTest {
     void testGetOrdersWithoutHasFrozenMoneyParameter() {
         DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259 , "", "");
         DexOrder order2 = new DexOrder(2L, 4L, OrderType.SELL, 200L, DexCurrency.APL, 50000L, DexCurrency.ETH, BigDecimal.TEN, 290, OrderStatus.WAITING_APPROVAL, 380 , "", "");
-        DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).build();
+        DexOrderDBRequest request = DexOrderDBRequest.builder().limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
 
@@ -195,9 +195,9 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithFrozenMoney() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(true).build();
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(true).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(true).build();
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(true).build();
         doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
@@ -211,11 +211,11 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutFrozenMoney() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).hasFrozenMoney(false).build();
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().offset(1).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).hasFrozenMoney(false).build();
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(3).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
         doReturn(List.of(order3, order4)).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
-        DexOrderDBRequest request3 = DexOrderDBRequest.builder().offset(5).limit(2).hasFrozenMoney(false).build();
+        DexOrderDBRequest request3 = DexOrderDBRequest.builder().offset(5).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
         doReturn(List.of(order)).when(dexOrderDao).getOrders(request3, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, true)).when(cache).getUnchecked(2L);
@@ -229,9 +229,9 @@ class DexServiceTest {
 
     @Test
     void testGetOrdersWithoutOffset() {
-        DexOrderDBRequest request1 = DexOrderDBRequest.builder().limit(2).hasFrozenMoney(false).build();
+        DexOrderDBRequest request1 = DexOrderDBRequest.builder().limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
         doReturn(List.of(order1, order2)).when(dexOrderDao).getOrders(request1, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
-        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(2).limit(2).hasFrozenMoney(false).build();
+        DexOrderDBRequest request2 = DexOrderDBRequest.builder().offset(2).limit(2).sortBy(DexOrderSortBy.PAIR_RATE).sortOrder(DBSortOrder.DESC).hasFrozenMoney(false).build();
         doReturn(List.of()).when(dexOrderDao).getOrders(request2, DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         doReturn(new OrderFreezing(2L, false)).when(cache).getUnchecked(2L);
