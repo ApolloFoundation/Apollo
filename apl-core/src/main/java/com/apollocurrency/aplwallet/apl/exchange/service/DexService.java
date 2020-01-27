@@ -171,6 +171,8 @@ public class DexService {
 
     @Transactional
     public void saveDexContract(ExchangeContract exchangeContract) {
+        log.debug("Create new contract: id:{}, orderId:{}, counterOrderId:{}, contractStatus:{}",
+            exchangeContract.getId(), exchangeContract.getOrderId(), exchangeContract.getCounterOrderId(), exchangeContract.getContractStatus());
         exchangeContract.setHeight(this.blockchain.getHeight()); // new height value
         dexContractTable.insert(exchangeContract);
     }
@@ -333,10 +335,9 @@ public class DexService {
         DexOrder order        = getOrder(contract.getOrderId());
         DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
+        //Close current and all income contracts/orders.
         handleExpiredContractOrder(order, time);
         handleExpiredContractOrder(counterOrder, time);
-        contract.setContractStatus(ExchangeContractStatus.STEP_4);
-        saveDexContract(contract);
     }
 
 
@@ -857,7 +858,9 @@ public class DexService {
                 long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
                 ExchangeContract exchangeContract = getDexContractById(contractId);
 
-                closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
+                if (!exchangeContract.getContractStatus().isStep4()) {
+                    closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
+                }
             }
         }
     }
