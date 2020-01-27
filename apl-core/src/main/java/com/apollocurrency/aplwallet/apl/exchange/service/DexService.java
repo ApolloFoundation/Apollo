@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -860,6 +861,11 @@ public class DexService {
                 closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
             }
         }
+    }
+
+    public DexOrder getLastOrderBeforeTimestamp(DexCurrency currency, int timestamp) {
+        int epochTime = Convert2.toEpochTime((long) timestamp * 1000);
+        return dexOrderDao.getLastClosedOrderBeforeTimestamp(currency, epochTime);
     }
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction uncTx) {
