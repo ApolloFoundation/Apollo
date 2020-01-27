@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -219,14 +220,7 @@ public class TradingViewUtils {
         Collections.reverse(data);
 
         TradingDataOutput tdo = new TradingDataOutput();
-
-        tdo.setT(new ArrayList<>());
-        tdo.setC(new ArrayList<>());
-        tdo.setH(new ArrayList<>());
-        tdo.setO(new ArrayList<>());
-        tdo.setL(new ArrayList<>());
-        tdo.setV(new ArrayList<>());
-
+        tdo.init();
 
         for (SimpleTradingEntry e : data) {
             tdo.getT().add(e.time);
@@ -237,8 +231,16 @@ public class TradingViewUtils {
             tdo.getV().add(e.volumefrom);
 
         }
-        tdo.setS("ok");
-        tdo.setNextTime(null);
+        if (data.isEmpty()) {
+            DexOrder order = service.getLastOrderBeforeTimestamp(DexCurrency.fromString(symbol), fromTs);
+            if (order != null) {
+                long nearestOrderTs = Convert2.fromEpochTime(order.getFinishTime());
+                tdo.setNextTime((int) (nearestOrderTs / 1000));
+            }
+            tdo.setS("no_data");
+        } else {
+            tdo.setS("ok");
+        }
         return tdo;
     }
 }
