@@ -307,7 +307,11 @@ public class DexService {
 
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
         long start = System.currentTimeMillis();
-        List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
+        List<DexOrder> orders = dexOrderTable.getOverdueOrders(time)
+            .stream()
+            .filter(order -> order.getHeight() < blockchain.getHeight())
+            .collect(Collectors.toList());
+
         log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
                 orders.size(), System.currentTimeMillis() - start, time);
 
@@ -318,7 +322,6 @@ public class DexService {
             refundFrozenAplForOrderIfWeCan(order);
 
             reopenIncomeOrders(order.getId());
-
         }
         log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
