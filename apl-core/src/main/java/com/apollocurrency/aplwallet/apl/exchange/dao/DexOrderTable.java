@@ -71,6 +71,11 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     @Override
     public void save(Connection con, DexOrder order) throws SQLException {
+        log.debug("Save new order: id:{}, accountId:{}, type:{}, order_currency:{}, :{}, pair_currency:{}, " +
+                "finish_time:{}, status:{}, height:{}, from_address:{}, to_address:{}",
+            order.getId(), order.getAccountId(), order.getType(), order.getOrderCurrency(), order.getOrderAmount(), order.getPairCurrency(),
+            order.getFinishTime(), order.getStatus(), order.getHeight(), order.getFromAddress(), order.getToAddress());
+
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, type, " +
                 "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {

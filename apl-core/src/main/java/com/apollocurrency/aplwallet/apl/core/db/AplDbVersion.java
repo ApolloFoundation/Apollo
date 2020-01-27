@@ -849,7 +849,11 @@ public class AplDbVersion extends DbVersion {
             case 326:
                 apply("ALTER TABLE dex_operation ADD CONSTRAINT IF NOT EXISTS dex_operation_account_stage_eid_idx UNIQUE (account, stage, eid)");
             case 327:
-                return 327;
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_offer_id_height_idx  ON dex_offer (id, height DESC)");
+            case 328:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_contract_id_height_idx ON dex_contract (id, height DESC)");
+            case 329:
+                return 329;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                         + ", probably trying to run older code on newer database");
