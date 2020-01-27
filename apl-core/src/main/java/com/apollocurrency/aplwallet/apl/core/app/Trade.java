@@ -180,7 +180,7 @@ public final class Trade {
         return trade;
     }
 
-    static void init() {}
+    public static void init() {}
 
 
     private final int timestamp;
@@ -301,9 +301,9 @@ public final class Trade {
     public long getQuantityATU() { return quantityATU; }
 
     public long getPriceATM() { return priceATM; }
-    
+
     public long getAssetId() { return assetId; }
-    
+
     public int getTimestamp() { return timestamp; }
 
     public int getHeight() {
