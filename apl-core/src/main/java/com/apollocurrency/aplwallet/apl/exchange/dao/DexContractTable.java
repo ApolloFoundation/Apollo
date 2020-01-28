@@ -54,9 +54,9 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
 
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
                 "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());
