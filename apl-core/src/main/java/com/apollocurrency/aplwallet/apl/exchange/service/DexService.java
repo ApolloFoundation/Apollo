@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
@@ -171,6 +172,8 @@ public class DexService {
 
     @Transactional
     public void saveDexContract(ExchangeContract exchangeContract) {
+        log.debug("Create new contract: id:{}, orderId:{}, counterOrderId:{}, contractStatus:{}",
+            exchangeContract.getId(), exchangeContract.getOrderId(), exchangeContract.getCounterOrderId(), exchangeContract.getContractStatus());
         exchangeContract.setHeight(this.blockchain.getHeight()); // new height value
         dexContractTable.insert(exchangeContract);
     }
@@ -303,20 +306,30 @@ public class DexService {
     }
 
 
+    /**
+     * Can close only Open orders.
+     *
+     * @param time
+     * @throws AplException.ExecutiveProcessException
+     */
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
         long start = System.currentTimeMillis();
-        List<DexOrder> orders = dexOrderTable.getOverdueOrders(time);
+        List<DexOrder> orders = dexOrderTable.getOverdueOrders(time)
+            .stream()
+            .filter(order -> order.getHeight() < blockchain.getHeight())
+            .collect(Collectors.toList());
+
         log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
-                orders.size(), System.currentTimeMillis() - start, time);
+            orders.size(), System.currentTimeMillis() - start, time);
 
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
             saveOrder(order);
-            refundFrozenAplForOrderIfWeCan(order);
+
+            tryRefundApl(order);
 
             reopenIncomeOrders(order.getId());
-
         }
         log.trace("<< closeOverdueOrders() = total {} ms", System.currentTimeMillis() - start);
     }
@@ -331,12 +344,17 @@ public class DexService {
 
     public void closeContract(ExchangeContract contract, Integer time) throws AplException.ExecutiveProcessException {
         DexOrder order        = getOrder(contract.getOrderId());
-        DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
+        //Close current and all income contracts/orders.
         handleExpiredContractOrder(order, time);
-        handleExpiredContractOrder(counterOrder, time);
+        // In the Step1 user didn't answer yet, so it can have another offers. This order on this step is Open.
+        if (!contract.getContractStatus().isStep1()) {
+            DexOrder counterOrder = getOrder(contract.getCounterOrderId());
+            handleExpiredContractOrder(counterOrder, time);
+        }
         contract.setContractStatus(ExchangeContractStatus.STEP_4);
         saveDexContract(contract);
+
     }
 
 
@@ -349,7 +367,6 @@ public class DexService {
                 order.setStatus(OrderStatus.EXPIRED);
                 saveOrder(order);
                 refundFrozenAplForOrderIfWeCan(order);
-                reopenIncomeOrders(order.getId());
             }
 
         } else {
@@ -396,6 +413,11 @@ public class DexService {
         //Return APL.
         Account account = Account.getAccount(order.getAccountId());
         account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, order.getId(), order.getOrderAmount());
+    }
+    public void tryRefundApl(DexOrder order) throws AplException.ExecutiveProcessException {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
+           doRefundApl(order);
+        }
     }
 
     public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
@@ -784,6 +806,10 @@ public class DexService {
         return blockchain.hasTransaction(txId, requiredTxHeight);
     }
 
+    /**
+     * orders in the status Pending doesn't have phasing transaction.
+     * @throws AplException.ExecutiveProcessException
+     */
     public void reopenPendingOrders(int height, int time) throws AplException.ExecutiveProcessException {
         if (height % 10 == 0 ) { // every ten blocks
             List<DexOrder> pendingOrders = dexOrderTable.getPendingOrdersWithoutContracts(height - Constants.DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS);
@@ -792,7 +818,7 @@ public class DexService {
                     pendingOrder.setStatus(OrderStatus.OPEN);
                 } else {
                     pendingOrder.setStatus(OrderStatus.EXPIRED);
-                    refundFrozenAplForOrderIfWeCan(pendingOrder);
+                    tryRefundApl(pendingOrder);
                 }
                 saveOrder(pendingOrder);
             }
@@ -857,9 +883,16 @@ public class DexService {
                 long contractId = ((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId();
                 ExchangeContract exchangeContract = getDexContractById(contractId);
 
-                closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
+                if (!exchangeContract.getContractStatus().isStep4()) {
+                    closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
+                }
             }
         }
+    }
+
+    public DexOrder getLastOrderBeforeTimestamp(DexCurrency currency, int timestamp) {
+        int epochTime = Convert2.toEpochTime((long) timestamp * 1000);
+        return dexOrderDao.getLastClosedOrderBeforeTimestamp(currency, epochTime);
     }
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction uncTx) {

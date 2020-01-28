@@ -72,7 +72,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
-            dexService.refundFrozenAplForOrderIfWeCan(order);
+            dexService.tryRefundApl(order);
 
             dexService.cancelOffer(order);
 
