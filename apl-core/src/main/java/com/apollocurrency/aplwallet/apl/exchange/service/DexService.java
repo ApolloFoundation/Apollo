@@ -327,10 +327,7 @@ public class DexService {
     }
 
     public void closeExpiredContracts(Integer time) throws AplException.ExecutiveProcessException {
-        List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time)
-            .stream()
-            .filter(cont -> !cont.getContractStatus().isStep4())
-            .collect(Collectors.toList());
+        List<ExchangeContract> contracts = dexContractTable.getOverdueContractsStep1and2(time);
 
         for (ExchangeContract contract : contracts) {
             closeContract(contract, time);
@@ -339,14 +336,17 @@ public class DexService {
 
     public void closeContract(ExchangeContract contract, Integer time) throws AplException.ExecutiveProcessException {
         DexOrder order        = getOrder(contract.getOrderId());
-        DexOrder counterOrder = getOrder(contract.getCounterOrderId());
 
         //Close current and all income contracts/orders.
         handleExpiredContractOrder(order, time);
         // In the Step1 user didn't answer yet, so it can have another offers. This order on this step is Open.
         if (!contract.getContractStatus().isStep1()) {
+            DexOrder counterOrder = getOrder(contract.getCounterOrderId());
             handleExpiredContractOrder(counterOrder, time);
         }
+        contract.setContractStatus(ExchangeContractStatus.STEP_4);
+        saveDexContract(contract);
+
     }
 
 
@@ -359,7 +359,6 @@ public class DexService {
                 order.setStatus(OrderStatus.EXPIRED);
                 saveOrder(order);
                 refundFrozenAplForOrderIfWeCan(order);
-                reopenIncomeOrders(order.getId());
             }
 
         } else {
