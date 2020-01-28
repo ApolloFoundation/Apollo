@@ -64,7 +64,7 @@ public class BlockApplier {
                 log.trace("Back fees {} to forger at height {}", ((double)backFees[i])/ Constants.ONE_APL,
                         height - i - 1);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
-                previousGeneratorAccount.addToForgedBalanceATM(backFees[i]);
+                accountService.addToForgedBalanceATM(previousGeneratorAccount, backFees[i]);
             }
         }
         if (totalBackFees != 0) {
@@ -74,7 +74,7 @@ public class BlockApplier {
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
-        generatorAccount.addToForgedBalanceATM(block.getTotalFeeATM() - totalBackFees);
+        accountService.addToForgedBalanceATM(generatorAccount, block.getTotalFeeATM() - totalBackFees);
     }
 
 }

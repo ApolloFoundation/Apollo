@@ -51,7 +51,7 @@ public class Account extends VersionedDerivedEntity {
     private long balanceATM;
     @Setter
     private long unconfirmedBalanceATM;
-    @Setter
+
     private long forgedBalanceATM;
     @Setter
     private long activeLesseeId;

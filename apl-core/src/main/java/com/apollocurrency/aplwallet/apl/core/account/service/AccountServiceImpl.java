@@ -334,6 +334,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public void addToForgedBalanceATM(Account account, long amountATM){
+        if (account.addToForgedBalanceATM(amountATM)){
+            update(account);
+        }
+    }
+
+    @Override
     public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;

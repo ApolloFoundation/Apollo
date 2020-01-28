@@ -871,14 +871,14 @@ public final class Shuffling {
                     previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-                previousGeneratorAccount.addToForgedBalanceATM(fee);
+                accountService.addToForgedBalanceATM(previousGeneratorAccount, fee);
                 LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                         block.getHeight() - i - 1);
             }
             fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
             Account blockGeneratorAccount = accountService.getAccount(block.getGeneratorId());
             accountService.addToBalanceAndUnconfirmedBalanceATM(blockGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
-            blockGeneratorAccount.addToForgedBalanceATM(fee);
+            accountService.addToForgedBalanceATM(blockGeneratorAccount, fee);
             LOG.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double)fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                     block.getHeight());
         }
