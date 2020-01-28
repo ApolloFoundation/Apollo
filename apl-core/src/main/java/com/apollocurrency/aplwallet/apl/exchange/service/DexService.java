@@ -305,6 +305,12 @@ public class DexService {
     }
 
 
+    /**
+     * it can an close only Open orders.
+     *
+     * @param time
+     * @throws AplException.ExecutiveProcessException
+     */
     public void closeOverdueOrders(Integer time) throws AplException.ExecutiveProcessException {
         long start = System.currentTimeMillis();
         List<DexOrder> orders = dexOrderTable.getOverdueOrders(time)
@@ -313,7 +319,7 @@ public class DexService {
             .collect(Collectors.toList());
 
         log.trace(">> closeOverdueOrders() size=[{}] = {} ms by finish_time < {}",
-                orders.size(), System.currentTimeMillis() - start, time);
+            orders.size(), System.currentTimeMillis() - start, time);
 
         for (DexOrder order : orders) {
             log.debug("Order expired, orderId: {}", order.getId());
@@ -799,6 +805,10 @@ public class DexService {
         return blockchain.hasTransaction(txId, requiredTxHeight);
     }
 
+    /**
+     * orders in the status Pending doesn't have phasing transaction.
+     * @throws AplException.ExecutiveProcessException
+     */
     public void reopenPendingOrders(int height, int time) throws AplException.ExecutiveProcessException {
         if (height % 10 == 0 ) { // every ten blocks
             List<DexOrder> pendingOrders = dexOrderTable.getPendingOrdersWithoutContracts(height - Constants.DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS);

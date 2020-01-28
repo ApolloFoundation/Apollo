@@ -76,9 +76,10 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             order.getId(), order.getAccountId(), order.getType(), order.getOrderCurrency(), order.getOrderAmount(), order.getPairCurrency(),
             order.getFinishTime(), order.getStatus(), order.getHeight(), order.getFromAddress(), order.getToAddress());
 
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, type, " +
-                "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_offer (id, account_id, type, " +
+            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) " +
+            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
+
             int i = 0;
             pstmt.setLong(++i, order.getId());
             pstmt.setLong(++i, order.getAccountId());
