@@ -319,7 +319,8 @@ public class DexService {
             log.debug("Order expired, orderId: {}", order.getId());
             order.setStatus(OrderStatus.EXPIRED);
             saveOrder(order);
-            refundFrozenAplForOrderIfWeCan(order);
+
+            tryRefundApl(order);
 
             reopenIncomeOrders(order.getId());
         }
@@ -405,6 +406,11 @@ public class DexService {
         //Return APL.
         Account account = Account.getAccount(order.getAccountId());
         account.addToUnconfirmedBalanceATM(LedgerEvent.DEX_REFUND_FROZEN_MONEY, order.getId(), order.getOrderAmount());
+    }
+    public void tryRefundApl(DexOrder order) throws AplException.ExecutiveProcessException {
+        if (DexCurrencyValidator.haveFreezeOrRefundApl(order)) {
+           doRefundApl(order);
+        }
     }
 
     public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
@@ -801,7 +807,7 @@ public class DexService {
                     pendingOrder.setStatus(OrderStatus.OPEN);
                 } else {
                     pendingOrder.setStatus(OrderStatus.EXPIRED);
-                    refundFrozenAplForOrderIfWeCan(pendingOrder);
+                    tryRefundApl(pendingOrder);
                 }
                 saveOrder(pendingOrder);
             }
