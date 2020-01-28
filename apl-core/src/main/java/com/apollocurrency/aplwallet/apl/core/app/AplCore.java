@@ -26,27 +26,15 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.db.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDelete;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -114,19 +102,14 @@ public final class AplCore {
     @Inject @Setter
     private PrunableArchiveMonitor prunableArchiveMonitor;
 
-    @Inject @Setter
-    private DerivedTablesRegistry dbRegistry;
-
-    @Inject @Setter
-    private AccountPropertyTable accountPropertyTable; //TODO yes, it's neve accessed but keep it until the DerivedTablesRegistry refactoring will be done
-
-    @Inject @Setter
-    private AccountLedgerTable accountLedgerTable; //TODO yes, it's neve accessed but keep it until the DerivedTablesRegistry refactoring will be done
-
     @Inject
     @Setter
     PeersService peers;
     private String initCoreTaskID;
+
+    @Inject
+    @Setter
+    TableRegistryInitializer tableRegistryInitializer;
 
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
@@ -243,7 +226,6 @@ public final class AplCore {
                 tcs.initialize();
 
 
-                TransactionProcessor transactionProcessor = CDI.current().select(TransactionProcessor.class).get();
                 bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
@@ -258,20 +240,7 @@ public final class AplCore {
                 Poll.init();
                 Trade.init();
                 AssetTransfer.init(databaseManager);
-                AssetDelete.init();
-                AssetDividend.init();
-                Vote.init();
-                Currency.init();
-                CurrencyExchangeOffer.init();
-                CurrencyBuyOffer.init();
-                CurrencySellOffer.init();
-                CurrencyFounder.init();
-                CurrencyMint.init();
-                CurrencyTransfer.init();
-                Exchange.init();
-                ExchangeRequest.init();
-                Shuffling.init();
-                ShufflingParticipant.init();
+
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");
                 APIProxy.init();

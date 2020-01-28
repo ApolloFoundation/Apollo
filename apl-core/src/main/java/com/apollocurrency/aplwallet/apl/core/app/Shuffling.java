@@ -317,7 +317,7 @@ public final class Shuffling {
         listeners.notify(shuffling, Event.SHUFFLING_CREATED);
     }
 
-    static void init() {
+    public static void init() {
 
     }
 

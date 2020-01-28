@@ -115,7 +115,7 @@ public abstract class Order {
 
     }
 
-    static void init() {
+    public static void init() {
         Ask.init();
         Bid.init();
     }
