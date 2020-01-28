@@ -474,7 +474,7 @@ public class DexSmartContractService {
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String identifier = credentials.getAddress() + orderId.toString()  + DexTransaction.Op.INITIATE;
+        String identifier = credentials.getAddress() + Numeric.toHexString(secretHash)  + DexTransaction.Op.INITIATE;
         synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
             if (txHash == null) {

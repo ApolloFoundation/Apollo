@@ -7,7 +7,8 @@ public enum OrderStatus {
     EXPIRED,    //2
     CANCEL,     //3
     WAITING_APPROVAL,   //4
-    CLOSED;     //5
+    CLOSED,     //5
+    PHASING_RESULT_PENDING; // 6
 
     public static OrderStatus getType(int ordinal) {
         if (ordinal < 0 || ordinal > OrderStatus.values().length) {
