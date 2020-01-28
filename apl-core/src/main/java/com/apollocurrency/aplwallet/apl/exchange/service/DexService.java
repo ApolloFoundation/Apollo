@@ -306,7 +306,7 @@ public class DexService {
 
 
     /**
-     * it can an close only Open orders.
+     * Can close only Open orders.
      *
      * @param time
      * @throws AplException.ExecutiveProcessException
