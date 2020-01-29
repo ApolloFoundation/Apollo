@@ -93,6 +93,23 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
         return CollectionUtil.toList(dbIterator);
     }
 
+    public List<ExchangeContract> getByOrderIdAndHeight(long orderId, int height) throws AplException.ExecutiveProcessException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con
+                 .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
+                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?)")
+        ) {
+            int i = 0;
+            pstmt.setInt(++i, height);
+            pstmt.setLong(++i, orderId);
+            pstmt.setLong(++i, orderId);
+
+            return CollectionUtil.toList(getManyBy(con, pstmt, true));
+        } catch (SQLException ex) {
+            throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
+        }
+    }
+
     public ExchangeContract getLastByOrder(Long orderId) {
         List<ExchangeContract> allByOrder = getAllByLongParameterFromStatusHeightSorted(orderId, "offer_id", 1);
         return getFirstOrNull(allByOrder);
