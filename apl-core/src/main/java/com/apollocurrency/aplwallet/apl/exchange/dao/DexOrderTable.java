@@ -5,12 +5,14 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -67,6 +69,10 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
         }
 
         return dexOrders;
+    }
+
+    public List<DexOrder> getWaitingPhasingResultOrders() {
+        return CollectionUtil.toList(getManyBy(new DbClause.ByteClause("status", (byte) OrderStatus.PHASING_RESULT_PENDING.ordinal()), 0, -1));
     }
 
     @Override
