@@ -48,21 +48,26 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthDepositsInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthExpiredSwaps;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -925,6 +930,53 @@ public class DexService {
         return dexSmartContractService.getUserFilledOrders(user, offset, limit);
     }
 
+    //TODO implement some abstract function to download all data.
+    public List<EthDepositInfo> getAllUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
+        List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+        boolean isContinue = true;
+
+        while (isContinue) {
+            EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
+            if (ethDepositsWithOffset == null) {
+                isContinue = false;
+                continue;
+            }
+            ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
+
+            if (ethDepositsWithOffset.getDeposits().size() < limit) {
+                isContinue = false;
+                continue;
+            }
+            offset += limit;
+        }
+        return ethDepositInfos;
+    }
+
+    public List<EthDepositInfo> getAllUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
+        List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+        boolean isContinue = true;
+
+        while (isContinue) {
+            EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
+            if (ethDepositsWithOffset == null) {
+                isContinue = false;
+                continue;
+            }
+            ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
+
+            if (ethDepositsWithOffset.getDeposits().size() < limit) {
+                isContinue = false;
+                continue;
+            }
+            offset += limit;
+        }
+        return ethDepositInfos;
+    }
+
     public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
         return dexContractDao.getAllForAccountOrder(accountId, orderId, status, status);
     }
@@ -936,5 +988,80 @@ public class DexService {
     public List<ExchangeContract> getVersionedContractsByAccountOrder(long accountId, long orderId) {
         return dexContractDao.getAllVersionedForAccountOrder(accountId, orderId, 0, ExchangeContractStatus.values().length - 1);
     }
+
+    public List<String> getAllUsers() throws AplException.ExecutiveProcessException {
+        List<String> addresses = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+        boolean isContinue = true;
+
+        while (isContinue) {
+            UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
+            if (addresses == null) {
+                isContinue = false;
+                continue;
+            }
+            addresses.addAll(userAddressesWithOffset.getAddresses());
+
+            if (userAddressesWithOffset.getAddresses().size() < limit) {
+                isContinue = false;
+                continue;
+            }
+            offset += limit;
+        }
+
+        return addresses;
+    }
+
+    public List<AddressEthDepositsInfo> getAllFilledOrders() throws AplException.ExecutiveProcessException {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<EthDepositInfo> ethDepositInfos = getAllUserFilledOrders(address);
+                addressEthDepositsInfos.add(new AddressEthDepositsInfo(address, ethDepositInfos));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+
+        }
+
+        return addressEthDepositsInfos;
+    }
+
+    public List<AddressEthExpiredSwaps> getAllExpiredSwaps() throws AplException.ExecutiveProcessException {
+        List<AddressEthExpiredSwaps> addressEthExpiredSwaps = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
+                addressEthExpiredSwaps.add(new AddressEthExpiredSwaps(address, expiredSwaps));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+        }
+
+        return addressEthExpiredSwaps;
+    }
+
+    public List<AddressEthDepositsInfo> getAllActiveDeposits() throws AplException.ExecutiveProcessException {
+        List<AddressEthDepositsInfo> addressEthExpiredSwaps = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<EthDepositInfo> expiredSwaps = getAllUserActiveDeposits(address);
+                addressEthExpiredSwaps.add(new AddressEthDepositsInfo(address, expiredSwaps));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+        }
+
+        return addressEthExpiredSwaps;
+    }
+
+
 
 }

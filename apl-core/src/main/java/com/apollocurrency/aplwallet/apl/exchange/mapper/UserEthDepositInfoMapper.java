@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.mapper;
 
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import org.apache.commons.collections4.CollectionUtils;
 import org.web3j.tuples.generated.Tuple4;
 
@@ -20,7 +20,7 @@ public class UserEthDepositInfoMapper {
         }
 
         for (int i = 0; i < data.component1().size(); i++) {
-            ethDepositsWithOffset.getDeposits().add(new UserEthDepositInfo(Long.parseUnsignedLong(
+            ethDepositsWithOffset.getDeposits().add(new EthDepositInfo(Long.parseUnsignedLong(
                 data.component1().get(i).toString()),
                 EthUtil.weiToEther(data.component2().get(i)),
                 data.component3().get(i).longValue()

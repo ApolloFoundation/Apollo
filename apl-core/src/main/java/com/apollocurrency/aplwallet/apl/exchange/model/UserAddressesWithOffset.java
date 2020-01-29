@@ -4,13 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EthDepositsWithOffset {
-    private List<EthDepositInfo> deposits = new ArrayList<>();
+public class UserAddressesWithOffset {
+    private List<String> addresses;
     private long offset;
 }
