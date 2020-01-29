@@ -15,7 +15,7 @@ public class UserEthDepositInfoMapper {
     public static EthDepositsWithOffset map(Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger> data) {
         EthDepositsWithOffset ethDepositsWithOffset = new EthDepositsWithOffset();
 
-        if (data == null || CollectionUtils.isEmpty(data.getValue1())) {
+        if (data == null || CollectionUtils.isEmpty(data.component1())) {
             return ethDepositsWithOffset;
         }
 
