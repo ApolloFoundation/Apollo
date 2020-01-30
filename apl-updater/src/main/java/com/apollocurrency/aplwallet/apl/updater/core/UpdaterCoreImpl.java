@@ -21,6 +21,10 @@ import com.apollocurrency.aplwallet.apl.updater.UpdateTransaction;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifier;
 import com.apollocurrency.aplwallet.apl.updater.UpdateTransactionVerifierImpl;
 import com.apollocurrency.aplwallet.apl.updater.UpdaterUtil;
+import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEvent;
+import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventBinding;
+import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventData;
+import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventType;
 import com.apollocurrency.aplwallet.apl.updater.repository.UpdaterDbRepository;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterServiceImpl;
@@ -35,7 +39,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -48,35 +54,40 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private UpdateTransactionVerifier updateTransactionVerifier;
     private final UpdateInfo updateInfo;
     private volatile boolean processUpdateTxs = false;
+    private final Event<StartUpdateEventData> startUpdateEvent;
 
     @Override
     public UpdateInfo getUpdateInfo() {
         return updateInfo;
     }
 
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo) {
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateInfo updateInfo, Event<StartUpdateEventData> startUpdateEvent) {
         this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
-                new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo);
+                new UpdateTransactionVerifierImpl(updaterMediator, updaterService), updateInfo, startUpdateEvent);
     }
 
     @Inject
-    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo) {
-        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo);
+    public UpdaterCoreImpl(UpdaterMediatorImpl updaterMediator, UpdateInfo updateInfo, Event<StartUpdateEventData> startUpdateEvent) {
+        this(new UpdaterServiceImpl(new UpdaterDbRepository(updaterMediator)), updaterMediator, updateInfo, startUpdateEvent);
     }
 
 
-    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
-        this(updaterService, updaterMediator, new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo), updateTransactionVerifier, updateInfo);
+    public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator,
+                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo, Event<StartUpdateEventData> startUpdateEvent) {
+        this(updaterService, updaterMediator,
+            new UpdaterFactoryImpl(updaterMediator, updaterService, updateInfo),
+            updateTransactionVerifier, updateInfo, startUpdateEvent);
     }
 
 
     public UpdaterCoreImpl(UpdaterService updaterService, UpdaterMediator updaterMediator, UpdaterFactory updaterFactory,
-                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo) {
+                           UpdateTransactionVerifier updateTransactionVerifier, UpdateInfo updateInfo, Event<StartUpdateEventData> startUpdateEvent) {
         this.updaterService = updaterService;
         this.updaterMediator = updaterMediator;
         this.updaterFactory = updaterFactory;
         this.updateInfo = Objects.requireNonNull(updateInfo);
         this.updateTransactionVerifier = updateTransactionVerifier;
+        this.startUpdateEvent = startUpdateEvent;
     }
 
     @Override
@@ -96,6 +107,8 @@ public class UpdaterCoreImpl implements UpdaterCore {
             if (updateData == null) {
                 LOG.debug("Unable to validate file attachment");
             } else {
+                fireStartUpdateEventMethod(); // fire event for doing data export
+                LOG.debug("run startUpdate...");
                 startUpdate(updateData);
             }
         } else {
@@ -232,5 +245,20 @@ public class UpdaterCoreImpl implements UpdaterCore {
             updateInfo.setVersion(updateAttachment.getAppVersion());
             updateInfo.setUpdateState(state);
         }
+    }
+
+    protected void fireStartUpdateEventMethod() {
+        LOG.debug("Fire StartUpdateEvent BEFORE...");
+        StartUpdateEventData startUpdateEventData = new StartUpdateEventData();
+        startUpdateEvent.select(literal(StartUpdateEventType.BEFORE_SCRIPT)).fire(startUpdateEventData); // data is ignored
+    }
+
+    private AnnotationLiteral<StartUpdateEvent> literal(StartUpdateEventType startUpdateEventType) {
+        return new StartUpdateEventBinding() {
+            @Override
+            public StartUpdateEventType value() {
+                return startUpdateEventType;
+            }
+        };
     }
 }
