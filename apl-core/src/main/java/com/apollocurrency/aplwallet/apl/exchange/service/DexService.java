@@ -935,19 +935,17 @@ public class DexService {
         List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        boolean isContinue = true;
+        int maxPages = 10;
 
-        while (isContinue) {
+        for (int i = 0; i < maxPages; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
             if (ethDepositsWithOffset == null) {
-                isContinue = false;
-                continue;
+                break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
 
             if (ethDepositsWithOffset.getDeposits().size() < limit) {
-                isContinue = false;
-                continue;
+                break;
             }
             offset += limit;
         }
@@ -958,19 +956,17 @@ public class DexService {
         List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        boolean isContinue = true;
+        int maxPages = 10;
 
-        while (isContinue) {
+        for (int i = 0; i < maxPages; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
             if (ethDepositsWithOffset == null) {
-                isContinue = false;
-                continue;
+                break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
 
             if (ethDepositsWithOffset.getDeposits().size() < limit) {
-                isContinue = false;
-                continue;
+                break;
             }
             offset += limit;
         }
@@ -993,19 +989,17 @@ public class DexService {
         List<String> addresses = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        boolean isContinue = true;
+        int maxPages = 10;
 
-        while (isContinue) {
+        for (int i = 0; i < maxPages; i++) {
             UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
-            if (addresses == null) {
-                isContinue = false;
-                continue;
+            if (userAddressesWithOffset == null) {
+                break;
             }
             addresses.addAll(userAddressesWithOffset.getAddresses());
 
             if (userAddressesWithOffset.getAddresses().size() < limit) {
-                isContinue = false;
-                continue;
+                break;
             }
             offset += limit;
         }
