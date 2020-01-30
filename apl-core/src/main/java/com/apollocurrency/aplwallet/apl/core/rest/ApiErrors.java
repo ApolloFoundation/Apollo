@@ -27,7 +27,7 @@ public enum ApiErrors implements ErrorInfo {
     PARAM_GREATER_OR_EQUAL_ERROR(4, 2015, "''{0}'' is greater or equal to ''{1}''"),
 
     DEX_NOT_ENOUGH_AMOUNT(6, 2016, "Not enough %s"),
-    DEX_NOT_ENOUGH_FEE(6, 2016, "Not enough %s for a fee.")
+    DEX_NOT_ENOUGH_FEE(6, 2016, "Not enough {0} for a fee. Min value is {1} {0}")
     ;
     public static final Long CONSTRAINT_VIOLATION_ERROR_CODE = 2014L;
 

@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -230,9 +231,9 @@ public class DexController {
                     return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.APL).build();
                 }
 
-                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
-                if (ethAmount == null || ethAmount.equals(BigInteger.ZERO)) {
-                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH).build();
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getToAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
 
             } else if (order.getPairCurrency().isEth() && order.getType().isBuy()) {
@@ -240,6 +241,10 @@ public class DexController {
                 BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
                 if (amount == null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
                     return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.ETH).build();
+                }
+
+                if (amount.compareTo(EthUtil.etherToWei(haveToPay.add(Constants.DEX_MIN_ETH_FEE))) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
             } else if (order.getPairCurrency().isPax() && order.getType().isBuy()) {
                 BigInteger amountPax = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.PAX);
@@ -249,8 +254,8 @@ public class DexController {
                 }
 
                 BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
-                if (ethAmount == null || ethAmount.equals(BigInteger.ZERO)) {
-                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH).build();
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
             }
 
