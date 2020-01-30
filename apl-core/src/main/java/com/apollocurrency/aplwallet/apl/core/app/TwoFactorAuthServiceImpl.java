@@ -9,15 +9,18 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
+import java.util.List;
 import java.util.Random;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
 
+@Slf4j
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
@@ -27,27 +30,32 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final String DEFAULT_CHARSET = "UTF-8";
 
     private TwoFactorAuthRepository repository;
+    private TwoFactorAuthRepository targetFileRepository;
     private final Random random;
     private final String issuerSuffix;
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix) {
-        this(repository, issuerSuffix, new Random());
+    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix,
+                                    TwoFactorAuthRepository targetFileRepository) {
+        this(repository, issuerSuffix, new Random(), targetFileRepository);
     }
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random) {
+    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random,
+                                    TwoFactorAuthRepository targetFileRepository) {
         if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
             throw new IllegalArgumentException("issuerSuffix cannot be null or empty");
         }
-        this.repository = repository;
+        this.repository = repository; // database repo
         this.random = random;
         this.issuerSuffix = issuerSuffix.trim();
+        this.targetFileRepository = targetFileRepository; // file repo
     }
 
     @Override
 //    transaction management required
     public TwoFactorAuthDetails enable(long accountId) {
 //        check existing and not confirmed 2fa
-        TwoFactorAuthEntity entity = repository.get(accountId);
+//        TwoFactorAuthEntity entity = repository.get(accountId);
+        TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         if (entity != null) {
             if (!entity.isConfirmed()) {
 
@@ -61,7 +69,8 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
         String base32Secret = TimeBasedOneTimePasswordUtil.generateBase32Secret(SECRET_LENGTH);
         byte[] base32Bytes = BASE_32.decode(base32Secret);
-        boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
+//        boolean saved = repository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false));
+        boolean saved = targetFileRepository.add(new TwoFactorAuthEntity(accountId, base32Bytes, false)); // switched to File storage
         if (!saved) {
             return new TwoFactorAuthDetails(null, null, Status2FA.INTERNAL_ERROR);
         }
@@ -83,23 +92,27 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public Status2FA disable(long accountId, int authCode) {
-        TwoFactorAuthEntity entity = repository.get(accountId);
+//        TwoFactorAuthEntity entity = repository.get(accountId);
+        TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         Status2FA status2Fa = process2FAEntity(entity, true, authCode);
         if (status2Fa != Status2FA.OK) {
             return status2Fa;
         }
-        return repository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR;
+//        return repository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR;
+        return targetFileRepository.delete(accountId) ? Status2FA.OK : Status2FA.INTERNAL_ERROR; // switched to File storage
     }
 
     @Override
     public boolean isEnabled(long accountId) {
-        TwoFactorAuthEntity entity = repository.get(accountId);
+//        TwoFactorAuthEntity entity = repository.get(accountId);
+        TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         return entity != null && entity.isConfirmed() && entity.getSecret() != null;
     }
 
     @Override
     public Status2FA tryAuth(long accountId, int authCode) {
-        TwoFactorAuthEntity entity = repository.get(accountId);
+//        TwoFactorAuthEntity entity = repository.get(accountId);
+        TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         return process2FAEntity(entity, true, authCode);
     }
 
@@ -122,13 +135,15 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     @Override
     public Status2FA confirm(long accountId, int authCode) {
-        TwoFactorAuthEntity entity = repository.get(accountId);
+//        TwoFactorAuthEntity entity = repository.get(accountId);
+        TwoFactorAuthEntity entity = targetFileRepository.get(accountId); // switched to File storage
         Status2FA analyzedStatus = process2FAEntity(entity, false, authCode);
         if (analyzedStatus != Status2FA.OK) {
             return analyzedStatus;
         }
         entity.setConfirmed(true);
-        boolean updated = repository.update(entity);
+//        boolean updated = repository.update(entity);
+        boolean updated = targetFileRepository.update(entity); // switched to File storage
         if (!updated) {
             return Status2FA.INTERNAL_ERROR;
         }
@@ -149,5 +164,39 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             return Status2FA.INCORRECT_CODE;
         }
         return Status2FA.OK;
+    }
+
+    @Override
+    public boolean attemptMoveDataFromDatabase() {
+        log.debug("make attempt to move data from db into file...");
+        // select all possible records from db
+        List<TwoFactorAuthEntity> result = repository.selectAll();
+        log.debug("Db repo found 2fa records = [{}]", result.size());
+        boolean isAllImportedIntoFile = true; // store and check if any error has happen on any record
+        int countProcesses = 0; // store really processed records
+        // loop over all db records if any
+        for (TwoFactorAuthEntity itemRecord: result ) {
+            // check if record was stored as 2fa file before
+            TwoFactorAuthEntity previousValue = targetFileRepository.get(itemRecord.getAccount()); // store into file
+            if (previousValue == null) { // if 2fa file is missing
+                boolean isImported = targetFileRepository.add(itemRecord); // store into file
+                if (!isImported) {
+                    log.error("Error importing 2fa record as File (result={}) = {}", isImported, itemRecord);
+                    isAllImportedIntoFile = isImported; // store false
+                    continue; // go to next record, do not delete if record was NOT exported
+                }
+                repository.delete(itemRecord.getAccount()); // remove ONLY processed record from db
+                countProcesses++; // increase counter when really processed
+            } else {
+                // skipped processing, because record exists in 2fa as file
+                log.debug("Already stored 2fa for accountId={} ({})",
+                    previousValue.getAccount(), previousValue.isConfirmed());
+            }
+        }
+        if (!isAllImportedIntoFile) {
+            log.error("Something went wrong on export/import all 2fa records !!!");
+        }
+        log.info("Moved 2fa records = [{}], 2fa db records were found = [{}]", countProcesses, result.size());
+        return isAllImportedIntoFile /*&& countProcesses > 0*/;
     }
 }

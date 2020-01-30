@@ -68,4 +68,19 @@ public class TwoFactorAuthEntity implements Cloneable {
         obj.setSecret(Arrays.copyOf(this.secret, this.secret.length));
         return obj;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TwoFactorAuthEntity{");
+        sb.append("account=").append(account);
+        sb.append(", secret=");
+        if (secret == null) {
+            sb.append("null");
+        } else {
+            sb.append('[').append(secret.length).append(']');
+        }
+        sb.append(", confirmed=").append(confirmed);
+        sb.append('}');
+        return sb.toString();
+    }
 }

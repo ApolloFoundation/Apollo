@@ -49,4 +49,9 @@ public interface TwoFactorAuthService {
      */
     Status2FA confirm(long accountId, int authCode);
 
+    /**
+     * Check db and move all data into file if exists
+     */
+    boolean attemptMoveDataFromDatabase();
+
 }

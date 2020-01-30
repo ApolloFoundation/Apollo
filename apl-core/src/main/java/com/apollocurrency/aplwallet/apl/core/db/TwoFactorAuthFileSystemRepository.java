@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -134,5 +135,11 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
             }
         }
         return false;
+    }
+
+    @Override
+    public List<TwoFactorAuthEntity> selectAll() {
+        // should not be called on 2fa file repository
+        throw new UnsupportedOperationException("selecting all records for 2fa repo is not suported now...");
     }
 }
