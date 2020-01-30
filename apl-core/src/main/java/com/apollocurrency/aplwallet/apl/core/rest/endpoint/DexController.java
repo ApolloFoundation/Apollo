@@ -586,9 +586,9 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve eth/pax order swaps for eth address", description = "Query eth node for orders, which participate in atomic swaps for specified eth address",
         responses = @ApiResponse(description = "List of swap deposits with offset ", responseCode = "200",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
-    public Response getUserFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
-                                        @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
-                                        @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
+    public Response getUsersFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
+                                         @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
+                                         @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
 
         try {
             return Response.ok(service.getUserFilledOrders(walletAddress, offset, limit)).build();
@@ -617,7 +617,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
         responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
     public Response getAllUsers() {
         List<String> addresses;
         try {
@@ -629,13 +629,12 @@ public class DexController {
     }
 
     @GET
-    @Path("/eth/filledOrders")
+    @Path("/eth/filled-orders")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
         responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
     public Response getAllUsersFilledOrders() {
-
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
             addressEthDepositsInfos = service.getAllFilledOrders();
@@ -647,13 +646,12 @@ public class DexController {
     }
 
     @GET
-    @Path("/eth/expiredSwaps")
+    @Path("/eth/expired-swaps")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
         responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
     public Response getAllUsersExpiredSwaps() {
-
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
         try {
             addressEthExpiredSwaps = service.getAllExpiredSwaps();
@@ -666,21 +664,20 @@ public class DexController {
 
 
     @GET
-    @Path("/eth/activeDeposits")
+    @Path("/eth/active-deposits")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
         responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class))))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
     public Response getAllUsersActiveDeposits() {
-
-        List<AddressEthDepositsInfo> addressEthExpiredSwaps;
+        List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
-            addressEthExpiredSwaps = service.getAllActiveDeposits();
+            addressEthDepositsInfos = service.getAllActiveDeposits();
         } catch (AplException.ExecutiveProcessException e) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        return Response.ok(addressEthExpiredSwaps).build();
+        return Response.ok(addressEthDepositsInfos).build();
     }
 
 }

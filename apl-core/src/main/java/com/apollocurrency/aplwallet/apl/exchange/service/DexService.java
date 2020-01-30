@@ -79,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -939,7 +940,7 @@ public class DexService {
 
         for (int i = 0; i < maxPages; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
-            if (ethDepositsWithOffset == null) {
+            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
@@ -960,7 +961,7 @@ public class DexService {
 
         for (int i = 0; i < maxPages; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
-            if (ethDepositsWithOffset == null) {
+            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
@@ -993,7 +994,7 @@ public class DexService {
 
         for (int i = 0; i < maxPages; i++) {
             UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
-            if (userAddressesWithOffset == null) {
+            if (CollectionUtils.isEmpty(userAddressesWithOffset.getAddresses())) {
                 break;
             }
             addresses.addAll(userAddressesWithOffset.getAddresses());
