@@ -623,7 +623,7 @@ public class DexController {
         try {
             addresses = service.getAllUsers();
         } catch (AplException.ExecutiveProcessException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         return Response.ok(addresses).build();
     }
@@ -639,7 +639,7 @@ public class DexController {
         try {
             addressEthDepositsInfos = service.getAllFilledOrders();
         } catch (AplException.ExecutiveProcessException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
 
         return Response.ok(addressEthDepositsInfos).build();
@@ -656,7 +656,7 @@ public class DexController {
         try {
             addressEthExpiredSwaps = service.getAllExpiredSwaps();
         } catch (AplException.ExecutiveProcessException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
 
         return Response.ok(addressEthExpiredSwaps).build();
@@ -674,7 +674,7 @@ public class DexController {
         try {
             addressEthDepositsInfos = service.getAllActiveDeposits();
         } catch (AplException.ExecutiveProcessException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
 
         return Response.ok(addressEthDepositsInfos).build();
