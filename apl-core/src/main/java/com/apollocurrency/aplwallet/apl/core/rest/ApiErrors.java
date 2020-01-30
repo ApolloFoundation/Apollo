@@ -26,6 +26,8 @@ public enum ApiErrors implements ErrorInfo {
     ETH_NODE_ERROR(-1, 2014, "Unable to query eth node: '%s'"),
     PARAM_GREATER_OR_EQUAL_ERROR(4, 2015, "''{0}'' is greater or equal to ''{1}''"),
 
+    DEX_NOT_ENOUGH_AMOUNT(6, 2016, "Not enough %s"),
+    DEX_NOT_ENOUGH_FEE(6, 2016, "Not enough %s for a fee.")
     ;
     public static final Long CONSTRAINT_VIOLATION_ERROR_CODE = 2014L;
 

@@ -88,7 +88,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -663,7 +662,7 @@ public class DexService {
     }
 
     @Transactional
-    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
+    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ExecutiveProcessException, AplException.ValidationException {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
@@ -700,6 +699,7 @@ public class DexService {
             order.setId(orderTx.getId());
         }
 
+        //Freeze ETH or PAX
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
