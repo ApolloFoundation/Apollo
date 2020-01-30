@@ -617,7 +617,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
         responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
+            content = @Content(mediaType = "application/json")))
     public Response getAllUsers() {
         List<String> addresses;
         try {
@@ -633,7 +633,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
         responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
+            content = @Content(mediaType = "application/json")))
     public Response getAllUsersFilledOrders() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
@@ -650,7 +650,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
         responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
+            content = @Content(mediaType = "application/json")))
     public Response getAllUsersExpiredSwaps() {
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
         try {
@@ -668,7 +668,7 @@ public class DexController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
         responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))))
+            content = @Content(mediaType = "application/json")))
     public Response getAllUsersActiveDeposits() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
