@@ -121,6 +121,7 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private DexConfig dexConfig;
 
+    private Integer MAX_PAGES_FOR_SEARCH = 10;
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
@@ -936,9 +937,8 @@ public class DexService {
         List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        int maxPages = 10;
 
-        for (int i = 0; i < maxPages; i++) {
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
             if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
@@ -957,9 +957,8 @@ public class DexService {
         List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        int maxPages = 10;
 
-        for (int i = 0; i < maxPages; i++) {
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
             if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
@@ -990,9 +989,8 @@ public class DexService {
         List<String> addresses = new ArrayList<>();
         int offset = 0;
         int limit = 100;
-        int maxPages = 10;
 
-        for (int i = 0; i < maxPages; i++) {
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
             if (CollectionUtils.isEmpty(userAddressesWithOffset.getAddresses())) {
                 break;
