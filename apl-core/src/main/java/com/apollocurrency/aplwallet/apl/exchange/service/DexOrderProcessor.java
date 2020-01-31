@@ -749,56 +749,55 @@ public class DexOrderProcessor {
         refundUserEthPax(accountId, OrderStatus.EXPIRED, accountExpiredOrderMap);
     }
 
-    private void refundUserEthPax(Long accountId, OrderStatus orderStatus, Map<Long, OrderHeightId> cash){
-        try {
-            OrderHeightId orderHeightId;
-            synchronized (cash) {
-                orderHeightId = cash.get(accountId);
-            }
+    private void refundUserEthPax(Long accountId, OrderStatus orderStatus, Map<Long, OrderHeightId> cache){
+        OrderHeightId orderHeightId;
+        synchronized (cache) {
+            orderHeightId = cache.get(accountId);
+        }
 
-            String passphrase = secureStorageService.getUserPassPhrase(accountId);
-            long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
-            DexOrder lastSuccessOrder = null;
-            boolean wasException = false;
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+        long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
+        DexOrder lastSuccessOrder = null;
+        boolean wasException = false;
 
-            for (int i = 0; i < AMOUNT_ITERATIONS_FOR_ACCOUNT; i++) {
-                List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
-                    .accountId(accountId)
-                    .dbId(fromDbId)
-                    .status(orderStatus)
-                    .type(OrderType.BUY.ordinal())
-                    .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.DB_ID)
-                    .sortOrder(DBSortOrder.ASC)
-                    .build());
+        for (int i = 0; i < AMOUNT_ITERATIONS_FOR_ACCOUNT; i++) {
+            List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
+                .accountId(accountId)
+                .dbId(fromDbId)
+                .status(orderStatus)
+                .type(OrderType.BUY.ordinal())
+                .limit(ORDERS_SELECT_SIZE)
+                .sortBy(DexOrderSortBy.DB_ID)
+                .sortOrder(DBSortOrder.ASC)
+                .build());
 
-                for (DexOrder order : orders) {
-                    try {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order);
-                    } catch (AplException.ExecutiveProcessException e) {
-                        wasException = true;
-                        log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
-                    } catch (Exception e){
-                        wasException = true;
-                        log.error(e.getMessage(), e);
+            for (DexOrder order : orders) {
+                try {
+                    String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+                    if(dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                        dexService.refundEthPaxFrozenMoney(passphrase, order, false);
                     }
+                } catch (AplException.ExecutiveProcessException e) {
+                    wasException = true;
+                    log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                } catch (Exception e){
+                    wasException = true;
+                    log.error(e.getMessage(), e);
+                }
 
-                    fromDbId = order.getDbId();
-                    if(!wasException){
-                        lastSuccessOrder = order;
-                    }
-                }
-                if (orders.size() < ORDERS_SELECT_SIZE) {
-                    break;
+                fromDbId = order.getDbId();
+                if(!wasException){
+                    lastSuccessOrder = order;
                 }
             }
-            if (lastSuccessOrder!=null && (orderHeightId == null || orderHeightId.getDbId() < lastSuccessOrder.getDbId())) {
-                synchronized (cash) {
-                    cash.put(accountId, new OrderHeightId(lastSuccessOrder.getDbId(), lastSuccessOrder.getHeight()));
-                }
+            if (orders.size() < ORDERS_SELECT_SIZE) {
+                break;
             }
-        } catch (NotValidTransactionException ex) {
-            log.warn(ex.getMessage());
+        }
+        if (lastSuccessOrder!=null && (orderHeightId == null || orderHeightId.getDbId() < lastSuccessOrder.getDbId())) {
+            synchronized (cache) {
+                cache.put(accountId, new OrderHeightId(lastSuccessOrder.getDbId()));
+            }
         }
     }
 
@@ -856,36 +855,9 @@ public class DexOrderProcessor {
         }
     }
 
-
-    public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        rollbackCachedOrderDbIds(block.getHeight());
-    }
-
-    private void rollbackCachedOrderDbIds(int height) {
-        CompletableFuture.runAsync(() -> {
-            synchronized (accountCancelOrderMap) {
-                rollbackToHeight(height, accountCancelOrderMap);
-                rollbackToHeight(height, accountExpiredOrderMap);
-            }
-        });
-    }
-
-    public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        rollbackCachedOrderDbIds(block.getHeight());
-    }
-
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
         validator.validate(tx);
         dexService.broadcast(tx);
     }
 
-    private void rollbackToHeight(int height, Map<Long, OrderHeightId> cash) {
-        Set<Long> rolledBackAccountIdsCancell = accountCancelOrderMap.entrySet()
-                .stream()
-                .filter(e -> e.getValue().getHeight() >= height)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-
-        rolledBackAccountIdsCancell.forEach(cash::remove);
-    }
 }
