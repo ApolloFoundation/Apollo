@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -45,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -836,9 +836,9 @@ public class DexOrderProcessor {
                     EthDepositsWithOffset withOffset;
                     do  {
                         withOffset = dexService.getUserActiveDeposits(address, offset, CONTRACT_FETCH_SIZE);
-                        List<UserEthDepositInfo> deposits = withOffset.getDeposits();
+                        List<EthDepositInfo> deposits = withOffset.getDeposits();
                         offset = withOffset.getOffset();
-                        for (UserEthDepositInfo deposit : deposits) {
+                        for (EthDepositInfo deposit : deposits) {
                             DexOrder order = dexService.getOrder(deposit.getOrderId());
                             if (order == null) {
                                 long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();

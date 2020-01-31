@@ -19,11 +19,12 @@
  */
 package com.apollocurrency.aplwallet.apl.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.41.9");
+    public static final Version VERSION = new Version("1.41.10");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -175,6 +176,9 @@ public final class Constants {
     public static String ETH_GAS_INFO_URL = "https://ethgasstation.info/json/ethgasAPI.json";
 
     public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
+    //TODO calculate this value on the future.
+    public static BigDecimal DEX_MIN_ETH_FEE = BigDecimal.valueOf(0.002);
 
     //168h
     public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;

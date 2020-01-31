@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserEthDepositInfo {
+public class EthDepositInfo {
     private Long orderId;
 
     private BigDecimal amount;

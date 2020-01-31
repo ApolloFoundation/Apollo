@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionEx
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.ExpiredSwapMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.UserAddressesMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -289,6 +291,15 @@ public class DexSmartContractService {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
             return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user).sendAsync().get());
+        } catch (Exception e) {
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+    public UserAddressesWithOffset getUserAddresses(long offset, long limit) throws AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            return UserAddressesMapper.map(dexContract.getUsersList(offset, limit).sendAsync().get());
         } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
