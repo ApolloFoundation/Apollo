@@ -51,27 +51,27 @@ public class DexCloseOrderTransaction extends DEX {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) tx.getAttachment();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
         if (dexContract == null) {
-            throw new AplException.NotValidException("Contract does not exists, id - " + attachment.getContractId());
+            throw new AplException.NotCurrentlyValidException("Contract does not exists, id - " + attachment.getContractId());
         }
         if (dexContract.getRecipient() != tx.getSenderId() && dexContract.getSender() != tx.getSenderId()) {
-            throw new AplException.NotValidException("Account " + tx.getSenderId() + " is not a participant of the contract, id - " + dexContract.getId());
+            throw new AplException.NotCurrentlyValidException("Account " + tx.getSenderId() + " is not a participant of the contract, id - " + dexContract.getId());
         }
         if (dexContract.getContractStatus() != ExchangeContractStatus.STEP_3) {
-            throw new AplException.NotValidException("Wrong contract status, expected STEP_3, got " + dexContract.getContractStatus());
+            throw new AplException.NotCurrentlyValidException("Wrong contract status, expected STEP_3, got " + dexContract.getContractStatus());
         }
         long orderId = dexContract.getSender() == tx.getSenderId() ? dexContract.getOrderId() : dexContract.getCounterOrderId();
         DexOrder order = dexService.getOrder(orderId);
         if (order == null) {
-            throw new AplException.NotValidException("Order with id " + attachment.getContractId() + " does not exists");
+            throw new AplException.NotCurrentlyValidException("Order with id " + attachment.getContractId() + " does not exists");
         }
         if (order.getAccountId() != tx.getSenderId()) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("orderId", "You can close only your orders.")));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderId", "You can close only your orders.")));
         }
         if (order.getType() == OrderType.BUY) {
-            throw new AplException.NotValidException("APL buy orders are closing automatically");
+            throw new AplException.NotCurrentlyValidException("APL buy orders are closing automatically");
         }
         if (!order.getStatus().isWaitingForApproval()) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but: " + order.getStatus().name())));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but: " + order.getStatus().name())));
         }
     }
 
