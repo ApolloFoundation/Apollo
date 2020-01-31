@@ -86,8 +86,9 @@ public class DexOrderProcessor {
     private static final String ETH_SWAP_DESCRIPTION_FORMAT = "Account %s initiate atomic swap '%s' with %s under contract %d";
     private static final String ETH_SWAP_S1_DETAILS_FORMAT = "secretHash:%s;encryptedSecret:%s";
     private static final String ETH_SWAP_S2_DETAILS_FORMAT = "secretHash:%s";
-    private static final int ORDERS_SELECT_SIZE = 30;
+    private static final int ORDERS_SELECT_SIZE = 50;
     private static final int CONTRACT_FETCH_SIZE = 50;
+    private static final int AMOUNT_ITERATIONS_FOR_ACCOUNT = 5;
     public static final int DEFAULT_DEX_OFFER_PROCESSOR_DELAY = 3 * 60; // 3 min in seconds
     public static final int MIN_DEX_OFFER_PROCESSOR_DELAY = 15; // 15 sec
 
@@ -741,82 +742,59 @@ public class DexOrderProcessor {
     }
 
     void processCancelOrders(Long accountId) {
-        try {
-            String passphrase = secureStorageService.getUserPassPhrase(accountId);
-            OrderHeightId orderHeightId;
-            synchronized (accountCancelOrderMap) {
-                orderHeightId = accountCancelOrderMap.get(accountId);
-            }
-            long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
-            int orderHeight = 0;
-            while (true) {
-                List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
-                        .accountId(accountId)
-                        .dbId(fromDbId)
-                        .status(OrderStatus.CANCEL)
-                        .type(OrderType.BUY.ordinal())
-                        .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.DB_ID)
-                    .sortOrder(DBSortOrder.ASC)
-                        .build());
-                for (DexOrder order : orders) {
-                    fromDbId = order.getDbId();
-                    orderHeight = order.getHeight();
-                    try {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order);
-                    } catch (AplException.ExecutiveProcessException e) {
-                        log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
-                    }
-                }
-                if (orders.size() < ORDERS_SELECT_SIZE) {
-                    break;
-                }
-            }
-            if (orderHeight != 0) {
-                synchronized (accountCancelOrderMap) {
-                    accountCancelOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
-                }
-            }
-        } catch (NotValidTransactionException ex) {
-            log.warn(ex.getMessage());
-        }
+        refundUserEthPax(accountId, OrderStatus.CANCEL, accountCancelOrderMap);
     }
 
     void processExpiredOrders(Long accountId) {
+        refundUserEthPax(accountId, OrderStatus.EXPIRED, accountCancelOrderMap);
+    }
+
+    private void refundUserEthPax(Long accountId, OrderStatus orderStatus, Map<Long, OrderHeightId> cash){
         try {
-            String passphrase = secureStorageService.getUserPassPhrase(accountId);
             OrderHeightId orderHeightId;
-            synchronized (accountExpiredOrderMap) {
-                orderHeightId = accountExpiredOrderMap.get(accountId);
+            synchronized (cash) {
+                orderHeightId = cash.get(accountId);
             }
+
+            String passphrase = secureStorageService.getUserPassPhrase(accountId);
             long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
-            int orderHeight = 0;
-            while (true) {
+            DexOrder lastSuccessOrder = null;
+            boolean wasException = false;
+
+            for (int i = 0; i < AMOUNT_ITERATIONS_FOR_ACCOUNT; i++) {
                 List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
-                        .accountId(accountId)
-                        .dbId(fromDbId)
-                        .status(OrderStatus.EXPIRED)
-                        .type(OrderType.BUY.ordinal())
-                        .limit(ORDERS_SELECT_SIZE)
+                    .accountId(accountId)
+                    .dbId(fromDbId)
+                    .status(orderStatus)
+                    .type(OrderType.BUY.ordinal())
+                    .limit(ORDERS_SELECT_SIZE)
                     .sortBy(DexOrderSortBy.DB_ID)
                     .sortOrder(DBSortOrder.ASC)
-                        .build());
+                    .build());
+
                 for (DexOrder order : orders) {
-                    fromDbId = order.getDbId();
-                    orderHeight = order.getHeight();
                     try {
                         dexService.refundEthPaxFrozenMoney(passphrase, order);
                     } catch (AplException.ExecutiveProcessException e) {
-                        log.info("Unable to refund expired order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                        wasException = true;
+                        log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                    } catch (Exception e){
+                        wasException = true;
+                        log.error(e.getMessage(), e);
+                    }
+
+                    fromDbId = order.getDbId();
+                    if(!wasException){
+                        lastSuccessOrder = order;
                     }
                 }
                 if (orders.size() < ORDERS_SELECT_SIZE) {
                     break;
                 }
             }
-            if (orderHeight != 0) {
-                synchronized (accountExpiredOrderMap) {
-                    accountExpiredOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
+            if (lastSuccessOrder!=null && (orderHeightId == null || orderHeightId.getDbId() < lastSuccessOrder.getDbId())) {
+                synchronized (cash) {
+                    cash.put(accountId, new OrderHeightId(lastSuccessOrder.getDbId(), lastSuccessOrder.getHeight()));
                 }
             }
         } catch (NotValidTransactionException ex) {
