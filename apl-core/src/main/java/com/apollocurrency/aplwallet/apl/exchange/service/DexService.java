@@ -451,14 +451,16 @@ public class DexService {
         }
     }
 
-    public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
+    public String refundEthPaxFrozenMoney(String passphrase, DexOrder order, boolean check) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.requireEthOrPaxRefundable(order);
 
         //Check if deposit exist.
-        String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-        if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
-            log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
-            return "";
+        if(check) {
+            String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+            if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
+                return "";
+            }
         }
 
         String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null);
