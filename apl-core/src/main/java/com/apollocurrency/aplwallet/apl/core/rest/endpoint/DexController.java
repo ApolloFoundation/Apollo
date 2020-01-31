@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.AdminSecured;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -618,6 +619,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
         responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
             content = @Content(mediaType = "application/json")))
+    @AdminSecured
     public Response getAllUsers() {
         List<String> addresses;
         try {
@@ -634,6 +636,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
         responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
             content = @Content(mediaType = "application/json")))
+    @AdminSecured
     public Response getAllUsersFilledOrders() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
@@ -651,6 +654,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
         responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
             content = @Content(mediaType = "application/json")))
+    @AdminSecured
     public Response getAllUsersExpiredSwaps() {
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
         try {
@@ -669,6 +673,7 @@ public class DexController {
     @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
         responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
             content = @Content(mediaType = "application/json")))
+    @AdminSecured
     public Response getAllUsersActiveDeposits() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
