@@ -14,6 +14,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -26,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
+import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventData;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
@@ -68,6 +71,8 @@ public class UpdaterCoreTest {
     private UpdateTransactionVerifier transactionVerifier;
     @Mock
     UpdaterMediator updaterMediator;
+    @Mock
+    private Event<StartUpdateEventData> startUpdateEvent;
 
     private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
 
@@ -94,7 +99,8 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
 
         UpdaterCore spy = spy(updaterCore);
 
@@ -113,7 +119,8 @@ public class UpdaterCoreTest {
         when(updaterService.getLast()).thenReturn(updateTransaction);
         when(transactionVerifier.process(mockTransaction)).thenReturn(new UpdateData(attachment, mockTransaction.getId(), decryptedUrl));
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier,updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -126,7 +133,8 @@ public class UpdaterCoreTest {
     @Test
     public void testInitNullUpdateTransaction() throws Exception {
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -143,7 +151,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
 
         spy.init();
@@ -161,7 +170,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
@@ -181,7 +191,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(new Version("1.0.7"));
 
@@ -198,7 +209,8 @@ public class UpdaterCoreTest {
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
-        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance, updaterFactory, transactionVerifier, updateInfo);
+        UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
+            updaterFactory, transactionVerifier, updateInfo, startUpdateEvent);
         UpdaterCore spy = spy(updaterCore);
         when(updaterMediatorInstance.getWalletVersion()).thenReturn(attachment.getAppVersion());
 
@@ -217,7 +229,7 @@ public class UpdaterCoreTest {
         UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
         UpdateInfo updateInfo = new UpdateInfo();
         UpdaterCore updaterCore = new UpdaterCoreImpl(updaterService, updaterMediatorInstance,
-                transactionVerifier, updateInfo);
+                transactionVerifier, updateInfo, startUpdateEvent);
         doReturn(new UpdateTransaction(mockTransaction.getId(), false)).when(updaterService).getLast();
         doReturn(updateData).when(transactionVerifier).process(mockTransaction);
         UpdaterCore spy = spy(updaterCore);
