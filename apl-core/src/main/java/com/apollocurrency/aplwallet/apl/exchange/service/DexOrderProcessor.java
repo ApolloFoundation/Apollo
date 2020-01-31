@@ -746,7 +746,7 @@ public class DexOrderProcessor {
     }
 
     void processExpiredOrders(Long accountId) {
-        refundUserEthPax(accountId, OrderStatus.EXPIRED, accountCancelOrderMap);
+        refundUserEthPax(accountId, OrderStatus.EXPIRED, accountExpiredOrderMap);
     }
 
     private void refundUserEthPax(Long accountId, OrderStatus orderStatus, Map<Long, OrderHeightId> cash){
