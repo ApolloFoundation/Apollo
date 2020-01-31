@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface SecureStorageService {
 
+    static final String SECURE_STORE_KEY = "secure_store_key";
+
     /**
      * Add user passPhrase to the storage.
      */
@@ -42,8 +44,7 @@ public interface SecureStorageService {
      * Create private key for application.
      */
     String createPrivateKeyForStorage() throws AplException.ExecutiveProcessException;
-   
-    
+
     /**
      * Flushing keys after decentralized exchange routine
      * @param accountID   id of the corresponding account
@@ -51,7 +52,6 @@ public interface SecureStorageService {
      * @return flag whether the corresponding pair was found
      */
     boolean flushAccountKeys(Long accountID, String passPhrase);
-
 
     boolean isEnabled();
 }
