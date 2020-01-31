@@ -299,7 +299,7 @@ public class DexSmartContractService {
     public UserAddressesWithOffset getUserAddresses(long offset, long limit) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            return UserAddressesMapper.map(dexContract.getUserFilledOrders(offset, limit).sendAsync().get());
+            return UserAddressesMapper.map(dexContract.getUsersList(offset, limit).sendAsync().get());
         } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }

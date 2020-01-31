@@ -283,7 +283,7 @@ public class DexContract extends Contract {
             });
     }
 
-    public RemoteCall<Tuple2<List<String>, BigInteger>> getUserFilledOrders(long offset, long limit) throws IOException {
+    public RemoteCall<Tuple2<List<String>, BigInteger>> getUsersList(long offset, long limit) throws IOException {
         final Function function = new Function(FUNC_GET_USERS_LIST,
             Arrays.asList(new Uint256(offset), new Uint256(limit)),
             Arrays.asList(new TypeReference<DynamicArray<Address>>() {
