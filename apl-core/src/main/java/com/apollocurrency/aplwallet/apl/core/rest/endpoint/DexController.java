@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -80,7 +81,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -211,16 +211,7 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-            if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                if (!EthUtil.isAddressValid(order.getFromAddress())) {
-                    return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
-                }
-                try {
-                    Convert.parseAccountId(order.getToAddress());
-                } catch (Exception ex){
-                    return Response.ok(JSON.toString(incorrect("toAddress", " is not valid."))).build();
-                }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
+            if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
                 try {
                     if (!Convert2.rsAccount(account.getId()).equals(order.getFromAddress())) {
                         return Response.ok(JSON.toString(incorrect("fromAddress", "You can use only your address."))).build();
@@ -237,14 +228,34 @@ public class DexController {
             //If we should freeze APL
             if (order.getType().isSell()) {
                 if (account.getUnconfirmedBalanceATM() < order.getOrderAmount()) {
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.APL).build();
                 }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), order.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
 
-                if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getToAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+
+            } else if (order.getPairCurrency().isEth() && order.getType().isBuy()) {
+                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amount == null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.ETH).build();
+                }
+
+                if (amount.compareTo(EthUtil.etherToWei(haveToPay.add(Constants.DEX_MIN_ETH_FEE))) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+            } else if (order.getPairCurrency().isPax() && order.getType().isBuy()) {
+                BigInteger amountPax = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.PAX);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amountPax == null || amountPax.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.PAX).build();
+                }
+
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
             }
 
@@ -257,13 +268,10 @@ public class DexController {
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                return Response.ok(JSON.toString(JSONResponses.error("Validation exception"))).build();
             } catch (AplException.ThirdServiceIsNotAvailable e) {
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
-            } catch (ExecutionException e) {
-                log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             } catch (Exception e) { // should catch NotSufficientFundsException and NotValidTransactionException, etc
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
