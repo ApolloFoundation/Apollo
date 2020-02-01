@@ -29,12 +29,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -109,7 +107,7 @@ class AccountLeaseDaoTest {
 
     @Test
     void getLeaseChangingAccounts() {
-        List<AccountLease> accounts = toList(table.getLeaseChangingAccountsOnExactlyHeight(testData.ACC_LEAS_0.getHeight()));
+        List<AccountLease> accounts = table.getLeaseChangingAccountsOnExactlyHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()
                 .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom()==testData.ACC_LEAS_0.getHeight()
                         || accountLease.getCurrentLeasingHeightTo()==testData.ACC_LEAS_0.getHeight())

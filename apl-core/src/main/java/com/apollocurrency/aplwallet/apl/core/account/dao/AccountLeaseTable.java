@@ -4,7 +4,6 @@
 package com.apollocurrency.aplwallet.apl.core.account.dao;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
@@ -95,7 +94,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             rc=super.rollback(height);
             log.trace("--lease-- rollback removed Lease count={}", rc);
             if (rc > 0){
-                List<AccountLease> accountLeaseList = toList(getLeaseChangingAccountsByInterval(height));
+                List<AccountLease> accountLeaseList = getLeaseChangingAccountsByInterval(height);
                 for(AccountLease lease: accountLeaseList){
                     if (log.isTraceEnabled()){
                         log.trace("--lease-- rollback Update account.activeLeaseId lessorId={} leaseId={} ",
@@ -118,7 +117,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         return getCount();
     }
 
-    public DbIterator<AccountLease> getLeaseChangingAccountsOnExactlyHeight(final int height) {
+    public List<AccountLease> getLeaseChangingAccountsOnExactlyHeight(final int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(
@@ -129,14 +128,15 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             int i = 0;
             pstmt.setInt(++i, height);
             pstmt.setInt(++i, height);
-            return getManyBy(con, pstmt, true);
+            List<AccountLease> resultList = toList(getManyBy(con, pstmt, true));
+            return resultList;
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
-    public DbIterator<AccountLease> getLeaseChangingAccountsByInterval(final int height) {
+    public List<AccountLease> getLeaseChangingAccountsByInterval(final int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(
@@ -146,7 +146,8 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
             int i = 0;
             pstmt.setInt(++i, height);
             pstmt.setInt(++i, height);
-            return getManyBy(con, pstmt, true);
+            List<AccountLease> resultList = toList(getManyBy(con, pstmt, true));
+            return resultList;
         }
         catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

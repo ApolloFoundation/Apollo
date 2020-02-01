@@ -21,7 +21,6 @@ import javax.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
-import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -84,7 +83,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
 
     @Override
     public List<AccountLease> getLeaseChangingAccountsOnExactlyHeight(int height) {
-        return toList(accountLeaseTable.getLeaseChangingAccountsOnExactlyHeight(height));
+        return accountLeaseTable.getLeaseChangingAccountsOnExactlyHeight(height);
     }
 
     @Override
