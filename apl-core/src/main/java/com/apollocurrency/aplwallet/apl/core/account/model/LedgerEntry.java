@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +18,7 @@ import java.util.Objects;
 /**
  * Ledger entry
  */
+@ToString(callSuper = true)
 @Getter @Setter
 public class LedgerEntry extends DerivedEntity {
     /** Ledger identifier */
@@ -122,7 +124,6 @@ public class LedgerEntry extends DerivedEntity {
         change += amount;
     }
 
-
     /**
      * Return the hash code
      *
@@ -143,5 +144,4 @@ public class LedgerEntry extends DerivedEntity {
     public boolean equals(Object obj) {
         return (obj instanceof LedgerEntry) && accountId == ((LedgerEntry) obj).accountId && event == ((LedgerEntry) obj).event && eventId == ((LedgerEntry) obj).eventId && holding == ((LedgerEntry) obj).holding && (Objects.equals(holdingId, ((LedgerEntry) obj).holdingId));
     }
-    
 }

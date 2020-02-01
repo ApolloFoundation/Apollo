@@ -109,7 +109,7 @@ class AccountLeaseDaoTest {
 
     @Test
     void getLeaseChangingAccounts() {
-        List<AccountLease> accounts = toList(table.getLeaseChangingAccounts(testData.ACC_LEAS_0.getHeight()));
+        List<AccountLease> accounts = toList(table.getLeaseChangingAccountsOnExactlyHeight(testData.ACC_LEAS_0.getHeight()));
         List<AccountLease> expected = testData.ALL_LEASE.stream()
                 .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom()==testData.ACC_LEAS_0.getHeight()
                         || accountLease.getCurrentLeasingHeightTo()==testData.ACC_LEAS_0.getHeight())

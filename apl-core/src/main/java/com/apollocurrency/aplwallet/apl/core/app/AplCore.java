@@ -21,20 +21,17 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountRestrictions;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountLedgerTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountPropertyTable;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
-import com.apollocurrency.aplwallet.apl.core.monetary.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -110,6 +107,9 @@ public final class AplCore {
     @Inject
     @Setter
     TableRegistryInitializer tableRegistryInitializer;
+    @Inject
+    @Setter
+    DerivedTablesRegistry dbRegistry;
 
     public AplCore() {
         time = CDI.current().select(TimeService.class).get();
@@ -230,16 +230,9 @@ public final class AplCore {
                 blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
                 blockchain = CDI.current().select(BlockchainImpl.class).get();
                 peers.init();
-                transactionProcessor.init();
                 GenesisAccounts.init();
-                AccountRestrictions.init();
+
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  55.0, "Apollo Account ledger initialization");
-                Alias.init();
-                Asset.init();
-                Order.init();
-                Poll.init();
-                Trade.init();
-                AssetTransfer.init(databaseManager);
 
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  60.0, "Apollo Account ledger initialization done");
                 aplAppStatus.durableTaskUpdate(initCoreTaskID,  61.0, "Apollo Peer services initialization started");

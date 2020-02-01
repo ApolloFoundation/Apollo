@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
-
+@ToString(callSuper = true)
 @Getter @Setter
 public final class AccountLease extends VersionedDerivedEntity {
 
@@ -27,7 +28,7 @@ public final class AccountLease extends VersionedDerivedEntity {
     long nextLesseeId;
     int nextLeasingHeightFrom;
     int nextLeasingHeightTo;
-    
+
     public AccountLease(long lessorId, int currentLeasingHeightFrom, int currentLeasingHeightTo, long currentLesseeId, int height) {
         super(null, height);
         this.lessorId = lessorId;
@@ -47,5 +48,5 @@ public final class AccountLease extends VersionedDerivedEntity {
         this.nextLesseeId = rs.getLong("next_lessee_id");
         setDbKey(dbKey);
     }
-    
+
 }

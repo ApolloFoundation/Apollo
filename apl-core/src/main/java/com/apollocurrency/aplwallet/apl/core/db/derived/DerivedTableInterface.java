@@ -16,7 +16,7 @@ import java.sql.SQLException;
  */
 public interface DerivedTableInterface<T> {
 
-    void rollback(int height);
+    int rollback(int height);
 
     /**
      * @return true, when this table is not a part of blockchain core data and can be reverted and re-populated
