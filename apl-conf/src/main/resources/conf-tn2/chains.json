@@ -19,7 +19,7 @@
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeight": 750000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
     },
     "blockchainProperties": [
       {
