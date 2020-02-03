@@ -48,21 +48,26 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthDepositsInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthExpiredSwaps;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
@@ -74,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -88,7 +94,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -115,6 +120,7 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private DexConfig dexConfig;
 
+    private Integer MAX_PAGES_FOR_SEARCH = 10;
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
@@ -445,14 +451,16 @@ public class DexService {
         }
     }
 
-    public String refundEthPaxFrozenMoney(String passphrase, DexOrder order) throws AplException.ExecutiveProcessException {
+    public String refundEthPaxFrozenMoney(String passphrase, DexOrder order, boolean check) throws AplException.ExecutiveProcessException {
         DexCurrencyValidator.requireEthOrPaxRefundable(order);
 
         //Check if deposit exist.
-        String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
-        if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
-            log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
-            return "";
+        if(check) {
+            String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+            if (!dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                log.warn("Eth/Pax deposit is not exist. Perhaps refund process was called before. OrderId: {}", order.getId());
+                return "";
+            }
         }
 
         String txHash = dexSmartContractService.withdraw(passphrase, order.getAccountId(), order.getFromAddress(), new BigInteger(Long.toUnsignedString(order.getId())), null);
@@ -663,7 +671,7 @@ public class DexService {
     }
 
     @Transactional
-    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException, ExecutionException {
+    public JSONStreamAware createOffer(CustomRequestWrapper requestWrapper, Account account, DexOrder order) throws ParameterException, AplException.ExecutiveProcessException, AplException.ValidationException {
         DexOrder counterOffer = dexMatcherService.findCounterOffer(order);
         String freezeTx = null;
         JSONStreamAware response = new JSONObject();
@@ -700,6 +708,7 @@ public class DexService {
             order.setId(orderTx.getId());
         }
 
+        //Freeze ETH or PAX
         if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
             String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(requestWrapper, true));
             freezeTx = freezeEthPax(passphrase, order);
@@ -925,6 +934,47 @@ public class DexService {
         return dexSmartContractService.getUserFilledOrders(user, offset, limit);
     }
 
+    //TODO implement some abstract function to download all data.
+    public List<EthDepositInfo> getAllUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
+        List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
+            EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
+            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
+                break;
+            }
+            ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
+
+            if (ethDepositsWithOffset.getDeposits().size() < limit) {
+                break;
+            }
+            offset += limit;
+        }
+        return ethDepositInfos;
+    }
+
+    public List<EthDepositInfo> getAllUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
+        List<EthDepositInfo> ethDepositInfos = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
+            EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
+            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
+                break;
+            }
+            ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
+
+            if (ethDepositsWithOffset.getDeposits().size() < limit) {
+                break;
+            }
+            offset += limit;
+        }
+        return ethDepositInfos;
+    }
+
     public List<ExchangeContract> getContractsByAccountOrderWithStatus(long accountId, long orderId, byte status) {
         return dexContractDao.getAllForAccountOrder(accountId, orderId, status, status);
     }
@@ -936,5 +986,77 @@ public class DexService {
     public List<ExchangeContract> getVersionedContractsByAccountOrder(long accountId, long orderId) {
         return dexContractDao.getAllVersionedForAccountOrder(accountId, orderId, 0, ExchangeContractStatus.values().length - 1);
     }
+
+    public List<String> getAllUsers() throws AplException.ExecutiveProcessException {
+        List<String> addresses = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+
+        for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
+            UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
+            if (CollectionUtils.isEmpty(userAddressesWithOffset.getAddresses())) {
+                break;
+            }
+            addresses.addAll(userAddressesWithOffset.getAddresses());
+
+            if (userAddressesWithOffset.getAddresses().size() < limit) {
+                break;
+            }
+            offset += limit;
+        }
+
+        return addresses;
+    }
+
+    public List<AddressEthDepositsInfo> getAllFilledOrders() throws AplException.ExecutiveProcessException {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<EthDepositInfo> ethDepositInfos = getAllUserFilledOrders(address);
+                addressEthDepositsInfos.add(new AddressEthDepositsInfo(address, ethDepositInfos));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+
+        }
+
+        return addressEthDepositsInfos;
+    }
+
+    public List<AddressEthExpiredSwaps> getAllExpiredSwaps() throws AplException.ExecutiveProcessException {
+        List<AddressEthExpiredSwaps> addressEthExpiredSwaps = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);
+                addressEthExpiredSwaps.add(new AddressEthExpiredSwaps(address, expiredSwaps));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+        }
+
+        return addressEthExpiredSwaps;
+    }
+
+    public List<AddressEthDepositsInfo> getAllActiveDeposits() throws AplException.ExecutiveProcessException {
+        List<AddressEthDepositsInfo> addressEthExpiredSwaps = new ArrayList<>();
+        List<String> addresses = getAllUsers();
+
+        for (String address : addresses) {
+            try {
+                List<EthDepositInfo> expiredSwaps = getAllUserActiveDeposits(address);
+                addressEthExpiredSwaps.add(new AddressEthDepositsInfo(address, expiredSwaps));
+            } catch (Exception ex) {
+                log.warn(ex.getMessage());
+            }
+        }
+
+        return addressEthExpiredSwaps;
+    }
+
+
 
 }
