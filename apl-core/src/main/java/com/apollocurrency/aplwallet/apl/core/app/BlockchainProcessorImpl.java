@@ -1050,9 +1050,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
-                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
-                    dexService.processWaitingPhasingOrders(block.getTimestamp());
-                }
             } catch (AplException.ExecutiveProcessException e) {
                 log.error(e.toString(), e);
                 throw new RuntimeException(e.getMessage(), e);
