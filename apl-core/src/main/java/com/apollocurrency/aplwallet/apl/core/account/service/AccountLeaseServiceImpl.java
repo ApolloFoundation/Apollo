@@ -43,15 +43,21 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     }
 
     public void onLeaseStarted(@Observes @AccountEvent(AccountEventType.LEASE_STARTED) AccountLease accountLease ){
-        log.trace("--lease-- Catch event (LEASE_STARTED) lessor={}", accountLease);
+        if(log.isTraceEnabled()) {
+            log.trace("--lease-- Catch event (LEASE_STARTED) lessor={} at height {}", accountLease, blockchain.getHeight());
+        }
     }
 
     public void onLeaseEnded(@Observes @AccountEvent(AccountEventType.LEASE_ENDED) AccountLease accountLease ){
-        log.trace("--lease-- Catch event (LEASE_ENDED) lessor={}", accountLease);
+        if(log.isTraceEnabled()) {
+            log.trace("--lease-- Catch event (LEASE_ENDED) lessor={} at height {}", accountLease, blockchain.getHeight());
+        }
     }
 
     public void onLeaseRollbackEnded(@Observes @AccountEvent(AccountEventType.LEASE_ROLLBACK_ENDED) AccountEventType event ){
-        log.trace("--lease-- Catch event (ROLLBACK_LEASE_ENDED)");
+        if(log.isTraceEnabled()) {
+            log.trace("--lease-- Catch event (ROLLBACK_LEASE_ENDED) at height {}", blockchain.getHeight());
+        }
     }
 
     @Override
@@ -109,6 +115,9 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
             accountLease.setNextLesseeId(lesseeId);
         }
         insertLease(accountLease);
+        if (log.isTraceEnabled()){
+            log.trace("--lease-- Scheduled lease AccountLease={} at height {}", accountLease, blockchain.getHeight());
+        }
         accountLeaseEvent.select(literal(AccountEventType.LEASE_SCHEDULED)).fire(accountLease);
     }
 

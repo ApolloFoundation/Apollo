@@ -84,20 +84,23 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             //TODO: Need to analyze, what statement is more suitable/effective "UPDATE account ac SET AC.ACTIVE_LESSEE_ID = null WHERE AC.ACTIVE_LESSEE_ID IS NOT NULL";
-            PreparedStatement updateStmtClear = con.prepareStatement("UPDATE ACCOUNT ac set ac.ACTIVE_LESSEE_ID = null where ac.LATEST = true and ac.ID in (select lessor_id from ACCOUNT_LEASE AL where AL.HEIGHT > ?  AND AL.LATEST=true)");
+            PreparedStatement updateStmtClear = con.prepareStatement("UPDATE ACCOUNT ac set ac.ACTIVE_LESSEE_ID = null where ac.LATEST = true and ac.ID in (select lessor_id from ACCOUNT_LEASE AL where AL.CURRENT_LEASING_HEIGHT_FROM > ?  AND AL.LATEST=true)");
             PreparedStatement updateStmtSet = con.prepareStatement("UPDATE ACCOUNT ac set ac.ACTIVE_LESSEE_ID = ? where ac.ID = ? AND ac.LATEST = TRUE ");
         ) {
             int i = 0;
             updateStmtClear.setInt(++i, height);
             rc=updateStmtClear.executeUpdate();
-            log.trace("--lease-- rollback updated Lease count={}", rc);
+            log.trace("--lease-- rollback updated Lease count={}, height={}", rc, height);
             rc=super.rollback(height);
-            log.trace("--lease-- rollback removed Lease count={}", rc);
+            log.trace("--lease-- rollback (super.rollback) removed Lease count={}, height={}", rc, height);
             if (rc > 0){
                 List<AccountLease> accountLeaseList = getLeaseChangingAccountsByInterval(height);
+                if (log.isTraceEnabled()){
+                    log.trace("--lease-- rollback found {} changed accounts", accountLeaseList.size());
+                }
                 for(AccountLease lease: accountLeaseList){
                     if (log.isTraceEnabled()){
-                        log.trace("--lease-- rollback Update account.activeLeaseId lessorId={} leaseId={} ",
+                        log.trace("--lease-- rollback Update account id={} set activeLeaseId={}",
                             lease.getLessorId(), lease.getCurrentLesseeId());
                     }
                     i = 0;

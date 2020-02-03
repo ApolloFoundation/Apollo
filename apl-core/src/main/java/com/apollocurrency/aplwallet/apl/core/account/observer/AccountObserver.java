@@ -53,10 +53,16 @@ public class AccountObserver {
             Account lessor = accountService.getAccount(lease.getLessorId());
             if (height == lease.getCurrentLeasingHeightFrom()) {
                 lessor.setActiveLesseeId(lease.getCurrentLesseeId());
+                if (log.isTraceEnabled()){
+                    log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
+                }
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
             } else if (height == lease.getCurrentLeasingHeightTo()) {
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_ENDED)).fire(lease);
                 lessor.setActiveLesseeId(0);
+                if (log.isTraceEnabled()){
+                    log.trace("--lease-- set activeLeaseId=0");
+                }
                 if (lease.getNextLeasingHeightFrom() == 0) {
                     lease.setCurrentLeasingHeightFrom(0);
                     lease.setCurrentLeasingHeightTo(0);
@@ -72,9 +78,15 @@ public class AccountObserver {
                     accountLeaseService.insertLease(lease);
                     if (height == lease.getCurrentLeasingHeightFrom()) {
                         lessor.setActiveLesseeId(lease.getCurrentLesseeId());
+                        if (log.isTraceEnabled()){
+                            log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
+                        }
                         accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
                     }
                 }
+            }
+            if (log.isTraceEnabled()){
+                log.trace("--lease-- update account, entity={}", lessor);
             }
             accountService.update(lessor);
         }
