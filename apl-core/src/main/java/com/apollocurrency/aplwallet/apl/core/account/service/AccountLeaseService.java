@@ -23,7 +23,7 @@ public interface AccountLeaseService {
 
     boolean deleteLease(AccountLease lease);
 
-    List<AccountLease> getLeaseChangingAccountsOnExactlyHeight(int height);
+    List<AccountLease> getLeaseChangingAccountsAtHeight(int height);
 
     /**
      * Lease own's forging power to another account for a fixed period of time.

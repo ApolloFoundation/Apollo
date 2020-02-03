@@ -16,6 +16,11 @@ import java.sql.SQLException;
  */
 public interface DerivedTableInterface<T> {
 
+    /**
+     * Remove all records from the derived table above the height.
+     * @param height the height
+     * @return the number of removed records
+     */
     int rollback(int height);
 
     /**

@@ -48,7 +48,7 @@ public class AccountObserver {
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
         log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block.height={}", block.getHeight());
         int height = block.getHeight();
-        List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccountsOnExactlyHeight(height);
+        List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccountsAtHeight(height);
         for (AccountLease lease : changingLeases) {
             Account lessor = accountService.getAccount(lease.getLessorId());
             if (height == lease.getCurrentLeasingHeightFrom()) {

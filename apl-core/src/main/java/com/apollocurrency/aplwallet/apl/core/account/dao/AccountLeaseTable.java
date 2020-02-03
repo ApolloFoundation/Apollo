@@ -76,10 +76,14 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         }
     }
 
+    /**
+     * Remove records in account_lease table above the height.
+     * It's crucial to clear the active_lease_id field in the account table during the rolling back account_lease table;
+     * Otherwise, rollback/popoff operation might lead to 'Generation signature verification failed' exception.
+     * @see com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface#rollback(int)
+     */
     @Override
     public int rollback(int height) {
-        //It's crucial to clear the active_lease_id field in the account table during the rolling back account_lease table;
-        //Otherwise, rollback/popoff operation might lead to 'Generation signature verification failed' exception.
         int rc;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
@@ -120,7 +124,7 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         return getCount();
     }
 
-    public List<AccountLease> getLeaseChangingAccountsOnExactlyHeight(final int height) {
+    public List<AccountLease> getLeaseChangingAccountsAtHeight(final int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(

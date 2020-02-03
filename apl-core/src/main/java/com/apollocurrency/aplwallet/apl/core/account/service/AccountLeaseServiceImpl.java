@@ -88,8 +88,8 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
     }
 
     @Override
-    public List<AccountLease> getLeaseChangingAccountsOnExactlyHeight(int height) {
-        return accountLeaseTable.getLeaseChangingAccountsOnExactlyHeight(height);
+    public List<AccountLease> getLeaseChangingAccountsAtHeight(int height) {
+        return accountLeaseTable.getLeaseChangingAccountsAtHeight(height);
     }
 
     @Override
