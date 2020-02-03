@@ -72,6 +72,13 @@ public interface AccountService {
         }
     }
 
+    /**
+     * Change the forged balance value and save into the data base.
+     * @param account the account
+     * @param amountATM the forged balance is increased on that value
+     */
+    void addToForgedBalanceATM(Account account, long amountATM);
+
     void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM);
 
     void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM);

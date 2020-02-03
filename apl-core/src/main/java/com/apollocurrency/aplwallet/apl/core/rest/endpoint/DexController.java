@@ -5,31 +5,34 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
-import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
-import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
-import com.apollocurrency.aplwallet.api.trading.TradingDataOutputUpdated;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.AdminSecured;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ExchangeContractToDTOConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputUpdatedToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthDepositsInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthExpiredSwaps;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -41,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -56,13 +60,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
-import org.web3j.crypto.Hash;
 
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -77,17 +84,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
-import java.util.Calendar;
-import java.util.TimeZone;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Path("/dex")
@@ -218,16 +220,7 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-            if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                if (!EthUtil.isAddressValid(order.getFromAddress())) {
-                    return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
-                }
-                try {
-                    Convert.parseAccountId(order.getToAddress());
-                } catch (Exception ex){
-                    return Response.ok(JSON.toString(incorrect("toAddress", " is not valid."))).build();
-                }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
+            if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
                 try {
                     if (!Convert2.rsAccount(account.getId()).equals(order.getFromAddress())) {
                         return Response.ok(JSON.toString(incorrect("fromAddress", "You can use only your address."))).build();
@@ -244,14 +237,34 @@ public class DexController {
             //If we should freeze APL
             if (order.getType().isSell()) {
                 if (account.getUnconfirmedBalanceATM() < order.getOrderAmount()) {
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.APL).build();
                 }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), order.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
 
-                if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getToAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+
+            } else if (order.getPairCurrency().isEth() && order.getType().isBuy()) {
+                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amount == null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.ETH).build();
+                }
+
+                if (amount.compareTo(EthUtil.etherToWei(haveToPay.add(Constants.DEX_MIN_ETH_FEE))) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+            } else if (order.getPairCurrency().isPax() && order.getType().isBuy()) {
+                BigInteger amountPax = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.PAX);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amountPax == null || amountPax.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.PAX).build();
+                }
+
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
             }
 
@@ -264,13 +277,10 @@ public class DexController {
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                return Response.ok(JSON.toString(JSONResponses.error("Validation exception"))).build();
             } catch (AplException.ThirdServiceIsNotAvailable e) {
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
-            } catch (ExecutionException e) {
-                log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             } catch (Exception e) { // should catch NotSufficientFundsException and NotValidTransactionException, etc
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
@@ -290,15 +300,17 @@ public class DexController {
             @ApiResponse(responseCode = "200", description = "Exchange offers"),
             @ApiResponse(responseCode = "200", description = "Unexpected error") })
     @PermitAll
-    public Response getOffers(  @Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
-                                @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
-                                @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
-                                @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
-                                @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
-                                @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
-                                @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
-                                @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
-                                @Context HttpServletRequest req) throws NotFoundException {
+    public Response getOffers(@Parameter(description = "Type of the offer. (BUY = 0 /SELL = 1)") @QueryParam("orderType") Byte orderType,
+                              @Parameter(description = "Criteria by Paired currency. (APL=0, ETH=1, PAX=2)") @QueryParam("pairCurrency") Byte pairCurrency,
+                              @Parameter(description = "Offer status. (Open = 0, Close = 2)") @QueryParam("status") Byte status,
+                              @Parameter(description = "User account id.") @QueryParam("accountId") String accountIdStr,
+                              @Parameter(description = "Return offers available for now. By default = false") @DefaultValue(value = "false") @QueryParam("isAvailableForNow") boolean isAvailableForNow,
+                              @Parameter(description = "Criteria by min prise.") @QueryParam("minAskPrice") BigDecimal minAskPrice,
+                              @Parameter(description = "Criteria by max prise.") @QueryParam("maxBidPrice") BigDecimal maxBidPrice,
+                              @Parameter(description = "Required order freezing status") @QueryParam("hasFrozenMoney") Boolean hasFrozenMoney,
+                              @Parameter(description = "Sorted by (PAIR_RATE , DB_ID)") @DefaultValue(value = "PAIR_RATE") @QueryParam("sortBy") DexOrderSortBy sortBy,
+                              @Parameter(description = "Sorted order (ASC, DESC)") @DefaultValue(value = "ASC") @QueryParam("sortOrder") DBSortOrder sortOrder,
+                              @Context HttpServletRequest req) throws NotFoundException {
 
         log.debug("getOrders:  orderType: {}, pairCurrency: {}, status: {}, accountIdStr: {}, isAvailableForNow: {}, minAskPrice: {}, maxBidPrice: {}", orderType, pairCurrency, status, accountIdStr, isAvailableForNow, minAskPrice, maxBidPrice);
 
@@ -348,6 +360,8 @@ public class DexController {
                 .offset(firstIndex)
                 .limit(limit)
                 .hasFrozenMoney(hasFrozenMoney)
+            .sortBy(sortBy)
+            .sortOrder(sortOrder)
                 .build();
 
         List<DexOrderWithFreezing> orders = service.getOrdersWithFreezing(dexOrderDBRequest);
@@ -571,128 +585,40 @@ public class DexController {
     }
 
     @GET
-    @Path("/history")
+    @Path("/eth-deposits")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @Operation(tags = {"dex"}, summary = "Retrieve eth/pax deposits for eth address", description = "Query eth node for deposits for specified eth address",
+        responses = @ApiResponse(description = "List of deposits with offset ", responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
     @PermitAll
-    public Response getHistoday2(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                @Parameter(description = "resolution") @QueryParam("resolution") String resolution,
-                                @Parameter(description = "from") @QueryParam("from") Integer from,
-                                @Parameter(description = "to") @QueryParam("to") Integer to,
-                                @Context HttpServletRequest req) throws NotFoundException {
+    public Response getUserActiveDeposits(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
+                                        @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
+                                        @Parameter(description = "Eth address, for which active deposits should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
 
-        log.debug("getHistory:  fsym: {}, resolution: {}, to: {}, from: {}", symbol, resolution, to, from);
-
-
-        // the date of DEX release - 30.09.. taking 25 as an upper limit
-        //1569369600
-        //Is equivalent to: 09/25/2019 @ 12:00am (UTC)
-
-        if (to <= 1569369600){
-             log.debug("flushing: ");
-            TradingDataOutputUpdated tdo = new TradingDataOutputUpdated();
-            tdo.setC(null);
-            tdo.setH(null);
-            tdo.setL(null);
-            tdo.setO(null);
-            tdo.setT(null);
-            tdo.setV(null);
-            tdo.setNextTime(null);
-            tdo.setS("no_data");
-            return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tdo) ) .build();
+        try {
+            return Response.ok(service.getUserActiveDeposits(walletAddress,offset, limit )).build();
+        } catch (AplException.ExecutiveProcessException e) {
+            return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage()).build();
         }
-
-
-        TradingDataOutputUpdated tradingDataOutputUpdated = getUpdatedDataForIntervalFromOffers(symbol,resolution,to,from,service, timeService);
-        return Response.ok( new TradingDataOutputUpdatedToDtoConverter().apply(tradingDataOutputUpdated) ) .build();
     }
 
-
     @GET
-    @Path("/symbols")
+    @Path("/eth-swaps")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get history", description = "getting history")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
+    @Operation(tags = {"dex"}, summary = "Retrieve eth/pax order swaps for eth address", description = "Query eth node for orders, which participate in atomic swaps for specified eth address",
+        responses = @ApiResponse(description = "List of swap deposits with offset ", responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
     @PermitAll
-    public Response getSymbols(   @Parameter(description = "Cryptocurrency identifier") @QueryParam("symbol") String symbol,
-                                @Context HttpServletRequest req) throws NotFoundException {
+    public Response getUsersFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
+                                         @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
+                                         @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
 
-        log.debug("getSymbols:  fsym: {}", symbol );
-        TimeZone tz = Calendar.getInstance().getTimeZone();
-        SymbolsOutputDTO symbolsOutputDTO = new SymbolsOutputDTO();
-        symbolsOutputDTO.name = symbol;
-        symbolsOutputDTO.exchange_traded = "Apollo DEX";
-        symbolsOutputDTO.exchange_listed = "Apollo DEX";
-        symbolsOutputDTO.timezone = tz.getID();
-        symbolsOutputDTO.minmov = 1;
-        symbolsOutputDTO.minmov2 = 0;
-        symbolsOutputDTO.pointvalue = 1;
-        symbolsOutputDTO.session = "24x7";
-        symbolsOutputDTO.has_intraday = true;
-        symbolsOutputDTO.has_no_volume = false;
-        symbolsOutputDTO.has_daily = true;
-        symbolsOutputDTO.description = symbol;
-        symbolsOutputDTO.type = "cryptocurrency";
-        symbolsOutputDTO.has_daily = true;
-        symbolsOutputDTO.has_empty_bars = true;
-        symbolsOutputDTO.has_weekly_and_monthly = false;
-        symbolsOutputDTO.supported_resolutions = new ArrayList<>();;
-        symbolsOutputDTO.supported_resolutions.add("15");
-        symbolsOutputDTO.supported_resolutions.add("60");
-        symbolsOutputDTO.supported_resolutions.add("240");
-        symbolsOutputDTO.supported_resolutions.add("D");
-        symbolsOutputDTO.pricescale = 1000000000;
-        symbolsOutputDTO.ticker = symbol;
+        try {
+            return Response.ok(service.getUserFilledOrders(walletAddress, offset, limit)).build();
+        } catch (AplException.ExecutiveProcessException e) {
 
-        return Response.ok( symbolsOutputDTO ) .build();
+        return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage() ) .build();}
     }
-
-    @GET
-    @Path("/time")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get time for trading vies", description = "getting time")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getTime(  ) throws NotFoundException {
-
-        Long time = System.currentTimeMillis()/1000L;
-        return Response.ok( time ) .build();
-    }
-
-
-
-    @GET
-    @Path("/config")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(tags = {"dex"}, summary = "Get configuration", description = "getting TV configuration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Exchange offers"),
-            @ApiResponse(responseCode = "200", description = "Unexpected error") })
-    public Response getConfig(  ) throws NotFoundException {
-
-        log.debug("getConfig entry point");
-        TradingViewConfigDTO tradingViewConfigDTO = new TradingViewConfigDTO();
-        tradingViewConfigDTO.supports_search = true;
-        tradingViewConfigDTO.supports_group_request = false;
-        tradingViewConfigDTO.supports_marks = false;
-        tradingViewConfigDTO.supports_timescale_marks = false;
-        tradingViewConfigDTO.supports_time = false;
-        // resolutions
-        tradingViewConfigDTO.supported_resolutions =  new ArrayList<>();
-        tradingViewConfigDTO.supported_resolutions.add("15");
-        tradingViewConfigDTO.supported_resolutions.add("60");
-        tradingViewConfigDTO.supported_resolutions.add("240");
-        tradingViewConfigDTO.supported_resolutions.add("D");
-
-        return Response.ok( tradingViewConfigDTO ) .build();
-    }
-
 
 
     @GET
@@ -701,12 +627,85 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve all versioned dex contracts for order", description = "Get all versions of dex contracts related to the specified order (including all contracts with STEP1 status and previous versions of processable contract) ",
             responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
+    @PermitAll
     public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
-                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+                                                     @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
         long accountId = Convert.parseAccountId(account);
         long orderId = Convert.parseLong(order);
         List<ExchangeContract> contracts = service.getVersionedContractsByAccountOrder(accountId, orderId);
         return Response.ok(contractConverter.convert(contracts)).build();
+    }
+
+    @GET
+    @Path("/eth/addresses")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
+        responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsers() {
+        List<String> addresses;
+        try {
+            addresses = service.getAllUsers();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        return Response.ok(addresses).build();
+    }
+
+    @GET
+    @Path("/eth/filled-orders")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
+        responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersFilledOrders() {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos;
+        try {
+            addressEthDepositsInfos = service.getAllFilledOrders();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthDepositsInfos).build();
+    }
+
+    @GET
+    @Path("/eth/expired-swaps")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
+        responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersExpiredSwaps() {
+        List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
+        try {
+            addressEthExpiredSwaps = service.getAllExpiredSwaps();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthExpiredSwaps).build();
+    }
+
+
+    @GET
+    @Path("/eth/active-deposits")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
+        responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersActiveDeposits() {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos;
+        try {
+            addressEthDepositsInfos = service.getAllActiveDeposits();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthDepositsInfos).build();
     }
 
 }

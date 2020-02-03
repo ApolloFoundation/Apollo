@@ -29,6 +29,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
 
     private static final String TABLE_NAME = "account_guaranteed_balance";
 
+    private static final String ADDITIONS_COLUMN_NAME = "additions";
+
     private final BlockchainConfig blockchainConfig;
     private final int batchCommitSize;
 
@@ -71,7 +73,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
     public Long getSumOfAdditions(long accountId, int height, int currentHeight) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS additions "
+             PreparedStatement pstmt = con.prepareStatement("SELECT SUM (additions) AS " + ADDITIONS_COLUMN_NAME + " "
                  + "FROM account_guaranteed_balance WHERE account_id = ? AND height > ? AND height <= ?")) {
             pstmt.setLong(1, accountId);
             pstmt.setInt(2, height);
@@ -80,7 +82,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
                 if (!rs.next()) {
                     return null;
                 }
-                return rs.getLong("additions");
+                return rs.getLong(ADDITIONS_COLUMN_NAME);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -92,7 +94,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
         Long[] lessorIds = lessors.toArray(new Long[]{});
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS additions "
+             PreparedStatement pstmt = con.prepareStatement("SELECT account_id, SUM (additions) AS " + ADDITIONS_COLUMN_NAME + " "
                  + "FROM account_guaranteed_balance, TABLE (id BIGINT=?) T WHERE account_id = T.id AND height > ? "
                  + (height < blockchainHeight ? " AND height <= ? " : "")
                  + " GROUP BY account_id ORDER BY account_id")
@@ -105,7 +107,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     long accountId = rs.getLong("account_id");
-                    long sum = rs.getLong("additions");
+                    long sum = rs.getLong(ADDITIONS_COLUMN_NAME);
                     lessorsAdditions.put(accountId, sum);
                 }
             }
@@ -132,7 +134,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable {
             try (ResultSet rs = pstmtSelect.executeQuery()) {
                 long additions = amountATM;
                 if (rs.next()) {
-                    additions = Math.addExact(additions, rs.getLong("additions"));
+                    additions = Math.addExact(additions, rs.getLong(ADDITIONS_COLUMN_NAME));
                 }
                 pstmtUpdate.setLong(1, accountId);
                 pstmtUpdate.setLong(2, additions);

@@ -13,15 +13,19 @@ import com.apollocurrency.aplwallet.apl.eth.web3j.DefaultRawTransactionManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.ExpiredSwapMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.UserAddressesMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
+import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -38,7 +42,7 @@ import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
-import org.web3j.tuples.generated.Tuple3;
+import org.web3j.tuples.generated.Tuple4;
 import org.web3j.tx.ChainId;
 import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
@@ -52,7 +56,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -239,19 +242,7 @@ public class DexSmartContractService {
         if (order.getType() == OrderType.SELL) {
             return true;
         }
-        try {
-            List<UserEthDepositInfo> deposits = getUserActiveDeposits(order.getFromAddress());
-            BigDecimal expectedFrozenAmount = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
-            for (UserEthDepositInfo deposit : deposits) {
-                if (deposit.getOrderId().equals(order.getId()) && deposit.getAmount().compareTo(expectedFrozenAmount) == 0) {
-                    return true;
-                }
-            }
-        }
-        catch (AplException.ExecutiveProcessException e) {
-            log.warn("Unable to extract user deposits (possible cause - eth service is not available)", e);
-        }
-        return false;
+        return isDepositForOrderExist(order.getFromAddress(), order.getId(), EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate()));
     }
 
 
@@ -275,28 +266,46 @@ public class DexSmartContractService {
     }
 
 
-    public List<UserEthDepositInfo> getUserActiveDeposits(String user) throws AplException.ExecutiveProcessException {
+    public EthDepositsWithOffset getUserActiveDeposits(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> call = dexContract.getUserActiveDeposits(user);
-            Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> callResponse = call.send();
-            return new ArrayList<>(UserEthDepositInfoMapper.map(callResponse));
+            RemoteCall<Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger>> call = dexContract.getUserActiveDeposits(user, offset, limit);
+            Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger> callResponse = call.send();
+            return UserEthDepositInfoMapper.map(callResponse);
         } catch (Exception e) {
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
     }
 
-    public List<UserEthDepositInfo> getUserFilledOrders(String user) throws AplException.ExecutiveProcessException {
-        List<UserEthDepositInfo> userDeposit = new ArrayList<>();
+    public EthDepositsWithOffset getUserFilledOrders(String user, long offset, long limit) throws AplException.ExecutiveProcessException {
         DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
         try {
-            userDeposit.addAll(UserEthDepositInfoMapper.map(dexContract.getUserFilledOrders(user).sendAsync().get()));
-            return userDeposit;
+            return UserEthDepositInfoMapper.map(dexContract.getUserFilledOrders(user, offset, limit).sendAsync().get());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new AplException.ExecutiveProcessException(e.getMessage());
         }
     }
+
+    public List<ExpiredSwap> getExpiredSwaps(String user) throws AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            return ExpiredSwapMapper.map(dexContract.getExpiredSwaps(user).sendAsync().get());
+        } catch (Exception e) {
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+    public UserAddressesWithOffset getUserAddresses(long offset, long limit) throws AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            return UserAddressesMapper.map(dexContract.getUsersList(offset, limit).sendAsync().get());
+        } catch (Exception e) {
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
+
 
 
     public boolean isDepositForOrderExist(String userAddress, Long orderId) {
@@ -308,17 +317,7 @@ public class DexSmartContractService {
     public boolean isDepositForOrderExist(String userAddress, Long orderId, BigDecimal amountEth) {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
-        return depositedOrderDetails != null && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().equals(amountEth);
-    }
-
-    public boolean isUserTransferMoney(String user, Long orderId) throws AplException.ExecutiveProcessException {
-        for (UserEthDepositInfo userInfo : getUserFilledOrders(user)) {
-            if (userInfo.getOrderId().equals(orderId)) {
-                return true;
-            }
-        }
-
-        return false;
+        return depositedOrderDetails != null && depositedOrderDetails.isCreated() && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().compareTo(amountEth) == 0;
     }
 
     public List<String> getEthUserAddresses(String passphrase, Long accountId) {
@@ -486,7 +485,7 @@ public class DexSmartContractService {
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String identifier = credentials.getAddress() + orderId.toString()  + DexTransaction.Op.INITIATE;
+        String identifier = credentials.getAddress() + Numeric.toHexString(secretHash)  + DexTransaction.Op.INITIATE;
         synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
             if (txHash == null) {

@@ -94,18 +94,20 @@ public abstract class DerivedDbTable<T> implements DerivedTableInterface<T> {
     }
 
     @Override
-    public void rollback(int height) {
+    public int rollback(int height) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
+        int rc;
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
-            pstmtDelete.executeUpdate();
+            rc = pstmtDelete.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        return rc;
     }
 
     @Override

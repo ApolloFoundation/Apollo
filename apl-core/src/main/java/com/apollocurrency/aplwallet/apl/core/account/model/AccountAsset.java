@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +16,7 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@ToString(callSuper = true)
 @Getter @Setter
 public final class AccountAsset extends VersionedDerivedEntity {
 
@@ -23,7 +25,7 @@ public final class AccountAsset extends VersionedDerivedEntity {
     long quantityATU;
     long unconfirmedQuantityATU;
 
-    
+
     public AccountAsset(long accountId, long assetId, long quantityATU, long unconfirmedQuantityATU, int height) {
         super(null, height);
         this.accountId = accountId;
@@ -41,9 +43,4 @@ public final class AccountAsset extends VersionedDerivedEntity {
         setDbKey(dbKey);
     }
 
-    @Override
-    public String toString() {
-        return "AccountAsset account_id: " + Long.toUnsignedString(accountId) + " asset_id: " + Long.toUnsignedString(assetId) + " quantity: " + quantityATU + " unconfirmedQuantity: " + unconfirmedQuantityATU;
-    }
-    
 }

@@ -51,9 +51,6 @@ import java.math.BigInteger;
 
 import static com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexApiConstants.COUNTER_ORDER_ID;
 import static com.apollocurrency.aplwallet.apl.core.rest.endpoint.DexApiConstants.ORDER_ID;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MAX_TIME_OF_ATOMIC_SWAP;
-import static com.apollocurrency.aplwallet.apl.util.Constants.DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Path("/dex")
@@ -165,7 +162,7 @@ public class DexTransactionSendingController {
     public Response sendContractStep1(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @DefaultValue("0") @FormParam("code2FA") @Min(0) @Max(999999) int code2FA,
-                                      @Parameter(description = "Amount of time to be active for contract") @FormParam("timeToReply") @Min(DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) @Max(DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY) @DefaultValue("" + DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) int timeToReply,
+                                      @Parameter(description = "Amount of time to be active for contract") @FormParam("timeToReply") @ValidAtomicSwapTime @DefaultValue("1000") int timeToReply,
                                       @Parameter(description = "Id of order, owned by sender account in PENDING status. Signed or unsigned int64/long", required = true) @FormParam("orderId") @NotBlank String orderId,
                                       @Parameter(description = "Id of order to match sender's order. Required OPEN status and opposite type. Signed or unsigned int64/long", required = true) @FormParam("counterOrderId") @NotBlank String counterOrderId,
                                       @Context HttpServletRequest req
@@ -195,7 +192,7 @@ public class DexTransactionSendingController {
     public Response sendContractStep2(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-                                      @Parameter(description = "Amount of time to be active for contract in seconds") @FormParam("timeToReply") @Min(DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) @Max(DEX_MAX_TIME_OF_ATOMIC_SWAP) @DefaultValue("" + DEX_MAX_TIME_OF_ATOMIC_SWAP) int timeToReply,
+                                      @Parameter(description = "Amount of time to be active for contract in seconds", required = true) @FormParam("timeToReply") @ValidAtomicSwapTime int timeToReply,
                                       @Parameter(description = "Id of the contract to update with a new contract transaction.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
                                       @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
                                       @Parameter(description = "64-bytes encrypted secret in the hexadecimal format", required = true) @FormParam("encryptedSecret") @NotBlank String encryptedSecret,
@@ -243,7 +240,7 @@ public class DexTransactionSendingController {
     public Response sendContractStep3(@Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
                                       @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
                                       @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-                                      @Parameter(description = "Amount of time to be active for contract in seconds") @FormParam("timeToReply") @Min(DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) @Max(DEX_MAX_TIME_OF_ATOMIC_SWAP) @DefaultValue("" + DEX_MAX_TIME_OF_ATOMIC_SWAP / 2) int timeToReply,
+                                      @Parameter(description = "Amount of time to be active for contract in seconds", required = true) @FormParam("timeToReply") @ValidAtomicSwapTime int timeToReply,
                                       @Parameter(description = "Id of the contract to update with a new contract transaction.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
                                       @Parameter(description = "Unsigned Id of apl TransferMoneyWithApproval transaction for sell order or hexadecimal hash of 'initiate' ETH transaction, sent to smart contract", required = true) @FormParam("transferTx") @NotBlank String transferTx,
                                       @Context HttpServletRequest req
@@ -280,7 +277,7 @@ public class DexTransactionSendingController {
             @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
             @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
             @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Amount of time for transaction to expire. Use twice times less duration than left in already initiated atomic swap, when no atomic swap initiated it is OK to left default.") @FormParam("atomicSwapDuration") @Min(DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) @Max(DEX_MAX_TIME_OF_ATOMIC_SWAP) @DefaultValue("" + DEX_MAX_TIME_OF_ATOMIC_SWAP) int atomicSwapDuration,
+            @Parameter(description = "Amount of time for transaction to expire. Use twice times less duration than left in already initiated atomic swap", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
             @Parameter(description = "Id of the contract to which TransferMoney transaction will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
             @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
             @Parameter(description = "Amount of atms to transfer", required = true) @FormParam("amount") @Min(0) long amountAtm,
@@ -315,7 +312,7 @@ public class DexTransactionSendingController {
             @Parameter(description = "APL account id of sender (RS, signed or unsigned int64/long)", required = true) @FormParam("sender") @NotBlank String accountString,
             @Parameter(description = "Passphrase for the vault account", required = true) @FormParam("passphrase") @NotBlank String passphrase,
             @Parameter(description = "Two factor authentication code, if 2fa is enabled") @FormParam("code2FA") @DefaultValue("0") @Min(0) @Max(999999) int code2FA,
-            @Parameter(description = "Amount of time for atomic swap to expire. Use twice times less duration than left in already initiated atomic swap, when no atomic swap initiated it is OK to left default.") @FormParam("atomicSwapDuration") @Min(DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY) @Max(DEX_MAX_TIME_OF_ATOMIC_SWAP) @DefaultValue("" + DEX_MAX_TIME_OF_ATOMIC_SWAP) int atomicSwapDuration,
+            @Parameter(description = "Amount of time for atomic swap to expire. Use twice times less duration than left in already initiated atomic swap.", required = true) @FormParam("atomicSwapDuration") @ValidAtomicSwapTime int atomicSwapDuration,
             @Parameter(description = "Id of the contract to which ETH 'atomic swap' will be linked.  Signed or unsigned int64/long", required = true) @FormParam("contractId") @NotBlank String contractId,
             @Parameter(description = "SHA-256 hash of the secret in the hexadecimal format", required = true) @FormParam("secretHash") @NotBlank String secretHash,
             @Context HttpServletRequest request

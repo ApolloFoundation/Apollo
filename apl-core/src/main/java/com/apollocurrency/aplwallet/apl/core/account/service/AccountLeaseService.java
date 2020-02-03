@@ -23,7 +23,14 @@ public interface AccountLeaseService {
 
     boolean deleteLease(AccountLease lease);
 
-    List<AccountLease> getLeaseChangingAccounts(int height);
+    List<AccountLease> getLeaseChangingAccountsAtHeight(int height);
 
+    /**
+     * Lease own's forging power to another account for a fixed period of time.
+     * When the leasing period expires, the forging power will return back automatically.
+     * @param account  it's forging power is allowed to lease
+     * @param lesseeId another account
+     * @param period a certain fixed period time
+     */
     void leaseEffectiveBalance(Account account, long lesseeId, int period);
 }

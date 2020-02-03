@@ -92,7 +92,7 @@ public class DexOrderTransaction extends DEX {
 
         int currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
     }
 

@@ -19,11 +19,12 @@
  */
 package com.apollocurrency.aplwallet.apl.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.41.7");
+    public static final Version VERSION = new Version("1.41.10");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -176,29 +177,19 @@ public final class Constants {
 
     public static BigInteger ETH_MAX_POS_INT = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
-    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP = 2 * 60 * 60;
-    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP = 48 * 60 * 60;
+    //TODO calculate this value on the future.
+    public static BigDecimal DEX_MIN_ETH_FEE = BigDecimal.valueOf(0.002);
 
-    public static final int DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP = 10;
-
-    public static final int DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MIN_TIME_OF_ATOMIC_SWAP - (DEX_MIN_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
-    public static final int DEX_MAX_TIME_OF_ATOMIC_SWAP_WITH_BIAS = DEX_MAX_TIME_OF_ATOMIC_SWAP + (DEX_MAX_TIME_OF_ATOMIC_SWAP * DEX_MAX_ALLOWED_TIME_BIAS_FOR_ATOMIC_SWAP) / 100;
-
-    //24 h
-    public static final int DEX_MIN_CONTRACT_TIME_WAITING_TO_REPLY = DEX_MIN_TIME_OF_ATOMIC_SWAP_WITH_BIAS;
     //168h
     public static final int DEX_MAX_CONTRACT_TIME_WAITING_TO_REPLY = 7 * 24 * 60 * 60;
 
     public static final int DEX_NUMBER_OF_PENDING_ORDER_CONFIRMATIONS = 1000;
-    public static final int DEX_ETH_NUMBER_OF_CONFIRMATIONS = 10; // 150 sec for 15sec blocks
-    public static final int DEX_APL_NUMBER_OF_CONFIRMATIONS = 30; // 150 sec for 5 sec blocks (average block time for 2/10 adaptive forging)
 
     public static final int DEX_GRAPH_INTERVAL_MIN = 60;
     public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
     public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
 
     public static final int HEALTH_CHECK_INTERVAL = 30*1000; //milliseconds
-
     private Constants() {
     } // never
 

@@ -76,6 +76,8 @@ public class DexContract extends Contract {
 
     public static final String FUNC_REFUND = "refund";
 
+    public static final String FUNC_GET_USERS_LIST = "getUsersList";
+
     public static final String FUNC_GETUSERDEPOSITSAMOUNT = "getUserDepositIndex";
 
     public static final String FUNC_INITIATE = "initiate";
@@ -241,44 +243,60 @@ public class DexContract extends Contract {
             });
     }
 
-    public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserActiveDeposits(String user) {
+    public RemoteCall<Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger>> getUserActiveDeposits(String user, long offset, long limit) {
         final org.web3j.abi.datatypes.Function function = new org.web3j.abi.datatypes.Function(FUNC_GETUSERACTIVEDEPOSITS,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user), new Uint256(offset), new Uint256(limit)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Uint256>>() {
+                }, new TypeReference<Uint256>() {
                 }));
-        return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
-                new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
-                    @Override
-                    public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);
-                        return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
-                                convertToNative((List<Uint256>) results.get(0).getValue()),
-                                convertToNative((List<Uint256>) results.get(1).getValue()),
-                                convertToNative((List<Uint256>) results.get(2).getValue()));
-                    }
-                });
+        return new RemoteCall<>(
+            () -> {
+                List<Type> results = executeCallMultipleValueReturn(function);
+                return new Tuple4<>(
+                    convertToNative((List<Uint256>) results.get(0).getValue()),
+                    convertToNative((List<Uint256>) results.get(1).getValue()),
+                    convertToNative((List<Uint256>) results.get(2).getValue()),
+                    (BigInteger)results.get(3).getValue()
+                    );
+            });
     }
 
-    public RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>> getUserFilledOrders(String user) {
+    public RemoteCall<Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger>> getUserFilledOrders(String user, long offset, long limit) {
         final Function function = new Function(FUNC_GETUSERFILLEDORDERS,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user)),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }, new TypeReference<DynamicArray<Uint256>>() {
-                }));
-        return new RemoteCall<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>(
-                new Callable<Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>>() {
-                    @Override
-                    public Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);
-                        return new Tuple3<List<BigInteger>, List<BigInteger>, List<BigInteger>>(
-                            convertToNative((List<Uint256>) results.get(0).getValue()),
-                            convertToNative((List<Uint256>) results.get(1).getValue()),
-                                convertToNative((List<Uint256>) results.get(2).getValue()));
-                    }
-                });
+            Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(user), new Uint256(offset), new Uint256(limit)),
+            Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
+            }, new TypeReference<DynamicArray<Uint256>>() {
+            }, new TypeReference<DynamicArray<Uint256>>() {
+            }, new TypeReference<Uint256>() {
+            }));
+        return new RemoteCall<>(
+            () -> {
+                List<Type> results = executeCallMultipleValueReturn(function);
+                return new Tuple4<>(
+                    convertToNative((List<Uint256>) results.get(0).getValue()),
+                    convertToNative((List<Uint256>) results.get(1).getValue()),
+                    convertToNative((List<Uint256>) results.get(2).getValue()),
+                    (BigInteger) results.get(3).getValue()
+                );
+            });
+    }
+
+    public RemoteCall<Tuple2<List<String>, BigInteger>> getUsersList(long offset, long limit) throws IOException {
+        final Function function = new Function(FUNC_GET_USERS_LIST,
+            Arrays.asList(new Uint256(offset), new Uint256(limit)),
+            Arrays.asList(new TypeReference<DynamicArray<Address>>() {
+            }, new TypeReference<Uint256>() {
+            }));
+
+        return new RemoteCall<>(
+            () -> {
+                List<Type> results = executeCallMultipleValueReturn(function);
+                return new Tuple2<>(
+                    convertToNative((List<Address>) results.get(0).getValue()),
+                    (BigInteger) results.get(1).getValue());
+            });
     }
 
     public RemoteCall<Tuple2<BigInteger, BigInteger>> getSwapLifetimeLimits() {
@@ -713,16 +731,13 @@ public class DexContract extends Contract {
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {
                 }, new TypeReference<DynamicArray<Bytes32>>() {
                 }));
-        return new RemoteCall<Tuple2<List<BigInteger>, List<byte[]>>>(
-                new Callable<Tuple2<List<BigInteger>, List<byte[]>>>() {
-                    @Override
-                    public Tuple2<List<BigInteger>, List<byte[]>> call() throws Exception {
-                        List<Type> results = executeCallMultipleValueReturn(function);
-                        return new Tuple2<List<BigInteger>, List<byte[]>>(
-                                convertToNative((List<Uint256>) results.get(0).getValue()),
-                                convertToNative((List<Bytes32>) results.get(1).getValue()));
-                    }
-                });
+        return new RemoteCall<>(
+            () -> {
+                List<Type> results = executeCallMultipleValueReturn(function);
+                return new Tuple2<>(
+                    convertToNative((List<Uint256>) results.get(0).getValue()),
+                    convertToNative((List<Bytes32>) results.get(1).getValue()));
+            });
     }
 
     public RemoteCall<String> getUserById(BigInteger userId) {

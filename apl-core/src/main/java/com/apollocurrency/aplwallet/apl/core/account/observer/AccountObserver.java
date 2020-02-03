@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEvent;
@@ -32,37 +31,38 @@ public class AccountObserver {
 
     private final AccountService accountService;
     private final AccountLeaseService accountLeaseService;
-    private final AccountPublicKeyService accountPublicKeyService;
     private final Event<AccountLease> accountLeaseEvent;
     private final AccountLedgerService accountLedgerService;
 
     @Inject
     public AccountObserver(AccountService accountService,
                            AccountLeaseService accountLeaseService,
-                           AccountPublicKeyService accountPublicKeyService,
                            Event<AccountLease> accountLeaseEvent,
                            AccountLedgerService accountLedgerService) {
         this.accountService = accountService;
         this.accountLeaseService = accountLeaseService;
-        this.accountPublicKeyService = accountPublicKeyService;
         this.accountLeaseEvent = accountLeaseEvent;
         this.accountLedgerService = accountLedgerService;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
-        log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block={}", block.getHeight());
+        log.trace(":accept:AccountObserver: START onBlockApplaid AFTER_BLOCK_APPLY. block.height={}", block.getHeight());
         int height = block.getHeight();
-        List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccounts(height);
+        List<AccountLease> changingLeases = accountLeaseService.getLeaseChangingAccountsAtHeight(height);
         for (AccountLease lease : changingLeases) {
             Account lessor = accountService.getAccount(lease.getLessorId());
             if (height == lease.getCurrentLeasingHeightFrom()) {
                 lessor.setActiveLesseeId(lease.getCurrentLesseeId());
-                //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
+                if (log.isTraceEnabled()){
+                    log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
+                }
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
             } else if (height == lease.getCurrentLeasingHeightTo()) {
-                //leaseListeners.notify(lease, AccountEventType.LEASE_ENDED);
                 accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_ENDED)).fire(lease);
                 lessor.setActiveLesseeId(0);
+                if (log.isTraceEnabled()){
+                    log.trace("--lease-- set activeLeaseId=0");
+                }
                 if (lease.getNextLeasingHeightFrom() == 0) {
                     lease.setCurrentLeasingHeightFrom(0);
                     lease.setCurrentLeasingHeightTo(0);
@@ -78,10 +78,15 @@ public class AccountObserver {
                     accountLeaseService.insertLease(lease);
                     if (height == lease.getCurrentLeasingHeightFrom()) {
                         lessor.setActiveLesseeId(lease.getCurrentLesseeId());
-                        //leaseListeners.notify(lease, AccountEventType.LEASE_STARTED);
+                        if (log.isTraceEnabled()){
+                            log.trace("--lease-- set activeLeaseId={}", lease.getCurrentLesseeId());
+                        }
                         accountLeaseEvent.select(AccountEventBinding.literal(AccountEventType.LEASE_STARTED)).fire(lease);
                     }
                 }
+            }
+            if (log.isTraceEnabled()){
+                log.trace("--lease-- update account, entity={}", lessor);
             }
             accountService.update(lessor);
         }

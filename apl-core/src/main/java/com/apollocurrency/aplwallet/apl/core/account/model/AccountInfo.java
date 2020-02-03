@@ -7,6 +7,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,13 +16,14 @@ import java.sql.SQLException;
  *
  * @author al
  */
+@ToString(callSuper = true)
 @Getter @Setter
 public final class AccountInfo extends VersionedDerivedEntity {
 
     final long accountId;
     String name;
     String description;
-    
+
     public AccountInfo(long accountId, String name, String description, int height) {
         super(null, height);
         this.accountId = accountId;

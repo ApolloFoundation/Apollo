@@ -40,7 +40,7 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     }
 
     public AccountCurrencyTable() {
-        super("account_currency", accountCurrencyDbKeyFactory);
+        super("account_currency", accountCurrencyDbKeyFactory, false);
     }
 
     @Override

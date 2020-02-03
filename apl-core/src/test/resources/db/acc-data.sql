@@ -110,8 +110,10 @@ INSERT INTO PUBLIC.ACCOUNT_PROPERTY
 
 INSERT INTO PUBLIC.ACCOUNT_LEASE
 (DB_ID, LESSOR_ID,  CURRENT_LEASING_HEIGHT_FROM, CURRENT_LEASING_HEIGHT_TO, CURRENT_LESSEE_ID, NEXT_LEASING_HEIGHT_FROM, NEXT_LEASING_HEIGHT_TO, NEXT_LESSEE_ID, HEIGHT, LATEST) VALUES
-(1,     100,        10000,                       11000,                     200,                0,                       0,                      0,              10000,  true),
-(2,     110,        10000,                       11000,                     210,                0,                       0,                      0,              10000,  true),
-(3,     120,        10000,                       11000,                     220,                0,                       0,                      0,              10000,  true),
-(4,     130,        8000,                        10000,                     230,                0,                       0,                      0,              8000,   true),
-(5,     140,        8000,                        9000,                      240,                0,                       0,                      0,              8000,   true);
+(1,     100,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
+(2,     110,        10000,                       11000,                     10,                0,                       0,                      0,              10000,  true),
+(3,     120,        10000,                       11000,                     20,                0,                       0,                      0,              10000,  true),
+(4,     130,        8000,                        10000,                     30,                0,                       0,                      0,              8000,   true),
+(5,     140,        8000,                        9000,                      40,                0,                       0,                      0,              7000,   false),
+(6,     140,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true),
+(7,     150,        9440,                        12440,                      50,                0,                       0,                      0,              8000,   true);

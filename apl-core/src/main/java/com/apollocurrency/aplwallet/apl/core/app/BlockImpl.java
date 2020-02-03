@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
@@ -37,6 +35,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -45,7 +44,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.enterprise.inject.spi.CDI;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public final class BlockImpl implements Block {
     private static final Logger LOG = getLogger(BlockImpl.class);
@@ -326,12 +326,14 @@ public final class BlockImpl implements Block {
     public JSONObject getJSONObject() {
         JSONObject json = new JSONObject();
         json.put("version", version);
+        json.put("stringId", stringId);
         json.put("timestamp", timestamp);
         json.put("previousBlock", Long.toUnsignedString(previousBlockId));
         json.put("totalAmountATM", totalAmountATM);
         json.put("totalFeeATM", totalFeeATM);
         json.put("payloadLength", payloadLength);
         json.put("payloadHash", Convert.toHexString(payloadHash));
+        json.put("generatorId", Long.toUnsignedString(generatorId));
         json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
         json.put("generationSignature", Convert.toHexString(generationSignature));
         json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
@@ -442,7 +444,8 @@ public final class BlockImpl implements Block {
             Account account = lookupAccountService().getAccount(getGeneratorId());
             long effectiveBalance = account == null ? 0 : lookupAccountService().getEffectiveBalanceAPL(account, blockchain.getHeight(), true);
             if (effectiveBalance <= 0) {
-                LOG.warn("Account: {} Effective ballance: {},  verification failed",account,effectiveBalance);
+                LOG.warn("Account: {} Effective ballance: {}, blockchain.height: {},  verification failed",
+                    account, effectiveBalance, blockchain.getHeight());
                 return false;
             }
 
@@ -450,8 +453,8 @@ public final class BlockImpl implements Block {
             digest.update(previousBlock.getGenerationSignature());
             byte[] generationSignatureHash = digest.digest(getGeneratorPublicKey());
             if (!Arrays.equals(generationSignature, generationSignatureHash)) {
-                LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, verification failed",
-                        account,effectiveBalance,generationSignature,generationSignatureHash);
+                LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, blockchain.height: {}, verification failed",
+                    account, effectiveBalance, generationSignature, generationSignatureHash, blockchain.getHeight());
                 return false;
             }
 
@@ -459,7 +462,8 @@ public final class BlockImpl implements Block {
 
             boolean ret = Generator.verifyHit(hit, BigInteger.valueOf(effectiveBalance), previousBlock, requireTimeout(version) ? timestamp - timeout: timestamp);
             if(!ret){
-               LOG.warn("Account: {} Effective ballance: {},  Generator.verifyHit() verification failed",account,effectiveBalance);
+               LOG.warn("Account: {} Effective ballance: {}, blockchain.height: {}, Generator.verifyHit() verification failed",
+                   account, effectiveBalance, blockchain.getHeight());
             }
             return ret;
         } catch (RuntimeException e) {
