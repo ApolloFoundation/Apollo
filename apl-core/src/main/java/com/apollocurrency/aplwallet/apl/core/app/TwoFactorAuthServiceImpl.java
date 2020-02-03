@@ -167,7 +167,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean attemptMoveDataFromDatabase() {
+    public int attemptMoveDataFromDatabase() {
         log.debug("make attempt to move data from db into file...");
         // select all possible records from db
         List<TwoFactorAuthEntity> result = repository.selectAll();
@@ -197,6 +197,6 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             log.error("Something went wrong on export/import all 2fa records !!!");
         }
         log.info("Moved 2fa records = [{}], 2fa db records were found = [{}]", countProcesses, result.size());
-        return isAllImportedIntoFile /*&& countProcesses > 0*/;
+        return countProcesses;
     }
 }

@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepository {
-    private static final Logger LOG = getLogger(TwoFactorAuthFileSystemRepository.class);
     private static final String DEFAULT_SUFFIX = ".copy";
     private final String suffix;
     private Path twoFactorDirPath;
@@ -29,8 +29,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         if (!Files.exists(directory)) {
             try {
                 Files.createDirectories(directory);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         } else if (!Files.isDirectory(directory)) {
@@ -43,6 +42,7 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
     public TwoFactorAuthFileSystemRepository(Path directory) {
         this(directory, DEFAULT_SUFFIX);
     }
+
     @Override
     public TwoFactorAuthEntity get(long account) {
         Path path = findFile(Convert.defaultRsAccount(account));
@@ -51,9 +51,8 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         }
         try {
             return JSON.getMapper().readValue(path.toFile(), TwoFactorAuthEntity.class);
-        }
-        catch (IOException e) {
-            LOG.debug("Read 2fa json error", e);
+        } catch (IOException e) {
+            log.warn("Read 2fa json error", e);
             return null;
         }
     }
@@ -66,9 +65,9 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         return targetPath;
     }
 
-
     @Override
     public boolean add(TwoFactorAuthEntity entity2FA) {
+        log.trace("Add new 2fa-file = {}", entity2FA.getAccount());
         Path path = getNewFilePath(Convert.defaultRsAccount(entity2FA.getAccount()));
         if (path == null) {
             return false;
@@ -76,9 +75,8 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
         try {
             JSON.writeJson(path, entity2FA);
             return Files.exists(path);
-        }
-        catch (IOException e) {
-            LOG.debug("Write 2fa json error", e);
+        } catch (IOException e) {
+            log.debug("Write 2fa json error", e);
             return false;
         }
     }
@@ -109,14 +107,12 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
             }
             TwoFactorAuthEntity savedEntity = get(entity2FA.getAccount());
             return savedEntity.equals(entity2FA);
-        }
-        catch (IOException e) {
-            LOG.debug("2fa update json error", e);
+        } catch (IOException e) {
+            log.debug("2fa update json error", e);
             try {
                 Files.deleteIfExists(copyPath);
-            }
-            catch (IOException e1) {
-                LOG.debug("Delete 2fa copied file error", e1);
+            } catch (IOException e1) {
+                log.debug("Delete 2fa copied file error", e1);
             }
         }
         return false;
@@ -124,14 +120,14 @@ public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepositor
 
     @Override
     public boolean delete(long account) {
+        log.trace("delete 2fa by account = {}", account);
         TwoFactorAuthEntity entity = get(account);
         if (entity != null && entity.getAccount() == account) {
             try {
                 Files.delete(twoFactorDirPath.resolve(Convert.defaultRsAccount(account)));
                 return get(account) == null;
-            }
-            catch (IOException e) {
-                LOG.debug("2fa delete json error", e);
+            } catch (IOException e) {
+                log.debug("2fa delete json error", e);
             }
         }
         return false;

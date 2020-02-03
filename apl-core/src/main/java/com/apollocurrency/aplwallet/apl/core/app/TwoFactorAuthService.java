@@ -52,6 +52,6 @@ public interface TwoFactorAuthService {
     /**
      * Check db and move all data into file if exists
      */
-    boolean attemptMoveDataFromDatabase();
+    int attemptMoveDataFromDatabase();
 
 }

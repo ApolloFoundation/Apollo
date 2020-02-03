@@ -17,8 +17,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 @Retention(RUNTIME)
-public @interface StartUpdateEvent {
+public @interface UpdateEvent {
 
-    StartUpdateEventType value();
+    UpdateEventType value();
 
 }

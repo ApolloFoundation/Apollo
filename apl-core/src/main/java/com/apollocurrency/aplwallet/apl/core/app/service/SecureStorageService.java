@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SecureStorageService {
 
-    static final String SECURE_STORE_KEY = "secure_store_key";
+    String SECURE_STORE_KEY = "secure_store_key";
 
     /**
      * Add user passPhrase to the storage.

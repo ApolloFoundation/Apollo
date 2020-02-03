@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Data
-public class StartUpdateEventData {
+public class UpdateEventData {
     // no data
 }

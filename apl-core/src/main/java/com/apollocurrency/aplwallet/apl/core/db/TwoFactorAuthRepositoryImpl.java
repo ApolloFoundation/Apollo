@@ -125,7 +125,7 @@ public class TwoFactorAuthRepositoryImpl implements TwoFactorAuthRepository {
         try (Connection con = db.getConnection();
             PreparedStatement pstmt = con.prepareStatement(SELECT_QUERY_ALL)) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
+                while (rs.next()) {
                     TwoFactorAuthEntity entity = new TwoFactorAuthEntity();
                     entity.setAccount(rs.getLong(KEY_COLUMN_NAME));
                     entity.setSecret(rs.getBytes(SECRET_COLUMN_NAME));

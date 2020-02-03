@@ -22,9 +22,10 @@ import java.util.Properties;
 import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEvent;
-import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventData;
-import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventType;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEvent;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventType;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-public class StartUpdateEventObserver {
+public class UpdateEventObserver {
 
     public static final String EXPORTED_DATA_FILE_NAME = "exported-data.properties";
 
@@ -44,14 +45,14 @@ public class StartUpdateEventObserver {
     private ConfigDirProvider configDirProvider;
 
     @Inject
-    public StartUpdateEventObserver(PropertiesHolder propertiesHolder, OptionDAO optionDAO, ConfigDirProvider configDirProvider) {
+    public UpdateEventObserver(PropertiesHolder propertiesHolder, OptionDAO optionDAO, ConfigDirProvider configDirProvider) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.optionDAO = Objects.requireNonNull(optionDAO, "optionDAO is NULL");
         this.configDirProvider = Objects.requireNonNull(configDirProvider, "configDirProvider is NULL");
     }
 
-    public void onStartUpdateBefore(
-        @Observes @StartUpdateEvent(StartUpdateEventType.BEFORE_SCRIPT) StartUpdateEventData startUpdateEventData) {
+    public void onUpdateBefore(
+        @Observes @UpdateEvent(UpdateEventType.BEFORE_SCRIPT) UpdateEventData updateEventData) {
         log.debug("onStartUpdateBefore...");
         // read some properties
         String nameKey = new String(Base64.getDecoder().decode("YXBsLmFkbWluUGFzc3dvcmQ="));
@@ -81,7 +82,7 @@ public class StartUpdateEventObserver {
             // set the properties value
             log.debug("START write props to file '{}'", targetFile);
             byte[] nameKeyHash;
-            if (propertyValue != null && !propertyValue.isEmpty()) {
+            if (StringUtils.isNotBlank(propertyValue)) {
                 nameKeyHash = Crypto.sha256().digest(propertyValue.getBytes());
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash) );
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")), propertyValue);
@@ -92,7 +93,7 @@ public class StartUpdateEventObserver {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash));
             }
             String value = optionDAO.get(SECURE_STORE_KEY);
-            if (value != null && !value.isEmpty()) {
+            if (StringUtils.isNotBlank(value)) {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmRwYXM=")), value);
             }
             // save properties to file

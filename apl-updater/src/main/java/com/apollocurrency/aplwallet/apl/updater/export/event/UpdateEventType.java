@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.updater.export.event;
 /**
  * Enum class for start update type
  */
-public enum StartUpdateEventType {
+public enum UpdateEventType {
     BEFORE_SCRIPT, // event type fired before running script
     AFTER_SCRIPT // event type fired after running script
 }

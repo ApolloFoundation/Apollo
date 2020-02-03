@@ -28,12 +28,11 @@ import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterFactory;
-import com.apollocurrency.aplwallet.apl.updater.export.event.StartUpdateEventData;
+import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEventData;
 import com.apollocurrency.aplwallet.apl.updater.pdu.PlatformDependentUpdater;
 import com.apollocurrency.aplwallet.apl.updater.service.UpdaterService;
 import com.apollocurrency.aplwallet.apl.util.Architecture;
 import com.apollocurrency.aplwallet.apl.util.DoubleByteArrayTuple;
-import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Platform;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -72,7 +71,7 @@ public class UpdaterCoreTest {
     @Mock
     UpdaterMediator updaterMediator;
     @Mock
-    private Event<StartUpdateEventData> startUpdateEvent;
+    private Event<UpdateEventData> startUpdateEvent;
 
     private final String decryptedUrl = "http://apollocurrency/ApolloWallet.jar";
 

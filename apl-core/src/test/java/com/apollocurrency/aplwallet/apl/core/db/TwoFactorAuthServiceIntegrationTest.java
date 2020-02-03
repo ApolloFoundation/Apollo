@@ -72,6 +72,9 @@ public class TwoFactorAuthServiceIntegrationTest {
         TwoFactorAuthDetails authDetails = service.enable(td.ACCOUNT2.getId());
         TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(td.ACCOUNT2.getId()));
         assertFalse(service.isEnabled(td.ACCOUNT2.getId()));
+        // remove 2fa-file after test has passed
+        boolean result = fileRepository.delete(td.ACCOUNT2.getId());
+        assertTrue(result);
     }
 
     @Test
@@ -174,10 +177,9 @@ public class TwoFactorAuthServiceIntegrationTest {
     @Test
     public void testMoveData() throws GeneralSecurityException {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
-        int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
-        boolean result = service.attemptMoveDataFromDatabase();
-        assertTrue(result, "Error on moving data from DB into File repo");
+        int result = service.attemptMoveDataFromDatabase();
+        assertEquals(2, result, "Error on moving data from DB into File repo");
         assertFalse(service.isEnabled(td.ACCOUNT3.getId()));
     }
 }
