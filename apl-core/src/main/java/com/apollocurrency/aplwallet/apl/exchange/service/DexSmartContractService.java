@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionEx
 import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.ExpiredSwapMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
+import com.apollocurrency.aplwallet.apl.exchange.mapper.UserAddressesMapper;
 import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
 import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -294,6 +296,15 @@ public class DexSmartContractService {
         }
     }
 
+    public UserAddressesWithOffset getUserAddresses(long offset, long limit) throws AplException.ExecutiveProcessException {
+        DexContract dexContract = new DexContractImpl(smartContractAddress, web3j, Credentials.create(ACCOUNT_TO_READ_DATA), null);
+        try {
+            return UserAddressesMapper.map(dexContract.getUsersList(offset, limit).sendAsync().get());
+        } catch (Exception e) {
+            throw new AplException.ExecutiveProcessException(e.getMessage());
+        }
+    }
+
 
 
 
@@ -474,7 +485,7 @@ public class DexSmartContractService {
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
         ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
-        String identifier = credentials.getAddress() + orderId.toString()  + DexTransaction.Op.INITIATE;
+        String identifier = credentials.getAddress() + Numeric.toHexString(secretHash)  + DexTransaction.Op.INITIATE;
         synchronized (idLocks.compute(identifier, (k, v)-> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
             if (txHash == null) {

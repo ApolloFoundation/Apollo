@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.http.AdminSecured;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
@@ -22,6 +23,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancel
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthDepositsInfo;
+import com.apollocurrency.aplwallet.apl.exchange.model.AddressEthExpiredSwaps;
 import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -40,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderTransactionCrea
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -80,7 +84,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect;
@@ -211,16 +214,7 @@ public class DexController {
                 return Response.ok(JSON.toString(JSONResponses.incorrect("OfferCurrency and PairCurrency are equal."))).build();
             }
 
-            if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                if (!EthUtil.isAddressValid(order.getFromAddress())) {
-                    return Response.ok(JSON.toString(incorrect("fromAddress", " is not valid."))).build();
-                }
-                try {
-                    Convert.parseAccountId(order.getToAddress());
-                } catch (Exception ex){
-                    return Response.ok(JSON.toString(incorrect("toAddress", " is not valid."))).build();
-                }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
+            if (order.getPairCurrency().isEthOrPax() && order.getType().isSell()) {
                 try {
                     if (!Convert2.rsAccount(account.getId()).equals(order.getFromAddress())) {
                         return Response.ok(JSON.toString(incorrect("fromAddress", "You can use only your address."))).build();
@@ -237,14 +231,34 @@ public class DexController {
             //If we should freeze APL
             if (order.getType().isSell()) {
                 if (account.getUnconfirmedBalanceATM() < order.getOrderAmount()) {
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.APL).build();
                 }
-            } else if (order.getPairCurrency().isEthOrPax() && order.getType().isBuy()) {
-                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), order.getPairCurrency());
-                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
 
-                if(amount==null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0){
-                    return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getToAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+
+            } else if (order.getPairCurrency().isEth() && order.getType().isBuy()) {
+                BigInteger amount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amount == null || amount.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.ETH).build();
+                }
+
+                if (amount.compareTo(EthUtil.etherToWei(haveToPay.add(Constants.DEX_MIN_ETH_FEE))) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
+                }
+            } else if (order.getPairCurrency().isPax() && order.getType().isBuy()) {
+                BigInteger amountPax = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.PAX);
+                BigDecimal haveToPay = EthUtil.atmToEth(order.getOrderAmount()).multiply(order.getPairRate());
+                if (amountPax == null || amountPax.compareTo(EthUtil.etherToWei(haveToPay)) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_AMOUNT, DexCurrency.PAX).build();
+                }
+
+                BigInteger ethAmount = ethereumWalletService.getEthOrPaxBalanceWei(order.getFromAddress(), DexCurrency.ETH);
+                if (ethAmount == null || EthUtil.weiToEther(ethAmount).compareTo(Constants.DEX_MIN_ETH_FEE) < 0) {
+                    return ResponseBuilder.apiError(ApiErrors.DEX_NOT_ENOUGH_FEE, DexCurrency.ETH, Constants.DEX_MIN_ETH_FEE).build();
                 }
             }
 
@@ -257,13 +271,10 @@ public class DexController {
                 return Response.ok(JSON.toString(response)).build();
             } catch (AplException.ValidationException e) {
                 log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.NOT_ENOUGH_APL)).build();
+                return Response.ok(JSON.toString(JSONResponses.error("Validation exception"))).build();
             } catch (AplException.ThirdServiceIsNotAvailable e) {
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error("Third service is not available, try later."))).build();
-            } catch (ExecutionException e) {
-                log.error(e.getMessage(), e);
-                return Response.ok(JSON.toString(JSONResponses.error("Exception during work with third service."))).build();
             } catch (Exception e) { // should catch NotSufficientFundsException and NotValidTransactionException, etc
                 log.error(e.getMessage(), e);
                 return Response.ok(JSON.toString(JSONResponses.error(e.getMessage()))).build();
@@ -584,12 +595,12 @@ public class DexController {
     @Operation(tags = {"dex"}, summary = "Retrieve eth/pax order swaps for eth address", description = "Query eth node for orders, which participate in atomic swaps for specified eth address",
         responses = @ApiResponse(description = "List of swap deposits with offset ", responseCode = "200",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EthDepositsWithOffset.class))))
-    public Response getUserFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
-                                        @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
-                                        @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
+    public Response getUsersFilledOrders(@Parameter(description = "Number of first N deposits, which should be skipped during fetching (useful for pagination)") @QueryParam("offset") @PositiveOrZero long offset,
+                                         @Parameter(description = "Number of deposits to extract") @QueryParam("limit") @Min(1) @Max(100) long limit,
+                                         @Parameter(description = "Eth address, for which deposits involved into atomic swap should be extracted") @QueryParam(DexApiConstants.WALLET_ADDRESS) @NotBlank String walletAddress) {
 
         try {
-            return Response.ok(service.getUserFilledOrders(walletAddress,offset, limit )).build();
+            return Response.ok(service.getUserFilledOrders(walletAddress, offset, limit)).build();
         } catch (AplException.ExecutiveProcessException e) {
 
         return ResponseBuilder.apiError(ApiErrors.ETH_NODE_ERROR, e.getMessage() ) .build();}
@@ -603,11 +614,83 @@ public class DexController {
             responses = @ApiResponse(description = "List of versioned contracts", responseCode = "200",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExchangeContractDTO.class))))
     public Response getAllVersionedContractsForOrder(@Parameter(description = "APL account id (RS, singed or unsigned int64/long) ") @QueryParam("accountId") String account,
-                                        @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
+                                                     @Parameter(description = "Order id (signed/unsigned int64/long) ") @QueryParam("orderId") String order) {
         long accountId = Convert.parseAccountId(account);
         long orderId = Convert.parseLong(order);
         List<ExchangeContract> contracts = service.getVersionedContractsByAccountOrder(accountId, orderId);
         return Response.ok(contractConverter.convert(contracts)).build();
+    }
+
+    @GET
+    @Path("/eth/addresses")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all user addresses on the smart contract. ",
+        responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsers() {
+        List<String> addresses;
+        try {
+            addresses = service.getAllUsers();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        return Response.ok(addresses).build();
+    }
+
+    @GET
+    @Path("/eth/filled-orders")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users filled orders on the smart contract. ",
+        responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersFilledOrders() {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos;
+        try {
+            addressEthDepositsInfos = service.getAllFilledOrders();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthDepositsInfos).build();
+    }
+
+    @GET
+    @Path("/eth/expired-swaps")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users expired swaps on the smart contract. ",
+        responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersExpiredSwaps() {
+        List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
+        try {
+            addressEthExpiredSwaps = service.getAllExpiredSwaps();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthExpiredSwaps).build();
+    }
+
+
+    @GET
+    @Path("/eth/active-deposits")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(tags = {"dex"}, description = "Get all users active deposits on the smart contract. ",
+        responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
+            content = @Content(mediaType = "application/json")))
+    @AdminSecured
+    public Response getAllUsersActiveDeposits() {
+        List<AddressEthDepositsInfo> addressEthDepositsInfos;
+        try {
+            addressEthDepositsInfos = service.getAllActiveDeposits();
+        } catch (AplException.ExecutiveProcessException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return Response.ok(addressEthDepositsInfos).build();
     }
 
 }

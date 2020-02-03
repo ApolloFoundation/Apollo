@@ -54,9 +54,9 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
 
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
+        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
                 "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());
@@ -91,6 +91,23 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     private List<ExchangeContract> getAllByLongParameterFromStatus(Long parameterValue, String parameterName,  int fromStatus) {
         DbIterator<ExchangeContract> dbIterator = getManyBy(new DbClause.LongClause(parameterName, parameterValue).and(new DbClause.ByteClause("status", DbClause.Op.GTE, (byte) fromStatus)), 0, -1);
         return CollectionUtil.toList(dbIterator);
+    }
+
+    public List<ExchangeContract> getByOrderIdAndHeight(long orderId, int height) throws AplException.ExecutiveProcessException {
+        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+             PreparedStatement pstmt = con
+                 .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
+                     "AND height = ? AND (offer_id = ? OR counter_offer_id = ?)")
+        ) {
+            int i = 0;
+            pstmt.setInt(++i, height);
+            pstmt.setLong(++i, orderId);
+            pstmt.setLong(++i, orderId);
+
+            return CollectionUtil.toList(getManyBy(con, pstmt, true));
+        } catch (SQLException ex) {
+            throw new AplException.ExecutiveProcessException(ex.getMessage(), ex);
+        }
     }
 
     public ExchangeContract getLastByOrder(Long orderId) {
