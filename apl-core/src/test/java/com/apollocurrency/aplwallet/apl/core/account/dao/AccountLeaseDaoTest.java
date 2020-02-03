@@ -101,6 +101,7 @@ class AccountLeaseDaoTest {
     @Test
     void getAccountLeaseCount() {
         int expected = testData.ALL_LEASE.size();
+        expected--; //one record doesn't have 'latest' indicator;
         int actual = table.getAccountLeaseCount();
         assertEquals(expected, actual);
     }
