@@ -54,12 +54,6 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
         }
     }
 
-    public void onLeaseRollbackEnded(@Observes @AccountEvent(AccountEventType.LEASE_ROLLBACK_ENDED) AccountEventType event ){
-        if(log.isTraceEnabled()) {
-            log.trace("--lease-- Catch event (ROLLBACK_LEASE_ENDED) at height {}", blockchain.getHeight());
-        }
-    }
-
     @Override
     public AccountLease getAccountLease(Account account) {
         return accountLeaseTable.get(AccountTable.newKey(account));
