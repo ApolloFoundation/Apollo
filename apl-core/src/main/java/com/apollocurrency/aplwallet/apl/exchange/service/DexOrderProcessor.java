@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -45,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserEthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -86,8 +86,9 @@ public class DexOrderProcessor {
     private static final String ETH_SWAP_DESCRIPTION_FORMAT = "Account %s initiate atomic swap '%s' with %s under contract %d";
     private static final String ETH_SWAP_S1_DETAILS_FORMAT = "secretHash:%s;encryptedSecret:%s";
     private static final String ETH_SWAP_S2_DETAILS_FORMAT = "secretHash:%s";
-    private static final int ORDERS_SELECT_SIZE = 30;
+    private static final int ORDERS_SELECT_SIZE = 50;
     private static final int CONTRACT_FETCH_SIZE = 50;
+    private static final int AMOUNT_ITERATIONS_FOR_ACCOUNT = 5;
     public static final int DEFAULT_DEX_OFFER_PROCESSOR_DELAY = 3 * 60; // 3 min in seconds
     public static final int MIN_DEX_OFFER_PROCESSOR_DELAY = 15; // 15 sec
 
@@ -746,86 +747,62 @@ public class DexOrderProcessor {
     }
 
     void processCancelOrders(Long accountId) {
-        try {
-            String passphrase = secureStorageService.getUserPassPhrase(accountId);
-            OrderHeightId orderHeightId;
-            synchronized (accountCancelOrderMap) {
-                orderHeightId = accountCancelOrderMap.get(accountId);
-            }
-            long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
-            int orderHeight = 0;
-            while (true) {
-                List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
-                        .accountId(accountId)
-                        .dbId(fromDbId)
-                        .status(OrderStatus.CANCEL)
-                        .type(OrderType.BUY.ordinal())
-                        .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.DB_ID)
-                    .sortOrder(DBSortOrder.ASC)
-                        .build());
-                for (DexOrder order : orders) {
-                    fromDbId = order.getDbId();
-                    orderHeight = order.getHeight();
-                    try {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order);
-                    } catch (AplException.ExecutiveProcessException e) {
-                        log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
-                    }
-                }
-                if (orders.size() < ORDERS_SELECT_SIZE) {
-                    break;
-                }
-            }
-            if (orderHeight != 0) {
-                synchronized (accountCancelOrderMap) {
-                    accountCancelOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
-                }
-            }
-        } catch (NotValidTransactionException ex) {
-            log.warn(ex.getMessage());
-        }
+        refundUserEthPax(accountId, OrderStatus.CANCEL, accountCancelOrderMap);
     }
 
     void processExpiredOrders(Long accountId) {
-        try {
-            String passphrase = secureStorageService.getUserPassPhrase(accountId);
-            OrderHeightId orderHeightId;
-            synchronized (accountExpiredOrderMap) {
-                orderHeightId = accountExpiredOrderMap.get(accountId);
-            }
-            long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
-            int orderHeight = 0;
-            while (true) {
-                List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
-                        .accountId(accountId)
-                        .dbId(fromDbId)
-                        .status(OrderStatus.EXPIRED)
-                        .type(OrderType.BUY.ordinal())
-                        .limit(ORDERS_SELECT_SIZE)
-                    .sortBy(DexOrderSortBy.DB_ID)
-                    .sortOrder(DBSortOrder.ASC)
-                        .build());
-                for (DexOrder order : orders) {
-                    fromDbId = order.getDbId();
-                    orderHeight = order.getHeight();
-                    try {
-                        dexService.refundEthPaxFrozenMoney(passphrase, order);
-                    } catch (AplException.ExecutiveProcessException e) {
-                        log.info("Unable to refund expired order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+        refundUserEthPax(accountId, OrderStatus.EXPIRED, accountExpiredOrderMap);
+    }
+
+    private void refundUserEthPax(Long accountId, OrderStatus orderStatus, Map<Long, OrderHeightId> cache){
+        OrderHeightId orderHeightId;
+        synchronized (cache) {
+            orderHeightId = cache.get(accountId);
+        }
+
+        String passphrase = secureStorageService.getUserPassPhrase(accountId);
+        long fromDbId = orderHeightId == null ? 0 : orderHeightId.getDbId();
+        DexOrder lastSuccessOrder = null;
+        boolean wasException = false;
+
+        for (int i = 0; i < AMOUNT_ITERATIONS_FOR_ACCOUNT; i++) {
+            List<DexOrder> orders = dexService.getOrders(DexOrderDBRequest.builder()
+                .accountId(accountId)
+                .dbId(fromDbId)
+                .status(orderStatus)
+                .type(OrderType.BUY.ordinal())
+                .limit(ORDERS_SELECT_SIZE)
+                .sortBy(DexOrderSortBy.DB_ID)
+                .sortOrder(DBSortOrder.ASC)
+                .build());
+
+            for (DexOrder order : orders) {
+                try {
+                    String ethAddress = DexCurrencyValidator.isEthOrPaxAddress(order.getFromAddress()) ? order.getFromAddress() : order.getToAddress();
+                    if(dexSmartContractService.isDepositForOrderExist(ethAddress, order.getId())) {
+                        dexService.refundEthPaxFrozenMoney(passphrase, order, false);
                     }
+                } catch (AplException.ExecutiveProcessException e) {
+                    wasException = true;
+                    log.info("Unable to refund cancel order {} for {}, reason: {}", order.getPairCurrency(), order.getFromAddress(), e.getMessage());
+                } catch (Exception e){
+                    wasException = true;
+                    log.error(e.getMessage(), e);
                 }
-                if (orders.size() < ORDERS_SELECT_SIZE) {
-                    break;
+
+                fromDbId = order.getDbId();
+                if(!wasException){
+                    lastSuccessOrder = order;
                 }
             }
-            if (orderHeight != 0) {
-                synchronized (accountExpiredOrderMap) {
-                    accountExpiredOrderMap.put(accountId, new OrderHeightId(fromDbId, orderHeight));
-                }
+            if (orders.size() < ORDERS_SELECT_SIZE) {
+                break;
             }
-        } catch (NotValidTransactionException ex) {
-            log.warn(ex.getMessage());
+        }
+        if (lastSuccessOrder!=null && (orderHeightId == null || orderHeightId.getDbId() < lastSuccessOrder.getDbId())) {
+            synchronized (cache) {
+                cache.put(accountId, new OrderHeightId(lastSuccessOrder.getDbId()));
+            }
         }
     }
 
@@ -841,9 +818,9 @@ public class DexOrderProcessor {
                     EthDepositsWithOffset withOffset;
                     do  {
                         withOffset = dexService.getUserActiveDeposits(address, offset, CONTRACT_FETCH_SIZE);
-                        List<UserEthDepositInfo> deposits = withOffset.getDeposits();
+                        List<EthDepositInfo> deposits = withOffset.getDeposits();
                         offset = withOffset.getOffset();
-                        for (UserEthDepositInfo deposit : deposits) {
+                        for (EthDepositInfo deposit : deposits) {
                             DexOrder order = dexService.getOrder(deposit.getOrderId());
                             if (order == null) {
                                 long timeDiff = ethereumWalletService.getLastBlock().getTimestamp().longValue() - deposit.getCreationTime();
@@ -883,36 +860,9 @@ public class DexOrderProcessor {
         }
     }
 
-
-    public void onRollback(@BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        rollbackCachedOrderDbIds(block.getHeight());
-    }
-
-    private void rollbackCachedOrderDbIds(int height) {
-        CompletableFuture.runAsync(() -> {
-            synchronized (accountCancelOrderMap) {
-                rollbackToHeight(height, accountCancelOrderMap);
-                rollbackToHeight(height, accountExpiredOrderMap);
-            }
-        });
-    }
-
-    public void onScan(@BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        rollbackCachedOrderDbIds(block.getHeight());
-    }
-
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
         validator.validate(tx);
         dexService.broadcast(tx);
     }
 
-    private void rollbackToHeight(int height, Map<Long, OrderHeightId> cash) {
-        Set<Long> rolledBackAccountIdsCancell = accountCancelOrderMap.entrySet()
-                .stream()
-                .filter(e -> e.getValue().getHeight() >= height)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-
-        rolledBackAccountIdsCancell.forEach(cash::remove);
-    }
 }

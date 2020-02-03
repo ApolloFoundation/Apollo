@@ -117,25 +117,25 @@ class DexCloseOrderTransactionTest {
         // sender
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(contract).when(dexService).getDexContractById(10);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(1000L).when(tx).getSenderId();
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         contract.setContractStatus(ExchangeContractStatus.STEP_3);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         doReturn(order).when(dexService).getOrder(200L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         order.setAccountId(1000L);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         order.setType(OrderType.SELL);
-        assertThrows(AplException.NotValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
 
         order.setStatus(OrderStatus.WAITING_APPROVAL);
 

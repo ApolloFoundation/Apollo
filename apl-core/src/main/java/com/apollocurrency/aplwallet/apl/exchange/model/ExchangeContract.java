@@ -85,4 +85,16 @@ public class ExchangeContract extends VersionedDerivedEntity {
         this.deadlineToReply = deadlineToReply;
         this.setLatest(latest);
     }
+
+    public Long getPhasingIdForOrder(DexOrder order) {
+        Long txId = null;
+        if (order.getType() == OrderType.SELL) {
+            if (getOrderId().equals(order.getId()) && getTransferTxId() != null) {
+                txId = Long.parseUnsignedLong(getTransferTxId());
+            } else if (getCounterOrderId().equals(order.getId()) && getCounterOrderId() != null) {
+                txId = Long.parseUnsignedLong(getCounterTransferTxId());
+            }
+        }
+        return txId;
+    }
 }

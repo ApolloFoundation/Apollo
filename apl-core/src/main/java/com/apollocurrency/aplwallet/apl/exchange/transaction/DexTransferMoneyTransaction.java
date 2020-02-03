@@ -53,36 +53,36 @@ public class DexTransferMoneyTransaction extends DEX {
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
 
         if (dexContract == null) {
-            throw new AplException.NotValidException("Contract does not exist: id - " + attachment.getContractId());
+            throw new AplException.NotCurrentlyValidException("Contract does not exist: id - " + attachment.getContractId());
         }
         if (dexContract.getRecipient() != transaction.getSenderId() && dexContract.getSender() != transaction.getSenderId()) {
-            throw new AplException.NotValidException("Account" + transaction.getSenderId() + " is not a party of the contract. Expected - " + dexContract.getRecipient() + " or  " + dexContract.getSender());
+            throw new AplException.NotCurrentlyValidException("Account" + transaction.getSenderId() + " is not a party of the contract. Expected - " + dexContract.getRecipient() + " or  " + dexContract.getSender());
         }
         boolean isSender = dexContract.getSender() == transaction.getSenderId();
         long recipient = isSender ? dexContract.getRecipient() : dexContract.getSender();
         if (recipient != transaction.getRecipientId()) {
-            throw new AplException.NotValidException("Tx recipient differs from account, specified in the contract");
+            throw new AplException.NotCurrentlyValidException("Tx recipient differs from account, specified in the contract");
         }
         long transactionId = Convert.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
         if (transactionId == 0) {
-            throw new AplException.NotValidException("Contract transaction was not pre confirmed or missing");
+            throw new AplException.NotCurrentlyValidException("Contract transaction was not pre confirmed or missing");
         }
         if (transaction.getId() != transactionId) {
-            throw new AplException.NotValidException("Transaction was not registered in the contract. ");
+            throw new AplException.NotCurrentlyValidException("Transaction was not registered in the contract. ");
         }
         long orderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
         DexOrder order = dexService.getOrder(orderId);
         if (order == null) {
-            throw new AplException.NotValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
+            throw new AplException.NotCurrentlyValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
         }
         if (order.getAccountId() != transaction.getRecipientId()) {
-            throw new AplException.NotValidException("Order" + orderId + " should belong to the account: " + transaction.getRecipientId());
+            throw new AplException.NotCurrentlyValidException("Order" + orderId + " should belong to the account: " + transaction.getRecipientId());
         }
         if (order.getStatus() != OrderStatus.WAITING_APPROVAL) {
-            throw new AplException.NotValidException("Inconsistent order state for id: " + order + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + order.getStatus());
+            throw new AplException.NotCurrentlyValidException("Inconsistent order state for id: " + order + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + order.getStatus());
         }
         if (order.getType() != OrderType.BUY) {
-            throw new AplException.NotValidException("Required SELL type for order " + orderId);
+            throw new AplException.NotCurrentlyValidException("Required SELL type for order " + orderId);
         }
     }
 
