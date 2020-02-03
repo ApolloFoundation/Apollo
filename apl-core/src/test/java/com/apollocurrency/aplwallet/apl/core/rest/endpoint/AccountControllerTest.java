@@ -93,12 +93,8 @@ class AccountControllerTest extends AbstractEndpointTest{
                 );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
-
-        account = new Account(ACCOUNT_ID, 0);
+        account = new Account(ACCOUNT_ID, 1000L, 1500L, 0L, 0L, 0);
         account.setPublicKey(new PublicKey(ACCOUNT_ID, Convert.parseHexString(PUBLIC_KEY_HEX), 0));
-        account.setBalanceATM(1000L);
-        account.setForgedBalanceATM(0L);
-        account.setUnconfirmedBalanceATM(1500L);
 
         accountDTO = new AccountDTO(ACCOUNT_ID, ACCOUNT_RS,
                 account.getBalanceATM(),

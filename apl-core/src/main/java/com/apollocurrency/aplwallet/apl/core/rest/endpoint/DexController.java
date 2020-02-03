@@ -62,6 +62,7 @@ import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -643,6 +644,7 @@ public class DexController {
         responses = @ApiResponse(description = "List of user addresses", responseCode = "200",
             content = @Content(mediaType = "application/json")))
     @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsers() {
         List<String> addresses;
         try {
@@ -660,6 +662,7 @@ public class DexController {
         responses = @ApiResponse(description = "List of user filled orders", responseCode = "200",
             content = @Content(mediaType = "application/json")))
     @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersFilledOrders() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
@@ -678,6 +681,7 @@ public class DexController {
         responses = @ApiResponse(description = "List of user expired swaps", responseCode = "200",
             content = @Content(mediaType = "application/json")))
     @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersExpiredSwaps() {
         List<AddressEthExpiredSwaps> addressEthExpiredSwaps;
         try {
@@ -697,6 +701,7 @@ public class DexController {
         responses = @ApiResponse(description = "List of user active deposits", responseCode = "200",
             content = @Content(mediaType = "application/json")))
     @AdminSecured
+    @RolesAllowed("admin")
     public Response getAllUsersActiveDeposits() {
         List<AddressEthDepositsInfo> addressEthDepositsInfos;
         try {
