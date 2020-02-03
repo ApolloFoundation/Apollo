@@ -17,7 +17,7 @@
     "genesisLocation": "6",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 150,
-      "dexExpiredContractWithFinishedPhasingHeight": 150
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 150
     },
     "blockchainProperties": [
       {
