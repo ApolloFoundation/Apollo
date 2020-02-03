@@ -36,7 +36,8 @@ public interface DexContractDao {
         "AND (:sender is NULL or contract.sender=:sender) " +
         "AND (:offerId is NULL or contract.offer_id=:offerId) " +
         "AND (:counterOfferId is NULL or contract.counter_offer_id=:counterOfferId) " +
-        "AND contract.status IN (<statuses>)")
+        "AND contract.status IN (<statuses>) " +
+        "ORDER BY db_id desc")
     @RegisterRowMapper(ExchangeContractMapper.class)
     List<ExchangeContract> getAllWithMultipleStatuses(@BindBean DexContractDBRequest dexContractDBRequest, @BindList("statuses") List<Integer> statuses);
 
@@ -60,7 +61,8 @@ public interface DexContractDao {
         "AND (:sender is NULL or sender=:sender) " +
         "AND (:offerId is NULL or offer_id=:offerId) " +
         "AND (:counterOfferId is NULL or counter_offer_id=:counterOfferId) " +
-        "AND contract.status IN (<statuses>)")
+        "AND contract.status IN (<statuses>) " +
+        "ORDER BY db_id desc")
     @RegisterRowMapper(ExchangeContractMapper.class)
     ExchangeContract getWithMultipleStatuses(@BindBean DexContractDBRequest dexContractDBRequest, @BindList("statuses") List<Integer> statuses);
 
