@@ -15,7 +15,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
 
     public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM,
                                                    Attachment attachment, boolean broadcast,
-                                                   AccountService accountService) throws AplException.ValidationException, ParameterException {
+                                                   AccountService accountService) throws ParameterException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));
