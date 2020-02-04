@@ -396,39 +396,6 @@ public class DexService {
 
     }
 
-    public void processWaitingPhasingOrders(int time) throws AplException.ExecutiveProcessException {
-        if (blockchain.getHeight() % 10 == 0) {
-            List<DexOrder> waitingOrders = dexOrderTable.getWaitingPhasingResultOrders();
-            for (DexOrder order : waitingOrders) {
-                List<ExchangeContract> contracts = dexContractTable.getByOrderIdAndHeight(order.getId(), order.getHeight()); // contract was saved at same height
-                if (contracts.size() > 1) {
-                    throw new IllegalStateException("Expected 1 contract for order " + order.getId() + ", got " + contracts);
-                }
-                ExchangeContract exchangeContract = contracts.get(0);
-                Long id = exchangeContract.getPhasingIdForOrder(order);
-                if (id == null) {
-                    throw new IllegalStateException("Order with status " + OrderStatus.PHASING_RESULT_PENDING + " should have contract with phasing tx id, got " + exchangeContract);
-                }
-                PhasingPollResult result = phasingPollService.getResult(id);
-                if (result == null) {
-                    continue;
-                }
-                if (result.isApproved()) {
-                    order.setStatus(OrderStatus.EXPIRED);
-                } else {
-                    if (order.getFinishTime() > time) {
-                        order.setStatus(OrderStatus.OPEN);
-                    } else {
-                        order.setStatus(OrderStatus.EXPIRED);
-                        tryRefundApl(order);
-                    }
-                }
-                log.debug("Update WAITING order {} at height {}", order, blockchain.getHeight());
-                saveOrder(order);
-            }
-        }
-    }
-
 
     public void handleExpiredContractOrder(DexOrder order, Integer time, ExchangeContract contract) throws AplException.ExecutiveProcessException {
         if (!order.getStatus().isClosedOrExpiredOrCancel()) {
@@ -457,7 +424,8 @@ public class DexService {
                     PhasingPoll poll = phasingPollService.getPoll(id);
                     PhasingPollResult result = phasingPollService.getResult(id);
                     boolean finishedPhasing = result != null && result.isApproved();
-                    boolean phasingInProgress = poll != null && result == null;
+                    boolean phasingInProgress = poll != null && (poll.getFinishHeight() > blockchain.getHeight() || poll.getFinishTime() > blockchain.getLastBlockTimestamp()) && result == null;
+
                     if (finishedPhasing) {
                         orderStatus = OrderStatus.EXPIRED;
                     } else if (phasingInProgress) {
@@ -927,11 +895,28 @@ public class DexService {
     }
 
 
-    public void onPhasedTxReleased(@Observes @TxEvent(TxEventType.RELEASE_PHASED_TRANSACTION) Transaction transaction) {
+    public void onPhasedTxReleased(@Observes @TxEvent(TxEventType.RELEASE_PHASED_TRANSACTION) Transaction transaction) throws AplException.ExecutiveProcessException {
         if (transaction.getType() == DEX.DEX_TRANSFER_MONEY_TRANSACTION) {
             List<PhasingVote> votes = phasingPollService.getVotes(transaction.getId());
             log.debug("Found {} votes, pick latest", votes.size());
             phasingApprovedResultTable.insert(new PhasingApprovalResult(blockchain.getHeight(), transaction.getId(), votes.get(0).getVoteId()));
+            ExchangeContract contract = getDexContractById(((DexControlOfFrozenMoneyAttachment) transaction.getAttachment()).getContractId());
+            if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null &&
+                blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() < blockchain.getHeight()) {
+                if (contract.getContractStatus().isStep4()) {
+
+                    DexOrder order = getOrder(contract.getOrderId());
+                    DexOrder counterOrder = getOrder(contract.getCounterOrderId());
+                    DexOrder aplOrder = order.getType().isSell() ? order : counterOrder;
+                    if (aplOrder.getStatus() == OrderStatus.PHASING_RESULT_PENDING) {
+                        log.debug("PHASING_RESULT_PENDING RELEASED, order {}, contract {}, phasing {}", aplOrder.getId(), contract.getId(), transaction.getId());
+                        aplOrder.setStatus(OrderStatus.EXPIRED);
+                        saveOrder(aplOrder);
+                    } else {
+                        log.debug("NOT A PHASING_RESULT_PENDING ORDER (release), skip processing order {}, contract {}, phasing {}", aplOrder.getId(), contract.getId(), transaction.getId());
+                    }
+                }
+            }
         }
     }
 
@@ -945,6 +930,22 @@ public class DexService {
 
                 if (!exchangeContract.getContractStatus().isStep4()) {
                     closeContract(exchangeContract, blockchain.getLastBlockTimestamp());
+                } else {
+                    DexOrder order = getOrder(exchangeContract.getOrderId());
+                    DexOrder counterOrder = getOrder(exchangeContract.getCounterOrderId());
+                    DexOrder aplOrder = order.getType().isSell() ? order : counterOrder;
+                    if (aplOrder.getStatus() == OrderStatus.PHASING_RESULT_PENDING) {
+                        log.debug("PHASING_RESULT_PENDING REJECTED, order {}, contract {}, phasing {}", aplOrder.getId(), exchangeContract.getId(), transaction.getId());
+                        if (aplOrder.getFinishTime() > blockchain.getLastBlockTimestamp()) {
+                            aplOrder.setStatus(OrderStatus.OPEN);
+                        } else {
+                            aplOrder.setStatus(OrderStatus.EXPIRED);
+                            tryRefundApl(aplOrder);
+                        }
+                        saveOrder(aplOrder);
+                    } else {
+                        log.debug("NOT A PHASING_RESULT_PENDING ORDER (reject), skip processing order {}, contract {}, phasing {}", aplOrder.getId(), exchangeContract.getId(), transaction.getId());
+                    }
                 }
             }
         }
