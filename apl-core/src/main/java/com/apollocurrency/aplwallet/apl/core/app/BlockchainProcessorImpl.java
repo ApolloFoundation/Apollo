@@ -1037,13 +1037,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //                }
             });
             log.trace(":accept: dex service block.");
+
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
-                dexService.closeExpiredContracts(block.getTimestamp());
+
+                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
+                    dexService.closeExpiredContractsStep1_2_3(block.getTimestamp());
+                } else {
+                    dexService.closeExpiredContractsStep1_2(block.getTimestamp());
+                }
+
+
                 if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
-                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeight()) {
+                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
                     dexService.processWaitingPhasingOrders(block.getTimestamp());
                 }
             } catch (AplException.ExecutiveProcessException e) {

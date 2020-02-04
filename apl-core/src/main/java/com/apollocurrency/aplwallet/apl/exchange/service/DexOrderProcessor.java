@@ -1,13 +1,10 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
@@ -61,6 +58,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,15 +66,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_4;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
@@ -613,13 +610,12 @@ public class DexOrderProcessor {
     }
 
     /**
-     * Processing contracts with status step_2.
+     * Processing contracts with status step_3.
      *
      * @param accountId
      */
     @Transactional
     private void processIncomeContractsForUserStep3(Long accountId) {
-
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
         List<ExchangeContract> contracts = dexService.getDexContracts(DexContractDBRequest.builder()
                 .recipient(accountId)
@@ -633,15 +629,15 @@ public class DexOrderProcessor {
                     continue;
                 }
 
-                log.debug("DexOfferProcessor Step-2 (part-1). accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3 (part-1). accountId: {}", accountId);
 
                 byte[] secret = Crypto.aesGCMDecrypt(contract.getEncryptedSecret(), Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
-                log.debug("DexOfferProcessor Step-2(part-1). Approving money transfer. accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3(part-1). Approving money transfer. accountId: {}", accountId);
 
                 dexService.approveMoneyTransfer(passphrase, accountId, contract.getCounterOrderId(), contract.getTransferTxId(), contract.getId(), secret);
 
-                log.debug("DexOfferProcessor Step-2(part-1). Approved money transfer. accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3(part-1). Approved money transfer. accountId: {}", accountId);
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
             }
@@ -664,14 +660,13 @@ public class DexOrderProcessor {
                 ExchangeContract contract = dexService.getDexContract(DexContractDBRequest.builder()
                         .sender(accountId)
                         .offerId(outcomeOrder.getId())
-                        .status(STEP_3.ordinal())
-                        .build());
+                        .build(), Arrays.asList(STEP_3, STEP_4));
 
                 if (contract == null) {
                     continue;
                 }
 
-                log.debug("DexOfferProcessor Step-2(part-2). accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3(part-2). accountId: {}", accountId);
 
                 //TODO move it to validation function.
                 //Check that contract was not approved, and we can get money.
@@ -695,13 +690,13 @@ public class DexOrderProcessor {
                     }
                 }
 
-                log.debug("DexOfferProcessor Step-2(part-2). Approving money transfer. accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3(part-2). Approving money transfer. accountId: {}", accountId);
 
                 byte[] secret = dexService.getSecretIfTxApproved(contract.getSecretHash(), contract.getTransferTxId());
 
                 dexService.approveMoneyTransfer(passphrase, accountId, outcomeOrder.getId(), contract.getCounterTransferTxId(), contract.getId(), secret);
 
-                log.debug("DexOfferProcessor Step-2(part-2). Approved money transfer. accountId: {}", accountId);
+                log.debug("DexOfferProcessor Step-3(part-2). Approved money transfer. accountId: {}", accountId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

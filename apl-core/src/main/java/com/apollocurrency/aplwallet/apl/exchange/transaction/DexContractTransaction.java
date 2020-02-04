@@ -236,6 +236,6 @@ public class DexContractTransaction extends DEX {
                 .filter(c -> !c.getOrderId().equals(contract.getOrderId()))
                 .collect(Collectors.toList());
 
-        dexService.closeContracts(contractsForReopen);
+        dexService.closeContractsReopenOrders(contractsForReopen);
     }
 }
