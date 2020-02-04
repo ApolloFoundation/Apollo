@@ -69,7 +69,7 @@ public class SecurityInterceptor implements ContainerRequestFilter {
             return;
         }
 
-        if(apw.isDisableAdminPassword()){
+        if(apw.isDisabledAdminPassword()){
             //Access allowed for all
             return;
         }

@@ -4,25 +4,52 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.api.response.*;
+import com.apollocurrency.aplwallet.api.dto.Account2FADTO;
+import com.apollocurrency.aplwallet.api.dto.Account2FADetailsDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountKeyDTO;
+import com.apollocurrency.aplwallet.api.dto.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlocksCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountBlocksResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyCountResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
+import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.*;
-import com.apollocurrency.aplwallet.apl.core.http.API;
+import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.Order;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.IdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.UnsignedIntegerParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.parameter.Validate;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
@@ -40,8 +67,14 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -455,22 +488,22 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountCurrentAskOrderIds(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The asset ID.") @QueryParam("asset") Long assetId,
-            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
-            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
+            @Parameter(description = "The account ID.", required = true) @QueryParam("account") @Validate(required = true) AccountIdParameter accountIdParameter,
+            @Parameter(description = "The asset ID.") @QueryParam("asset") @Validate IdParameter assetIdParameter,
+            @Parameter(description = "The first index." ) @QueryParam("firstIndex") @Validate UnsignedIntegerParameter firstIndexParam,
+            @Parameter(description = "The last index." ) @QueryParam("lastIndex") @Validate UnsignedIntegerParameter lastIndexParam,
             @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
-        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
-        long accountId  = RestParameters.parseAccountId(accountStr);
+        long accountId  = accountIdParameter.get();
+        int firstIndex = firstIndexParam.get();
+        int lastIndex = lastIndexParam.get();
         List<Order.Ask> ordersByAccount;
-        if (assetId == null || assetId == 0) {
+        if (assetIdParameter == null) {
             ordersByAccount = accountBalanceService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
         }else{
-            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetId, firstIndex, lastIndex);
+            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetIdParameter.get(), firstIndex, lastIndex);
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 

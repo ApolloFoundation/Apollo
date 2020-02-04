@@ -4,14 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -19,12 +13,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 @Singleton

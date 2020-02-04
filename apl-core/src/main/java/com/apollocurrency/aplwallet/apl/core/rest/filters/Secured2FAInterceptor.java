@@ -52,8 +52,7 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
             Integer code2FA = null;
             try {
                 code2FA = Integer.parseInt(params.get(CODE2FA_PARAM_NAME));
-            }catch (NumberFormatException e){
-
+            }catch (NumberFormatException ignored){
             }
 
             TwoFactorAuthParameters twoFactorAuthParameters = faHelper.verify2FA(
@@ -66,9 +65,6 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
             requestContext.setProperty(TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters);
         }
 
-        return;
-
     }
-
 
 }

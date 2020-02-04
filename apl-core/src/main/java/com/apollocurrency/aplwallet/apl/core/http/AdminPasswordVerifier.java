@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
@@ -36,9 +35,10 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NO_PASSWO
 public class AdminPasswordVerifier {
     public static final String ADMIN_ROLE = "admin";
     public static final String ADMIN_PASSWORD_PARAMETER_NAME="adminPassword";
+    private final Random random = new Random();
     private final String adminPassword;
     @Getter
-    public final boolean disableAdminPassword;
+    private final boolean disabledAdminPassword;
     private final Map<String, PasswordCount> incorrectPasswords = new HashMap<>();
     private final TimeService timeService;
     @Getter
@@ -49,7 +49,7 @@ public class AdminPasswordVerifier {
         this.timeService = timeService;
         adminPassword = propertiesHolder.getStringProperty("apl.adminPassword", "", true);
         String host = propertiesHolder.getStringProperty("apl.apiServerHost");
-        disableAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || ("127.0.0.1".equals(host) && adminPassword.isEmpty());
+        disabledAdminPassword = propertiesHolder.getBooleanProperty("apl.disableAdminPassword") || (isLocalHost(host) && adminPassword.isEmpty());
         forwardedForHeader = propertiesHolder.getStringProperty("apl.forwardedForHeader");
     }
 
@@ -58,7 +58,7 @@ public class AdminPasswordVerifier {
     }
 
     public void verifyPassword(HttpServletRequest req) throws ParameterException {
-        if (disableAdminPassword) {
+        if (disabledAdminPassword) {
             return;
         }
         if (isBlankAdminPassword()) {
@@ -77,7 +77,7 @@ public class AdminPasswordVerifier {
     }
 
     public Response verifyPasswordWithoutException(HttpServletRequest req) {
-        if (disableAdminPassword) {
+        if (disabledAdminPassword) {
             return null;
         }
         if (isBlankAdminPassword()) {
@@ -137,18 +137,17 @@ public class AdminPasswordVerifier {
             }
             if (!password.equals(this.adminPassword)) {
                 if (password.length() > 0) {
+                    if (incorrectPasswords.size() > 1000) {
+                        // Remove one of the locked hosts at random to prevent unlimited growth of the map
+                        List<String> remoteHosts = new ArrayList<>(incorrectPasswords.keySet());
+                        incorrectPasswords.remove(remoteHosts.get(random.nextInt(remoteHosts.size())));
+                    }
                     if (passwordCount == null) {
                         passwordCount = new PasswordCount();
-                        incorrectPasswords.put(remoteHost, passwordCount);
-                        if (incorrectPasswords.size() > 1000) {
-                            // Remove one of the locked hosts at random to prevent unlimited growth of the map
-                            List<String> remoteHosts = new ArrayList<>(incorrectPasswords.keySet());
-                            Random r = new Random();
-                            incorrectPasswords.remove(remoteHosts.get(r.nextInt(remoteHosts.size())));
-                        }
                     }
                     passwordCount.count++;
                     passwordCount.time = now;
+                    incorrectPasswords.put(remoteHost, passwordCount);
                     log.warn("Incorrect adminPassword from " + remoteHost);
                     return 2;
                 } else {
@@ -160,6 +159,13 @@ public class AdminPasswordVerifier {
             }
         }
         return 0;
+    }
+
+    private boolean isLocalHost(String host){
+        return host != null && (host.equalsIgnoreCase("localhost")
+            || host.equals("127.0.0.1")
+            || host.endsWith("0:1")
+            || host.endsWith("::1"));
     }
 
 }
