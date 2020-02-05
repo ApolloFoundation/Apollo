@@ -118,7 +118,6 @@ public class UpdaterCoreImpl implements UpdaterCore {
             catch (Throwable e) {
                 LOG.debug("Updater db error: {}", e.getLocalizedMessage());
             }
-            fireStartUpdateEventMethod(); // fire event for doing data export
             if (updateTransaction != null) {
                 Transaction transaction = updateTransaction.getTransaction();
                 if (!updateTransaction.isUpdated()) {
@@ -205,6 +204,7 @@ public class UpdaterCoreImpl implements UpdaterCore {
     private void performUpdate(UpdateData data) {
         Updater updater = updaterFactory.getUpdater(data);
         getUpdateInfo().setDownloadInfo(updaterService.getDownloadInfo());
+        fireStartUpdateEventMethod(); // fire event for doing data export
         UpdateInfo.UpdateState updateState = updater.processUpdate();
         LOG.info("Update state: {}", updateState);
     }

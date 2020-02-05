@@ -11,8 +11,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -75,9 +77,23 @@ public class UpdateEventObserver {
             log.debug("Exists configDir = '{}'", configDir);
         }
         File targetFile = Path.of(configDir, EXPORTED_DATA_FILE_NAME).toFile(); // full target file
+        Properties writeTempProps = new Properties();
+        // check if file has been written previously ans stores something valuable
+        if (targetFile.exists()) {
+            try (InputStream inputStream = new FileInputStream(targetFile)) {
+                writeTempProps.load(inputStream);
+                if (writeTempProps.containsKey(new String(Base64.getDecoder().decode("YXBsLmRwYXM=")))) {
+                    // do not rewrite file, skip further processing
+                    log.warn("File '{}' is no empty, skip rewriting...", targetFile);
+                    return;
+                }
+            } catch (Exception e) {
+                log.error("Error reading '{}', continue to attempt write file...", targetFile, e);
+                // continue and try write file
+            }
+        }
         log.debug("Before saving data to file in config dir = '{}'", targetFile);
         // read, prepare and write data
-        Properties writeTempProps = new Properties();
         try (OutputStream output = new FileOutputStream(targetFile, false) ) {
             // set the properties value
             log.debug("START write props to file '{}'", targetFile);
