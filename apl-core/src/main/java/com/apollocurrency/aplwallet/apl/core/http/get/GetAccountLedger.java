@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountLedgerService;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
@@ -29,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
@@ -255,16 +254,16 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         //
         // Process the request parameters
         //
-        long accountId = ParameterParser.getAccountId(req, "account", false);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long accountId = HttpParameterParser.getAccountId(req, "account", false);
+        int firstIndex = HttpParameterParser.getFirstIndex(req);
+        int lastIndex = HttpParameterParser.getLastIndex(req);
         String eventType = Convert.emptyToNull(req.getParameter("eventType"));
         LedgerEvent event = null;
         long eventId = 0;
         if (eventType != null) {
             try {
                 event = LedgerEvent.valueOf(eventType);
-                eventId = ParameterParser.getUnsignedLong(req, "event", false);
+                eventId = HttpParameterParser.getUnsignedLong(req, "event", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("eventType"));
             }
@@ -275,7 +274,7 @@ public class GetAccountLedger extends AbstractAPIRequestHandler {
         if (holdingType != null) {
             try {
                 holding = LedgerHolding.valueOf(holdingType);
-                holdingId = ParameterParser.getUnsignedLong(req, "holding", false);
+                holdingId = HttpParameterParser.getUnsignedLong(req, "holding", false);
             } catch (RuntimeException e) {
                 throw new ParameterException(JSONResponses.incorrect("holdingType"));
             }

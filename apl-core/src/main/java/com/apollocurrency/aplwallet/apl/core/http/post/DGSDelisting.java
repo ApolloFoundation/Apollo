@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelisting;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -45,8 +45,8 @@ public final class DGSDelisting extends CreateTransaction {
     private DGSService service = CDI.current().select(DGSService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account account = ParameterParser.getSenderAccount(req);
-        DGSGoods goods = ParameterParser.getGoods(service, req);
+        Account account = HttpParameterParser.getSenderAccount(req);
+        DGSGoods goods = HttpParameterParser.getGoods(service, req);
         if (goods.isDelisted() || goods.getSellerId() != account.getId()) {
             return UNKNOWN_GOODS;
         }

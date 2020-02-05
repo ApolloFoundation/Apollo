@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
@@ -45,12 +45,12 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", true);
-        long accountId = ParameterParser.getAccountId(req, vaultAccountName(), false);
-        long recipientId = ParameterParser.getAccountId(req, "recipientAccount", false);
-        byte[] secretBytes = ParameterParser.getSecretBytes(req, accountId, true);
+        byte[] shufflingFullHash = HttpParameterParser.getBytes(req, "shufflingFullHash", true);
+        long accountId = HttpParameterParser.getAccountId(req, vaultAccountName(), false);
+        long recipientId = HttpParameterParser.getAccountId(req, "recipientAccount", false);
+        byte[] secretBytes = HttpParameterParser.getSecretBytes(req, accountId, true);
 
-        byte[] recipientPublicKey = ParameterParser.getPublicKey(req, "recipient", recipientId, true);
+        byte[] recipientPublicKey = HttpParameterParser.getPublicKey(req, "recipient", recipientId, true);
         try {
             Shuffler shuffler = Shuffler.addOrGetShuffler(secretBytes, recipientPublicKey, shufflingFullHash);
             return shuffler != null ? JSONData.shuffler(shuffler, false) : JSON.emptyJSON;

@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -44,7 +44,7 @@ public final class GetCurrencies extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long[] currencyIds = ParameterParser.getUnsignedLongs(req, "currencies");
+        long[] currencyIds = HttpParameterParser.getUnsignedLongs(req, "currencies");
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));
         JSONObject response = new JSONObject();
         JSONArray currenciesJSONArray = new JSONArray();

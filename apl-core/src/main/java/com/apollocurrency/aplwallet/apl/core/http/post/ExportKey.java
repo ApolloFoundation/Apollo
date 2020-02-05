@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
@@ -32,8 +32,8 @@ public class ExportKey extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
 
-        String passphrase = ParameterParser.getPassphrase(request, true);
-        long accountId = ParameterParser.getAccountId(request, true);
+        String passphrase = HttpParameterParser.getPassphrase(request, true);
+        long accountId = HttpParameterParser.getAccountId(request, true);
 
         byte [] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
 

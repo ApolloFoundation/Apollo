@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetExchanges;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
@@ -60,10 +60,10 @@ public final class CurrencyBuy extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long rateATM = ParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
-        long units = ParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParser.getCurrency(req);
+        long rateATM = HttpParameterParser.getLong(req, "rateATM", 0, Long.MAX_VALUE, true);
+        long units = HttpParameterParser.getLong(req, "units", 0, Long.MAX_VALUE, true);
+        Account account = HttpParameterParser.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemExchangeBuyAttachment(currency.getId(), rateATM, units);
         try {

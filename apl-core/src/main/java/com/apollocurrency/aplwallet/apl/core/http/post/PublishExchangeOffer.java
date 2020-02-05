@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
@@ -73,15 +73,15 @@ public final class PublishExchangeOffer extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long buyRateATM = ParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
-        long sellRateATM = ParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
-        long totalBuyLimit = ParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
-        long totalSellLimit = ParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
-        long initialBuySupply = ParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
-        long initialSellSupply = ParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
-        int expirationHeight = ParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParser.getCurrency(req);
+        long buyRateATM = HttpParameterParser.getLong(req, "buyRateATM", 0, Long.MAX_VALUE, true);
+        long sellRateATM = HttpParameterParser.getLong(req, "sellRateATM", 0, Long.MAX_VALUE, true);
+        long totalBuyLimit = HttpParameterParser.getLong(req, "totalBuyLimit", 0, Long.MAX_VALUE, true);
+        long totalSellLimit = HttpParameterParser.getLong(req, "totalSellLimit", 0, Long.MAX_VALUE, true);
+        long initialBuySupply = HttpParameterParser.getLong(req, "initialBuySupply", 0, Long.MAX_VALUE, true);
+        long initialSellSupply = HttpParameterParser.getLong(req, "initialSellSupply", 0, Long.MAX_VALUE, true);
+        int expirationHeight = HttpParameterParser.getInt(req, "expirationHeight", 0, Integer.MAX_VALUE, true);
+        Account account = HttpParameterParser.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemPublishExchangeOffer(currency.getId(), buyRateATM, sellRateATM,
                 totalBuyLimit, totalSellLimit, initialBuySupply, initialSellSupply, expirationHeight);

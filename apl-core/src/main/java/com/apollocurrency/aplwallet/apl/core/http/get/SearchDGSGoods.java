@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
@@ -56,10 +56,10 @@ public final class SearchDGSGoods extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long sellerId = ParameterParser.getAccountId(req, "seller", false);
-        String query = ParameterParser.getSearchQuery(req);
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        long sellerId = HttpParameterParser.getAccountId(req, "seller", false);
+        String query = HttpParameterParser.getSearchQuery(req);
+        int firstIndex = HttpParameterParser.getFirstIndex(req);
+        int lastIndex = HttpParameterParser.getLastIndex(req);
         boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
         boolean hideDelisted = "true".equalsIgnoreCase(req.getParameter("hideDelisted"));
         boolean includeCounts = "true".equalsIgnoreCase(req.getParameter("includeCounts"));

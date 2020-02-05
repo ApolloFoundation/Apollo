@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -80,7 +80,7 @@ class CreateTransactionTest {
     void parsePhasingWhenFinishTimeNotFilled() throws Exception {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight + 300), "-1", "-1");
 
-        PhasingAppendixV2 phasingAppendix = ParameterParser.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = HttpParameterParser.parsePhasing(request);
 
         assertEquals(lastBlockHeight + 300, phasingAppendix.getFinishHeight());
         assertEquals(-1, phasingAppendix.getFinishTime());
@@ -91,35 +91,35 @@ class CreateTransactionTest {
     void parsePhasingWhenFinishTimeZero() {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight + 300), "0", "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishNullZero() {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight + 300), null, "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishHeightMoreThenMax() throws Exception {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight + Constants.MAX_PHASING_DURATION + 2), "-1", "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishHeightLessThenMin() throws Exception {
         HttpServletRequest request = initRequest(String.valueOf(lastBlockHeight), "-1", "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishHeightNotFilled() throws Exception {
         HttpServletRequest request = initRequest("-1", "360", "-1");
 
-        PhasingAppendixV2 phasingAppendix = ParameterParser.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = HttpParameterParser.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime + 360, phasingAppendix.getFinishTime());
@@ -129,28 +129,28 @@ class CreateTransactionTest {
     void parsePhasingWhenFinishHeightZero() throws Exception {
         HttpServletRequest request = initRequest("0", "360", "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishHeightNull() throws Exception {
         HttpServletRequest request = initRequest(null, "360", "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishTimeMoreThenMax() throws Exception {
         HttpServletRequest request = initRequest("-1", String.valueOf(Constants.MAX_PHASING_TIME_DURATION_SEC + 1), "-1");
 
-        assertThrows(ParameterException.class,()-> ParameterParser.parsePhasing(request));
+        assertThrows(ParameterException.class,()-> HttpParameterParser.parsePhasing(request));
     }
 
     @Test
     void parsePhasingWhenFinishTimeMaxValue() throws Exception {
         HttpServletRequest request = initRequest("-1", String.valueOf(Constants.MAX_PHASING_TIME_DURATION_SEC), "-1");
 
-        PhasingAppendixV2 phasingAppendix = ParameterParser.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = HttpParameterParser.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC, phasingAppendix.getFinishTime());
@@ -160,7 +160,7 @@ class CreateTransactionTest {
     void parsePhasingWhenFinishTimeMinValue() throws Exception {
         HttpServletRequest request = initRequest("-1", "0", "-1");
 
-        PhasingAppendixV2 phasingAppendix = ParameterParser.parsePhasing(request);
+        PhasingAppendixV2 phasingAppendix = HttpParameterParser.parsePhasing(request);
 
         assertEquals(-1, phasingAppendix.getFinishHeight());
         assertEquals(currentTime, phasingAppendix.getFinishTime());

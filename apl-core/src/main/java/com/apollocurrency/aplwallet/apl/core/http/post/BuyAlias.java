@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Alias;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasBuy;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -43,9 +43,9 @@ public final class BuyAlias extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Account buyer = ParameterParser.getSenderAccount(req);
-        Alias alias = ParameterParser.getAlias(req);
-        long amountATM = ParameterParser.getAmountATM(req);
+        Account buyer = HttpParameterParser.getSenderAccount(req);
+        Alias alias = HttpParameterParser.getAlias(req);
+        long amountATM = HttpParameterParser.getAmountATM(req);
         if (Alias.getOffer(alias) == null) {
             return INCORRECT_ALIAS_NOTFORSALE;
         }

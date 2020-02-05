@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -43,9 +43,9 @@ public final class StopShuffler extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        byte[] shufflingFullHash = ParameterParser.getBytes(req, "shufflingFullHash", false);
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req,accountId, false);
+        byte[] shufflingFullHash = HttpParameterParser.getBytes(req, "shufflingFullHash", false);
+        long accountId = HttpParameterParser.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req,accountId, false);
         JSONObject response = new JSONObject();
         if (keySeed != null) {
             if (accountId != 0 && AccountService.getId(Crypto.getPublicKey(keySeed)) != accountId) {

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -52,7 +52,7 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request, HttpServletResponse response) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(request, "transaction", true);
+        long transactionId = HttpParameterParser.getUnsignedLong(request, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(request.getParameter("retrieve"));
         PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
@@ -61,9 +61,9 @@ public final class DownloadPrunableMessage extends AbstractAPIRequestHandler {
             }
             prunableMessage = prunableMessageService.get(transactionId);
         }
-        long accountId = ParameterParser.getAccountId(request, false);
-        byte[] keySeed = ParameterParser.getKeySeed(request, accountId, false);
-        byte[] sharedKey = ParameterParser.getBytes(request, "sharedKey", false);
+        long accountId = HttpParameterParser.getAccountId(request, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(request, accountId, false);
+        byte[] sharedKey = HttpParameterParser.getBytes(request, "sharedKey", false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey", "passphrase & account");
         }

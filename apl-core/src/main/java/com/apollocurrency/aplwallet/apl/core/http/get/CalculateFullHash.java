@@ -20,23 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.security.MessageDigest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SIGNATURE_HASH;
-import javax.enterprise.inject.Vetoed;
 
 @Vetoed
 public final class CalculateFullHash extends AbstractAPIRequestHandler {
@@ -57,7 +57,7 @@ public final class CalculateFullHash extends AbstractAPIRequestHandler {
         }
         JSONObject response = new JSONObject();
         try {
-            Transaction transaction = ParameterParser.parseTransaction(unsignedTransactionJSONString, unsignedBytesString, null).build();
+            Transaction transaction = HttpParameterParser.parseTransaction(unsignedTransactionJSONString, unsignedBytesString, null).build();
             MessageDigest digest = Crypto.sha256();
             digest.update(transaction.getUnsignedBytes());
             byte[] fullHash = digest.digest(Convert.parseHexString(signatureHashString));

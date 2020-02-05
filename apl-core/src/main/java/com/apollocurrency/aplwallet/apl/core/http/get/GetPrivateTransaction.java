@@ -12,11 +12,10 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_T
 import javax.servlet.http.HttpServletRequest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -34,7 +33,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        ParameterParser.PrivateTransactionsAPIData data = ParameterParser.parsePrivateTransactionRequest(req);
+        HttpParameterParser.PrivateTransactionsAPIData data = HttpParameterParser.parsePrivateTransactionRequest(req);
         if (data == null) {
             return MISSING_SECRET_PHRASE_AND_PUBLIC_KEY;
         }

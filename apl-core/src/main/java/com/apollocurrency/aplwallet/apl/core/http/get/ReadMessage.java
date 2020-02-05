@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -61,7 +61,7 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
 
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
+        long transactionId = HttpParameterParser.getUnsignedLong(req, "transaction", true);
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         Transaction transaction = lookupBlockchain().getTransaction(transactionId);
         if (transaction == null) {
@@ -89,10 +89,10 @@ public final class ReadMessage extends AbstractAPIRequestHandler {
             response.put("message", Convert.toString(prunableMessage.getMessage(), prunableMessage.messageIsText()));
             response.put("messageIsPrunable", true);
         }
-        long accountId = ParameterParser.getAccountId(req, false);
+        long accountId = HttpParameterParser.getAccountId(req, false);
 
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
-        byte[] sharedKey = ParameterParser.getBytes(req, "sharedKey", false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
+        byte[] sharedKey = HttpParameterParser.getBytes(req, "sharedKey", false);
         if (sharedKey.length != 0 && keySeed != null) {
             return JSONResponses.either("secretPhrase", "sharedKey");
         }

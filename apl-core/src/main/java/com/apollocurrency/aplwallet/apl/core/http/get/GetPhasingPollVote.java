@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -43,8 +43,8 @@ public class GetPhasingPollVote extends AbstractAPIRequestHandler {
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long transactionId = ParameterParser.getUnsignedLong(req, "transaction", true);
-        long accountId = ParameterParser.getAccountId(req, true);
+        long transactionId = HttpParameterParser.getUnsignedLong(req, "transaction", true);
+        long accountId = HttpParameterParser.getAccountId(req, true);
 
         PhasingVote phasingVote = phasingPollService.getVote(transactionId, accountId);
         if (phasingVote != null) {

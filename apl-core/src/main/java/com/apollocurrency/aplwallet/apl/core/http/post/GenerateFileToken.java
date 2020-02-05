@@ -33,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -47,15 +47,15 @@ public final class GenerateFileToken extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, true);
+        long accountId = HttpParameterParser.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, true);
         byte[] data;
         try {
             Part part = req.getPart("file");
             if (part == null) {
                 throw new ParameterException(INCORRECT_FILE);
             }
-            ParameterParser.FileData fileData = new ParameterParser.FileData(part).invoke();
+            HttpParameterParser.FileData fileData = new HttpParameterParser.FileData(part).invoke();
             data = fileData.getData();
         } catch (IOException | ServletException e) {
             throw new ParameterException(INCORRECT_FILE);

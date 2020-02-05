@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountPropertyDelete;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -44,12 +44,12 @@ public final class DeleteAccountProperty extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account senderAccount = ParameterParser.getSenderAccount(req);
-        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
+        Account senderAccount = HttpParameterParser.getSenderAccount(req);
+        long recipientId = HttpParameterParser.getAccountId(req, "recipient", false);
         if (recipientId == 0) {
             recipientId = senderAccount.getId();
         }
-        long setterId = ParameterParser.getAccountId(req, "setter", false);
+        long setterId = HttpParameterParser.getAccountId(req, "setter", false);
         if (setterId == 0) {
             setterId = senderAccount.getId();
         }

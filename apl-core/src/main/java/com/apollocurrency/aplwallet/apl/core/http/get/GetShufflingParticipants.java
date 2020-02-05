@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -43,7 +43,7 @@ public final class GetShufflingParticipants extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long shufflingId = ParameterParser.getUnsignedLong(req, "shuffling", true);
+        long shufflingId = HttpParameterParser.getUnsignedLong(req, "shuffling", true);
         JSONObject response = new JSONObject();
         JSONArray participantsJSONArray = new JSONArray();
         response.put("participants", participantsJSONArray);

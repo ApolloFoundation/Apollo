@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.dgs.model.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedDigitalGoodsDelivery;
@@ -55,8 +55,8 @@ public final class DGSDelivery extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account sellerAccount = ParameterParser.getSenderAccount(req);
-        DGSPurchase purchase = ParameterParser.getPurchase(service, req);
+        Account sellerAccount = HttpParameterParser.getSenderAccount(req);
+        DGSPurchase purchase = HttpParameterParser.getPurchase(service, req);
         if (sellerAccount.getId() != purchase.getSellerId()) {
             return INCORRECT_PURCHASE;
         }
@@ -81,7 +81,7 @@ public final class DGSDelivery extends CreateTransaction {
 
         Account buyerAccount = lookupAccountService().getAccount(purchase.getBuyerId());
         boolean goodsIsText = !"false".equalsIgnoreCase(req.getParameter("goodsIsText"));
-        EncryptedData encryptedGoods = ParameterParser.getEncryptedData(req, "goods");
+        EncryptedData encryptedGoods = HttpParameterParser.getEncryptedData(req, "goods");
         byte[] goodsBytes = null;
         boolean broadcast = !"false".equalsIgnoreCase(req.getParameter("broadcast"));
 
@@ -95,7 +95,7 @@ public final class DGSDelivery extends CreateTransaction {
             } catch (RuntimeException e) {
                 return INCORRECT_DGS_GOODS;
             }
-            byte[] keySeed = ParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
+            byte[] keySeed = HttpParameterParser.getKeySeed(req, sellerAccount.getId(),broadcast);
             if (keySeed != null) {
                 encryptedGoods = lookupAccountPublickKeyService().encryptTo(buyerAccount.getId(), goodsBytes, keySeed, true);
             }

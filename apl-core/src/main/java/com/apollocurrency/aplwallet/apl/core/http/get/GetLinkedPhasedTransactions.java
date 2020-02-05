@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONArray;
@@ -45,7 +45,7 @@ public class GetLinkedPhasedTransactions extends AbstractAPIRequestHandler {
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        byte[] linkedFullHash = ParameterParser.getBytes(req, "linkedFullHash", true);
+        byte[] linkedFullHash = HttpParameterParser.getBytes(req, "linkedFullHash", true);
 
         JSONArray json = new JSONArray();
         List<? extends Transaction> transactions = phasingPollService.getLinkedPhasedTransactions(linkedFullHash);

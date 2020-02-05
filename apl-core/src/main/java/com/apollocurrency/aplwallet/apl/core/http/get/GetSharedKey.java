@@ -20,18 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import javax.enterprise.inject.Vetoed;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
+
+import javax.enterprise.inject.Vetoed;
+import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 public final class GetSharedKey extends AbstractAPIRequestHandler {
@@ -42,11 +42,11 @@ public final class GetSharedKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParser.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
 
-        long participantAccountId = ParameterParser.getAccountId(req,"participantAccount", true);
-        byte[] nonce = ParameterParser.getBytes(req, "nonce", true);
+        long participantAccountId = HttpParameterParser.getAccountId(req,"participantAccount", true);
+        byte[] nonce = HttpParameterParser.getBytes(req, "nonce", true);
         byte[] publicKey = lookupAccountService().getPublicKeyByteArray(participantAccountId);
         if (publicKey == null) {
             return JSONResponses.INCORRECT_ACCOUNT;

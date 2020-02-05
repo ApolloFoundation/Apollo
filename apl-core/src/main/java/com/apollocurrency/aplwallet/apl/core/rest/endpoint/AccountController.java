@@ -47,12 +47,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.IdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.UnsignedIntegerParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.Validate;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -67,6 +65,8 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -161,22 +161,20 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccount(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "include additional lessors information.") @QueryParam("includeLessors") @DefaultValue("false") Boolean includeLessors,
-            @Parameter(description = "include additional assets information.") @QueryParam("includeAssets") @DefaultValue("false") Boolean includeAssets,
-            @Parameter(description = "include additional currency information.") @QueryParam("includeCurrencies") @DefaultValue("false") Boolean includeCurrencies,
-            @Parameter(description = "include effective balance.") @QueryParam("includeEffectiveBalance") @DefaultValue("false") Boolean includeEffectiveBalance,
-            @Parameter(description = "require block.") @QueryParam("requireBlock") String requireBlockStr,
-            @Parameter(description = "require last block.") @QueryParam("requireLastBlock") String requireLastBlockStr
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)") @QueryParam("includeLessors") @DefaultValue("false") boolean includeLessors,
+            @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)") @QueryParam("includeAssets") @DefaultValue("false") boolean includeAssets,
+            @Parameter(description = "include accountCurrencies (optional)") @QueryParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
+            @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)") @QueryParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        long accountId = RestParameters.parseAccountId(accountStr);
+        long accountId = accountIdParameter.get();
         Account account  = accountService.getAccount(accountId);
 
         if (account == null) {
-            return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountStr).build();
+            return response.error( ApiErrors.UNKNOWN_VALUE, "account", accountId).build();
         }
 
         AccountDTO dto = converter.convert(account);
@@ -204,8 +202,8 @@ public class AccountController {
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Generate account Returns account information",
-            description = "Returns new account, publicKey, accountRS.",
+            summary = "Generate new account and return the detail information",
+            description = "Generate new account and return new account, publicKey, accountRS.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -213,7 +211,7 @@ public class AccountController {
                                     schema = @Schema(implementation = WalletKeysInfoDTO.class)))
             })
     @PermitAll
-    public Response generateAccount( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase ) {
+    public Response generateAccount( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") @NotNull String passphrase ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         if (StringUtils.isEmpty(passphrase)){
@@ -234,8 +232,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the assets count.",
-            description = "Returns the number of assets by account id and height.",
+            summary = "Get the number of assets owned by an account given the account ID.",
+            description = "Return the number of assets by account id or accountRS and height.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -244,12 +242,12 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountAssetsCount(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The blockchain height.") @QueryParam("height") String heightStr) {
+        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+        @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        long accountId  = accountIdParameter.get();
+        int height = null == heightParam? -1: heightParam;
 
         AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
         dto.setNumberOfAssets(accountAssetService.getAccountAssetCount(accountId, height));
@@ -261,8 +259,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the account assets.",
-            description = "Returns the account assets by account id and height.",
+            summary = "Get the account assets.",
+            description = "Return the account assets by account id and height.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -271,18 +269,18 @@ public class AccountController {
             })
     @PermitAll
     //TODO: need to be adjusted to return one common response.
-    // cause this GET returns two different responses (Acjjxtym countAssetDTO or AccountAssetResponse)
-    // that depend on the value of the asset parameter.
+    // This GET returns two different responses (countAssetDTO or AccountAssetResponse)
+    // it depends on the value of the asset parameter.
     public Response getAccountAssets(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The asset ID.") @QueryParam("asset") Long assetId,
-            @Parameter(description = "The blockchain height.") @QueryParam("height") String heightStr,
-            @Parameter(description = "Include asset information.") @QueryParam("includeAssetInfo") @DefaultValue("false") Boolean includeAssetInfo
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The asset ID (optional).") @QueryParam("asset") @PositiveOrZero Long assetId,
+            @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam,
+            @Parameter(description = "Include asset information (optional).") @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        long accountId  = accountIdParameter.get();
+        int height = null == heightParam? -1: heightParam;
         if (assetId == null || assetId == 0) {
             List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, height, 0, -1);
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
@@ -306,8 +304,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the blocks count.",
-            description = "Returns the number of blocks by account id.",
+            summary = "Get the number of blocks forged by an account.",
+            description = "Return the number of blocks forged by an account.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -316,10 +314,11 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountBlocksCount(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr) {
+        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
+        ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
+        long accountId  = accountIdParameter.get();
 
         AccountBlocksCountResponse dto = new AccountBlocksCountResponse();
         dto.setNumberOfBlocks(blockchain.getBlockCount(accountId));
@@ -331,8 +330,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the blocks ID list.",
-            description = "Returns the list of blocks ID by account id.",
+            summary = "Get the block IDs of all blocks forged by an account.",
+            description = "Get the block IDs of all blocks forged (generated) by an account in reverse block height order.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -341,22 +340,15 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountBlockIds(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The timestamp." ) @QueryParam("timestamp") Integer timestampParam,
-            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
-            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
+            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
             @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        Integer timestamp = RestParameters.parseInt(timestampParam, 0, Integer.MAX_VALUE, "timestamp");
-        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
-        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
-        /*
-        int firstIdx = Math.min(firstIndex, Integer.MAX_VALUE - API.maxRecords + 1);
-        lastIndex = Math.min(lastIndex, firstIdx + API.maxRecords - 1);
-         */
+        long accountId  = accountIdParameter.get();
 
         List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
         List<String> blockIds = blocks.stream().map(Block::getStringId).collect(Collectors.toList());
@@ -371,8 +363,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the blocks list.",
-            description = "Returns the list of blocks by account id.",
+            summary = "Get all blocks forged (generated) by an account.",
+            description = "Return all blocks forged (generated) by an account in reverse block height order.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -381,19 +373,15 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountBlocks(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The timestamp." ) @QueryParam("timestamp") Integer timestampParam,
-            @Parameter(description = "The first index." ) @QueryParam("firstIndex") Integer firstIndexParam,
-            @Parameter(description = "The last index." ) @QueryParam("lastIndex") Integer lastIndexParam,
-            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword,
-            @Parameter(description = "Include transactions info" ) @QueryParam("includeTransaction") @DefaultValue("false") Boolean includeTransaction
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional)." ) @QueryParam("timestamp") @PositiveOrZero int timestamp,
+            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
+            @Parameter(description = "Include transactions detail info" ) @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction,
+            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
     ) {
-
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        Integer timestamp = RestParameters.parseInt(timestampParam, 0, Integer.MAX_VALUE, "timestamp");
-        Integer firstIndex = RestParameters.parseInt(firstIndexParam, 0, Integer.MAX_VALUE, "firstIndex");
-        Integer lastIndex = RestParameters.parseInt(lastIndexParam, 0, Integer.MAX_VALUE, "lastIndex");
+        long accountId  = accountIdParameter.get();
 
         List<Block> blocks = accountService.getAccountBlocks(accountId, timestamp, firstIndex, lastIndex);
 
@@ -407,8 +395,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the currencies count.",
-            description = "Returns the number of currencies by account id and height.",
+            summary = "Get the number of currencies issued by a given account.",
+            description = "Return the number of currencies issued by a given account and height.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -417,13 +405,14 @@ public class AccountController {
             })
     @PermitAll
     public Response getAccountCurrencyCount(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The blockchain height." ) @QueryParam("height") String heightStr
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        long accountId  = accountIdParameter.get();
+        int height = null == heightParam? -1: heightParam;
+
         Integer count = accountCurrencyService.getAccountCurrencyCount(accountId, height);
 
         return response.bind(new AccountCurrencyCountResponse(count)).build();
@@ -433,8 +422,8 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the currency list.",
-            description = "Returns the list of currencies by account id and height.",
+            summary = "Get the currencies issued by a given account.",
+            description = "Return the currencies issued by a given account and height.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -443,15 +432,15 @@ public class AccountController {
             })
     @RolesAllowed("admin")
     public Response getAccountCurrencies(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") String accountStr,
-            @Parameter(description = "The currency ID." ) @QueryParam("currency") Long currencyId,
-            @Parameter(description = "The blockchain height." ) @QueryParam("height") String heightStr,
-            @Parameter(description = "Include currency info" ) @QueryParam("includeCurrencyInfo") @DefaultValue("false") Boolean includeCurrencyInfo
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The currency ID (optional)." ) @QueryParam("currency") @PositiveOrZero Long currencyId,
+            @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam,
+            @Parameter(description = "Include additional currency info (optional)" ) @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        long accountId  = RestParameters.parseAccountId(accountStr);
-        int height = RestParameters.parseHeight(heightStr, accountService.getBlockchainHeight());
+        long accountId  = accountIdParameter.get();
+        int height = null == heightParam? -1: heightParam;
         if (currencyId == null || currencyId == 0) {
             List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, height, 0, -1);
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
@@ -478,45 +467,43 @@ public class AccountController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns the current asked orders list.",
-            description = "Returns the list of current asked orders by account id and asset.",
+            summary = "Get current asset order IDs given an account ID.",
+            description = "Get current asset order IDs given an account ID in reverse block height order. The admin password is required.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = AccountAssetDTO.class)))
+                                    schema = @Schema(implementation = AccountCurrentAskOrderIdsResponse.class)))
             })
     @RolesAllowed("admin")
     public Response getAccountCurrentAskOrderIds(
-            @Parameter(description = "The account ID.", required = true) @QueryParam("account") @Validate(required = true) AccountIdParameter accountIdParameter,
-            @Parameter(description = "The asset ID.") @QueryParam("asset") @Validate IdParameter assetIdParameter,
-            @Parameter(description = "The first index." ) @QueryParam("firstIndex") @Validate UnsignedIntegerParameter firstIndexParam,
-            @Parameter(description = "The last index." ) @QueryParam("lastIndex") @Validate UnsignedIntegerParameter lastIndexParam,
-            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword
+            @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
+            @Parameter(description = "The asset ID.") @QueryParam("asset") @PositiveOrZero Long assetIdParam,
+            @Parameter(description = "A zero-based index to the first block ID to retrieve (optional)." ) @QueryParam("firstIndex") @PositiveOrZero int firstIndex,
+            @Parameter(description = "A zero-based index to the last block ID to retrieve (optional)." ) @QueryParam("lastIndex") @PositiveOrZero int lastIndex,
+            @Parameter(description = "The admin password." ) @QueryParam("adminPassword") String adminPassword //need for Swagger documentation
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int firstIndex = firstIndexParam.get();
-        int lastIndex = lastIndexParam.get();
         List<Order.Ask> ordersByAccount;
-        if (assetIdParameter == null) {
+        if ( assetIdParam == null || assetIdParam == 0 ) {
             ordersByAccount = accountBalanceService.getAskOrdersByAccount(accountId, firstIndex, lastIndex);
         }else{
-            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetIdParameter.get(), firstIndex, lastIndex);
+            ordersByAccount = accountBalanceService.getAskOrdersByAccountAsset(accountId, assetIdParam, firstIndex, lastIndex);
         }
         List<String> ordersIdList = ordersByAccount.stream().map(ask -> Long.toUnsignedString(ask.getId())).collect(Collectors.toList());
 
         return response.bind(new AccountCurrentAskOrderIdsResponse(ordersIdList)).build();
     }
-
+/* check below ============================== */
     @Path("/exportKey")
     @POST
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
-            summary = "Delete account",
-            description = "Delete account and Remove secret bytes from keystore.",
+            summary = "Export the public key associated with an account ID.",
+            description = "Export the public key associated with an account ID.",
             tags = {"accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -524,11 +511,12 @@ public class AccountController {
                                     schema = @Schema(implementation = AccountKeyDTO.class)))
             })
     @PermitAll
-    public Response exportKey( @Parameter(description = "The passphrase", required = true) @FormParam("passphrase") String passphrase,
-                               @Parameter(description = "The account ID.") @FormParam("account") String accountStr) {
-
+    public Response exportKey( @Parameter(description = "The secret passphrase of the account.", required = true) @FormParam("passphrase") @NotNull String passphrase,
+                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
+    ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountStr, passphrase, null);
+        accountIdParameter.get();
+        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountIdParameter.getRawData(), passphrase, null);
 
         byte [] secretBytes = account2FAHelper.findAplSecretBytes(params2FA);
 

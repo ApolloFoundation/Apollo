@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
@@ -32,13 +32,13 @@ public class GetAllTransactions extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        byte type = ParameterParser.getByteOrNegative(req, "type", false);
-        byte subtype = ParameterParser.getByteOrNegative(req, "subtype", false);
+        byte type = HttpParameterParser.getByteOrNegative(req, "type", false);
+        byte subtype = HttpParameterParser.getByteOrNegative(req, "subtype", false);
         if (TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParser.getFirstIndex(req);
+        int lastIndex = HttpParameterParser.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
         try (DbIterator<? extends Transaction> iterator = lookupBlockchain().getTransactions(type, subtype, firstIndex, lastIndex)) {

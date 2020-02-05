@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
-import org.apache.commons.lang3.StringUtils;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 
 public abstract class AbstractRestParameter<T> implements RestParameter<T> {
 
@@ -13,7 +13,7 @@ public abstract class AbstractRestParameter<T> implements RestParameter<T> {
     protected T value = null;
 
     public AbstractRestParameter(String rawData) {
-        this.rawData = StringUtils.isBlank(rawData)? null: rawData;
+        this.rawData = rawData;
     }
 
     @Override
@@ -22,11 +22,20 @@ public abstract class AbstractRestParameter<T> implements RestParameter<T> {
     }
 
     @Override
-    public T get() {
+    public T getIfPresent(){
         if(value == null){
-            try{
+            try {
                 value = parse();
-            }catch (Exception ignored){}
+            }catch (Exception ignored){
+            }
+        }
+        return value;
+    }
+
+    @Override
+    public T get() throws RestParameterException {
+        if(value == null){
+            value = parse();
         }
         return value;
     }

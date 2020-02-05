@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -44,11 +44,11 @@ public final class TransferAsset extends CreateTransaction {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long recipient = ParameterParser.getAccountId(req, "recipient", true);
+        long recipient = HttpParameterParser.getAccountId(req, "recipient", true);
 
-        Asset asset = ParameterParser.getAsset(req);
-        long quantityATU = ParameterParser.getQuantityATU(req);
-        Account account = ParameterParser.getSenderAccount(req);
+        Asset asset = HttpParameterParser.getAsset(req);
+        long quantityATU = HttpParameterParser.getQuantityATU(req);
+        Account account = HttpParameterParser.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsAssetTransfer(asset.getId(), quantityATU);
         try {

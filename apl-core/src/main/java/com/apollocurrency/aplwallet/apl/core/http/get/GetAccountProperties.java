@@ -42,14 +42,14 @@ public final class GetAccountProperties extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long recipientId = ParameterParser.getAccountId(req, "recipient", false);
-        long setterId = ParameterParser.getAccountId(req, "setter", false);
+        long recipientId = HttpParameterParser.getAccountId(req, "recipient", false);
+        long setterId = HttpParameterParser.getAccountId(req, "setter", false);
         if (recipientId == 0 && setterId == 0) {
             return JSONResponses.missing("recipient", "setter");
         }
         String property = Convert.emptyToNull(req.getParameter("property"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParser.getFirstIndex(req);
+        int lastIndex = HttpParameterParser.getLastIndex(req);
 
         JSONObject response = new JSONObject();
         JSONArray propertiesJSON = new JSONArray();

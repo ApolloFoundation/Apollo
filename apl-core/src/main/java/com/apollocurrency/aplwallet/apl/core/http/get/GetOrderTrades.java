@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Trade;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -46,11 +46,11 @@ public final class GetOrderTrades extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        long askOrderId = ParameterParser.getUnsignedLong(req, "askOrder", false);
-        long bidOrderId = ParameterParser.getUnsignedLong(req, "bidOrder", false);
+        long askOrderId = HttpParameterParser.getUnsignedLong(req, "askOrder", false);
+        long bidOrderId = HttpParameterParser.getUnsignedLong(req, "bidOrder", false);
         boolean includeAssetInfo = "true".equalsIgnoreCase(req.getParameter("includeAssetInfo"));
-        int firstIndex = ParameterParser.getFirstIndex(req);
-        int lastIndex = ParameterParser.getLastIndex(req);
+        int firstIndex = HttpParameterParser.getFirstIndex(req);
+        int lastIndex = HttpParameterParser.getLastIndex(req);
 
         if (askOrderId == 0 && bidOrderId == 0) {
             return JSONResponses.missing("askOrder", "bidOrder");

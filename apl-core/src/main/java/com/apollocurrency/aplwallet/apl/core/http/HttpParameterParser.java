@@ -115,8 +115,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
-public final class ParameterParser {
-    private static final Logger LOG = getLogger(ParameterParser.class);
+public final class HttpParameterParser {
+    private static final Logger LOG = getLogger(HttpParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
     protected  static AdminPasswordVerifier apw =  CDI.current().select(AdminPasswordVerifier.class).get();
@@ -461,7 +461,7 @@ public final class ParameterParser {
         boolean isText = !"false".equalsIgnoreCase(req.getParameter("messageToEncryptToSelfIsText"));
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncryptToSelf"));
         byte[] plainMessageBytes = null;
-        EncryptedData encryptedData = ParameterParser.getEncryptedData(req, "encryptToSelfMessage");
+        EncryptedData encryptedData = HttpParameterParser.getEncryptedData(req, "encryptToSelfMessage");
         if (encryptedData == null) {
             String plainMessage = Convert.emptyToNull(req.getParameter("messageToEncryptToSelf"));
             if (plainMessage == null) {
@@ -495,7 +495,7 @@ public final class ParameterParser {
         if (secretPhrase != null) {
             return Convert.toBytes(secretPhrase);
         }
-        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
+        String passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, false));
         if (passphrase != null) {
             return Helper2FA.findAplSecretBytes(senderId, passphrase);
         }
@@ -555,7 +555,7 @@ public final class ParameterParser {
             try {
                 byte[] publicKey = Convert.parseHexString(Convert.emptyToNull(req.getParameter(publicKeyParam)));
                 if (publicKey == null) {
-                    String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, passphraseParam,false));
+                    String passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, passphraseParam,false));
                     if (accountId == 0 || passphrase == null) {
                         if (isMandatory) {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
@@ -593,7 +593,7 @@ public final class ParameterParser {
 
     public static Account getSenderAccount(HttpServletRequest req, String accountName) throws ParameterException {
         String accountParam = accountName == null ? "sender" : accountName;
-        long accountId = ParameterParser.getAccountId(req, accountParam, false);
+        long accountId = HttpParameterParser.getAccountId(req, accountParam, false);
         byte[] publicKey = getPublicKey(req, accountId);
         if (publicKey == null) {
             throw new ParameterException(UNKNOWN_PUBLIC_KEY);
@@ -745,11 +745,11 @@ public final class ParameterParser {
     }
 
     public static HoldingType getHoldingType(HttpServletRequest req) throws ParameterException {
-        return HoldingType.get(ParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
+        return HoldingType.get(HttpParameterParser.getByte(req, "holdingType", (byte) 0, (byte) 2, false));
     }
 
     public static long getHoldingId(HttpServletRequest req, HoldingType holdingType) throws ParameterException {
-        long holdingId = ParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
+        long holdingId = HttpParameterParser.getUnsignedLong(req, "holding", holdingType != HoldingType.APL);
         if (holdingType == HoldingType.APL && holdingId != 0) {
             throw new ParameterException(incorrect("holding",
                     "holding id should not be specified if holdingType is " + blockchainConfig.getCoinSymbol()));
@@ -862,7 +862,7 @@ public final class ParameterParser {
         boolean compress = !"false".equalsIgnoreCase(req.getParameter("compressMessageToEncrypt"));
         byte[] plainMessageBytes = null;
         byte[] recipientPublicKey = null;
-        EncryptedData encryptedData = ParameterParser.getEncryptedData(req, "encryptedMessage");
+        EncryptedData encryptedData = HttpParameterParser.getEncryptedData(req, "encryptedMessage");
         if (encryptedData == null) {
             String plainMessage = Convert.emptyToNull(req.getParameter("messageToEncrypt"));
             if (plainMessage == null) {
@@ -1006,9 +1006,9 @@ public final class ParameterParser {
     }
 
     public static PrivateTransactionsAPIData parsePrivateTransactionRequest(HttpServletRequest req) throws ParameterException {
-        byte[] publicKey = Convert.emptyToNull(ParameterParser.getBytes(req, "publicKey", false));
-        long account = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, account, false);
+        byte[] publicKey = Convert.emptyToNull(HttpParameterParser.getBytes(req, "publicKey", false));
+        long account = HttpParameterParser.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req, account, false);
         if (keySeed == null && publicKey == null) {
             return null;
         }
@@ -1024,8 +1024,8 @@ public final class ParameterParser {
     }
 
     public static TwoFactorAuthParameters parse2FARequest(HttpServletRequest req, String accountName, boolean isMandatory) throws ParameterException {
-        String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
-        String secretPhrase = Convert.emptyToNull(ParameterParser.getSecretPhrase(req, false));
+        String passphrase = Convert.emptyToNull(HttpParameterParser.getPassphrase(req, false));
+        String secretPhrase = Convert.emptyToNull(HttpParameterParser.getSecretPhrase(req, false));
 
         if (isMandatory && secretPhrase == null && passphrase == null) {
             throw new ParameterException(missing("secretPhrase", "passphrase"));
@@ -1035,7 +1035,7 @@ public final class ParameterParser {
         }
         long accountId = 0;
         if (passphrase != null) {
-            accountId = ParameterParser.getAccountId(req, accountName, true);
+            accountId = HttpParameterParser.getAccountId(req, accountName, true);
         } else if (secretPhrase != null){
             accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
         }
@@ -1045,11 +1045,11 @@ public final class ParameterParser {
 
     public static PhasingAppendixV2 parsePhasing(HttpServletRequest req) throws ParameterException {
         int phasingTimeLockDuration = -1;
-        int phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+        int phasingFinishHeight = HttpParameterParser.getInt(req, "phasingFinishHeight",
                 -1, blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1, true);
 
         if(req.getParameter("phasingFinishTime") != null){
-            phasingTimeLockDuration = ParameterParser.getInt(req, "phasingFinishTime",
+            phasingTimeLockDuration = HttpParameterParser.getInt(req, "phasingFinishTime",
                     -1, Constants.MAX_PHASING_TIME_DURATION_SEC, false);
         }
 
@@ -1060,7 +1060,7 @@ public final class ParameterParser {
 
         int phasingFinishTime = -1;
         if(phasingTimeLockDuration == -1) {
-            phasingFinishHeight = ParameterParser.getInt(req, "phasingFinishHeight",
+            phasingFinishHeight = HttpParameterParser.getInt(req, "phasingFinishHeight",
                     blockchain.getHeight() + 1,
                     blockchain.getHeight() + Constants.MAX_PHASING_DURATION + 1,
                     true);
@@ -1083,17 +1083,17 @@ public final class ParameterParser {
         }
 
         byte[] hashedSecret = Convert.parseHexString(Convert.emptyToNull(req.getParameter("phasingHashedSecret")));
-        byte algorithm = ParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
+        byte algorithm = HttpParameterParser.getByte(req, "phasingHashedSecretAlgorithm", (byte) 0, Byte.MAX_VALUE, false);
 
         return new PhasingAppendixV2(phasingFinishHeight, phasingFinishTime, phasingParams, linkedFullHashes, hashedSecret, algorithm);
     }
 
     public static PhasingParams parsePhasingParams(HttpServletRequest req, String parameterPrefix) throws ParameterException {
-        byte votingModel = ParameterParser.getByte(req, parameterPrefix + "VotingModel", (byte)-1, (byte)5, true);
-        long quorum = ParameterParser.getLong(req, parameterPrefix + "Quorum", 0, Long.MAX_VALUE, false);
-        long minBalance = ParameterParser.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
-        byte minBalanceModel = ParameterParser.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
-        long holdingId = ParameterParser.getUnsignedLong(req, parameterPrefix + "Holding", false);
+        byte votingModel = HttpParameterParser.getByte(req, parameterPrefix + "VotingModel", (byte)-1, (byte)5, true);
+        long quorum = HttpParameterParser.getLong(req, parameterPrefix + "Quorum", 0, Long.MAX_VALUE, false);
+        long minBalance = HttpParameterParser.getLong(req, parameterPrefix + "MinBalance", 0, Long.MAX_VALUE, false);
+        byte minBalanceModel = HttpParameterParser.getByte(req, parameterPrefix + "MinBalanceModel", (byte)0, (byte)3, false);
+        long holdingId = HttpParameterParser.getUnsignedLong(req, parameterPrefix + "Holding", false);
         long[] whitelist = null;
         String[] whitelistValues = req.getParameterValues(parameterPrefix + "Whitelisted");
         if (whitelistValues != null && whitelistValues.length > 0) {
@@ -1113,7 +1113,7 @@ public final class ParameterParser {
 
     }
 
-    private ParameterParser() {} // never
+    private HttpParameterParser() {} // never
 
     public static class PrivateTransactionsAPIData {
         private boolean encrypt;

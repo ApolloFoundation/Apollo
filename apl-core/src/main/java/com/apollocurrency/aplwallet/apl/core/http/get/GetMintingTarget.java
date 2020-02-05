@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -53,14 +53,14 @@ public final class GetMintingTarget extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
+        Currency currency = HttpParameterParser.getCurrency(req);
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(currency.getId()));
-        long units = ParameterParser.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
+        long units = HttpParameterParser.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
         BigInteger numericTarget = CurrencyMinting.getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(CurrencyMinting.getTarget(numericTarget)));
-        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint.getCounter(currency.getId(), ParameterParser.getAccountId(req, true)));
+        json.put("counter", com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint.getCounter(currency.getId(), HttpParameterParser.getAccountId(req, true)));
         return json;
     }
 

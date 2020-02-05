@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import org.json.simple.JSONStreamAware;
@@ -42,7 +42,7 @@ public final class GetBidOrder extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long orderId = ParameterParser.getUnsignedLong(req, "order", true);
+        long orderId = HttpParameterParser.getUnsignedLong(req, "order", true);
         Order.Bid bidOrder = Order.Bid.getBidOrder(orderId);
         if (bidOrder == null) {
             return UNKNOWN_ORDER;

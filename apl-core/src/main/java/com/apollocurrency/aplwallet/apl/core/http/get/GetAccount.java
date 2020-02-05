@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.util.AplException;
@@ -59,7 +59,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
 
-        Account account = ParameterParser.getAccount(req);
+        Account account = HttpParameterParser.getAccount(req);
         boolean includeLessors = "true".equalsIgnoreCase(req.getParameter("includeLessors"));
         boolean includeAssets = "true".equalsIgnoreCase(req.getParameter("includeAssets"));
         boolean includeCurrencies = "true".equalsIgnoreCase(req.getParameter("includeCurrencies"));

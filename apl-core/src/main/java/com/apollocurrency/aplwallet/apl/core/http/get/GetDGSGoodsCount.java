@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 import com.apollocurrency.aplwallet.apl.core.dgs.DGSService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -42,7 +42,7 @@ public final class GetDGSGoodsCount extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        long sellerId = ParameterParser.getAccountId(req, "seller", false);
+        long sellerId = HttpParameterParser.getAccountId(req, "seller", false);
         boolean inStockOnly = !"false".equalsIgnoreCase(req.getParameter("inStockOnly"));
 
         JSONObject response = new JSONObject();

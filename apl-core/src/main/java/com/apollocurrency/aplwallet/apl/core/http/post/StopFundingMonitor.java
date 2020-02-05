@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONObject;
@@ -66,8 +66,8 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
      */
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws ParameterException {
-        long accountId = ParameterParser.getAccountId(req, false);
-        byte[] keySeed = ParameterParser.getKeySeed(req, accountId, false);
+        long accountId = HttpParameterParser.getAccountId(req, false);
+        byte[] keySeed = HttpParameterParser.getKeySeed(req, accountId, false);
 
         JSONObject response = new JSONObject();
         if (keySeed == null) {
@@ -83,9 +83,9 @@ public class StopFundingMonitor extends AbstractAPIRequestHandler {
                     accountId = AccountService.getId(Crypto.getPublicKey(keySeed));
                 }
             }
-            HoldingType holdingType = ParameterParser.getHoldingType(req);
-            long holdingId = ParameterParser.getHoldingId(req, holdingType);
-            String property = ParameterParser.getAccountProperty(req, true);
+            HoldingType holdingType = HttpParameterParser.getHoldingType(req);
+            long holdingId = HttpParameterParser.getHoldingId(req, holdingType);
+            String property = HttpParameterParser.getAccountProperty(req, true);
             boolean stopped = FundingMonitor.stopMonitor(holdingType, holdingId, property, accountId);
             response.put("stopped", stopped ? 1 : 0);
         } else {

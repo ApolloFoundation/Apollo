@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveClaim;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import javax.enterprise.inject.Vetoed;
 import org.json.simple.JSONStreamAware;
@@ -54,9 +54,9 @@ public final class CurrencyReserveClaim extends CreateTransaction {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = ParameterParser.getCurrency(req);
-        long units = ParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
-        Account account = ParameterParser.getSenderAccount(req);
+        Currency currency = HttpParameterParser.getCurrency(req);
+        long units = HttpParameterParser.getLong(req, "units", 0, currency.getReserveSupply(), false);
+        Account account = HttpParameterParser.getSenderAccount(req);
         Attachment attachment = new MonetarySystemReserveClaim(currency.getId(), units);
         return createTransaction(req, account, attachment);
 

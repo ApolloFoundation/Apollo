@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -47,7 +47,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
 public final class DumpPeers extends AbstractAPIRequestHandler {
-   
+
     private static final Logger LOG = getLogger(DumpPeers.class);
 
     public DumpPeers() {
@@ -60,7 +60,7 @@ public final class DumpPeers extends AbstractAPIRequestHandler {
         Version version = new Version(Convert.nullToEmpty(req.getParameter("version")));
 
         int weight =
-                ParameterParser.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
+                HttpParameterParser.getInt(req, "weight", 0, (int) CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceAPL(),
                 false);
         boolean connect = "true".equalsIgnoreCase(req.getParameter("connect")) && apw.checkPassword(req);
         if (connect) {

@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation.PollBuilder;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
+import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
 import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
@@ -93,35 +93,35 @@ public final class CreatePoll extends CreateTransaction {
         }
 
         int currentHeight = lookupBlockchain().getHeight();
-        int finishHeight = ParameterParser.getInt(req, "finishHeight",
+        int finishHeight = HttpParameterParser.getInt(req, "finishHeight",
                 currentHeight + 2,
                 currentHeight + Constants.MAX_POLL_DURATION + 1, true);
 
-        byte votingModel = ParameterParser.getByte(req, "votingModel", (byte)0, (byte)3, true);
+        byte votingModel = HttpParameterParser.getByte(req, "votingModel", (byte)0, (byte)3, true);
 
-        byte minNumberOfOptions = ParameterParser.getByte(req, "minNumberOfOptions", (byte) 1, optionsSize, true);
-        byte maxNumberOfOptions = ParameterParser.getByte(req, "maxNumberOfOptions", minNumberOfOptions, optionsSize, true);
+        byte minNumberOfOptions = HttpParameterParser.getByte(req, "minNumberOfOptions", (byte) 1, optionsSize, true);
+        byte maxNumberOfOptions = HttpParameterParser.getByte(req, "maxNumberOfOptions", minNumberOfOptions, optionsSize, true);
 
-        byte minRangeValue = ParameterParser.getByte(req, "minRangeValue", Constants.MIN_VOTE_VALUE, Constants.MAX_VOTE_VALUE, true);
-        byte maxRangeValue = ParameterParser.getByte(req, "maxRangeValue", minRangeValue, Constants.MAX_VOTE_VALUE, true);
+        byte minRangeValue = HttpParameterParser.getByte(req, "minRangeValue", Constants.MIN_VOTE_VALUE, Constants.MAX_VOTE_VALUE, true);
+        byte maxRangeValue = HttpParameterParser.getByte(req, "maxRangeValue", minRangeValue, Constants.MAX_VOTE_VALUE, true);
 
         PollBuilder builder = new PollBuilder(nameValue.trim(), descriptionValue.trim(),
                 options.toArray(new String[options.size()]), finishHeight, votingModel,
                 minNumberOfOptions, maxNumberOfOptions, minRangeValue, maxRangeValue);
 
-        long minBalance = ParameterParser.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
+        long minBalance = HttpParameterParser.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
 
         if (minBalance != 0) {
-            byte minBalanceModel = ParameterParser.getByte(req, "minBalanceModel", (byte)0, (byte)3, true);
+            byte minBalanceModel = HttpParameterParser.getByte(req, "minBalanceModel", (byte)0, (byte)3, true);
             builder.minBalance(minBalanceModel, minBalance);
         }
 
-        long holdingId = ParameterParser.getUnsignedLong(req, "holding", false);
+        long holdingId = HttpParameterParser.getUnsignedLong(req, "holding", false);
         if (holdingId != 0) {
             builder.holdingId(holdingId);
         }
 
-        Account account = ParameterParser.getSenderAccount(req);
+        Account account = HttpParameterParser.getSenderAccount(req);
         Attachment attachment = builder.build();
         return createTransaction(req, account, attachment);
     }
