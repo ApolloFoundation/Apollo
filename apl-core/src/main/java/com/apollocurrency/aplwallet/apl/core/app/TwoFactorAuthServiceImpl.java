@@ -176,27 +176,27 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         int countProcesses = 0; // store really processed records
         // loop over all db records if any
         for (TwoFactorAuthEntity itemRecord: result ) {
-            // check if record was stored as 2fa file before
-            TwoFactorAuthEntity previousValue = targetFileRepository.get(itemRecord.getAccount()); // store into file
-            if (previousValue == null) { // if 2fa file is missing
-                boolean isImported = targetFileRepository.add(itemRecord); // store into file
-                if (!isImported) {
-                    log.error("Error importing 2fa record as File (result={}) = {}", isImported, itemRecord);
-                    isAllImportedIntoFile = isImported; // store false
-                    continue; // go to next record, do not delete if record was NOT exported
-                }
-                repository.delete(itemRecord.getAccount()); // remove ONLY processed record from db
-                countProcesses++; // increase counter when really processed
+            log.debug("Start conversion 2fa record = {}...", itemRecord);
+            if (targetFileRepository.add(itemRecord)) { // if 2fa file added
+                // added new file, record stored as 2fa file
+                log.debug("File Stored for 2fa record = {}...", itemRecord);
             } else {
-                // skipped processing, because record exists in 2fa as file
-                log.debug("Already stored 2fa for accountId={} ({})",
-                    previousValue.getAccount(), previousValue.isConfirmed());
+                // a previous file found for 2fa record
+                log.debug("SKIPPING, 2fa File already stored for record = {}", itemRecord);
+            }
+            try {
+                repository.delete(itemRecord.getAccount()); // remove record from db
+                countProcesses++; // increase counter when really processed
+                log.debug("DONE conversion 2fa record = {}...", itemRecord);
+            } catch (Exception e) {
+                isAllImportedIntoFile = false;
+                log.warn("Error removing 2fa record from db = {}", itemRecord, e);
             }
         }
         if (!isAllImportedIntoFile) {
             log.error("Something went wrong on export/import all 2fa records !!!");
         }
-        log.info("Moved 2fa records = [{}], 2fa db records were found = [{}]", countProcesses, result.size());
+        log.info("Moved 2fa records = [{}], 2fa db records found = [{}]", countProcesses, result.size());
         return countProcesses;
     }
 }
