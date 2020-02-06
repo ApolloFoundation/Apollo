@@ -8,6 +8,7 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 public enum ApiErrors implements ErrorInfo {
 
+    INTERNAL_SERVER_EXCEPTION(0, 1000, "Internal error, root cause: %s"),
     JSON_SERIALIZATION_EXCEPTION(1,1001,"Exception encountered during generating JSON content, root cause: %s"),
 
     MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
@@ -18,7 +19,7 @@ public enum ApiErrors implements ErrorInfo {
     PEER_NOT_CONNECTED(5, 2006, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2007, "Peer is not providing open API."),
 
-    FAILED_TO_ADD(8, 2008, "Failed to add peer %s"),
+    FAILED_TO_ADD(8, 2008, "Failed to add a peer %s"),
     NO_PASSWORD_IN_CONFIG(8, 2010, "Administrator's password is not configured. Please set apl.adminPassword"),
     INCORRECT_PARAM(4, 2011, "Incorrect {0}, {1}"),
     UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: '%s', see stacktrace for details"),

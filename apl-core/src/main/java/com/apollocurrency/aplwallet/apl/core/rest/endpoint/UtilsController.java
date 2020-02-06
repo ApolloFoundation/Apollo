@@ -6,12 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import javax.imageio.ImageIO;
 import javax.inject.Singleton;
-import javax.validation.constraints.PositiveOrZero;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -23,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.google.zxing.BarcodeFormat;
@@ -41,6 +45,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @NoArgsConstructor
 @Slf4j
@@ -52,9 +57,10 @@ public class UtilsController {
     @Path("/qrcode/encode")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "The EncodeQRCode API converts a UTF-8 string to a base64-encoded jpeg image of a 2-D QR (Quick Response) code",
-        description = "The output qrCodeBase64 string can be incorporated into an in-line HTML image like this: &lt;img src=\"data:image/jpeg;base64,qrCodeBase64\"&gt",
+        description = "The output qrCodeBase64 string can be incorporated into an in-line HTML image like this: &lt;img src=\"data:image/jpeg;base64,qrCodeBase64\"&gt; ",
         tags = {"utility"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -62,16 +68,32 @@ public class UtilsController {
                     schema = @Schema(implementation = QrCodeDto.class)))
         })
     public Response encodeQRCode(
-        @Parameter(description = "QR code data", required = true) @QueryParam("qrCodeData") String qrCodeData,
-        @Parameter(description = "QR code image width", allowEmptyValue = true) @QueryParam("width") @PositiveOrZero @DefaultValue("100") int width,
-        @Parameter(description = "QR code image height", allowEmptyValue = true) @QueryParam("height") @PositiveOrZero @DefaultValue("100") int height
+        @Parameter(description = "QR code data", required = true) @FormParam("qrCodeData") String qrCodeData,
+        @Parameter(description = "QR code image width", allowEmptyValue = true) @FormParam("width") @DefaultValue("0") String widthStr,
+        @Parameter(description = "QR code image height", allowEmptyValue = true) @FormParam("height") @DefaultValue("0") String heightStr,
+        @Context HttpServletRequest request
     ) {
-        log.debug("Started encodeQRCode,\n\t\twidth={}, height={}, qrCodeData={}", width, height, qrCodeData);
+        log.debug("Started encodeQRCode,\n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
+        if (StringUtils.isEmpty(qrCodeData)) {
+            return response.error( ApiErrors.MISSING_PARAM, "qrCodeData").build();
+        }
+        int width;
+        try {
+            width = ParameterParser.getInt(request, "width", 0, 5000, false);
+        } catch (ParameterException e) {
+            return response.error(ApiErrors.INCORRECT_PARAM, "width", widthStr).build();
+        }
+        int height;
+        try {
+            height = ParameterParser.getInt(request, "height", 0, 5000, false);
+        } catch (ParameterException e) {
+            return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
+        }
+
         QrCodeDto dto = new QrCodeDto();
         try {
-//            Map<EncodeHintType, Object> hints = new HashMap<>();
-            Map hints = new HashMap();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
             // Error correction level: L (7%), M (15%), Q (25%), H (30%) -- Default L.
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
             hints.put(EncodeHintType.MARGIN, 0); // Default 4
@@ -91,12 +113,10 @@ public class UtilsController {
             String base64 = Base64.getEncoder().encodeToString(bytes);
             log.debug("base64 = {}", base64);
             dto.qrCodeBase64 = base64;
-        } catch(WriterException | IOException ex) {
-            String errorMessage = String.format("Error creating image from qrCodeData: %s", qrCodeData);
+        } catch(WriterException | IOException | NullPointerException ex) {
+            String errorMessage = String.format("Error creating QR from qrCodeData: %s, ex = %s", qrCodeData, ex.getMessage());
             log.error(errorMessage, ex);
-//            return response.error(new ApiErrors(4, 0, errorMessage).).build();
-            return response.error(ApiErrors.JSON_SERIALIZATION_EXCEPTION).build();
-//            JSONData.putException(response, ex, errorMessage);
+            return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
         }
         return response.bind(dto).build();
     }
