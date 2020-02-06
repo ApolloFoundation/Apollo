@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
@@ -698,7 +698,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doCallRealMethod().when(account2FAHelper).parse2FARequestParams("0", null, null);
 
         MockHttpRequest request = post(uri);
-        request.setAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
+        request.setAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
 
         MockHttpResponse response = sendPostRequest(request,"wrong=value");
 
@@ -713,7 +713,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doCallRealMethod().when(account2FAHelper).parse2FARequestParams("0", PASSPHRASE, SECRET);
 
         MockHttpRequest request = post(uri);
-        request.setAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
+        request.setAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
 
         MockHttpResponse response = sendPostRequest(request,"passphrase="+PASSPHRASE+"&secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
 
@@ -725,7 +725,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
 
         MockHttpRequest request = post(uri);
-        request.setAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
+        request.setAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
 
         MockHttpResponse response = sendPostRequest(request,"secretPhrase="+SECRET);
 
@@ -736,7 +736,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
 
         MockHttpRequest request = post(uri);
-        request.setAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
+        request.setAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
         MockHttpResponse response = sendPostRequest(request, "passphrase="+PASSPHRASE+"&account="+ACCOUNT_RS+"&code2FA="+CODE_2FA);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
@@ -754,7 +754,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
 
         MockHttpRequest request = post(uri);
-        request.setAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
+        request.setAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE, twoFactorAuthParameters );
 
         MockHttpResponse response = sendPostRequest(request,"secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
 

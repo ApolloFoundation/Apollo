@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 
 public class AccountIdParameter extends AbstractRestParameter<Long> {
@@ -15,6 +15,6 @@ public class AccountIdParameter extends AbstractRestParameter<Long> {
 
     @Override
     public Long parse() throws RestParameterException {
-        return RestParameters.parseAccountId(getRawData());
+        return RestParametersParser.parseAccountId(getRawData());
     }
 }

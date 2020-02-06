@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 
 import javax.annotation.Priority;
@@ -18,11 +19,10 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.CODE2FA_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.PASSPHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.SECRET_PHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE;
-import static com.apollocurrency.aplwallet.apl.core.rest.RestParameters.parseRequestParameters;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.CODE2FA_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.PASSPHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.SECRET_PHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE;
 
 
 @Secured2FA
@@ -32,6 +32,8 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
 
     @Inject
     private Account2FAHelper faHelper;
+    @Inject
+    private RestParametersParser restParametersParser;
 
     @Context
     ResourceInfo info;
@@ -42,7 +44,7 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
             Secured2FA secured2FA = info.getResourceMethod().getAnnotation(Secured2FA.class);
             String vault = secured2FA.value();
 
-            Map<String, String> params = parseRequestParameters( requestContext,
+            Map<String, String> params = restParametersParser.parseRequestParameters( requestContext,
                     vault,
                     PASSPHRASE_PARAM_NAME,
                     SECRET_PHRASE_PARAM_NAME,

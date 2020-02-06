@@ -1,13 +1,10 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
@@ -68,11 +65,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
 import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;

@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
@@ -89,7 +89,7 @@ import java.util.stream.Collectors;
 public class AccountController {
 
     private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
-                                                                             RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+                                                                             RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
     @Inject @Setter
     private Blockchain blockchain;
     @Inject @Setter
@@ -548,7 +548,7 @@ public class AccountController {
                               @Context org.jboss.resteasy.spi.HttpRequest request ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
 
         KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
 
@@ -584,7 +584,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
             ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
 
         account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
         Account2FADTO dto = faConverter.convert(params2FA);
@@ -617,7 +617,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
 
         account2FAHelper.disable2FA(params2FA, code2FA);
 

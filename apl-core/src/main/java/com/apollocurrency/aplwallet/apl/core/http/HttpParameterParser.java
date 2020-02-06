@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -116,7 +117,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This class is just a static helper for parameters. It should be removed later cause it uses the CDI static methods.
- * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.RestParameters} class instead of this one.
+ * @deprecated Use {@link RestParametersParser} class instead of this one.
  */
 @Deprecated
 public final class HttpParameterParser {
