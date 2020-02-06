@@ -203,11 +203,11 @@ then
     then
 	if [ ${NOSHARD} == false ]
 	then
-	    bash ./update3.sh $1 $2 $3 true ${NETID}
+#	    bash ./update3.sh $1 $2 $3 true ${NETID}
 	fi
     elif [ $4 == false ]
     then
-	bash ./update3.sh $1 $2 $3 $4 $5
+#	bash ./update3.sh $1 $2 $3 $4 $5
     fi
 
     
