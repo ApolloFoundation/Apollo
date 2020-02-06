@@ -135,10 +135,22 @@ public class DexContractTable  extends VersionedDeletableEntityDbTable<ExchangeC
     }
 
     public List<ExchangeContract> getOverdueContractsStep1and2(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1) AND deadline_to_reply < ?";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+    public List<ExchangeContract> getOverdueContractsStep1_2_3(int deadlineToReply) throws AplException.ExecutiveProcessException {
+        String sql = "SELECT * FROM dex_contract  where latest = true " +
+            "AND status IN (0,1,2) AND deadline_to_reply < ?";
+
+        return getOverdueContracts(deadlineToReply, sql);
+    }
+
+    private List<ExchangeContract> getOverdueContracts(int deadlineToReply, String sql) throws AplException.ExecutiveProcessException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con
-                     .prepareStatement("SELECT * FROM dex_contract  where latest = true " +
-                             "AND status IN (0,1) AND deadline_to_reply < ?")
+                     .prepareStatement(sql)
         ) {
             int i = 0;
             pstmt.setLong(++i, deadlineToReply);

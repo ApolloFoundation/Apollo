@@ -2,10 +2,13 @@ package com.apollocurrency.aplwallet.apl.exchange.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
@@ -25,6 +28,8 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 public class DexCloseOrderTransaction extends DEX {
 
     private DexService dexService = CDI.current().select(DexService.class).get();
+    private PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
+    private Blockchain blockchain = CDI.current().select(Blockchain.class).get();
 
     @Override
     public byte getSubtype() {
@@ -59,7 +64,8 @@ public class DexCloseOrderTransaction extends DEX {
         if (dexContract.getContractStatus() != ExchangeContractStatus.STEP_3) {
             throw new AplException.NotCurrentlyValidException("Wrong contract status, expected STEP_3, got " + dexContract.getContractStatus());
         }
-        long orderId = dexContract.getSender() == tx.getSenderId() ? dexContract.getOrderId() : dexContract.getCounterOrderId();
+        boolean isSender = dexContract.getSender() == tx.getSenderId();
+        long orderId = isSender ? dexContract.getOrderId() : dexContract.getCounterOrderId();
         DexOrder order = dexService.getOrder(orderId);
         if (order == null) {
             throw new AplException.NotCurrentlyValidException("Order with id " + attachment.getContractId() + " does not exists");
@@ -71,8 +77,27 @@ public class DexCloseOrderTransaction extends DEX {
             throw new AplException.NotCurrentlyValidException("APL buy orders are closing automatically");
         }
         if (!order.getStatus().isWaitingForApproval()) {
-            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but: " + order.getStatus().name())));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("orderStatus", "You can close order in the status WaitingForApproval only, but got: " + order.getStatus().name())));
         }
+        long transferId = Long.parseUnsignedLong(isSender ? dexContract.getTransferTxId() : dexContract.getCounterTransferTxId());
+        Transaction transferTx = blockchain.getTransaction(transferId);
+        if (transferTx == null) {
+            throw new AplException.NotCurrentlyValidException("Transfer tx was not found: " + transferId);
+        }
+        if (transferTx.getType() != DEX_TRANSFER_MONEY_TRANSACTION) {
+            throw new AplException.NotCurrentlyValidException("Wrong type of transfer tx: " + transferTx.getType());
+        }
+        if (transferTx.getSenderId() != tx.getSenderId()) {
+            throw new AplException.NotCurrentlyValidException("Wrong transfer tx sender: " + tx.getSenderId() + ", expected -" + transferTx.getSenderId());
+        }
+        long transferContractId = ((DexControlOfFrozenMoneyAttachment) transferTx.getAttachment()).getContractId();
+        if (transferContractId != attachment.getContractId()) {
+            throw new AplException.NotCurrentlyValidException("Trasfer tx " + transferId + " refers to another contract " + transferContractId + ", expected " + attachment.getContractId());
+        }
+        if (phasingPollService.getPoll(transferId) == null && phasingPollService.getResult(transferId) == null) {
+            throw new AplException.NotCurrentlyValidException("Transfer tx " + transferId + " was not phased");
+        }
+
     }
 
     @Override
