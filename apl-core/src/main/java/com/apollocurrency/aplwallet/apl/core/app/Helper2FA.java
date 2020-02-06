@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * This class is just static helper for 2FA. It should be removed later
  * and replaced by properly used CDI
- * @deprecated Use Account2FAHelper class instead of this one.
+ * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper} class instead of this one.
  * @author al
  */
 @Deprecated
