@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
+import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -80,14 +80,14 @@ public class UtilsController {
         }
         int width;
         try {
-            width = ParameterParser.getInt(request, "width", 0, 5000, false);
-        } catch (ParameterException e) {
+            width = RestParameters.parseInt(widthStr, "width", 0, 5000, false);
+        } catch (RestParameterException e) {
             return response.error(ApiErrors.INCORRECT_PARAM, "width", widthStr).build();
         }
         int height;
         try {
-            height = ParameterParser.getInt(request, "height", 0, 5000, false);
-        } catch (ParameterException e) {
+            height = RestParameters.parseInt(heightStr, "height", 0, 5000, false);
+        } catch (RestParameterException e) {
             return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
         }
 
