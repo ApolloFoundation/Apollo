@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TimeService;
 import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
@@ -59,6 +60,7 @@ class DexTransferMoneyTransactionTest {
                     MockBean.of(mock(DexConfig.class), DexConfig.class),
                     MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
                     MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
+                    MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
                     MockBean.of(dexService, DexService.class),
                     MockBean.of(mock(TimeService.class), TimeService.class)
             ).build();
