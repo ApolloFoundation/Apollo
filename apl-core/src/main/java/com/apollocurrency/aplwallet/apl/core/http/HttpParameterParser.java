@@ -114,7 +114,11 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.incorrect
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.missing;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
+/**
+ * This class is just a static helper for parameters. It should be removed later cause it uses the CDI static methods.
+ * @deprecated Use {@link com.apollocurrency.aplwallet.apl.core.rest.RestParameters} class instead of this one.
+ */
+@Deprecated
 public final class HttpParameterParser {
     private static final Logger LOG = getLogger(HttpParameterParser.class);
     private static BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();

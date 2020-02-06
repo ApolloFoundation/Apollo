@@ -4,7 +4,12 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.*;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
@@ -35,17 +40,17 @@ import javax.inject.Singleton;
 @Singleton
 public class Account2FAHelper {
 
-    private TwoFactorAuthService service2FA;
-    private PassphraseGeneratorImpl passphraseGenerator;
+    private final TwoFactorAuthService service2FA;
+    private final PassphraseGeneratorImpl passphraseGenerator;
 
 
-    private ElGamalEncryptor elGamal;
-    private KeyStoreService KEYSTORE;
-    private AccountBalanceService accountService;
+    private final ElGamalEncryptor elGamal;
+    private final KeyStoreService keyStoreService;
+    private final AccountBalanceService accountService;
 
     @Inject
-    public Account2FAHelper(DatabaseManager databaseManager, PropertiesHolder propertiesHolder, DirProvider dirProvider, KeyStoreService KEYSTORE, ElGamalEncryptor elGamal, AccountBalanceService accountService) {
-        this.KEYSTORE = KEYSTORE;
+    public Account2FAHelper(DatabaseManager databaseManager, PropertiesHolder propertiesHolder, DirProvider dirProvider, KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountBalanceService accountService) {
+        this.keyStoreService = keyStoreService;
         this.elGamal = elGamal;
         this.accountService = accountService;
         this.passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
@@ -180,7 +185,7 @@ public class Account2FAHelper {
 
         long aplId = apolloWallet.getAplWalletKey().getId();
 
-        KeyStoreService.Status status = KEYSTORE.saveSecretKeyStore(passphrase, aplId, apolloWallet);
+        KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passphrase, aplId, apolloWallet);
         validateKeyStoreStatus(aplId, status, "generated");
 
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
@@ -193,7 +198,7 @@ public class Account2FAHelper {
             Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }
-        KeyStoreService.Status status = KEYSTORE.deleteKeyStore(passphrase, accountId);
+        KeyStoreService.Status status = keyStoreService.deleteKeyStore(passphrase, accountId);
         validateKeyStoreStatus(accountId, status, "deleted");
         return status;
     }
@@ -203,7 +208,7 @@ public class Account2FAHelper {
     }
 
     public byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
-        ApolloFbWallet fbWallet = KEYSTORE.getSecretStore(passphrase, accountId);
+        ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
         if (fbWallet == null) {
             throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d","account id or passphrase", accountId));
         }

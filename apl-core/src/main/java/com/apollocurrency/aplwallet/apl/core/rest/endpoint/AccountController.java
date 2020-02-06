@@ -44,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
@@ -496,7 +495,7 @@ public class AccountController {
 
         return response.bind(new AccountCurrentAskOrderIdsResponse(ordersIdList)).build();
     }
-/* check below ============================== */
+
     @Path("/exportKey")
     @POST
     @Produces(MediaType.TEXT_HTML)
@@ -549,10 +548,7 @@ public class AccountController {
                               @Context org.jboss.resteasy.spi.HttpRequest request ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-        checkNotNull(params2FA, request.getUri().toString());
-        account2FAHelper.validate2FAParameters(params2FA);
 
         KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
 
@@ -577,8 +573,9 @@ public class AccountController {
                             content = @Content(mediaType = "text/html",
                                     schema = @Schema(implementation = Account2FADTO.class)))
             })
-    @Secured2FA
+
     @PermitAll
+    @Secured2FA
     public Response confirm2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
@@ -587,11 +584,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
             ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-
-        //TwoFactorAuthParameters  params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-        checkNotNull(params2FA, request.getUri().toString());
-        account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
         Account2FADTO dto = faConverter.convert(params2FA);
@@ -613,8 +606,9 @@ public class AccountController {
                             content = @Content(mediaType = "text/html",
                                     schema = @Schema(implementation = Account2FADTO.class)))
             })
-    @Secured2FA
+
     @PermitAll
+    @Secured2FA
     public Response disable2FA(
             @Parameter(description = "The passphrase") @FormParam("passphrase") String passphraseParam,
             @Parameter(description = "The secret phrase") @FormParam("secretPhrase") String secretPhraseParam,
@@ -623,11 +617,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-
-        //TwoFactorAuthParameters params2FA = account2FAHelper.verify2FA(accountStr, passphraseParam, secretPhraseParam, code2FA);
         TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParameters.TWO_FCTOR_AUTH_ATTRIBUTE);
-        checkNotNull(params2FA, request.getUri().toString());
-        account2FAHelper.validate2FAParameters(params2FA);
 
         account2FAHelper.disable2FA(params2FA, code2FA);
 
@@ -665,13 +655,6 @@ public class AccountController {
         faDetailsConverter.addAccount(dto, params2FA.getAccountId());
 
         return response.bind(dto).build();
-    }
-
-    private void checkNotNull(TwoFactorAuthParameters params2FA, String uri){
-        if (params2FA == null) {
-            log.error("{} request={}", PARAMS2FA_NOT_FOUND_ERROR_MSG, uri);
-            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, PARAMS2FA_NOT_FOUND_ERROR_MSG);
-        }
     }
 
 }
