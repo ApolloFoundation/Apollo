@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This filter routes request calls to new jax-rs based endpoints or to old ones
- * if new is not yet implemented. 
+ * if new is not yet implemented.
  * @author alukin@gmail.com
  */
 public class ApiSplitFilter implements Filter{
@@ -30,12 +30,12 @@ public class ApiSplitFilter implements Filter{
      * Should be removed as soon as all API will be on RestEasy
      */
     public static boolean isCoreReady = false;
-    
+
     static final Logger logger = LoggerFactory.getLogger(ApiSplitFilter.class);
-    
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-       
+
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ApiSplitFilter implements Filter{
         logger.trace("========= RequestType IS EMPTY!==========");
 
         String forwardUri = NewApiRegistry.getRestPath(rqType);
-        //forward to new API, it should be ready always because it is on CDI and 
+        //forward to new API, it should be ready always because it is on CDI and
         //does not require completion of old static init() methods
         if(forwardUri != null && !forwardUri.isEmpty()){
            logger.trace("Request "+rqType+" forwarded to: "+forwardUri);
@@ -77,14 +77,14 @@ public class ApiSplitFilter implements Filter{
 
     @Override
     public void destroy() {
-        
+
     }
-    
+
     private void logRequest(HttpServletRequest rq){
         logger.trace("Request from: "+rq.getRemoteAddr()+" Method: "+rq.getMethod()
                 +" User: "+rq.getRemoteUser()
-                +"/n/t Request URI: "+rq.getRequestURI()
-                +"/n/t Request session ID: "+rq.getRequestedSessionId()
+                +"\n\t Request URI: "+rq.getRequestURI()
+                +"\n\t Request session ID: "+rq.getRequestedSessionId()
         );
         //print all headers
         Enumeration<String> hdre = rq.getHeaderNames();
@@ -99,7 +99,7 @@ public class ApiSplitFilter implements Filter{
         String ps="";
         ps = params.keySet().stream().map((k) -> "\n\t"+"Name:>"+k+"< Value: >"+Arrays.toString(params.get(k))).reduce(ps, String::concat)+"<";
         logger.trace("Request parameters: "+ps);
-        
+
     }
-   
+
 }
