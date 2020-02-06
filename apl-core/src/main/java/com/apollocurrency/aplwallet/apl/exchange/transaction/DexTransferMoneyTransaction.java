@@ -70,19 +70,19 @@ public class DexTransferMoneyTransaction extends DEX {
         if (transaction.getId() != transactionId) {
             throw new AplException.NotCurrentlyValidException("Transaction was not registered in the contract. ");
         }
-        long orderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
-        DexOrder order = dexService.getOrder(orderId);
-        if (order == null) {
-            throw new AplException.NotCurrentlyValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + orderId);
+        long recipientOrderId =  isSender ? dexContract.getCounterOrderId() : dexContract.getOrderId();
+        DexOrder recipientOrder = dexService.getOrder(recipientOrderId);
+        if (recipientOrder == null) {
+            throw new AplException.NotCurrentlyValidException("Contract: " + dexContract.getId() + " refer to non-existent order: " + recipientOrderId);
         }
-        if (order.getAccountId() != transaction.getRecipientId()) {
-            throw new AplException.NotCurrentlyValidException("Order" + orderId + " should belong to the account: " + transaction.getRecipientId());
+        if (recipientOrder.getAccountId() != transaction.getRecipientId()) {
+            throw new AplException.NotCurrentlyValidException("Order" + recipientOrderId + " should belong to the account: " + transaction.getRecipientId());
         }
-        if (order.getStatus() != OrderStatus.WAITING_APPROVAL) {
-            throw new AplException.NotCurrentlyValidException("Inconsistent order state for id: " + order + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + order.getStatus());
+        if (recipientOrder.getStatus() != OrderStatus.WAITING_APPROVAL) {
+            throw new AplException.NotCurrentlyValidException("Inconsistent order state for id: " + recipientOrder + ", expected - " + OrderStatus.WAITING_APPROVAL + ", got " + recipientOrder.getStatus());
         }
-        if (order.getType() != OrderType.BUY) {
-            throw new AplException.NotCurrentlyValidException("Required SELL type for order " + orderId);
+        if (recipientOrder.getType() != OrderType.BUY) {
+            throw new AplException.NotCurrentlyValidException("Required BUY type for order " + recipientOrderId);
         }
     }
 
