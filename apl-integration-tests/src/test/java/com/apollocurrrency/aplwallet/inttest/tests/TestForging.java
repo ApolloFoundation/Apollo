@@ -14,7 +14,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @DisplayName("Forging")
 @Epic(value = "Dex")
 public class TestForging extends TestBaseOld {
@@ -23,7 +25,7 @@ public class TestForging extends TestBaseOld {
     @DisplayName("Start Get Stop Forging")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
-    public void  getAccountPropertyTest(Wallet wallet) throws IOException {
+    public void getAccountPropertyTest(Wallet wallet) throws IOException {
         GetAccountResponse accountDTO = getAccount(wallet.getUser());
         if (accountDTO.getEffectiveBalanceAPL() > 100000000000L) {
             ForgingDetails forgingDetails = startForging(wallet);
@@ -32,7 +34,7 @@ public class TestForging extends TestBaseOld {
             assertNotNull(getForgingResponse.getGenerators().size() > 0);
             forgingDetails = stopForging(wallet);
             assertTrue(forgingDetails.getFoundAndStopped());
-        }else{
+        } else {
             //TODO: Implement
         }
     }

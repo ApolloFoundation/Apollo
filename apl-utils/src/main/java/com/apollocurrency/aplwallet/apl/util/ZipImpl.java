@@ -1,27 +1,27 @@
- /*
+/*
  * Copyright © 2018-2019 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util;
 
  import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+ import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-import javax.inject.Singleton;
+ import javax.inject.Singleton;
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileOutputStream;
+ import java.io.FilenameFilter;
+ import java.io.IOException;
+ import java.nio.file.attribute.FileTime;
+ import java.time.Instant;
+ import java.util.ArrayList;
+ import java.util.Comparator;
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipInputStream;
+ import java.util.zip.ZipOutputStream;
 
 /**
  * Class is used for zip-unzip filtered files in specified directory
@@ -37,7 +37,7 @@ public class ZipImpl implements Zip {
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
     private List<File> fileList = new ArrayList<>();
     private static final int ZIP_COMPRESSION_LEVEL=9;
-    
+
     public ZipImpl() {
     }
 
@@ -100,7 +100,7 @@ public class ZipImpl implements Zip {
         }
         return res;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -158,7 +158,7 @@ public class ZipImpl implements Zip {
                 zos.setComment("");
                 zos.setLevel(ZIP_COMPRESSION_LEVEL);
                 zos.setMethod(ZipOutputStream.DEFLATED);
-                
+
             for (File file: fl) {
 
                 String name = file.getName();
@@ -192,7 +192,7 @@ public class ZipImpl implements Zip {
             return false;
         }
     }
-    
+
     private List<File> getFileList(File directory, FilenameFilter filenameFilter, boolean recursive) {
 
         fileList.clear();

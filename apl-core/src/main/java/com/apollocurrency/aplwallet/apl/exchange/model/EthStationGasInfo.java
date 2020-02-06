@@ -7,7 +7,11 @@ package com.apollocurrency.aplwallet.apl.exchange.model;
 import com.apollocurrency.aplwallet.api.dto.EthGasInfoDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
+@AllArgsConstructor
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EthStationGasInfo implements EthGasInfo {
     /**
@@ -25,9 +29,9 @@ public class EthStationGasInfo implements EthGasInfo {
 
     public EthGasInfoDto toDto() {
         EthGasInfoDto ethGasInfoDto = new EthGasInfoDto();
-        ethGasInfoDto.fast = this.fastSpeedPrice.toString();
-        ethGasInfoDto.average = this.averageSpeedPrice.toString();
-        ethGasInfoDto.safeLow = this.safeLowSpeedPrice.toString();
+        ethGasInfoDto.fast = this.getFastSpeedPrice().toString();
+        ethGasInfoDto.average = this.getAverageSpeedPrice().toString();
+        ethGasInfoDto.safeLow = this.getSafeLowSpeedPrice().toString();
 
         return ethGasInfoDto;
     }

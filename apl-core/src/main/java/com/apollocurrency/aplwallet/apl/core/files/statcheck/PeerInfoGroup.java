@@ -15,8 +15,8 @@ public class PeerInfoGroup {
     public PeerInfoGroup(String hash) {
         this.hash = hash;
     }
-    
-    public void add(PeerFileHashSum pi){
+
+    public void add(PeerFileHashSum pi) {
         pl.add(pi);
     }
     

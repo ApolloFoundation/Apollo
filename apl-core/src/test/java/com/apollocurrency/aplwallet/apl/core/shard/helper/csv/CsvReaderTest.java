@@ -21,13 +21,15 @@ import org.junit.jupiter.api.Test;
 @EnableWeld
 class CsvReaderTest {
 
+    private CsvEscaper translator = new CsvEscaperImpl();
+
     @Test
     void readShardCsv() throws Exception {
         int readRowsByCsvReader = 0;
         String itemName = "shard.csv";
 
         ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-        try (CsvReader csvReader = new CsvReaderImpl(resourceFileLoader.getResourcePath());
+        try (CsvReader csvReader = new CsvReaderImpl(resourceFileLoader.getResourcePath(), translator);
              ResultSet rs = csvReader.read(itemName, null, null)) {
             csvReader.setOptions("fieldDelimiter="); // do not put ""
             // get CSV meta data info
@@ -67,7 +69,7 @@ class CsvReaderTest {
             int readRowsByCsvReader = 0;
 
             ResourceFileLoader resourceFileLoader = new ResourceFileLoader();
-            try (CsvReader csvReader = new CsvReaderImpl(resourceFileLoader.getResourcePath());
+            try (CsvReader csvReader = new CsvReaderImpl(resourceFileLoader.getResourcePath(), translator);
                  ResultSet rs = csvReader.read(itemName, null, null)) {
                 csvReader.setOptions("fieldDelimiter="); // do not put ""
                 // get CSV meta data info

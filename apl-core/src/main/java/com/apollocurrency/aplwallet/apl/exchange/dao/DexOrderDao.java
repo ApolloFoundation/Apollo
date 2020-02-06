@@ -6,11 +6,18 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.DexOrderMapper;
+import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -33,11 +40,11 @@ public interface DexOrderDao {
             "AND (:status is NULL OR offer.status = :status) " +
             "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
             "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
-            "ORDER BY offer.pair_rate DESC " +
+        "ORDER BY <sortBy> <sortOrder> " +
             "OFFSET :offset LIMIT :limit"
     )
     @RegisterRowMapper(DexOrderMapper.class)
-    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest);
+    List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest, @Define("sortBy") DexOrderSortBy sortBy, @Define("sortOrder") DBSortOrder sortOrder);
 
     @AllowUnusedBindings
     @Transactional(readOnly = true)
@@ -53,5 +60,69 @@ public interface DexOrderDao {
             " ORDER BY offer.pair_rate <orderby> ")
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOffersForMatchingPure(@BindBean DexOrderDBMatchingRequest dexOrderDBMatchingRequest, @Define("orderby") String orderBy);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND offer.status = 5 " + // CLOSED
+            "AND offer.type = 0 " + // only autocloseable buy orders
+            "AND offer.pair_currency = :coin " +
+            "AND offer.height < :toHeight " +
+            "AND offer.db_id > :fromDbId ORDER BY db_id " +
+            "LIMIT :limit")
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getClosedOrdersFromDbId(@BindBean HeightDbIdRequest heightDbIdRequest);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND offer.status = 5 " + // CLOSED
+            "AND offer.type = 0 " + // only autocloseable buy orders
+            "AND offer.pair_currency = :coin " +
+            "AND offer.height < :toHeight " +
+            " ORDER BY height DESC, db_id DESC " +
+            "LIMIT 1")
+    @RegisterRowMapper(DexOrderMapper.class)
+    DexOrder getLastClosedOrderBeforeHeight(@Bind("coin") DexCurrency coin, @Bind("toHeight") int toHeight);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+        "WHERE latest = true " +
+        "AND offer.status = 5 " + // CLOSED
+        "AND offer.type = 0 " + // only autocloseable buy orders
+        "AND offer.pair_currency = :coin " +
+        "AND offer.finish_time < :timestamp " +
+        " ORDER BY finish_time DESC " +
+        "LIMIT 1")
+    @RegisterRowMapper(DexOrderMapper.class)
+    DexOrder getLastClosedOrderBeforeTimestamp(@Bind("coin") DexCurrency coin, @Bind("timestamp") int timestamp);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND (offer.finish_time > :startInterval) " +
+            "AND (offer.finish_time <= :endInterval) " +
+            "AND (offer.type = :requestedType) " +
+            "AND (offer.status = 5) " +
+            "AND (offer.pair_currency = :pairCur) " +
+            "ORDER BY offer.height ASC " +
+            "OFFSET :offset LIMIT :limit "
+    )
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getOrdersForTrading(@BindBean DexOrderDBRequestForTrading dexOrderDBRequestForTrading);
+
+    @Transactional(readOnly = true)
+    @SqlQuery("SELECT * FROM dex_offer AS offer " +
+            "WHERE latest = true " +
+            "AND offer.finish_time BETWEEN :fromTime AND :toTime " +
+            "AND offer.db_id > :fromDbId " + // pagination
+            "AND offer.type = 0 " +
+            "AND offer.status = 5 " +
+            "AND offer.pair_currency = :coin " +
+            "ORDER BY offer.db_id ASC " +
+            "LIMIT :limit "
+    )
+    @RegisterRowMapper(DexOrderMapper.class)
+    List<DexOrder> getOrdersFromDbIdBetweenTimestamps(@BindBean OrderDbIdPaginationDbRequest request);
 
 }

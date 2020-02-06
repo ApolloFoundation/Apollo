@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrencies;
+import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
@@ -69,8 +69,8 @@ public class DexOrderTransaction extends DEX {
         }
 
         try {
-            DexCurrencies.getType(attachment.getOrderCurrency());
-            DexCurrencies.getType(attachment.getPairCurrency());
+            DexCurrency.getType(attachment.getOrderCurrency());
+            DexCurrency.getType(attachment.getPairCurrency());
             OrderType.getType(attachment.getType());
         } catch (Exception ex) {
             throw new AplException.NotValidException("Invalid dex codes: " + attachment.getOrderCurrency() + " / " + attachment.getPairCurrency() + " / " + attachment.getType());
@@ -92,7 +92,7 @@ public class DexOrderTransaction extends DEX {
 
         int currentTime = timeService.getEpochTime();
         if (attachment.getFinishTime() <= 0 || attachment.getFinishTime() - currentTime > MAX_ORDER_DURATION_SEC) {
-            throw new AplException.NotValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
+            throw new AplException.NotCurrentlyValidException(JSON.toString(incorrect("amountOfTime", String.format("value %d not in range [%d-%d]", attachment.getFinishTime(), 0, MAX_ORDER_DURATION_SEC))));
         }
     }
 

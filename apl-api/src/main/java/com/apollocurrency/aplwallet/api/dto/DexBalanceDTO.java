@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DexBalanceDTO extends BaseDTO{
+public class DexBalanceDTO extends BaseDTO {
     private Double pax;
     private Double eth;
 }

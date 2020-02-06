@@ -128,13 +128,18 @@ class GenesisImporterTest {
         accountGuaranteedBalanceTable.init();
         testData = new BalancesPublicKeysTestData();
 
-        propertiesHolder.init(getGenesisAccountTotalProperty());
+        propertiesHolder.init(
+                getGenesisAccountTotalProperties("230730", "84832")
+        );
     }
 
     @Test
     void newGenesisBlock() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+        propertiesHolder.init(
+                getGenesisAccountTotalProperties("10", "10")
+        );
         genesisImporter = new GenesisImporter(
                 blockchainConfig,
                 blockchainConfigUpdater,
@@ -482,10 +487,13 @@ class GenesisImporterTest {
         assertThrows(IllegalStateException.class, executable);
     }
 
-    private Properties getGenesisAccountTotalProperty() {
+    private Properties getGenesisAccountTotalProperties(
+            final String publicKeyNumberTotal,
+            final String balanceNumberTotal
+    ) {
         Properties properties = new Properties();
-        properties.put(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, "230730");
-        properties.put(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME, "84832");
+        properties.put(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, publicKeyNumberTotal);
+        properties.put(GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME, balanceNumberTotal);
         return properties;
     }
 

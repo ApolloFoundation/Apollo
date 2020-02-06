@@ -7,7 +7,8 @@
       "51.15.253.171",
       "51.15.210.116",
       "51.15.242.197",
-      "51.15.218.241"
+      "51.15.218.241",
+      "51.15.130.37"
     ],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
@@ -16,7 +17,8 @@
     "project": "Apollo",
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 10000
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
     },
     "blockchainProperties": [
       {
@@ -43,12 +45,8 @@
         "shardingSettings": {
           "enabled": true,
           "frequency": 500000
-        },
-        "featuresHeightRequirement":{
-          "phasingApprovalTx": 1
         }
       }
     ]
   }
 ]
-

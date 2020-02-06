@@ -310,18 +310,21 @@ public class DataSourceWrapper implements DataSource {
     protected Connection getPooledConnection() throws SQLException {
         Connection con = dataSource.getConnection();
         if (jmxBean != null) {
-            int totalConnections = jmxBean.getTotalConnections();
-            int activeConnections = jmxBean.getActiveConnections();
-            int idleConnections = jmxBean.getIdleConnections();
-            int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
-            if (log.isDebugEnabled() && idleConnections <= totalConnections * 0.1) {
-                log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
-                        totalConnections,
-                        activeConnections,
-                        idleConnections,
-                        threadAwaitingConnections,
-                        dataSource.getPoolName(), // show main or shard db
-                        Thread.currentThread().getName());
+            if (log.isDebugEnabled()){
+                int totalConnections = jmxBean.getTotalConnections();
+                int idleConnections = jmxBean.getIdleConnections();
+
+                if (idleConnections <= totalConnections * 0.1) {
+                    int activeConnections = jmxBean.getActiveConnections();
+                    int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
+                    log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
+                            totalConnections,
+                            activeConnections,
+                            idleConnections,
+                            threadAwaitingConnections,
+                            dataSource.getPoolName(), // show main or shard db
+                            Thread.currentThread().getName());
+                }
             }
         }
         return con;

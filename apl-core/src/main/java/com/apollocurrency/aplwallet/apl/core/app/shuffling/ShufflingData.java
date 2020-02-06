@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.app.shuffling;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -12,9 +9,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 public class ShufflingData {
 
     private long shufflingId;

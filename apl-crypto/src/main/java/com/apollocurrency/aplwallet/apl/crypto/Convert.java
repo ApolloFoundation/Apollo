@@ -96,6 +96,16 @@ public final class Convert {
         return Long.parseUnsignedLong(number);
     }
 
+    public static long parseLong(String s) {
+        if (s == null) {
+            return 0;
+        } else if (s.charAt(0)== '-') {
+            return Long.parseLong(s);
+        } else {
+            return Long.parseUnsignedLong(s);
+        }
+    }
+
     public static long parseLong(Object o) {
         if (o == null) {
             return 0;
@@ -117,7 +127,7 @@ public final class Convert {
         if (prefixEnd > 0) {
             return Crypto.rsDecode(account.substring(prefixEnd + 1));
         } else if (prefixEnd == 0) {
-            return Long.valueOf(account);
+            return Long.parseLong(account);
         } else {
             return Long.parseUnsignedLong(account);
         }

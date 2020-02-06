@@ -6,14 +6,13 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 
 import javax.servlet.http.HttpServletRequest;
 
 public class HttpRequestToCreateTransactionRequestConverter {
 
 
-    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws AplException.ValidationException, ParameterException {
+    public static CreateTransactionRequest convert(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws ParameterException {
         String passphrase = Convert.emptyToNull(ParameterParser.getPassphrase(req, false));
         String secretPhrase = ParameterParser.getSecretPhrase(req, false);
         Boolean encryptedMessageIsPrunable = Boolean.valueOf(req.getParameter("encryptedMessageIsPrunable"));

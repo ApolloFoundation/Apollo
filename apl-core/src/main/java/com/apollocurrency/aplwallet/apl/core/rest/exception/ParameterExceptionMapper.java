@@ -1,13 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
+import com.apollocurrency.aplwallet.api.response.ResponseBase;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.StringWriter;
-
-import com.apollocurrency.aplwallet.api.response.ResponseBase;
 
 
 /**

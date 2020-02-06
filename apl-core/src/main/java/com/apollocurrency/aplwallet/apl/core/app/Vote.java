@@ -32,7 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class Vote {
 
     private static final LongKeyFactory<Vote> voteDbKeyFactory = new LongKeyFactory<Vote>("id") {
@@ -58,17 +60,53 @@ public final class Vote {
         public void trim(int height) {
             super.trim(height);
             try (Connection con = databaseManager.getDataSource().getConnection();
-                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
+//                 DbIterator<Poll> polls = Poll.getPollsFinishingAtOrBefore(height, 0, Integer.MAX_VALUE);
+                 DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
                  PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
-                for (Poll poll : polls) {
-                    pstmt.setLong(1, poll.getId());
-                    pstmt.executeUpdate();
-                }
+                commonTrim(height, false, polls, pstmt);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
         }
+
+        public void trim(int height, boolean isSharding) {
+            log.debug("Vote trim: isSharding={}, height = {}", isSharding, height);
+            if (isSharding) {
+                // trim when sharding process has been started
+                super.trim(height);
+                try (Connection con = databaseManager.getDataSource().getConnection();
+                     // select all polls below or equal height value ('snapshot block' in our case)
+                     DbIterator<Poll> polls = Poll.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
+                     PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
+                    commonTrim(height, true, polls, pstmt);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.toString(), e);
+                }
+            } else {
+                // usual trim in other non sharding cases
+                this.trim(height);
+            }
+        }
     };
+
+    private static void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
+        log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
+        int index = 0; // index for affected Polls
+        int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
+        for (Poll poll : polls) {
+            pstmt.setLong(1, poll.getId());
+            log.trace("Vote trim: Before deleting votes, index=[{}] by pollId={} at height = {}", index, poll.getId(), height);
+            int deletedRecords = pstmt.executeUpdate();
+            if (deletedRecords > 0) {
+                log.trace("Vote trim: deleted [{}] votes, index=[{}] by pollId = {}, poll finishHeight={} at blockchain height={}",
+                    deletedRecords, index, poll.getId(), poll.getFinishHeight(), height);
+                totalDeletedVotes += deletedRecords;
+            }
+            index++;
+        }
+        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
+            totalDeletedVotes, index, height, isSharding);
+    }
 
     public static int getCount() {
         return voteTable.getCount();
@@ -156,4 +194,13 @@ public final class Vote {
         return voteBytes;
     }
 
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Vote{");
+        sb.append("pollId=").append(pollId);
+        sb.append(", id=").append(id);
+        sb.append(", voterId=").append(voterId);
+        sb.append('}');
+        return sb.toString();
+    }
 }

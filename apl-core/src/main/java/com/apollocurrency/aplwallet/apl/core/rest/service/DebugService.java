@@ -4,10 +4,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.service;
 
 import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfo;
-import com.apollocurrency.aplwallet.api.p2p.FileInfo;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.files.FileDownloader;
-import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
