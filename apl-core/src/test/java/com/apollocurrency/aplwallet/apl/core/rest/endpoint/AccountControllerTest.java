@@ -15,7 +15,15 @@ import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParametersParser;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.*;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountBlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -29,12 +37,81 @@ import org.junit.jupiter.api.Test;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.data.BlockTestData.*;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_11_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_12_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_13_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_1_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_2_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_3_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_4_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_6_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_7_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_8_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_9_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_GENERATOR;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_TIMESTAMP;
+import static com.apollocurrency.aplwallet.apl.data.BlockTestData.buildBlock;
 import static org.jboss.resteasy.mock.MockHttpRequest.post;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AccountControllerTest extends AbstractEndpointTest{
 
@@ -144,10 +221,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccount_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
 
     }
 
@@ -175,10 +252,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void createAccount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void createAccount_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendPostRequest("/accounts/account", "wrong=param");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -190,11 +267,11 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void enable2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010() throws URISyntaxException, IOException {
+    void enable2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2011() throws URISyntaxException, IOException {
         when(account2FAHelper.parse2FARequestParams(null, PASSPHRASE, SECRET)).thenCallRealMethod();
         MockHttpResponse response = sendPostRequest("/accounts/enable2FA", "passphrase="+PASSPHRASE+"&secretPhrase="+SECRET);
 
-        checkMandatoryParameterMissingErrorCode(response, 2010);
+        checkMandatoryParameterMissingErrorCode(response, 2011);
     }
 
     @Test
@@ -261,7 +338,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     @Test
     void disable2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010() throws URISyntaxException, IOException {
-        check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010("/accounts/disable2FA");
+        check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2015("/accounts/disable2FA");
     }
 
     @Test
@@ -302,7 +379,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
     @Test
     void confirm2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010() throws URISyntaxException, IOException {
-        check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010("/accounts/confirm2FA");
+        check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2015("/accounts/confirm2FA");
     }
 
     @Test
@@ -389,10 +466,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssetCount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountAssetCount_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/assetCount");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -420,10 +497,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountAssets_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountAssets_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/assets");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -481,10 +558,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencyCount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountCurrencyCount_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/currencyCount");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -512,10 +589,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountCurrencies_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountCurrencies_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/currencies");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -573,10 +650,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountBlockCount_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountBlockCount_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/blockCount");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -603,10 +680,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountBlockIds_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountBlockIds_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/blockIds");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -644,10 +721,10 @@ class AccountControllerTest extends AbstractEndpointTest{
     }
 
     @Test
-    void getAccountBlocks_whenCallWithoutMandatoryParameter_thenGetError_2003() throws URISyntaxException, IOException {
+    void getAccountBlocks_whenCallWithoutMandatoryParameter_thenGetError_2001() throws URISyntaxException, IOException {
         MockHttpResponse response = sendGetRequest("/accounts/account/blocks");
 
-        checkMandatoryParameterMissingErrorCode(response, 2003);
+        checkMandatoryParameterMissingErrorCode(response, 2001);
     }
 
     @Test
@@ -705,7 +782,7 @@ class AccountControllerTest extends AbstractEndpointTest{
         checkMandatoryParameterMissingErrorCode(response, 2002);
     }
 
-    private void check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010(String uri) throws URISyntaxException, IOException {
+    private void check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2015(String uri) throws URISyntaxException, IOException {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(0L, PASSPHRASE, SECRET);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
@@ -717,7 +794,7 @@ class AccountControllerTest extends AbstractEndpointTest{
 
         MockHttpResponse response = sendPostRequest(request,"passphrase="+PASSPHRASE+"&secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
 
-        checkMandatoryParameterMissingErrorCode(response, 2010);
+        checkMandatoryParameterMissingErrorCode(response, 2015);
     }
 
     private void check2FA_withoutMandatoryParameter_Code2FA_thenGetError_2003(String uri) throws URISyntaxException, IOException {

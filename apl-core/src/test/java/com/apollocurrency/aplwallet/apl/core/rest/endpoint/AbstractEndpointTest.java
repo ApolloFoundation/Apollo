@@ -4,7 +4,10 @@ import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -42,8 +45,12 @@ public class AbstractEndpointTest {
     void setUp() {
         dispatcher = MockDispatcherFactory.createDispatcher();
         dispatcher.getProviderFactory()
-                .register(RestParameterExceptionMapper.class)
-                .register(ClientErrorExceptionMapper.class);
+            .register(DefaultGlobalExceptionMapper.class)
+            .register(RestParameterExceptionMapper.class)
+            .register(ConstraintViolationExceptionMapper.class)
+            .register(ClientErrorExceptionMapper.class)
+            .register(Secured2FAInterceptor.class);
+
 
         doReturn(CURRENT_HEIGHT).when(blockchain).getHeight();
     }
