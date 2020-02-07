@@ -172,7 +172,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         // select all possible records from db
         List<TwoFactorAuthEntity> result = repository.selectAll();
         log.debug("Db repo found 2fa records = [{}]", result.size());
-        boolean isAllImportedIntoFile = true; // store and check if any error has happen on any record
+        boolean isAllImportedIntoFile = true; // store and check if any error has happened on any record
         int countProcesses = 0; // store really processed records
         // loop over all db records if any
         for (TwoFactorAuthEntity itemRecord: result ) {
@@ -181,8 +181,15 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
                 // added new file, record stored as 2fa file
                 log.debug("File Stored for 2fa record = {}...", itemRecord);
             } else {
-                // a previous file found for 2fa record
-                log.debug("SKIPPING, 2fa File already stored for record = {}", itemRecord);
+                // 2fa file is not added by some reason
+                if (targetFileRepository.get(itemRecord.getAccount()) != null) {
+                    // a previous file found for 2fa record, remove db recors
+                    log.debug("SKIPPING, 2fa File already stored for record = {}", itemRecord);
+                } else {
+                    // a previous file is NOT found for 2fa record AND it is NOT added
+                    isAllImportedIntoFile = false;
+                    continue; // skip for next time, do not remove db record
+                }
             }
             try {
                 repository.delete(itemRecord.getAccount()); // remove record from db
