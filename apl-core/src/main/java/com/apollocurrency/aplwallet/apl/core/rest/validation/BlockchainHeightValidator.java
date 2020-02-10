@@ -12,8 +12,9 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class BlockchainHeightValidator implements ConstraintValidator<ValidBlockchainHeight, Integer> {
+
     @Inject @Setter
-    Blockchain blockchain;
+    private Blockchain blockchain;
 
     @Override
     public void initialize(ValidBlockchainHeight constraintAnnotation) {

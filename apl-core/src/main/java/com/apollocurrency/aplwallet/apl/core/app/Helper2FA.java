@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParser;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
@@ -83,7 +83,7 @@ public class Helper2FA {
         TwoFactorAuthParameters params2FA = HttpParameterParser.parse2FARequest(req, accountName, false);
 
         if (isEnabled2FA(params2FA.getAccountId())) {
-            TwoFactorAuthParameters.requireSecretPhraseOrPassphrase(params2FA);
+            requireSecretPhraseOrPassphrase(params2FA);
             int code = HttpParameterParser.getInt(req,"code2FA", Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             Status2FA status2FA;
             long accountId;
@@ -95,6 +95,12 @@ public class Helper2FA {
                 accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
             }
             validate2FAStatus(status2FA, accountId);
+        }
+    }
+
+    public static void requireSecretPhraseOrPassphrase(TwoFactorAuthParameters params2FA) throws ParameterException {
+        if (!params2FA.isPassphrasePresent() && !params2FA.isSecretPhrasePresent()) {
+            throw new ParameterException(JSONResponses.either("secretPhrase", "passphrase"));
         }
     }
 

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +19,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.apollocurrency.aplwallet.apl.core.rest.ApiErrors.INCORRECT_VALUE;
+
 @Slf4j
 @Singleton
 public class RestParametersParser {
-    public static final String TWO_FCTOR_AUTH_ATTRIBUTE = "twoFactorAuthParameters";
+    public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
 
+    public static final String HEIGHT_PARAM_NAME = "height";
     public static final String PASSPHRASE_PARAM_NAME="passphrase";
     public static final String SECRET_PHRASE_PARAM_NAME ="secretPhrase";
     public static final String CODE2FA_PARAM_NAME="code2FA";
@@ -45,15 +49,31 @@ public class RestParametersParser {
         return parsedParams;
     }
 
-    public Integer parseHeight(String heightValue, int maxHeight) throws RestParameterException {
-        if (heightValue == null){
-            return -1;
+    public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
+        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
+        if(params2FA == null){
+            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
         }
-        Integer height = parseInt(heightValue, 0, maxHeight, "height");
+        return params2FA;
+    }
+
+    public int validateHeight(Integer heightParam){
+        int height = null == heightParam? -1: heightParam;
+        if ( height > blockchain.getHeight() ){
+            throw new RestParameterException(INCORRECT_VALUE, heightParam, HEIGHT_PARAM_NAME);
+        }
         return height;
     }
 
-    public Integer parseInt(String intStrValue, int min, int max, String paramName) throws RestParameterException {
+    public int parseHeight(String heightValue, int maxHeight) throws RestParameterException {
+        if (heightValue == null){
+            return -1;
+        }
+        int height = parseInt(heightValue, 0, maxHeight, HEIGHT_PARAM_NAME);
+        return height;
+    }
+
+    public int parseInt(String intStrValue, int min, int max, String paramName) throws RestParameterException {
         if (intStrValue != null) {
             try {
                 int intValue = Integer.parseInt(intStrValue);
@@ -65,14 +85,11 @@ public class RestParametersParser {
         return min;
     }
 
-    public Integer parseInt(Integer intValue, int min, int max, String paramName) throws RestParameterException {
-        if (intValue != null) {
-            if (intValue < min || intValue > max) {
-                throw new RestParameterException(ApiErrors.INCORRECT_VALUE, paramName, intValue);
-            }
-            return intValue;
+    public int parseInt(int intValue, int min, int max, String paramName) throws RestParameterException {
+        if (intValue < min || intValue > max) {
+            throw new RestParameterException(ApiErrors.INCORRECT_VALUE, paramName, intValue);
         }
-        return min;
+        return intValue;
     }
 
     public static long parseAccountId(String account) throws RestParameterException {

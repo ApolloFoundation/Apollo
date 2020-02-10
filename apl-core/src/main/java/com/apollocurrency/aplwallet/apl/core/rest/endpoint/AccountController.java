@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.Order;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
@@ -49,7 +49,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
-import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -88,8 +87,6 @@ import java.util.stream.Collectors;
 @Path("/accounts")
 public class AccountController {
 
-    private static final String PARAMS2FA_NOT_FOUND_ERROR_MSG=String.format("Request attribute '%s' not found.",
-                                                                             RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
     @Inject @Setter
     private Blockchain blockchain;
     @Inject @Setter
@@ -116,6 +113,8 @@ public class AccountController {
     private Account2FAConverter faConverter;
     @Inject @Setter
     private AccountBalanceService accountBalanceService;
+    @Inject @Setter
+    private RestParametersParser restParametersParser;
 
     public AccountController(Blockchain blockchain,
                              Account2FAHelper account2FAHelper,
@@ -129,7 +128,8 @@ public class AccountController {
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
-                             AccountBalanceService accountBalanceService) {
+                             AccountBalanceService accountBalanceService,
+                             RestParametersParser restParametersParser) {
 
         this.blockchain = blockchain;
         this.account2FAHelper = account2FAHelper;
@@ -144,6 +144,7 @@ public class AccountController {
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
         this.accountBalanceService = accountBalanceService;
+        this.restParametersParser = restParametersParser;
     }
 
     @Path("/account")
@@ -242,11 +243,11 @@ public class AccountController {
     @PermitAll
     public Response getAccountAssetsCount(
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-        @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam) {
+        @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = null == heightParam? -1: heightParam;
+        int height = restParametersParser.validateHeight(heightParam);
 
         AccountAssetsCountResponse dto = new AccountAssetsCountResponse();
         dto.setNumberOfAssets(accountAssetService.getAccountAssetCount(accountId, height));
@@ -273,13 +274,13 @@ public class AccountController {
     public Response getAccountAssets(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The asset ID (optional).") @QueryParam("asset") @PositiveOrZero Long assetId,
-            @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam,
+            @Parameter(description = "The height of the blockchain to determine the asset count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam,
             @Parameter(description = "Include asset information (optional).") @QueryParam("includeAssetInfo") @DefaultValue("false") boolean includeAssetInfo
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = null == heightParam? -1: heightParam;
+        int height = restParametersParser.validateHeight(heightParam);
         if (assetId == null || assetId == 0) {
             List<AccountAsset> accountAssets = accountAssetService.getAssetAccounts(accountId, height, 0, -1);
             List<AccountAssetDTO> accountAssetDTOList = accountAssetConverter.convert(accountAssets);
@@ -405,12 +406,12 @@ public class AccountController {
     @PermitAll
     public Response getAccountCurrencyCount(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
-            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam
+            @Parameter(description = "The height of the blockchain to determine the currency count (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = null == heightParam? -1: heightParam;
+        int height = restParametersParser.validateHeight(heightParam);
 
         Integer count = accountCurrencyService.getAccountCurrencyCount(accountId, height);
 
@@ -433,13 +434,13 @@ public class AccountController {
     public Response getAccountCurrencies(
             @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
             @Parameter(description = "The currency ID (optional)." ) @QueryParam("currency") @PositiveOrZero Long currencyId,
-            @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).") @QueryParam("height") @ValidBlockchainHeight Integer heightParam,
+            @Parameter(description = "The height of the blockchain to determine the currencies (optional, default is last block).") @QueryParam("height") @PositiveOrZero Integer heightParam,
             @Parameter(description = "Include additional currency info (optional)" ) @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId  = accountIdParameter.get();
-        int height = null == heightParam? -1: heightParam;
+        int height = restParametersParser.validateHeight(heightParam);
         if (currencyId == null || currencyId == 0) {
             List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrencies(accountId, height, 0, -1);
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
@@ -511,11 +512,11 @@ public class AccountController {
             })
     @PermitAll
     public Response exportKey( @Parameter(description = "The secret passphrase of the account.", required = true) @FormParam("passphrase") @NotNull String passphrase,
-                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter
+                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @FormParam("account") @NotNull AccountIdParameter accountIdParameter
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         accountIdParameter.get();
-        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountIdParameter.getRawData(), passphrase, null);
+        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountIdParameter.getRawData(), passphrase, null);
 
         byte [] secretBytes = account2FAHelper.findAplSecretBytes(params2FA);
 
@@ -548,7 +549,7 @@ public class AccountController {
                               @Context org.jboss.resteasy.spi.HttpRequest request ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
         KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
 
@@ -584,7 +585,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
             ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
         account2FAHelper.confirm2FA(params2FA, params2FA.getCode2FA());
         Account2FADTO dto = faConverter.convert(params2FA);
@@ -617,7 +618,7 @@ public class AccountController {
             @Context org.jboss.resteasy.spi.HttpRequest request
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters  params2FA = (TwoFactorAuthParameters) request.getAttribute(RestParametersParser.TWO_FCTOR_AUTH_ATTRIBUTE);
+        TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
         account2FAHelper.disable2FA(params2FA, code2FA);
 
@@ -647,7 +648,7 @@ public class AccountController {
             ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters params2FA = account2FAHelper.parse2FARequestParams(accountStr, passphraseParam, secretPhraseParam);
+        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountStr, passphraseParam, secretPhraseParam);
 
         TwoFactorAuthDetails twoFactorAuthDetails = account2FAHelper.enable2FA(params2FA);
 

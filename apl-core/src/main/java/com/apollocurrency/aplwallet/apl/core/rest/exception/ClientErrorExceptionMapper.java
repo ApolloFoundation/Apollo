@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -23,9 +24,15 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
 
     @Override
     public Response toResponse(ClientErrorException exception) {
-        ResponseBuilder responseBuilder = ResponseBuilder.apiError(
-                ApiErrors.INTERNAL_SERVER_EXCEPTION,
-                exception.getMessage());
+        ResponseBuilder responseBuilder;
+        if (exception instanceof NotFoundException && exception.getCause() instanceof NumberFormatException){
+            responseBuilder = ResponseBuilder.apiError(
+                ApiErrors.INCORRECT_PARAM_VALUE, "number format "+exception.getCause().getMessage());
+        }else {
+            responseBuilder = ResponseBuilder.apiError(
+                ApiErrors.INTERNAL_SERVER_EXCEPTION, exception.getMessage());
+        }
+
         return responseBuilder.build();
     }
 

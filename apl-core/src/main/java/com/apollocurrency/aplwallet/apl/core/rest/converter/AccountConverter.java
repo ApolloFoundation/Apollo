@@ -4,15 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
-import com.apollocurrency.aplwallet.api.dto.*;
-import com.apollocurrency.aplwallet.apl.core.account.model.*;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetBalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountAssetUnconfirmedBalanceDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountDTO;
+import com.apollocurrency.aplwallet.api.dto.AccountLeaseDTO;
+import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
 import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Setter;
@@ -38,7 +47,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
     private AccountLeaseService accountLeaseService;
 
     @Inject @Setter
-    private Account2FAHelper account2FAHelper;
+    private TwoFactorAuthService twoFactorAuthService;
 
     @Inject @Setter
     private Blockchain blockchain;
@@ -51,7 +60,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
-        dto.set2FA(account2FAHelper.isEnabled2FA(account.getId()));
+        dto.set2FA(twoFactorAuthService.isEnabled(account.getId()));
         PublicKey pk = account.getPublicKey();
         if ( pk != null) {
             byte[] publicKey = pk.getPublicKey();

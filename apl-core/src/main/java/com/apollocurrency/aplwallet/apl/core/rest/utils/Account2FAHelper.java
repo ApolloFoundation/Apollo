@@ -9,23 +9,16 @@ import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.http.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountBalanceService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -43,37 +36,28 @@ public class Account2FAHelper {
     private final TwoFactorAuthService service2FA;
     private final PassphraseGeneratorImpl passphraseGenerator;
 
-
     private final ElGamalEncryptor elGamal;
     private final KeyStoreService keyStoreService;
     private final AccountBalanceService accountService;
 
     @Inject
-    public Account2FAHelper(DatabaseManager databaseManager, PropertiesHolder propertiesHolder, DirProvider dirProvider, KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountBalanceService accountService) {
+    public Account2FAHelper(TwoFactorAuthService service2FA,  KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountBalanceService accountService) {
         this.keyStoreService = keyStoreService;
         this.elGamal = elGamal;
         this.accountService = accountService;
         this.passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
-        service2FA = new TwoFactorAuthServiceImpl(
-                propertiesHolder.getBooleanProperty("apl.store2FAInFileSystem")
-                        ? new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
-                        : new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource()),
-                propertiesHolder.getStringProperty("apl.issuerSuffix2FA", RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"));
+        this.service2FA = service2FA;
     }
 
-    public TwoFactorAuthParameters validate2FAParameters(TwoFactorAuthParameters parameters){
-        String accountStr = Long.toUnsignedString(parameters.getAccountId());
-        String passphrase = parameters.getPassphrase();
-        String secretPhrase = parameters.getSecretPhrase();
-        Integer code2FA = parameters.getCode2FA();
-        if (code2FA == null){
-            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
-        }
-
-        return parse2FARequestParams(accountStr, passphrase, secretPhrase);
-    }
-
-    public TwoFactorAuthParameters parse2FARequestParams(String accountStr, String passphraseParam, String secretPhraseParam) throws RestParameterException{
+    /**
+     * Analise incoming parameters and create TwoFactorAuthParameters instance. Throw the exception if parameters are wrong or inconsistent.
+     * @param accountStr account id
+     * @param passphraseParam pass phrase
+     * @param secretPhraseParam secret phrase
+     * @return new instance of TwoFactorAuthParameters
+     * @throws RestParameterException
+     */
+    public TwoFactorAuthParameters create2FAParameters(String accountStr, String passphraseParam, String secretPhraseParam) throws RestParameterException{
         if (StringUtils.isBlank(passphraseParam) && StringUtils.isBlank(secretPhraseParam)){
             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, "passphrase, secretPhrase");
         }
@@ -147,22 +131,31 @@ public class Account2FAHelper {
     }
 
     public TwoFactorAuthParameters verify2FA(String accountStr, String passphraseParam, String secretPhraseParam, Integer code2FA) throws RestParameterException {
-        if (code2FA == null){
-            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
-        }
-        TwoFactorAuthParameters params2FA = parse2FARequestParams(accountStr, passphraseParam, secretPhraseParam);
+        TwoFactorAuthParameters params2FA = create2FAParameters(accountStr, passphraseParam, secretPhraseParam);
         params2FA.setCode2FA(code2FA);
         if (isEnabled2FA(params2FA.getAccountId())) {
-            Status2FA status2FA;
-            if (params2FA.isPassphrasePresent()) {
-                status2FA = auth2FA(params2FA.getPassphrase(), params2FA.getAccountId(), code2FA);
-            } else {
-                status2FA = auth2FA(params2FA.getSecretPhrase(), code2FA);
-            }
+            Status2FA status2FA = verify2FA(params2FA);
             params2FA.setStatus2FA(status2FA);
-            validate2FAStatus(status2FA, params2FA.getAccountId());
         }
         return params2FA;
+    }
+
+    private Status2FA verify2FA(TwoFactorAuthParameters params2FA) throws RestParameterException {
+        if (params2FA.getCode2FA() == null) {
+            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
+        }
+
+        Status2FA status2FA;
+        if (params2FA.isPassphrasePresent()) {
+            findAplSecretBytes(params2FA.getAccountId(), params2FA.getPassphrase());
+            status2FA = service2FA.tryAuth(params2FA.getAccountId(), params2FA.getCode2FA());
+            validate2FAStatus(status2FA, params2FA.getAccountId());
+        } else {
+            long accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
+            status2FA = service2FA.tryAuth(accountId, params2FA.getCode2FA());
+            validate2FAStatus(status2FA, accountId);
+        }
+        return status2FA;
     }
 
     public boolean isEnabled2FA(long accountId) {
@@ -175,9 +168,6 @@ public class Account2FAHelper {
 
     public WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws RestParameterException {
         if (passphrase == null) {
-            if (passphraseGenerator == null) {
-                throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Either passphrase generator or passphrase required");
-            }
             passphrase = passphraseGenerator.generate();
         }
 
@@ -224,19 +214,6 @@ public class Account2FAHelper {
             log.debug("2fa error: {}-{}", Convert2.rsAccount(accountId), status2FA);
             throw new RestParameterException(ApiErrors.ACCOUNT_2FA_ERROR, String.format("%s, account=%d",status2FA.name(), accountId));
         }
-    }
-
-    private Status2FA auth2FA(String passphrase, long accountId, int code) {
-        findAplSecretBytes(accountId, passphrase);
-
-        return service2FA.tryAuth(accountId, code);
-    }
-
-    private Status2FA auth2FA(String secretPhrase, int code) {
-        long accountId = Convert.getId(Crypto.getPublicKey(secretPhrase));
-        Status2FA status2FA = service2FA.tryAuth(accountId, code);
-        validate2FAStatus(status2FA, accountId);
-        return status2FA;
     }
 
     private void validateKeyStoreStatus(long accountId, KeyStoreService.Status status, String notPerformedAction) {

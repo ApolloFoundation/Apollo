@@ -19,7 +19,7 @@ public enum ApiErrors implements ErrorInfo {
     OUT_OF_RANGE(4, 2006, "{0} is not in range [{1}..{2}]"),
     PEER_NOT_CONNECTED(5, 2007, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2008, "Peer is not providing open API."),
-    FAILED_TO_ADD(8, 2009, "Failed to add peer %s"),
+    FAILED_TO_ADD_PEER(8, 2009, "Failed to add peer %s"),
     ACCOUNT_GENERATION_ERROR(6, 2010, "Error occurred during account generation."),
     ONLY_ONE_OF_PARAM_LIST(6, 2011, "Not more than one of [%s] can be specified."),
     INCORRECT_PARAM_VALUE(4, 2012, "Incorrect %s"),

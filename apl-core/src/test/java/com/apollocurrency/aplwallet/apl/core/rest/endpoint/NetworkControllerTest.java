@@ -173,7 +173,7 @@ public class NetworkControllerTest extends AbstractEndpointTest {
 
         MockHttpResponse response = sendPostRequest("/networking/peer", "peer="+WRONG_PEER_ADDRESS);
 
-        checkMandatoryParameterMissingErrorCode(response, 2008);
+        checkMandatoryParameterMissingErrorCode(response, 2009);
     }
 
     @Test

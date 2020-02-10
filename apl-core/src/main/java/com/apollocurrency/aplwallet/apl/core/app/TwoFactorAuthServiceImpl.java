@@ -4,20 +4,28 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.security.GeneralSecurityException;
-import java.util.Random;
-
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
+import java.util.Objects;
+import java.util.Random;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+@Slf4j
+@Singleton
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
@@ -30,17 +38,15 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private final Random random;
     private final String issuerSuffix;
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix) {
-        this(repository, issuerSuffix, new Random());
-    }
-
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random) {
-        if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
-            throw new IllegalArgumentException("issuerSuffix cannot be null or empty");
+    @Inject
+    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, @Property("apl.issuerSuffix2FA") String issuerSuffix) {
+        this.repository = Objects.requireNonNull(repository, "2FA repository is NULL.");
+        if(issuerSuffix == null || issuerSuffix.isBlank()){
+            this.issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
+        } else {
+          this.issuerSuffix = issuerSuffix;
         }
-        this.repository = repository;
-        this.random = random;
-        this.issuerSuffix = issuerSuffix.trim();
+        this.random = new Random();
     }
 
     @Override

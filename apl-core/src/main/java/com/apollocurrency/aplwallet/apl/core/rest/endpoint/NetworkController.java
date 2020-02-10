@@ -139,7 +139,7 @@ public class NetworkController {
         Peer peer = service.findOrCreatePeerByAddress(peerAddress);
 
         if (peer == null) {
-            return response.error( ApiErrors.FAILED_TO_ADD,peerAddress).build();
+            return response.error( ApiErrors.FAILED_TO_ADD_PEER,peerAddress).build();
         }
 
         boolean isNewlyAdded = service.addPeer(peer, peerAddress);
