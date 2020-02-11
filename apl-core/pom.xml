@@ -17,6 +17,16 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-crypto</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
@@ -31,6 +41,16 @@
     <dependency>
       <groupId>io.firstbridge</groupId>
       <artifactId>cryptolib</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -285,7 +305,7 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.7</version>
     </dependency>
 
     <!-- Ethereum API -->

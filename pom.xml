@@ -67,11 +67,11 @@
         <!--Web-->
         <servlet-api.version>3.1.0</servlet-api.version>
         <!--  -->
-        <antifraud.version>1.0.6</antifraud.version>
+        <antifraud.version>1.0.7</antifraud.version>
 
     <!--Crypto-->
 
-    <fbcrypto.version>1.2.7</fbcrypto.version>
+    <fbcrypto.version>1.2.8</fbcrypto.version>
     <bcprov.version>1.61</bcprov.version>
 
 
@@ -190,6 +190,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit</groupId>
+            <artifactId>junit-bom</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
