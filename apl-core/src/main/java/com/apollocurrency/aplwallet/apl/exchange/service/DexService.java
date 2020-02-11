@@ -766,6 +766,10 @@ public class DexService {
 
 
     public boolean isTxApproved(byte[] secretHash, String transferTxId) throws AplException.ExecutiveProcessException {
+        if(transferTxId == null){
+            return false;
+        }
+
         if (DexCurrencyValidator.isEthOrPaxAddress(transferTxId)) {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
