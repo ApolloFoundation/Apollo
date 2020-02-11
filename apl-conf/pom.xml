@@ -7,7 +7,6 @@
     <artifactId>apollo-wallet</artifactId>
     <version>1.41.15</version>
   </parent>
-
   <artifactId>apl-conf</artifactId>
   <name>apl-conf</name>
   <packaging>jar</packaging>

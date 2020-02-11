@@ -199,16 +199,17 @@ then
 	    
     esac    
 
-    if [ "$#" -eq 3 ]
-    then
-	if [ ${NOSHARD} == false ]
-	then
+# TODO: ! refactor and ncomment that block
+#    if [ "$#" -eq 3 ]
+#    then
+#	if [ ${NOSHARD} == false ]
+#	then
 #	    bash ./update3.sh $1 $2 $3 true ${NETID}
-	fi
-    elif [ $4 == false ]
-    then
+#	fi
+#    elif [ $4 == false ]
+#    then
 #	bash ./update3.sh $1 $2 $3 $4 $5
-    fi
+#    fi
 
     
 
