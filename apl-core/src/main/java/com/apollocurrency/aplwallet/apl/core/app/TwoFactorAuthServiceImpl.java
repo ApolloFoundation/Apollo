@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,12 +21,9 @@ import java.security.GeneralSecurityException;
 import java.util.Objects;
 import java.util.Random;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @Slf4j
 @Singleton
 public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
-    private static final Logger LOG = getLogger(TwoFactorAuthServiceImpl.class);
     private static final Base32 BASE_32 = new Base32();
     private static final String ISSUER_URL_TEMPLATE = "&issuer=Apollo-%s-%d";
     private static final int SECRET_LENGTH = 32;
@@ -121,7 +117,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             }
         }
         catch (GeneralSecurityException e) {
-            LOG.error("Unable to create temporal code", e);
+            log.error("Unable to create temporal code", e);
         }
         return success;
     }

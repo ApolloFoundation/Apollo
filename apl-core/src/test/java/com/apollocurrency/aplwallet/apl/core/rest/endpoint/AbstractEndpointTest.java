@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorException
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -31,13 +30,16 @@ import static org.mockito.Mockito.mock;
 
 public class AbstractEndpointTest {
     public static final int CURRENT_HEIGHT = 650000;
+    public static final int CODE_2FA = 123456;
+    public static final String PASSPHRASE = "123456";
+    public static final String SECRET = "SuperSecretPhrase"; //accountId=-3831750337430207973
+    public static final long ACCOUNT_ID_WITH_SECRET = -3831750337430207973L;
 
     static ObjectMapper mapper = new ObjectMapper();
     Dispatcher dispatcher;
 
     Blockchain blockchain = mock(Blockchain.class);
     RestParametersParser restParametersParser = new RestParametersParser(blockchain);
-    Secured2FAInterceptor secured2FAInterceptor = new Secured2FAInterceptor();
 
     static{
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -46,16 +48,12 @@ public class AbstractEndpointTest {
     }
 
     void setUp() {
-        secured2FAInterceptor.setRestParametersParser(restParametersParser);
         dispatcher = MockDispatcherFactory.createDispatcher();
         dispatcher.getProviderFactory()
             .register(DefaultGlobalExceptionMapper.class)
             .register(RestParameterExceptionMapper.class)
             .register(ConstraintViolationExceptionMapper.class)
-            .register(ClientErrorExceptionMapper.class)
-            .register(new RestParametersParser(blockchain), RestParametersParser.class)
-            .register(secured2FAInterceptor, Secured2FAInterceptor.class);
-            //.register(Secured2FAInterceptor.class);
+            .register(ClientErrorExceptionMapper.class);
 
         doReturn(CURRENT_HEIGHT).when(blockchain).getHeight();
     }

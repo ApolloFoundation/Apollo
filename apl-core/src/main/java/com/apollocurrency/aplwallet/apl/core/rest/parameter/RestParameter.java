@@ -24,12 +24,14 @@ public interface RestParameter<T> {
 
     /**
      * Return parsed value or <code>null</code> if the raw string does not contain a parsable value. It's a silent Get.
+     * Use for Optional parameters.
      * @return parsed value or <code>null</code> if the raw string does not contain a parsable value.
      */
     T getIfPresent();
 
     /**
      * Get parsed value or throw exception if the raw string does not contain a parsable value.
+     * Use for mandatory parameters.
      * @return parsed value
      * @throws RestParameterException - if the raw string does not contain a parsable value.
      */

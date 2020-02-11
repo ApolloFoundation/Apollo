@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.nio.file.Path;
 
 /**
  * The 2FA Repository producer
@@ -22,22 +23,41 @@ import javax.inject.Singleton;
 public class TwoFactorAuthRepositoryProducer {
 
     private final TwoFactorAuthRepository repository;
+    private final Path path2FADir;
+    private final TransactionalDataSource dataSource;
 
     @Inject
     public TwoFactorAuthRepositoryProducer(DatabaseManager databaseManager,
                                            DirProvider dirProvider,
-                                           @Property("apl.store2FAInFileSystem") boolean isStorInFileSystem,
+                                           @Property("apl.store2FAInFileSystem") boolean isStoreInFileSystem,
                                            @Property("apl.issuerSuffix2FA") String issuerSuffix2FA) {
 
-        log.info("The 2FA store is allocated {}.", isStorInFileSystem? "on the file system" : "in the data base");
-        this.repository = isStorInFileSystem ?
-            new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir()):
-            new TwoFactorAuthRepositoryImpl(databaseManager.getDataSource());
+        log.info("The 2FA store is allocated {}.", isStoreInFileSystem? "on the file system" : "in the data base");
+        path2FADir = dirProvider.get2FADir();
+        dataSource = databaseManager.getDataSource();
+
+        this.repository = isStoreInFileSystem ?
+            new TwoFactorAuthFileSystemRepository(path2FADir):
+            new TwoFactorAuthRepositoryImpl(dataSource);
     }
 
     @Produces
     public TwoFactorAuthRepository getTwoFactorAuthRepository(){
         return repository;
     }
+/*
+
+    @Named("2FARepositoryOnFS")
+    @Produces
+    public TwoFactorAuthRepository get2FARepositoryOnFileSystem(){
+        return new TwoFactorAuthFileSystemRepository(path2FADir);
+    }
+
+    @Named("2FARepositoryOnDB")
+    @Produces
+    public TwoFactorAuthRepository get2FARepositoryOnDataBase(){
+        return new TwoFactorAuthRepositoryImpl(dataSource);
+    }
+*/
 
 }

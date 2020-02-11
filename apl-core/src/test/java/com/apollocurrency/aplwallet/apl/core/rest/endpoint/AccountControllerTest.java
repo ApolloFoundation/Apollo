@@ -32,7 +32,6 @@ import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -112,20 +111,16 @@ import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AccountControllerTest extends AbstractEndpointTest{
 
-    private static final String PASSPHRASE = "123456";
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
     public static final String ACCOUNT_RS = "APL-5MRD-NBKX-X5EJ-3UP2M";
     public static final long ACCOUNT_ID = 1838236804542746347L;
     public static final String QR_CODE_URL = "https://url.google.com/qrcode";
-    public static final String SECRET = "SuperSecret";
-    public static final int CODE_2FA = 123456;
 
     public static final long ASSET_ID = 8180990979457659735L;
     public static final long CURRENCY_ID = 784842454721729391L;
@@ -696,57 +691,6 @@ class AccountControllerTest extends AbstractEndpointTest{
         MockHttpResponse response = sendPostRequest(uri,"wrong=value");
 
         checkMandatoryParameterMissingErrorCode(response, 1000);
-    }
-
-    @Disabled("will be moved to AccountEndpointTest cause it needs the Weld container.")
-    @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA","/accounts/deleteKey"})
-    public void check2FA_withoutMandatoryParameters_thenGetError_2002(String uri) throws URISyntaxException, IOException {
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(0L, null, null);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-        doCallRealMethod().when(account2FAHelper).verify2FA(null, null,null, CODE_2FA);
-        //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
-        doCallRealMethod().when(account2FAHelper).create2FAParameters("0", null, null);
-
-        MockHttpRequest request = post(uri);
-        request.setAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME, twoFactorAuthParameters);
-
-        MockHttpResponse response = sendPostRequest(request,"wrong=value");
-
-        checkMandatoryParameterMissingErrorCode(response, 2002);
-    }
-
-    @Disabled("will be moved to AccountEndpointTest cause it needs the Weld container.")
-    @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA"})
-    public void check2FA_withBothSecretPhraseAndPassPhrase_thenGetError_2010(String uri) throws URISyntaxException, IOException {
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(0L, PASSPHRASE, SECRET);
-        twoFactorAuthParameters.setCode2FA(CODE_2FA);
-
-        //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
-        doCallRealMethod().when(account2FAHelper).create2FAParameters("0", PASSPHRASE, SECRET);
-
-        MockHttpRequest request = post(uri);
-        request.setAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME, twoFactorAuthParameters);
-
-        MockHttpResponse response = sendPostRequest(request,"passphrase="+PASSPHRASE+"&secretPhrase="+SECRET+"&code2FA="+CODE_2FA);
-
-        checkMandatoryParameterMissingErrorCode(response, 2010);
-    }
-
-    @Disabled("will be moved to AccountEndpointTest cause it needs the Weld container.")
-    @ParameterizedTest(name = "{index} url={arguments}")
-    @ValueSource(strings = {"/accounts/disable2FA","/accounts/confirm2FA","/accounts/deleteKey"})
-    public void check2FA_withoutMandatoryParameter_Code2FA_thenGetError_2003(String uri) throws URISyntaxException, IOException {
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(0L, null, SECRET);
-        //doCallRealMethod().when(account2FAHelper).validate2FAParameters(twoFactorAuthParameters);
-
-        MockHttpRequest request = post(uri);
-        request.setAttribute(RestParametersParser.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME, twoFactorAuthParameters);
-
-        MockHttpResponse response = sendPostRequest(request,"secretPhrase="+SECRET);
-
-        checkMandatoryParameterMissingErrorCode(response, 2003);
     }
 
     private void check2FA_withPathPhraseAndAccountAndCode2FA(String uri, TwoFactorAuthParameters twoFactorAuthParameters) throws URISyntaxException, IOException {
