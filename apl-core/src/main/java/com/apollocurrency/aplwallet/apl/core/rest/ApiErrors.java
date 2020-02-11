@@ -11,6 +11,7 @@ public enum ApiErrors implements ErrorInfo {
     INTERNAL_SERVER_EXCEPTION(0,1000,"Internal error, root cause: %s"),
     JSON_SERIALIZATION_EXCEPTION(1,1001,"Exception encountered during generating JSON content, root cause: %s"),
 
+    CONSTRAINT_VIOLATION(4, 2001, "Constraint violation [%s]."),
     MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
     MISSING_PARAM(3, 2003, "The mandatory parameter '%s' is not specified."),
     INCORRECT_VALUE(4, 2004, "Incorrect {0} value, [{1}] is not defined or wrong"),

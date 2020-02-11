@@ -38,7 +38,8 @@ public class NewApiRegistry {
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
 
-//        apis.put("encodeQRCode", "/rest/utils/qrcode/encode"); //POST
+        apis.put("encodeQRCode", "/rest/utils/qrcode/encode"); //POST
+        apis.put("decodeQRCode", "/rest/utils/qrcode/decode"); //POST
 
         //TODO: add new implemented endpoints
     }
