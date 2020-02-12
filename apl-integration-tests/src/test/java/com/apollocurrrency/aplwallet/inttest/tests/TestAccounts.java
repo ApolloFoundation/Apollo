@@ -47,10 +47,10 @@ public class TestAccounts extends TestBaseOld {
 
     @Test
     @DisplayName("Verify AccountBlockCount endpoint")
-    public void testAccountBlockCount() throws IOException {
+    public void testAccountBlockCount(){
         GetAccountBlockCountResponse accountBlockCount = getAccountBlockCount(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("Account count = {}", accountBlockCount.getNumberOfBlocks());
-        assertTrue(accountBlockCount.getNumberOfBlocks() > 0);
+        assertThat("Genesis account has more than 0 generated blocks",accountBlockCount.getNumberOfBlocks().intValue(), greaterThan( 0 ));
     }
 
     @Test
