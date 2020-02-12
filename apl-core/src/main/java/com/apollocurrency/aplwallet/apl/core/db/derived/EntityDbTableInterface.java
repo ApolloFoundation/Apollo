@@ -18,8 +18,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     String defaultSort();
 
-    void checkAvailable(int height);
-
     @Deprecated
     T newEntity(DbKey dbKey);
 
@@ -30,8 +28,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
     T get(DbKey dbKey, int height);
 
     T getBy(DbClause dbClause);
-
-    T getBy(DbClause dbClause, int height);
 
     T get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException;
 
@@ -53,10 +49,6 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     DbIterator<T> getAll(int from, int to, String sort);
 
-    DbIterator<T> getAll(int height, int from, int to);
-
-    DbIterator<T> getAll(int height, int from, int to, String sort);
-
     int getCount();
 
     int getCount(DbClause dbClause);
@@ -67,5 +59,5 @@ public interface EntityDbTableInterface<T> extends DerivedTableInterface<T> {
 
     int getCount(PreparedStatement pstmt) throws SQLException;
 
-    boolean doesNotExceed(int height);
+    boolean isMultiversion();
 }

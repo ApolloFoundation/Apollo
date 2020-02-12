@@ -12,14 +12,15 @@ import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -35,9 +36,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEventBinding.literal;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -45,26 +48,27 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @EnableWeld
 class AccountAssetServiceTest {
 
-    private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountAssetTable accountAssetTable = mock(AccountAssetTable.class);
     private Event accountEvent = mock(Event.class);
     private Event accountAssetEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
     private AccountService accountService = mock(AccountService.class);
     private AssetDividendService assetDividendService = mock(AssetDividendServiceImpl.class);
+    private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             PropertiesHolder.class
     )
-            .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
+            .addBeans(MockBean.of(blockChainInfoService, BlockchainImpl.class))
             .build();
 
-    AccountAssetService accountAssetService;
+    AccountAssetServiceImpl accountAssetService;
 
     AccountTestData testData;
 
@@ -72,13 +76,14 @@ class AccountAssetServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountAssetService = spy(new AccountAssetServiceImpl(
-                blockchain,
                 accountAssetTable,
                 accountService,
                 accountEvent,
                 accountAssetEvent,
                 ledgerEvent,
-                assetDividendService)
+                assetDividendService,
+                blockChainInfoService
+            )
         );
     }
 
@@ -97,9 +102,9 @@ class AccountAssetServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -127,12 +132,12 @@ class AccountAssetServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
-        AccountAsset expectedNewAsset = new AccountAsset(testData.ACC_0.getId(), assetId, quantity, 0, blockchain.getHeight());
+        AccountAsset expectedNewAsset = new AccountAsset(testData.ACC_0.getId(), assetId, quantity, 0, blockChainInfoService.getHeight());
 
         Event firedEventAcc = mock(Event.class);
         Event firedEventAss = mock(Event.class);
@@ -170,9 +175,9 @@ class AccountAssetServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -210,13 +215,13 @@ class AccountAssetServiceTest {
                 1000L, 1000L,testData.ASS_BLOCKCHAIN_HEIGHT);
         accountAssetService.update(newAsset);
         verify(accountAssetTable, times(1)).insert(newAsset);
-        verify(accountAssetTable, never()).delete(any(AccountAsset.class));
+        verify(accountAssetTable, never()).deleteAtHeight(any(AccountAsset.class), anyInt());
     }
 
     @Test
     void testUpdate_as_delete() {
         accountAssetService.update(testData.newAsset);
-        verify(accountAssetTable, times(1)).delete(testData.newAsset);
+        verify(accountAssetTable, times(1)).deleteAtHeight(testData.newAsset, blockChainInfoService.getHeight());
         verify(accountAssetTable, never()).insert(any(AccountAsset.class));
     }
 
@@ -232,9 +237,9 @@ class AccountAssetServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -284,10 +289,33 @@ class AccountAssetServiceTest {
 
         doReturn(testData.ACC_0).when(accountService).getAccount(any(long.class));
         doReturn(expected).when(accountAssetTable).getAssetAccounts(testData.ACC_ASS_6.getAssetId(), height, 0, -1);
+        when(blockChainInfoService.getHeight()).thenReturn(height);
 
         accountAssetService.payDividends(testData.ACC_6, transactionId, attachment);
         verify(accountService, times(4)).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), eq(LedgerEvent.ASSET_DIVIDEND_PAYMENT), eq(transactionId), any(long.class));
         verify(accountService).addToBalanceATM(testData.ACC_6, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDivident);
         verify(assetDividendService).addAssetDividend(eq(transactionId), any(ColoredCoinsDividendPayment.class), eq(totalDivident), eq(numCount));
+    }
+
+    @Test
+    void testCheckAvailable_on_correct_height() {
+        doReturn(720).when(blockChainInfoService).getMinRollbackHeight();
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockChainInfoService).getHeight();
+        assertDoesNotThrow(() -> accountAssetService.getAsset(1, 1, testData.ASS_BLOCKCHAIN_HEIGHT));
+    }
+
+    @Test
+    void testCheckAvailable_on_wrong_height_LT_rollback() {
+        doReturn(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + 720)
+            .when(blockChainInfoService).getMinRollbackHeight();
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockChainInfoService).getHeight();
+        assertThrows(IllegalArgumentException.class, () -> accountAssetService.checkAvailable(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT));
+    }
+
+    @Test
+    void testCheckAvailable_on_wrong_height() {
+        doReturn(720).when(blockChainInfoService).getMinRollbackHeight();
+        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockChainInfoService).getHeight();
+        assertThrows(IllegalArgumentException.class, () -> accountAssetService.checkAvailable(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT));
     }
 }

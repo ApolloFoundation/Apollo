@@ -11,10 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -34,11 +34,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountCurrencyServiceTest {
-    private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountCurrencyTable accountCurrencyTable = mock(AccountCurrencyTable.class);
     private Event accountEvent = mock(Event.class);
     private Event accountCurrencyEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
+    private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
 
     private AccountCurrencyService accountCurrencyService;
     private AccountTestData testData;
@@ -47,12 +47,11 @@ class AccountCurrencyServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountCurrencyService = spy(new AccountCurrencyServiceImpl(
-                blockchain,
                 accountCurrencyTable,
                 ledgerEvent,
                 accountEvent,
-                accountCurrencyEvent
-                ));
+                accountCurrencyEvent,
+            blockChainInfoService));
     }
 
     @AfterEach
@@ -70,9 +69,9 @@ class AccountCurrencyServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -101,12 +100,12 @@ class AccountCurrencyServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
-        AccountCurrency expectedNewCurrency = new AccountCurrency(testData.ACC_0.getId(), currencyId, units, 0, blockchain.getHeight());
+        AccountCurrency expectedNewCurrency = new AccountCurrency(testData.ACC_0.getId(), currencyId, units, 0, blockChainInfoService.getHeight());
 
         Event firedEventAcc = mock(Event.class);
         Event firedEventCurr = mock(Event.class);
@@ -146,9 +145,9 @@ class AccountCurrencyServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -191,9 +190,9 @@ class AccountCurrencyServiceTest {
         Event firedEventLedger = mock(Event.class);
         Block lastBlock = mock(Block.class);
         doReturn(1L).when(lastBlock).getPreviousBlockId();
-        doReturn(lastBlock).when(blockchain).getLastBlock();
+        doReturn(lastBlock).when(blockChainInfoService).getLastBlock();
         doReturn(height).when(lastBlock).getHeight();
-        doReturn(height).when(blockchain).getHeight();
+        doReturn(height).when(blockChainInfoService).getHeight();
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY));
         doReturn(firedEventLedger).when(ledgerEvent).select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY));
 
@@ -230,13 +229,13 @@ class AccountCurrencyServiceTest {
                 1000L, 1000L,testData.CUR_BLOCKCHAIN_HEIGHT);
         accountCurrencyService.update(newCurrency);
         verify(accountCurrencyTable, times(1)).insert(newCurrency);
-        verify(accountCurrencyTable, never()).delete(any(AccountCurrency.class));
+        verify(accountCurrencyTable, never()).deleteAtHeight(any(AccountCurrency.class), anyInt());
     }
 
     @Test
     void testUpdate_as_delete() {
         accountCurrencyService.update(testData.newCurrency);
-        verify(accountCurrencyTable, times(1)).delete(testData.newCurrency);
+        verify(accountCurrencyTable, times(1)).deleteAtHeight(testData.newCurrency, blockChainInfoService.getHeight());
         verify(accountCurrencyTable, never()).insert(any(AccountCurrency.class));
     }
 

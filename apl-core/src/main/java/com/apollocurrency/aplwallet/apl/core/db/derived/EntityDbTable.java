@@ -48,8 +48,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
 
     private final String defaultSort;
     private final String fullTextSearchColumns;
-    private  Blockchain blockchain;
-    private BlockchainProcessor blockchainProcessor;
     private FullTextSearchService fullText;
 
     protected EntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
@@ -81,36 +79,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         return defaultSort;
     }
 
-    public void checkAvailable(int height) {
-        if (multiversion) {
-            int minRollBackHeight = lookupBlockchainProcessor().getMinRollbackHeight();
-            if (height < minRollBackHeight) {
-                throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
-            }
-        }
-
-        if (height > lookupBlockchain().getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-        }
-    }
-
-    //TODO: Fix injection and remove
-    protected BlockchainProcessor lookupBlockchainProcessor(){
-        if (blockchainProcessor == null){
-            blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        }
-        return blockchainProcessor;
-    }
-
-    //TODO: Fix injection and remove
-    protected Blockchain lookupBlockchain(){
-        if (blockchain == null){
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return blockchain;
-    }
-
-
     /**
      * Create new entity or return existing from cache in transaction
      * Current use case: caching complex entity, incremental entity update from multiple methods in one transaction
@@ -140,12 +108,16 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         }
     }
 
+    /**
+     * Gets an entity.
+     *
+     * Note that validation happens at service level.
+     * @param dbKey
+     * @param height
+     * @return
+     */
     @Override
     public T get(DbKey dbKey, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return get(dbKey);
-        }
-        checkAvailable(height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()
@@ -171,30 +143,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
                      + " WHERE " + dbClause.getClause() + (multiversion ? " AND latest = TRUE LIMIT 1" : ""))) {
             dbClause.set(pstmt, 1);
             return get(con, pstmt, true);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
-    public final T getBy(DbClause dbClause, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getBy(dbClause);
-        }
-        checkAvailable(height);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE " + dbClause.getClause()
-                     + " AND height <= ?" + (multiversion ? " AND (latest = TRUE OR EXISTS ("
-                     + "SELECT 1 FROM " + table + " AS b WHERE " + keyFactory.getSelfJoinClause()
-                     + " AND b.height > ?)) ORDER BY height DESC LIMIT 1" : ""))) {
-            int i = 0;
-            i = dbClause.set(pstmt, ++i);
-            pstmt.setInt(i, height);
-            if (multiversion) {
-                pstmt.setInt(++i, height);
-            }
-            return get(con, pstmt, false);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -248,12 +196,19 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         return getManyBy(dbClause, height, from, to, defaultSort());
     }
 
+    /**
+     * Gets an iterator on entities.
+     *
+     * Note that validation happens at service level.
+     * @param dbClause
+     * @param height
+     * @param from
+     * @param to
+     * @param sort
+     * @return
+     */
     @Override
     public final DbIterator<T> getManyBy(DbClause dbClause, int height, int from, int to, String sort) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getManyBy(dbClause, from, to, sort);
-        }
-        checkAvailable(height);
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
@@ -349,41 +304,6 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
     }
 
     @Override
-    public final DbIterator<T> getAll(int height, int from, int to) {
-        return getAll(height, from, to, defaultSort());
-    }
-
-    @Override
-    public final DbIterator<T> getAll(int height, int from, int to, String sort) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getAll(from, to, sort);
-        }
-        checkAvailable(height);
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + " AS a WHERE height <= ?"
-                    + (multiversion ? " AND (latest = TRUE OR (latest = FALSE "
-                    + "AND EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height > ? AND " + keyFactory.getSelfJoinClause()
-                    + ") AND NOT EXISTS (SELECT 1 FROM " + table + " AS b WHERE b.height <= ? AND " + keyFactory.getSelfJoinClause()
-                    + " AND b.height > a.height))) " : " ") + sort
-                    + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setInt(++i, height);
-            if (multiversion) {
-                pstmt.setInt(++i, height);
-                pstmt.setInt(++i, height);
-            }
-            i = DbUtils.setLimits(++i, pstmt, from, to);
-            return getManyBy(con, pstmt, false);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
     public int getCount() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -407,12 +327,16 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
         }
     }
 
+    /**
+     * Gets entity count.
+     *
+     * Note that validation happens at service level.
+     * @param dbClause
+     * @param height
+     * @return
+     */
     @Override
     public final int getCount(DbClause dbClause, int height) {
-        if (height < 0 || doesNotExceed(height)) {
-            return getCount(dbClause);
-        }
-        checkAvailable(height);
         Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
@@ -497,12 +421,4 @@ public abstract class EntityDbTable<T> extends BasicDbTable<T> implements Entity
             fullText.createIndex(con, "PUBLIC", table.toUpperCase(), fullTextSearchColumns.toUpperCase());
         }
     }
-
-    @Override
-    public boolean doesNotExceed(int height) {
-        if (blockchain == null) blockchain = CDI.current().select(BlockchainImpl.class).get();
-        if (blockchainProcessor == null) blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
-        return blockchain.getHeight() <= height;
-    }
-
 }

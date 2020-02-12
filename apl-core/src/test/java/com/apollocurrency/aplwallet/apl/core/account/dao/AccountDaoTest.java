@@ -37,7 +37,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -123,19 +122,6 @@ class AccountDaoTest  {
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
 
         assertEquals(expected, all);
-    }
-
-    @Test
-    void testCheckAvailable_on_correct_height() {
-        doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        doReturn(testData.ACC_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        assertDoesNotThrow(() -> table.checkAvailable(testData.ACC_BLOCKCHAIN_HEIGHT));
-    }
-
-    @Test
-    void testCheckAvailable_on_wrong_height() {
-        doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        assertThrows(IllegalArgumentException.class, () -> table.checkAvailable(testData.ACC_BLOCKCHAIN_WRONG_HEIGHT));
     }
 
     @Test

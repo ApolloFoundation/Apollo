@@ -36,11 +36,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.testutil.DbUtils.toList;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -122,28 +120,6 @@ class AccountAssetDaoTest {
         assertTrue(actual.getUnconfirmedQuantityATU()-testData.ACC_ASS_0.getUnconfirmedQuantityATU() == 50000);
         assertEquals(previous.getQuantityATU(), actual.getQuantityATU());
         assertEquals(previous.getAssetId(), actual.getAssetId());
-    }
-
-    @Test
-    void testCheckAvailable_on_correct_height() {
-        doReturn(720).when(blockchainProcessor).getMinRollbackHeight();
-        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        assertDoesNotThrow(() -> table.checkAvailable(testData.ASS_BLOCKCHAIN_HEIGHT));
-    }
-
-    @Test
-    void testCheckAvailable_on_wrong_height_LT_rollback() {
-        doReturn(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK + 720)
-                .when(blockchainProcessor).getMinRollbackHeight();
-        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        assertThrows(IllegalArgumentException.class, () -> table.checkAvailable(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT));
-    }
-
-    @Test
-    void testCheckAvailable_on_wrong_height() {
-        doReturn(720).when(blockchainProcessor).getMinRollbackHeight();
-        doReturn(testData.ASS_BLOCKCHAIN_HEIGHT).when(blockchain).getHeight();
-        assertThrows(IllegalArgumentException.class, () -> table.checkAvailable(testData.ASS_BLOCKCHAIN_WRONG_HEIGHT));
     }
 
     @Test

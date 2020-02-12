@@ -11,11 +11,13 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.db.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.monetary.service.AssetDividendService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -30,23 +32,31 @@ import static com.apollocurrency.aplwallet.apl.core.account.observer.events.Acco
 @Singleton
 public class AccountAssetServiceImpl implements AccountAssetService {
 
-    private final Blockchain blockchain;
     private final AccountAssetTable accountAssetTable;
     private final AccountService accountService;
     private final Event<Account> accountEvent;
     private final Event<AccountAsset> accountAssetEvent;
     private final Event<LedgerEntry> logLedgerEvent;
     private final AssetDividendService assetDividendService;
+    private final BlockChainInfoService blockChainInfoService;
 
     @Inject
-    public AccountAssetServiceImpl(Blockchain blockchain, AccountAssetTable accountAssetTable, AccountService accountService, Event<Account> accountEvent, Event<AccountAsset> accountAssetEvent, Event<LedgerEntry> logLedgerEvent, AssetDividendService assetDividendService) {
-        this.blockchain = blockchain;
+    public AccountAssetServiceImpl(
+        AccountAssetTable accountAssetTable,
+        AccountService accountService,
+        Event<Account> accountEvent,
+        Event<AccountAsset> accountAssetEvent,
+        Event<LedgerEntry> logLedgerEvent,
+        AssetDividendService assetDividendService,
+        BlockChainInfoService blockChainInfoService
+    ) {
         this.accountAssetTable = accountAssetTable;
         this.accountService = accountService;
         this.accountEvent = accountEvent;
         this.accountAssetEvent = accountAssetEvent;
         this.logLedgerEvent = logLedgerEvent;
         this.assetDividendService = assetDividendService;
+        this.blockChainInfoService = blockChainInfoService;
     }
 
     @Override
@@ -56,6 +66,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public List<AccountAsset> getAssets(long assetId, int height, int from, int to){
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return accountAssetTable.getAssetAccounts(assetId, from, to);
+        }
+        checkAvailable(height);
+
         return accountAssetTable.getAssetAccounts(assetId, height, from, to);
     }
 
@@ -81,6 +96,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public int getAssetCount(long assetId, int height) {
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return accountAssetTable.getAssetCount(assetId);
+        }
+        checkAvailable(height);
         return accountAssetTable.getAssetCount(assetId, height);
     }
 
@@ -106,7 +125,21 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public AccountAsset getAsset(long accountId, long assetId, int height) {
-        return accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+        final DbKey dbKey = AccountAssetTable.newKey(accountId, assetId);
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return accountAssetTable.get(dbKey);
+        }
+        checkAvailable(height);
+        return accountAssetTable.get(dbKey, height);
+    }
+
+    void checkAvailable(int height) {
+        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < blockChainInfoService.getMinRollbackHeight()){
+            throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
+        }
+        if (height > blockChainInfoService.getHeight()) {
+            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockChainInfoService.getHeight());
+        }
     }
 
     @Override
@@ -122,7 +155,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
 
     @Override
     public long getAssetBalanceATU(long accountId, long assetId, int height) {
-        AccountAsset accountAsset = accountAssetTable.get(AccountAssetTable.newKey(accountId, assetId), height);
+        AccountAsset accountAsset = getAsset(accountId, assetId, height);
         return accountAsset == null ? 0 : accountAsset.getQuantityATU();
     }
 
@@ -141,16 +174,16 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         long assetBalance = accountAsset == null ? 0 : accountAsset.getQuantityATU();
         assetBalance = Math.addExact(assetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, 0, blockchain.getHeight());
+            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, 0, blockChainInfoService.getHeight());
         } else {
             accountAsset.setQuantityATU(assetBalance);
-            accountAsset.setHeight(blockchain.getHeight());
+            accountAsset.setHeight(blockChainInfoService.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                quantityATU, assetBalance, blockchain.getLastBlock());
+                quantityATU, assetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 
@@ -163,10 +196,10 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, 0, unconfirmedAssetBalance, blockchain.getHeight());
+            accountAsset = new AccountAsset(account.getId(), assetId, 0, unconfirmedAssetBalance, blockChainInfoService.getHeight());
         } else {
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
-            accountAsset.setHeight(blockchain.getHeight());
+            accountAsset.setHeight(blockChainInfoService.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(account);
@@ -176,7 +209,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
             return;
         }
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock());
+                quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
     }
 
@@ -186,7 +219,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         if (accountAsset.getQuantityATU() > 0 || accountAsset.getUnconfirmedQuantityATU() > 0) {
             accountAssetTable.insert(accountAsset);
         } else {
-            accountAssetTable.delete(accountAsset);
+            accountAssetTable.deleteAtHeight(accountAsset, blockChainInfoService.getHeight());
         }
     }
 
@@ -202,11 +235,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         long unconfirmedAssetBalance = accountAsset == null ? 0 : accountAsset.getUnconfirmedQuantityATU();
         unconfirmedAssetBalance = Math.addExact(unconfirmedAssetBalance, quantityATU);
         if (accountAsset == null) {
-            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, unconfirmedAssetBalance, blockchain.getHeight());
+            accountAsset = new AccountAsset(account.getId(), assetId, assetBalance, unconfirmedAssetBalance, blockChainInfoService.getHeight());
         } else {
             accountAsset.setQuantityATU(assetBalance);
             accountAsset.setUnconfirmedQuantityATU(unconfirmedAssetBalance);
-            accountAsset.setHeight(blockchain.getHeight());
+            accountAsset.setHeight(blockChainInfoService.getHeight());
         }
         update(accountAsset);
         accountEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(account);
@@ -215,11 +248,11 @@ public class AccountAssetServiceImpl implements AccountAssetService {
         accountAssetEvent.select(literal(AccountEventType.ASSET_BALANCE)).fire(accountAsset);
         accountAssetEvent.select(literal(AccountEventType.UNCONFIRMED_ASSET_BALANCE)).fire(accountAsset);
         LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.UNCONFIRMED_ASSET_BALANCE, assetId,
-                quantityATU, unconfirmedAssetBalance, blockchain.getLastBlock());
+                quantityATU, unconfirmedAssetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
 
         entry = new LedgerEntry(event, eventId, account.getId(), LedgerHolding.ASSET_BALANCE, assetId,
-                quantityATU, assetBalance, blockchain.getLastBlock());
+                quantityATU, assetBalance, blockChainInfoService.getLastBlock());
         logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_ENTRY)).fire(entry);
     }
 

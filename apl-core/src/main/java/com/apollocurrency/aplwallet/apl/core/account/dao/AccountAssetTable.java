@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableEntityDbTable;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -70,16 +69,6 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
             pstmt.setLong(++i, accountAsset.getUnconfirmedQuantityATU());
             pstmt.setInt(++i, accountAsset.getHeight());
             pstmt.executeUpdate();
-        }
-    }
-
-    @Override
-    public void checkAvailable(int height) {
-        if (height + Constants.MAX_DIVIDEND_PAYMENT_ROLLBACK < lookupBlockchainProcessor().getMinRollbackHeight()) {
-            throw new IllegalArgumentException("Historical data as of height " + height + " not available.");
-        }
-        if (height > lookupBlockchain().getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + lookupBlockchain().getHeight());
         }
     }
 

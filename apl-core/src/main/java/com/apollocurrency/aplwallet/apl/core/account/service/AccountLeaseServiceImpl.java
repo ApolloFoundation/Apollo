@@ -78,7 +78,7 @@ public class AccountLeaseServiceImpl implements AccountLeaseService {
         if (log.isTraceEnabled()){
             log.trace("--lease-- Delete lease AccountLease={} at height {}", lease, blockchain.getHeight());
         }
-        return accountLeaseTable.delete(lease);
+        return accountLeaseTable.deleteAtHeight(lease, blockchain.getHeight());
     }
 
     @Override

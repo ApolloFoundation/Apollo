@@ -63,13 +63,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private long creatorId;
 
     private final BlockchainConfig blockchainConfig;
-    private final Blockchain blockchain;
 
     @Inject
     //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
     public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/) {
         super("account", accountDbKeyFactory, false);
-        this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL.");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
         this.creatorId = GenesisImporter.CREATOR_ID;
     }
@@ -106,17 +104,6 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             return;
         }
         super.trim(height);
-    }
-
-    @Override
-    public void checkAvailable(int height) {
-        if (height > blockchainConfig.getGuaranteedBalanceConfirmations()) {
-            super.checkAvailable(height);
-            return;
-        }
-        if (height > blockchain.getHeight()) {
-            throw new IllegalArgumentException("Height " + height + " exceeds blockchain height " + blockchain.getHeight());
-        }
     }
 
     public long getTotalSupply() {

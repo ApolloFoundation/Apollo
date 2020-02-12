@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,7 +71,7 @@ class AccountInfoServiceTest {
                 testData.newInfo.getDescription(), testData.INFO_BLOCKCHAIN_HEIGHT);
         accountInfoService.update(newInfo);
         verify(accountInfoTable, times(1)).insert(newInfo);
-        verify(accountInfoTable, never()).delete(any(AccountInfo.class));
+        verify(accountInfoTable, never()).deleteAtHeight(any(AccountInfo.class), anyInt());
     }
 
     @Test
@@ -78,7 +79,7 @@ class AccountInfoServiceTest {
         AccountInfo deletedAccountInfo = new AccountInfo(
                 testData.ACC_1.getId(), null, null, blockchain.getHeight());
         accountInfoService.update(deletedAccountInfo);
-        verify(accountInfoTable, times(1)).delete(deletedAccountInfo);
+        verify(accountInfoTable, times(1)).deleteAtHeight(deletedAccountInfo, blockchain.getHeight());
         verify(accountInfoTable, never()).insert(any(AccountInfo.class));
     }
 }

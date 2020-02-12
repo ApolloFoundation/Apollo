@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.apl.core.account.dao.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.account.model.Account;
 import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.service.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -40,7 +40,6 @@ import static com.apollocurrency.aplwallet.apl.core.app.CollectionUtil.toList;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    private final Blockchain blockchain;
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
     private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
     private final InMemoryCacheManager cacheManager;
@@ -48,18 +47,19 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     private final boolean cacheEnabled;
     @Getter
     private Cache<DbKey, PublicKey> publicKeyCache;
+    private final BlockChainInfoService blockChainInfoService;
 
     @Inject
     public AccountPublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
                                        @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
                                        PropertiesHolder propertiesHolder,
-                                       Blockchain blockchain,
-                                       InMemoryCacheManager cacheManager) {
-        this.blockchain = blockchain;
+                                       InMemoryCacheManager cacheManager,
+                                       BlockChainInfoService blockChainInfoService) {
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;
         this.cacheManager = cacheManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
+        this.blockChainInfoService = blockChainInfoService;
     }
 
     @PostConstruct
@@ -154,11 +154,27 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey loadPublicKey(DbKey dbKey, int height) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, height);
+        PublicKey publicKey = getPublicKey(dbKey, height);
         if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, height);
+            publicKey = getGenesisPublicKey(dbKey, height);
         }
         return publicKey;
+    }
+
+    private PublicKey getGenesisPublicKey(DbKey dbKey, int height) {
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return genesisPublicKeyTable.get(dbKey);
+        }
+        blockChainInfoService.checkAvailable(height, genesisPublicKeyTable.isMultiversion());
+        return genesisPublicKeyTable.get(dbKey, height);
+    }
+
+    private PublicKey getPublicKey(DbKey dbKey, int height) {
+        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
+            return publicKeyTable.get(dbKey);
+        }
+        blockChainInfoService.checkAvailable(height, publicKeyTable.isMultiversion());
+        return publicKeyTable.get(dbKey, height);
     }
 
     @Override
@@ -205,7 +221,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     @Override
     public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
         DbKey dbKey = AccountTable.newKey(accountId);
-        return setOrVerifyPublicKey(dbKey, key, blockchain.getHeight());
+        return setOrVerifyPublicKey(dbKey, key, blockChainInfoService.getHeight());
     }
 
     @Override
@@ -239,7 +255,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
-        } else if (publicKey.getHeight() >= blockchain.getHeight() - 1) {
+        } else if (publicKey.getHeight() >= blockChainInfoService.getHeight() - 1) {
             PublicKey dbPublicKey = loadPublicKey(account.getDbKey());
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 insertPublicKey(publicKey, isGenesis);
