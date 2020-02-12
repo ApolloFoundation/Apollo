@@ -69,7 +69,7 @@ public class TestAccounts extends TestBaseOld {
     public void testAccountBlockIds() {
         AccountBlockIdsResponse accountBlockIds = getAccountBlockIds(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("BlockIds count = {}", accountBlockIds.getBlockIds().size());
-        assertThat("Genesis account has more than 0 generated blocks",accountBlocks.getBlocks().size(), greaterThan( 0 ));
+        assertThat("Genesis account has more than 0 generated blocks",accountBlockIds.getBlockIds().size(), greaterThan( 0 ));
     }
 
 
