@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,19 +66,19 @@ public class TestAccounts extends TestBaseOld {
 
     @Test
     @DisplayName("Verify AccountBlockIds endpoint")
-    public void testAccountBlockIds() throws IOException {
+    public void testAccountBlockIds() {
         AccountBlockIdsResponse accountBlockIds = getAccountBlockIds(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("BlockIds count = {}", accountBlockIds.getBlockIds().size());
-        assertTrue(accountBlockIds.getBlockIds().size() > 0);
+        assertThat("Genesis account has more than 0 generated blocks",accountBlocks.getBlocks().size(), greaterThan( 0 ));
     }
 
 
     @Test
     @DisplayName("Verify getAccountBlocks endpoint")
-    public void testAccountBlocks() throws IOException {
+    public void testAccountBlocks(){
         BlockListInfoResponse accountBlocks = getAccountBlocks(getTestConfiguration().getGenesisWallet().getUser());
         log.trace("Blocks count = {}", accountBlocks.getBlocks().size());
-        assertTrue(accountBlocks.getBlocks().size() > 0);
+        assertThat("Genesis account has more than 0 generated blocks",accountBlocks.getBlocks().size(), greaterThan( 0 ));
     }
 
 
