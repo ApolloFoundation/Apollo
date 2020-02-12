@@ -60,8 +60,8 @@ public final class Crypto {
             throw new RuntimeException(e.getMessage(), e);
         }
     });
-    
-    
+
+
     private static String normalizeByLen( String in, int length)
     {
         String rx = "";
@@ -73,7 +73,7 @@ public final class Crypto {
             }
             rx += in;
             return rx;
-        } else { // length < xlen // cut the vector            
+        } else { // length < xlen // cut the vector
             return in.substring( xlen-length, length+1 );
         }
     }
@@ -346,9 +346,9 @@ public final class Crypto {
     public static boolean isCanonicalSignature(byte[] signature) {
         return Curve25519.isCanonicalSignature(signature);
     }
-    
+
     public static FBElGamalKeyPair getElGamalKeyPair() {
-       
+
             try {
                 FBCryptoParams params = FBCryptoParams.createDefault();
                 AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
@@ -357,10 +357,10 @@ public final class Crypto {
             } catch (CryptoNotValidException ex) {
                 LOG.debug(ex.getLocalizedMessage());
             }
-            
+
             return null;
-        
-        
+
+
     }
 
     public static String elGamalDecrypt(String cryptogramm, FBElGamalKeyPair keyPair)
@@ -374,18 +374,19 @@ public final class Crypto {
             int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
             String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
             String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
-            
+
             FBCryptoParams params = FBCryptoParams.createDefault();
             AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
             instanceOfAlice.setCurveParameters();
-        
-            FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();    
+
+            FBElGamalEncryptedMessage cryptogram1 = new FBElGamalEncryptedMessage();
             String M2 = aesKey.substring(262);
-            cryptogram1.setM2( new BigInteger(M2, 16)); 
-            
+            cryptogram1.setM2( new BigInteger(M2, 16));
+
             String M1_X = aesKey.substring(0, 131);
             String M1_Y = aesKey.substring(131, 262);
-            org.bouncycastle.math.ec.ECPoint.Fp _M1 = 
+//            org.bouncycastle.math.ec.ECPoint.Fp _M1 =
+            org.bouncycastle.math.ec.ECPoint _M1 =
             instanceOfAlice.extrapolateECPoint(
                     new BigInteger(M1_X, 16),
                     new BigInteger(M1_Y, 16));
@@ -393,33 +394,33 @@ public final class Crypto {
             // setting M1 to the instance of cryptogram
             cryptogram1.setM1(_M1);
             BigInteger pKey = keyPair.getPrivateKey();
-            
+
             BigInteger restored = BigInteger.ZERO;
-               
+
             restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
             String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
-            
+
             byte[] IVC = null;
             byte[] key = null;
             IVC = Convert.parseHexString(IVCiphered);
             key = Convert.parseHexString(keyStr);
-            
+
 
             byte[] plain = aesGCMDecrypt(IVC, key);
             //TODO:
             // Add passphrase encryption verification bolow
-            
+
             return new String(plain);
         }
         catch (Exception e)
         {
             LOG.trace(e.getMessage());
-            
+
             return cryptogramm;
         }
 
-        
-        
+
+
     }
 
 }

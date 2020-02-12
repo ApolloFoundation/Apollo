@@ -21,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.http.ParameterParser;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
@@ -124,7 +123,7 @@ public class DexService {
     @Inject
     public DexService(EthereumWalletService ethereumWalletService, DexOrderDao dexOrderDao, DexOrderTable dexOrderTable, TransactionProcessor transactionProcessor,
                       DexSmartContractService dexSmartContractService, SecureStorageService secureStorageService, DexContractTable dexContractTable,
-                      DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollServiceImpl phasingPollService,
+                      DexOrderTransactionCreator dexOrderTransactionCreator, TimeService timeService, DexContractDao dexContractDao, Blockchain blockchain, PhasingPollService phasingPollService,
                       IDexMatcherInterface dexMatcherService, PhasingApprovedResultTable phasingApprovedResultTable, MandatoryTransactionDao mandatoryTransactionDao,
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
@@ -767,6 +766,10 @@ public class DexService {
 
 
     public boolean isTxApproved(byte[] secretHash, String transferTxId) throws AplException.ExecutiveProcessException {
+        if(transferTxId == null){
+            return false;
+        }
+
         if (DexCurrencyValidator.isEthOrPaxAddress(transferTxId)) {
             SwapDataInfo swapDataInfo = dexSmartContractService.getSwapData(secretHash);
             return swapDataInfo != null && swapDataInfo.getSecret() != null;
