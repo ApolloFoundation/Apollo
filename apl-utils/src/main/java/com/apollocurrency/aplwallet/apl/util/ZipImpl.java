@@ -5,23 +5,29 @@
 package com.apollocurrency.aplwallet.apl.util;
 
  import org.slf4j.Logger;
- import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory;
 
- import javax.inject.Singleton;
- import java.io.File;
- import java.io.FileInputStream;
- import java.io.FileOutputStream;
- import java.io.FilenameFilter;
- import java.io.IOException;
- import java.nio.file.attribute.FileTime;
- import java.time.Instant;
- import java.util.ArrayList;
- import java.util.Comparator;
+import javax.inject.Singleton;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.Comparator;
  import java.util.List;
  import java.util.Objects;
+ import java.util.stream.Collectors;
  import java.util.zip.ZipEntry;
- import java.util.zip.ZipInputStream;
- import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Class is used for zip-unzip filtered files in specified directory
@@ -35,7 +41,6 @@ public class ZipImpl implements Zip {
     // magic constant copied from DownloadableFilesManager class
     private final static int BUF_SIZE= 1024 * 16; // 16 Kb
     public static Instant DEFAULT_BACK_TO_1970 = Instant.EPOCH; // in past
-    private List<File> fileList = new ArrayList<>();
     private static final int ZIP_COMPRESSION_LEVEL=9;
 
     public ZipImpl() {
@@ -114,9 +119,8 @@ public class ZipImpl implements Zip {
             ChunkedFileOps chunkedFileOps = new ChunkedFileOps(zipFile);
             byte[] zipCrcHash = chunkedFileOps.getFileHashSums();
 
-            log.debug("Created archive '{}' with [{}] file(s), CRC/hash = [{}] within {} sec",
-                    zipFile, zipCrcHash.length,
-                    fileList.size(), (System.currentTimeMillis() - start) / 1000);
+            log.debug("Created archive '{}', CRC/hash = [{}] within {} sec",
+                    zipFile, zipCrcHash.length, (System.currentTimeMillis() - start) / 1000);
             return chunkedFileOps;
         } else {
             return new ChunkedFileOps("");
@@ -134,17 +138,6 @@ public class ZipImpl implements Zip {
         StringValidator.requireNonBlank(zipFile);
         StringValidator.requireNonBlank(inputFolder);
 
-        log.trace("Creating file '{}' in folder '{}', filesTimestamp = {}", zipFile, inputFolder, filesTimeFromEpoch);
-        File directory = new File(inputFolder);
-        // get file(s) listing from folder by filter (no recursion for subfolders(s) !)
-        List<File> fl = getFileList(directory, filenameFilter, recursive);
-
-        // throw exception because it's a error/failure in case sharding process
-        if (fl.size() == 0) {
-            log.warn("Zip will not created, no files found");
-            return false;
-        }
-
         // assign permanent zip file entry info
         FileTime ft;
         if (filesTimeFromEpoch != null) {
@@ -158,31 +151,37 @@ public class ZipImpl implements Zip {
                 zos.setComment("");
                 zos.setLevel(ZIP_COMPRESSION_LEVEL);
                 zos.setMethod(ZipOutputStream.DEFLATED);
-
-            for (File file: fl) {
-
-                String name = file.getName();
-                log.trace("processing zip entry '{}' as file ...", name);
-                ZipEntry zipEntry = new ZipEntry(name);
-                zipEntry.setCreationTime(ft);
-                zipEntry.setLastAccessTime(ft);
-                zipEntry.setLastModifiedTime(ft);
-                zipEntry.setTime(ft.toMillis());
-                zipEntry.setComment("");
-                zipEntry.setMethod(ZipOutputStream.DEFLATED);
-                zos.putNextEntry(zipEntry);
-
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    byte[] buffer = new byte[BUF_SIZE];
-                    int length;
-                    while ((length = fis.read(buffer)) > 0) {
-                        zos.write(buffer, 0, length);
+            Path input = Paths.get(inputFolder);
+            if (recursive) {
+                Files.walkFileTree(input, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        if (dir.equals(input)) {
+                            return super.preVisitDirectory(dir, attrs);
+                        }
+                        ZipEntry zipEntry = makeZipEntry(input.relativize(dir).toString() + "/", ft);
+                        zos.putNextEntry(zipEntry);
+                        zos.closeEntry();
+                        return super.preVisitDirectory(dir, attrs);
                     }
-                    zos.closeEntry();
-                    log.trace("closed zip entry '{}'", name);
-                } catch (Exception e) {
-                    log.error("Error creating zip file: {}", zipFile, e);
-                    throw new RuntimeException(e);
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if (filenameFilter != null && !filenameFilter.accept(file.getParent().toFile(), file.getFileName().toString())) {
+                            return super.visitFile(file, attrs);
+                        }
+                        zipFile(zos, ft, input, file);
+                        return super.visitFile(file, attrs);
+                    }
+                });
+            } else {
+                List<Path> filesToZip = Files.list(input)
+                    .filter(f -> !Files.isDirectory(f) && (filenameFilter == null || filenameFilter.accept(f.getParent().toFile(), f.getFileName().toString())))
+                    .sorted(Comparator.comparing(Path::getFileName))
+                    .collect(Collectors.toList());
+                for (Path file : filesToZip) {
+                    zipFile(zos, ft, input, file);
+
                 }
             }
             zos.finish();
@@ -193,29 +192,29 @@ public class ZipImpl implements Zip {
         }
     }
 
-    private List<File> getFileList(File directory, FilenameFilter filenameFilter, boolean recursive) {
+    private void zipFile(ZipOutputStream zos, FileTime ft, Path inputDir, Path file) throws IOException {
+        ZipEntry zipEntry = makeZipEntry(inputDir.relativize(file).toString(), ft);
+        zos.putNextEntry(zipEntry);
 
-        fileList.clear();
-        File[] files;
-        if (filenameFilter == null) {
-            files = directory.listFiles();
-        } else {
-            files = directory.listFiles(filenameFilter);
-        }
-        if (files != null && files.length > 0) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    fileList.add(file);
-                } else if(recursive){
-                    getFileList(file, filenameFilter, recursive);
-                }
+        try (FileInputStream fis = new FileInputStream(file.toFile())) {
+            byte[] buffer = new byte[BUF_SIZE];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
             }
+            zos.closeEntry();
         }
-        //sort by simple name to avoid different order in zip
-        fileList.sort(Comparator.comparing(File::getName));
+    }
 
-        log.debug("Gathered [{}] files with filter = {}", files != null?  files.length : -1, filenameFilter);
-        return fileList;
+    private ZipEntry makeZipEntry(String name, FileTime ft) {
+        ZipEntry zipEntry = new ZipEntry(name);
+        zipEntry.setCreationTime(ft);
+        zipEntry.setLastAccessTime(ft);
+        zipEntry.setLastModifiedTime(ft);
+        zipEntry.setTime(ft.toMillis());
+        zipEntry.setComment("");
+        zipEntry.setMethod(ZipOutputStream.DEFLATED);
+        return zipEntry;
     }
 
 }
