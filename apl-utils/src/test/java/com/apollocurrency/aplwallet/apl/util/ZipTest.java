@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -116,8 +117,8 @@ class ZipTest {
 
         boolean compressed = zipComponent.compress(zipFileInPath, folderNoCsvInside.toAbsolutePath().toString(), null, null, false);
 
-        assertTrue(compressed);
-        assertTrue(Files.exists(Paths.get(zipFileInPath)));
+        assertFalse(compressed);
+        assertFalse(Files.exists(Paths.get(zipFileInPath)));
     }
 
     @Test

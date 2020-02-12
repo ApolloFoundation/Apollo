@@ -21,7 +21,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.Comparator;
+ import java.util.ArrayList;
+ import java.util.Comparator;
  import java.util.List;
  import java.util.Objects;
  import java.util.stream.Collectors;
@@ -145,51 +146,69 @@ public class ZipImpl implements Zip {
         } else {
             ft = FileTime.from(DEFAULT_BACK_TO_1970); // assign default, PREFERRED value!
         }
-
-        try (FileOutputStream fos = new FileOutputStream(zipFile);
-                ZipOutputStream zos = new ZipOutputStream(fos)) {
+        Path inputDirPath = Paths.get(inputFolder);
+        try {
+            List<Path> filesToZip = collectFiles(inputDirPath, filenameFilter, recursive);
+            if (filesToZip.isEmpty()) {
+                return false;
+            }
+            try (FileOutputStream fos = new FileOutputStream(zipFile);
+                 ZipOutputStream zos = new ZipOutputStream(fos)) {
                 zos.setComment("");
                 zos.setLevel(ZIP_COMPRESSION_LEVEL);
                 zos.setMethod(ZipOutputStream.DEFLATED);
-            Path input = Paths.get(inputFolder);
-            if (recursive) {
-                Files.walkFileTree(input, new SimpleFileVisitor<>() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                        if (dir.equals(input)) {
-                            return super.preVisitDirectory(dir, attrs);
-                        }
-                        ZipEntry zipEntry = makeZipEntry(input.relativize(dir).toString() + "/", ft);
-                        zos.putNextEntry(zipEntry);
-                        zos.closeEntry();
-                        return super.preVisitDirectory(dir, attrs);
-                    }
-
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        if (filenameFilter != null && !filenameFilter.accept(file.getParent().toFile(), file.getFileName().toString())) {
-                            return super.visitFile(file, attrs);
-                        }
-                        zipFile(zos, ft, input, file);
-                        return super.visitFile(file, attrs);
-                    }
-                });
-            } else {
-                List<Path> filesToZip = Files.list(input)
-                    .filter(f -> !Files.isDirectory(f) && (filenameFilter == null || filenameFilter.accept(f.getParent().toFile(), f.getFileName().toString())))
-                    .sorted(Comparator.comparing(Path::getFileName))
-                    .collect(Collectors.toList());
                 for (Path file : filesToZip) {
-                    zipFile(zos, ft, input, file);
-
+                    if (Files.isDirectory(file)) {
+                        zipDir(zos, ft, inputDirPath, file);
+                    } else {
+                        zipFile(zos, ft, inputDirPath, file);
+                    }
                 }
+                zos.finish();
+                return true;
             }
-            zos.finish();
-            return true;
         } catch (IOException e) {
             log.error("Error creating zip file: {}", zipFile, e);
             return false;
         }
+    }
+
+    List<Path> collectFiles(Path input,FilenameFilter filter, boolean recursive) throws IOException {
+        List<Path> files = new ArrayList<>();
+        if (recursive) {
+            Files.walkFileTree(input, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (dir.equals(input)) {
+                        return super.preVisitDirectory(dir, attrs);
+                    }
+                    files.add(dir);
+                    return super.preVisitDirectory(dir, attrs);
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (filter != null && !filter.accept(file.getParent().toFile(), file.getFileName().toString())) {
+                        return super.visitFile(file, attrs);
+                    }
+                    files.add(file);
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } else {
+            files.addAll(
+                Files.list(input)
+                    .filter(f -> !Files.isDirectory(f) && (filter == null || filter.accept(f.getParent().toFile(), f.getFileName().toString())))
+                    .sorted(Comparator.comparing(Path::getFileName))
+                    .collect(Collectors.toList()));
+        }
+        return files;
+    }
+
+    private void zipDir(ZipOutputStream zos, FileTime ft, Path inputDir, Path dir) throws IOException {
+        ZipEntry zipEntry = makeZipEntry(inputDir.relativize(dir).toString() + "/", ft);
+        zos.putNextEntry(zipEntry);
+        zos.closeEntry();
     }
 
     private void zipFile(ZipOutputStream zos, FileTime ft, Path inputDir, Path file) throws IOException {
