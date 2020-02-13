@@ -110,4 +110,8 @@ public class TestConfiguration {
     public File getDefaultImage() {
         return defaultImage;
     }
+
+    public String getEnv() {
+        return env;
+    }
 }

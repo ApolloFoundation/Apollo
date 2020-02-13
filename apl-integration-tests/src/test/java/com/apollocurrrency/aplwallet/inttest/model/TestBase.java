@@ -66,7 +66,11 @@ public abstract class TestBase implements ITest {
             startForgingSetUp();
             setUpTestData();
         } catch (Exception ex) {
-            fail("Precondition FAILED: " + ex.getMessage(), ex);
+            if (TestConfiguration.getTestConfiguration().getEnv().equals("localhost")){
+                log.warn("One of the peers doesn't respond");
+            }else {
+                fail("Precondition FAILED: " + ex.getMessage(), ex);
+            }
         }
         log.info("Preconditions finished");
     }

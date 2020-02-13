@@ -25,7 +25,7 @@ public class TestBlock extends TestBaseOld {
     @Test
     @DisplayName("Get Block")
     public void getBlockTest() throws IOException {
-        GetBlockIdResponse blockID = getBlockId("0");
+        GetBlockIdResponse blockID = getBlockId(String.valueOf(getBlock().getHeight()));
         BlockDTO block = getBlock(blockID.getBlock());
         assertNotNull(block.getHeight());
         assertNotNull(block.getTransactions());
