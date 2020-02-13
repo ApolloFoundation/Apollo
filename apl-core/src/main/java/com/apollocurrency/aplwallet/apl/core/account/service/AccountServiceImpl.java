@@ -118,6 +118,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public Account reloadAccount(Account account) {
+        return accountTable.get(account.getDbKey());
+    }
+
+    @Override
     public Account getAccount(byte[] publicKey) {
         long accountId = AccountService.getId(publicKey);
         Account account = getAccount(accountId);
