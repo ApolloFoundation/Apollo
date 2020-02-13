@@ -43,8 +43,9 @@ public class TestShuffling extends TestBaseOld {
 
     RetryPolicy retry = new RetryPolicy()
             .retryWhen(false)
-            .withMaxRetries(20)
-            .withDelay(10, TimeUnit.SECONDS);
+            .withMaxRetries(30)
+            .withDelay(3, TimeUnit.SECONDS);
+
     private final int NON_SHUFFLEABLE = 32;
 
     private final int STAGE_REGISTRATION = 0;
@@ -159,7 +160,8 @@ public class TestShuffling extends TestBaseOld {
             shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
             shufflingVerify(randomStandart, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
 
-            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
+            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
+            //getAllShufflings()
             assertShufflingDone(type, recipients);
         }
     }
@@ -212,7 +214,8 @@ public class TestShuffling extends TestBaseOld {
             startShuffler(randomStandart, shuffling.getFullHash(), recipients.get(1).getPass());
             startShuffler(randomVault, shuffling.getFullHash(), recipients.get(2).getPass());
 
-            waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
+            log.info("Shuffling started " + shuffling.getTransaction());
+            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
             assertShufflingDone(type, recipients);
 
 
@@ -376,8 +379,16 @@ public class TestShuffling extends TestBaseOld {
 
     @Step
     private void waitForChangeShufflingStage(String shuffling, int stage) {
+        log.info("Check Shuffling stage: " + stage);
         boolean isStage = Failsafe.with(retry).get(() -> getShuffling(shuffling).getStage() == stage);
         assertTrue(isStage, String.format("Stage isn't %s - > : %s", stage, getShuffling(shuffling).getStage()));
+    }
+
+    @Step
+    private void waitForShufflingDeleted(String shuffling) {
+
+      //  boolean isStage = Failsafe.with(retry).get(() -> getS == stage);
+      //  assertTrue(isStage, String.format("Stage isn't %s - > : %s", stage, getShuffling(shuffling).getStage()));
     }
 
     @Step
@@ -387,15 +398,12 @@ public class TestShuffling extends TestBaseOld {
     }
 
 
-    @AfterEach
     @Override
     public void tearDown() {
-        super.tearDown();
         sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
-        if (getShuffling(shuffling.getTransaction()).getStage() == STAGE_DONE) {
             for (Wallet wallet : recipients) {
                 sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
             }
         }
-    }
+
 }

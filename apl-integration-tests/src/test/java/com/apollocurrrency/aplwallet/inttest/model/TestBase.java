@@ -201,9 +201,9 @@ public abstract class TestBase implements ITest {
 
                 boolean isForgingEnableOnGen = false;
                 try {
-
+                    log.info("Check Forging on peers");
                     for (String ip : peersIp) {
-
+                    log.info("Check Forging on: " + ip);
                     HashMap<String, String> param = new HashMap();
                     param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
@@ -221,20 +221,24 @@ public abstract class TestBase implements ITest {
                                 .getObject("", ForgingResponse.class);
 
                         if (forgingResponse.getGenerators().size() > 0) {
+                            log.info("Forgers founded");
                             isForgingEnableOnGen = true;
                             break;
+                        }else{
+                            log.info("Forgers not founded");
                         }
 
                     }
 
                     if (!isForgingEnableOnGen) {
+                        log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
                         addParameters(RequestType.requestType, startForging);
                         addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
                         addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
                         getInstanse(ForgingDetails.class);
                     }
                 } catch (Exception ex) {
-                    log.error("FAILED: Get Forging. " + ex.getMessage());
+                    log.warn("FAILED: Get Forging. " + ex.getMessage());
                 }
             }
 

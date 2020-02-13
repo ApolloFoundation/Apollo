@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.api.response.AccountLedgerResponse;
 import com.apollocurrency.aplwallet.api.response.AccountOpenAssetOrdersResponse;
 import com.apollocurrency.aplwallet.api.response.AccountPropertiesResponse;
 import com.apollocurrency.aplwallet.api.response.AccountTransactionIdsResponse;
+import com.apollocurrency.aplwallet.api.response.AllShufflingsResponse;
 import com.apollocurrency.aplwallet.api.response.AllTaggedDataResponse;
 import com.apollocurrency.aplwallet.api.response.AssetTradeResponse;
 import com.apollocurrency.aplwallet.api.response.AssetsAccountsCountResponse;
@@ -82,89 +83,7 @@ import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.getInstans
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallGet;
 import static com.apollocurrrency.aplwallet.inttest.helper.HttpHelper.httpCallPost;
 import static com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration.getTestConfiguration;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.cancelAskOrder;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.cancelBidOrder;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyBuy;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyMint;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyReserveClaim;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencyReserveIncrease;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.currencySell;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.deleteAssetShares;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.deleteCurrency;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsDelisting;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsDelivery;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsFeedback;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsListing;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsPriceChange;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsPurchase;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsQuantityChange;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dgsRefund;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.dividendPayment;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.extendTaggedData;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountAssetCount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountAssets;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlockCount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlockIds;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountBlocks;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrencies;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentAskOrderIds;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentAskOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentBidOrderIds;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountCurrentBidOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountId;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountLedger;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountLedgerEntry;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAccountProperties;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllAssets;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllCurrencies;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllOpenAskOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllOpenBidOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllTaggedData;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAllTrades;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrder;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrderIds;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAskOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAsset;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetAccountCount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetAccounts;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetDeletes;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getAssetIds;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBalance;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBidOrders;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlock;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlockId;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlockchainStatus;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getBlocks;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getCurrency;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getCurrencyAccounts;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getDGSGood;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getDataTagCount;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getECBlock;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getExpectedAssetDeletes;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getForging;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPoll;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPollResult;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getPollVotes;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getShuffling;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.getTaggedData;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.issueAsset;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.placeAskOrder;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.placeBidOrder;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.publishExchangeOffer;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.scheduleCurrencyBuy;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.searchTaggedData;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingCancel;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingCreate;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingProcess;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingRegister;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.shufflingVerify;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startForging;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.startShuffler;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.stopForging;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.transferAsset;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.transferCurrency;
-import static com.apollocurrrency.aplwallet.inttest.model.RequestType.uploadTaggedData;
+import static com.apollocurrrency.aplwallet.inttest.model.RequestType.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -1319,18 +1238,26 @@ public class TestBaseOld extends TestBase {
     @Step
     public ShufflingDTO getShuffling(String shuffling) {
         addParameters(RequestType.requestType, getShuffling);
-        ;
         addParameters(Parameters.shuffling, shuffling);
         addParameters(Parameters.includeHoldingInfo, false);
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
-        return getInstanse(ShufflingDTO.class);
+        ShufflingDTO shufflingDTO = getInstanse(ShufflingDTO.class);
+        log.info("Current Shuffling stage: " + shufflingDTO.getStage()+" waiting some blocks...");
+        return shufflingDTO;
     }
+
+    @Step
+    public AllShufflingsResponse getAllShufflings() {
+        addParameters(RequestType.requestType, getAllShufflings);
+        AllShufflingsResponse shufflingDTO = getInstanse(AllShufflingsResponse.class);
+        return shufflingDTO;
+    }
+
 
     @Step
     public CreateTransactionResponse shufflingRegister(Wallet wallet, String shufflingFullHash) {
         addParameters(RequestType.requestType, shufflingRegister);
-        ;
         addParameters(Parameters.shufflingFullHash, shufflingFullHash);
         addParameters(Parameters.wallet, wallet);
         addParameters(Parameters.feeATM, "100000000000");

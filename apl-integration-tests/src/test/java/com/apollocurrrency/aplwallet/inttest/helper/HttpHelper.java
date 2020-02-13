@@ -165,7 +165,9 @@ public class HttpHelper {
             }
             return (T) mapper.readValue(responseBody, clazz);
         } catch (Exception e) {
-            Allure.addAttachment("Response Body", responseBody);
+            if (TestBase.testInfo != null) {
+                Allure.addAttachment("Response Body", responseBody);
+            }
             return fail(responseBody + "\n" + e.getMessage());
         }
     }
