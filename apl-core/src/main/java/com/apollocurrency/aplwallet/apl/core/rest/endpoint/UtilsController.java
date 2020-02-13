@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import javax.annotation.security.PermitAll;
 import javax.imageio.ImageIO;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -13,23 +14,31 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.apollocurrency.aplwallet.api.dto.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.QrEncodeDto;
+import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Search;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -47,13 +56,19 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
 @NoArgsConstructor
 @Slf4j
@@ -65,20 +80,42 @@ public class UtilsController {
     @Path("/qrcode/encode")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "The API converts a UTF-8 string to a base64-encoded jpeg image of a 2-D QR (Quick Response) code",
         description = "The output qrCodeBase64 string can be incorporated into an in-line HTML image like this: &lt;img src=\"data:image/jpeg;base64,qrCodeBase64\"&gt; ",
         tags = {"utility"},
+        parameters = {
+            @Parameter(name = "qrCodeData", description = "QR code data", required = true),
+            @Parameter(name = "width", description = "QR code image width, optional", allowEmptyValue = true,
+                schema = @Schema(
+                    type = "integer",
+                    format = "int64",
+                    description = "QR code image width positive value (0 - 5000), optional",
+                    allowableValues = {"0","100","5000"}
+                ),
+                example = "value from 0 to 5000 maximum"
+            ),
+            @Parameter(name = "height", description = "QR code image height, optional", allowEmptyValue = true,
+                schema = @Schema(
+                    type = "integer",
+                    format = "int64",
+                    description = "QR code image height positive value (0 - 5000), optional",
+                    allowableValues = {"0","100","5000"}
+                ),
+                example = "value from 0 to 5000 maximum"
+            )
+        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = QrEncodeDto.class)))
         })
+    @PermitAll
     public Response encodeQRCode(
-        @Parameter(description = "QR code data", required = true) @FormParam("qrCodeData") String qrCodeData,
-        @Parameter(description = "QR code image width", allowEmptyValue = true) @FormParam("width") @DefaultValue("0") String widthStr,
-        @Parameter(description = "QR code image height", allowEmptyValue = true) @FormParam("height") @DefaultValue("0") String heightStr
+        @FormParam("qrCodeData") String qrCodeData,
+        @FormParam("width") @DefaultValue("0") String widthStr,
+        @FormParam("height") @DefaultValue("0") String heightStr
     ) {
         log.debug("Started encodeQRCode: \n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -131,7 +168,7 @@ public class UtilsController {
     @Path("/qrcode/decode")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "The API converts a base64-encoded image of a 2-D QR (Quick Response) code to a UTF-8 string",
         description = "The API converts a base64-encoded image of a 2-D QR (Quick Response) code to a UTF-8 string. The input qrCodeBase64 can be the output of the decodeQRCode API",
@@ -141,6 +178,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = QrDecodeDto.class)))
         })
+    @PermitAll
     public Response decodeQRCode(
         @Parameter(description = "A base64 string encoded from an image of a QR code", required = true)
         @FormParam("qrCodeBase64") String qrCodeBase64
@@ -176,5 +214,100 @@ public class UtilsController {
         }
         return response.bind(dto).build();
     }
+
+    @Path("/detect/mime-type")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Operation(
+        summary = "The API makes possible to detect Mime-Type of file or data field",
+        description = "Try to upload file OR specify data field for detecting supplied mime-type",
+        tags = {"utility"},
+        requestBody = @RequestBody(
+            content = @Content(
+                mediaType = "multipart/form-data",
+                schema = @Schema(implementation = DetectMimeTypeUploadForm.class), // class is used by swagger UI
+                encoding = @Encoding(name = "UTF-8", contentType = "multipart/form-data;charset=utf-8") // doesn't affect actually
+            )
+        ),
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = DetectMimeTypeDto.class)))
+        })
+    @PermitAll
+    public Response detectMimeType(
+        @Parameter(hidden = true) @MultipartForm MultipartFormDataInput formDataInput
+    ) {
+        log.debug("Started detectMimeType : \n\t 'formDataInput' size = [{}]",
+            formDataInput.getFormDataMap() != null ? formDataInput.getFormDataMap().size() : -1);
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        if (formDataInput.getFormDataMap() == null) {
+            // missing one of params to detect
+            return response.error(ApiErrors.MISSING_PARAM, "file or data fields").build();
+        }
+        DetectMimeTypeDto dto = new DetectMimeTypeDto();
+        String uploadedFileName = "unknown-uploaded-file";
+        byte[] data; // bytes data to check mime
+        Map<String, List<InputPart>> uploadForm = formDataInput.getFormDataMap();
+        if (uploadForm.containsKey("file")) {
+            List<InputPart> inputParts = uploadForm.get("file");
+            for (InputPart inputPart : inputParts) {
+                    MultivaluedMap<String, String> header = inputPart.getHeaders();
+                    uploadedFileName = extractFileNameFromUploadHeader(header);
+                    //convert the uploaded file to inputstream
+                try (InputStream inputStream = inputPart.getBody(InputStream.class,null)) {
+                    int nRead;
+                    byte[] bytes = new byte[1024];
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    while ((nRead = inputStream.read(bytes, 0, bytes.length)) != -1) {
+                        baos.write(bytes, 0, nRead);
+                    }
+                    data = baos.toByteArray();
+                    log.debug("Read [{}] bytes content from uploaded file '{}'", nRead, uploadedFileName);
+                    String detectedMimeType = Search.detectMimeType(data, uploadedFileName);
+                    log.debug("Detected Mime-Type '{}'", detectedMimeType);
+                    dto.type = detectedMimeType;
+                } catch (Exception e) {
+                    log.error("Error reading bytes from uploaded file: " + uploadedFileName, e);
+                }
+            }
+        } else if (formDataInput.getFormDataMap().containsKey("data")) {
+            // suppose 'data' is filled with some content
+            List<InputPart> inputParts = uploadForm.get("data");
+            for (InputPart inputPart : inputParts) {
+                try {
+                    String inputString = inputPart.getBody(String.class,null);
+                    if (inputString != null && !inputString.isEmpty()) {
+                        data = Convert.toBytes(inputString);
+                        log.debug("Read 'data' content [{}]", data.length);
+                        String detectedMimeType = Search.detectMimeType(data);
+                        log.debug("Detect Mime-Type '{}'", detectedMimeType);
+                        dto.type = detectedMimeType;
+                    }
+                } catch (Exception e) {
+                    log.error("Error reading bytes from uploaded file: " + uploadedFileName, e);
+                }
+            }
+        }
+        return response.bind(dto).build();
+    }
+
+    private String extractFileNameFromUploadHeader(MultivaluedMap<String, String> header) {
+        String[] contentDisposition = header.getFirst("Content-Disposition").split(";");
+        log.debug("extractFileNameFromUploadHeader() - contentDisposition split = [{}]",
+            Arrays.toString(contentDisposition));
+        for (String filename : contentDisposition) {
+            if ((filename.trim().startsWith("filename"))) {
+                String[] name = filename.split("=");
+                String finalFileName = name[1].trim().replaceAll("\"", "");
+                log.debug("extracted file name = '{}'", finalFileName);
+                return finalFileName;
+            }
+        }
+        log.warn("Content-Disposition file name was NOT extracted...");
+        return "unknown file name";
+    }
+
 
 }
