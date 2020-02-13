@@ -13,9 +13,13 @@ import com.apollocurrrency.aplwallet.inttest.helper.RestHelper;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Step;
+import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.http.params.CoreConnectionPNames;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -49,10 +53,16 @@ public abstract class TestBase implements ITest {
     protected static RestHelper restHelper;
     protected static ObjectMapper mapper = new ObjectMapper();
     public static final Logger log = LoggerFactory.getLogger(TestBase.class);
+    private static RestAssuredConfig config;
 
     @BeforeAll
     static void initAll() {
         log.info("Preconditions started");
+         config = RestAssured.config()
+            .httpClient(HttpClientConfig.httpClientConfig()
+                .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
+                .setParam(CoreConnectionPNames.SO_TIMEOUT, 10000));
+
         TestConfiguration.getTestConfiguration();
         retryPolicy = new RetryPolicy()
                 .retryWhen(false)
@@ -181,7 +191,7 @@ public abstract class TestBase implements ITest {
                 param.put(RequestType.requestType.toString(), RequestType.getBlockchainStatus.toString());
 
                 path = "/apl";
-                BlockchainInfoDTO status = given().log().all()
+                BlockchainInfoDTO status = given().config(config).log().all()
                         .spec(restHelper.getPreconditionSpec())
                         .contentType(ContentType.URLENC)
                         .formParams(param)
@@ -200,16 +210,16 @@ public abstract class TestBase implements ITest {
             if (peersIp != null && peersIp.size() > 0) {
 
                 boolean isForgingEnableOnGen = false;
-                try {
+
                     log.info("Check Forging on peers");
                     for (String ip : peersIp) {
                     log.info("Check Forging on: " + ip);
                     HashMap<String, String> param = new HashMap();
                     param.put(RequestType.requestType.toString(), RequestType.getForging.toString());
                     param.put(Parameters.adminPassword.toString(), getTestConfiguration().getAdminPass());
-
-                        path = "/apl";
-                        ForgingResponse forgingResponse = given().log().all()
+                    path = "/apl";
+                    try {
+                       ForgingResponse forgingResponse = given().config(config).log().all()
                                 .baseUri(String.format("http://%s:%s", ip, 7876))
                                 .contentType(ContentType.URLENC)
                                 .formParams(param)
@@ -219,7 +229,6 @@ public abstract class TestBase implements ITest {
                                 .assertThat().statusCode(200)
                                 .extract().body().jsonPath()
                                 .getObject("", ForgingResponse.class);
-
                         if (forgingResponse.getGenerators().size() > 0) {
                             log.info("Forgers founded");
                             isForgingEnableOnGen = true;
@@ -227,9 +236,12 @@ public abstract class TestBase implements ITest {
                         }else{
                             log.info("Forgers not founded");
                         }
-
+                    } catch (Exception ex) {
+                        log.warn("FAILED: Get Forging 1. " + ex.getMessage());
                     }
 
+                    }
+                try {
                     if (!isForgingEnableOnGen) {
                         log.info("Start forging on APL-NZKH-MZRE-2CTT-98NPZ account");
                         addParameters(RequestType.requestType, startForging);
@@ -238,7 +250,7 @@ public abstract class TestBase implements ITest {
                         getInstanse(ForgingDetails.class);
                     }
                 } catch (Exception ex) {
-                    log.warn("FAILED: Get Forging. " + ex.getMessage());
+                    log.warn("FAILED: Start Forging. " + ex.getMessage());
                 }
             }
 

@@ -216,6 +216,7 @@ public class TestShuffling extends TestBaseOld {
 
             log.info("Shuffling started " + shuffling.getTransaction());
             //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
+            waitForHeight(getBlock().getHeight()+5);
             assertShufflingDone(type, recipients);
 
 
