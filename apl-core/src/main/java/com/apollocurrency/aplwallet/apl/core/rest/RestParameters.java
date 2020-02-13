@@ -62,21 +62,22 @@ public class RestParameters {
         return min;
     }
 
-    public static int parseInt(String paramValue, String name, int min, int max, boolean isMandatory) throws RestParameterException {
-        if (paramValue == null) {
+    public static int parseInt(String paramValue, String paramName, int min, int max, boolean isMandatory) throws RestParameterException {
+        if (paramValue == null || paramValue.isEmpty()) {
             if (isMandatory) {
-                throw new RestParameterException(ApiErrors.MISSING_PARAM, name);
+                throw new RestParameterException(ApiErrors.MISSING_PARAM, paramName);
             }
-            return 0;
+//            return 0;
+            return min; // let's return minimal permitted
         }
         try {
             int value = Integer.parseInt(paramValue);
             if (value < min || value > max) {
-                throw new RestParameterException(ApiErrors.OUT_OF_RANGE_NAME_VALUE, name, value, min, max);
+                throw new RestParameterException(ApiErrors.OUT_OF_RANGE_NAME_VALUE, paramName, value, min, max);
             }
             return value;
         } catch (RuntimeException e) {
-            throw new RestParameterException(ApiErrors.INCORRECT_VALUE, name, paramValue);
+            throw new RestParameterException(ApiErrors.INCORRECT_VALUE, paramName, paramValue);
         }
     }
 

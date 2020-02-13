@@ -40,6 +40,7 @@ public class NewApiRegistry {
 
         apis.put("encodeQRCode", "/rest/utils/qrcode/encode"); //POST
         apis.put("decodeQRCode", "/rest/utils/qrcode/decode"); //POST
+//        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST
 
         //TODO: add new implemented endpoints
     }
