@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.QrDecodeDto;
-import com.apollocurrency.aplwallet.api.dto.QrEncodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -31,6 +32,7 @@ class UtilsControllerTest {
     private Dispatcher dispatcher;
     private static String encodeQrUri = "/utils/qrcode/encode";
     private static String decodeQrUri = "/utils/qrcode/decode";
+    private static String fullHashToIdUri = "/utils/fullhash/toid";
 //    private AnService service;
 
     @BeforeEach
@@ -211,6 +213,42 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(1000, error.getNewErrorCode());
+    }
+
+    @Test
+    void fullHashToId_SUCCESS() throws URISyntaxException, IOException {
+        String uri = fullHashToIdUri + "?fullHash=5e485346362cdece52dada076459abf88a0ae128cac6870e108257a88543f09f";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.stringId);
+        assertEquals("14906400428262639710", dto.stringId);
+        assertEquals("-3540343645446911906", dto.longId);
+    }
+
+    @Test
+    void fullHashToId_EMPTY_param() throws URISyntaxException, IOException {
+        String uri = fullHashToIdUri + "?fullHash=";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void fullHashToId_INCORRECT_param() throws URISyntaxException, IOException {
+        String uri = fullHashToIdUri + "?fullHash=incorrect_value";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
     }
 
 }

@@ -7,12 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import javax.annotation.security.PermitAll;
 import javax.imageio.ImageIO;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotBlank;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -29,9 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.apollocurrency.aplwallet.api.dto.DetectMimeTypeDto;
-import com.apollocurrency.aplwallet.api.dto.QrDecodeDto;
-import com.apollocurrency.aplwallet.api.dto.QrEncodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
@@ -56,7 +60,6 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -70,6 +73,9 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
+/**
+ * Expose several utility methods
+ */
 @NoArgsConstructor
 @Slf4j
 @Path("/utils")
@@ -80,7 +86,7 @@ public class UtilsController {
     @Path("/qrcode/encode")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "The API converts a UTF-8 string to a base64-encoded jpeg image of a 2-D QR (Quick Response) code",
         description = "The output qrCodeBase64 string can be incorporated into an in-line HTML image like this: &lt;img src=\"data:image/jpeg;base64,qrCodeBase64\"&gt; ",
@@ -159,7 +165,7 @@ public class UtilsController {
             dto.qrCodeBase64 = base64;
         } catch(WriterException | IOException | NullPointerException ex) {
             String errorMessage = String.format("Error creating QR from qrCodeData: %s, ex = %s", qrCodeData, ex.getMessage());
-            log.error(errorMessage, ex);
+            log.warn(errorMessage, ex);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
         }
         return response.bind(dto).build();
@@ -168,7 +174,7 @@ public class UtilsController {
     @Path("/qrcode/decode")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "The API converts a base64-encoded image of a 2-D QR (Quick Response) code to a UTF-8 string",
         description = "The API converts a base64-encoded image of a 2-D QR (Quick Response) code to a UTF-8 string. The input qrCodeBase64 can be the output of the decodeQRCode API",
@@ -206,11 +212,11 @@ public class UtilsController {
             log.debug("qrCodeData = {}", qrCodeData);
         } catch(IOException | NullPointerException | IllegalArgumentException e) {
             String errorMessage = String.format("Error reading base64 byte stream, incorrect base64 encoding or else: e = %s", e.getMessage());
-            log.error(errorMessage, e);
+            log.warn(errorMessage, e);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
         } catch(NotFoundException e) {
             String errorMessage = String.format("Error creating QR from qrCodeData: e = %s", e.getMessage());
-            log.error(errorMessage, e); // return DTO for backward compatibility
+            log.warn(errorMessage, e); // return DTO for backward compatibility
         }
         return response.bind(dto).build();
     }
@@ -225,7 +231,7 @@ public class UtilsController {
         tags = {"utility"},
         requestBody = @RequestBody(
             content = @Content(
-                mediaType = "multipart/form-data",
+                mediaType = "multipart/form-data;charset=utf-8",
                 schema = @Schema(implementation = DetectMimeTypeUploadForm.class), // class is used by swagger UI
                 encoding = @Encoding(name = "UTF-8", contentType = "multipart/form-data;charset=utf-8") // doesn't affect actually
             )
@@ -309,5 +315,37 @@ public class UtilsController {
         return "unknown file name";
     }
 
+    @Path("/fullhash/toid")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API returns Long Id and Unsigned Long values by supplied UTF-8 HASH string value",
+        description = "Long Id and Unsigned Long ID values are returned by supplied UTF-8 HASH string value",
+        tags = {"utility"},
+        parameters = {
+            @Parameter(name = "fullHash", description = "full hash data as string", required = true)
+        },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = FullHashToIdDto.class)))
+        })
+    public Response getFullHashToId(@QueryParam("fullHash") @NotBlank String fullHash) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started getFullHashToId : \t 'fullHash' = {}", fullHash);
+        long longId = 0;
+        FullHashToIdDto dto = new FullHashToIdDto();
+        try {
+            longId = Convert.fullHashToId(Convert.parseHexString(fullHash));
+            dto.longId = String.valueOf(longId);
+            dto.stringId = Long.toUnsignedString(longId);
+        } catch (NumberFormatException e) {
+            String errorMessage = String.format("Error converting hashed string to ID: %s, e = %s",
+                fullHash, e.getMessage());
+            log.warn(errorMessage, e);
+            return response.error(ApiErrors.INCORRECT_PARAM, "fullHash", fullHash).build();
+        }
+        return response.bind(dto).build();
+    }
 
 }
