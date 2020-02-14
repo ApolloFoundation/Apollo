@@ -387,9 +387,8 @@ public class TestShuffling extends TestBaseOld {
 
     @Step
     private void waitForShufflingDeleted(String shuffling) {
-
-      //  boolean isStage = Failsafe.with(retry).get(() -> getS == stage);
-      //  assertTrue(isStage, String.format("Stage isn't %s - > : %s", stage, getShuffling(shuffling).getStage()));
+       boolean isDeleted = Failsafe.with(retry).get(() -> getAllShufflings().getShufflings().stream().noneMatch(shuff -> shuff.getShuffling().equals(shuffling)));
+       assertTrue(isDeleted, String.format("Stage isn't %s - > : %s", isDeleted, getShuffling(shuffling).getStage()));
     }
 
     @Step
@@ -399,7 +398,7 @@ public class TestShuffling extends TestBaseOld {
     }
 
 
-    @Override
+
     public void tearDown() {
         sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
             for (Wallet wallet : recipients) {

@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.api.response;
 
-import com.apollocurrency.aplwallet.api.dto.AccountAliasDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,5 +12,5 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class AllShufflingsResponse extends ResponseBase {
-    private List<AccountAliasDTO> shufflings;
+    private List<ShufflingDTO> shufflings;
 }
