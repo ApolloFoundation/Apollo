@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Asset")
 @Epic(value = "Asset")
 public class TestAssetExchangeAPI extends TestBaseOld {
-
+      // TODO:  Neeed imp full Exchange
     //SMOKE API TESTING (STATUS CODE 200)
     @DisplayName("issueAsset")
     @ParameterizedTest(name = "{displayName} {arguments}")

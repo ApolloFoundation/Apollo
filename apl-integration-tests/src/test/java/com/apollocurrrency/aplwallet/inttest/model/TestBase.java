@@ -178,7 +178,8 @@ public abstract class TestBase implements ITest {
     private static void startForgingSetUp() {
         List<String> peersIp;
         String path;
-        if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost")) {
+       // if (TestConfiguration.getTestConfiguration().getBaseURL().equals("localhost"))
+        {
             path = "/rest/networking/peer/all";
             List<String> peers = given().log().uri()
                     .spec(restHelper.getPreconditionSpec())
@@ -254,7 +255,7 @@ public abstract class TestBase implements ITest {
                 }
             }
 
-        } else {
+   /*     } else {
             addParameters(RequestType.requestType, getForging);
             addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
             ForgingResponse forgingResponse = getInstanse(ForgingResponse.class);
@@ -265,7 +266,7 @@ public abstract class TestBase implements ITest {
                 addParameters(Parameters.wallet, TestConfiguration.getTestConfiguration().getGenesisWallet());
                 addParameters(Parameters.adminPassword, getTestConfiguration().getAdminPass());
                 getInstanse(ForgingDetails.class);
-            }
+            }*/
         }
 
     }
