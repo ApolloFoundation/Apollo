@@ -117,8 +117,10 @@ public abstract class TestBase implements ITest {
     }
 
     public static void setUpTestData() {
+        log.info("Balance check started");
         CreateTransactionResponse transactionResponse;
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getStandartWallet()).getBalanceATM() < 90000000000000L) {
+            log.info("Send money on: ",TestConfiguration.getTestConfiguration().getStandartWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getStandartWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
@@ -129,6 +131,7 @@ public abstract class TestBase implements ITest {
         verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
 
         if (getBalanceSetUP(TestConfiguration.getTestConfiguration().getVaultWallet()).getBalanceATM() < 90000000000000L) {
+            log.info("Send money on: ",TestConfiguration.getTestConfiguration().getVaultWallet());
             transactionResponse = sendMoneySetUp(TestConfiguration.getTestConfiguration().getGenesisWallet(),
                     TestConfiguration.getTestConfiguration().getVaultWallet().getUser(), 1000000);
             verifyTransactionInBlockSetUp(transactionResponse.getTransaction());
@@ -235,10 +238,10 @@ public abstract class TestBase implements ITest {
                             isForgingEnableOnGen = true;
                             break;
                         }else{
-                            log.info("Forgers not founded");
+                            log.info("Forgers not founded on: "+ip);
                         }
                     } catch (Exception ex) {
-                        log.warn("FAILED: Get Forging 1. " + ex.getMessage());
+                        log.warn("FAILED: Get Forging. " + ex.getMessage());
                     }
 
                     }

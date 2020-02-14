@@ -97,7 +97,7 @@ public class TestPoll extends TestBaseOld {
             log.info("result = " + result);
             log.info("weight = " + weight);
             log.info("voteNumber = " + voteNumber);
-            waitForHeight(currentHeight + plusFinishHeight + 1);
+            waitForHeight(currentHeight + plusFinishHeight + 2);
 
             //getResults().get(INDEX) INDEX: YES = 0, No = 1, MAYBE = 2
             assertEquals(true, getPoll(pollId).getFinished(), "status of finished poll is different");
