@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +23,7 @@ import java.net.URISyntaxException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -33,6 +35,7 @@ class UtilsControllerTest {
     private static String encodeQrUri = "/utils/qrcode/encode";
     private static String decodeQrUri = "/utils/qrcode/decode";
     private static String fullHashToIdUri = "/utils/fullhash/toid";
+    private static String hexConvertUri = "/utils/hexconvert";
 //    private AnService service;
 
     @BeforeEach
@@ -232,7 +235,7 @@ class UtilsControllerTest {
     }
 
     @Test
-    void fullHashToId_EMPTY_param() throws URISyntaxException, IOException {
+    void fullHashToId_EMPTY_param() throws URISyntaxException {
         String uri = fullHashToIdUri + "?fullHash=";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
@@ -242,7 +245,7 @@ class UtilsControllerTest {
     }
 
     @Test
-    void fullHashToId_INCORRECT_param() throws URISyntaxException, IOException {
+    void fullHashToId_INCORRECT_param() throws URISyntaxException {
         String uri = fullHashToIdUri + "?fullHash=incorrect_value";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
@@ -251,4 +254,55 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
     }
 
+    @Test
+    void hexConvert_SUCCESS() throws URISyntaxException, IOException {
+        String uri = hexConvertUri + "?string=5e485346362cdece52dada076459abf88a0ae128cac6870e108257a88543f09f";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.text);
+        assertEquals("35653438353334363336326364656365353264616461303736343539616266383861306165313238636163363837306531303832353761383835343366303966",
+            dto.binary);
+
+        uri = hexConvertUri + "?string=5e48rtyt";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNull(dto.text);
+        assertNotNull(dto.binary);
+        assertEquals("3565343872747974", dto.binary);
+    }
+
+    @Test
+    void hexConvert_EMPTY_param() throws URISyntaxException {
+        String uri = hexConvertUri + "?string=";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void hexConvert_INCORRECT_param() throws URISyntaxException, IOException {
+        String uri = hexConvertUri + "?string=incorrect_value";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        HexConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.binary);
+    }
 }

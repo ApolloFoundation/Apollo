@@ -42,6 +42,7 @@ public class NewApiRegistry {
         apis.put("decodeQRCode", "/rest/utils/qrcode/decode"); //POST
 //        apis.put("detectMimeType", "/rest/utils/detect/mime-type"); //POST
         apis.put("fullHashToId", "/rest/utils/fullhash/toid"); //GET
+        apis.put("hexConvert", "/rest/utils/hexconvert"); //GET
 
         //TODO: add new implemented endpoints
     }

@@ -34,6 +34,7 @@ import java.util.Map;
 
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
@@ -79,7 +80,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 @NoArgsConstructor
 @Slf4j
 @Path("/utils")
-@OpenAPIDefinition(info = @Info(description = "Provide several utility methods used by UI"))
+@OpenAPIDefinition(info = @Info(description = "Provide several utility methods"))
 @Singleton
 public class UtilsController {
 
@@ -345,6 +346,43 @@ public class UtilsController {
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM, "fullHash", fullHash).build();
         }
+        return response.bind(dto).build();
+    }
+
+    @Path("/hexconvert")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API converts HEX string into text or binary representation",
+        description = "The API makes attempt to parse HEX string into text representation, if attempt fails it tries take bytes and convert them into string",
+        tags = {"utility"},
+        parameters = {
+            @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
+        },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = HexConvertDto.class)))
+        })
+    public Response getHexConvert(@QueryParam("string") @NotBlank String stringHash) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started getHexConvert : \t 'stringHash' = {}", stringHash);
+        HexConvertDto dto = new HexConvertDto();
+        try {
+            byte[] asHex = Convert.parseHexString(stringHash);
+            if (asHex.length > 0) {
+                String parsedHex = Convert.toString(asHex);
+                log.debug("parsedHex = '{}'", parsedHex);
+                dto.text = parsedHex;
+            }
+        } catch (RuntimeException ignore) {}
+        try {
+            byte[] asText = Convert.toBytes(stringHash);
+            String bytesAsString = Convert.toHexString(asText);
+            log.debug("bytesAsString = '{}'", bytesAsString);
+            dto.binary = bytesAsString;
+        } catch (RuntimeException ignore) {}
+
         return response.bind(dto).build();
     }
 
