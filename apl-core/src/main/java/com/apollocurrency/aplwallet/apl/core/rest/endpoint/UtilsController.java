@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import javax.annotation.security.PermitAll;
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.Consumes;
@@ -32,13 +33,17 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
+import com.apollocurrency.aplwallet.apl.core.app.Convert2;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
@@ -84,6 +89,13 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 @OpenAPIDefinition(info = @Info(description = "Provide several utility methods"))
 @Singleton
 public class UtilsController {
+
+    private BlockchainConfig blockchainConfig;
+
+    @Inject
+    public UtilsController(BlockchainConfig blockchainConfig) {
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
+    }
 
     @Path("/qrcode/encode")
     @POST
@@ -335,7 +347,7 @@ public class UtilsController {
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
-    public Response getFullHashToId(@QueryParam("fullHash") @NotBlank String fullHash) {
+    public Response fullHashToId(@QueryParam("fullHash") @NotBlank String fullHash) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getFullHashToId : \t 'fullHash' = {}", fullHash);
         long longId = 0;
@@ -395,18 +407,18 @@ public class UtilsController {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        summary = "The API converts HEX string into text or binary representation",
-        description = "The API makes attempt to parse HEX string into text representation, if attempt fails it tries take bytes and convert them into string",
+        summary = "The API converts supplied Id string into text or long representation",
+        description = "The API converts supplied Id string into Long Id text or BigInteger Id representation",
         tags = {"utility"},
         parameters = {
-            @Parameter(name = "id", description = "correct HEX data as string representation", required = true)
+            @Parameter(name = "id", description = "valid Id data as string representation", required = true)
         },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
-    public Response getLongConvert(@QueryParam("id") @NotBlank String stringId) {
+    public Response longConvert(@QueryParam("id") @NotBlank String stringId) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getLongConvert : \t 'stringId' = {}", stringId);
         FullHashToIdDto dto = new FullHashToIdDto();
@@ -441,6 +453,47 @@ public class UtilsController {
             }
         }
         log.debug("getLongConvert result: {}", dto);
+        return response.bind(dto).build();
+    }
+
+    @Path("/convert/rs")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API receive valid account Id string and return Account info",
+        description = "The API receive valid account Id string and return Account info like account Long Id, Reed-Solomon name, account Id",
+        tags = {"utility"},
+        parameters = {
+            @Parameter(name = "account", description = "existing, valid account Id", required = true)
+        },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RsConvertDto.class)))
+        })
+    public Response rcConvert(@QueryParam("account") @NotBlank String accountIdString) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started getLongConvert : \t 'accountIdString' = {}", accountIdString);
+        RsConvertDto dto = new RsConvertDto();
+        try {
+            long accountId = Convert.parseAccountId(accountIdString);
+            if (accountId == 0) {
+                String errorMessage = String.format("Error, invalid account ID: value = %s",
+                    accountIdString);
+                log.warn(errorMessage);
+                return response.error(ApiErrors.INCORRECT_VALUE, "account", accountIdString).build();
+            }
+            dto.account = Long.toUnsignedString(accountId);
+            dto.accountRS = Convert2.rsAccount(blockchainConfig.getAccountPrefix(), accountId);
+//            JSONData.putAccount(response, "account", accountId);
+            dto.accountLongId = String.valueOf(accountId);
+            log.debug("getRcConvert result: {}", dto);
+        } catch (RuntimeException e) {
+            String errorMessage = String.format("Incorrect account ID: value = %s",
+                accountIdString);
+            log.warn(errorMessage, e);
+            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "account", accountIdString).build();
+        }
         return response.bind(dto).build();
     }
 

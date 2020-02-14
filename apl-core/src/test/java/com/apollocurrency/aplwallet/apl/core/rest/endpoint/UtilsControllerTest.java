@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
+import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -16,6 +18,8 @@ import org.jboss.resteasy.mock.MockHttpResponse;
 import org.jboss.resteasy.spi.Dispatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -29,6 +33,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 class UtilsControllerTest {
+    @Mock
+    private BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
 
     private static ObjectMapper mapper = new ObjectMapper();
     private Dispatcher dispatcher;
@@ -37,14 +43,16 @@ class UtilsControllerTest {
     private static String fullHashToIdUri = "/utils/fullhash/toid";
     private static String hexConvertUri = "/utils/convert/hex";
     private static String longConvertUri = "/utils/convert/long";
+    private static String rcConvertUri = "/utils/convert/rs";
 //    private AnService service;
 
     @BeforeEach
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
 //        service = mock(AnService.class);
-        UtilsController controller = new UtilsController();
+        UtilsController controller = new UtilsController(blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(controller);
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
 
     @Test
@@ -297,7 +305,7 @@ class UtilsControllerTest {
     }
 
     @Test
-    void longConvertToId_SUCCESS() throws URISyntaxException, IOException {
+    void longConvert_SUCCESS() throws URISyntaxException, IOException {
         String uri = longConvertUri + "?id=999999999999";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
@@ -327,7 +335,7 @@ class UtilsControllerTest {
     }
 
     @Test
-    void longConvertToId_EMPTY_param() throws URISyntaxException, IOException {
+    void longConvert_EMPTY_param() throws URISyntaxException, IOException {
         String uri = longConvertUri + "?id=";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
@@ -337,7 +345,7 @@ class UtilsControllerTest {
     }
 
     @Test
-    void longConvertToId_INCORRECT_param() throws URISyntaxException, IOException {
+    void longConvert_INCORRECT_param() throws URISyntaxException, IOException {
         String uri = longConvertUri + "?id=incorrect_value";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
@@ -357,6 +365,76 @@ class UtilsControllerTest {
         assertNotNull(error.getErrorDescription());
 
         uri = longConvertUri + "?id=98446744073709551618";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+    }
+
+    @Test
+    void rcConvert_SUCCESS() throws URISyntaxException, IOException {
+        String uri = rcConvertUri + "?account=-3050588097064620469";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        RsConvertDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.account);
+        assertNotNull(dto.accountRS);
+        assertEquals("15396155976644931147", dto.account);
+        assertEquals("APL-VDLD-B9D8-U94M-F4KCD", dto.accountRS);
+
+        uri = rcConvertUri + "?account=6165265950559152337";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.account);
+        assertNotNull(dto.accountRS);
+        assertEquals("6165265950559152337", dto.account);
+        assertEquals("APL-9C8K-QYAG-9R2X-7EV5D", dto.accountRS);
+    }
+
+    @Test
+    void rcConvert_EMPTY_param() throws URISyntaxException, IOException {
+        String uri = rcConvertUri + "?account=";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void rcConvert_INCORRECT_param() throws URISyntaxException, IOException {
+        String uri = rcConvertUri + "?account=incorrect_value";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+
+        uri = rcConvertUri + "?account=-99999998446744073709551616";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+
+        uri = rcConvertUri + "?account=98446744073709551618";
         request = MockHttpRequest.get(uri);
         response = new MockHttpResponse();
         dispatcher.invoke(request, response);

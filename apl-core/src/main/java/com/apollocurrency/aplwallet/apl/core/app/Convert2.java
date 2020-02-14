@@ -33,7 +33,11 @@ public final class Convert2 {
 
     //TODO: rewrite other classes without defaultRsAccount
     public static String rsAccount(long accountId) {
-        return CDI.current().select(BlockchainConfig .class).get().getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
+        return CDI.current().select(BlockchainConfig.class).get().getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
+    }
+
+    public static String rsAccount(String accountPrefix, long accountId) {
+        return accountPrefix + "-" + Crypto.rsEncode(accountId);
     }
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
