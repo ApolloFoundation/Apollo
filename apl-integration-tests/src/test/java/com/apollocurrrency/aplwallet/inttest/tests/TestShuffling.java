@@ -160,8 +160,8 @@ public class TestShuffling extends TestBaseOld {
             shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
             shufflingVerify(randomStandart, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
 
-            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
-            //getAllShufflings()
+            waitForShufflingDeleted(shuffling.getTransaction());
+            assertShufflingDone(type, recipients);
             assertShufflingDone(type, recipients);
         }
     }
@@ -215,8 +215,7 @@ public class TestShuffling extends TestBaseOld {
             startShuffler(randomVault, shuffling.getFullHash(), recipients.get(2).getPass());
 
             log.info("Shuffling started " + shuffling.getTransaction());
-            //waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_DONE);
-            waitForHeight(getBlock().getHeight()+5);
+            waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
 
 
@@ -388,7 +387,7 @@ public class TestShuffling extends TestBaseOld {
     @Step
     private void waitForShufflingDeleted(String shuffling) {
        boolean isDeleted = Failsafe.with(retry).get(() -> getAllShufflings().getShufflings().stream().noneMatch(shuff -> shuff.getShuffling().equals(shuffling)));
-       assertTrue(isDeleted, String.format("Stage isn't %s - > : %s", isDeleted, getShuffling(shuffling).getStage()));
+       assertTrue(isDeleted, String.format("Isn't deleted %s - > : %s", isDeleted, getAllShufflings().getShufflings().stream().noneMatch(shuff -> shuff.getShuffling().equals(shuffling))));
     }
 
     @Step
