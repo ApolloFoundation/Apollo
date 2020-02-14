@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.EnumSet;
@@ -169,6 +170,7 @@ public class UtilsController {
             log.warn(errorMessage, ex);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
         }
+        log.debug("encodeQRCode result: {}", dto);
         return response.bind(dto).build();
     }
 
@@ -219,6 +221,7 @@ public class UtilsController {
             String errorMessage = String.format("Error creating QR from qrCodeData: e = %s", e.getMessage());
             log.warn(errorMessage, e); // return DTO for backward compatibility
         }
+        log.debug("decodeQRCode result: {}", dto);
         return response.bind(dto).build();
     }
 
@@ -276,7 +279,7 @@ public class UtilsController {
                     log.debug("Detected Mime-Type '{}'", detectedMimeType);
                     dto.type = detectedMimeType;
                 } catch (Exception e) {
-                    log.error("Error reading bytes from uploaded file: " + uploadedFileName, e);
+                    log.warn("Error reading bytes from uploaded file: " + uploadedFileName, e);
                 }
             }
         } else if (formDataInput.getFormDataMap().containsKey("data")) {
@@ -293,10 +296,11 @@ public class UtilsController {
                         dto.type = detectedMimeType;
                     }
                 } catch (Exception e) {
-                    log.error("Error reading bytes from uploaded file: " + uploadedFileName, e);
+                    log.warn("Error reading bytes from uploaded file: " + uploadedFileName, e);
                 }
             }
         }
+        log.debug("detectMimeType result: {}", dto);
         return response.bind(dto).build();
     }
 
@@ -346,10 +350,11 @@ public class UtilsController {
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM, "fullHash", fullHash).build();
         }
+        log.debug("getFullHashToId result: {}", dto);
         return response.bind(dto).build();
     }
 
-    @Path("/hexconvert")
+    @Path("/convert/hex")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -382,7 +387,60 @@ public class UtilsController {
             log.debug("bytesAsString = '{}'", bytesAsString);
             dto.binary = bytesAsString;
         } catch (RuntimeException ignore) {}
+        log.debug("getHexConvert result: {}", dto);
+        return response.bind(dto).build();
+    }
 
+    @Path("/convert/long")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API converts HEX string into text or binary representation",
+        description = "The API makes attempt to parse HEX string into text representation, if attempt fails it tries take bytes and convert them into string",
+        tags = {"utility"},
+        parameters = {
+            @Parameter(name = "id", description = "correct HEX data as string representation", required = true)
+        },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = FullHashToIdDto.class)))
+        })
+    public Response getLongConvert(@QueryParam("id") @NotBlank String stringId) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started getLongConvert : \t 'stringId' = {}", stringId);
+        FullHashToIdDto dto = new FullHashToIdDto();
+        BigInteger bigInteger = null;
+        try {
+            bigInteger = new BigInteger(stringId);
+        } catch (NumberFormatException e) {
+            String errorMessage = String.format("1. Error converting Id to Long ID: value = %s",
+                stringId);
+            log.warn(errorMessage);
+            return response.error(ApiErrors.INCORRECT_VALUE, "id", stringId).build();
+        }
+        if (bigInteger.signum() < 0) {
+            if (bigInteger.negate().compareTo(Convert.two64) > 0) {
+                String errorMessage = String.format("1. Error converting Id to Long ID: value = %s",
+                    stringId);
+                log.warn(errorMessage);
+                return response.error(ApiErrors.OVERFLOW_PARAM, "id", stringId).build();
+            } else {
+                dto.stringId = bigInteger.add(Convert.two64).toString();
+                dto.longId = String.valueOf(bigInteger.longValue());
+            }
+        } else {
+            if (bigInteger.compareTo(Convert.two64) >= 0) {
+                String errorMessage = String.format("2. Error converting Id to Long ID: value = %s",
+                    stringId);
+                log.warn(errorMessage);
+                return response.error(ApiErrors.OVERFLOW_PARAM, "id", stringId).build();
+            } else {
+                dto.stringId = bigInteger.toString();
+                dto.longId = String.valueOf(bigInteger.longValue());
+            }
+        }
+        log.debug("getLongConvert result: {}", dto);
         return response.bind(dto).build();
     }
 

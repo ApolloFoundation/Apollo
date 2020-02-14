@@ -35,7 +35,8 @@ class UtilsControllerTest {
     private static String encodeQrUri = "/utils/qrcode/encode";
     private static String decodeQrUri = "/utils/qrcode/decode";
     private static String fullHashToIdUri = "/utils/fullhash/toid";
-    private static String hexConvertUri = "/utils/hexconvert";
+    private static String hexConvertUri = "/utils/convert/hex";
+    private static String longConvertUri = "/utils/convert/long";
 //    private AnService service;
 
     @BeforeEach
@@ -74,8 +75,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<Error>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2003, error.getNewErrorCode());
     }
@@ -92,8 +91,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2011, error.getNewErrorCode());
     }
@@ -110,8 +107,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2011, error.getNewErrorCode());
     }
@@ -128,8 +123,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2011, error.getNewErrorCode());
     }
@@ -161,8 +154,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2003, error.getNewErrorCode());
     }
@@ -178,8 +169,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(2003, error.getNewErrorCode());
     }
@@ -195,8 +184,6 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         String respondJson = response.getContentAsString();
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-
-        assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
         assertEquals(1000, error.getNewErrorCode());
     }
@@ -245,13 +232,16 @@ class UtilsControllerTest {
     }
 
     @Test
-    void fullHashToId_INCORRECT_param() throws URISyntaxException {
+    void fullHashToId_INCORRECT_param() throws URISyntaxException, IOException {
         String uri = fullHashToIdUri + "?fullHash=incorrect_value";
         MockHttpRequest request = MockHttpRequest.get(uri);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
         assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
     }
 
     @Test
@@ -305,4 +295,75 @@ class UtilsControllerTest {
         assertNotNull(dto);
         assertNotNull(dto.binary);
     }
+
+    @Test
+    void longConvertToId_SUCCESS() throws URISyntaxException, IOException {
+        String uri = longConvertUri + "?id=999999999999";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        FullHashToIdDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.stringId);
+        assertNotNull(dto.longId);
+        assertEquals("999999999999", dto.stringId);
+        assertEquals("999999999999", dto.longId);
+
+        uri = longConvertUri + "?id=-18446744073709551616";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.stringId);
+        assertNotNull(dto.longId);
+        assertEquals("0", dto.stringId);
+        assertEquals("0", dto.longId);
+    }
+
+    @Test
+    void longConvertToId_EMPTY_param() throws URISyntaxException, IOException {
+        String uri = longConvertUri + "?id=";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void longConvertToId_INCORRECT_param() throws URISyntaxException, IOException {
+        String uri = longConvertUri + "?id=incorrect_value";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+
+        uri = longConvertUri + "?id=-99999998446744073709551616";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+
+        uri = longConvertUri + "?id=98446744073709551618";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+    }
+
 }
