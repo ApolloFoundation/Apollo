@@ -44,7 +44,7 @@ public class TestShuffling extends TestBaseOld {
     RetryPolicy retry = new RetryPolicy()
             .retryWhen(false)
             .withMaxRetries(30)
-            .withDelay(3, TimeUnit.SECONDS);
+            .withDelay(5, TimeUnit.SECONDS);
 
     private final int NON_SHUFFLEABLE = 32;
 

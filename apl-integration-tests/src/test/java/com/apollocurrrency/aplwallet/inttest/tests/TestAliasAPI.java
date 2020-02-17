@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestAliasAPI extends TestBaseOld {
 
 
+
     @DisplayName("SetAlias -> GetAliasesCount -> Get Aliases")
     @ParameterizedTest(name = "{displayName} {arguments}")
     @ArgumentsSource(WalletProvider.class)
