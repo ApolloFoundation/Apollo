@@ -162,7 +162,6 @@ public class TestShuffling extends TestBaseOld {
 
             waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
-            assertShufflingDone(type, recipients);
         }
     }
 
