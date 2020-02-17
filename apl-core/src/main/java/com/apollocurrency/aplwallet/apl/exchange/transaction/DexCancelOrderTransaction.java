@@ -51,7 +51,7 @@ public class DexCancelOrderTransaction extends DEX {
         }
 
         if (!order.getAccountId().equals(transaction.getSenderId())) {
-            throw new AplException.NotValidException("Can cancel only your orders.");
+            throw new AplException.NotCurrentlyValidException("Can cancel only your orders.");
         }
 
         if (!OrderStatus.OPEN.equals(order.getStatus())) {
@@ -72,7 +72,7 @@ public class DexCancelOrderTransaction extends DEX {
         DexOrder order = dexService.getOrder(attachment.getOrderId());
 
         try {
-            dexService.refundFrozenAplForOrderIfWeCan(order);
+            dexService.tryRefundApl(order);
 
             dexService.cancelOffer(order);
 

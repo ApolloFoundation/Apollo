@@ -36,4 +36,8 @@ public enum ExchangeContractStatus {
     public boolean isStep3() {
         return this == ExchangeContractStatus.STEP_3;
     }
+
+    public boolean isStep4() {
+        return this == ExchangeContractStatus.STEP_4;
+    }
 }

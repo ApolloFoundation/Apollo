@@ -138,9 +138,9 @@ public class BlockchainConfig {
         }
     }
 
-    public Integer getDexExpiredContractWithFinishedPhasingHeight() {
+    public Integer getDexExpiredContractWithFinishedPhasingHeightAndStep3() {
         if (chain.getFeaturesHeightRequirement() != null) {
-            return chain.getFeaturesHeightRequirement().getDexExpiredContractWithFinishedPhasingHeight();
+            return chain.getFeaturesHeightRequirement().getDexExpiredContractWithFinishedPhasingHeightAndStep3();
         } else {
             return null;
         }

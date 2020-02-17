@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
-import com.apollocurrency.aplwallet.api.trading.ConversionType;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.app.Convert2;
@@ -59,10 +58,8 @@ public class DexTradingDataService {
         this.orderSelectLimit = orderSelectLimit;
     }
 
-    public List<SimpleTradingEntry> getFromCandlesticks(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
-        validateLimit(limit);
-        int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
-        int prevTime = ceilTo(timeFrame, startTime);
+    public List<SimpleTradingEntry> getFromCandlesticks(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
+        int prevTime = ceilTo(timeFrame, fromTimestamp);
         List<DexCandlestick> candlesticks = candlestickDao.getForTimespan(prevTime, toTimestamp, currency);
         List<SimpleTradingEntry> entries = candlesticks.stream().map(this::fromCandleStick).collect(Collectors.toList());
         return getResultData(entries, timeFrame, prevTime, toTimestamp);
@@ -71,7 +68,11 @@ public class DexTradingDataService {
     private int ceilTo(TimeFrame timeFrame, int time) {
         int interval = timeFrame.muliplier * BASE_TIME_INTERVAL;
         int remainder = time % interval;
-        return time + (interval - remainder);
+        if (remainder == 0) {
+            return time;
+        } else {
+            return time + (interval - remainder);
+        }
     }
 
     private int floorTo(TimeFrame timeFrame, int time) {
@@ -80,30 +81,21 @@ public class DexTradingDataService {
         return time - remainder;
     }
 
-    public TradingDataOutput getForTimeFrame(int toTimestamp, int limit, DexCurrency currency, TimeFrame timeFrame) {
-        validateLimit(limit);
-        int startTime = toTimestamp - limit * timeFrame.muliplier * BASE_TIME_INTERVAL;
+    public TradingDataOutput getBars(int fromTimestamp, int toTimestamp, DexCurrency currency, TimeFrame timeFrame) {
         int lastCandlestickTimestamp = getLastCandlestickTimestamp(currency);
         List<SimpleTradingEntry> data = new ArrayList<>();
         if (lastCandlestickTimestamp == -1 ||
-                floorTo(timeFrame, lastCandlestickTimestamp) <= ceilTo(timeFrame, startTime) && floorTo(timeFrame, lastCandlestickTimestamp) <= toTimestamp) { // only orders
-            data.addAll(getForTimeFrameFromDexOrders(ceilTo(timeFrame, startTime), toTimestamp, currency, timeFrame));
+                floorTo(timeFrame, lastCandlestickTimestamp) <= ceilTo(timeFrame, fromTimestamp) && floorTo(timeFrame, lastCandlestickTimestamp) <= toTimestamp) { // only orders
+            data.addAll(getForTimeFrameFromDexOrders(ceilTo(timeFrame, fromTimestamp), toTimestamp, currency, timeFrame));
         } else if (floorTo(timeFrame, lastCandlestickTimestamp) > toTimestamp) { // only candlesticks
-            data.addAll(getFromCandlesticks(toTimestamp, limit, currency, timeFrame));
+            data.addAll(getFromCandlesticks(fromTimestamp, toTimestamp, currency, timeFrame));
         } else { // both candlesticks and orders
-            int fromTimestamp = floorTo(timeFrame, lastCandlestickTimestamp);
-            List<SimpleTradingEntry> dexOrderCandlesticks = getForTimeFrameFromDexOrders(fromTimestamp, toTimestamp, currency, timeFrame);
-            limit -= dexOrderCandlesticks.size();
-            data.addAll(getFromCandlesticks(fromTimestamp - 1, limit, currency, timeFrame)); // do not include last candlestick
+            int orderFromTimestamp = floorTo(timeFrame, lastCandlestickTimestamp);
+            List<SimpleTradingEntry> dexOrderCandlesticks = getForTimeFrameFromDexOrders(orderFromTimestamp, toTimestamp, currency, timeFrame);
+            data.addAll(getFromCandlesticks(fromTimestamp, orderFromTimestamp - 1, currency, timeFrame)); // do not include last candlestick
             data.addAll(dexOrderCandlesticks);
         }
-        return buildTradingDataOutput(toTimestamp, startTime, data);
-    }
-
-    private void validateLimit(int limit) {
-        if (limit <= 0) {
-            throw new IllegalArgumentException("Limit should be greater than zero");
-        }
+        return buildTradingDataOutput(currency, timeFrame, fromTimestamp, data);
     }
 
     public int getLastCandlestickTimestamp(DexCurrency currency) {
@@ -149,31 +141,41 @@ public class DexTradingDataService {
             int candlestickFinishTime = candlestickTime + interval;
             int finalCandlestickTime = candlestickTime;
             List<SimpleTradingEntry> entries = fullData.stream().filter(e->e.getTime() < candlestickFinishTime && e.getTime() >= finalCandlestickTime).collect(Collectors.toList());
-            SimpleTradingEntry compressed = compress(entries, candlestickTime);
+            if (entries.isEmpty()) {
+                continue;
+            }
+            SimpleTradingEntry compressed = pack(entries, candlestickTime);
             result.add(compressed);
         }
         return result;
     }
 
 
-    private TradingDataOutput buildTradingDataOutput(int toTimestamp, int fromTimestamp, List<SimpleTradingEntry> data) {
+    private TradingDataOutput buildTradingDataOutput(DexCurrency currency, TimeFrame timeFrame, int fromTimestamp, List<SimpleTradingEntry> data) {
         TradingDataOutput tradingDataOutput = new TradingDataOutput();
-        tradingDataOutput.setResponse("Success");
-        tradingDataOutput.setType(100);
-        tradingDataOutput.setAggregated(false);
-        tradingDataOutput.setData(data);
-        tradingDataOutput.setTimeTo(toTimestamp);
-        tradingDataOutput.setTimeFrom(fromTimestamp);
-        tradingDataOutput.setFirstValueInArray(true);
-        ConversionType conversionType = new ConversionType();
-        conversionType.type = "force_direct";
-        conversionType.conversionSymbol = "";
-        tradingDataOutput.setConversionType(conversionType);
-        tradingDataOutput.setHasWarning(false);
+        if (data.isEmpty()) {
+            tradingDataOutput.setS("no_data");
+            DexOrder order = orderDao.getLastClosedOrderBeforeTimestamp(currency, Convert2.toEpochTime((long)fromTimestamp * 1000));
+            if (order != null) {
+                int nextTime =(int)  (Convert2.fromEpochTime(order.getFinishTime()) / 1000);
+                tradingDataOutput.setNextTime(floorTo(timeFrame, nextTime));
+            }
+        } else {
+            tradingDataOutput.init();
+            tradingDataOutput.setS("ok");
+            for (SimpleTradingEntry tradingEntry : data) {
+                tradingDataOutput.getC().add(tradingEntry.getClose());
+                tradingDataOutput.getO().add(tradingEntry.getOpen());
+                tradingDataOutput.getV().add(tradingEntry.getVolumefrom());
+                tradingDataOutput.getH().add(tradingEntry.getHigh());
+                tradingDataOutput.getL().add(tradingEntry.getLow());
+                tradingDataOutput.getT().add(tradingEntry.getTime());
+            }
+        }
         return tradingDataOutput;
     }
 
-    private SimpleTradingEntry compress(List<SimpleTradingEntry> entries, int time) {
+    private SimpleTradingEntry pack(List<SimpleTradingEntry> entries, int time) {
             BigDecimal totalVolumeFrom = BigDecimal.ZERO;
             BigDecimal totalVolumeTo = BigDecimal.ZERO;
             BigDecimal maxPrice = BigDecimal.ZERO;

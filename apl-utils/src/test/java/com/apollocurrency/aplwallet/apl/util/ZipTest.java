@@ -1,12 +1,5 @@
 package com.apollocurrency.aplwallet.apl.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -15,26 +8,34 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import javax.inject.Inject;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @EnableWeld
 class ZipTest {
     private static final Logger log = getLogger(ZipTest.class);
     private static final String APL_BLOCKCHAIN_ARCH_1_ZIP_HASH = "f3b51cb318c7de39c345ba6344f2bb0068a2627e92a8d6466a7a98bf3fd3e1a2";
-    @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(ZipImpl.class)
@@ -52,9 +53,9 @@ class ZipTest {
     }
 
     @Test
-    void compressAndExtractFiles() throws Exception {
+    void compressAndExtractFiles(@TempDir Path dir) throws Exception {
         // create ZIP in temp folder for unit test
-        String folderWithZip = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath();
+        String folderWithZip = dir.toAbsolutePath().toString();
         log.debug("Create zip into = '{}'", folderWithZip);
         String zipFileName = "test-archive-csv-1.zip";
         String zipFileInPath = folderWithZip + File.separator + zipFileName;
@@ -68,13 +69,13 @@ class ZipTest {
 
         String[] zipExtension = new String[]{"zip"};
         // check ZIP is created
-        Collection filesInFolder = FileUtils.listFiles(temporaryFolderExtension.getRoot().toPath().toFile(), zipExtension, false);
+        Collection filesInFolder = FileUtils.listFiles(dir.toFile(), zipExtension, false);
         assertNotNull(filesInFolder);
         assertEquals(1, filesInFolder.size());// first zip is created, the second is
 
 
         // extract all csv files from ZIP and check CSV content
-        String anotherFolderExtract = temporaryFolderExtension.getRoot().toPath().toFile().getAbsolutePath()
+        String anotherFolderExtract = dir.toFile().getAbsolutePath()
                 + File.separator + "EXTRACT_TO";
         log.debug("Extract zip into another folder = '{}'", anotherFolderExtract);
 
@@ -108,11 +109,63 @@ class ZipTest {
     }
 
     @Test
-    void tryToCompressEmptyFolder() {
-        File folderNoCsvInside = temporaryFolderExtension.getRoot().toPath().toFile();
+    void tryToCompressEmptyFolder(@TempDir Path dir) throws IOException {
+        Path folderNoCsvInside = dir.resolve("csvFolder");
+        Files.createDirectories(folderNoCsvInside);
         String zipFileName = "test-archive-csv-1.zip";
-        String zipFileInPath = folderNoCsvInside + File.separator + zipFileName;
-        assertFalse(zipComponent.compress(zipFileInPath, folderNoCsvInside.getAbsolutePath(), null, null,false));
+        String zipFileInPath = dir + File.separator + zipFileName;
+
+        boolean compressed = zipComponent.compress(zipFileInPath, folderNoCsvInside.toAbsolutePath().toString(), null, null, false);
+
+        assertFalse(compressed);
+        assertFalse(Files.exists(Paths.get(zipFileInPath)));
+    }
+
+    @Test
+    void testCompressExtractRecursive(@TempDir Path tempDir) throws IOException {
+        Path dir = tempDir.resolve("dirToZip");
+        Path file1 = dir.resolve("dir/1.txt");
+        Files.createDirectories(file1.getParent());
+        Files.write(file1, "Content 1".getBytes());
+        Path file2 = dir.resolve("2.txt");
+        Files.write(file2, "Content 2".getBytes());
+        Path file3 = dir.resolve("dd/dd/dd/3.txt");
+        Files.createDirectories(file3.getParent());
+        Files.write(file3, "Content 3".getBytes());
+        Path file4 = dir.resolve("dd/dd/dd/4.txt");
+        Files.write(file4, "Content 4".getBytes());
+        Path file5 = dir.resolve("dd/dd1/5.txt");
+        Files.createDirectories(file5.getParent());
+        Files.write(file5, "Content 5".getBytes());
+        List<Path> filesToCompress = List.of(file1, file2, file3, file4, file5);
+
+
+        Path toDir = tempDir.resolve("toDir");
+        Path extractDir = tempDir.resolve("extractDir");
+        Path zipFile = toDir.resolve("target.zip");
+        Files.createDirectories(extractDir);
+        Files.createDirectories(toDir);
+
+        boolean compress = zipComponent.compress(zipFile.toAbsolutePath().toString(), dir.toAbsolutePath().toString(), null, null, true);
+
+        assertTrue(compress);
+        assertTrue(Files.exists(zipFile));
+
+        boolean extracted = zipComponent.extract(zipFile.toAbsolutePath().toString(), extractDir.toAbsolutePath().toString());
+        assertTrue(extracted);
+
+        filesToCompress.forEach(f-> {
+            Path extractedFile = extractDir.resolve(extractDir.relativize(f));
+            assertTrue(Files.exists(extractedFile));
+            try {
+                assertEquals(Files.readAllLines(f), Files.readAllLines(extractedFile));
+            } catch (IOException e) {
+                fail(e);
+            }
+        });
+
+
+
     }
 
     @Test
