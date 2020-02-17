@@ -451,12 +451,12 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return pi.getAnnouncedAddress()==null;
+        return isInboundSocket();
     }
 
     @Override
     public boolean isOutbound() {
-        return pi.getAnnouncedAddress()!=null;
+        return isOutboundSocket(); 
     }
     @Override
     public boolean isInboundSocket() {
