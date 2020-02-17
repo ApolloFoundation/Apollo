@@ -148,8 +148,8 @@ public class NetworkController {
     // that depend on the value of the includePeerInfo parameter.
     public Response getPeersList(
             @Parameter(description = "include active only peers") @QueryParam("active") @DefaultValue("false") Boolean active,
-            @Parameter(description = "include peers in certain state (NON_CONNECTED, CONNECTED, DISCONNECTED).",
-                    schema = @Schema(allowableValues = {"NON_CONNECTED", "CONNECTED", "DISCONNECTED"}))
+            @Parameter(description = "include peers in certain state (NON_CONNECTED, CONNECTED).",
+                    schema = @Schema(allowableValues = {"NON_CONNECTED", "CONNECTED"}))
                         @QueryParam("state") String stateValue,
             @Parameter(description = "include peer which provides services (HALLMARK, PRUNABLE, API, API_SSL, CORS)")
                         @QueryParam("service") List<String> serviceValues,
