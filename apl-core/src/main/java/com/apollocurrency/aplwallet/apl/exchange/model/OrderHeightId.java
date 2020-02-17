@@ -5,5 +5,4 @@ import lombok.Data;
 @Data
 public class OrderHeightId {
     private final long dbId;
-    private final int height;
 }

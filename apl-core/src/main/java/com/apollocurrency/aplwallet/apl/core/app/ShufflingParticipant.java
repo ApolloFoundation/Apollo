@@ -184,7 +184,7 @@ public final class ShufflingParticipant {
                 new DbClause.ByteClause("state", State.VERIFIED.getCode())));
     }
 
-    static void init() {}
+    public static void init() {}
 
     private final long shufflingId;
     private final long accountId; // sender account

@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-wallet</artifactId>
-    <version>1.41.7</version>
+    <version>1.41.15</version>
   </parent>
 
   <artifactId>apl-crypto</artifactId>
@@ -20,6 +20,10 @@
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit</groupId>
+          <artifactId>junit-bom</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

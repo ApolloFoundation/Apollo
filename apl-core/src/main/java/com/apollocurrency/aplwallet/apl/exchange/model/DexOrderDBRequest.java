@@ -27,4 +27,7 @@ public class DexOrderDBRequest {
     private Integer offset;
     private Integer limit;
     private Boolean hasFrozenMoney;
+
+    private DexOrderSortBy sortBy = DexOrderSortBy.PAIR_RATE;
+    private DBSortOrder sortOrder = DBSortOrder.DESC;
 }

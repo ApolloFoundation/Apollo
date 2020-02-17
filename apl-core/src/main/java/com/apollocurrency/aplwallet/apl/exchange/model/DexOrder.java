@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Builder
 public class DexOrder extends VersionedDerivedEntity {
 
@@ -111,6 +111,7 @@ public class DexOrder extends VersionedDerivedEntity {
         dexOrderDto.status = this.getStatus().ordinal();
         //TODO make changes on UI. Send BigDecimal.
         dexOrderDto.pairRate = EthUtil.ethToGwei(this.getPairRate());
+        dexOrderDto.height = this.getHeight();
 
         return dexOrderDto;
     }
