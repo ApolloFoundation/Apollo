@@ -1,11 +1,13 @@
 package com.apollocurrrency.aplwallet.inttest.tests;
 
 import com.apollocurrency.aplwallet.api.dto.AccountCurrencyDTO;
+import com.apollocurrency.aplwallet.api.dto.ShufflingParticipant;
 import com.apollocurrency.aplwallet.api.response.Account2FAResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.CreateTransactionResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
+import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrrency.aplwallet.inttest.helper.TestConfiguration;
 import com.apollocurrrency.aplwallet.inttest.model.TestBaseOld;
 import com.apollocurrrency.aplwallet.inttest.model.Wallet;
@@ -44,7 +46,7 @@ public class TestShuffling extends TestBaseOld {
     RetryPolicy retry = new RetryPolicy()
             .retryWhen(false)
             .withMaxRetries(30)
-            .withDelay(5, TimeUnit.SECONDS);
+            .withDelay(4, TimeUnit.SECONDS);
 
     private final int NON_SHUFFLEABLE = 32;
 
@@ -91,6 +93,7 @@ public class TestShuffling extends TestBaseOld {
     @ParameterizedTest(name = "{displayName} Currency type: {0}")
     @ValueSource(ints = {0, 1, 2})
     public void shufflingCreateTest(int type) {
+        log.info("Shuffling Type: "+type);
         ShufflingDTO shufflingDTO;
         int registrationPeriod = RandomUtils.nextInt(500, 10080);
         randomStandart = getRandomStandartWallet();
@@ -128,7 +131,7 @@ public class TestShuffling extends TestBaseOld {
             log.info("Shuffling created " + shuffling.getTransaction());
             verifyCreatingTransaction(shuffling);
             verifyTransactionInBlock(shuffling.getTransaction());
-            ;
+
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_REGISTRATION);
 
@@ -142,23 +145,60 @@ public class TestShuffling extends TestBaseOld {
                     getRandomRecipientWallet(),
                     getRandomRecipientWallet());
 
-            verifyCreatingTransaction(
-                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()));
-            waitForChangeShufflingAssign(shuffling.getTransaction(), randomStandart.getUser());
+         /*   int iteration = 0;
+            while (iteration != 3) {
+                waitForHeight(getBlock().getHeight()+1);
+                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
+                if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
+                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass());
+                    log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
+                    iteration++;
+                }else if (shufflingDTO.getAssigneeRS().equals(randomStandart.getUser())){
+                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass());
+                    log.info(String.format("Random Standart: %s REGISTERED", randomStandart.getUser()));
+                    iteration++;
+                }else {
+                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass());
+                    log.info(String.format("Random Vault: %s REGISTERED", randomVault.getUser()));
+                    iteration++;
+                }
+            }*/
 
-            verifyCreatingTransaction(
-                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()));
-            waitForChangeShufflingAssign(shuffling.getTransaction(), randomVault.getUser());
-
-            verifyCreatingTransaction(
-                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()));
+            int iteration = 0;
+            while (iteration != PARTICIPANT_COUNT) {
+                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
+                if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
+                    verifyTransactionInBlock(shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()).getTransaction());
+                    log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
+                    iteration++;
+                }else if (shufflingDTO.getAssigneeRS().equals(randomStandart.getUser())){
+                    verifyTransactionInBlock(shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()).getTransaction());
+                    log.info(String.format("Random Standart: %s REGISTERED", randomStandart.getUser()));
+                    iteration++;
+                }else {
+                    verifyTransactionInBlock(shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction());
+                    log.info(String.format("Random Vault: %s REGISTERED", randomVault.getUser()));
+                    iteration++;
+                }
+            }
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
-
-
             shufflingDTO = getShuffling(shuffling.getTransaction());
-            shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
-            shufflingVerify(randomStandart, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash());
+
+            ShufflingParticipantsResponse shufflingParticipantsResponse = getShufflingParticipants(shuffling.getTransaction());
+            for (ShufflingParticipant participant: shufflingParticipantsResponse.getParticipants()) {
+                System.out.println(participant.getState());
+                System.out.println(participant.getAccountRS());
+                if (participant.getState() == STAGE_PROCESSING){
+                   if (participant.getAccountRS().equals(wallet.getUser())) {
+                       verifyTransactionInBlock(shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash()).getTransaction());
+                   }else if(participant.getAccountRS().equals(randomStandart.getUser())){
+                       verifyTransactionInBlock(shufflingVerify(randomStandart, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash()).getTransaction());
+                   }else {
+                       verifyTransactionInBlock(shufflingVerify(randomVault, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash()).getTransaction());
+                   }
+                }
+            }
 
             waitForShufflingDeleted(shuffling.getTransaction());
             assertShufflingDone(type, recipients);
@@ -279,21 +319,23 @@ public class TestShuffling extends TestBaseOld {
                     getRandomRecipientWallet());
 
 
-            verifyCreatingTransaction(
-                    shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass())
-            );
-
-            waitForChangeShufflingAssign(shuffling.getTransaction(), randomStandart.getUser());
-
-            verifyCreatingTransaction(
-                    shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass())
-            );
-
-            waitForChangeShufflingAssign(shuffling.getTransaction(), randomVault.getUser());
-
-            verifyTransactionInBlock(
-                    shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction()
-            );
+            int iteration = 0;
+            while (iteration != PARTICIPANT_COUNT) {
+                shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
+                if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
+                   verifyTransactionInBlock(shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()).getTransaction());
+                    log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
+                    iteration++;
+                }else if (shufflingDTO.getAssigneeRS().equals(randomStandart.getUser())){
+                    verifyTransactionInBlock(shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()).getTransaction());
+                    log.info(String.format("Random Standart: %s REGISTERED", randomStandart.getUser()));
+                    iteration++;
+                }else {
+                    verifyTransactionInBlock(shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction());
+                    log.info(String.format("Random Vault: %s REGISTERED", randomVault.getUser()));
+                    iteration++;
+                }
+            }
 
             waitForChangeShufflingStage(shuffling.getTransaction(), STAGE_VERIFICATION);
 
@@ -396,8 +438,10 @@ public class TestShuffling extends TestBaseOld {
     }
 
 
-
+    @AfterEach
+    @Override
     public void tearDown() {
+        super.tearDown();
         sendMoney(randomVault, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(randomVault).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));
             for (Wallet wallet : recipients) {
                 sendMoney(wallet, TestConfiguration.getTestConfiguration().getGenesisWallet().getUser(), (int) ((getBalance(wallet).getUnconfirmedBalanceATM() - 1000000000L) / 100000000));

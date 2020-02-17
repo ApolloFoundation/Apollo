@@ -60,6 +60,7 @@ import com.apollocurrency.aplwallet.api.response.PollResultResponse;
 import com.apollocurrency.aplwallet.api.response.PollVotesResponse;
 import com.apollocurrency.aplwallet.api.response.SearchAccountsResponse;
 import com.apollocurrency.aplwallet.api.response.ShufflingDTO;
+import com.apollocurrency.aplwallet.api.response.ShufflingParticipantsResponse;
 import com.apollocurrency.aplwallet.api.response.TransactionListResponse;
 import com.apollocurrency.aplwallet.api.response.VaultWalletResponse;
 import com.apollocurrency.aplwallet.api.response.WithdrawResponse;
@@ -1243,9 +1244,17 @@ public class TestBaseOld extends TestBase {
         addParameters(Parameters.feeATM, "100000000000");
         addParameters(Parameters.deadline, 1440);
         ShufflingDTO shufflingDTO = getInstanse(ShufflingDTO.class);
-        log.info("Current Shuffling stage: " + shufflingDTO.getStage()+" waiting some blocks...");
+        log.info("Shuffling stage: " + shufflingDTO.getStage()+" assigned on: "+ shufflingDTO.getAssigneeRS());
         return shufflingDTO;
     }
+
+    @Step
+    public ShufflingParticipantsResponse getShufflingParticipants(String shuffling) {
+        addParameters(RequestType.requestType, getShufflingParticipants);
+        addParameters(Parameters.shuffling, shuffling);
+        return getInstanse(ShufflingParticipantsResponse.class);
+    }
+
 
     @Step
     public AllShufflingsResponse getAllShufflings() {
