@@ -37,6 +37,7 @@ import java.util.Objects;
 
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
@@ -49,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.RestParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Search;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
@@ -485,7 +487,6 @@ public class UtilsController {
             }
             dto.account = Long.toUnsignedString(accountId);
             dto.accountRS = Convert2.rsAccount(blockchainConfig.getAccountPrefix(), accountId);
-//            JSONData.putAccount(response, "account", accountId);
             dto.accountLongId = String.valueOf(accountId);
             log.debug("getRcConvert result: {}", dto);
         } catch (RuntimeException e) {
@@ -493,6 +494,53 @@ public class UtilsController {
                 accountIdString);
             log.warn(errorMessage, e);
             return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "account", accountIdString).build();
+        }
+        return response.bind(dto).build();
+    }
+
+    @Path("/hash")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "The API hashes of passed data by using specified Hash algorithm",
+        description = "The API hashes of passed data by using specified Hash algorithm, data and if it's text of binary is passed with algorithm number",
+        tags = {"utility"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successful execution",
+                content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = HashDto.class)))
+        })
+    public Response hashByAlgorithm(
+        @Parameter(name = "hashAlgorithm", description = "Valid Algorithm from available list", required = true,
+            schema = @Schema(implementation = HashFunction.class))
+            @QueryParam("hashAlgorithm") HashFunction hashAlgorithm,
+        @Parameter(name = "secretIsText", description = "false (default) is HEX string, true if data is plain Text")
+            @QueryParam("secretIsText") @DefaultValue("false") Boolean secretIsText,
+        @Parameter(name = "secret", description = "text or data to be hashed by selected algorithm", required = true)
+            @QueryParam("secret") @NotBlank String secret
+    ) {
+        ResponseBuilder response = ResponseBuilder.startTiming();
+        log.debug("Started hashByAlgorithm : \t 'hashAlgorithm' = {}", hashAlgorithm);
+        HashDto dto = new HashDto();
+        if (hashAlgorithm == null) {
+            String errorMessage = String.format("Incorrect hashAlgorithm: %s", hashAlgorithm);
+            log.warn(errorMessage);
+            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "hashAlgorithm", hashAlgorithm).build();
+        }
+        if (secret == null || secret.isEmpty()) {
+            String errorMessage = String.format("Missing secret, value = %s", secret);
+            log.warn(errorMessage);
+            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "secret", secret).build();
+        }
+        try {
+            byte[] secretAsByteArray = secretIsText != null ? Convert.toBytes(secret) : Convert.parseHexString(secret);
+            dto.hash = Convert.toHexString(hashAlgorithm.hash(secretAsByteArray));
+            log.debug("hashByAlgorithm result: {}", dto);
+        } catch (RuntimeException e) {
+            String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s'",
+                hashAlgorithm, secret);
+            log.warn(errorMessage, e);
+            return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
         }
         return response.bind(dto).build();
     }
