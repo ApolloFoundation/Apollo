@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,9 +39,9 @@ public class TestAliasAPI extends TestBaseOld {
         alias = setAlias.getTransaction();
         verifyTransactionInBlock(alias);
         AccountCountAliasesResponse getAliasesCount = getAliasCount(wallet);
-        assertTrue(getAliasesCount.getNumberOfAliases() >= 1);
+        assertThat(getAliasesCount.getNumberOfAliases(),greaterThan(1L));
         AccountAliasesResponse accountAliasesResponse = getAliases(wallet);
-        assertTrue(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(alias)).count() == 1);
+        assertThat(accountAliasesResponse.getAliases().stream().filter(aliasDTO -> aliasDTO.getAlias().equals(alias)).count() ,equalTo(1));
 
     }
 

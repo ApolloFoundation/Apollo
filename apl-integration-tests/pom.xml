@@ -112,6 +112,13 @@
       <artifactId>allure-rest-assured</artifactId>
       <version>2.13.0</version>
     </dependency>
+  <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-library -->
+  <dependency>
+    <groupId>org.hamcrest</groupId>
+    <artifactId>hamcrest-library</artifactId>
+    <version>2.2</version>
+    <scope>test</scope>
+  </dependency>
   </dependencies>
 
   <build>
