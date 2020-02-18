@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -118,14 +119,27 @@ public class UtilsController {
     @PermitAll
     public Response encodeQRCode(
         @Parameter(name = "qrCodeData", description = "QR code data", required = true) // works on UI without good description
-            @FormParam("qrCodeData") @NotBlank String qrCodeData,
-        @Parameter(name = "width", description = "QR code image width, 0 - 5000, optional") // works on UI without good description
-            @FormParam("width") @Range(min = 0, max = 5000) @DefaultValue("0") Integer width,
-        @Parameter(name = "height", description = "QR code image height, 0 - 5000, optional") // works on UI without good description
-            @FormParam("height") @Range(min = 0, max = 5000) @DefaultValue("0") Integer height
+            @FormParam("qrCodeData") @NotEmpty String qrCodeData,
+        @Parameter(name = "width", description = "QR code image width, optional") // works on UI without good description
+            @FormParam("width") @DefaultValue("0") String widthStr,
+        @Parameter(name = "height", description = "QR code image height, optional") // works on UI without good description
+            @FormParam("height") @DefaultValue("0") String heightStr
     ) {
-        log.debug("Started encodeQRCode: \n\t\twidth={}, height={}, qrCodeData={}", width, height, qrCodeData);
+        log.debug("Started encodeQRCode: \n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
+        int width;
+        try {
+            width = RestParameters.parseInt(widthStr, "width", 0, 5000, false);
+        } catch (RestParameterException e) {
+            return response.error(ApiErrors.INCORRECT_PARAM, "width", widthStr).build();
+        }
+        int height;
+        try {
+            height = RestParameters.parseInt(heightStr, "height", 0, 5000, false);
+        } catch (RestParameterException e) {
+            return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
+        }
+
         QrEncodeDto dto = new QrEncodeDto();
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
