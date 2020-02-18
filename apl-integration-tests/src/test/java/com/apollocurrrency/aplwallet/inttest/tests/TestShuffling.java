@@ -323,15 +323,15 @@ public class TestShuffling extends TestBaseOld {
             while (iteration != PARTICIPANT_COUNT) {
                 shufflingDTO = getShuffling(String.valueOf(shuffling.getTransaction()));
                 if (shufflingDTO.getAssigneeRS().equals(wallet.getUser())){
-                   verifyTransactionInBlock(shufflingProcess(wallet, shuffling.getTransaction(), recipients.get(2).getPass()).getTransaction());
+                    verifyTransactionInBlock(shufflingProcess(wallet, shufflingDTO.getShuffling(), recipients.get(2).getPass()).getTransaction());
                     log.info(String.format("Wallet: %s REGISTERED", wallet.getUser()));
                     iteration++;
                 }else if (shufflingDTO.getAssigneeRS().equals(randomStandart.getUser())){
-                    verifyTransactionInBlock(shufflingProcess(randomStandart, shuffling.getTransaction(), recipients.get(1).getPass()).getTransaction());
+                    verifyTransactionInBlock(shufflingProcess(randomStandart, shufflingDTO.getShuffling(), recipients.get(1).getPass()).getTransaction());
                     log.info(String.format("Random Standart: %s REGISTERED", randomStandart.getUser()));
                     iteration++;
                 }else {
-                    verifyTransactionInBlock(shufflingProcess(randomVault, shuffling.getTransaction(), recipients.get(0).getPass()).getTransaction());
+                    verifyTransactionInBlock(shufflingProcess(randomVault, shufflingDTO.getShuffling(), recipients.get(0).getPass()).getTransaction());
                     log.info(String.format("Random Vault: %s REGISTERED", randomVault.getUser()));
                     iteration++;
                 }
