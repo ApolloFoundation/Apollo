@@ -45,6 +45,7 @@ public class NewApiRegistry {
         apis.put("hexConvert", "/rest/utils/convert/hex"); //GET
         apis.put("longConvert", "/rest/utils/convert/long"); //GET
         apis.put("rsConvert", "/rest/utils/convert/rs"); //GET
+        apis.put("hash", "/rest/utils/hash"); //GET
 
         //TODO: add new implemented endpoints
     }

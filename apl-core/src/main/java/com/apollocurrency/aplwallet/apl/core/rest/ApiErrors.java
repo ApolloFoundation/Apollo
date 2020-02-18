@@ -28,6 +28,7 @@ public enum ApiErrors implements ErrorInfo {
     NO_PASSWORD_IN_CONFIG(8, 2010, "Administrator's password is not configured. Please set apl.adminPassword"),
     INCORRECT_PARAM(4, 2011, "Incorrect {0}, {1}"),
     UNKNOWN_SERVER_ERROR(1, 2012, "Unknown server error: ''%s'', see stacktrace for details"),
+    REST_API_SERVER_ERROR(1, 2012, "REST API error: ''%s'', see server's log for details"),
     WEB3J_CRYPTO_ERROR(-1, 2013, "Web3j crypto error: ''%s'', see stacktrace for details"),
 
     ETH_NODE_ERROR(-1, 2014, "Unable to query eth node: ''%s''"),

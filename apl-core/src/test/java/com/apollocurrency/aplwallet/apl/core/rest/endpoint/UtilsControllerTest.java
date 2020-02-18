@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
+import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HexConvertDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
@@ -30,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 class UtilsControllerTest {
     @Mock
@@ -44,12 +44,11 @@ class UtilsControllerTest {
     private static String hexConvertUri = "/utils/convert/hex";
     private static String longConvertUri = "/utils/convert/long";
     private static String rcConvertUri = "/utils/convert/rs";
-//    private AnService service;
+    private static String hashUri = "/utils/hash";
 
     @BeforeEach
     void setup(){
         dispatcher = MockDispatcherFactory.createDispatcher();
-//        service = mock(AnService.class);
         UtilsController controller = new UtilsController(blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(controller);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
@@ -57,7 +56,6 @@ class UtilsControllerTest {
 
     @Test
     void encodeQrCode_SUCCESS() throws URISyntaxException, IOException {
-//        doReturn(data).when(service).method();
         MockHttpRequest request = MockHttpRequest.post(encodeQrUri)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .addFormHeader("qrCodeData", "123456");
@@ -441,6 +439,71 @@ class UtilsControllerTest {
         assertEquals(200, response.getStatus());
         respondJson = response.getContentAsString();
         error = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(error.getErrorDescription());
+    }
+
+    @Test
+    void hash_SUCCESS() throws URISyntaxException, IOException {
+        String uri = hashUri + "?hashAlgorithm=SHA3&secretIsText=true&secret=12345";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+        String respondJson = response.getContentAsString();
+        HashDto dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.hash);
+        assertEquals("1841d653f9c4edda9d66a7e7737b39763d6bd40f569a3ec6859d3305b72310e6", dto.hash);
+
+        uri = hashUri + "?hashAlgorithm=SHA256&secretIsText=false&secret=1841d653f9c4edda";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        dto = mapper.readValue(respondJson, new TypeReference<>(){});
+        assertNotNull(dto);
+        assertNotNull(dto.hash);
+        assertEquals("92cf48b58578dc5cc78b211383a3eae92999260dfba48e349d9dfcb387c5a6e8", dto.hash);
+    }
+
+    @Test
+    void hash_EMPTY_params() throws URISyntaxException, IOException {
+        String uri = hashUri + "?hashAlgorithm=&secretIsText=true&secret=12345";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(404, response.getStatus()); // 404 - missing parameter of ENUM type
+        String respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+
+        uri = hashUri + "?hashAlgorithm=SHA256&secretIsText=true&secret=";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(400, response.getStatus());
+        respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+    }
+
+    @Test
+    void hash_INCORRECT_params() throws URISyntaxException, IOException {
+        String uri = hashUri + "?hashAlgorithm=GOOOOL&secretIsText=true&secret=12345";
+        MockHttpRequest request = MockHttpRequest.get(uri);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(404, response.getStatus()); // 404 - incorrect parameter value of ENUM type
+        String respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
+
+        uri = hashUri + "?hashAlgorithm=SHA256&secretIsText=false&secret=incorrect";
+        request = MockHttpRequest.get(uri);
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+        assertEquals(200, response.getStatus());
+        respondJson = response.getContentAsString();
+        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
     }
 

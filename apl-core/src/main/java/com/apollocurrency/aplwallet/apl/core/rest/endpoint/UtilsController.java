@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.apollocurrency.aplwallet.api.dto.utils.DecodeQRCodeRequestDto;
 import com.apollocurrency.aplwallet.api.dto.utils.DetectMimeTypeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.FullHashToIdDto;
 import com.apollocurrency.aplwallet.api.dto.utils.HashDto;
@@ -78,6 +79,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
@@ -107,27 +109,6 @@ public class UtilsController {
         summary = "The API converts a UTF-8 string to a base64-encoded jpeg image of a 2-D QR (Quick Response) code",
         description = "The output qrCodeBase64 string can be incorporated into an in-line HTML image like this: &lt;img src=\"data:image/jpeg;base64,qrCodeBase64\"&gt; ",
         tags = {"utility"},
-        parameters = {
-            @Parameter(name = "qrCodeData", description = "QR code data", required = true),
-            @Parameter(name = "width", description = "QR code image width, optional", allowEmptyValue = true,
-                schema = @Schema(
-                    type = "integer",
-                    format = "int64",
-                    description = "QR code image width positive value (0 - 5000), optional",
-                    allowableValues = {"0","100","5000"}
-                ),
-                example = "value from 0 to 5000 maximum"
-            ),
-            @Parameter(name = "height", description = "QR code image height, optional", allowEmptyValue = true,
-                schema = @Schema(
-                    type = "integer",
-                    format = "int64",
-                    description = "QR code image height positive value (0 - 5000), optional",
-                    allowableValues = {"0","100","5000"}
-                ),
-                example = "value from 0 to 5000 maximum"
-            )
-        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
@@ -135,9 +116,12 @@ public class UtilsController {
         })
     @PermitAll
     public Response encodeQRCode(
-        @FormParam("qrCodeData") String qrCodeData,
-        @FormParam("width") @DefaultValue("0") String widthStr,
-        @FormParam("height") @DefaultValue("0") String heightStr
+        @Parameter(name = "qrCodeData", description = "QR code data", required = true) // works on UI without good description
+            @FormParam("qrCodeData") String qrCodeData,
+        @Parameter(name = "width", description = "QR code image width, optional") // works on UI without good description
+            @FormParam("width") @DefaultValue("0") String widthStr,
+        @Parameter(name = "height", description = "QR code image height, optional") // works on UI without good description
+            @FormParam("height") @DefaultValue("0") String heightStr
     ) {
         log.debug("Started encodeQRCode: \n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
@@ -203,12 +187,14 @@ public class UtilsController {
         })
     @PermitAll
     public Response decodeQRCode(
-        @Parameter(description = "A base64 string encoded from an image of a QR code", required = true)
-        @FormParam("qrCodeBase64") String qrCodeBase64
+        @Parameter(name = "qrCodeBase64", description = "A base64 string encoded from an image of a QR code", required = true,
+            schema = @Schema(implementation = DecodeQRCodeRequestDto.class)
+        )
+        @Form DecodeQRCodeRequestDto requestDto
     ) {
-        log.debug("Started decodeQRCode: qrCodeBase64: \t{}", qrCodeBase64);
+        log.debug("Started decodeQRCode: qrCodeBase64: \t{}", requestDto);
         ResponseBuilder response = ResponseBuilder.startTiming();
-        if (StringUtils.isEmpty(qrCodeBase64)) {
+        if (StringUtils.isEmpty(requestDto.qrCodeBase64)) {
             return response.error(ApiErrors.MISSING_PARAM, "qrCodeBase64").build();
         }
         QrDecodeDto dto = new QrDecodeDto();
@@ -216,7 +202,7 @@ public class UtilsController {
             BinaryBitmap binaryBitmap = new BinaryBitmap(
                 new HybridBinarizer(new BufferedImageLuminanceSource(
                     ImageIO.read(new ByteArrayInputStream(
-                        Base64.getDecoder().decode(qrCodeBase64)
+                        Base64.getDecoder().decode(requestDto.qrCodeBase64)
                     ))
                 ))
             );
@@ -341,15 +327,14 @@ public class UtilsController {
         summary = "The API returns Long Id and Unsigned Long values by supplied UTF-8 HASH string value",
         description = "Long Id and Unsigned Long ID values are returned by supplied UTF-8 HASH string value",
         tags = {"utility"},
-        parameters = {
-            @Parameter(name = "fullHash", description = "full hash data as string", required = true)
-        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
-    public Response fullHashToId(@QueryParam("fullHash") @NotBlank String fullHash) {
+    public Response fullHashToId(
+        @Parameter(name = "fullHash", description = "full hash data as string", required = true)
+            @QueryParam("fullHash") @NotBlank String fullHash) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getFullHashToId : \t 'fullHash' = {}", fullHash);
         long longId = 0;
@@ -375,15 +360,14 @@ public class UtilsController {
         summary = "The API converts HEX string into text or binary representation",
         description = "The API makes attempt to parse HEX string into text representation, if attempt fails it tries take bytes and convert them into string",
         tags = {"utility"},
-        parameters = {
-            @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
-        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = HexConvertDto.class)))
         })
-    public Response getHexConvert(@QueryParam("string") @NotBlank String stringHash) {
+    public Response getHexConvert(
+        @Parameter(name = "string", description = "correct HEX data as string representation", required = true)
+            @QueryParam("string") @NotBlank String stringHash) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getHexConvert : \t 'stringHash' = {}", stringHash);
         HexConvertDto dto = new HexConvertDto();
@@ -412,15 +396,14 @@ public class UtilsController {
         summary = "The API converts supplied Id string into text or long representation",
         description = "The API converts supplied Id string into Long Id text or BigInteger Id representation",
         tags = {"utility"},
-        parameters = {
-            @Parameter(name = "id", description = "valid Id data as string representation", required = true)
-        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = FullHashToIdDto.class)))
         })
-    public Response longConvert(@QueryParam("id") @NotBlank String stringId) {
+    public Response longConvert(
+        @Parameter(name = "id", description = "valid Id data as string representation", required = true)
+            @QueryParam("id") @NotBlank String stringId) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getLongConvert : \t 'stringId' = {}", stringId);
         FullHashToIdDto dto = new FullHashToIdDto();
@@ -465,15 +448,14 @@ public class UtilsController {
         summary = "The API receive valid account Id string and return Account info",
         description = "The API receive valid account Id string and return Account info like account Long Id, Reed-Solomon name, account Id",
         tags = {"utility"},
-        parameters = {
-            @Parameter(name = "account", description = "existing, valid account Id", required = true)
-        },
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = RsConvertDto.class)))
         })
-    public Response rcConvert(@QueryParam("account") @NotBlank String accountIdString) {
+    public Response rcConvert(
+        @Parameter(name = "account", description = "existing, valid account Id", required = true)
+            @QueryParam("account") @NotBlank String accountIdString) {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started getLongConvert : \t 'accountIdString' = {}", accountIdString);
         RsConvertDto dto = new RsConvertDto();
@@ -522,18 +504,9 @@ public class UtilsController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         log.debug("Started hashByAlgorithm : \t 'hashAlgorithm' = {}", hashAlgorithm);
         HashDto dto = new HashDto();
-        if (hashAlgorithm == null) {
-            String errorMessage = String.format("Incorrect hashAlgorithm: %s", hashAlgorithm);
-            log.warn(errorMessage);
-            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "hashAlgorithm", hashAlgorithm).build();
-        }
-        if (secret == null || secret.isEmpty()) {
-            String errorMessage = String.format("Missing secret, value = %s", secret);
-            log.warn(errorMessage);
-            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, "secret", secret).build();
-        }
         try {
-            byte[] secretAsByteArray = secretIsText != null ? Convert.toBytes(secret) : Convert.parseHexString(secret);
+            byte[] secretAsByteArray = secretIsText != null && secretIsText ?
+                Convert.toBytes(secret) : Convert.parseHexString(secret);
             dto.hash = Convert.toHexString(hashAlgorithm.hash(secretAsByteArray));
             log.debug("hashByAlgorithm result: {}", dto);
         } catch (RuntimeException e) {
