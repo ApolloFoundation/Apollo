@@ -79,6 +79,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.constraints.Range;
 import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
@@ -117,30 +118,14 @@ public class UtilsController {
     @PermitAll
     public Response encodeQRCode(
         @Parameter(name = "qrCodeData", description = "QR code data", required = true) // works on UI without good description
-            @FormParam("qrCodeData") String qrCodeData,
-        @Parameter(name = "width", description = "QR code image width, optional") // works on UI without good description
-            @FormParam("width") @DefaultValue("0") String widthStr,
-        @Parameter(name = "height", description = "QR code image height, optional") // works on UI without good description
-            @FormParam("height") @DefaultValue("0") String heightStr
+            @FormParam("qrCodeData") @NotBlank String qrCodeData,
+        @Parameter(name = "width", description = "QR code image width, 0 - 5000, optional") // works on UI without good description
+            @FormParam("width") @Range(min = 0, max = 5000) @DefaultValue("0") Integer width,
+        @Parameter(name = "height", description = "QR code image height, 0 - 5000, optional") // works on UI without good description
+            @FormParam("height") @Range(min = 0, max = 5000) @DefaultValue("0") Integer height
     ) {
-        log.debug("Started encodeQRCode: \n\t\twidthStr={}, heightStr={}, qrCodeData={}", widthStr, heightStr, qrCodeData);
+        log.debug("Started encodeQRCode: \n\t\twidth={}, height={}, qrCodeData={}", width, height, qrCodeData);
         ResponseBuilder response = ResponseBuilder.startTiming();
-        if (StringUtils.isEmpty(qrCodeData)) {
-            return response.error( ApiErrors.MISSING_PARAM, "qrCodeData").build();
-        }
-        int width;
-        try {
-            width = RestParameters.parseInt(widthStr, "width", 0, 5000, false);
-        } catch (RestParameterException e) {
-            return response.error(ApiErrors.INCORRECT_PARAM, "width", widthStr).build();
-        }
-        int height;
-        try {
-            height = RestParameters.parseInt(heightStr, "height", 0, 5000, false);
-        } catch (RestParameterException e) {
-            return response.error(ApiErrors.INCORRECT_PARAM, "height", heightStr).build();
-        }
-
         QrEncodeDto dto = new QrEncodeDto();
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
@@ -156,14 +141,19 @@ public class UtilsController {
                 hints
             );
             BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(matrix);
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(bufferedImage, "jpeg", os);
-            byte[] bytes = os.toByteArray();
-            os.close();
+            byte[] bytes = new byte[0];
+            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                ImageIO.write(bufferedImage, "jpeg", os);
+                bytes = os.toByteArray();
+            } catch (IOException e) {
+                String errorMessage = String.format("Error writing buffered image for qrCodeData : %s", qrCodeData);
+                log.warn(errorMessage, e);
+                return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
+            }
             String base64 = Base64.getEncoder().encodeToString(bytes);
             log.debug("base64 = {}", base64);
             dto.qrCodeBase64 = base64;
-        } catch(WriterException | IOException | NullPointerException ex) {
+        } catch(WriterException | NullPointerException ex) {
             String errorMessage = String.format("Error creating QR from qrCodeData: %s, ex = %s", qrCodeData, ex.getMessage());
             log.warn(errorMessage, ex);
             return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
@@ -265,11 +255,11 @@ public class UtilsController {
             for (InputPart inputPart : inputParts) {
                     MultivaluedMap<String, String> header = inputPart.getHeaders();
                     uploadedFileName = extractFileNameFromUploadHeader(header);
-                    //convert the uploaded file to inputstream
-                try (InputStream inputStream = inputPart.getBody(InputStream.class,null)) {
+                //convert the uploaded file to input stream
+                try (InputStream inputStream = inputPart.getBody(InputStream.class,null);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                     int nRead;
                     byte[] bytes = new byte[1024];
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     while ((nRead = inputStream.read(bytes, 0, bytes.length)) != -1) {
                         baos.write(bytes, 0, nRead);
                     }
@@ -513,7 +503,7 @@ public class UtilsController {
             String errorMessage = String.format("Error hashing by an algorithm = '%s', value = '%s'",
                 hashAlgorithm, secret);
             log.warn(errorMessage, e);
-            return response.error(ApiErrors.INTERNAL_SERVER_EXCEPTION, errorMessage).build();
+            return response.error(ApiErrors.INCORRECT_PARAM_VALUE, errorMessage).build();
         }
         return response.bind(dto).build();
     }

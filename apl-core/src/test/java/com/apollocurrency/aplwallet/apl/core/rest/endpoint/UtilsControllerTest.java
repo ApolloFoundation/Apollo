@@ -78,11 +78,9 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<Error>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2003, error.getNewErrorCode());
+        assertNotNull(respondJson);
     }
 
     @Test
@@ -94,11 +92,20 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertNotNull(respondJson);
+
+        request = MockHttpRequest.post(encodeQrUri)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+            .addFormHeader("qrCodeData", "1234")
+            .addFormHeader("width", "-10").addFormHeader("height", "7000");
+        response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(400, response.getStatus());
+        respondJson = response.getContentAsString();
+        assertNotNull(respondJson);
     }
 
     @Test
@@ -110,11 +117,9 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertNotNull(respondJson);
     }
 
     @Test
@@ -126,11 +131,9 @@ class UtilsControllerTest {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
 
-        assertEquals(200, response.getStatus());
+        assertEquals(400, response.getStatus());
         String respondJson = response.getContentAsString();
-        Error error = mapper.readValue(respondJson, new TypeReference<>(){});
-        assertNotNull(error.getErrorDescription());
-        assertEquals(2011, error.getNewErrorCode());
+        assertNotNull(respondJson);
     }
 
     @Test
