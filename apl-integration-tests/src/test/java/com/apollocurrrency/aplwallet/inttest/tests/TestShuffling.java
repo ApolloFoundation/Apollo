@@ -187,8 +187,6 @@ public class TestShuffling extends TestBaseOld {
 
             ShufflingParticipantsResponse shufflingParticipantsResponse = getShufflingParticipants(shuffling.getTransaction());
             for (ShufflingParticipant participant: shufflingParticipantsResponse.getParticipants()) {
-                System.out.println(participant.getState());
-                System.out.println(participant.getAccountRS());
                 if (participant.getState() == STAGE_PROCESSING){
                    if (participant.getAccountRS().equals(wallet.getUser())) {
                        verifyTransactionInBlock(shufflingVerify(wallet, shufflingDTO.getShuffling(), shufflingDTO.getShufflingStateHash()).getTransaction());
